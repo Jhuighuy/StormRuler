@@ -6,35 +6,11 @@ written in modern Fortran.
 ## Equations solved
 **StormRuler** features support of the various set of the
 partial differential equations, including:
-* Incompressible Navier-Stokes equations
-  $$
-    \frac{\partial\vec{v}}{\partial t} +
-    (\vec{v}\cdot\nabla)\vec{v} + 
-    \frac{1}{\rho}\nabla p = 
-    \nu\Delta\vec{v},\quad
-    \nabla\cdot\vec{v} = 0,
-  $$
-* Cahn-Hilliard equation
-  $$
-    \frac{\partial c}{\partial t} =
-    \nabla\cdot M(c)\nabla\left(
-      f(c) - \varepsilon^{2}\Delta c
-    \right),
-  $$
+* Incompressible Navier-Stokes equations,
+* Cahn-Hilliard equation,
 * _(planned)_ Streamfunction-Vorticity formulation for the
   Incompressible Navier-Stokes equations in 2D,
-* Incompressible Navier-Stokes-Cahn-Hilliard equations
-  $$
-    \frac{\partial\vec{v}}{\partial t} +
-    (\vec{v}\cdot\nabla)\vec{v} + 
-    \frac{1}{\rho}\nabla p + \frac{1}{\rho}c\nabla w = 
-    \nu\Delta\vec{v},\quad
-    \nabla\cdot\vec{v} = 0, \\
-    \frac{\partial c}{\partial t} +
-    (\vec{v}\cdot\nabla)c =
-    \nabla\cdot M(c)\nabla w,\quad
-    w = f(c) - \varepsilon^{2}\Delta c,
-  $$
+* Incompressible Navier-Stokes-Cahn-Hilliard equations,
 * _(planned)_ Streamfunction-Vorticity formulation for the
   Incompressible Navier-Stokes-Cahn-Hilliard equations in 2D.
 <!----------------------------------------------------------------->

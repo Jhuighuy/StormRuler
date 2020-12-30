@@ -20,6 +20,7 @@ _deps
 ## Visual Studio configration files. 
 *.rsuser
 *.suo
+*.u2d
 *.user
 *.userosscache
 *.sln.docstates

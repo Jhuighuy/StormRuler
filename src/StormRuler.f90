@@ -77,6 +77,7 @@ program nsch
   use StormRuler_Mesh
   use StormRuler_CahnHilliard
   use StormRuler_NavierStokes
+  use StormRuler_IO
   implicit none
 
   Integer :: L,M,iCell
@@ -84,6 +85,7 @@ program nsch
   Real(8), Dimension(:,:), Allocatable :: w,v,f
   type(CahnHilliardParams) :: CH
   class(Mesh2D), allocatable :: mesh
+  type(IODataSet) :: dataSet
   
   
   ! ----------------------
@@ -131,6 +133,10 @@ program nsch
       if ((abs(r(1)) < 1).and.((abs(r(2)) < 1))) c(iCell) = -1
     end associate
   End Do
+
+  call dataSet%AddNode('c',c)
+  call dataSet%AddNode('p',p)
+  call dataSet%AddNode('v',v)
 
   CH%EpsSqr = 0.01D0
   Call print_mesh3(mesh, v,p,c, 0)

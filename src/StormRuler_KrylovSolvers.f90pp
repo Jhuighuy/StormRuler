@@ -28,6 +28,8 @@ use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
 
+!$fpp MAX_NUM_RANKS = 0
+
 implicit none
 
 !! -----------------------------------------------------------------  
@@ -43,13 +45,22 @@ end type
 private ConvParameters_Init, ConvParameters_Check
 
 abstract interface
-  subroutine MeshOperator(mesh,u,c,opParams)
+  !$fpp for kRank in range(0,MAX_NUM_RANKS+1)
+  subroutine MeshOperator(mesh,u,c,opParams) !$fpp 'MeshOperator'+=str(kRank)
     import Mesh2D
     class(Mesh2D), intent(in) :: mesh
-    real(8), intent(inout) :: u(:),c(:)
+    real(8), intent(inout) :: &
+      u(:),c(:) !$fpp ':'+=kRank*',:'
     class(*), intent(in) :: opParams
-  end subroutine MeshOperator
+  end subroutine MeshOperator !$fpp 'MeshOperator'+=str(kRank)
+  !$fpp end for
 end interface
+
+interface Solve_BiCGStab
+  !$fpp for kRank in range(0,MAX_NUM_RANKS+1)
+  module procedure Solve_BiCGStab !$fpp 'Solve_BiCGStab'+=str(kRank)
+  !$fpp end for
+end interface Solve_BiCGStab
 
 contains
 
@@ -118,7 +129,7 @@ subroutine Solve_CG(mesh &
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(inout) :: u(:),b(:)
-  procedure(MeshOperator) :: LOp
+  procedure(MeshOperator0) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -164,17 +175,20 @@ end subroutine Solve_CG
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-subroutine Solve_BiCGStab(mesh &
+!$fpp for kRank in range(0, MAX_NUM_RANKS+1)
+subroutine Solve_BiCGStab(mesh & !$fpp 'Solve_BiCGStab'+=str(kRank)
                          ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(:),b(:)
-  procedure(MeshOperator) :: LOp
+  real(dp), intent(inout) :: &
+    u(:),b(:) !$fpp ':'+=kRank*',:'
+  procedure(MeshOperator) :: LOp !$fpp 'MeshOperator'+=str(kRank)
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta,mu,rho,omega
-  real(dp), allocatable :: h(:),p(:),r(:),s(:),t(:),v(:)
+  real(dp), allocatable :: &
+    h(:),p(:),r(:),s(:),t(:),v(:) !$fpp ':'+=kRank*',:'
   allocate(h,p,r,s,t,v, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -225,6 +239,7 @@ subroutine Solve_BiCGStab(mesh &
     gamma = Dot(mesh,r,r)
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
-end subroutine Solve_BiCGStab
+end subroutine Solve_BiCGStab !$fpp 'Solve_BiCGStab'+=str(kRank)
+!$fpp end for
 
 end module StormRuler_KrylovSolvers

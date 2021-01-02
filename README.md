@@ -1,5 +1,5 @@
 # StormRuler
-**StormRuler** is a multidimensional very high order CFD solver, 
+**StormRuler** is a very high order multidimensional CFD solver, 
 written in modern Fortran.
 
 <!----------------------------------------------------------------->

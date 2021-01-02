@@ -43,6 +43,9 @@ end interface Sub
 interface Mul
   module procedure Mul2
 end interface Mul
+interface Dot
+  module procedure Dot1,Dot2
+end interface Dot
 
 contains
 
@@ -104,7 +107,7 @@ end subroutine Set2
 
 !! -----------------------------------------------------------------  
 !! Compute a dot product.
-function Dot(mesh, u,v) result(d)
+function Dot1(mesh, u,v) result(d)
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in) :: u(:), v(:)
   real(dp) :: d
@@ -117,7 +120,21 @@ function Dot(mesh, u,v) result(d)
     end do
     !$omp end parallel do
   end block
-end function Dot
+end function Dot1
+function Dot2(mesh, u,v) result(d)
+  class(Mesh2D), intent(in) :: mesh
+  real(dp), intent(in) :: u(:,:), v(:,:)
+  real(dp) :: d
+  block
+    integer :: iCell
+    d = 0
+    !$omp parallel do private(iCell) reduction(+:d)
+    do iCell = 1, mesh%NumCells
+      d = d + (mesh%Dx(1)**2)*dot_product(u(:,iCell),v(:,iCell))
+    end do
+    !$omp end parallel do
+  end block
+end function Dot2
 
 !! -----------------------------------------------------------------  
 !! Compute "u = c⋅v + a⋅w".

@@ -1,12 +1,82 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+## Copyright (C) 2021 Oleg Butakov
+## 
+## Permission is hereby granted, free of charge, to any person 
+## obtaining a copy of this software and associated documentation 
+## files (the "Software"), to deal in the Software without 
+## restriction, including without limitation the rights  to use, 
+## copy, modify, merge, publish, distribute, sublicense, and/or
+## sell copies of the Software, and to permit persons to whom the  
+## Software is furnished to do so, subject to the following 
+## conditions:
+## 
+## The above copyright notice and this permission notice shall be 
+## included in all copies or substantial portions of the Software.
+## 
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+## NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+## OTHER DEALINGS IN THE SOFTWARE.
+## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 import tempfile
 import sys
 import os
 import fypp
 
-temppath = os.path.join(tempfile._get_default_tempdir(),\
-                   next(tempfile._get_candidate_names()))
+# ----------------------
+# Separate GFortran options and input files.
+arguments = []
+inputFiles = []
+for arg in sys.argv[1:]:
+  isInputFile = not (arg.startswith('-')\
+    or (len(arguments) > 0 and arguments[-1] == '-o'))
+  if isInputFile:
+    ext = os.path.splitext(arg)[1].lower()
+    isInputFile = ext in ['.f','.for','.f90','.f03','.f08']
+  if isInputFile:
+    inputFiles.append(arg)
+  else:
+    arguments.append(arg)
 
-os.system('gfortran ' + ' '.join(sys.argv[1:]))
+# ----------------------
+# Preprocess inputs.
+ppInputFiles = []
+if len(inputFiles) > 0:
+  ppOptions = fypp.FyppOptions()
+  ppOptions.line_numbering = True
+  ppTool = fypp.Fypp(ppOptions)
+  for inputFile in inputFiles:
+    # Generate a temporary preprocessed file path
+    # (and keep the original file extension).
+    ppInputFile\
+      = os.path.join(tempfile._get_default_tempdir(),\
+                next(tempfile._get_candidate_names()))\
+      + os.path.splitext(inputFile)[1]
+    ppInputFiles += [ppInputFile]
+    # Preprocess the input file.
+    try:
+      ppTool.process_file(inputFile, ppInputFile)
+    except fypp.FyppError as ppError:
+      # Format the error message in GFortran's style.
+      ppLine, ppMessage = ppError.span[0]+1,ppError.msg
+      message = '{0}:{1}:1:\n\n\nFatal Error: {2}'\
+        .format(inputFile, ppLine, ppMessage)
+      print(message, file=sys.stderr)
+      sys.stderr.flush()
+      os._exit(1)
+else:
+  ppInputFiles = inputFiles
+
+# ----------------------
+# Execute GFortran and exit.
+gfortranCommand = 'gfortran {0} {1}'\
+  .format(' '.join(arguments), ' '.join(ppInputFiles))
+gfortranExitCode = os.system(gfortranCommand)
+os._exit(gfortranExitCode)

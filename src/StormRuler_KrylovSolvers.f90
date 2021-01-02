@@ -28,8 +28,6 @@ use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
 
-!$fpp MAX_NUM_RANKS = 0
-
 implicit none
 
 !! -----------------------------------------------------------------  
@@ -44,22 +42,33 @@ contains
 end type
 private ConvParameters_Init, ConvParameters_Check
 
+#:set Ranks = range(1,3)
+#:def RankSuffix(rank)
+$:'' if rank == 0 else ':' + ',:' * (rank - 1)
+#:enddef RankSuffix
+
 abstract interface
-  !$fpp for kRank in range(0,MAX_NUM_RANKS+1)
-  subroutine MeshOperator(mesh,u,c,opParams) !$fpp 'MeshOperator'+=str(kRank)
+#:for rank in Ranks
+  subroutine MeshOperator${rank}$(mesh,u,c,opParams)
     import Mesh2D
     class(Mesh2D), intent(in) :: mesh
-    real(8), intent(inout) :: &
-      u(:),c(:) !$fpp ':'+=kRank*',:'
+    real(8), intent(inout)&
+      ,dimension(${RankSuffix(rank)}$) :: u,c
     class(*), intent(in) :: opParams
-  end subroutine MeshOperator !$fpp 'MeshOperator'+=str(kRank)
-  !$fpp end for
+  end subroutine MeshOperator${rank}$
+#:endfor
 end interface
 
+interface Solve_CG
+#:for rank in Ranks
+  module procedure Solve_CG${rank}$
+#:endfor
+end interface Solve_CG
+
 interface Solve_BiCGStab
-  !$fpp for kRank in range(0,MAX_NUM_RANKS+1)
-  module procedure Solve_BiCGStab !$fpp 'Solve_BiCGStab'+=str(kRank)
-  !$fpp end for
+#:for rank in Ranks
+  module procedure Solve_BiCGStab${rank}$
+#:endfor
 end interface Solve_BiCGStab
 
 contains
@@ -124,17 +133,20 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-subroutine Solve_CG(mesh &
-                   ,u,b,LOp,opParams,convParams)
+#:for rank in Ranks
+subroutine Solve_CG${rank}$(mesh &
+                           ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(:),b(:)
-  procedure(MeshOperator0) :: LOp
+  real(dp), intent(inout)&
+    ,dimension(${RankSuffix(rank)}$) :: u,b
+  procedure(MeshOperator${rank}$) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta
-  real(dp), allocatable :: p(:),r(:),t(:)
+  real(dp), allocatable&
+    ,dimension(${RankSuffix(rank)}$) :: p,r,t
   allocate(p,r,t, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -170,25 +182,26 @@ subroutine Solve_CG(mesh &
     ! γ ← α.
     gamma = alpha
   end do
-end subroutine Solve_CG
+end subroutine Solve_CG${rank}$
+#:endfor
 
+#:for rank in Ranks
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-!$fpp for kRank in range(0, MAX_NUM_RANKS+1)
-subroutine Solve_BiCGStab(mesh & !$fpp 'Solve_BiCGStab'+=str(kRank)
-                         ,u,b,LOp,opParams,convParams)
+subroutine Solve_BiCGStab${rank}$(mesh &
+                                 ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: &
-    u(:),b(:) !$fpp ':'+=kRank*',:'
-  procedure(MeshOperator) :: LOp !$fpp 'MeshOperator'+=str(kRank)
+  real(dp), intent(inout)&
+    ,dimension(${RankSuffix(rank)}$) :: u,b
+  procedure(MeshOperator${rank}$) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta,mu,rho,omega
-  real(dp), allocatable :: &
-    h(:),p(:),r(:),s(:),t(:),v(:) !$fpp ':'+=kRank*',:'
+  real(dp), allocatable&
+    ,dimension(${RankSuffix(rank)}$) :: h,p,r,s,t,v
   allocate(h,p,r,s,t,v, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -239,7 +252,7 @@ subroutine Solve_BiCGStab(mesh & !$fpp 'Solve_BiCGStab'+=str(kRank)
     gamma = Dot(mesh,r,r)
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
-end subroutine Solve_BiCGStab !$fpp 'Solve_BiCGStab'+=str(kRank)
-!$fpp end for
+end subroutine Solve_BiCGStab${rank}$
+#:endfor
 
 end module StormRuler_KrylovSolvers

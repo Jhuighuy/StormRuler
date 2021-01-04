@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Copyright (C) 2021 Oleg Butakov
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights  to use,
+# copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following
+# conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+import re
+
+_IF_REGEXP = re.compile(
+  r"^\s*if\s*\((?P<condition>\w+)\)\s*then$")
+_ELSE_IF_REGEXP = re.compile(
+  r"^\s*else\s*if\s*\((?P<condition>\w+)\)\s*then$")
+_ELSE_REGEXP = re.compile(r"^\s*else$")
+_END_IF_REGEXP = re.compile(r"^\s*end\s*if$")
+
+_DO_REGEXP = re.compile(
+  r"^\s*do\s+(?P<index>[a-zA-Z]\w*)\s*=\s*(?P<start>\w+)\s*,\s*(?P<end>\w+)(\s*,\s*(?P<step>\w+))?$")
+_END_DO_REGEXP = re.compile(r"^\s*end\s*do$")
+
+
+def run_f90_to_py(file_path):
+  with open(file_path) as file:
+    file_lines = file.readlines()
+  ident = 0
+  source = ""
+  source += "#!/usr/bin/env python\n"
+  source += "# -*- coding: utf-8 -*-\n"
+  for line in file_lines:
+    line = line.rstrip()
+    # ----------------------
+    # Check for the directive.
+    index = line.find("#$")
+    if index == -1:
+      source += ident * "  " + f"print r'''{line}'''\n"
+    else:
+      lineDirective = line[index+len("!$fpp"):].strip()
+      line = line[0:index]
+      if lineDirective.startswith("for"):
+        source += ident*"  " + lineDirective + ":\n"
+        ident = ident+1
+      elif lineDirective.startswith("end"):
+        source += ident*"  " + "pass\n"
+        ident = ident-1
+      elif lineDirective.count("+=") > 0:
+        replaceArgs = lineDirective.split("+=")
+        source += ident*"  " \
+               + "print r\"\"\""+line+"\"\"\".replace(" + replaceArgs[0] + "," + replaceArgs[0]+"+"+replaceArgs[1] + ")\n"
+      else:
+        source += ident*"  " + lineDirective + "\n"
+  return source

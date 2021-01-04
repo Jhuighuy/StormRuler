@@ -42,34 +42,29 @@ contains
 end type
 private ConvParameters_Init, ConvParameters_Check
 
-#:set Ranks = range(1,3)
-#:def RankSuffix(rank)
-#:assert rank > 0
-$:'' if rank == 0 else ':' + ',:' * (rank - 1)
-#:enddef RankSuffix
+#fpp set Ranks = range(0,2)
 
 abstract interface
-#:for rank in Ranks
-  subroutine MeshOperator${rank}$(mesh,u,c,opParams)
-    import Mesh2D
+#fpp for rank in Ranks
+  subroutine MeshOperator{rank}(mesh,u,c,opParams)
+    import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
-    real(8), intent(inout)&
-      ,dimension(${RankSuffix(rank)}$) :: u,c
+    real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
-  end subroutine MeshOperator${rank}$
-#:endfor
+  end subroutine MeshOperator{rank}
+#fpp end for
 end interface
 
 interface Solve_CG
-#:for rank in Ranks
-  module procedure Solve_CG${rank}$
-#:endfor
+#fpp for rank in Ranks
+  module procedure Solve_CG{rank}
+#fpp end for
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#:for rank in Ranks
-  module procedure Solve_BiCGStab${rank}$
-#:endfor
+#fpp for rank in Ranks
+  module procedure Solve_BiCGStab{rank}
+#fpp end for
 end interface Solve_BiCGStab
 
 contains
@@ -134,20 +129,18 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-#:for rank in Ranks
-subroutine Solve_CG${rank}$(mesh &
-                           ,u,b,LOp,opParams,convParams)
+#fpp for rank in Ranks
+subroutine Solve_CG{rank}(mesh &
+                         ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout)&
-    ,dimension(${RankSuffix(rank)}$) :: u,b
-  procedure(MeshOperator${rank}$) :: LOp
+  real(dp), intent(inout) :: u(@:,:),b(@:,:)
+  procedure(MeshOperator{rank}) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta
-  real(dp), allocatable&
-    ,dimension(${RankSuffix(rank)}$) :: p,r,t
+  real(dp), allocatable :: p(@:,:),r(@:,:),t(@:,:)
   allocate(p,r,t, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -183,26 +176,24 @@ subroutine Solve_CG${rank}$(mesh &
     ! γ ← α.
     gamma = alpha
   end do
-end subroutine Solve_CG${rank}$
-#:endfor
+end subroutine Solve_CG{rank}
+#fpp end for
 
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-#:for rank in Ranks
-subroutine Solve_BiCGStab${rank}$(mesh &
-                                 ,u,b,LOp,opParams,convParams)
+#fpp for rank in Ranks
+subroutine Solve_BiCGStab{rank}(mesh &
+                               ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout)&
-    ,dimension(${RankSuffix(rank)}$) :: u,b
-  procedure(MeshOperator${rank}$) :: LOp
+  real(dp), intent(inout) :: u(@:,:),b(@:,:)
+  procedure(MeshOperator{rank}) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta,mu,rho,omega
-  real(dp), allocatable&
-    ,dimension(${RankSuffix(rank)}$) :: h,p,r,s,t,v
+  real(dp), allocatable :: h(@:,:),p(@:,:),r(@:,:),s(@:,:),t(@:,:),v(@:,:)
   allocate(h,p,r,s,t,v, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -253,7 +244,7 @@ subroutine Solve_BiCGStab${rank}$(mesh &
     gamma = Dot(mesh,r,r)
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
-end subroutine Solve_BiCGStab${rank}$
-#:endfor
+end subroutine Solve_BiCGStab{rank}
+#fpp end for
 
 end module StormRuler_KrylovSolvers

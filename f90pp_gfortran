@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Copyright (C) 2021 Oleg Butakov
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights  to use,
+# copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following
+# conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+"""
+A simple wrapper for the 
+GNU Fortran compiler with a custom preprocessor (F90PP/FYPP).
+"""
+
+import tempfile
+import sys
+import os
+import re
+
+_FORTRAN_EXT = [".f", ".for", ".f90", ".f03", ".f08"]
+
+
+def gfortran_parse_arguments():
+  """
+  Separate GNU Fortran options and input files.
+  """
+  arguments = []
+  input_files = []
+  for arg in sys.argv[1:]:
+    is_input_file = not (arg.startswith("-")
+                         or (len(arguments) > 0 and arguments[-1] == "-o"))
+    if is_input_file:
+      ext = os.path.splitext(arg)[1]
+      is_input_file = ext.lower() in _FORTRAN_EXT
+    if is_input_file:
+      input_files.append(arg)
+    else:
+      arguments.append(arg)
+  return arguments, input_files
+
+
+def gfortran_fypp_preprocess(input_file, output_file):
+  """
+  Preprocess Fortran source with FYPP.
+  """
+  import fypp
+  _FYPP_OPTIONS = fypp.FyppOptions()
+  _FYPP_OPTIONS.line_numbering = True
+  _FYPP = fypp.Fypp(_FYPP_OPTIONS)
+  try:
+    _FYPP.process_file(input_file, output_file)
+  except fypp.FyppError as fypp_error:
+    line, msg = fypp_error.span[0] + 1, fypp_error.msg
+    gfortran_message = f"{input_file}:{line}:{1}:\n\n\nFatal Error: {msg}"
+    print(gfortran_message, file=sys.stderr)
+    sys.stderr.flush()
+    sys.exit(1)
+
+
+def gfortran_f90pp_error(input_file, line, message):
+  print(message)
+  sys.exit(1)
+
+
+def gfortran_f90pp_preprocess(input_file, output_file):
+  """
+  Preprocess Fortran source with a builtin F90PP.
+  """
+  _FPP_DIR_REGEXP = re.compile(r"^\s*\#\s*fpp\s+(.*)$")
+  _FPP_SET_REGEXP = re.compile(r"^set\s+([a-zA-Z]\w*\s*=.*)$")
+  _FPP_FOR_REGEXP = re.compile(r"^for\s+([a-zA-Z]\w*)\s+in\s+.+$")
+  _FPP_END_FOR_REGEXP = re.compile(r"^\s*end\s*for$")
+  _FPP_EXP_REGEXP = re.compile(r"\@([\w\:]+),")
+  _FPP_SUB_REGEXP = re.compile(r"\{([a-zA-Z]\w*)\}")
+
+  of = open(output_file, mode="w")
+
+  _FPP = {'G':0}
+  def _FPP_PRINT(fpp,line):
+    while True:
+      matches = _FPP_EXP_REGEXP.search(line)
+      if not matches:
+        break
+      start, end = matches.span()
+      entry = line[start+1:end]
+      line = line[0:start] + fpp['_G']*entry + line[end:]
+    while True:
+      matches = _FPP_SUB_REGEXP.search(line)
+      if not matches:
+        break
+      expr = matches.groups()[0]
+      start, end = matches.span()
+      entry = line[start+1:end]
+      line = line[0:start] + str(fpp[expr]) + line[end:]
+    print(line, file=of)
+
+  with open(input_file, mode="r") as fp:
+    fortran_lines = fp.readlines()
+
+  fpp_stack = []
+  fpp_lines = [f"_FPP_PRINT(_FPP,r'''# {1} \"{input_file}\" 1''')"]
+  for line_num in range(0, len(fortran_lines)):
+    line = fortran_lines[line_num].rstrip()
+    match = _FPP_DIR_REGEXP.match(line)
+    if match is None:
+      plain_line = len(fpp_stack) * " " \
+                   + f"_FPP_PRINT(_FPP,r\"\"\"{line}\"\"\")"
+      fpp_lines.append(plain_line)
+    else:
+      directive = match.groups()[0].strip()
+      if _FPP_SET_REGEXP.match(directive):
+        match = _FPP_SET_REGEXP.match(directive)
+        statement = len(fpp_stack) * " " + match.groups()[0]
+        fpp_lines.append(statement)
+      elif _FPP_FOR_REGEXP.match(directive):
+        match = _FPP_FOR_REGEXP.match(directive)
+        index = match.groups()[0].strip()
+        statement = len(fpp_stack) * " " + directive + ":\n" \
+                  + len(fpp_stack) * " " + f" _FPP['_G']={index}; _FPP['{index}']={index};"
+        fpp_lines.append(statement)
+        fpp_stack.append('for')
+      elif _FPP_END_FOR_REGEXP.match(directive):
+        if fpp_stack[-1] != 'for':
+          gfortran_f90pp_error(input_file, line_num, "'end for' expected")
+        fpp_stack.pop()
+      else:
+        gfortran_f90pp_error(input_file, line_num, "unknown directive")
+  fpp_listing = '\n'.join(fpp_lines)
+  exec(fpp_listing)
+  of.close()
+
+def gfortran_fypp_main():
+  """
+  Run GNU Fortran/FYPP.
+  """
+  arguments, input_files = gfortran_parse_arguments()
+  output_files = []
+  for input_file in input_files:
+    output_file = tempfile.NamedTemporaryFile().name + os.path.splitext(input_file)[1]
+    output_files.append(output_file)
+    gfortran_f90pp_preprocess(input_file, output_file)
+  gfortran_command = f"gfortran {' '.join(arguments)} {' '.join(output_files)}"
+  gfortran_exit_code = os.system(gfortran_command)
+  sys.exit(gfortran_exit_code)
+
+
+if __name__ == "__main__":
+  gfortran_fypp_main()

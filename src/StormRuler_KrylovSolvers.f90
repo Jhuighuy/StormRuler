@@ -44,6 +44,7 @@ private ConvParameters_Init, ConvParameters_Check
 
 #:set Ranks = range(1,3)
 #:def RankSuffix(rank)
+#:assert rank > 0
 $:'' if rank == 0 else ':' + ',:' * (rank - 1)
 #:enddef RankSuffix
 
@@ -185,10 +186,10 @@ subroutine Solve_CG${rank}$(mesh &
 end subroutine Solve_CG${rank}$
 #:endfor
 
-#:for rank in Ranks
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
+#:for rank in Ranks
 subroutine Solve_BiCGStab${rank}$(mesh &
                                  ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<

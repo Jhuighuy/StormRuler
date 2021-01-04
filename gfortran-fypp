@@ -1,82 +1,93 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-## Copyright (C) 2021 Oleg Butakov
-## 
-## Permission is hereby granted, free of charge, to any person 
-## obtaining a copy of this software and associated documentation 
-## files (the "Software"), to deal in the Software without 
-## restriction, including without limitation the rights  to use, 
-## copy, modify, merge, publish, distribute, sublicense, and/or
-## sell copies of the Software, and to permit persons to whom the  
-## Software is furnished to do so, subject to the following 
-## conditions:
-## 
-## The above copyright notice and this permission notice shall be 
-## included in all copies or substantial portions of the Software.
-## 
-## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-## NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## OTHER DEALINGS IN THE SOFTWARE.
-## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Copyright (C) 2021 Oleg Butakov
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights  to use,
+# copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following
+# conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+"""
+A simple wrapper for GFortran compiler and FYPP preprocessor.
+"""
 
 import tempfile
 import sys
 import os
 import fypp
 
-# ----------------------
-# Separate GFortran options and input files.
-arguments = []
-inputFiles = []
-for arg in sys.argv[1:]:
-  isInputFile = not (arg.startswith('-')\
-    or (len(arguments) > 0 and arguments[-1] == '-o'))
-  if isInputFile:
-    ext = os.path.splitext(arg)[1].lower()
-    isInputFile = ext in ['.f','.for','.f90','.f03','.f08']
-  if isInputFile:
-    inputFiles.append(arg)
-  else:
-    arguments.append(arg)
+_FORTRAN_EXT = [".f", ".for", ".f90", ".f03", ".f08"]
 
-# ----------------------
-# Preprocess inputs.
-ppInputFiles = []
-if len(inputFiles) > 0:
-  ppOptions = fypp.FyppOptions()
-  ppOptions.line_numbering = True
-  ppTool = fypp.Fypp(ppOptions)
-  for inputFile in inputFiles:
-    # Generate a temporary preprocessed file path
-    # (and keep the original file extension).
-    ppInputFile\
-      = os.path.join(tempfile._get_default_tempdir(),\
-                next(tempfile._get_candidate_names()))\
-      + os.path.splitext(inputFile)[1]
-    ppInputFiles += [ppInputFile]
-    # Preprocess the input file.
-    try:
-      ppTool.process_file(inputFile, ppInputFile)
-    except fypp.FyppError as ppError:
-      # Format the error message in GFortran's style.
-      ppLine, ppMessage = ppError.span[0]+1,ppError.msg
-      message = '{0}:{1}:1:\n\n\nFatal Error: {2}'\
-        .format(inputFile, ppLine, ppMessage)
-      print(message, file=sys.stderr)
-      sys.stderr.flush()
-      os._exit(1)
-else:
-  ppInputFiles = inputFiles
+_FYPP_OPTIONS = fypp.FyppOptions()
+_FYPP_OPTIONS.line_numbering = True
+_FYPP = fypp.Fypp(_FYPP_OPTIONS)
 
-# ----------------------
-# Execute GFortran and exit.
-gfortranCommand = 'gfortran {0} {1}'\
-  .format(' '.join(arguments), ' '.join(ppInputFiles))
-gfortranExitCode = os.system(gfortranCommand)
-os._exit(gfortranExitCode)
+
+def gfortran_parse_arguments():
+  """
+  Separate GFortran options and input files.
+  """
+  arguments = []
+  input_files = []
+  for arg in sys.argv[1:]:
+    is_input_file = not (arg.startswith("-")
+                         or (len(arguments) > 0 and arguments[-1] == "-o"))
+    if is_input_file:
+      ext = os.path.splitext(arg)[1]
+      is_input_file = ext.lower() in _FORTRAN_EXT
+    if is_input_file:
+      input_files.append(arg)
+    else:
+      arguments.append(arg)
+  return arguments, input_files
+
+
+def gfortran_fypp_preprocess(input_file, output_file):
+  """
+  Preprocess Fortran source with FYPP.
+  """
+  try:
+    _FYPP.process_file(input_file, output_file)
+  except fypp.FyppError as fypp_error:
+    line, msg = fypp_error.span[0] + 1, fypp_error.msg
+    gfortran_message = f"{input_file}:{line}:{1}:\n\n\nFatal Error: {msg}"
+    print(gfortran_message, file=sys.stderr)
+    sys.stderr.flush()
+    sys.exit(1)
+
+
+def gfortran_fypp_main():
+  """
+  Run GFortran-FYPP.
+  """
+  arguments, input_files = gfortran_parse_arguments()
+  output_files = []
+  for input_file in input_files:
+    output_file = tempfile.NamedTemporaryFile().name + os.path.splitext(input_file)[1]
+    output_files.append(output_file)
+    gfortran_fypp_preprocess(input_file, output_file)
+  gfortran_command = f"gfortran {' '.join(arguments)} {' '.join(output_files)}"
+  gfortran_exit_code = os.system(gfortran_command)
+  sys.exit(gfortran_exit_code)
+
+
+if __name__ == "__main__":
+  gfortran_fypp_main()

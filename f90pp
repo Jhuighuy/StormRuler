@@ -25,47 +25,123 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+import sys
 import re
 
-_IF_REGEXP = re.compile(
-  r"^\s*if\s*\((?P<condition>\w+)\)\s*then$")
-_ELSE_IF_REGEXP = re.compile(
-  r"^\s*else\s*if\s*\((?P<condition>\w+)\)\s*then$")
-_ELSE_REGEXP = re.compile(r"^\s*else$")
-_END_IF_REGEXP = re.compile(r"^\s*end\s*if$")
+sys.dont_write_bytecode = True
 
-_DO_REGEXP = re.compile(
-  r"^\s*do\s+(?P<index>[a-zA-Z]\w*)\s*=\s*(?P<start>\w+)\s*,\s*(?P<end>\w+)(\s*,\s*(?P<step>\w+))?$")
-_END_DO_REGEXP = re.compile(r"^\s*end\s*do$")
+_IF_ = re.compile(
+  r"^\s*if\s*\((?P<condition>.+)\)\s*then$")
+_ELSE_IF_ = re.compile(
+  r"^\s*else\s*if\s*\((?P<condition>.+)\)\s*then$")
+_ELSE_ = re.compile(r"^\s*else$")
+_END_IF_ = re.compile(r"^\s*end\s*if$")
+
+_DO_ = re.compile(
+  r"^\s*do\s+(?P<index>[a-zA-Z]\w*)\s*=\s*(?P<start>\w+)\s*,\s*(?P<stop>\w+)(\s*,\s*(?P<step>\w+))?$")
+_END_DO_ = re.compile(r"^\s*end\s*do$")
 
 
-def run_f90_to_py(file_path):
-  with open(file_path) as file:
-    file_lines = file.readlines()
-  ident = 0
-  source = ""
-  source += "#!/usr/bin/env python\n"
-  source += "# -*- coding: utf-8 -*-\n"
-  for line in file_lines:
-    line = line.rstrip()
-    # ----------------------
-    # Check for the directive.
-    index = line.find("#$")
-    if index == -1:
-      source += ident * "  " + f"print r'''{line}'''\n"
+class AstNode(object):
+  pass
+
+class AstLnNode(AstNode):
+  def __init__(self):
+    self.line = ''
+
+class AstIfNone(AstNode):
+  def __init__(self):
+    self.condition = ''
+    self.then_branch = []
+    self.elif_branch = []
+    self.else_branch = []
+
+class AstDoNone(AstNode):
+  def __init__(self):
+    self.index = ''
+    self.start = ''
+    self.stop = ''
+    self.step = ''
+    self.loop_body = []
+
+class F90ppParser(object):
+  def __init__(self, lines):
+    self._lines = lines
+    self._line = self._lines[0]
+
+  def _matches(self, *regexps):
+    for regexp in regexps:
+      if regexp.match(self._line):
+        return True
+    return False
+  def _match(self, regexp):
+    g = regexp.match(self._line).groupdict()
+    self._advance()
+    return g
+  def _advance(self):
+    self._lines = self._lines[1:]
+    self._line = self._lines[0]
+
+  def _expect(self, regexp):
+    self._matches(regexp)
+
+  def _parse(self):
+    if self._matches(_IF_):
+      return self._parse_if_directive()
+    elif self._matches(_DO_):
+      return self._parse_do_directive()
     else:
-      lineDirective = line[index+len("!$fpp"):].strip()
-      line = line[0:index]
-      if lineDirective.startswith("for"):
-        source += ident*"  " + lineDirective + ":\n"
-        ident = ident+1
-      elif lineDirective.startswith("end"):
-        source += ident*"  " + "pass\n"
-        ident = ident-1
-      elif lineDirective.count("+=") > 0:
-        replaceArgs = lineDirective.split("+=")
-        source += ident*"  " \
-               + "print r\"\"\""+line+"\"\"\".replace(" + replaceArgs[0] + "," + replaceArgs[0]+"+"+replaceArgs[1] + ")\n"
-      else:
-        source += ident*"  " + lineDirective + "\n"
-  return source
+      return self._parse_ln()
+
+  def _parse_ln(self):
+    node = AstLnNode()
+    node.line = self._line
+    self._advance()
+    return node
+
+  def _parse_if_directive(self):
+    g = self._match(_IF_)
+    node = AstIfNone()
+    node.condition = g['condition']
+    while not self._matches(_ELSE_IF_,_ELSE_,_END_IF_):
+      node.then_branch.append(self._parse())
+    while not self._matches(_ELSE_,_END_IF_):
+      node.elif_branch.append((self._match(_ELSE_IF_)['condition'],[]))
+      while not self._matches(_ELSE_IF_,_ELSE_,_END_IF_):
+        node.elif_branch[-1][1].append(self._parse())
+    if self._matches(_ELSE_):
+      self._advance()
+      while not self._matches(_END_IF_):
+        node.else_branch.append(self._parse())
+    self._expect(_END_IF_)    
+    return node
+
+  def _parse_do_directive(self):
+    g = self._match(_DO_)
+    node = AstDoNone()
+    node.index, node.start, node.stop, node.step \
+      = g['index'], g['start'], g['stop'], g['step']
+    while not self._matches(_END_DO_):
+      node.loop_body.append(self._parse())
+    self._advance()
+    return node
+
+
+input_file = r'''if (3 > 2) then
+  hui
+  djigurda
+  do i = 1, 2
+    xuy
+  end do
+else if (2 > 1) then
+  piska
+else if (1 > 0) then
+  siski
+else
+  pizda
+end if
+'''.split('\n')
+
+pp = F90ppParser(input_file)
+a = pp._parse()
+print(a)

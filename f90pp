@@ -37,23 +37,25 @@ sys.dont_write_bytecode = True
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
-_DIR = re.compile(
-  r'\s*#\s*fpp\s+(?P<dir>(?P<head>\w+)\s+.+)(\s+\!.*)?$', re.IGNORECASE)
+def _regExp(pattern: str) -> Pattern[str]:
+  return re.compile(pattern, re.IGNORECASE)
 
-_USE = re.compile(
-  r'^(?P<dir>use|include)\s+(?P<path>(\".+\")|(\'.+\'))$', re.IGNORECASE)
+_DIR = _regExp(
+    r'\s*#\s*fpp\s+(?P<dir>(?P<head>\w+)\s+.+)(\s+\!.*)?$')
 
-_IF = re.compile(
-  r'^if\s*\((?P<cond>.+)\)\s*then$', re.IGNORECASE)
-_ELSE_IF = re.compile(
-  r'^else\s*if\s*\((?P<cond>.+)\)\s*then$', re.IGNORECASE)
-_ELSE = re.compile(r'^else$', re.IGNORECASE)
-_END_IF = re.compile(r'^end\s*if$', re.IGNORECASE)
+_USE = _regExp(
+    r'^(?P<dir>use|include)\s+(?P<path>(\".+\")|(\'.+\'))$')
 
-_DO = re.compile(
-  r'^do\s+(?P<index>[a-zA-Z]\w*)\s*=\s*(?P<start>\w+)\s*,' 
-    + r'\s*(?P<stop>\w+)(\s*,\s*(?P<step>\w+))?$', re.IGNORECASE)
-_END_DO = re.compile(r'^end\s*do$', re.IGNORECASE)
+_IF = _regExp(
+    r'^if\s*\((?P<cond>.+)\)\s*then$')
+_ELSE_IF = _regExp(
+    r'^else\s*if\s*\((?P<cond>.+)\)\s*then$')
+_ELSE = _regExp(r'^else$')
+_END_IF = _regExp(r'^end\s*if$')
+
+_DO = _regExp(
+    r'^do\s+(?P<index>[a-zA-Z]+.)\s*=\s*(?P<bounds>.*)$')
+_END_DO = _regExp(r'^end\s*do$')
 
 
 class ASTNode:
@@ -92,9 +94,7 @@ class ASTNodeDo(ASTNode):
   '''
   def __init__(self) -> None:
     self.index: str = ''
-    self.start: str = ''
-    self.stop: str = ''
-    self.step: str = ''
+    self.bounds: str = ''
     self.loopBody: List[ASTNode] = []
 
 class AST:
@@ -248,8 +248,7 @@ class ASTParser:
   def _parseDirectiveDo(self) -> ASTNodeDo:
     '''Parse DO/END DO directives.'''
     node = ASTNodeDo()
-    node.index, node.start, node.stop, node.step \
-      = self._matchDirective(_DO).group('index', 'start', 'stop', 'step')
+    node.bounds = self._matchDirective(_DO).group('bounds')
     while not self._matchesDirective(_END_DO):
       node.loopBody.append(self._parseSingle())
     self._matchDirective(_END_DO)

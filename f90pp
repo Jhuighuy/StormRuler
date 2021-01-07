@@ -29,7 +29,45 @@ import sys
 import re
 import json
 from json import JSONEncoder
-from typing import List, Tuple, Union, Optional, Pattern, Match
+from typing import List, Dict, Tuple, Union, Callable, Optional, Pattern, Match
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
+
+
+class ASTError(Exception):
+  '''Abstract syntax tree parse error.
+  '''
+  def __init__(self, message: str,
+               filePath: str, line: str, lineNumber: int) -> None:
+    super().__init__()
+    self.message: str = message
+    self.filePath: str = filePath
+    self.line: str = line
+    self.lineNumber: int = lineNumber
+
+  def __str__(self) -> str:
+    message = f'{self.filePath}:{self.lineNumber}:1:\n\n' \
+            + f'{self.line}\n1\n' \
+            + f'Fatal Error: {self.message}'
+    return ''.join(message)
+
+
+class ASTEndError(ASTError):
+  '''Unexpected end of file.
+  '''
+  def __init__(self, filePath: str, lineNumber: int):
+    super().__init__('unexpected end of file', filePath, '', lineNumber)
+
+
+class ASTDirError(ASTError):
+  '''Unexpected directive error.
+  '''
+  def __init__(self, directive: str,
+               filePath: str, line: str, lineNumber: int):
+    super().__init__(
+      f'unexpected directive `{directive}`',
+      filePath, line, lineNumber)
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
@@ -41,10 +79,10 @@ def _regExp(pattern: str) -> Pattern[str]:
 
 
 _DIR = _regExp(
-  r'\s*#\s*fpp\s+(?P<dir>(?P<head>\w+)(\s+.+)?)(\s+\!.*)?$')
+  r'#\s*fpp\s+(?P<dir>(?P<head>\w+)(\s+.+)?)(\s+\!.*)?$')
 
 _USE = _regExp(
-  r'^(?P<dir>use|include)\s+(?P<path>(\".+\")|(\'.+\'))$')
+  r'^(?P<dir>use|include)\s+(?P<path>(\".+\")|(\'.+\')|(\<.+\>))$')
 
 _IF = _regExp(
   r'^if\s*\((?P<cond>.+)\)\s*then$')
@@ -83,7 +121,7 @@ class ASTNodeUse(ASTNode):
     self.emitLineBlocks: bool = False
 
 
-class ASTNodeIf(ASTNode):
+class ASTNodeIfElseEnd(ASTNode):
   '''The IF/ELSE IF/ELSE/END IF directive syntax tree node.
   '''
   def __init__(self, filePath: str, lineNumber: int) -> None:
@@ -102,7 +140,7 @@ class ASTNodeElseIf(ASTNode):
     self.branchBody: List[ASTNode] = []
 
 
-class ASTNodeDo(ASTNode):
+class ASTNodeDoEnd(ASTNode):
   '''The DO/END DO directive syntax tree node.
   '''
   def __init__(self, filePath: str, lineNumber: int) -> None:
@@ -115,8 +153,8 @@ class ASTNodeDo(ASTNode):
 class AST:
   '''An abstract syntax tree.
   '''
-  def __init__(self) -> None:
-    self.filePath: str = ''
+  def __init__(self, filePath: str) -> None:
+    self.filePath: str = filePath
     self.rootNodes: List[ASTNode] = []
 
   def __str__(self) -> str:
@@ -124,28 +162,8 @@ class AST:
       def default(self, obj):
         return obj.__dict__
 
-    formattedJSON = json.dumps(self, indent=2, cls=Encoder)
-    # return highlight(formattedJSON,
-    #  lexers.JsonLexer(), formatters.TerminalFormatter())
-    return formattedJSON
-
-
-class ASTParseError(Exception):
-  '''Abstract syntax tree parse error
-  '''
-  def __init__(self, message: str,
-               filePath: str, line: str, lineNumber: int) -> None:
-    super(ASTParseError, self).__init__()
-    self.message: str = message
-    self.filePath: str = filePath
-    self.line: str = line
-    self.lineNumber: int = lineNumber
-
-  def __str__(self) -> str:
-    message = [self.__class__.__name__, ': ']
-    if self.filePath is not None:
-      message.append('file \'{}\''.format(self.filePath))
-    return ''.join(message)
+    string = json.dumps(self, indent=2, cls=Encoder)
+    return string
 
 
 class ASTParser:
@@ -169,25 +187,28 @@ class ASTParser:
     return self._curLineIndex >= len(self._lines)
 
   def _matchLine(self, regExp: Pattern[str]) -> Match[str]:
-    match = regExp.match(self._curLine())
+    match = self._matchesLine(regExp)
     if match is None:
       raise RuntimeError('expected match')
     self._advanceLine()
     return match
 
-  def _matchDirective(self, regExp: Pattern[str]) -> Match[str]:
-    directive = self._matchLine(_DIR).group('dir')
-    match = regExp.match(directive)
-    if match is None:
-      raise RuntimeError('expected match')
-    return match
-
   def _matchesLine(self, *regExpList: Pattern[str]) -> Optional[Match[str]]:
+    if self._matchesEnd():
+      raise ASTEndError(self._filePath, self._curLineNumber())
     for regExp in regExpList:
       match = regExp.match(self._curLine())
       if match is not None:
         return match
     return None
+
+  def _matchDirective(self, regExp: Pattern[str]) -> Match[str]:
+    directive = self._matchLine(_DIR).group('dir')
+    match = regExp.match(directive)
+    if match is None:
+      raise ASTDirError(directive, self._filePath,
+                        self._curLine(), self._curLineNumber())
+    return match
 
   def _matchesDirective(self, *regExpList: Pattern[str]) -> Optional[Match[str]]:
     dirMatch = self._matchesLine(_DIR)
@@ -201,8 +222,7 @@ class ASTParser:
 
   def parse(self) -> AST:
     '''Parse the source lines.'''
-    tree = AST()
-    tree.filePath = self._filePath
+    tree = AST(self._filePath)
     while not self._matchesEnd():
       tree.rootNodes.append(self._parseSingle())
     return tree
@@ -215,7 +235,8 @@ class ASTParser:
 
   def _parseLineBlock(self) -> ASTNodeLineBlock:
     '''Parse a line block.'''
-    node = ASTNodeLineBlock(self._filePath, self._curLineNumber())
+    node = ASTNodeLineBlock(self._filePath,
+                            self._curLineNumber())
     while True:
       node.lines.append(self._curLine())
       self._advanceLine()
@@ -225,18 +246,20 @@ class ASTParser:
 
   def _parseDirective(self) -> ASTNode:
     '''Parse a directive.'''
-    dirHead = self._matchesLine(_DIR).group('head').lower()
-    if dirHead in ['use', 'include']:
+    if self._matchesDirective(_USE):
       return self._parseDirectiveUse()
-    elif dirHead == 'if':
-      return self._parseDirectiveIf()
-    elif dirHead == 'do':
-      return self._parseDirectiveDo()
-    raise RuntimeError('unknown directive')
+    elif self._matchesDirective(_IF):
+      return self._parseDirectiveIfElseEnd()
+    elif self._matchesDirective(_DO):
+      return self._parseDirectiveDoEnd()
+    directive = self._matchesLine(_DIR).group('dir')
+    raise ASTDirError(directive, self._filePath,
+                      self._curLine(), self._curLineNumber())
 
   def _parseDirectiveUse(self) -> ASTNodeUse:
     '''Parse USE/INCLUDE directives.'''
-    node = ASTNodeUse(self._filePath, self._curLineNumber())
+    node = ASTNodeUse(self._filePath,
+                      self._curLineNumber())
     node.pathToInclude, directive \
         = self._matchDirective(_USE).group('path', 'dir')
     node.pathToInclude = node.pathToInclude[1:-1]
@@ -244,14 +267,16 @@ class ASTParser:
       node.emitLineBlocks = True
     return node
 
-  def _parseDirectiveIf(self) -> ASTNodeIf:
+  def _parseDirectiveIfElseEnd(self) -> ASTNodeIfElseEnd:
     '''Parse IF/ELSE IF/ELSE/END IF directives.'''
-    node = ASTNodeIf(self._filePath, self._curLineNumber())
+    node = ASTNodeIfElseEnd(self._filePath,
+                            self._curLineNumber())
     node.condition = self._matchDirective(_IF).group('cond')
     while not self._matchesDirective(_ELSE_IF, _ELSE, _END_IF):
       node.thenBranch.append(self._parseSingle())
     while not self._matchesDirective(_ELSE, _END_IF):
-      elseIfNode = ASTNodeElseIf(self._filePath, self._curLineNumber())
+      elseIfNode = ASTNodeElseIf(self._filePath,
+                                 self._curLineNumber())
       elseIfNode.condition = self._matchDirective(_ELSE_IF).group('cond')
       while not self._matchesDirective(_ELSE_IF, _ELSE, _END_IF):
         elseIfNode.branchBody.append(self._parseSingle())
@@ -263,10 +288,10 @@ class ASTParser:
     self._matchDirective(_END_IF)
     return node
 
-  def _parseDirectiveDo(self) -> ASTNodeDo:
+  def _parseDirectiveDoEnd(self) -> ASTNodeDoEnd:
     '''Parse DO/END DO directives.'''
-    node = ASTNodeDo(self._filePath,
-                     self._curLineNumber())
+    node = ASTNodeDoEnd(self._filePath,
+                        self._curLineNumber())
     node.bounds = self._matchDirective(_DO).group('bounds')
     while not self._matchesDirective(_END_DO):
       node.loopBody.append(self._parseSingle())
@@ -278,67 +303,85 @@ class ASTParser:
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
 
-class ASTEvaluator:
+class ASTNodeEvaluator:
   '''Abstract syntax tree evaluator.
   '''
-  def eval(self, node: Union[ASTNode, AST]):
+  def __init__(self, scope: Dict[str, int] = {}):
+    self._scope: Dict[str, int] = scope
+
+  def _evalExpr(self, expression):
+    return eval(expression, self._scope)
+
+  def eval(self, node: Union[AST, ASTNode],
+           callback: Callable[[str], None]) -> None:
+    '''Evaluate the syntax tree or the syntax tree node.'''
     if isinstance(node, AST):
-      return self._evalTree(node)
-    return self._evalNode(node)
+      tree: AST = node
+      self._evalNodeList(tree.rootNodes, callback)
+    else:
+      self._evalNodeList(node, callback)
 
-  def _evalTree(self, tree: AST):
-    for node in tree.rootNodes:
-      self._evalNode(node)
+  def _evalNodeList(self, nodes: Union[ASTNode, List[ASTNode]],
+                    callback: Callable[[str], None]):
+    '''Evaluate the syntax tree node or a list of nodes.'''
+    if not isinstance(nodes, list):
+      nodes = [nodes]
+    for node in nodes:
+      if isinstance(node, ASTNodeLineBlock):
+        self._evalLineBlock(node, callback)
+      elif isinstance(node, ASTNodeUse):
+        self._evalUse(node, callback)
+      elif isinstance(node, ASTNodeIfElseEnd):
+        self._evalIfElseEnd(node, callback)
+      elif isinstance(node, ASTNodeDoEnd):
+        self._evalDoEnd(node, callback)
+      else:
+        raise RuntimeError(node.__class__.__name__)
 
-  def _evalNode(self, node: ASTNode):
-    if isinstance(node, ASTNodeLineBlock):
-      return self._evalNodeLineBlock(node)
-    elif isinstance(node, ASTNodeUse):
-      return self._evalNodeUse(node)
-    elif isinstance(node, ASTNodeIf):
-      return self._evalNodeIf(node)
-    elif isinstance(node, ASTNodeDo):
-      return self._evalNodeDo(node)
-    raise RuntimeError(node.__class__.__name__)
+  def _evalLineBlock(self, node: ASTNodeLineBlock,
+                     callback: Callable[[str], None]):
+    '''Evaluate line block.'''
+    callback(f'# {node.lineNumber} "{node.filePath}"')
+    for line in node.lines:
+      callback(line)
 
-  def _evalNodeLineBlock(self, node: ASTNodeLineBlock):
+  def _evalUse(self, node: ASTNodeUse,
+               callback: Callable[[str], None]):
     print(node.__class__.__name__)
     pass
 
-  def _evalNodeUse(self, node: ASTNodeUse):
-    print(node.__class__.__name__)
-    pass
+  def _evalIfElseEnd(self, node: ASTNodeIfElseEnd,
+                     callback: Callable[[str], None]):
+    '''Evaluate IF/ELSE IF/ELSE/END IF node.'''
+    condition: bool = self._evalExpr(node.condition)
+    if condition:
+      self._evalNodeList(node.thenBranch, callback)
+    else:
+      for elseIfNode in node.elseIfBranches:
+        condition: bool = self._evalExpr(elseIfNode.condition)
+        if condition:
+          self._evalNodeList(node.thenBranch, callback)
+          break
+      else:
+        self._evalNodeList(node.elseBranch, callback)
 
-  def _evalNodeIf(self, node: ASTNodeIf):
-    print(node.__class__.__name__)
-    pass
-
-  def _evalNodeDo(self, node: ASTNodeDo):
-    print(node.__class__.__name__)
-    pass
+  def _evalDoEnd(self, node: ASTNodeDoEnd,
+                 callback: Callable[[str], None]):
+    '''Evaluate DO/END DO node.'''
+    bounds = self._evalExpr(node.bounds)
+    start, stop = bounds
+    for index in range(start, stop+1):
+      self._evalNodeList(node.loopBody, callback)
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
-input_file = r'''
-#fpp if (3 > 2) then
-#fpp include 'hui.txt'
-  hui
-  djigurda
-#fpp   do i = 1, 2
-    xuy
-#fpp   end do
-#fpp else if (2 > 1) then
-  piska
-#fpp else if (1 > 0) then
-  siski
-#fpp else
-  pizda
-#fpp end if
-'''.split('\n')
-
-a = ASTParser('test', input_file).parse()
-print(a)
-
-ASTEvaluator().eval(a)
+if __name__ == '__main__':
+  filePath = sys.argv[1]
+  outputFilePath = sys.argv[2]
+  with open(filePath, 'r') as fp:
+    lines = fp.read().splitlines()
+  ast = ASTParser(filePath, lines).parse()
+  with open(outputFilePath, 'w') as fp:
+    ASTNodeEvaluator({'NumRanks': 1}).eval(ast, lambda x: print(x, file=fp))

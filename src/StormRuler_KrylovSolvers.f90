@@ -42,29 +42,27 @@ contains
 end type
 private ConvParameters_Init, ConvParameters_Check
 
-#fpp set Ranks = range(0,2)
-
 abstract interface
-#fpp for rank in Ranks
+#fpp do rank = 0, NumRanks
   subroutine MeshOperator{rank}(mesh,u,c,opParams)
     import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
     real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator{rank}
-#fpp end for
+#fpp end do
 end interface
 
 interface Solve_CG
-#fpp for rank in Ranks
+#fpp do rank = 0, NumRanks
   module procedure Solve_CG{rank}
-#fpp end for
+#fpp end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#fpp for rank in Ranks
+#fpp do rank = 0, NumRanks
   module procedure Solve_BiCGStab{rank}
-#fpp end for
+#fpp end do
 end interface Solve_BiCGStab
 
 contains
@@ -129,7 +127,7 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-#fpp for rank in Ranks
+#fpp do rank = 0, NumRanks
 subroutine Solve_CG{rank}(mesh &
                          ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -177,12 +175,12 @@ subroutine Solve_CG{rank}(mesh &
     gamma = alpha
   end do
 end subroutine Solve_CG{rank}
-#fpp end for
+#fpp end do
 
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-#fpp for rank in Ranks
+#fpp do rank = 0, NumRanks
 subroutine Solve_BiCGStab{rank}(mesh &
                                ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -245,6 +243,6 @@ subroutine Solve_BiCGStab{rank}(mesh &
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
 end subroutine Solve_BiCGStab{rank}
-#fpp end for
+#fpp end do
 
 end module StormRuler_KrylovSolvers

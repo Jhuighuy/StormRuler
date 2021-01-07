@@ -29,13 +29,17 @@ import sys
 import re
 import json
 from json import JSONEncoder
-from typing import List, Dict, Tuple, Union, Callable, Optional, Pattern, Match
+from typing import \
+  Any, List, Dict, Union, \
+  Callable, Optional, Pattern, Match
+
+sys.dont_write_bytecode = True
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
 
-class ASTError(Exception):
+class TielError(Exception):
   '''Abstract syntax tree parse error.
   '''
   def __init__(self, message: str,
@@ -53,14 +57,14 @@ class ASTError(Exception):
     return ''.join(message)
 
 
-class ASTEndError(ASTError):
+class TielEndError(TielError):
   '''Unexpected end of file.
   '''
   def __init__(self, filePath: str, lineNumber: int):
     super().__init__('unexpected end of file', filePath, '', lineNumber)
 
 
-class ASTDirError(ASTError):
+class TielDirError(TielError):
   '''Unexpected directive error.
   '''
   def __init__(self, directive: str,
@@ -92,70 +96,16 @@ _ELSE = _regExp(r'^else$')
 _END_IF = _regExp(r'^end\s*if$')
 
 _DO = _regExp(
-  r'^do\s+(?P<index>[a-zA-Z]+.)\s*=\s*(?P<bounds>.*)$')
+  r'^do\s+(?P<index>[a-zA-Z]\w*)\s*=\s*(?P<bounds>.*)$')
 _END_DO = _regExp(r'^end\s*do$')
 
 
-class ASTNode:
-  '''An abstract syntax tree node.
-  '''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    self.filePath: str = filePath
-    self.lineNumber: int = lineNumber
-
-
-class ASTNodeLineBlock(ASTNode):
-  '''The block of regular lines syntax tree node.
-  '''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    super().__init__(filePath, lineNumber)
-    self.lines: List[str] = []
-
-
-class ASTNodeUse(ASTNode):
-  '''The USE/INCLUDE directive syntax tree node.
-  '''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    super().__init__(filePath, lineNumber)
-    self.pathToInclude: str = ''
-    self.emitLineBlocks: bool = False
-
-
-class ASTNodeIfElseEnd(ASTNode):
-  '''The IF/ELSE IF/ELSE/END IF directive syntax tree node.
-  '''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    super().__init__(filePath, lineNumber)
-    self.condition: str = ''
-    self.thenBranch: List[ASTNode] = []
-    self.elseIfBranches: List[ASTNodeElseIf] = []
-    self.elseBranch: List[ASTNode] = []
-
-
-class ASTNodeElseIf(ASTNode):
-  '''The ELSE IF directive syntax tree node.'''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    super().__init__(filePath, lineNumber)
-    self.condition: str = ''
-    self.branchBody: List[ASTNode] = []
-
-
-class ASTNodeDoEnd(ASTNode):
-  '''The DO/END DO directive syntax tree node.
-  '''
-  def __init__(self, filePath: str, lineNumber: int) -> None:
-    super().__init__(filePath, lineNumber)
-    self.index: str = ''
-    self.bounds: str = ''
-    self.loopBody: List[ASTNode] = []
-
-
-class AST:
+class TielTree:
   '''An abstract syntax tree.
   '''
   def __init__(self, filePath: str) -> None:
     self.filePath: str = filePath
-    self.rootNodes: List[ASTNode] = []
+    self.rootNodes: List[TielTreeNode] = []
 
   def __str__(self) -> str:
     class Encoder(JSONEncoder):
@@ -166,7 +116,61 @@ class AST:
     return string
 
 
-class ASTParser:
+class TielTreeNode:
+  '''An abstract syntax tree node.
+  '''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    self.filePath: str = filePath
+    self.lineNumber: int = lineNumber
+
+
+class TielTreeNodeLineBlock(TielTreeNode):
+  '''The block of regular lines syntax tree node.
+  '''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    super().__init__(filePath, lineNumber)
+    self.lines: List[str] = []
+
+
+class TielTreeNodeUse(TielTreeNode):
+  '''The USE/INCLUDE directive syntax tree node.
+  '''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    super().__init__(filePath, lineNumber)
+    self.pathToInclude: str = ''
+    self.emitLineBlocks: bool = False
+
+
+class TielTreeNodeIfElseEnd(TielTreeNode):
+  '''The IF/ELSE IF/ELSE/END IF directive syntax tree node.
+  '''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    super().__init__(filePath, lineNumber)
+    self.condition: str = ''
+    self.thenBranch: List[TielTreeNode] = []
+    self.elseIfBranches: List[TielTreeNodeElseIf] = []
+    self.elseBranch: List[TielTreeNode] = []
+
+
+class TielTreeNodeElseIf(TielTreeNode):
+  '''The ELSE IF directive syntax tree node.'''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    super().__init__(filePath, lineNumber)
+    self.condition: str = ''
+    self.branchBody: List[TielTreeNode] = []
+
+
+class TielTreeNodeDoEnd(TielTreeNode):
+  '''The DO/END DO directive syntax tree node.
+  '''
+  def __init__(self, filePath: str, lineNumber: int) -> None:
+    super().__init__(filePath, lineNumber)
+    self.indexName: str = ''
+    self.bounds: str = ''
+    self.loopBody: List[TielTreeNode] = []
+
+
+class TielParser:
   '''Abstract syntax tree parser.
   '''
   def __init__(self, filePath: str, lines: List[str]) -> None:
@@ -195,7 +199,7 @@ class ASTParser:
 
   def _matchesLine(self, *regExpList: Pattern[str]) -> Optional[Match[str]]:
     if self._matchesEnd():
-      raise ASTEndError(self._filePath, self._curLineNumber())
+      raise TielEndError(self._filePath, self._curLineNumber())
     for regExp in regExpList:
       match = regExp.match(self._curLine())
       if match is not None:
@@ -206,8 +210,8 @@ class ASTParser:
     directive = self._matchLine(_DIR).group('dir')
     match = regExp.match(directive)
     if match is None:
-      raise ASTDirError(directive, self._filePath,
-                        self._curLine(), self._curLineNumber())
+      raise TielDirError(directive, self._filePath,
+                         self._curLine(), self._curLineNumber())
     return match
 
   def _matchesDirective(self, *regExpList: Pattern[str]) -> Optional[Match[str]]:
@@ -220,23 +224,23 @@ class ASTParser:
           return match
     return None
 
-  def parse(self) -> AST:
+  def parse(self) -> TielTree:
     '''Parse the source lines.'''
-    tree = AST(self._filePath)
+    tree = TielTree(self._filePath)
     while not self._matchesEnd():
       tree.rootNodes.append(self._parseSingle())
     return tree
 
-  def _parseSingle(self) -> ASTNode:
+  def _parseSingle(self) -> TielTreeNode:
     '''Parse a directive or a line block.'''
     if self._matchesLine(_DIR):
       return self._parseDirective()
     return self._parseLineBlock()
 
-  def _parseLineBlock(self) -> ASTNodeLineBlock:
+  def _parseLineBlock(self) -> TielTreeNodeLineBlock:
     '''Parse a line block.'''
-    node = ASTNodeLineBlock(self._filePath,
-                            self._curLineNumber())
+    node = TielTreeNodeLineBlock(self._filePath,
+                                 self._curLineNumber())
     while True:
       node.lines.append(self._curLine())
       self._advanceLine()
@@ -244,7 +248,7 @@ class ASTParser:
         break
     return node
 
-  def _parseDirective(self) -> ASTNode:
+  def _parseDirective(self) -> TielTreeNode:
     '''Parse a directive.'''
     if self._matchesDirective(_USE):
       return self._parseDirectiveUse()
@@ -252,32 +256,32 @@ class ASTParser:
       return self._parseDirectiveIfElseEnd()
     elif self._matchesDirective(_DO):
       return self._parseDirectiveDoEnd()
-    directive = self._matchesLine(_DIR).group('dir')
-    raise ASTDirError(directive, self._filePath,
-                      self._curLine(), self._curLineNumber())
+    directive = self._matchesLine(_DIR)['dir']
+    raise TielDirError(directive, self._filePath,
+                       self._curLine(), self._curLineNumber())
 
-  def _parseDirectiveUse(self) -> ASTNodeUse:
+  def _parseDirectiveUse(self) -> TielTreeNodeUse:
     '''Parse USE/INCLUDE directives.'''
-    node = ASTNodeUse(self._filePath,
-                      self._curLineNumber())
-    node.pathToInclude, directive \
-        = self._matchDirective(_USE).group('path', 'dir')
+    node = TielTreeNodeUse(self._filePath,
+                           self._curLineNumber())
+    directive, node.pathToInclude \
+      = self._matchDirective(_USE).group('dir', 'path')
     node.pathToInclude = node.pathToInclude[1:-1]
     if directive.lower() == 'include':
       node.emitLineBlocks = True
     return node
 
-  def _parseDirectiveIfElseEnd(self) -> ASTNodeIfElseEnd:
+  def _parseDirectiveIfElseEnd(self) -> TielTreeNodeIfElseEnd:
     '''Parse IF/ELSE IF/ELSE/END IF directives.'''
-    node = ASTNodeIfElseEnd(self._filePath,
-                            self._curLineNumber())
-    node.condition = self._matchDirective(_IF).group('cond')
+    node = TielTreeNodeIfElseEnd(self._filePath,
+                                 self._curLineNumber())
+    node.condition = self._matchDirective(_IF)['cond']
     while not self._matchesDirective(_ELSE_IF, _ELSE, _END_IF):
       node.thenBranch.append(self._parseSingle())
     while not self._matchesDirective(_ELSE, _END_IF):
-      elseIfNode = ASTNodeElseIf(self._filePath,
-                                 self._curLineNumber())
-      elseIfNode.condition = self._matchDirective(_ELSE_IF).group('cond')
+      elseIfNode = TielTreeNodeElseIf(self._filePath,
+                                      self._curLineNumber())
+      elseIfNode.condition = self._matchDirective(_ELSE_IF)['cond']
       while not self._matchesDirective(_ELSE_IF, _ELSE, _END_IF):
         elseIfNode.branchBody.append(self._parseSingle())
       node.elseIfBranches.append(elseIfNode)
@@ -288,11 +292,12 @@ class ASTParser:
     self._matchDirective(_END_IF)
     return node
 
-  def _parseDirectiveDoEnd(self) -> ASTNodeDoEnd:
+  def _parseDirectiveDoEnd(self) -> TielTreeNodeDoEnd:
     '''Parse DO/END DO directives.'''
-    node = ASTNodeDoEnd(self._filePath,
-                        self._curLineNumber())
-    node.bounds = self._matchDirective(_DO).group('bounds')
+    node = TielTreeNodeDoEnd(self._filePath,
+                             self._curLineNumber())
+    node.indexName, node.bounds \
+      = self._matchDirective(_DO).group('index', 'bounds')
     while not self._matchesDirective(_END_DO):
       node.loopBody.append(self._parseSingle())
     self._matchDirective(_END_DO)
@@ -303,55 +308,73 @@ class ASTParser:
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
 
-class ASTNodeEvaluator:
+class TielEvaluator:
   '''Abstract syntax tree evaluator.
   '''
-  def __init__(self, scope: Dict[str, int] = {}):
-    self._scope: Dict[str, int] = scope
+  def __init__(self, scope=None):
+    if scope is None:
+      scope = {}
+    self._scope: Dict[str, Any] = scope
 
-  def _evalExpr(self, expression):
-    return eval(expression, self._scope)
+  def _evalExpr(self, expression: str):
+    return eval(expression, dict(self._scope))
 
-  def eval(self, node: Union[AST, ASTNode],
+  def eval(self,
+           nodeOrTree: Union[TielTree, TielTreeNode],
            callback: Callable[[str], None]) -> None:
     '''Evaluate the syntax tree or the syntax tree node.'''
-    if isinstance(node, AST):
-      tree: AST = node
+    if isinstance(nodeOrTree, TielTree):
+      tree: TielTree = nodeOrTree
       self._evalNodeList(tree.rootNodes, callback)
     else:
+      node: TielTreeNode = nodeOrTree
       self._evalNodeList(node, callback)
 
-  def _evalNodeList(self, nodes: Union[ASTNode, List[ASTNode]],
-                    callback: Callable[[str], None]):
+  def _evalNodeList(self,
+                    nodes: Union[TielTreeNode, List[TielTreeNode]],
+                    callback: Callable[[str], None]) -> None:
     '''Evaluate the syntax tree node or a list of nodes.'''
     if not isinstance(nodes, list):
       nodes = [nodes]
     for node in nodes:
-      if isinstance(node, ASTNodeLineBlock):
+      if isinstance(node, TielTreeNodeLineBlock):
         self._evalLineBlock(node, callback)
-      elif isinstance(node, ASTNodeUse):
+      elif isinstance(node, TielTreeNodeUse):
         self._evalUse(node, callback)
-      elif isinstance(node, ASTNodeIfElseEnd):
+      elif isinstance(node, TielTreeNodeIfElseEnd):
         self._evalIfElseEnd(node, callback)
-      elif isinstance(node, ASTNodeDoEnd):
+      elif isinstance(node, TielTreeNodeDoEnd):
         self._evalDoEnd(node, callback)
       else:
         raise RuntimeError(node.__class__.__name__)
 
-  def _evalLineBlock(self, node: ASTNodeLineBlock,
-                     callback: Callable[[str], None]):
+  def _evalLineBlock(self,
+                     node: TielTreeNodeLineBlock,
+                     callback: Callable[[str], None]) -> None:
     '''Evaluate line block.'''
     callback(f'# {node.lineNumber} "{node.filePath}"')
-    for line in node.lines:
-      callback(line)
+    for lineNumber, line in enumerate(node.lines, start=node.lineNumber):
+      self._evalLine(line, lineNumber, node.filePath, callback)
 
-  def _evalUse(self, node: ASTNodeUse,
-               callback: Callable[[str], None]):
+  def _evalLine(self,
+                line: str, lineNumber: int, filePath: str,
+                callback: Callable[[str], None]) -> None:
+    '''Evaluate in-line substitutions.'''
+    line = re.sub(r'{(?P<expr>.+)}',
+                  lambda x: str(self._evalExpr(x['expr'])), line)
+    line = re.sub(r'@(?P<expr>:(\s*,)?)',
+                  lambda x: str(self._scope['__INDEX__']*x['expr']), line)
+    callback(line)
+
+  def _evalUse(self,
+               node: TielTreeNodeUse,
+               callback: Callable[[str], None]) -> None:
+    '''Evaluate USE/INCLUDE directive.'''
     print(node.__class__.__name__)
-    pass
 
-  def _evalIfElseEnd(self, node: ASTNodeIfElseEnd,
-                     callback: Callable[[str], None]):
+  def _evalIfElseEnd(self,
+                     node: TielTreeNodeIfElseEnd,
+                     callback: Callable[[str], None]) -> None:
     '''Evaluate IF/ELSE IF/ELSE/END IF node.'''
     condition: bool = self._evalExpr(node.condition)
     if condition:
@@ -365,23 +388,42 @@ class ASTNodeEvaluator:
       else:
         self._evalNodeList(node.elseBranch, callback)
 
-  def _evalDoEnd(self, node: ASTNodeDoEnd,
-                 callback: Callable[[str], None]):
+  def _evalDoEnd(self,
+                 node: TielTreeNodeDoEnd,
+                 callback: Callable[[str], None]) -> None:
     '''Evaluate DO/END DO node.'''
     bounds = self._evalExpr(node.bounds)
     start, stop = bounds
     for index in range(start, stop+1):
+      self._scope[node.indexName] = index
+      self._scope['__INDEX__'] = index
       self._evalNodeList(node.loopBody, callback)
 
 
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
 
-if __name__ == '__main__':
-  filePath = sys.argv[1]
-  outputFilePath = sys.argv[2]
+
+def tielPreprocess(filePath: str,
+                   outputFilePath: str) -> None:
+  '''Preprocess the source file.'''
   with open(filePath, 'r') as fp:
     lines = fp.read().splitlines()
-  ast = ASTParser(filePath, lines).parse()
+  tree = TielParser(filePath, lines).parse()
   with open(outputFilePath, 'w') as fp:
-    ASTNodeEvaluator({'NumRanks': 1}).eval(ast, lambda x: print(x, file=fp))
+    scope = {'NumRanks': 1}
+    TielEvaluator(dict(scope)).eval(tree,
+                                    lambda x: print(x, file=fp))
+
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< #
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
+
+def _tielMain() -> None:
+  filePath = sys.argv[1]
+  outputFilePath = sys.argv[2]
+  tielPreprocess(filePath, outputFilePath)
+
+
+if __name__ == '__main__':
+  _tielMain()

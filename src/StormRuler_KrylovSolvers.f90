@@ -27,6 +27,7 @@ module StormRuler_KrylovSolvers
 use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
+#fpp use 'StormRuler_Parameters.f90'
 
 implicit none
 
@@ -44,24 +45,24 @@ private ConvParameters_Init, ConvParameters_Check
 
 abstract interface
 #fpp do rank = 0, NumRanks
-  subroutine MeshOperator{rank}(mesh,u,c,opParams)
+  subroutine MeshOperator`rank`(mesh,u,c,opParams)
     import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
     real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
-  end subroutine MeshOperator{rank}
+  end subroutine MeshOperator`rank`
 #fpp end do
 end interface
 
 interface Solve_CG
 #fpp do rank = 0, NumRanks
-  module procedure Solve_CG{rank}
+  module procedure Solve_CG`rank`
 #fpp end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
 #fpp do rank = 0, NumRanks
-  module procedure Solve_BiCGStab{rank}
+  module procedure Solve_BiCGStab`rank`
 #fpp end do
 end interface Solve_BiCGStab
 
@@ -128,12 +129,12 @@ end function ConvParameters_Check
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
 #fpp do rank = 0, NumRanks
-subroutine Solve_CG{rank}(mesh &
+subroutine Solve_CG`rank`(mesh &
                          ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(inout) :: u(@:,:),b(@:,:)
-  procedure(MeshOperator{rank}) :: LOp
+  procedure(MeshOperator`rank`) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -174,19 +175,19 @@ subroutine Solve_CG{rank}(mesh &
     ! γ ← α.
     gamma = alpha
   end do
-end subroutine Solve_CG{rank}
+end subroutine Solve_CG`rank`
 #fpp end do
 
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
 #fpp do rank = 0, NumRanks
-subroutine Solve_BiCGStab{rank}(mesh &
+subroutine Solve_BiCGStab`rank`(mesh &
                                ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(inout) :: u(@:,:),b(@:,:)
-  procedure(MeshOperator{rank}) :: LOp
+  procedure(MeshOperator`rank`) :: LOp
   class(*), intent(in) :: opParams
   type(ConvParameters), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -242,7 +243,7 @@ subroutine Solve_BiCGStab{rank}(mesh &
     gamma = Dot(mesh,r,r)
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
-end subroutine Solve_BiCGStab{rank}
+end subroutine Solve_BiCGStab`rank`
 #fpp end do
 
 end module StormRuler_KrylovSolvers

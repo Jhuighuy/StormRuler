@@ -23,6 +23,8 @@
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+#@let NumRanks = 1
+
 module StormRuler_Parameters
 
 implicit none
@@ -30,7 +32,5 @@ implicit none
 !! -----------------------------------------------------------------  
 !! Double persicion kind for real numbers.
 integer, parameter:: dp=kind(0.D0)
-
-#fpp let NumRanks = 1
 
 end module StormRuler_Parameters

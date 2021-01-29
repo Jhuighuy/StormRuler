@@ -27,7 +27,7 @@ module StormRuler_KrylovSolvers
 use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
-#fpp use 'StormRuler_Parameters.f90'
+#@import 'StormRuler_Parameters.f90'
 
 implicit none
 
@@ -44,26 +44,26 @@ end type
 private ConvParameters_Init, ConvParameters_Check
 
 abstract interface
-#fpp do rank = 0, NumRanks
+#@do rank = 0, NumRanks
   subroutine MeshOperator`rank`(mesh,u,c,opParams)
     import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
     real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator`rank`
-#fpp end do
+#@end do
 end interface
 
 interface Solve_CG
-#fpp do rank = 0, NumRanks
+#@do rank = 0, NumRanks
   module procedure Solve_CG`rank`
-#fpp end do
+#@end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#fpp do rank = 0, NumRanks
+#@do rank = 0, NumRanks
   module procedure Solve_BiCGStab`rank`
-#fpp end do
+#@end do
 end interface Solve_BiCGStab
 
 contains
@@ -128,7 +128,7 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-#fpp do rank = 0, NumRanks
+#@do rank = 0, NumRanks
 subroutine Solve_CG`rank`(mesh &
                          ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -176,12 +176,12 @@ subroutine Solve_CG`rank`(mesh &
     gamma = alpha
   end do
 end subroutine Solve_CG`rank`
-#fpp end do
+#@end do
 
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-#fpp do rank = 0, NumRanks
+#@do rank = 0, NumRanks
 subroutine Solve_BiCGStab`rank`(mesh &
                                ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -244,6 +244,6 @@ subroutine Solve_BiCGStab`rank`(mesh &
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
 end subroutine Solve_BiCGStab`rank`
-#fpp end do
+#@end do
 
 end module StormRuler_KrylovSolvers

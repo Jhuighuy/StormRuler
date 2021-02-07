@@ -27,6 +27,7 @@ module StormRuler_FiniteDifferences
 use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
+#@use 'tiel/syntax.hf90'
 
 implicit none
 
@@ -41,10 +42,11 @@ elemental function FD1_C2(ur &
   real(dp), intent(in) :: ur
   real(dp), intent(in) :: ul
   real(dp) :: d
-  d = &
-    +1.0_dp/2.0_dp*ur &
-    -1.0_dp/2.0_dp*ul
+  d = +1.0_dp/2.0_dp*ur &
+    & -1.0_dp/2.0_dp*ul
 end function FD1_C2
+
+!! -----------------------------------------------------------------  
 !! Fourth order accracy centeral undivided finite difference.
 elemental function FD1_C4(ur,urr &
                          ,ul,ull) result(d)
@@ -52,10 +54,12 @@ elemental function FD1_C4(ur,urr &
   real(dp), intent(in) :: ul,ull
   real(dp) :: d
   d = -1.0_dp/12.0_dp*urr &
-      +2.0_dp/03.0_dp*ur  &
-      -2.0_dp/03.0_dp*ul  &
-      +1.0_dp/12.0_dp*ull
+    & +2.0_dp/03.0_dp*ur  &
+    & -2.0_dp/03.0_dp*ul  &
+    & +1.0_dp/12.0_dp*ull
 end function FD1_C4
+
+!! -----------------------------------------------------------------  
 !! Sixth order accracy centeral undivided finite difference.
 elemental function FD1_C6(ur,urr,urrr &
                          ,ul,ull,ulll) result(d)
@@ -63,12 +67,14 @@ elemental function FD1_C6(ur,urr,urrr &
   real(dp), intent(in) :: ul,ull,ulll
   real(dp) :: d
   d = +01.0_dp/60.0_dp*urrr &
-      -03.0_dp/20.0_dp*urr  &
-      +03.0_dp/04.0_dp*ur   &
-      -03.0_dp/04.0_dp*ul   &
-      +03.0_dp/20.0_dp*ull  &
-      -01.0_dp/60.0_dp*ulll
+    & -03.0_dp/20.0_dp*urr  &
+    & +03.0_dp/04.0_dp*ur   &
+    & -03.0_dp/04.0_dp*ul   &
+    & +03.0_dp/20.0_dp*ull  &
+    & -01.0_dp/60.0_dp*ulll
 end function FD1_C6
+
+!! -----------------------------------------------------------------  
 !! Eighth order accracy centeral undivided finite difference.
 elemental function FD1_C8(ur,urr,urrr,urrrr &
                          ,ul,ull,ulll,ullll) result(d)
@@ -76,72 +82,73 @@ elemental function FD1_C8(ur,urr,urrr,urrrr &
   real(dp), intent(in) :: ul,ull,ulll,ullll
   real(dp) :: d
   d = -001.0_dp/280.0_dp*urrrr &
-      +004.0_dp/105.0_dp*urrr  &
-      -001.0_dp/005.0_dp*urr   &
-      +004.0_dp/005.0_dp*ur    &
-      -004.0_dp/005.0_dp*ul    &
-      +001.0_dp/005.0_dp*ull   &
-      -004.0_dp/105.0_dp*ulll  &
-      +001.0_dp/280.0_dp*ullll
+    & +004.0_dp/105.0_dp*urrr  &
+    & -001.0_dp/005.0_dp*urr   &
+    & +004.0_dp/005.0_dp*ur    &
+    & -004.0_dp/005.0_dp*ul    &
+    & +001.0_dp/005.0_dp*ull   &
+    & -004.0_dp/105.0_dp*ulll  &
+    & +001.0_dp/280.0_dp*ullll
 end function FD1_C8
 
 !! -----------------------------------------------------------------  
-!! The central FDM-approximate gradient: `v ← v - λ∇u`.
+!! The central FDM-approximate gradient: v ← v - λ∇u.
 subroutine FDM_Gradient(mesh,v,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(inout) :: v(:,:),u(:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: kDir
-  integer :: iCell 
-  integer :: rCell,rrCell,rrrCell,rrrrCell
-  integer :: lCell,llCell,lllCell,llllCell 
+  integer :: iCell, kDir
   associate(numDir=>mesh%NumDir &
          ,numCells=>mesh%NumCells &
        ,cellToCell=>mesh%CellToCell &
             ,invDn=>lambda*SafeInverse(mesh%Dn))
-    !$omp parallel do firstprivate(rCell)
-    do iCell = 1, numCells
-      do kDir = 1, numDir, 2
+    !$omp parallel do
+    @do iCell = 1, numCells
+      @do kDir = 1, numDir, 2
         ! ----------------------
         ! Second order accracy.
-        rCell=cellToCell(iCell,kDir)
-        lCell=cellToCell(iCell,kDir+1)
-        if (ACCURACY_ORDER <= 2) then
+        integer :: rCell, lCell
+        rCell = cellToCell(iCell,kDir)
+        lCell = cellToCell(iCell,kDir+1)
+        @if (ACCURACY_ORDER <= 2) then
           v(:,iCell) = v(:,iCell) &
             - invDn(:,kDir)*FD1_C2(u(rCell),u(lCell))
-        else
+        @else
           ! ----------------------
           ! Fourth order accracy.
-          rrCell=cellToCell(rCell,kDir)
-          llCell=cellToCell(lCell,kDir+1)
-          if (ACCURACY_ORDER <= 4) then
+          integer :: rrCell, llCell
+          rrCell = cellToCell(rCell,kDir)
+          llCell = cellToCell(lCell,kDir+1)
+          @if (ACCURACY_ORDER <= 4) then
             v(:,iCell) = v(:,iCell) &
               - invDn(:,kDir)*FD1_C4(u(rCell),u(rrCell)&
                                     ,u(lCell),u(llCell))
-          else
+          @else
             ! ----------------------
             ! Sixth order accracy.
-            rrrCell=cellToCell(rrCell,kDir)
-            lllCell=cellToCell(llCell,kDir+1)
-            if (ACCURACY_ORDER <= 6) then
+            integer :: rrrCell, lllCell
+            rrrCell = cellToCell(rrCell,kDir)
+            lllCell = cellToCell(llCell,kDir+1)
+            @if (ACCURACY_ORDER <= 6) then
               v(:,iCell) = v(:,iCell) &
                 - invDn(:,kDir)*FD1_C6(u(rCell),u(rrCell),u(rrrCell)&
                                       ,u(lCell),u(llCell),u(lllCell))
-            else ! 6
+            @else ! 6
               ! ----------------------
               ! Eighth order accracy.
-              rrrrCell=cellToCell(rrrCell,kDir)
-              llllCell=cellToCell(lllCell,kDir+1)
+              integer :: rrrrCell, llllCell
+              rrrrCell = cellToCell(rrrCell,kDir)
+              llllCell = cellToCell(lllCell,kDir+1)
               v(:,iCell) = v(:,iCell) &
                 - invDn(:,kDir)*FD1_C8(u(rCell),u(rrCell),u(rrrCell),u(rrrrCell)&
                                       ,u(lCell),u(llCell),u(lllCell),u(llllCell))
-            end if ! 8 
-          end if ! 4
-        end if ! 2
-      end do
-    end do
+            @end if ! 8 
+          @end if ! 4
+        @end if ! 2
+      @end do
+    @end do
     !$omp end parallel do
   end associate
 end subroutine FDM_Gradient
@@ -154,55 +161,56 @@ subroutine FDM_Divergence(mesh,v,lambda,u)
   real(dp), intent(in) :: lambda
   real(dp), intent(inout) :: v(:),u(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: kDir
-  integer :: iCell 
-  integer :: rCell,rrCell,rrrCell,rrrrCell
-  integer :: lCell,llCell,lllCell,llllCell 
+  integer :: iCell, kDir
   associate(numDir=>mesh%NumDir &
          ,numCells=>mesh%NumCells &
        ,cellToCell=>mesh%CellToCell &
             ,invDn=>lambda*SafeInverse(mesh%Dn))
-    !$omp parallel do firstprivate(rCell)
-    do iCell = 1, numCells
-      do kDir = 1, numDir, 2
+    !$omp parallel do
+    @do iCell = 1, numCells
+      @do kDir = 1, numDir, 2
         ! ----------------------
         ! Second order accracy.
-        rCell=cellToCell(iCell,kDir)
-        lCell=cellToCell(iCell,kDir+1)
-        if (ACCURACY_ORDER <= 2) then
+        integer :: rCell, lCell
+        rCell = cellToCell(iCell,kDir)
+        lCell = cellToCell(iCell,kDir+1)
+        @if (ACCURACY_ORDER <= 2) then
           v(iCell) = v(iCell) &
             - dot_product(invDn(:,kDir),FD1_C2(u(:,rCell),u(:,lCell)))
-        else
+        @else
           ! ----------------------
           ! Fourth order accracy.
-          rrCell=cellToCell(rCell,kDir)
-          llCell=cellToCell(lCell,kDir+1)
-          if (ACCURACY_ORDER <= 4) then
+          integer :: rrCell, llCell
+          rrCell = cellToCell(rCell,kDir)
+          llCell = cellToCell(lCell,kDir+1)
+          @if (ACCURACY_ORDER <= 4) then
             v(iCell) = v(iCell) &
               - dot_product(invDn(:,kDir),FD1_C4(u(:,rCell),u(:,rrCell)& 
                                                 ,u(:,lCell),u(:,llCell)))
-          else
+          @else
             ! ----------------------
             ! Sixth order accracy.
-            rrrCell=cellToCell(rrCell,kDir)
-            lllCell=cellToCell(llCell,kDir+1)
-            if (ACCURACY_ORDER <= 6) then
+            integer :: rrrCell, lllCell
+            rrrCell = cellToCell(rrCell,kDir)
+            lllCell = cellToCell(llCell,kDir+1)
+            @if (ACCURACY_ORDER <= 6) then
               v(iCell) = v(iCell) &
                 - dot_product(invDn(:,kDir),FD1_C6(u(:,rCell),u(:,rrCell),u(:,rrrCell)&
                                                   ,u(:,lCell),u(:,llCell),u(:,lllCell)))
-            else ! 6
+            @else ! 6
               ! ----------------------
               ! Eighth order accracy.
-              rrrrCell=cellToCell(rrrCell,kDir)
-              llllCell=cellToCell(lllCell,kDir+1)
+              integer :: rrrrCell, llllCell
+              rrrrCell = cellToCell(rrrCell,kDir)
+              llllCell = cellToCell(lllCell,kDir+1)
               v(iCell) = v(iCell) &
                 - dot_product(invDn(:,kDir),FD1_C8(u(:,rCell),u(:,rrCell),u(:,rrrCell),u(:,rrrrCell)&
                                                   ,u(:,lCell),u(:,llCell),u(:,lllCell),u(:,llllCell)))
-            end if ! 8
-          end if ! 4
-        end if ! 2
-      end do
-    end do
+            @end if ! 8
+          @end if ! 4
+        @end if ! 2
+      @end do
+    @end do
     !$omp end parallel do
   end associate
 end subroutine FDM_Divergence
@@ -236,11 +244,12 @@ elemental function FD2_C2(u &
   real(dp), intent(in) :: ur
   real(dp), intent(in) :: ul
   real(dp) :: d
-  d = &
-    +1.0_dp*ur &
-    -2.0_dp*u  &
-    +1.0_dp*ul
+  d = +1.0_dp*ur &
+    & -2.0_dp*u  &
+    & +1.0_dp*ul
 end function FD2_C2
+
+!! -----------------------------------------------------------------  
 !! Fourth order accracy centeral undivided second finite difference.
 elemental function FD2_C4(u &
                          ,ur,urr &
@@ -250,11 +259,13 @@ elemental function FD2_C4(u &
   real(dp), intent(in) :: ul,ull
   real(dp) :: d
   d = -1.0_dp/12.0_dp*urr &
-      +4.0_dp/03.0_dp*ur  &
-      -5.0_dp/02.0_dp*u   &
-      +4.0_dp/03.0_dp*ul  &
-      -1.0_dp/12.0_dp*ull
+    & +4.0_dp/03.0_dp*ur  &
+    & -5.0_dp/02.0_dp*u   &
+    & +4.0_dp/03.0_dp*ul  &
+    & -1.0_dp/12.0_dp*ull
 end function FD2_C4
+
+!! -----------------------------------------------------------------  
 !! Sixth order accracy centeral undivided second finite difference.
 elemental function FD2_C6(u &
                          ,ur,urr,urrr &
@@ -264,13 +275,15 @@ elemental function FD2_C6(u &
   real(dp), intent(in) :: ul,ull,ulll
   real(dp) :: d
   d = +01.0_dp/90.0_dp*urrr &
-      -03.0_dp/20.0_dp*urr  &
-      +03.0_dp/02.0_dp*ur   &
-      -49.0_dp/18.0_dp*u    &
-      +03.0_dp/02.0_dp*ul   &
-      -03.0_dp/20.0_dp*ull  &
-      +01.0_dp/90.0_dp*ulll
+    & -03.0_dp/20.0_dp*urr  &
+    & +03.0_dp/02.0_dp*ur   &
+    & -49.0_dp/18.0_dp*u    &
+    & +03.0_dp/02.0_dp*ul   &
+    & -03.0_dp/20.0_dp*ull  &
+    & +01.0_dp/90.0_dp*ulll
 end function FD2_C6
+
+!! -----------------------------------------------------------------  
 !! Eighth order accracy centeral undivided second finite difference.
 elemental function FD2_C8(u &
                          ,ur,urr,urrr,urrrr &
@@ -280,14 +293,14 @@ elemental function FD2_C8(u &
   real(dp), intent(in) :: ul,ull,ulll,ullll
   real(dp) :: d
   d = -001.0_dp/560.0_dp*urrrr &
-      +008.0_dp/315.0_dp*urrr  &
-      -001.0_dp/005.0_dp*urr   &
-      +008.0_dp/005.0_dp*ur    &
-      -205.0_dp/072.0_dp*u     &
-      +008.0_dp/005.0_dp*ul    &
-      -001.0_dp/005.0_dp*ull   &
-      +008.0_dp/315.0_dp*ulll  &
-      -001.0_dp/560.0_dp*ullll
+    & +008.0_dp/315.0_dp*urrr  &
+    & -001.0_dp/005.0_dp*urr   &
+    & +008.0_dp/005.0_dp*ur    &
+    & -205.0_dp/072.0_dp*u     &
+    & +008.0_dp/005.0_dp*ul    &
+    & -001.0_dp/005.0_dp*ull   &
+    & +008.0_dp/315.0_dp*ulll  &
+    & -001.0_dp/560.0_dp*ullll
 end function FD2_C8
 
 !! -----------------------------------------------------------------  
@@ -298,59 +311,60 @@ subroutine FDM_Laplacian(mesh,v,lambda,u)
   real(dp), intent(in) :: lambda
   real(dp), intent(inout) :: v(:),u(:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: kDir
-  integer :: iCell 
-  integer :: rCell,rrCell,rrrCell,rrrrCell
-  integer :: lCell,llCell,lllCell,llllCell 
+  integer :: iCell, kDir
   associate(numDir=>mesh%NumDir &
          ,numCells=>mesh%NumCells &
        ,cellToCell=>mesh%CellToCell &
          ,invDxSqr=>lambda/mesh%Dx**2)
     !$omp parallel do firstprivate(rCell)
-    do iCell = 1, numCells
-      do kDir = 1, numDir, 2
+    @do iCell = 1, numCells
+      @do kDir = 1, numDir, 2
         ! ----------------------
         ! Second order accracy.
-        rCell=cellToCell(iCell,kDir)
-        lCell=cellToCell(iCell,kDir+1)
-        if (ACCURACY_ORDER <= 2) then
+        integer :: rCell, lCell
+        rCell = cellToCell(iCell,kDir)
+        lCell = cellToCell(iCell,kDir+1)
+        @if (ACCURACY_ORDER <= 2) then
           v(iCell) = v(iCell) &
             + invDxSqr(kDir)*FD2_C2(u(iCell)&
                                    ,u(rCell),u(lCell))
-        else
+        @else
           ! ----------------------
           ! Fourth order accracy.
-          rrCell=cellToCell(rCell,kDir)
-          llCell=cellToCell(lCell,kDir+1)
-          if (ACCURACY_ORDER <= 4) then
+          integer :: rrCell, llCell
+          rrCell = cellToCell(rCell,kDir)
+          llCell = cellToCell(lCell,kDir+1)
+          @if (ACCURACY_ORDER <= 4) then
             v(iCell) = v(iCell) &
               + invDxSqr(kDir)*FD2_C4(u(iCell)&
                                      ,u(rCell),u(rrCell)&
                                      ,u(lCell),u(llCell))
-          else
+          @else
             ! ----------------------
             ! Sixth order accracy.
-            rrrCell=cellToCell(rrCell,kDir)
-            lllCell=cellToCell(llCell,kDir+1)
-            if (ACCURACY_ORDER <= 6) then
+            integer :: rrrCell, lllCell
+            rrrCell = cellToCell(rrCell,kDir)
+            lllCell = cellToCell(llCell,kDir+1)
+            @if (ACCURACY_ORDER <= 6) then
               v(iCell) = v(iCell) &
                 + invDxSqr(kDir)*FD2_C6(u(iCell)&
                                        ,u(rCell),u(rrCell),u(rrrCell)&
                                        ,u(lCell),u(llCell),u(lllCell))
-            else ! 6
+            @else ! 6
               ! ----------------------
               ! Eighth order accracy.
-              rrrrCell=cellToCell(rrrCell,kDir)
-              llllCell=cellToCell(lllCell,kDir+1)
+              integer :: rrrrCell, llllCell
+              rrrrCell = cellToCell(rrrCell,kDir)
+              llllCell = cellToCell(lllCell,kDir+1)
               v(iCell) = v(iCell) &
                 + invDxSqr(kDir)*FD2_C8(u(iCell)&
                                        ,u(rCell),u(rrCell),u(rrrCell),u(rrrrCell)&
                                        ,u(lCell),u(llCell),u(lllCell),u(llllCell))
-            end if ! 8 
-          end if ! 4
-        end if ! 2
-      end do
-    end do
+            @end if ! 8 
+          @end if ! 4
+        @end if ! 2
+      @end do
+    @end do
     !$omp end parallel do
   end associate
 end subroutine FDM_Laplacian

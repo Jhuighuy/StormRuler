@@ -31,7 +31,7 @@ implicit none
 !! -----------------------------------------------------------------  
 !! Semi-structured 2D mesh.
 type Mesh2D
-  integer :: NumDir
+  integer :: NumFaces
   integer :: NumCells, NumAllCells
   real(dp) :: Dt
   real(dp), allocatable :: Dx(:)
@@ -140,7 +140,7 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
     mesh%Dn(:,2) = [mesh%Dx(1),0.0_dp,0.0_dp]
     mesh%Dn(:,3) = [0.0_dp,mesh%Dx(2),0.0_dp]
     mesh%Dn(:,4) = [0.0_dp,mesh%Dx(2),0.0_dp]
-    mesh%NumDir = 4
+    mesh%NumFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells,1:3))
     allocate(mesh%CellToCell(1:mesh%NumAllCells,1:4))
     associate(cellCenter => mesh%CellCenter &

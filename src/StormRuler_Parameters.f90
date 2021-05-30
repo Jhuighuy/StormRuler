@@ -23,7 +23,8 @@
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-#@let NumRanks = 1
+#@let NumRanks = 2
+#@let NUM_RANKS = 2
 
 module StormRuler_Parameters
 

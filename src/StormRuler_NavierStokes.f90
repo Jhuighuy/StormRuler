@@ -78,8 +78,7 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     call FDM_Convection(mesh,w(1,:),dt,v(1,:),v)
     call FDM_Convection(mesh,w(2,:),dt,v(2,:),v)
     call FDM_Gradient(mesh,w,beta*dt/rho,p)
-    call FDM_Laplacian(mesh,w(1,:),dt*nu,v(1,:))
-    call FDM_Laplacian(mesh,w(2,:),dt*nu,v(2,:))
+    call FDM_Laplacian(mesh,w,dt*nu,v)
     !call Add(mesh,w,w,g,dt)
     ! h ← 0,
     ! h ← h + (-ρ/dt)⋅(∇⋅w),

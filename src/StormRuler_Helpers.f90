@@ -25,16 +25,21 @@
 module StormRuler_Helpers
 
 use StormRuler_Parameters
+#@use 'StormRuler_Parameters.f90'
 
 implicit none  
 
-abstract interface
-  pure function MathFunc(x) result(f)
-    import dp
-    real(dp), intent(in) :: x
-    real(dp) :: f
-  end function MathFunc
-end interface
+interface Inner
+#@do rank = 0, NumRanks-1
+  module procedure Inner$rank
+#@end do
+end interface Inner
+
+interface Outer
+#@do rank = 0, NumRanks-1
+  module procedure Outer$rank
+#@end do
+end interface Outer
 
 contains
 
@@ -53,26 +58,35 @@ subroutine sort(n, a)
   end do
 end subroutine
 
-!! -----------------------------------------------------------------
-!! Integer increment.
-subroutine Increment(value)
-  integer, intent(inout) :: value
-  value = value + 1
-end subroutine Increment
-
 !! -----------------------------------------------------------------  
 !! Convert an integer to string.
 function IntToString(value) result(string)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   integer, intent(in) :: value
-  character(Len=20) :: string
+  character(len=20) :: string
+  ! >>>>>>>>>>>>>>>>>>>>>>
   write(string, *) value
   string = adjustl(string)
 end function IntToString
 
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+!! -----------------------------------------------------------------
+!! Integer increment.
+subroutine Increment(value)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer, intent(inout) :: value
+  value = value + 1
+  ! >>>>>>>>>>>>>>>>>>>>>>
+end subroutine Increment
+
 !! -----------------------------------------------------------------  
 subroutine EnsurePositive(value)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
-  if (isnan(value) .or. (value <= 0)) then
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  if (isnan(value).or.(value <= 0)) then
     print *, 'EnsurePositive', value
     error stop 1
   end if
@@ -80,26 +94,80 @@ end subroutine EnsurePositive
 
 !! -----------------------------------------------------------------  
 subroutine EnsureNonNegative(value)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   real(8), intent(in) :: value
-  if (isnan(value) .or. (value < 0)) then
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  if (isnan(value).or.(value < 0)) then
     print *, 'EnsureNonNegative', value
     error stop 1
   end if
 end subroutine EnsureNonNegative
 
+!! -----------------------------------------------------------------  
 function SafeDivide(a,b) result(c)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   real(8), intent(in) :: a, b
   real(8) :: c 
-  Call EnsureNonNegative(abs(a))
-  Call EnsurePositive(abs(b))
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  call EnsureNonNegative(abs(a))
+  call EnsurePositive(abs(b))
   c = a/b
 end function SafeDivide
 
+!! -----------------------------------------------------------------  
 elemental function SafeInverse(a) result(c)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a
   real(dp) :: c 
+  ! >>>>>>>>>>>>>>>>>>>>>>
   c = 0.0_dp
   if (a/=0.0_dp) c = 1.0_dp/a
 end function SafeInverse
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+!! -----------------------------------------------------------------  
+pure function Inner$0(v,w) result(u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: v(:),w(:)
+  real(dp) :: u
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  u = dot_product(v, w)
+end function Inner$0
+#@do rank = 1, NumRanks-1
+pure function Inner$rank(v,w) result(u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: v(:), w(:,@:)
+  real(dp) :: u(@{size(w, dim=$$+1)}@)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: i
+  u(@:) = 0.0_dp
+  do i = 1, size(v)
+    u(@:) += v(i)*w(i,@:)
+  end do
+end function Inner$rank
+#@end do
+
+!! -----------------------------------------------------------------  
+pure function Outer$0(v,w) result(u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: v(:),w
+  real(dp) :: u(size(v))
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  u = v*w
+end function Outer$0
+#@do rank = 1, NumRanks-1
+pure function Outer$rank(v,w) result(u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: v(:), w(@:)
+  real(dp) :: u(size(v), @{size(w, dim=$$+1)}@)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: i
+  do i = 1, size(v)
+    u(i,@:) = v(i)*w(@:)
+  end do
+end function Outer$rank
+#@end do
 
 end module StormRuler_Helpers

@@ -25,219 +25,212 @@
 module StormRuler_Arithmetics
 
 use StormRuler_Mesh
+use StormRuler_Parameters
+#@use 'StormRuler_Parameters.f90'
 
 implicit none
 
 interface Zero
-  module procedure Zero1,Zero2
+#@do rank = 0, NumRanks
+  module procedure Zero$rank
+#@end do
 end interface Zero
+
 interface Set
-  module procedure Set1,Set2
+#@do rank = 0, NumRanks
+  module procedure Set$rank
+#@end do
 end interface Set
-interface Add
-  module procedure Add1,Add2
-end interface Add
-interface Sub
-  module procedure Sub1,Sub2
-end interface Sub
-interface Mul
-  module procedure Mul2
-end interface Mul
+
 interface Dot
-  module procedure Dot1,Dot2
+#@do rank = 0, NumRanks
+  module procedure Dot$rank
+#@end do
 end interface Dot
+
+interface Add
+#@do rank = 0, NumRanks
+  module procedure Add$rank
+#@end do
+end interface Add
+
+interface Sub
+#@do rank = 0, NumRanks
+  module procedure Sub$rank
+#@end do
+end interface Sub
+
+interface Mul
+#@do rank = 0, NumRanks
+  module procedure Mul$rank
+#@end do
+end interface Mul
+
+interface ApplyFunc
+#@do rank = 0, NumRanks
+  module procedure ApplyFunc$rank
+#@end do
+end interface ApplyFunc
+
+abstract interface
+  pure function MathFunc$0(x) result(f)
+    import dp
+    real(dp), intent(in) :: x
+    real(dp) :: f
+  end function MathFunc$0
+end interface
+#@do rank = 1, NumRanks
+abstract interface
+  pure function MathFunc$rank(x) result(f)
+    import dp
+    real(dp), intent(in) :: x(@:)
+    real(dp) :: f(@{size(x, dim=$$+1)}@)
+  end function MathFunc$rank
+end interface
+#@end do
 
 contains
 
 !! -----------------------------------------------------------------  
-!! Y = X
-subroutine Zero1(mesh, Y)
+!! u = 0
+#@do rank = 0, NumRanks
+subroutine Zero$rank(mesh, u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: Y
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      Y(iCell) = 0
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Zero1
-subroutine Zero2(mesh, Y)
-  class(Mesh2D), intent(in) :: mesh
-  real(8), dimension(:,:), intent(inout) :: Y
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      Y(:,iCell) = 0
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Zero2
+  real(dp), intent(inout) :: u(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    u(@:,iCell) = 0
+  end do
+  !$omp end parallel do
+end subroutine Zero$rank
+#@end do
 
 !! -----------------------------------------------------------------  
-!! Y = X
-subroutine Set1(mesh, Y,X)
+!! u = v
+#@do rank = 0, NumRanks
+subroutine Set$rank(mesh, u,v)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: Y
-  real(8), dimension(:), intent(in) :: X
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      Y(iCell) = X(iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Set1
-subroutine Set2(mesh, Y,X)
-  class(Mesh2D), intent(in) :: mesh
-  real(8), dimension(:,:), intent(inout) :: Y
-  real(8), dimension(:,:), intent(in) :: X
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      Y(:,iCell) = X(:,iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Set2
+  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(in) :: v(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    u(@:,iCell) = v(@:,iCell)
+  end do
+  !$omp end parallel do
+end subroutine Set$rank
+#@end do
 
 !! -----------------------------------------------------------------  
 !! Compute a dot product.
-function Dot1(mesh, u,v) result(d)
+#@do rank = 0, NumRanks
+function Dot$rank(mesh, u,v) result(d)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: u(:), v(:)
+  real(dp), intent(in) :: u(@:,:), v(@:,:)
   real(dp) :: d
-  block
-    integer :: iCell
-    d = 0
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  d = 0.0_dp
+  associate(dv=>product(mesh%Dx))
     !$omp parallel do private(iCell) reduction(+:d)
     do iCell = 1, mesh%NumCells
-      d = d + (mesh%Dx(1)**2)*u(iCell)*v(iCell)
+#@if rank == 0
+      d += dv*u(iCell)*v(iCell)
+#@else if rank == 1
+      d += dv*dot_product(u(:,iCell),v(:,iCell))
+#@else
+      d += dv*sum(u(@:,iCell)*v(@:,iCell))
+#@end if
     end do
     !$omp end parallel do
-  end block
-end function Dot1
-function Dot2(mesh, u,v) result(d)
-  class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: u(:,:), v(:,:)
-  real(dp) :: d
-  block
-    integer :: iCell
-    d = 0
-    !$omp parallel do private(iCell) reduction(+:d)
-    do iCell = 1, mesh%NumCells
-      d = d + (mesh%Dx(1)**2)*dot_product(u(:,iCell),v(:,iCell))
-    end do
-    !$omp end parallel do
-  end block
-end function Dot2
+  end associate
+end function Dot$rank
+#@end do
 
 !! -----------------------------------------------------------------  
-!! Compute "u = c⋅v + a⋅w".
-subroutine Add1(mesh, u,v,w,a,c)
+!! Compute "u ← c⋅v + a⋅w".
+#@do rank = 0, NumRanks
+subroutine Add$rank(mesh, u,v,w,a,c)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(out) :: u(:)
-  real(dp), intent(inout) :: v(:), w(:)
+  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(inout) :: v(@:,:), w(@:,:)
   real(dp), intent(in), optional :: a, c
-  real(dp) :: b, d
-  b = 1.0_dp; if (present(a)) b = a 
-  d = 1.0_dp; if (present(c)) d = c 
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      u(iCell) = d*v(iCell) + b*w(iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Add1
-subroutine Add2(mesh, u,v,w,a,c)
-  class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(out) :: u(:,:)
-  real(dp), intent(inout) :: v(:,:), w(:,:)
-  real(dp), intent(in), optional :: a, c
-  real(dp) :: b, d
-  b = 1.0_dp; if (present(a)) b = a 
-  d = 1.0_dp; if (present(c)) d = c 
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      u(:,iCell) = d*v(:,iCell) + b*w(:,iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Add2
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  real(dp) :: aa, cc
+  aa = 1.0_dp; if (present(a)) aa = a 
+  cc = 1.0_dp; if (present(c)) cc = c 
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    u(@:,iCell) = cc*v(@:,iCell) + aa*w(@:,iCell)
+  end do
+  !$omp end parallel do
+end subroutine Add$rank
+#@end do
 
 !! -----------------------------------------------------------------  
-!! Compute "u = c⋅v - a⋅w".
-subroutine Sub1(mesh, u,v,w, a,c)
+!! Compute "u ← c⋅v - a⋅w".
+#@do rank = 0, NumRanks
+subroutine Sub$rank(mesh, u,v,w, a,c)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(out) :: u(:)
-  real(dp), intent(inout) :: v(:), w(:)
+  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(inout) :: v(@:,:), w(@:,:)
   real(dp), intent(in), optional :: a, c
-  real(dp) :: b, d
-  b = 1.0_dp; if (present(a)) b = a 
-  d = 1.0_dp; if (present(c)) d = c 
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      u(iCell) = d*v(iCell) - b*w(iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Sub1
-subroutine Sub2(mesh, u,v,w,c,a)
-  class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(out) :: u(:,:)
-  real(dp), intent(inout) :: v(:,:), w(:,:)
-  real(dp), intent(in), optional :: a, c
-  real(dp) :: b, d
-  b = 1.0_dp; if (present(a)) b = a 
-  d = 1.0_dp; if (present(c)) d = c 
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      u(:,iCell) = d*v(:,iCell) - b*w(:,iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Sub2
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  real(dp) :: aa, cc
+  aa = 1.0_dp; if (present(a)) aa = a 
+  cc = 1.0_dp; if (present(c)) cc = c 
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    u(@:,iCell) = cc*v(@:,iCell) - aa*w(@:,iCell)
+  end do
+  !$omp end parallel do
+end subroutine Sub$rank
+#@end do
 
-subroutine Mul2(mesh, u,v,w)
+!! -----------------------------------------------------------------  
+!! Compute "u ← v⋅w".
+#@do rank = 0, NumRanks
+subroutine Mul$rank(mesh, u,v,w)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(out) :: u(:,:)
-  real(dp), intent(inout) :: v(:), w(:,:)
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      u(:,iCell) = v(iCell)*w(:,iCell)
-    end do
-    !$omp end parallel do
-  end block
-end subroutine Mul2
+  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(inout) :: v(:), w(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    u(@:,iCell) = v(iCell)*w(@:,iCell)
+  end do
+  !$omp end parallel do
+end subroutine Mul$rank
+#@end do
 
 !! -----------------------------------------------------------------  
 !! Apply a function.
-subroutine ApplyFunc(mesh, Fu,u,f)
+#@do rank = 0, NumRanks
+subroutine ApplyFunc$rank(mesh, Fu,u, f)
+  ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(:), Fu(:)
-  procedure(MathFunc) :: f
-  block
-    integer :: iCell
-    !$omp parallel do private(iCell)
-    do iCell = 1, mesh%NumCells
-      Fu(iCell) = f(u(iCell))
-    end do
-    !$omp end parallel do
-  end block
-end subroutine ApplyFunc
+  real(dp), intent(inout) :: u(@:,:), Fu(@:,:)
+  procedure(MathFunc$rank) :: f
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  !$omp parallel do private(iCell)
+  do iCell = 1, mesh%NumCells
+    Fu(@:,iCell) = f(u(@:,iCell))
+  end do
+  !$omp end parallel do
+end subroutine ApplyFunc$rank
+#@end do
 
 end module StormRuler_Arithmetics

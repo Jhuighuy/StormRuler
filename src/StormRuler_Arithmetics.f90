@@ -30,47 +30,41 @@ use StormRuler_Parameters
 
 implicit none
 
-interface Zero
-#@do rank = 0, NumRanks
-  module procedure Zero$rank
+interface Fill
+#@do rank = 0, NUM_RANKS
+  module procedure Fill$rank
 #@end do
-end interface Zero
+end interface Fill
 
 interface Set
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Set$rank
 #@end do
 end interface Set
 
 interface Dot
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Dot$rank
 #@end do
 end interface Dot
 
 interface Add
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Add$rank
 #@end do
 end interface Add
 
 interface Sub
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Sub$rank
 #@end do
 end interface Sub
 
 interface Mul
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Mul$rank
 #@end do
 end interface Mul
-
-interface ApplyFunc
-#@do rank = 0, NumRanks
-  module procedure ApplyFunc$rank
-#@end do
-end interface ApplyFunc
 
 abstract interface
   pure function MathFunc$0(x) result(f)
@@ -79,7 +73,7 @@ abstract interface
     real(dp) :: f
   end function MathFunc$0
 end interface
-#@do rank = 1, NumRanks
+#@do rank = 1, NUM_RANKS
 abstract interface
   pure function MathFunc$rank(x) result(f)
     import dp
@@ -89,46 +83,59 @@ abstract interface
 end interface
 #@end do
 
+interface ApplyFunc
+#@do rank = 0, NUM_RANKS
+  module procedure ApplyFunc$rank
+#@end do
+end interface ApplyFunc
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 contains
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-!! u = 0
-#@do rank = 0, NumRanks
-subroutine Zero$rank(mesh, u)
+!! Fill vector components: u ← α.
+#@do rank = 0, NUM_RANKS
+subroutine Fill$rank(mesh, u, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in), optional :: alpha
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  !$omp parallel do private(iCell)
+  real(dp) :: a
+  a = 0.0_dp; if (present(alpha)) a = alpha
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = 0
+    u(@:,iCell) = a
   end do
   !$omp end parallel do
-end subroutine Zero$rank
+end subroutine Fill$rank
 #@end do
+!! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
 !! u = v
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
 subroutine Set$rank(mesh, u,v)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(out) :: u(@:,:)
   real(dp), intent(in) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  !$omp parallel do private(iCell)
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = v(@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Set$rank
 #@end do
+!! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
-!! Compute a dot product.
-#@do rank = 0, NumRanks
+!! Compute dot product: d ← <u⋅v>.
+#@do rank = 0, NUM_RANKS
 function Dot$rank(mesh, u,v) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -138,12 +145,10 @@ function Dot$rank(mesh, u,v) result(d)
   integer :: iCell
   d = 0.0_dp
   associate(dv=>product(mesh%Dx))
-    !$omp parallel do private(iCell) reduction(+:d)
+    !$omp parallel do reduction(+:d)
     do iCell = 1, mesh%NumCells
 #@if rank == 0
       d += dv*u(iCell)*v(iCell)
-#@else if rank == 1
-      d += dv*dot_product(u(:,iCell),v(:,iCell))
 #@else
       d += dv*sum(u(@:,iCell)*v(@:,iCell))
 #@end if
@@ -152,72 +157,85 @@ function Dot$rank(mesh, u,v) result(d)
   end associate
 end function Dot$rank
 #@end do
+!! -----------------------------------------------------------------
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-!! Compute "u ← c⋅v + a⋅w".
-#@do rank = 0, NumRanks
-subroutine Add$rank(mesh, u,v,w,a,c)
+!! Compute linear combination: u ← βv + αw.
+#@do rank = 0, NUM_RANKS
+subroutine Add$rank(mesh, u,v,w, alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(out) :: u(@:,:)
-  real(dp), intent(inout) :: v(@:,:), w(@:,:)
-  real(dp), intent(in), optional :: a, c
+  real(dp), intent(in) :: v(@:,:), w(@:,:)
+  real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  real(dp) :: aa, cc
-  aa = 1.0_dp; if (present(a)) aa = a 
-  cc = 1.0_dp; if (present(c)) cc = c 
-  !$omp parallel do private(iCell)
+  real(dp) :: a, b
+  a = 1.0_dp; if (present(alpha)) a = alpha
+  b = 1.0_dp; if (present(beta)) b = beta 
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = cc*v(@:,iCell) + aa*w(@:,iCell)
+    u(@:,iCell) = b*v(@:,iCell) + a*w(@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Add$rank
 #@end do
+!! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
-!! Compute "u ← c⋅v - a⋅w".
-#@do rank = 0, NumRanks
-subroutine Sub$rank(mesh, u,v,w, a,c)
+!! Compute linear combination: u ← βv - αw.
+#@do rank = 0, NUM_RANKS
+subroutine Sub$rank(mesh, u,v,w, alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(out) :: u(@:,:)
-  real(dp), intent(inout) :: v(@:,:), w(@:,:)
-  real(dp), intent(in), optional :: a, c
+  real(dp), intent(in) :: v(@:,:), w(@:,:)
+  real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  real(dp) :: aa, cc
-  aa = 1.0_dp; if (present(a)) aa = a 
-  cc = 1.0_dp; if (present(c)) cc = c 
-  !$omp parallel do private(iCell)
+  real(dp) :: a, b
+  a = 1.0_dp; if (present(alpha)) a = alpha 
+  b = 1.0_dp; if (present(beta)) b = beta 
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = cc*v(@:,iCell) - aa*w(@:,iCell)
+    u(@:,iCell) = b*v(@:,iCell) - a*w(@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Sub$rank
 #@end do
+!! -----------------------------------------------------------------  
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-!! Compute "u ← v⋅w".
-#@do rank = 0, NumRanks
+!! Compute "u ← vw".
+#@do rank = 0, NUM_RANKS
 subroutine Mul$rank(mesh, u,v,w)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(out) :: u(@:,:)
-  real(dp), intent(inout) :: v(:), w(@:,:)
+  real(dp), intent(in) :: v(:), w(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  !$omp parallel do private(iCell)
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = v(iCell)*w(@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul$rank
 #@end do
+!! -----------------------------------------------------------------  
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-!! Apply a function.
-#@do rank = 0, NumRanks
+!! Apply alpha function.
+#@do rank = 0, NUM_RANKS
 subroutine ApplyFunc$rank(mesh, Fu,u, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -225,12 +243,13 @@ subroutine ApplyFunc$rank(mesh, Fu,u, f)
   procedure(MathFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
-  !$omp parallel do private(iCell)
+  !$omp parallel do
   do iCell = 1, mesh%NumCells
     Fu(@:,iCell) = f(u(@:,iCell))
   end do
   !$omp end parallel do
 end subroutine ApplyFunc$rank
 #@end do
+!! -----------------------------------------------------------------  
 
 end module StormRuler_Arithmetics

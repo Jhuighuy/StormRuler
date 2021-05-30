@@ -36,7 +36,7 @@ subroutine PoissonOperator(mesh,f,u,opParams)
   class(Mesh2D), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: f,u
   class(*), intent(in) :: opParams
-  call Zero(mesh,f)
+  call Fill(mesh,f)
   call FDM_Laplacian(mesh,f,1.0_dp,u)
 end subroutine PoissonOperator
 
@@ -49,7 +49,7 @@ subroutine SolvePoisson(mesh,u,f)
   allocate(Params)
   call Params%Init(mesh%Dx(1)*mesh%Dx(1)*1.0D-4, mesh%Dx(1)*mesh%Dx(1)*1.0D-4, 100000)
   ! ----------------------
-  call Zero(mesh,u)
+  call Fill(mesh,u)
   call Solve_BiCGStab(mesh,u,f&
     ,PoissonOperator,Params,Params)
 end subroutine SolvePoisson
@@ -67,7 +67,7 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     ! z ← 0,
     ! z ← z - dt/ρ⋅∇s,
     ! z ← c⋅z
-    call Zero(mesh,z)
+    call Fill(mesh,z)
     call FDM_Gradient_Central(mesh,z,dt/rho,s)
     call Mul(mesh,z,c,z)
     ! w ← v + z,
@@ -83,7 +83,7 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     ! h ← 0,
     ! h ← h + (-ρ/dt)⋅(∇⋅w),
     ! solve Δd = h.
-    call Zero(mesh,h)
+    call Fill(mesh,h)
     call FDM_Divergence_Central(mesh,h,-rho/dt,w)
     call SolvePoisson(mesh,d,h)
     ! p ← d + β⋅p,

@@ -207,8 +207,8 @@ subroutine Solve_BiCGStab$rank(mesh &
   ! p ← 0, v ← 0,
   ! ρ ← 1, α ← 1, ω ← 1. 
   call Set(mesh,h,r)
-  call Zero(mesh,p)
-  call Zero(mesh,v)
+  call Fill(mesh,p)
+  call Fill(mesh,v)
   rho = 1.0_dp; alpha = 1.0_dp; omega = 1.0_dp
   ! ----------------------
   do

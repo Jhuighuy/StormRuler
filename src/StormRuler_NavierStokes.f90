@@ -68,7 +68,7 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     ! z ← z - dt/ρ⋅∇s,
     ! z ← c⋅z
     call Zero(mesh,z)
-    call FDM_Gradient(mesh,z,dt/rho,s)
+    call FDM_Gradient_Central(mesh,z,dt/rho,s)
     call Mul(mesh,z,c,z)
     ! w ← v + z,
     ! w ← w - dt⋅(v⋅∇)v,
@@ -77,20 +77,20 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     call Add(mesh,w,v,z)
     call FDM_Convection(mesh,w(1,:),dt,v(1,:),v)
     call FDM_Convection(mesh,w(2,:),dt,v(2,:),v)
-    call FDM_Gradient(mesh,w,beta*dt/rho,p)
+    call FDM_Gradient_Central(mesh,w,beta*dt/rho,p)
     call FDM_Laplacian(mesh,w,dt*nu,v)
     !call Add(mesh,w,w,g,dt)
     ! h ← 0,
     ! h ← h + (-ρ/dt)⋅(∇⋅w),
     ! solve Δd = h.
     call Zero(mesh,h)
-    call FDM_Divergence(mesh,h,-rho/dt,w)
+    call FDM_Divergence_Central(mesh,h,-rho/dt,w)
     call SolvePoisson(mesh,d,h)
     ! p ← d + β⋅p,
     ! w ← w - dt/ρ⋅∇d,
     ! v ← w.
     call Add(mesh,p,d,p,beta)
-    call FDM_Gradient(mesh,v,dt/rho,d)
+    call FDM_Gradient_Central(mesh,v,dt/rho,d)
     call Set(mesh,v,w)
     end associate
 end subroutine NavierStokes_PredictVelocity

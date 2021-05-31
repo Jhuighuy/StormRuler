@@ -1,4 +1,4 @@
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! Copyright (C) 2021 Oleg Butakov
 !! 
 !! Permission is hereby granted, free of charge, to any person 
@@ -21,7 +21,7 @@
 !! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FiniteDifferences
 
 use StormRuler_Helpers
@@ -73,11 +73,11 @@ interface FDM_Bilaplacian
 #@end do
 end interface FDM_Bilaplacian
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 contains
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Second order accracy central undivided finite difference.
 elemental function FD1_C2(u_r, &
                           u_l) result(du)
@@ -89,9 +89,9 @@ elemental function FD1_C2(u_r, &
   du = (+1.0_dp/2.0_dp)*u_r &
      + (-1.0_dp/2.0_dp)*u_l
 end function FD1_C2
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Fourth order accracy central undivided finite difference.
 elemental function FD1_C4(u_r,u_rr, &
                           u_l,u_ll) result(du)
@@ -105,9 +105,9 @@ elemental function FD1_C4(u_r,u_rr, &
      + (-2.0_dp/03.0_dp)*u_l  &
      + (+1.0_dp/12.0_dp)*u_ll
 end function FD1_C4
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Sixth order accracy central undivided finite difference.
 elemental function FD1_C6(u_r,u_rr,u_rrr, &
                           u_l,u_ll,u_lll) result(du)
@@ -123,9 +123,9 @@ elemental function FD1_C6(u_r,u_rr,u_rrr, &
      + (+03.0_dp/20.0_dp)*u_ll  &
      + (-01.0_dp/60.0_dp)*u_lll
 end function FD1_C6
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Eighth order accracy central undivided finite difference.
 elemental function FD1_C8(u_r,u_rr,u_rrr,u_rrrr, &
                           u_l,u_ll,u_lll,u_llll) result(du)
@@ -143,9 +143,9 @@ elemental function FD1_C8(u_r,u_rr,u_rrr,u_rrrr, &
      + (-004.0_dp/105.0_dp)*u_lll  &
      + (+001.0_dp/280.0_dp)*u_llll
 end function FD1_C8
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 !! The central FDM-approximate gradient: v ← v - λ∇u.
 #@do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Central$rank(mesh,v,lambda,u)
@@ -210,9 +210,9 @@ subroutine FDM_Gradient_Central$rank(mesh,v,lambda,u)
   end associate
 end subroutine FDM_Gradient_Central$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
  
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 !! The central FDM-approximate divergence: v ← v - λ∇⋅u.
 #@do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Central$rank(mesh,v,lambda,u)
@@ -277,9 +277,9 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,u)
   end associate
 end subroutine FDM_Divergence_Central$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 !! The central FDM-approximate convection: v ← v - λ∇⋅cu.
 #@do rank = 0, 0*(NUM_RANKS-1)
 subroutine FDM_Convection$rank(mesh,v,lambda,c,u)
@@ -297,12 +297,12 @@ subroutine FDM_Convection$rank(mesh,v,lambda,c,u)
   call FDM_Divergence_Central(mesh,v,lambda,w)
 end subroutine FDM_Convection$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Second order accracy central undivided second finite difference.
 elemental function FD2_C2(u,u_r,u_l) result(du)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -313,9 +313,9 @@ elemental function FD2_C2(u,u_r,u_l) result(du)
   ! >>>>>>>>>>>>>>>>>>>>>>
   du = u_r - 2.0_dp*u + u_l
 end function FD2_C2
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Fourth order accracy central undivided second finite difference.
 elemental function FD2_C4(u, &
                           u_r,u_rr, &
@@ -332,9 +332,9 @@ elemental function FD2_C4(u, &
      + (+4.0_dp/03.0_dp)*u_l  &
      + (-1.0_dp/12.0_dp)*u_ll
 end function FD2_C4
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Sixth order accracy central undivided second finite difference.
 elemental function FD2_C6(u, &
                           u_r,u_rr,u_rrr, &
@@ -353,9 +353,9 @@ elemental function FD2_C6(u, &
      + (-03.0_dp/20.0_dp)*u_ll  &
      + (+01.0_dp/90.0_dp)*u_lll
 end function FD2_C6
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 !! Eighth order accracy central undivided second finite difference.
 elemental function FD2_C8(u, &
                           u_r,u_rr,u_rrr,u_rrrr, &
@@ -376,9 +376,9 @@ elemental function FD2_C8(u, &
      + (+008.0_dp/315.0_dp)*u_lll  &
      + (-001.0_dp/560.0_dp)*u_llll
 end function FD2_C8
-!! -----------------------------------------------------------------  
+!! ----------------------------------------------------------------- !!
 
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!  
 !! The FDM-approximate Laplacian: v ← v + λΔu.
 #@do rank = 0, NUM_RANKS
 subroutine FDM_Laplacian$rank(mesh,v,lambda,u)
@@ -447,9 +447,9 @@ subroutine FDM_Laplacian$rank(mesh,v,lambda,u)
   end associate
 end subroutine FDM_Laplacian$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The FDM-approximate nonlinear Laplacian: v ← v + λΔf(u).
 #@do rank = 0, NUM_RANKS
 subroutine FDM_LaplacianF$rank(mesh,v,lambda,f,u)
@@ -468,9 +468,9 @@ subroutine FDM_LaplacianF$rank(mesh,v,lambda,f,u)
   call FDM_Laplacian(mesh,v,lambda,w)
 end subroutine FDM_LaplacianF$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The FDM-approximate Bilaplacian: v ← v + λΔ²u.
 #@do rank = 0, NUM_RANKS
 subroutine FDM_Bilaplacian$rank(mesh,v,lambda,u)
@@ -490,6 +490,6 @@ subroutine FDM_Bilaplacian$rank(mesh,v,lambda,u)
   call FDM_Laplacian(mesh,v,lambda,w)
 end subroutine FDM_Bilaplacian$rank
 #@end do
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 end module StormRuler_FiniteDifferences

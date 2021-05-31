@@ -38,12 +38,26 @@ type Mesh2D
   real(dp), allocatable :: Dn(:,:)
   real(dp), allocatable :: CellCenter(:,:)
   integer, allocatable :: CellToCell(:,:)
+  integer, allocatable :: CellToIndex(:,:,:)
 contains
   procedure :: InitRect => Mesh2D_InitRect
 end type Mesh2D
+!! -----------------------------------------------------------------  
 
 private Mesh2D_InitRect
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 contains
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+!! -----------------------------------------------------------------  
+subroutine Mesh2D_Init(mesh, &
+                       xNumCells,yNumCells)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(Mesh2D), intent(inout) :: mesh
+  ! >>>>>>>>>>>>>>>>>>>>>>
+end subroutine Mesh2D_Init
+!! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.

@@ -105,7 +105,7 @@ function ConvParameters_Check(params &
   ! Check whether number of iterations has exceeded.
   associate(iteration=>params%Iteration &
       , numIterations=>params%NumIterations)
-    call Increment(iteration)
+    iteration = iteration + 1
     converged = converged.or.(iteration>=numIterations)
   end associate
   ! ----------------------

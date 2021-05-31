@@ -81,6 +81,7 @@ program nsch
   implicit none
 
   Integer :: L,M,iCell
+  integer, allocatable :: pixels(:,:)
   Real(8), Dimension(:), Allocatable :: C,p,s
   Real(8), Dimension(:,:), Allocatable :: w,v,f
   type(CahnHilliardParams) :: CH
@@ -100,7 +101,11 @@ program nsch
   print *, '                                                            '
   print *, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
   print *, ''
-                                                      
+
+  
+  !call Load_PPM('test/Domain.ppm',pixels)
+  !call Save_PPM('test/Domain1.ppm',pixels)
+
 
   allocate(mesh)
   mesh%dt = dt

@@ -41,22 +41,9 @@ interface Outer
 #@end do
 end interface Outer
 
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 contains
-
-subroutine sort(n, a)
-  integer :: n, i, j
-  integer :: a(n), x
-  do i = 2, n
-    x = a(i)
-    j = i - 1
-    do while (j >= 1)
-      if (a(j) <= x) exit
-      a(j + 1) = a(j)
-      j = j - 1
-    end do
-    a(j + 1) = x
-  end do
-end subroutine
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
 !! Convert an integer to string.
@@ -71,15 +58,6 @@ end function IntToString
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-!! -----------------------------------------------------------------
-!! Integer increment.
-subroutine Increment(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(inout) :: value
-  value = value + 1
-  ! >>>>>>>>>>>>>>>>>>>>>>
-end subroutine Increment
 
 !! -----------------------------------------------------------------  
 subroutine EnsurePositive(value)
@@ -115,14 +93,15 @@ function SafeDivide(a,b) result(c)
 end function SafeDivide
 
 !! -----------------------------------------------------------------  
-elemental function SafeInverse(a) result(c)
+!! Compute pseudo inverse: i ← 1/a if a ≠ 0 else 0.
+elemental function SafeInverse(a) result(i)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a
-  real(dp) :: c 
+  real(dp) :: i
   ! >>>>>>>>>>>>>>>>>>>>>>
-  c = 0.0_dp
-  if (a/=0.0_dp) c = 1.0_dp/a
+  i = merge(0.0_dp, 1.0_dp/a, a==0.0_dp)
 end function SafeInverse
+!! -----------------------------------------------------------------  
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -148,6 +127,7 @@ pure function Inner$rank(v,w) result(u)
   end do
 end function Inner$rank
 #@end do
+!! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
 pure function Outer$0(v,w) result(u)
@@ -169,5 +149,102 @@ pure function Outer$rank(v,w) result(u)
   end do
 end function Outer$rank
 #@end do
+!! -----------------------------------------------------------------  
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+!! -----------------------------------------------------------------  
+pure function PixelToInt(colorChannels) result(int)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer, intent(in) :: colorChannels(3)
+  integer :: int
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  int = ior(iand(255,colorChannels(1)), &
+            ior(ishft(iand(255,colorChannels(2)),8), &
+                ishft(iand(255,colorChannels(3)),16)))
+end function PixelToInt
+!! -----------------------------------------------------------------  
+
+!! -----------------------------------------------------------------
+!! Load PPM image.
+subroutine Load_PPM(file,pixels)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  character(len=*), intent(in) :: file
+  integer, intent(out), allocatable :: pixels(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: unit,offset
+  integer :: numRows,numColumns
+  ! ----------------------
+  ! Parse PPM header.
+  block
+    character(len=2) :: magic
+    integer :: colorRange
+    open(newunit=unit,file=file, &
+         access='stream',form='formatted',status='old')
+    read(unit,'(A2)') magic
+    if (magic/='P6') &
+      error stop 'unexpected PPM magic, P6 expected'
+    read(unit,*) numRows,numColumns
+    read(unit,*) colorRange
+    if (colorRange/=255) &
+      error stop 'unsupported PPM color range, 255 expected'
+    inquire(unit, pos=offset)
+    close(unit)
+  end block
+  ! ----------------------
+  ! Allocate and read image pixels.
+  block
+    character :: byte
+    integer :: row,column,colorChannel
+    allocate(pixels(numRows,numColumns))
+    open(newunit=unit,file=file, &
+         access='stream',status='old')
+    read(unit, pos=offset-1) byte
+    do column = numColumns, 1, -1
+      do row = 1, numRows
+        do colorChannel = 0, 2
+          read(unit) byte
+          pixels(row,column) = &
+            ior(pixels(row,column), ishft(iachar(byte),8*colorChannel))
+        end do
+      end do
+    end do
+    close(unit)
+  end block
+end subroutine Load_PPM
+!! -----------------------------------------------------------------  
+
+!! -----------------------------------------------------------------
+!! Save PPM image.  
+subroutine Save_PPM(file,pixels)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  character(len=*), intent(in) :: file
+  integer, intent(in) :: pixels(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: unit
+  integer :: numRows,numColumns
+  integer :: row,column,colorChannel
+  ! ----------------------
+  ! Write PPM header.
+  numRows = size(pixels,dim=1) 
+  numColumns = size(pixels,dim=2)
+  open(newunit=unit,file=file,status='replace')
+  write(unit,'(A2)') 'P6'
+  write(unit,'(I0," ",I0)') numRows,numColumns
+  write(unit,'(I0)') 255
+  ! ----------------------
+  ! Write PPM image pixels.
+  do column = numColumns, 1, -1
+    do row = 1, numRows
+      do colorChannel = 0, 2
+        write(unit,'(A1)',advance='no') &
+          achar(iand(255,ishft(pixels(row,column),-8*colorChannel)))
+      end do
+    end do
+  end do
+  close(unit)
+end subroutine Save_PPM
+!! -----------------------------------------------------------------  
 
 end module StormRuler_Helpers

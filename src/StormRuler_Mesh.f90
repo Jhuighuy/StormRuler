@@ -78,7 +78,7 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
       iCell = 0
       do yCell = 1, yNumCells
         do xCell = 1, xNumCells
-          call Increment(iCell)
+          iCell = iCell + 1
           cellToIndex(xCell,yCell) = iCell
         end do
       end do
@@ -98,11 +98,11 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
       else
         do yCell = 1, yNumCells
           do xCell = 1-xNumLayers, 0
-            call Increment(iCell)
+            iCell = iCell + 1
             cellToIndex(xCell,yCell) = iCell
           end do
           do xCell = xNumCells+1, xNumCells+xNumLayers
-            call Increment(iCell)
+            iCell = iCell + 1
             cellToIndex(xCell,yCell) = iCell
           end do
         end do
@@ -118,11 +118,11 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
       else
         do xCell = 1, xNumCells
           do yCell = 1-yNumLayers, 0
-            call Increment(iCell)
+            iCell = iCell + 1
             cellToIndex(xCell,yCell) = iCell
           end do
           do yCell = yNumCells+1, yNumCells+yNumLayers
-            call Increment(iCell)
+            iCell = iCell + 1
             cellToIndex(xCell,yCell) = iCell
           end do
         end do

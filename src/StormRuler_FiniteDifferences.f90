@@ -211,7 +211,7 @@ subroutine FDM_Gradient_Central$rank(mesh,v,lambda,u)
 end subroutine FDM_Gradient_Central$rank
 #@end do
 !! -----------------------------------------------------------------  
-
+ 
 !! -----------------------------------------------------------------  
 !! The central FDM-approximate divergence: v ← v - λ∇⋅u.
 #@do rank = 0, NUM_RANKS-1
@@ -431,9 +431,9 @@ subroutine FDM_Laplacian$rank(mesh,v,lambda,u)
           case (5:6)
             v(@:,iCell) += &
               invDxSqr(iCellFace) &
-              *FD2_C4(u(@:,iCell), &
-                      u(@:,rCell),u(@:,rrCell), &
-                      u(@:,lCell),u(@:,llCell))
+              *FD2_C6(u(@:,iCell), &
+                      u(@:,rCell),u(@:,rrCell),u(@:,rrrCell), &
+                      u(@:,lCell),u(@:,llCell),u(@:,lllCell))
           case (7:8)
             v(@:,iCell) += &
               invDxSqr(iCellFace) &

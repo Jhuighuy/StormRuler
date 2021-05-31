@@ -25,85 +25,104 @@
 module StormRuler_IO
 
 use StormRuler_Helpers
-use StormRuler_Mesh
 
 implicit none
 
-integer, parameter :: IO_NAMELEN=10
-
-type :: IOListNode
-  character(len=IO_NAMELEN) :: Name
-  real(dp), pointer :: Data(:), DataVector(:,:), DataTensor(:,:,:)
-  type(IOListNode), pointer :: NextNode => null()
-end type IOListNode
-
-type :: IODataSet
-  type(IOListNode), pointer :: FirstNode=>null()&
-                            ,CurrentNode=>null()&
-                               ,LastNode=>null() 
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 contains
-  generic, public :: AddNode=>AddNodeScalar&
-                             ,AddNodeVector&
-                             ,AddNodeTensor
-  procedure, private :: AllocateNode=>IODataSet_AllocateNode
-  procedure, private :: AddNodeScalar=>IODataSet_AddNodeScalar&
-                       ,AddNodeVector=>IODataSet_AddNodeVector&
-                       ,AddNodeTensor=>IODataSet_AddNodeTensor
-end type IODataSet
-
-contains
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-subroutine IODataSet_AllocateNode(dataSet)
-  class(IODataSet), intent(inout) :: dataSet
-  if (associated(dataSet%LastNode)) then
-    allocate(dataSet%LastNode%NextNode)
-    dataSet%LastNode => dataSet%LastNode%NextNode
-  else
-    allocate(dataSet%LastNode)
-    dataSet%FirstNode => dataSet%LastNode
-  end if
-end subroutine IODataSet_AllocateNode
-
+pure function PixelToInt(colorChannels) result(int)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer, intent(in) :: colorChannels(3)
+  integer :: int
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  int = ior(iand(255,colorChannels(1)), &
+            ior(ishft(iand(255,colorChannels(2)),8), &
+                ishft(iand(255,colorChannels(3)),16)))
+end function PixelToInt
 !! -----------------------------------------------------------------  
-!! Append a new scalar field into the IO dataset.
-subroutine IODataSet_AddNodeScalar(dataSet,nodeName,nodeData)
-  class(IODataSet), intent(inout) :: dataSet
-  character(len=*), intent(in) :: nodeName
-  real(dp), target, intent(in) :: nodeData(:)
-  call dataSet%AllocateNode()
-  associate(node=>dataSet%LastNode)
-    node%Name = nodeName
-    node%Data => nodeData
-    node%DataVector => null()
-    node%DataTensor => null()
-  end associate
-end subroutine IODataSet_AddNodeScalar
-!! Append a new vector field into the IO dataset.
-subroutine IODataSet_AddNodeVector(dataSet,nodeName,nodeData)
-  class(IODataSet), intent(inout) :: dataSet
-  character(len=*), intent(in) :: nodeName
-  real(dp), target, intent(in) :: nodeData(:,:)
-  call dataSet%AllocateNode()
-  associate(node=>dataSet%LastNode)
-    node%Name = nodeName
-    node%Data => null()
-    node%DataVector => nodeData
-    node%DataTensor => null()
-  end associate
-end subroutine IODataSet_AddNodeVector
-!! Append a new tensor field into the IO dataset.
-subroutine IODataSet_AddNodeTensor(dataSet,nodeName,nodeData)
-  class(IODataSet), intent(inout) :: dataSet
-  character(len=*), intent(in) :: nodeName
-  real(dp), target, intent(in) :: nodeData(:,:,:)
-  call dataSet%AllocateNode()
-  associate(node=>dataSet%LastNode)
-    node%Name = nodeName
-    node%Data => null()
-    node%DataVector => null()
-    node%DataTensor => nodeData
-  end associate
-end subroutine IODataSet_AddNodeTensor
+
+!! -----------------------------------------------------------------
+!! Load PPM image.
+subroutine Load_PPM(file,pixels)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  character(len=*), intent(in) :: file
+  integer, allocatable, intent(out) :: pixels(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: unit,offset
+  integer :: numRows,numColumns
+  ! ----------------------
+  ! Parse PPM header.
+  block
+    character(len=2) :: magic
+    integer :: colorRange
+    open(newunit=unit,file=file, &
+         access='stream',form='formatted',status='old')
+    read(unit,'(A2)') magic
+    if (magic/='P6') &
+      error stop 'unexpected PPM magic, "P6" expected'
+    read(unit,*) numRows,numColumns
+    read(unit,*) colorRange
+    if (colorRange/=255) &
+      error stop 'unsupported PPM color range value, "255" expected'
+    inquire(unit,pos=offset)
+    close(unit)
+  end block
+  ! ----------------------
+  ! Allocate and read image pixels.
+  block
+    character :: byte
+    integer :: row,column,colorChannel
+    allocate(pixels(1:numRows,1:numColumns))
+    open(newunit=unit,file=file, &
+         access='stream',status='old')
+    read(unit,pos=offset-1) byte
+    do column = numColumns, 1, -1
+      do row = 1, numRows
+        do colorChannel = 0, 2
+          read(unit) byte
+          pixels(row,column) = &
+            ior(pixels(row,column),ishft(iand(255,iachar(byte)),8*colorChannel))
+        end do
+      end do
+    end do
+    close(unit)
+  end block
+end subroutine Load_PPM
+!! -----------------------------------------------------------------  
+
+!! -----------------------------------------------------------------
+!! Save PPM image.  
+subroutine Save_PPM(file,pixels)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  character(len=*), intent(in) :: file
+  integer, intent(in) :: pixels(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: unit
+  integer :: numRows,numColumns
+  integer :: row,column,colorChannel
+  ! ----------------------
+  ! Write PPM header.
+  numRows = size(pixels,dim=1) 
+  numColumns = size(pixels,dim=2)
+  open(newunit=unit,file=file,status='replace')
+  write(unit,'(A2)') 'P6'
+  write(unit,'(I0," ",I0)') numRows,numColumns
+  write(unit,'(I0)') 255
+  ! ----------------------
+  ! Write PPM image pixels.
+  do column = numColumns, 1, -1
+    do row = 1, numRows
+      do colorChannel = 0, 2
+        write(unit,'(A1)',advance='no') &
+          achar(iand(255,ishft(pixels(row,column),-8*colorChannel)))
+      end do
+    end do
+  end do
+  close(unit)
+end subroutine Save_PPM
+!! -----------------------------------------------------------------  
 
 end module StormRuler_IO

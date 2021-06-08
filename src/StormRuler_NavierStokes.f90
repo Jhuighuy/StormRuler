@@ -32,14 +32,6 @@ implicit none
     
 contains
    
-subroutine PoissonOperator(mesh,f,u,opParams)
-  class(Mesh2D), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: f,u
-  class(*), intent(in) :: opParams
-  call Fill(mesh,f)
-  call FDM_Laplacian(mesh,f,1.0_dp,u)
-end subroutine PoissonOperator
-
 subroutine SolvePoisson(mesh,u,f)
   class(Mesh2D), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: u(:),f(:)
@@ -52,6 +44,14 @@ subroutine SolvePoisson(mesh,u,f)
   call Fill(mesh,u)
   call Solve_BiCGStab(mesh,u,f&
     ,PoissonOperator,Params,Params)
+contains
+  subroutine PoissonOperator(mesh,f,u,opParams)
+    class(Mesh2D), intent(in) :: mesh
+    real(8), dimension(:), intent(inout) :: f,u
+    class(*), intent(in) :: opParams
+    call Fill(mesh,f)
+    call FDM_Laplacian(mesh,f,1.0_dp,u)
+  end subroutine PoissonOperator
 end subroutine SolvePoisson
 
 subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)

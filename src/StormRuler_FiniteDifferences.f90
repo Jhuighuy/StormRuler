@@ -33,15 +33,7 @@ implicit none
 
 integer, parameter :: ACCURACY_ORDER = 8
 
-private :: FS1_C4
-
-interface FDM_Average_Central
-#@do rank = 0, NUM_RANKS
-  module procedure FDM_Average_Central$rank
-#@end do
-end interface FDM_Average_Central
-
-private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
+private :: FD1_C2,FD1_C4,FD1_C6,FD1_C8
 
 interface FDM_Gradient_Central
 #@do rank = 0, NUM_RANKS-1
@@ -61,7 +53,7 @@ interface FDM_Convection_Central
 #@end do
 end interface FDM_Convection_Central
 
-private :: FD2_C2, FD2_C4, FD2_C6, FD2_C8
+private :: FD2_C2,FD2_C4,FD2_C6,FD2_C8
 
 interface FDM_Laplacian
 #@do rank = 0, NUM_RANKS
@@ -168,7 +160,7 @@ subroutine FDM_Gradient_Central$rank(mesh,v,lambda,u)
   end if
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
-      & numCellFaces=>mesh%NumFaces, &
+      & numCellFaces=>mesh%NumCellFaces, &
       &   cellToCell=>mesh%CellToCell, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
@@ -241,7 +233,7 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,u)
   end if
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
-      & numCellFaces=>mesh%NumFaces, &
+      & numCellFaces=>mesh%NumCellFaces, &
       &   cellToCell=>mesh%CellToCell, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
@@ -422,7 +414,7 @@ subroutine FDM_Laplacian$rank(mesh,v,lambda,u)
   end if
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
-      & numCellFaces=>mesh%NumFaces, &
+      & numCellFaces=>mesh%NumCellFaces, &
       &   cellToCell=>mesh%CellToCell, &
       &     invDxSqr=>lambda/mesh%Dx**2)
     ! ----------------------
@@ -493,7 +485,7 @@ subroutine FDM_LaplacianF$rank(mesh,v,lambda,f,u)
   procedure(MathFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable :: w(@:,:)
-  allocate(w, mold=u)
+  allocate(w,mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -518,7 +510,7 @@ subroutine FDM_Bilaplacian$rank(mesh,v,lambda,u)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable :: w(@:,:)
-  allocate(w, mold=u)
+  allocate(w,mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then

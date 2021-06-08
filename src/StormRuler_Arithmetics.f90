@@ -90,7 +90,7 @@ abstract interface
   pure function MathFunc$rank(x) result(f)
     import dp
     real(dp), intent(in) :: x(@:)
-    real(dp) :: f(@{size(x, dim=$$+1)}@)
+    real(dp) :: f(@{size(x,dim=$$+1)}@)
   end function MathFunc$rank
 end interface
 #@end do
@@ -108,7 +108,7 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: u ← α.
 #@do rank = 0, NUM_RANKS
-subroutine Fill$rank(mesh,u, alpha)
+subroutine Fill$rank(mesh,u,alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in), optional :: alpha
@@ -177,7 +177,7 @@ end function Dot$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: u ← βv + αw.
 #@do rank = 0, NUM_RANKS
-subroutine Add$rank(mesh,u,v,w, alpha,beta)
+subroutine Add$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in) :: v(@:,:), w(@:,:)
@@ -200,7 +200,7 @@ end subroutine Add$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: u ← βv - αw.
 #@do rank = 0, NUM_RANKS
-subroutine Sub$rank(mesh,u,v,w, alpha,beta)
+subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in) :: v(@:,:), w(@:,:)

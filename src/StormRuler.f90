@@ -74,6 +74,7 @@ end module helpers
   
 program nsch
   use helpers
+  use StormRuler_Helpers
   use StormRuler_Mesh
   use StormRuler_CahnHilliard
   use StormRuler_NavierStokes

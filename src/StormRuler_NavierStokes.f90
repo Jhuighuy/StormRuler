@@ -50,7 +50,7 @@ contains
     real(8), dimension(:), intent(inout) :: f,u
     class(*), intent(in) :: opParams
     call Fill(mesh,f)
-    call FDM_Laplacian(mesh,f,1.0_dp,u)
+    call FDM_Laplacian_Central(mesh,f,1.0_dp,u)
   end subroutine PoissonOperator
 end subroutine SolvePoisson
 
@@ -76,20 +76,20 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     ! w ← w + dt⋅ν⋅Δv.
     call Add(mesh,w,v,z)
     call FDM_Convection_Central(mesh,w,dt,v,v)
-    call FDM_Gradient_Central(mesh,w,beta*dt/rho,p)
-    call FDM_Laplacian(mesh,w,dt*nu,v)
+    call FDM_Gradient_Forward(mesh,w,beta*dt/rho,p)
+    call FDM_Laplacian_Central(mesh,w,dt*nu,v)
     !call Add(mesh,w,w,g,dt)
     ! h ← 0,
     ! h ← h + (-ρ/dt)⋅(∇⋅w),
     ! solve Δd = h.
     call Fill(mesh,h)
-    call FDM_Divergence_Central(mesh,h,-rho/dt,w)
+    call FDM_Divergence_Backward(mesh,h,-rho/dt,w)
     call SolvePoisson(mesh,d,h)
     ! p ← d + β⋅p,
     ! w ← w - dt/ρ⋅∇d,
     ! v ← w.
     call Add(mesh,p,d,p,beta)
-    call FDM_Gradient_Central(mesh,v,dt/rho,d)
+    call FDM_Gradient_Forward(mesh,v,dt/rho,d)
     call Set(mesh,v,w)
     end associate
 end subroutine NavierStokes_PredictVelocity

@@ -106,7 +106,7 @@ subroutine CahnHilliard_ImplicitSchemeRHS(mesh, C,v,B,physParams)
     ! b ← b + dt⋅ΔF'(φ).
     call Set(mesh, B,C)
     call FDM_Convection_Central(mesh, B,dt,c,v)
-    call FDM_LaplacianF(mesh, B,dt,CahnHilliardParams_ddCDoubleWell,C)
+    call FDM_LaplacianF_Central(mesh, B,dt,CahnHilliardParams_ddCDoubleWell,C)
   end associate
 end subroutine CahnHilliard_ImplicitSchemeRHS
 
@@ -121,7 +121,7 @@ subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
     ! u ← c
     ! u ← u + ε⋅dt⋅Δ²c.
     call Set(mesh,u,c)
-    call FDM_Bilaplacian(mesh,u,eps*dt,c)
+    call FDM_Bilaplacian_Central(mesh,u,eps*dt,c)
   end associate
 end subroutine CahnHilliard_ImplicitSchemeOperator
 subroutine CahnHilliard_ImplicitSchemeOperatorHelper(mesh,u,c,aCHPhysParams)
@@ -168,7 +168,7 @@ subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
   ! s ← F'(c)
   ! s ← s + (-ε)⋅Δc
   call ApplyFunc(mesh,s,c,CahnHilliardParams_ddCDoubleWell)
-  call FDM_Laplacian(mesh,s,-CHPhysParams%EpsSqr,c)
+  call FDM_Laplacian_Central(mesh,s,-CHPhysParams%EpsSqr,c)
 end subroutine CahnHilliard_ImplicitSchemeStep
   
 end module StormRuler_CahnHilliard

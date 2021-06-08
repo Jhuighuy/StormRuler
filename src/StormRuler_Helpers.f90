@@ -135,16 +135,16 @@ pure function Outer$0(v,w) result(u)
   real(dp), intent(in) :: v(:),w
   real(dp) :: u(size(v))
   ! >>>>>>>>>>>>>>>>>>>>>>
-  u = v*w
+  u(:) = v(:)*w
 end function Outer$0
 #@do rank = 1, NumRanks-1
 pure function Outer$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(@:)
-  real(dp) :: u(size(v),@{size(w,dim=$$+1)}@)
+  real(dp) :: u(size(v,dim=1),@{size(w,dim=$$+1)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
-  do i = 1, size(v)
+  do i = 1, size(v,dim=1)
     u(i,@:) = v(i)*w(@:)
   end do
 end function Outer$rank

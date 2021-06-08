@@ -60,9 +60,9 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
   real(dp), intent(inout) :: v(:,:),g(:,:),p(:),c(:),s(:)
   real(dp), intent(in) :: nu,rho,beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: z(:,:),w(:,:),d(:),h(:)
+  real(dp), allocatable :: z(:,:),w(:,:),d(:),q(:),h(:)
   allocate(w,z, mold=v)
-  allocate(d,h, mold=p)
+  allocate(d,h,q, mold=p)
   associate(dt=>mesh%dt)
     ! z ← 0,
     ! z ← z - dt/ρ⋅∇s,
@@ -75,8 +75,7 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
     ! w ← w - β⋅dt/ρ⋅∇p,
     ! w ← w + dt⋅ν⋅Δv.
     call Add(mesh,w,v,z)
-    call FDM_Convection(mesh,w(1,:),dt,v(1,:),v)
-    call FDM_Convection(mesh,w(2,:),dt,v(2,:),v)
+    call FDM_Convection_Central(mesh,w,dt,v,v)
     call FDM_Gradient_Central(mesh,w,beta*dt/rho,p)
     call FDM_Laplacian(mesh,w,dt*nu,v)
     !call Add(mesh,w,w,g,dt)

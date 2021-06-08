@@ -28,6 +28,10 @@ use StormRuler_Helpers
 
 implicit none
 
+type Cell2D
+  integer :: x
+end type Cell2D
+
 !! -----------------------------------------------------------------  
 !! Semi-structured 2D mesh.
 type Mesh2D
@@ -39,6 +43,7 @@ type Mesh2D
   real(dp), allocatable :: CellCenter(:,:)
   integer, allocatable :: CellToCell(:,:)
   integer, allocatable :: CellToIndex(:,:,:)
+  type(Cell2D), allocatable :: hui(:)
 contains
   procedure :: InitRect => Mesh2D_InitRect
 end type Mesh2D
@@ -51,12 +56,12 @@ contains
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 !! -----------------------------------------------------------------  
-subroutine Mesh2D_Init(mesh, &
-                       xNumCells,yNumCells)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
-  ! >>>>>>>>>>>>>>>>>>>>>>
-end subroutine Mesh2D_Init
+!subroutine Mesh2D_Init(mesh, &
+!                       xNumCells,yNumCells)
+!  ! <<<<<<<<<<<<<<<<<<<<<<
+!  class(Mesh2D), intent(inout) :: mesh
+!  ! >>>>>>>>>>>>>>>>>>>>>>
+!end subroutine Mesh2D_Init
 !! -----------------------------------------------------------------  
 
 !! -----------------------------------------------------------------  
@@ -70,6 +75,10 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
   integer, intent(in), optional :: numLayers
   integer :: xNumLayers,yNumLayers
   integer, allocatable :: cellToIndex(:,:)
+  ! ----------------------
+  allocate(mesh%hui(1:2))
+  mesh%hui(1)%x = 14
+  mesh%hui(2)%x = 88
   ! ----------------------
   ! Set up amount of layers.
   block

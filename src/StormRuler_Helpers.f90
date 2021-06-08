@@ -141,7 +141,7 @@ end function Outer$0
 pure function Outer$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(@:)
-  real(dp) :: u(size(v), @{size(w, dim=$$+1)}@)
+  real(dp) :: u(size(v),@{size(w,dim=$$+1)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
   do i = 1, size(v)

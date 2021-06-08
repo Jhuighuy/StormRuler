@@ -105,7 +105,7 @@ subroutine CahnHilliard_ImplicitSchemeRHS(mesh, C,v,B,physParams)
     ! b ← b - dt⋅∇⋅φv,
     ! b ← b + dt⋅ΔF'(φ).
     call Set(mesh, B,C)
-    call FDM_Convection(mesh, B,dt,c,v)
+    call FDM_Convection_Central(mesh, B,dt,c,v)
     call FDM_LaplacianF(mesh, B,dt,CahnHilliardParams_ddCDoubleWell,C)
   end associate
 end subroutine CahnHilliard_ImplicitSchemeRHS

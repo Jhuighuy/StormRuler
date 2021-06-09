@@ -94,15 +94,15 @@ end interface FDM_Bilaplacian_Central
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! The central FDM-approximate gradient: v̅ ← v̅ - λ∇ₕu.
+!! The forward FDM-approximate gradient: v̅ ← v̅ - λ∇ₕu.
 #@do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:)
+  real(dp), intent(in) :: u(@:,:),lambda
   real(dp), intent(inout) :: vBar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, iCellFace
+  integer :: iCell,iCellFace
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -111,48 +111,48 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell, &
+      &   cellToCell=>mesh%CellToCell1, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
-    !$omp parallel do
+    !$omp parallel do default(none) shared(u,vBar)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces, 2
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
-        rCell = cellToCell(iCell,iCellFace)
-        lCell = cellToCell(iCell,iCellFace+1)
+        rCell = cellToCell(+iCellFace,iCell)
+        lCell = cellToCell(-iCellFace,iCell)
         if (ACCURACY_ORDER >= 4) then
-          rrCell = cellToCell(rCell,iCellFace)
-          llCell = cellToCell(lCell,iCellFace+1)
+          rrCell = cellToCell(+iCellFace,rCell)
+          llCell = cellToCell(-iCellFace,lCell)
           if (ACCURACY_ORDER >= 6) then
-            rrrCell = cellToCell(rrCell,iCellFace)
-            lllCell = cellToCell(llCell,iCellFace+1)
+            rrrCell = cellToCell(+iCellFace,rrCell)
+            lllCell = cellToCell(-iCellFace,llCell)
             if (ACCURACY_ORDER >= 8) then
-              rrrrCell = cellToCell(rrrCell,iCellFace)
-              llllCell = cellToCell(lllCell,iCellFace+1)
+              rrrrCell = cellToCell(+iCellFace,rrrCell)
+              llllCell = cellToCell(-iCellFace,lllCell)
             end if
           end if
         end if
         ! ----------------------
         ! Compute FDM-approximate gradient increment.
-        !select case (ACCURACY_ORDER)
-        !  case (1:2)
+        !select case(ACCURACY_ORDER)
+        !  case(1:2)
             vBar(:,@:,iCell) -= &
               & Outer(invDn(:,iCellFace), &
               &       (u(@:,rCell)-u(@:,iCell)))
-        !  case (3:4)
+        !  case(3:4)
         !    vBar(:,@:,iCell) -= &
         !      & Outer(invDn(:,iCellFace), &
         !      &       FD1_C4(u(@:,rCell),u(@:,rrCell), &
         !      &              u(@:,lCell),u(@:,llCell)))
-        !  case (5:6)
+        !  case(5:6)
         !    vBar(:,@:,iCell) -= &
         !      & Outer(invDn(:,iCellFace), &
         !      &       FD1_C6(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell), &
         !      &              u(@:,lCell),u(@:,llCell),u(@:,lllCell)))
-        !  case (7:8)
+        !  case(7:8)
         !    vBar(:,@:,iCell) -= &
         !      & Outer(invDn(:,iCellFace), &
         !      &       FD1_C8(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell), &
@@ -167,15 +167,15 @@ end subroutine FDM_Gradient_Forward$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! The central FDM-approximate divergence: v ← v - λ∇ₕ⋅u̅.
+!! The backward FDM-approximate divergence: v ← v - λ∇ₕ⋅u̅.
 #@do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,uBar(:,@:,:)
+  real(dp), intent(in) :: uBar(:,@:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, iCellFace
+  integer :: iCell,iCellFace
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -184,48 +184,48 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell, &
+      &   cellToCell=>mesh%CellToCell1, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
-    !$omp parallel do
+    !$omp parallel do default(none) shared(uBar,v)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces, 2
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
-        rCell = cellToCell(iCell,iCellFace)
-        lCell = cellToCell(iCell,iCellFace+1)
+        rCell = cellToCell(+iCellFace,iCell)
+        lCell = cellToCell(-iCellFace,iCell)
         if (ACCURACY_ORDER >= 4) then
-          rrCell = cellToCell(rCell,iCellFace)
-          llCell = cellToCell(lCell,iCellFace+1)
+          rrCell = cellToCell(+iCellFace,rCell)
+          llCell = cellToCell(-iCellFace,lCell)
           if (ACCURACY_ORDER >= 6) then
-            rrrCell = cellToCell(rrCell,iCellFace)
-            lllCell = cellToCell(llCell,iCellFace+1)
+            rrrCell = cellToCell(+iCellFace,rrCell)
+            lllCell = cellToCell(-iCellFace,llCell)
             if (ACCURACY_ORDER >= 8) then
-              rrrrCell = cellToCell(rrrCell,iCellFace)
-              llllCell = cellToCell(lllCell,iCellFace+1)
+              rrrrCell = cellToCell(+iCellFace,rrrCell)
+              llllCell = cellToCell(-iCellFace,lllCell)
             end if
           end if
         end if
         ! ----------------------
         ! Compute FDM-approximate divergence increment.
-        !select case (ACCURACY_ORDER)
-        !  case (1:2)
+        !select case(ACCURACY_ORDER)
+        !  case(1:2)
             v(@:,iCell) -= &
               & Inner(invDn(:,iCellFace), &
               &       (uBar(:,@:,iCell)-uBar(:,@:,lCell)))
-        !  case (3:4)
+        !  case(3:4)
         !    v(@:,iCell) -= &
         !      & Inner(invDn(:,iCellFace), &
         !      &       FD1_C4(uBar(:,@:,rCell),uBar(:,@:,rrCell), &
         !      &              uBar(:,@:,lCell),uBar(:,@:,llCell)))
-        !  case (5:6)
+        !  case(5:6)
         !    v(@:,iCell) -= &
         !      & Inner(invDn(:,iCellFace), &
         !      &       FD1_C6(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell), &
         !      &              uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell)))
-        !  case (7:8)
+        !  case(7:8)
         !    v(@:,iCell) -= &
         !      & Inner(invDn(:,iCellFace), &
         !      &       FD1_C8(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell), &
@@ -314,10 +314,10 @@ end function FD1_C8
 subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:)
+  real(dp), intent(in) :: u(@:,:),lambda
   real(dp), intent(inout) :: vBar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, iCellFace
+  integer :: iCell,iCellFace
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -326,48 +326,48 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell, &
+      &   cellToCell=>mesh%CellToCell1, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
-    !$omp parallel do
+    !$omp parallel do default(none) shared(u,vBar)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces, 2
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
-        rCell = cellToCell(iCell,iCellFace)
-        lCell = cellToCell(iCell,iCellFace+1)
+        rCell = cellToCell(+iCellFace,iCell)
+        lCell = cellToCell(-iCellFace,iCell)
         if (ACCURACY_ORDER >= 4) then
-          rrCell = cellToCell(rCell,iCellFace)
-          llCell = cellToCell(lCell,iCellFace+1)
+          rrCell = cellToCell(+iCellFace,rCell)
+          llCell = cellToCell(-iCellFace,lCell)
           if (ACCURACY_ORDER >= 6) then
-            rrrCell = cellToCell(rrCell,iCellFace)
-            lllCell = cellToCell(llCell,iCellFace+1)
+            rrrCell = cellToCell(+iCellFace,rrCell)
+            lllCell = cellToCell(-iCellFace,llCell)
             if (ACCURACY_ORDER >= 8) then
-              rrrrCell = cellToCell(rrrCell,iCellFace)
-              llllCell = cellToCell(lllCell,iCellFace+1)
+              rrrrCell = cellToCell(+iCellFace,rrrCell)
+              llllCell = cellToCell(-iCellFace,lllCell)
             end if
           end if
         end if
         ! ----------------------
         ! Compute FDM-approximate gradient increment.
-        select case (ACCURACY_ORDER)
-          case (1:2)
+        select case(ACCURACY_ORDER)
+          case(1:2)
             vBar(:,@:,iCell) -= &
               & Outer(invDn(:,iCellFace), &
               &       FD1_C2(u(@:,rCell),u(@:,lCell)))
-          case (3:4)
+          case(3:4)
             vBar(:,@:,iCell) -= &
               & Outer(invDn(:,iCellFace), &
               &       FD1_C4(u(@:,rCell),u(@:,rrCell), &
               &              u(@:,lCell),u(@:,llCell)))
-          case (5:6)
+          case(5:6)
             vBar(:,@:,iCell) -= &
               & Outer(invDn(:,iCellFace), &
               &       FD1_C6(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell), &
               &              u(@:,lCell),u(@:,llCell),u(@:,lllCell)))
-          case (7:8)
+          case(7:8)
             vBar(:,@:,iCell) -= &
               & Outer(invDn(:,iCellFace), &
               &       FD1_C8(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell), &
@@ -387,10 +387,10 @@ end subroutine FDM_Gradient_Central$rank
 subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,uBar(:,@:,:)
+  real(dp), intent(in) :: uBar(:,@:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, iCellFace
+  integer :: iCell,iCellFace
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -399,48 +399,48 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell, &
+      &   cellToCell=>mesh%CellToCell1, &
       &        invDn=>lambda*SafeInverse(mesh%Dn))
     ! ----------------------
-    !$omp parallel do
+    !$omp parallel do default(none) shared(uBar,v)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces, 2
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
-        rCell = cellToCell(iCell,iCellFace)
-        lCell = cellToCell(iCell,iCellFace+1)
+        rCell = cellToCell(+iCellFace,iCell)
+        lCell = cellToCell(-iCellFace,iCell)
         if (ACCURACY_ORDER >= 4) then
-          rrCell = cellToCell(rCell,iCellFace)
-          llCell = cellToCell(lCell,iCellFace+1)
+          rrCell = cellToCell(+iCellFace,rCell)
+          llCell = cellToCell(-iCellFace,lCell)
           if (ACCURACY_ORDER >= 6) then
-            rrrCell = cellToCell(rrCell,iCellFace)
-            lllCell = cellToCell(llCell,iCellFace+1)
+            rrrCell = cellToCell(+iCellFace,rrCell)
+            lllCell = cellToCell(-iCellFace,llCell)
             if (ACCURACY_ORDER >= 8) then
-              rrrrCell = cellToCell(rrrCell,iCellFace)
-              llllCell = cellToCell(lllCell,iCellFace+1)
+              rrrrCell = cellToCell(+iCellFace,rrrCell)
+              llllCell = cellToCell(-iCellFace,lllCell)
             end if
           end if
         end if
         ! ----------------------
         ! Compute FDM-approximate divergence increment.
-        select case (ACCURACY_ORDER)
-          case (1:2)
+        select case(ACCURACY_ORDER)
+          case(1:2)
             v(@:,iCell) -= &
               & Inner(invDn(:,iCellFace), &
               &       FD1_C2(uBar(:,@:,rCell),uBar(:,@:,lCell)))
-          case (3:4)
+          case(3:4)
             v(@:,iCell) -= &
               & Inner(invDn(:,iCellFace), &
               &       FD1_C4(uBar(:,@:,rCell),uBar(:,@:,rrCell), &
               &              uBar(:,@:,lCell),uBar(:,@:,llCell)))
-          case (5:6)
+          case(5:6)
             v(@:,iCell) -= &
               & Inner(invDn(:,iCellFace), &
               &       FD1_C6(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell), &
               &              uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell)))
-          case (7:8)
+          case(7:8)
             v(@:,iCell) -= &
               & Inner(invDn(:,iCellFace), &
               &       FD1_C8(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell), &
@@ -463,7 +463,7 @@ end subroutine FDM_Divergence_Central$rank
 subroutine FDM_Convection_Central$rank(mesh,v,lambda,u,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:),wBar(:,:)
+  real(dp), intent(in) :: u(@:,:),wBar(:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable :: fBar(:,@:,:)
@@ -568,10 +568,10 @@ end function FD2_C8
 subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:)
+  real(dp), intent(in) :: u(@:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, iCellFace
+  integer :: iCell,iCellFace
   ! ----------------------
   ! Fast exit in case λ=0.
   if (lambda==0.0_dp) then
@@ -580,51 +580,51 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell, &
+      &   cellToCell=>mesh%CellToCell1, &
       &     invDxSqr=>lambda/mesh%Dx**2)
     ! ----------------------
-    !$omp parallel do
+    !$omp parallel do default(none) shared(u,v)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces, 2
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
-        rCell = cellToCell(iCell,iCellFace)
-        lCell = cellToCell(iCell,iCellFace+1)
+        rCell = cellToCell(+iCellFace,iCell)
+        lCell = cellToCell(-iCellFace,iCell)
         if (ACCURACY_ORDER >= 4) then
-          rrCell = cellToCell(rCell,iCellFace)
-          llCell = cellToCell(lCell,iCellFace+1)
+          rrCell = cellToCell(+iCellFace,rCell)
+          llCell = cellToCell(-iCellFace,lCell)
           if (ACCURACY_ORDER >= 6) then
-            rrrCell = cellToCell(rrCell,iCellFace)
-            lllCell = cellToCell(llCell,iCellFace+1)
+            rrrCell = cellToCell(+iCellFace,rrCell)
+            lllCell = cellToCell(-iCellFace,llCell)
             if (ACCURACY_ORDER >= 8) then
-              rrrrCell = cellToCell(rrrCell,iCellFace)
-              llllCell = cellToCell(lllCell,iCellFace+1)
+              rrrrCell = cellToCell(+iCellFace,rrrCell)
+              llllCell = cellToCell(-iCellFace,lllCell)
             end if
           end if
         end if
         ! ----------------------
         ! Compute FDM-approximate Laplacian increment.
-        select case (ACCURACY_ORDER)
-          case (1:2)
+        select case(ACCURACY_ORDER)
+          case(1:2)
             v(@:,iCell) += &
               & invDxSqr(iCellFace)* &
               & FD2_C2(u(@:,iCell), &
               &        u(@:,rCell),u(@:,lCell))
-          case (3:4)
+          case(3:4)
             v(@:,iCell) += &
               & invDxSqr(iCellFace)* &
               & FD2_C4(u(@:,iCell), &
               &        u(@:,rCell),u(@:,rrCell), &
               &        u(@:,lCell),u(@:,llCell))
-          case (5:6)
+          case(5:6)
             v(@:,iCell) += &
               & invDxSqr(iCellFace)* &
               & FD2_C6(u(@:,iCell), &
               &        u(@:,rCell),u(@:,rrCell),u(@:,rrrCell), &
               &        u(@:,lCell),u(@:,llCell),u(@:,lllCell))
-          case (7:8)
+          case(7:8)
             v(@:,iCell) += &
               & invDxSqr(iCellFace)* &
               & FD2_C8(u(@:,iCell), &
@@ -645,7 +645,7 @@ end subroutine FDM_Laplacian_Central$rank
 subroutine FDM_LaplacianF_Central$rank(mesh,v,lambda,f,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:)
+  real(dp), intent(in) :: u(@:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   procedure(MathFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -671,7 +671,7 @@ end subroutine FDM_LaplacianF_Central$rank
 subroutine FDM_Bilaplacian_Central$rank(mesh,v,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: lambda,u(@:,:)
+  real(dp), intent(in) :: u(@:,:),lambda
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable :: w(@:,:)

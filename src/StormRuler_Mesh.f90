@@ -41,7 +41,7 @@ type Mesh2D
   real(dp), allocatable :: Dx(:)
   real(dp), allocatable :: Dn(:,:)
   real(dp), allocatable :: CellCenter(:,:)
-  integer, allocatable :: CellToCell(:,:)
+  integer, allocatable :: CellToCell(:,:), CellToCell1(:,:)
   integer, allocatable :: CellToIndex(:,:,:)
   type(Cell2D), allocatable :: hui(:)
 contains
@@ -166,6 +166,7 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
     mesh%NumCellFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells,1:3))
     allocate(mesh%CellToCell(1:mesh%NumAllCells,1:4))
+    allocate(mesh%CellToCell1(-2:2,mesh%NumAllCells))
     associate(cellCenter => mesh%CellCenter &
             , cellToCell => mesh%CellToCell)
       ! ----------------------
@@ -179,7 +180,14 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
           cellToCell(iCell,:) &
             = [ cellToIndex(xCell+1,yCell), cellToIndex(xCell-1,yCell) &
               , cellToIndex(xCell,yCell+1), cellToIndex(xCell,yCell-1) ]
-        end do
+          !---
+          mesh%CellToCell1(:,iCell) = &
+            & [cellToIndex(xCell,yCell-1), &
+            &  cellToIndex(xCell-1,yCell), &
+            &  cellToIndex(xCell , yCell), &
+            &  cellToIndex(xCell+1,yCell), &
+            &  cellToIndex(xCell,yCell+1)]
+          end do
       end do
       !$omp end parallel do
       ! ----------------------

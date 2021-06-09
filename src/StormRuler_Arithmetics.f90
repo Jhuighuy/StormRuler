@@ -118,7 +118,7 @@ subroutine Fill$rank(mesh,u,alpha)
   real(dp) :: a
   a = 0.0_dp; if (present(alpha)) a = alpha
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,a)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = a
   end do
@@ -138,7 +138,7 @@ subroutine Set$rank(mesh,u,v)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,v)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = v(@:,iCell)
   end do
@@ -160,7 +160,7 @@ function Dot$rank(mesh,u,v) result(d)
   ! ----------------------
   d = 0.0_dp
   associate(dv=>product(mesh%Dx))
-    !$omp parallel do reduction(+:d)
+    !$omp parallel do default(none) shared(u,v) reduction(+:d)
     do iCell = 1, mesh%NumCells
 #@if rank == 0
       d += dv*u(iCell)*v(iCell)
@@ -189,10 +189,10 @@ subroutine Add$rank(mesh,u,v,w,alpha,beta)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a,b
-  a = 1.0_dp; if (present(alpha)) a = alpha
-  b = 1.0_dp; if (present(beta)) b = beta 
+  a = merge(alpha,1.0_dp,present(alpha))
+  b = merge(beta,1.0_dp,present(beta))
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,v,w,a,b)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = b*v(@:,iCell) + a*w(@:,iCell)
   end do
@@ -213,10 +213,10 @@ subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a,b
-  a = 1.0_dp; if (present(alpha)) a = alpha 
-  b = 1.0_dp; if (present(beta)) b = beta 
+  a = merge(alpha,1.0_dp,present(alpha))
+  b = merge(beta,1.0_dp,present(beta))
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,v,w,a,b)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = b*v(@:,iCell) - a*w(@:,iCell)
   end do
@@ -239,7 +239,7 @@ subroutine Mul$rank(mesh,u,v,w)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,v,w)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = v(iCell)*w(@:,iCell)
   end do
@@ -249,7 +249,7 @@ end subroutine Mul$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute "u ← v̅⋅w̅".
+!! Compute an inner product: u ← v̅⋅w̅.
 #@do rank = 0, NUM_RANKS-1
 subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -259,7 +259,7 @@ subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(u,vBar,wBar)
   do iCell = 1, mesh%NumCells
     u(@:,iCell) = Inner(vBar(:,iCell),wBar(:,@:,iCell))
   end do
@@ -269,7 +269,7 @@ end subroutine Mul_Inner$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute "û ← v̅⊗w̅".
+!! Compute an outer product: û ← v̅⊗w̅.
 #@do rank = 0, NUM_RANKS-1
 subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -279,7 +279,7 @@ subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(uHat,vBar,wBar)
   do iCell = 1, mesh%NumCells
     uHat(:,@:,iCell) = Outer(vBar(:,iCell),wBar(@:,iCell))
   end do
@@ -292,20 +292,20 @@ end subroutine Mul_Outer$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply a function.
+!! Compute a function product: v ← f(u).
 #@do rank = 0, NUM_RANKS
-subroutine ApplyFunc$rank(mesh,Fu,u,f)
+subroutine ApplyFunc$rank(mesh,v,u,f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(out) :: Fu(@:,:)
+  real(dp), intent(out) :: v(@:,:)
   procedure(MathFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do
+  !$omp parallel do default(none) shared(v,u)
   do iCell = 1, mesh%NumCells
-    Fu(@:,iCell) = f(u(@:,iCell))
+    v(@:,iCell) = f(u(@:,iCell))
   end do
   !$omp end parallel do
 end subroutine ApplyFunc$rank

@@ -209,21 +209,21 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
         select case(ACCURACY_ORDER)
         case(1:2)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_C2(u(@:,rCell),u(@:,lCell)))
         case(3:4)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_C4(u(@:,rCell),u(@:,rrCell), &
             &         u(@:,lCell),u(@:,llCell)))
         case(5:6)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_C6(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell)))
         case(7:8)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_C8(u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell),u(@:,llllCell)))
         end select
@@ -282,21 +282,21 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
         select case(ACCURACY_ORDER)
         case(1:2)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_C2(uBar(:,@:,rCell),uBar(:,@:,lCell)))
         case(3:4)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_C4(uBar(:,@:,rCell),uBar(:,@:,rrCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell)))
         case(5:6)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_C6(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell)))
         case(7:8)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_C8(uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell),uBar(:,@:,llllCell)))
         end select
@@ -460,80 +460,80 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dir)
         select case(d(iCellFace)*ACCURACY_ORDER)
         case(+1)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F1(u(@:,iCell),u(@:,rCell)))
         case(-1)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F1(u(@:,iCell),u(@:,lCell)))
         case(+2)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F2(u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell)))
         case(-2)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F2(u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell)))
         case(+3)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F3(u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell)))
         case(-3)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F3(u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell)))
         case(+4)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F4(u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell),u(@:,rrrCell)))
         case(-4)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F4(u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell)))
         case(+5)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F5(u(@:,llCell),u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell),u(@:,rrrCell)))
         case(-5)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F5(u(@:,rrCell),u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell)))
         case(+6)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F6(u(@:,llCell),u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell)))
         case(-6)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F6(u(@:,rrCell),u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell),u(@:,llllCell)))
         case(+7)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F7(u(@:,lllCell),u(@:,llCell),u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell)))
         case(-7)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F7(u(@:,rrrCell),u(@:,rrCell),u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell),u(@:,llllCell)))
         case(+8)
           vBar(:,@:,iCell) -= &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F8(u(@:,lllCell),u(@:,llCell),u(@:,lCell),u(@:,iCell), &
             &         u(@:,rCell),u(@:,rrCell),u(@:,rrrCell),u(@:,rrrrCell),u(@:,rrrrrCell)))
         case(-8)
           vBar(:,@:,iCell) += &
-            & (nOverDx(:,iCellFace).outer.&
+            & (nOverDx(:,iCellFace).outer. &
             &  FD1_F8(u(@:,rrrCell),u(@:,rrCell),u(@:,rCell),u(@:,iCell), &
             &         u(@:,lCell),u(@:,llCell),u(@:,lllCell),u(@:,llllCell),u(@:,lllllCell)))
         end select
@@ -598,81 +598,81 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar)
         select case(d(iCellFace)*ACCURACY_ORDER)
         case(-1)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F1(uBar(:,@:,iCell),uBar(:,@:,rCell)))
         case(+1)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F1(uBar(:,@:,iCell),uBar(:,@:,lCell)))
         case(-2)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F2(uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell)))
         case(+2)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F2(uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell)))
         case(-3)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F3(uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell)))
         case(+3)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F3(uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell)))
         case(-4)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F4(uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell)))
         case(+4)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F4(uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell)))
         case(-5)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F5(uBar(:,@:,llCell),uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell)))
         case(+5)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F5(uBar(:,@:,rrCell),uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell)))
         case(-6)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F6(uBar(:,@:,llCell),uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell)))
         case(+6)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F6(uBar(:,@:,rrCell),uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell),uBar(:,@:,llllCell)))
         case(-7)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F7(uBar(:,@:,lllCell),uBar(:,@:,llCell),uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell)))
         case(+7)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F7(uBar(:,@:,rrrCell),uBar(:,@:,rrCell),uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell),uBar(:,@:,llllCell)))
         case(-8)
           v(@:,iCell) -= &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F8(uBar(:,@:,lllCell),uBar(:,@:,llCell),uBar(:,@:,lCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,rrCell),uBar(:,@:,rrrCell),uBar(:,@:,rrrrCell), &
             &                                                               uBar(:,@:,rrrrrCell)))
         case(+8)
           v(@:,iCell) += &
-            & (nOverDx(:,iCellFace).inner.&
+            & (nOverDx(:,iCellFace).inner. &
             &  FD1_F8(uBar(:,@:,rrrCell),uBar(:,@:,rrCell),uBar(:,@:,rCell),uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,llCell),uBar(:,@:,lllCell),uBar(:,@:,llllCell), &
             &                                                               uBar(:,@:,lllllCell)))

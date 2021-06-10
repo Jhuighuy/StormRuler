@@ -30,13 +30,13 @@ use StormRuler_Parameters
 implicit none  
 
 interface operator(.inner.)
-#@do rank = 0, NumRanks-1
+#@do rank = 0, NUM_RANKS-1
   module procedure Inner$rank
 #@end do
 end interface
 
 interface operator(.outer.)
-#@do rank = 0, NumRanks-1
+#@do rank = 0, NUM_RANKS-1
   module procedure Outer$rank
 #@end do
 end interface
@@ -114,7 +114,7 @@ pure function Inner$0(v,w) result(u)
   ! >>>>>>>>>>>>>>>>>>>>>>
   u = dot_product(v, w)
 end function Inner$0
-#@do rank = 1, NumRanks-1
+#@do rank = 1, NUM_RANKS-1
 pure function Inner$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(:,@:)
@@ -137,7 +137,7 @@ pure function Outer$0(v,w) result(u)
   ! >>>>>>>>>>>>>>>>>>>>>>
   u(:) = v(:)*w
 end function Outer$0
-#@do rank = 1, NumRanks-1
+#@do rank = 1, NUM_RANKS-1
 pure function Outer$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(@:)

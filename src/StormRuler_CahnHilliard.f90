@@ -26,7 +26,7 @@ module StormRuler_CahnHilliard
 
 use StormRuler_Helpers
 use StormRuler_Mesh
-use StormRuler_FiniteDifferences
+use StormRuler_FDM_Operators
 use StormRuler_KrylovSolvers
   
 implicit none

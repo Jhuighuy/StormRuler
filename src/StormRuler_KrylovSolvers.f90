@@ -44,7 +44,7 @@ end type
 private ConvParameters_Init, ConvParameters_Check
 
 abstract interface
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   subroutine MeshOperator$rank(mesh,u,c,opParams)
     import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
@@ -55,13 +55,13 @@ abstract interface
 end interface
 
 interface Solve_CG
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Solve_CG$rank
 #@end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
   module procedure Solve_BiCGStab$rank
 #@end do
 end interface Solve_BiCGStab
@@ -128,7 +128,7 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
 subroutine Solve_CG$rank(mesh &
                         ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -181,7 +181,7 @@ end subroutine Solve_CG$rank
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-#@do rank = 0, NumRanks
+#@do rank = 0, NUM_RANKS
 subroutine Solve_BiCGStab$rank(mesh &
                               ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<

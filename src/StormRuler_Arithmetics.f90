@@ -116,7 +116,7 @@ subroutine Fill$rank(mesh,u,alpha)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a
-  a = 0.0_dp; if (present(alpha)) a = alpha
+  a = merge(alpha,1.0_dp,present(alpha))
   ! ----------------------
   !$omp parallel do default(none) shared(u,a)
   do iCell = 1, mesh%NumCells

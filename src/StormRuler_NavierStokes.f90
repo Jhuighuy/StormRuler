@@ -25,7 +25,7 @@
 module StormRuler_NavierStokes
 
 use StormRuler_Helpers
-use StormRuler_FiniteDifferences
+use StormRuler_FDM_Operators
 use StormRuler_KrylovSolvers
 
 implicit none

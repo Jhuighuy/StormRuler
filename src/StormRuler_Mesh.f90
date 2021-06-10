@@ -160,8 +160,8 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
     mesh%Dx(:) = [xDelta,xDelta,yDelta,yDelta]
     allocate(mesh%Dn(1:2,1:4))
     mesh%Dn(:,1) = [mesh%Dx(1),0.0_dp]
-    mesh%Dn(:,2) = [mesh%Dx(1),0.0_dp]
-    mesh%Dn(:,3) = [0.0_dp,mesh%Dx(2)]
+    mesh%Dn(:,2) = [0.0_dp,mesh%Dx(2)]
+    mesh%Dn(:,3) = [mesh%Dx(1),0.0_dp]
     mesh%Dn(:,4) = [0.0_dp,mesh%Dx(2)]
     mesh%NumCellFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells,1:3))

@@ -29,17 +29,17 @@ use StormRuler_Parameters
 
 implicit none  
 
-interface Inner
+interface operator(.inner.)
 #@do rank = 0, NumRanks-1
   module procedure Inner$rank
 #@end do
-end interface Inner
+end interface
 
-interface Outer
+interface operator(.outer.)
 #@do rank = 0, NumRanks-1
   module procedure Outer$rank
 #@end do
-end interface Outer
+end interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 contains

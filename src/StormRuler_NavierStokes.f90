@@ -60,9 +60,9 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
   real(dp), intent(inout) :: v(:,:),g(:,:),p(:),c(:),s(:)
   real(dp), intent(in) :: nu,rho,beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: z(:,:),w(:,:),d(:),q(:),h(:)
-  allocate(w,z, mold=v)
-  allocate(d,h,q, mold=p)
+  real(dp), allocatable :: z(:,:),w(:,:),d(:),h(:)
+  allocate(w,z,mold=v)
+  allocate(d,h,mold=p)
   associate(dt=>mesh%dt)
     ! z ← 0,
     ! z ← z - dt/ρ⋅∇s,
@@ -95,4 +95,3 @@ subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
 end subroutine NavierStokes_PredictVelocity
 
 end module StormRuler_NavierStokes
-    

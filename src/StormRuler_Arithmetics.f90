@@ -261,7 +261,7 @@ subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! ----------------------
   !$omp parallel do default(none) shared(u,vBar,wBar)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = Inner(vBar(:,iCell),wBar(:,@:,iCell))
+    u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul_Inner$rank
@@ -281,7 +281,7 @@ subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! ----------------------
   !$omp parallel do default(none) shared(uHat,vBar,wBar)
   do iCell = 1, mesh%NumCells
-    uHat(:,@:,iCell) = Outer(vBar(:,iCell),wBar(@:,iCell))
+    uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul_Outer$rank

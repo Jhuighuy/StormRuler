@@ -35,7 +35,7 @@ use StormRuler_Mesh
 
 implicit none
 
-integer, parameter :: ACCURACY_ORDER = 8
+integer, parameter :: ACCURACY_ORDER = 4
 
 private :: FD1_C2,FD1_C4,FD1_C6,FD1_C8
 
@@ -523,6 +523,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
           vBar(:,@:,iCell) += &
             & (nOverDx(:,iCellFace).outer. &
             &  FD1_F1(u(@:,iCell),u(@:,lCell)))
+        ! ----------------------
         case(+2)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -533,6 +534,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             & (nOverDx(:,iCellFace).outer. &
             &  FD1_F2(u(@:,iCell), &
             &         u(@:,lCell),u(@:,l2Cell)))
+        ! ----------------------
         case(+3)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -545,6 +547,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             &  FD1_F3(u(@:,iCell), &
             &         u(@:,rCell), &
             &         u(@:,lCell),u(@:,l2Cell)))
+        ! ----------------------
         case(+4)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -557,6 +560,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             &  FD1_F4(u(@:,iCell), &
             &         u(@:,rCell), &
             &         u(@:,lCell),u(@:,l2Cell),u(@:,l3Cell)))
+        ! ----------------------
         case(+5)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -569,6 +573,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             &  FD1_F5(u(@:,iCell), &
             &         u(@:,rCell),u(@:,r2Cell), &
             &         u(@:,lCell),u(@:,l2Cell),u(@:,l3Cell)))
+        ! ----------------------
         case(+6)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -583,6 +588,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             &         u(@:,rCell),u(@:,r2Cell), &
             &         u(@:,lCell),u(@:,l2Cell),u(@:,l3Cell), &
             &                                  u(@:,l4Cell)))
+        ! ----------------------
         case(+7)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -597,6 +603,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
             &         u(@:,rCell),u(@:,r2Cell),u(@:,r3Cell), &
             &         u(@:,lCell),u(@:,l2Cell),u(@:,l3Cell), &
             &                                  u(@:,l4Cell)))
+        ! ----------------------
         case(+8)
           vBar(:,@:,iCell) -= &
             & (nOverDx(:,iCellFace).outer. &
@@ -686,6 +693,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
           v(@:,iCell) += &
             & (nOverDx(:,iCellFace).inner. &
             &  FD1_F1(uBar(:,@:,iCell),uBar(:,@:,lCell)))
+        ! ----------------------
         case(-2)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -696,6 +704,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
             & (nOverDx(:,iCellFace).inner. &
             &  FD1_F2(uBar(:,@:,iCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell)))
+        ! ----------------------
         case(-3)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -708,6 +717,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
             &  FD1_F3(uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell)))
+        ! ----------------------
         case(-4)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -717,8 +727,10 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
         case(+4)
           v(@:,iCell) += &
             & (nOverDx(:,iCellFace).inner. &
-            &  FD1_F4(uBar(:,@:,rCell),uBar(:,@:,iCell), &
+            &  FD1_F4(uBar(:,@:,iCell), &
+            &         uBar(:,@:,rCell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell),uBar(:,@:,l3Cell)))
+        ! ----------------------
         case(-5)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -731,6 +743,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
             &  FD1_F5(uBar(:,@:,iCell), &
             &         uBar(:,@:,rCell),uBar(:,@:,r2Cell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell),uBar(:,@:,l3Cell)))
+        ! ----------------------
         case(-6)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -745,6 +758,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
             &         uBar(:,@:,rCell),uBar(:,@:,r2Cell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell),uBar(:,@:,l3Cell), &
             &                                            uBar(:,@:,l4Cell)))
+        ! ----------------------
         case(-7)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &
@@ -759,6 +773,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
             &         uBar(:,@:,rCell),uBar(:,@:,r2Cell),uBar(:,@:,r3Cell), &
             &         uBar(:,@:,lCell),uBar(:,@:,l2Cell),uBar(:,@:,l3Cell), &
             &                                            uBar(:,@:,l4Cell)))
+        ! ----------------------
         case(-8)
           v(@:,iCell) -= &
             & (nOverDx(:,iCellFace).inner. &

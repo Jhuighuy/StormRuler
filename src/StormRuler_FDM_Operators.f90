@@ -424,7 +424,7 @@ elemental function FD1_F7(u, &
   real(dp) :: du
   ! >>>>>>>>>>>>>>>>>>>>>>
   du = (-001.0_dp/105.0_dp)*u_l3 + &
-    &  (-001.0_dp/010.0_dp)*u_l2 + &
+    &  (+001.0_dp/010.0_dp)*u_l2 + &
     &  (-003.0_dp/005.0_dp)*u_l  + &
     &  (-001.0_dp/004.0_dp)*u    + &
     &                       u_r  + &
@@ -542,7 +542,8 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u, &
         case(-3)
           vBar(:,@:,iCell) += &
             & (nOverDx(:,iCellFace).outer. &
-            &  FD1_F3(u(@:,rCell),u(@:,iCell), &
+            &  FD1_F3(u(@:,iCell), &
+            &         u(@:,rCell), &
             &         u(@:,lCell),u(@:,l2Cell)))
         case(+4)
           vBar(:,@:,iCell) -= &

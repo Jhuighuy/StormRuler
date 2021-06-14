@@ -143,8 +143,7 @@ end function FD1_C6
 !! ----------------------------------------------------------------- !!
 elemental function FD1_C8(u_llll,u_lll,u_ll,u_l,u_r,u_rr,u_rrr,u_rrrr) result(du)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: u_r,u_rr,u_rrr,u_rrrr
-  real(dp), intent(in) :: u_l,u_ll,u_lll,u_llll
+  real(dp), intent(in) :: u_llll,u_lll,u_ll,u_l,u_r,u_rr,u_rrr,u_rrrr
   real(dp) :: du
    ! >>>>>>>>>>>>>>>>>>>>>>
   du = (-001.0_dp/280.0_dp)*u_rrrr + &
@@ -995,7 +994,7 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
       &   cellToCell=>mesh%CellToCell1, &
-      &       dx2Inv=>lambda/(mesh%Dx**2))
+      &       dxSqrInv=>lambda/(mesh%Dx**2))
     ! ----------------------
     !$omp parallel do default(none) shared(u,v)
     do iCell = 1, numCells; block
@@ -1023,31 +1022,31 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
         select case(ACCURACY_ORDER)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dx2Inv(iCellFace)* &
-              &   FD2_C2(u(@:,lCell), &
-              &          u(@:,iCell), &
-              &          u(@:,rCell)) )
+              & ( dxSqrInv(iCellFace) * &
+              &     FD2_C2(u(@:,lCell), &
+              &            u(@:,iCell), &
+              &            u(@:,rCell)) )
           case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dx2Inv(iCellFace)* &
-              &   FD2_C4(u(@:,llCell), &
-              &          u(@:, lCell), &
-              &          u(@:, iCell), &
-              &          u(@:, rCell), &
-              &          u(@:,rrCell)) )
+              & ( dxSqrInv(iCellFace) * &
+              &    FD2_C4(u(@:,llCell), &
+              &           u(@:, lCell), &
+              &           u(@:, iCell), &
+              &           u(@:, rCell), &
+              &           u(@:,rrCell)) )
           case(5:6)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dx2Inv(iCellFace)* &
+              & ( dxSqrInv(iCellFace) * &
               &   FD2_C6(u(@:,lllCell), &
               &          u(@:, llCell), &
               &          u(@:,  lCell), &
               &          u(@:,  iCell), &
               &          u(@:,  rCell), &
               &          u(@:, rrCell), &
-              &          u(@:,rrrCell)))
+              &          u(@:,rrrCell)) )
           case(7:8)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dx2Inv(iCellFace)* &
+              & ( dxSqrInv(iCellFace) * &
               &   FD2_C8(u(@:,llllCell), &
               &          u(@:, lllCell), &
               &          u(@:,  llCell), &

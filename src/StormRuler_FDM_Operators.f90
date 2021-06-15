@@ -183,7 +183,7 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces/2; block
+      do iCellFace = 1, numCellFaces/2
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
@@ -242,7 +242,7 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
               &                   u(@:, rrrCell), &
               &                   u(@:,rrrrCell)) )
         end select
-      end block; end do
+      end do
     end block; end do
     !$omp end parallel do
   end associate
@@ -355,7 +355,6 @@ elemental function FD1_F1(u,u_r) result(du)
   ! >>>>>>>>>>>>>>>>>>>>>>
   du = u_r - u
 end function FD1_F1
-!! ----------------------------------------------------------------- !!
 
 !! ----------------------------------------------------------------- !!
 !! Second order accuracy forward undivided finite difference.
@@ -386,7 +385,6 @@ elemental function FD1_F3(u_l, &
     &                   u_r + &
     &  (-1.0_dp/6.0_dp)*u_rr
 end function FD1_F3
-!! ----------------------------------------------------------------- !!
 
 !! ----------------------------------------------------------------- !!
 !! Fourth order accuracy forward undivided finite difference.
@@ -472,7 +470,6 @@ elemental function FD1_F8(u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr,u_rrrrr) result
     &  (-001.0_dp/028.0_dp)*u_rrrr + &
     &  (+001.0_dp/280.0_dp)*u_rrrrr
 end function FD1_F8
-!! ----------------------------------------------------------------- !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! The forward FDM-approximate gradient: v̅ ← v̅ - λ∇ₕu.

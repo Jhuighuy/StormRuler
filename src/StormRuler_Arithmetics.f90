@@ -26,7 +26,7 @@ module StormRuler_Arithmetics
 
 use StormRuler_Mesh
 use StormRuler_Parameters
-#@use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Parameters.f90'
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -34,51 +34,51 @@ use StormRuler_Parameters
 implicit none
 
 interface Fill
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Fill$rank
-#@end do
+#$end do
 end interface Fill
 
 interface Set
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Set$rank
-#@end do
+#$end do
 end interface Set
 
 interface Dot
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Dot$rank
-#@end do
+#$end do
 end interface Dot
 
 interface Add
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Add$rank
-#@end do
+#$end do
 end interface Add
 
 interface Sub
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Sub$rank
-#@end do
+#$end do
 end interface Sub
 
 interface Mul
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Mul$rank
-#@end do
+#$end do
 end interface Mul
 
 interface Mul_Inner
-#@do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-1
   module procedure Mul_Inner$rank
-#@end do
+#$end do
 end interface Mul_Inner
 
 interface Mul_Outer
-#@do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-1
   module procedure Mul_Outer$rank
-#@end do
+#$end do
 end interface Mul_Outer
 
 abstract interface
@@ -88,7 +88,7 @@ abstract interface
     real(dp) :: f
   end function MathFunc$0
 end interface
-#@do rank = 1, NUM_RANKS
+#$do rank = 1, NUM_RANKS
 abstract interface
   pure function MathFunc$rank(x) result(f)
     import dp
@@ -96,12 +96,12 @@ abstract interface
     real(dp) :: f(@{size(x,dim=$$+1)}@)
   end function MathFunc$rank
 end interface
-#@end do
+#$end do
 
 interface ApplyFunc
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure ApplyFunc$rank
-#@end do
+#$end do
 end interface ApplyFunc
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -112,7 +112,7 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: u ← α.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Fill$rank(mesh,u,alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -129,12 +129,12 @@ subroutine Fill$rank(mesh,u,alpha)
   end do
   !$omp end parallel do
 end subroutine Fill$rank
-#@end do
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! u ← v
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Set$rank(mesh,u,v)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -149,12 +149,12 @@ subroutine Set$rank(mesh,u,v)
   end do
   !$omp end parallel do
 end subroutine Set$rank
-#@end do
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute dot product: d ← <u⋅v>.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 function Dot$rank(mesh,u,v) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -167,16 +167,16 @@ function Dot$rank(mesh,u,v) result(d)
   associate(dv=>product(mesh%Dx))
     !$omp parallel do default(none) shared(u,v) reduction(+:d)
     do iCell = 1, mesh%NumCells
-#@if rank == 0
+#$if rank == 0
       d += dv*u(iCell)*v(iCell)
-#@else
+#$else
       d += dv*sum(u(@:,iCell)*v(@:,iCell))
-#@end if
+#$end if
     end do
     !$omp end parallel do
   end associate
 end function Dot$rank
-#@end do
+#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -184,7 +184,7 @@ end function Dot$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: u ← βv + αw.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Add$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -203,13 +203,13 @@ subroutine Add$rank(mesh,u,v,w,alpha,beta)
   end do
   !$omp end parallel do
 end subroutine Add$rank
-#@end do
+#$end do
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: u ← βv - αw.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -228,7 +228,7 @@ subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   end do
   !$omp end parallel do
 end subroutine Sub$rank
-#@end do
+#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -236,7 +236,7 @@ end subroutine Sub$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute "u̅ ← v̅w".
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Mul$rank(mesh,u,v,w)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -251,12 +251,12 @@ subroutine Mul$rank(mesh,u,v,w)
   end do
   !$omp end parallel do
 end subroutine Mul$rank
-#@end do
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute an inner product: u ← v̅⋅w̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-1
 subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -271,12 +271,12 @@ subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   end do
   !$omp end parallel do
 end subroutine Mul_Inner$rank
-#@end do
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute an outer product: û ← v̅⊗w̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-1
 subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -291,7 +291,7 @@ subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   end do
   !$omp end parallel do
 end subroutine Mul_Outer$rank
-#@end do
+#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -299,7 +299,7 @@ end subroutine Mul_Outer$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: v ← f(u).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine ApplyFunc$rank(mesh,v,u,f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
@@ -315,6 +315,6 @@ subroutine ApplyFunc$rank(mesh,v,u,f)
   end do
   !$omp end parallel do
 end subroutine ApplyFunc$rank
-#@end do
+#$end do
 
 end module StormRuler_Arithmetics

@@ -27,7 +27,7 @@ module StormRuler_KrylovSolvers
 use StormRuler_Helpers
 use StormRuler_Arithmetics
 use StormRuler_Mesh
-#@use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Parameters.f90'
 
 implicit none
 
@@ -44,26 +44,26 @@ end type
 private ConvParameters_Init, ConvParameters_Check
 
 abstract interface
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   subroutine MeshOperator$rank(mesh,u,c,opParams)
     import Mesh2D, dp
     class(Mesh2D), intent(in) :: mesh
     real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator$rank
-#@end do
+#$end do
 end interface
 
 interface Solve_CG
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Solve_CG$rank
-#@end do
+#$end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
   module procedure Solve_BiCGStab$rank
-#@end do
+#$end do
 end interface Solve_BiCGStab
 
 contains
@@ -128,7 +128,7 @@ end function ConvParameters_Check
 !! -----------------------------------------------------------------  
 !! Solve a linear self-adjoint definite 
 !! operator equation using the Conjugate Gradients method.
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Solve_CG$rank(mesh &
                         ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -176,12 +176,12 @@ subroutine Solve_CG$rank(mesh &
     gamma = alpha
   end do
 end subroutine Solve_CG$rank
-#@end do
+#$end do
 
 !! -----------------------------------------------------------------  
 !! Solve a linear operator equation using 
 !! the good old Biconjugate Gradients (stabilized) method.
-#@do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS
 subroutine Solve_BiCGStab$rank(mesh &
                               ,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -244,6 +244,6 @@ subroutine Solve_BiCGStab$rank(mesh &
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return
   end do
 end subroutine Solve_BiCGStab$rank
-#@end do
+#$end do
 
 end module StormRuler_KrylovSolvers

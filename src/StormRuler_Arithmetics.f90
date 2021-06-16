@@ -164,7 +164,7 @@ function Dot$rank(mesh,u,v) result(d)
   integer :: iCell
   ! ----------------------
   d = 0.0_dp
-  associate(dv=>product(mesh%Dx))
+  associate(dv=>product(mesh%dl))
     !$omp parallel do default(none) shared(u,v) reduction(+:d)
     do iCell = 1, mesh%NumCells
 #$if rank == 0

@@ -52,9 +52,9 @@ end function CahnHilliardParams_ddCDoubleWell
 
 !! -----------------------------------------------------------------  
 !! Estimate the Ginzburg-Landau free energy functional value.
-function CahnHilliard_FreeEnergy(nX,nY,dX,dY, C,CHPhysParams) result(E)
+function CahnHilliard_FreeEnergy(nX,nY,dl,dY, C,CHPhysParams) result(E)
   integer, intent(in) :: nX, nY
-  real(8), intent(in) :: dX, dY
+  real(8), intent(in) :: dl, dY
   real(8), dimension(0:nX+1,0:nY+1), intent(inout) :: C
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   real(8) :: E
@@ -66,7 +66,7 @@ function CahnHilliard_FreeEnergy(nX,nY,dX,dY, C,CHPhysParams) result(E)
     !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
     do iY = 1, nY
       do iX = 1, nX
-        E = E + dX*dY*CHPhysParams%F(C(iX,iY))
+        E = E + dl*dY*CHPhysParams%F(C(iX,iY))
       end do
     end do
     !$omp end parallel do
@@ -75,14 +75,14 @@ function CahnHilliard_FreeEnergy(nX,nY,dX,dY, C,CHPhysParams) result(E)
     !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
     do iY = 1, nY
       do iX = 0, nX
-        E = E + 0.5*CHPhysParams%EpsSqr * (dY/dX)*(C(iX+1,iY) - C(iX,iY))
+        E = E + 0.5*CHPhysParams%EpsSqr * (dY/dl)*(C(iX+1,iY) - C(iX,iY))
       end do
     end do
     !$omp end parallel do
     !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
     do iY = 0, nY
       do iX = 1, nX
-        E = E + 0.5*CHPhysParams%EpsSqr * (dX/dY)*(C(iX,iY+1) - C(iX,iY))
+        E = E + 0.5*CHPhysParams%EpsSqr * (dl/dY)*(C(iX,iY+1) - C(iX,iY))
       end do
     end do
     !$omp end parallel do
@@ -148,7 +148,7 @@ subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
   ! ----------------------
   ! Initialize iterations.
   allocate(Params)
-  call Params%Init(mesh%Dx(1)*mesh%Dx(1)*1.0D-4, mesh%Dx(1)*mesh%Dx(1)*1.0D-4, 100000)
+  call Params%Init(mesh%dl(1)*mesh%dl(1)*1.0D-4, mesh%dl(1)*mesh%dl(1)*1.0D-4, 100000)
   ! ----------------------
   allocate(b, mold=c)
   call CahnHilliard_ImplicitSchemeRHS(mesh,c,v,b,CHPhysParams)

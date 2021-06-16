@@ -26,24 +26,83 @@ module StormRuler_Mesh
 
 use StormRuler_Helpers
 
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
 implicit none
 
-type Cell2D
-  integer :: x
-end type Cell2D
-
-!! -----------------------------------------------------------------  
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Semi-structured 2D mesh.
-type Mesh2D
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+type :: Mesh2D
+  ! ----------------------
+  ! Number of interior cells.
+  ! This value should be used for field operations.
+  ! ----------------------
+  integer :: NumCells
+  ! ----------------------
+  ! Total number of cells (including interior and ghost cells).
+  ! This value should be used for field allocation.
+  ! ----------------------
+  integer :: NumAllCells
+
+  ! ----------------------
+  ! Number of faces (edges in 2D) per each cell.
+  ! ----------------------
   integer :: NumCellFaces
-  integer :: NumCells, NumAllCells
-  real(dp) :: Dt
-  real(dp), allocatable :: Dx(:)
-  real(dp), allocatable :: Dn(:,:)
-  real(dp), allocatable :: CellCenter(:,:)
+
+  ! ----------------------
+  ! Mesh dimension.
+  ! ----------------------
+  integer :: Dimensions
+  ! ----------------------
+  ! Multidimensional index bounds table.
+  ! Shape is [1,Dimensions].
+  ! ----------------------
+  integer, allocatable :: MDIndexBounds(:)
+  ! ----------------------
+  ! Cell multidimensional index table.
+  ! Shape is [1,Dimensions]×[1,NumCells].
+  ! ----------------------
+  integer, allocatable :: CellMDIndex(:,:)
+
+  ! ----------------------
+  ! Cell connectivity table.
+  ! Shape is [-NumCellFaces/2,+NumCellFaces/2]×[1,NumAllCells].
+  ! ----------------------
   integer, allocatable :: CellToCell(:,:), CellToCell1(:,:)
-  integer, allocatable :: CellToIndex(:,:,:)
-  type(Cell2D), allocatable :: hui(:)
+
+  ! ----------------------
+  ! Number of boundary condition marks.
+  ! ----------------------
+  integer :: NumBCMs
+  ! ----------------------
+  ! BC mark to boundary cell index (in CSR format).
+  ! ----------------------
+  integer, allocatable :: BCMs(:)
+  integer, allocatable :: BCMToCell(:)
+  integer, allocatable :: BCMToCellFace(:)
+
+  ! ----------------------
+  ! Temporal step value.
+  ! ----------------------
+  real(dp) :: dt
+  ! ----------------------
+  ! Distance between centers of the adjacent cells per face.
+  ! Shape is [-NumCellFaces/2,+NumCellFaces/2].
+  ! ----------------------
+  real(dp), allocatable :: dl(:)
+  ! ----------------------
+  ! Difference between centers of the adjacent cells per face.
+  ! Shape is [1,Dimensions]×[-NumCellFaces/2,+NumCellFaces/2].
+  ! ----------------------
+  real(dp), allocatable :: dr(:,:)
+  ! ----------------------
+  ! Cell center coordinates.
+  ! Shape is [1,Dimensions]×[1,NumCells].
+  ! ----------------------
+  real(dp), allocatable :: CellCenter(:,:)
+
 contains
   procedure :: InitRect => Mesh2D_InitRect
 end type Mesh2D
@@ -75,10 +134,6 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
   integer, intent(in), optional :: numLayers
   integer :: xNumLayers,yNumLayers
   integer, allocatable :: cellToIndex(:,:)
-  ! ----------------------
-  allocate(mesh%hui(1:2))
-  mesh%hui(1)%x = 14
-  mesh%hui(2)%x = 88
   ! ----------------------
   ! Set up amount of layers.
   block
@@ -156,13 +211,13 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
   ! Fill the cell geometry and connectivity.
   block
     integer :: iCell, xCell,yCell
-    allocate(mesh%Dx(1:4))
-    mesh%Dx(:) = [xDelta,xDelta,yDelta,yDelta]
-    allocate(mesh%Dn(1:2,1:4))
-    mesh%Dn(:,1) = [mesh%Dx(1),0.0_dp]
-    mesh%Dn(:,2) = [0.0_dp,mesh%Dx(2)]
-    mesh%Dn(:,3) = [mesh%Dx(1),0.0_dp]
-    mesh%Dn(:,4) = [0.0_dp,mesh%Dx(2)]
+    allocate(mesh%dl(1:4))
+    mesh%dl(:) = [xDelta,xDelta,yDelta,yDelta]
+    allocate(mesh%dr(1:2,1:4))
+    mesh%dr(:,1) = [mesh%dl(1),0.0_dp]
+    mesh%dr(:,2) = [0.0_dp,mesh%dl(2)]
+    mesh%dr(:,3) = [mesh%dl(1),0.0_dp]
+    mesh%dr(:,4) = [0.0_dp,mesh%dl(2)]
     mesh%NumCellFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells,1:3))
     allocate(mesh%CellToCell(1:mesh%NumAllCells,1:4))

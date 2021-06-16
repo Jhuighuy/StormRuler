@@ -39,7 +39,7 @@ subroutine SolvePoisson(mesh,u,f)
   ! ----------------------
   ! Initialize iterations.
   allocate(Params)
-  call Params%Init(mesh%Dx(1)*mesh%Dx(1)*1.0D-4, mesh%Dx(1)*mesh%Dx(1)*1.0D-4, 100000)
+  call Params%Init(mesh%Dl(1)*mesh%Dl(2)*1.0D-4, mesh%Dl(1)*mesh%Dl(1)*1.0D-4, 100000)
   ! ----------------------
   call Fill(mesh,u)
   call Solve_BiCGStab(mesh,u,f&

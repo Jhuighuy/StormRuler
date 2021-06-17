@@ -25,6 +25,7 @@
 module StormRuler_Mesh
 
 use StormRuler_Helpers
+use StormRuler_IO
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -36,6 +37,16 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 type :: Mesh2D
   ! ----------------------
+  ! Mesh dimension.
+  ! ----------------------
+  integer :: Dimensions
+
+  ! ----------------------
+  ! Number of faces (edges in 2D) per each cell.
+  ! ----------------------
+  integer :: NumCellFaces
+
+  ! ----------------------
   ! Number of interior cells.
   ! This value should be used for field operations.
   ! ----------------------
@@ -46,15 +57,6 @@ type :: Mesh2D
   ! ----------------------
   integer :: NumAllCells
 
-  ! ----------------------
-  ! Number of faces (edges in 2D) per each cell.
-  ! ----------------------
-  integer :: NumCellFaces
-
-  ! ----------------------
-  ! Mesh dimension.
-  ! ----------------------
-  integer :: Dimensions
   ! ----------------------
   ! Multidimensional index bounds table.
   ! Shape is [1,Dimensions].
@@ -105,23 +107,134 @@ type :: Mesh2D
 
 contains
   procedure :: InitRect => Mesh2D_InitRect
+  procedure :: InitFromImage2D => Mesh2D_InitFromImage2D
 end type Mesh2D
 !! -----------------------------------------------------------------  
 
 private Mesh2D_InitRect
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-contains
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-!! -----------------------------------------------------------------  
-!subroutine Mesh2D_Init(mesh, &
-!                       xNumCells,yNumCells)
-!  ! <<<<<<<<<<<<<<<<<<<<<<
-!  class(Mesh2D), intent(inout) :: mesh
-!  ! >>>>>>>>>>>>>>>>>>>>>>
-!end subroutine Mesh2D_Init
-!! -----------------------------------------------------------------  
+contains
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Initialize a 2D mesh from image.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh2D_InitFromImage2D(mesh,image,numBCLayers, &
+  & colorToBCM,fluidColor,solidColor)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(Mesh2D), intent(inout) :: mesh
+  integer, intent(in) :: image(0:,0:),colorToBCM(:,:),numBCLayers
+  integer, intent(in), optional :: fluidColor,solidColor
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: aFluidColor,aSolidColor
+  aFluidColor = merge(fluidColor,PixelToInt([0,0,0]),present(fluidColor))
+  aSolidColor = merge(solidColor,PixelToInt([1,1,1]),present(solidColor))
+  ! ----------------------
+  block
+    ! ----------------------
+    ! Fill dimensions, number of cell faces
+    ! and multidimensional index bounds.
+    ! ----------------------
+    mesh%Dimensions = 2
+    mesh%NumCellFaces = 4
+    mesh%MDIndexBounds = [size(image,dim=1)-2,size(image,dim=2)-2]
+    print *, 'MD index bounds', mesh%MDIndexBounds
+  end block
+  ! ----------------------
+  block
+    integer :: xCell,yCell,iCell,gCell
+    integer, allocatable :: MDIndexToCell(:,:)
+    ! ----------------------
+    ! PASS I:
+    !   Fill MD index to cell table,
+    !   compute number of interior and BC cells. 
+    ! ----------------------
+    iCell = 0; gCell = 0
+    allocate( MDIndexToCell(mesh%MDIndexBounds(1), &
+      &                     mesh%MDIndexBounds(2)) )
+    !$omp parallel do collapse(2) reduction(+:iCell) &
+    !$omp reduction(+:gCell) default(none) private(xCell) &
+    !$omp shared(MDIndexToCell) shared(image,numBCLayers,aFluidColor)
+    do yCell = 1, mesh%MDIndexBounds(2)
+      do xCell = 1, mesh%MDIndexBounds(1)
+        if (image(xCell,yCell) /= aFluidColor) cycle
+        ! ----------------------
+        iCell = iCell + 1; gCell = gCell + 1
+        if (image(xCell+1,yCell) /= aFluidColor) &
+          &             gCell = gCell + numBCLayers
+        if (image(xCell-1,yCell) /= aFluidColor) &
+          &             gCell = gCell + numBCLayers
+        if (image(xCell,yCell+1) /= aFluidColor) &
+          &             gCell = gCell + numBCLayers
+        if (image(xCell,yCell-1) /= aFluidColor) &
+          &             gCell = gCell + numBCLayers
+        ! ----------------------
+        MDIndexToCell(xCell,yCell) = iCell
+      end do
+    end do
+    !$omp end parallel do
+    mesh%NumCells = iCell; mesh%NumAllCells = gCell
+    print *, 'MESH CONTAINS', mesh%NumCells, 'CELLS, ', mesh%NumAllCells, 'IN TOTAL'
+    ! ----------------------
+    ! PASS II:
+    !   Fill Cell to MD index table,
+    !   compute number of interior and BC cells. 
+    ! ----------------------
+    gCell = mesh%NumCells + 1
+    allocate( mesh%CellMDIndex(mesh%Dimensions,mesh%NumCells ) )
+    allocate( mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells) )
+    !$omp parallel do collapse(2) default(none) private(xCell,iCell) &
+    !$omp shared(mesh,MDIndexToCell,gCell) shared(image,numBCLayers,aFluidColor)
+    do yCell = 1, mesh%MDIndexBounds(2)
+      do xCell = 1, mesh%MDIndexBounds(1)
+        if (image(xCell,yCell) /= aFluidColor) cycle
+        ! ----------------------
+        iCell = MDIndexToCell(xCell,yCell)
+        mesh%CellToCell(0,iCell) = iCell
+        ! ----------------------
+        if (image(xCell+1,yCell) == aFluidColor) then
+          mesh%CellToCell(+1,iCell) = MDIndexToCell(xCell+1,yCell)
+        else
+          !$omp critical(generateBCCells)
+          mesh%CellToCell(+1,iCell) = gCell
+          gCell = gCell + numBCLayers
+          !$omp end critical(generateBCCells)
+        end if
+        if (image(xCell-1,yCell) == aFluidColor) then
+          mesh%CellToCell(-1,iCell) = MDIndexToCell(xCell-1,yCell)
+        else
+          !$omp critical(generateBCCells)
+          mesh%CellToCell(-1,iCell) = gCell
+          gCell = gCell + numBCLayers
+          !$omp end critical(generateBCCells)
+        end if
+        ! ----------------------
+        if (image(xCell,yCell+1) == aFluidColor) then
+          mesh%CellToCell(+2,iCell) = MDIndexToCell(xCell,yCell+1)
+        else
+          !$omp critical(generateBCCells)
+          mesh%CellToCell(+2,iCell) = gCell
+          gCell = gCell + numBCLayers
+          !$omp end critical(generateBCCells)
+        end if
+        if (image(xCell,yCell-1) == aFluidColor) then
+          mesh%CellToCell(-2,iCell) = MDIndexToCell(xCell,yCell-1)
+        else
+          !$omp critical(generateBCCells)
+          mesh%CellToCell(-2,iCell) = gCell
+          gCell = gCell + numBCLayers
+          !$omp end critical(generateBCCells)
+        end if
+        ! ----------------------
+        mesh%CellMDIndex(:,iCell) = [xCell,yCell]
+      end do
+    end do
+    !$omp end parallel do
+    print *, mesh%NumAllCells, gCell
+    end block
+end subroutine Mesh2D_InitFromImage2D
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.

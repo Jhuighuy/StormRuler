@@ -86,7 +86,8 @@ program nsch
   Real(8), Dimension(:), Allocatable :: C,p,s
   Real(8), Dimension(:,:), Allocatable :: w,v,f
   type(CahnHilliardParams) :: CH
-  class(Mesh2D), allocatable :: mesh
+  class(Mesh2D), allocatable :: mesh, mesh1
+  integer, allocatable :: colorToBCM(:,:)
   
   ! ----------------------
   ! Print an epic banner.
@@ -102,7 +103,14 @@ program nsch
   print *, ''
 
   
-  !call Load_PPM('test/Domain.ppm',pixels)
+  allocate(mesh1)
+  call Load_PPM('test/Domain.ppm',pixels)
+  !pixels(:,:) = 0
+  !pixels(0,:) = 1
+  !pixels(319,:) = 1
+  !pixels(:,0) = 1
+  !pixels(:,319) = 1
+  call mesh1%InitFromImage2D(pixels,10,colorToBCM)
   !call Save_PPM('test/Domain1.ppm',pixels)
 
 

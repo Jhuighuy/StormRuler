@@ -55,6 +55,7 @@ subroutine Load_PPM(file,pixels)
   integer :: numRows,numColumns
   ! ----------------------
   ! Parse PPM header.
+  ! ----------------------
   block
     character(len=2) :: magic
     integer :: colorRange
@@ -72,15 +73,16 @@ subroutine Load_PPM(file,pixels)
   end block
   ! ----------------------
   ! Allocate and read image pixels.
+  ! ----------------------
   block
     character :: byte
     integer :: row,column,colorChannel
-    allocate(pixels(1:numRows,1:numColumns))
+    allocate(pixels(0:numRows-1,0:numColumns-1))
     open(newunit=unit,file=file, &
          access='stream',status='old')
     read(unit,pos=offset-1) byte
-    do column = numColumns, 1, -1
-      do row = 1, numRows
+    do column = numColumns-1, 0, -1
+      do row = 0, numRows-1
         do colorChannel = 0, 2
           read(unit) byte
           pixels(row,column) = &
@@ -105,6 +107,7 @@ subroutine Save_PPM(file,pixels)
   integer :: row,column,colorChannel
   ! ----------------------
   ! Write PPM header.
+  ! ----------------------
   numRows = size(pixels,dim=1) 
   numColumns = size(pixels,dim=2)
   open(newunit=unit,file=file,status='replace')
@@ -113,6 +116,7 @@ subroutine Save_PPM(file,pixels)
   write(unit,'(I0)') 255
   ! ----------------------
   ! Write PPM image pixels.
+  ! ----------------------
   do column = numColumns, 1, -1
     do row = 1, numRows
       do colorChannel = 0, 2

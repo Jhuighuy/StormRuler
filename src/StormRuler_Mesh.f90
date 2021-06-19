@@ -132,19 +132,11 @@ private Mesh2D_InitRect
 contains
 
 #$let STENCIL = { &
-  & 2: [ [+1,0,+1],[-1,0,-1],   &
-  &      [0,+1,+2],[0,-1,-2] ], &
-  & 3: [ [+1,0,0,+1],[-1,0,0,-1], &
-  &      [0,+1,0,+2],[0,-1,0,-2], &
-  &      [0,0,+1,+3],[0,0,-1,-3] ] }
-
-#$let STENCIL_2D = &
-  & [ (+1,0,+1),(-1,0,-1), &
-  &   (0,+1,+2),(0,-1,-2) ]
-#$let STENCIL_3D = &
-  & [ (+1,0,0,+1),(-1,0,0,-1), &
-  &   (0,+1,0,+2),(0,-1,0,-2), &
-  &   (0,0,+1,+3),(0,0,-1,-3) ]
+  & 2:{ +1:[+1,0],-1:[-1,0],   &
+  &     +2:[0,+1],-2:[0,-1] }, &
+  & 3:{ +1:[+1,0,0],-1:[-1,0,0], &
+  &     +2:[0,+1,0],-2:[0,-1,0], &
+  &     +3:[0,0,+1],-3:[0,0,-1] } }
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Initialize a mesh from image.
@@ -171,11 +163,11 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
     if (image($iCellMD) == fluidColor) then
       iCell = iCell + 1
       cache($iCellMD) = iCell
-#$for deltaMD in STENCIL[dim]
-#$define iiCellMD @{iCellMD$$+${deltaMD[$$-1]}$}@ 
-      if (image($iiCellMD) /= fluidColor) then
+#$for iCellFace,iCellFaceMD in STENCIL[dim]
+#$define jCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+      if (image($jCellMD) /= fluidColor) then
         iBCCell = iBCCell + 1
-        cache($iiCellMD) = -Find(colorToBCM,image($iiCellMD))
+        cache($jCellMD) = -Find(colorToBCM,image($jCellMD))
       end if
 #$end for
     end if
@@ -198,10 +190,9 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       iCell = cache($iCellMD)
       mesh%CellMDIndex(:,iCell) = [$iCellMD]
       mesh%CellToCell(0,iCell) = iCell
-#$for deltaMD in STENCIL[dim]
-#$define iCellFace ${deltaMD[dim]}$
-      mesh%CellToCell($iCellFace,iCell) = &
-        & cache(@{iCellMD$$+${deltaMD[$$-1]}$}@)
+#$for iCellFace,iCellFaceMD in STENCIL[dim]
+#$define jCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+      mesh%CellToCell($iCellFace,iCell) = cache($jCellMD)
 #$end for
     end if
 #$do rank = dim, 1, -1
@@ -213,77 +204,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
 end subroutine Mesh2D_InitFromImage${dim}$D
 #$end do
 
-#$if False
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize a 3D mesh from image.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_InitFromImage3D(mesh,image,fluidColor,colorToBCM,numBCLayers)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
-  integer, intent(in) :: image(0:,0:,0:),fluidColor,colorToBCM(:),numBCLayers
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: xCell,yCell,zCell,iCell,iBCCell
-  integer, allocatable :: cache(:,:,:)
-  allocate(cache,mold=image)
-  ! ----------------------
-  mesh%Dim = 2
-  mesh%NumCellFaces = 6
-  mesh%MDIndexBounds = shape(image)-[2,2,2]
-  ! ----------------------
-  ! Compute a number of interior cells, BC cells and ghost cells.
-  ! Pre-compute a cell to cell connectivity table.
-  ! ----------------------
-  iCell = 0; iBCCell = 0
-  !$omp parallel do collapse(3) reduction(+:iCell) reduction(+:iBCCell)
-  do zCell = 1, mesh%MDIndexBounds(3)
-    do yCell = 1, mesh%MDIndexBounds(2)
-      do xCell = 1, mesh%MDIndexBounds(1)
-        if (image(xCell,yCell,zCell)==fluidColor) then
-          iCell = iCell + 1
-          cache(xCell,yCell,zCell) = iCell
-#$for dx,dy,dz in STENCIL_3D
-          if (image(xCell+$dx,yCell+$dy,zCell+$dz)/=fluidColor) then
-            iBCCell = iBCCell + 1
-            cache(xCell+$dx,yCell+$dy,zCell+$dz) = &
-              & -Find(colorToBCM,image(xCell+$dx,yCell+$dy,zCell+$dz))
-          end if
-#$end for
-        end if
-      end do
-    end do
-  end do
-  !$omp end parallel do
-  ! ----------------------
-  mesh%NumCells = iCell 
-  mesh%NumBCCells = iBCCell
-  mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
-  allocate(mesh%CellMDIndex(mesh%Dim,mesh%NumCells))
-  allocate(mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells))
-  print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells
-  ! ----------------------
-  !$omp parallel do collapse(3) private(iCell)
-  do zCell = 1, mesh%MDIndexBounds(3)
-    do yCell = 1, mesh%MDIndexBounds(2)
-      do xCell = 1, mesh%MDIndexBounds(1)
-        if (image(xCell,yCell,zCell)==fluidColor) then
-          iCell = cache(xCell,yCell,zCell)
-          mesh%CellMDIndex(:,iCell) = [xCell,yCell,zCell]
-          mesh%CellToCell(0,iCell) = iCell
-#$for dx,dy,dz,iCellFace in STENCIL_3D
-          mesh%CellToCell($iCellFace,iCell) = &
-            & cache(xCell+$dx,yCell+$dy,zCell+$dz)
-#$end for
-          end if
-      end do
-    end do
-  end do
-  !$omp end parallel do
-  ! ----------------------
-  deallocate(cache)
-end subroutine Mesh2D_InitFromImage3D
-#$end if
-
-#$del STENCIL_2D,STENCIL_3D
+#$del STENCIL
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.

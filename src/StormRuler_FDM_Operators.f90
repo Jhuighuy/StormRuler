@@ -773,7 +773,7 @@ subroutine FDM_Convection_Central$rank(mesh,v,lambda,u,wBar)
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable :: fBar(:,@:,:)
   allocate(fBar(size(wBar,dim=1), &
-    & @{size(u,dim=$$+1)}@,size(wBar,dim=2)))
+    & @{size(u,dim=$$)}@,size(wBar,dim=2)))
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------

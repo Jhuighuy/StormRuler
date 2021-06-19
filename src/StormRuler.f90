@@ -87,7 +87,7 @@ program nsch
   Real(8), Dimension(:,:), Allocatable :: w,v,f
   type(CahnHilliardParams) :: CH
   class(Mesh2D), allocatable :: mesh, mesh1
-  integer, allocatable :: colorToBCM(:,:)
+  integer, allocatable :: colorToBCM(:)
   
   ! ----------------------
   ! Print an epic banner.
@@ -110,7 +110,8 @@ program nsch
   !pixels(319,:) = 1
   !pixels(:,0) = 1
   !pixels(:,319) = 1
-  call mesh1%InitFromImage2D(pixels,10,colorToBCM)
+  colorToBCM = (/PixelToInt((/255,255,255/))/)
+  call mesh1%InitFromImage2D(pixels,0,colorToBCM,10)
   !call Save_PPM('test/Domain1.ppm',pixels)
 
 

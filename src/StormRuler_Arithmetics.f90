@@ -93,7 +93,7 @@ abstract interface
   pure function MathFunc$rank(x) result(f)
     import dp
     real(dp), intent(in) :: x(@:)
-    real(dp) :: f(@{size(x,dim=$$+1)}@)
+    real(dp) :: f(@{size(x,dim=$$)}@)
   end function MathFunc$rank
 end interface
 #$end do

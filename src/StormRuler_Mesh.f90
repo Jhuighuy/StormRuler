@@ -39,7 +39,7 @@ type :: Mesh2D
   ! ----------------------
   ! Mesh dimension.
   ! ----------------------
-  integer :: Dimensions
+  integer :: Dim
 
   ! ----------------------
   ! Number of faces (edges in 2D) per each cell.
@@ -52,27 +52,31 @@ type :: Mesh2D
   ! ----------------------
   integer :: NumCells
   ! ----------------------
+  ! Number of boundary cells.
+  ! Cells may be counted multiple times..
+  ! ----------------------
+  integer :: NumBCCells
+  ! ----------------------
   ! Total number of cells (including interior and ghost cells).
   ! This value should be used for field allocation.
   ! ----------------------
   integer :: NumAllCells
+  ! ----------------------
+  ! Cell connectivity table.
+  ! Shape is [-NumFaces/2,+NumFaces/2]×[1,NumAllCells].
+  ! ----------------------
+  integer, allocatable :: CellToCell(:,:), CellToCell1(:,:)
 
   ! ----------------------
   ! Multidimensional index bounds table.
-  ! Shape is [1,Dimensions].
+  ! Shape is [1,Dim].
   ! ----------------------
   integer, allocatable :: MDIndexBounds(:)
   ! ----------------------
   ! Cell multidimensional index table.
-  ! Shape is [1,Dimensions]×[1,NumCells].
+  ! Shape is [1,Dim]×[1,NumCells].
   ! ----------------------
   integer, allocatable :: CellMDIndex(:,:)
-
-  ! ----------------------
-  ! Cell connectivity table.
-  ! Shape is [-NumCellFaces/2,+NumCellFaces/2]×[1,NumAllCells].
-  ! ----------------------
-  integer, allocatable :: CellToCell(:,:), CellToCell1(:,:)
 
   ! ----------------------
   ! Number of boundary condition marks.
@@ -80,9 +84,16 @@ type :: Mesh2D
   integer :: NumBCMs
   ! ----------------------
   ! BC mark to boundary cell index (in CSR format).
+  ! Shape is [1,NumBCMs].
   ! ----------------------
   integer, allocatable :: BCMs(:)
+  ! ----------------------
+  ! Shape is [1,NumBCCells].
+  ! ----------------------
   integer, allocatable :: BCMToCell(:)
+  ! ----------------------
+  ! Shape is [1,NumBCCells].
+  ! ----------------------
   integer, allocatable :: BCMToCellFace(:)
 
   ! ----------------------
@@ -91,150 +102,188 @@ type :: Mesh2D
   real(dp) :: dt
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.
-  ! Shape is [-NumCellFaces/2,+NumCellFaces/2].
+  ! Shape is [-NumFaces/2,+NumFaces/2].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
-  ! Shape is [1,Dimensions]×[-NumCellFaces/2,+NumCellFaces/2].
+  ! Shape is [1,Dim]×[-NumFaces/2,+NumFaces/2].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
   ! ----------------------
   ! Cell center coordinates.
-  ! Shape is [1,Dimensions]×[1,NumCells].
+  ! Shape is [1,Dim]×[1,NumCells].
   ! ----------------------
   real(dp), allocatable :: CellCenter(:,:)
 
 contains
   procedure :: InitRect => Mesh2D_InitRect
   procedure :: InitFromImage2D => Mesh2D_InitFromImage2D
+  procedure :: InitFromImage3D => Mesh2D_InitFromImage3D
 end type Mesh2D
 !! -----------------------------------------------------------------  
 
 private Mesh2D_InitRect
+
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 contains
 
+#$let STENCIL = { &
+  & 2: [ [+1,0,+1],[-1,0,-1],   &
+  &      [0,+1,+2],[0,-1,-2] ], &
+  & 3: [ [+1,0,0,+1],[-1,0,0,-1], &
+  &      [0,+1,0,+2],[0,-1,0,-2], &
+  &      [0,0,+1,+3],[0,0,-1,-3] ] }
+
+#$let STENCIL_2D = &
+  & [ (+1,0,+1),(-1,0,-1), &
+  &   (0,+1,+2),(0,-1,-2) ]
+#$let STENCIL_3D = &
+  & [ (+1,0,0,+1),(-1,0,0,-1), &
+  &   (0,+1,0,+2),(0,-1,0,-2), &
+  &   (0,0,+1,+3),(0,0,-1,-3) ]
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize a 2D mesh from image.
+!! Initialize a mesh from image.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_InitFromImage2D(mesh,image,numBCLayers, &
-  & colorToBCM,fluidColor,solidColor)
+#$do dim = 2, 3
+subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(inout) :: mesh
-  integer, intent(in) :: image(0:,0:),colorToBCM(:,:),numBCLayers
-  integer, intent(in), optional :: fluidColor,solidColor
+  integer, intent(in) :: image(@{0:}@),fluidColor,colorToBCM(:),numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: aFluidColor,aSolidColor
-  aFluidColor = merge(fluidColor,PixelToInt([0,0,0]),present(fluidColor))
-  aSolidColor = merge(solidColor,PixelToInt([1,1,1]),present(solidColor))
+  integer :: iCell,iBCCell,@{iCellMD$$}@
+  integer, allocatable :: cache(@:)
+  allocate(cache,mold=image)
   ! ----------------------
-  block
-    ! ----------------------
-    ! Fill dimensions, number of cell faces
-    ! and multidimensional index bounds.
-    ! ----------------------
-    mesh%Dimensions = 2
-    mesh%NumCellFaces = 4
-    mesh%MDIndexBounds = [size(image,dim=1)-2,size(image,dim=2)-2]
-    print *, 'MD index bounds', mesh%MDIndexBounds
-  end block
+  mesh%Dim = $dim
+  mesh%NumCellFaces = 2*$dim
+  mesh%MDIndexBounds = shape(image)-[@2]
+
+  iCell = 0; iBCCell = 0
+#$do rank = dim, 1, -1
+  do iCellMD$rank = 1, mesh%MDIndexBounds($rank) 
+#$end do
+#$define iCellMD @{iCellMD$$}@
+    if (image($iCellMD) == fluidColor) then
+      iCell = iCell + 1
+      cache($iCellMD) = iCell
+#$for deltaMD in STENCIL[dim]
+#$define iiCellMD @{iCellMD$$+${deltaMD[$$-1]}$}@ 
+      if (image($iiCellMD) /= fluidColor) then
+        iBCCell = iBCCell + 1
+        cache($iiCellMD) = -Find(colorToBCM,image($iiCellMD))
+      end if
+#$end for
+    end if
+#$do rank = dim, 1, -1
+  end do
+#$end do
+  
+  mesh%NumCells = iCell 
+  mesh%NumBCCells = iBCCell
+  mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
+  allocate(mesh%CellMDIndex(mesh%Dim,mesh%NumCells))
+  allocate(mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells))
+  print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells
+  
+#$do rank = dim, 1, -1
+  do iCellMD$rank = 1, mesh%MDIndexBounds($rank) 
+#$end do
+#$define iCellMD @{iCellMD$$}@
+    if (image($iCellMD) == fluidColor) then
+      iCell = cache($iCellMD)
+      mesh%CellMDIndex(:,iCell) = [$iCellMD]
+      mesh%CellToCell(0,iCell) = iCell
+#$for deltaMD in STENCIL[dim]
+#$define iCellFace ${deltaMD[dim]}$
+      mesh%CellToCell($iCellFace,iCell) = &
+        & cache(@{iCellMD$$+${deltaMD[$$-1]}$}@)
+#$end for
+    end if
+#$do rank = dim, 1, -1
+  end do
+#$end do
+
+  deallocate(cache)
+
+end subroutine Mesh2D_InitFromImage${dim}$D
+#$end do
+
+#$if False
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Initialize a 3D mesh from image.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh2D_InitFromImage3D(mesh,image,fluidColor,colorToBCM,numBCLayers)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(Mesh2D), intent(inout) :: mesh
+  integer, intent(in) :: image(0:,0:,0:),fluidColor,colorToBCM(:),numBCLayers
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: xCell,yCell,zCell,iCell,iBCCell
+  integer, allocatable :: cache(:,:,:)
+  allocate(cache,mold=image)
   ! ----------------------
-  block
-    integer :: xCell,yCell,iCell,gCell
-    integer, allocatable :: MDIndexToCell(:,:)
-    ! ----------------------
-    ! PASS I:
-    !   Fill MD index to cell table,
-    !   compute number of interior and BC cells. 
-    ! ----------------------
-    iCell = 0; gCell = 0
-    allocate( MDIndexToCell(mesh%MDIndexBounds(1), &
-      &                     mesh%MDIndexBounds(2)) )
-    !$omp parallel do collapse(2) reduction(+:iCell) &
-    !$omp reduction(+:gCell) default(none) private(xCell) &
-    !$omp shared(MDIndexToCell) shared(image,numBCLayers,aFluidColor)
+  mesh%Dim = 2
+  mesh%NumCellFaces = 6
+  mesh%MDIndexBounds = shape(image)-[2,2,2]
+  ! ----------------------
+  ! Compute a number of interior cells, BC cells and ghost cells.
+  ! Pre-compute a cell to cell connectivity table.
+  ! ----------------------
+  iCell = 0; iBCCell = 0
+  !$omp parallel do collapse(3) reduction(+:iCell) reduction(+:iBCCell)
+  do zCell = 1, mesh%MDIndexBounds(3)
     do yCell = 1, mesh%MDIndexBounds(2)
       do xCell = 1, mesh%MDIndexBounds(1)
-        if (image(xCell,yCell) /= aFluidColor) cycle
-        ! ----------------------
-        iCell = iCell + 1; gCell = gCell + 1
-        if (image(xCell+1,yCell) /= aFluidColor) &
-          &             gCell = gCell + numBCLayers
-        if (image(xCell-1,yCell) /= aFluidColor) &
-          &             gCell = gCell + numBCLayers
-        if (image(xCell,yCell+1) /= aFluidColor) &
-          &             gCell = gCell + numBCLayers
-        if (image(xCell,yCell-1) /= aFluidColor) &
-          &             gCell = gCell + numBCLayers
-        ! ----------------------
-        MDIndexToCell(xCell,yCell) = iCell
+        if (image(xCell,yCell,zCell)==fluidColor) then
+          iCell = iCell + 1
+          cache(xCell,yCell,zCell) = iCell
+#$for dx,dy,dz in STENCIL_3D
+          if (image(xCell+$dx,yCell+$dy,zCell+$dz)/=fluidColor) then
+            iBCCell = iBCCell + 1
+            cache(xCell+$dx,yCell+$dy,zCell+$dz) = &
+              & -Find(colorToBCM,image(xCell+$dx,yCell+$dy,zCell+$dz))
+          end if
+#$end for
+        end if
       end do
     end do
-    !$omp end parallel do
-    mesh%NumCells = iCell; mesh%NumAllCells = gCell
-    print *, 'MESH CONTAINS', mesh%NumCells, 'CELLS, ', mesh%NumAllCells, 'IN TOTAL'
-    ! ----------------------
-    ! PASS II:
-    !   Fill Cell to MD index table,
-    !   compute number of interior and BC cells. 
-    ! ----------------------
-    gCell = mesh%NumCells + 1
-    allocate( mesh%CellMDIndex(mesh%Dimensions,mesh%NumCells ) )
-    allocate( mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells) )
-    !$omp parallel do collapse(2) default(none) private(xCell,iCell) &
-    !$omp shared(mesh,MDIndexToCell,gCell) shared(image,numBCLayers,aFluidColor)
+  end do
+  !$omp end parallel do
+  ! ----------------------
+  mesh%NumCells = iCell 
+  mesh%NumBCCells = iBCCell
+  mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
+  allocate(mesh%CellMDIndex(mesh%Dim,mesh%NumCells))
+  allocate(mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells))
+  print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells
+  ! ----------------------
+  !$omp parallel do collapse(3) private(iCell)
+  do zCell = 1, mesh%MDIndexBounds(3)
     do yCell = 1, mesh%MDIndexBounds(2)
       do xCell = 1, mesh%MDIndexBounds(1)
-        if (image(xCell,yCell) /= aFluidColor) cycle
-        ! ----------------------
-        iCell = MDIndexToCell(xCell,yCell)
-        mesh%CellToCell(0,iCell) = iCell
-        ! ----------------------
-        if (image(xCell+1,yCell) == aFluidColor) then
-          mesh%CellToCell(+1,iCell) = MDIndexToCell(xCell+1,yCell)
-        else
-          !$omp critical(generateBCCells)
-          mesh%CellToCell(+1,iCell) = gCell
-          gCell = gCell + numBCLayers
-          !$omp end critical(generateBCCells)
-        end if
-        if (image(xCell-1,yCell) == aFluidColor) then
-          mesh%CellToCell(-1,iCell) = MDIndexToCell(xCell-1,yCell)
-        else
-          !$omp critical(generateBCCells)
-          mesh%CellToCell(-1,iCell) = gCell
-          gCell = gCell + numBCLayers
-          !$omp end critical(generateBCCells)
-        end if
-        ! ----------------------
-        if (image(xCell,yCell+1) == aFluidColor) then
-          mesh%CellToCell(+2,iCell) = MDIndexToCell(xCell,yCell+1)
-        else
-          !$omp critical(generateBCCells)
-          mesh%CellToCell(+2,iCell) = gCell
-          gCell = gCell + numBCLayers
-          !$omp end critical(generateBCCells)
-        end if
-        if (image(xCell,yCell-1) == aFluidColor) then
-          mesh%CellToCell(-2,iCell) = MDIndexToCell(xCell,yCell-1)
-        else
-          !$omp critical(generateBCCells)
-          mesh%CellToCell(-2,iCell) = gCell
-          gCell = gCell + numBCLayers
-          !$omp end critical(generateBCCells)
-        end if
-        ! ----------------------
-        mesh%CellMDIndex(:,iCell) = [xCell,yCell]
+        if (image(xCell,yCell,zCell)==fluidColor) then
+          iCell = cache(xCell,yCell,zCell)
+          mesh%CellMDIndex(:,iCell) = [xCell,yCell,zCell]
+          mesh%CellToCell(0,iCell) = iCell
+#$for dx,dy,dz,iCellFace in STENCIL_3D
+          mesh%CellToCell($iCellFace,iCell) = &
+            & cache(xCell+$dx,yCell+$dy,zCell+$dz)
+#$end for
+          end if
       end do
     end do
-    !$omp end parallel do
-    print *, mesh%NumAllCells, gCell
-    end block
-end subroutine Mesh2D_InitFromImage2D
+  end do
+  !$omp end parallel do
+  ! ----------------------
+  deallocate(cache)
+end subroutine Mesh2D_InitFromImage3D
+#$end if
+
+#$del STENCIL_2D,STENCIL_3D
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.

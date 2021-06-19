@@ -59,6 +59,15 @@ end function IntToString
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+pure function Find(array,value) result(index)
+  integer, intent(in) :: array(:), value
+  integer :: index
+  index = findloc(array,value,dim=1)
+end function
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 !! -----------------------------------------------------------------  
 subroutine EnsurePositive(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -118,7 +127,7 @@ end function Inner$0
 pure function Inner$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(:,@:)
-  real(dp) :: u(@{size(w, dim=$$+1)}@)
+  real(dp) :: u(@{size(w, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
   u(@:) = 0.0_dp
@@ -141,7 +150,7 @@ end function Outer$0
 pure function Outer$rank(v,w) result(u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: v(:), w(@:)
-  real(dp) :: u(size(v,dim=1),@{size(w,dim=$$+1)}@)
+  real(dp) :: u(size(v,dim=1),@{size(w,dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
   do i = 1, size(v,dim=1)

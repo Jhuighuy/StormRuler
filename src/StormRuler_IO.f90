@@ -44,6 +44,16 @@ pure function PixelToInt(colorChannels) result(int)
 end function PixelToInt
 !! -----------------------------------------------------------------  
 
+pure function IntToPixel(int) result(colorChannels)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer, intent(in) :: int
+  integer :: colorChannels(3)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  colorChannels(1) = iand(255,int)
+  colorChannels(2) = iand(255,ishft(int,-8))
+  colorChannels(3) = iand(255,ishft(int,-16))
+end function IntToPixel
+
 !! -----------------------------------------------------------------
 !! Load PPM image.
 subroutine Load_PPM(file,pixels)
@@ -75,7 +85,7 @@ subroutine Load_PPM(file,pixels)
   ! Allocate and read image pixels.
   ! ----------------------
   block
-    character :: byte
+    character :: byte,bytes(3)
     integer :: row,column,colorChannel
     allocate(pixels(0:numRows-1,0:numColumns-1))
     open(newunit=unit,file=file, &
@@ -83,11 +93,10 @@ subroutine Load_PPM(file,pixels)
     read(unit,pos=offset-1) byte
     do column = numColumns-1, 0, -1
       do row = 0, numRows-1
-        do colorChannel = 0, 2
-          read(unit) byte
-          pixels(row,column) = &
-            ior(pixels(row,column),ishft(iand(255,iachar(byte)),8*colorChannel))
+        do colorChannel = 1, 3
+          read(unit) byte; bytes(colorChannel) = byte
         end do
+        pixels(row,column) = PixelToInt(iachar(bytes))
       end do
     end do
     close(unit)

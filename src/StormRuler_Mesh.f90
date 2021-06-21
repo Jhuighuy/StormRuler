@@ -27,6 +27,8 @@ module StormRuler_Mesh
 use StormRuler_Helpers
 use StormRuler_IO
 
+use, intrinsic :: iso_fortran_env, only: error_unit
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -147,60 +149,129 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   class(Mesh2D), intent(inout) :: mesh
   integer, intent(in) :: image(@{0:}@),fluidColor,colorToBCM(:),numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell,iBCCell,@{iCellMD$$}@
+
+  #$define iCellMD @{iCellMD$$}@
+  integer :: iCell,iBCCell,iGCell,$iCellMD,iCellFace,iBCM
   integer, allocatable :: cache(@:)
   allocate(cache,mold=image)
+  
+  ! ----------------------
+  ! Process image data in order to:
+  ! 1. Generate initial "Cell MD Index" ⟺ "Cell (Plain Index)" table 
+  !    for interior cells and compute number of interior and boundary cells.
+  ! 2. Generate and pre-fill "BCM" ⟺ "Num BC Cells per BCM" CSR-style table.
   ! ----------------------
   mesh%Dim = $dim
-  mesh%NumCellFaces = 2*$dim
-  mesh%MDIndexBounds = shape(image)-[@2]
-
-  iCell = 0; iBCCell = 0
+  mesh%NumCellFaces = ${2*dim}$
+  mesh%MDIndexBounds = shape(image)-2
+  mesh%NumBCMs = size(colorToBCM,dim=1)
+  allocate(mesh%BCMs(mesh%NumBCMs+1))
+  ! ----------------------
+  iCell = 0; mesh%BCMs(:) = 0
 #$do rank = dim, 1, -1
   do iCellMD$rank = 1, mesh%MDIndexBounds($rank) 
 #$end do
-#$define iCellMD @{iCellMD$$}@
     if (image($iCellMD) == fluidColor) then
       iCell = iCell + 1
       cache($iCellMD) = iCell
 #$for iCellFace,iCellFaceMD in STENCIL[dim]
-#$define jCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
-      if (image($jCellMD) /= fluidColor) then
-        iBCCell = iBCCell + 1
-        cache($jCellMD) = -Find(colorToBCM,image($jCellMD))
+#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+      if (image($iiCellMD) /= fluidColor) then
+        iBCM = Find(colorToBCM,image($iiCellMD))
+        if (iBCM == 0) then
+          write(error_unit,*) 'INVALID IMAGE COLOR', IntToPixel(image($iiCellMD))
+          error stop
+        end if
+        mesh%BCMs(iBCM+1) = mesh%BCMs(iBCM+1) + 1
       end if
 #$end for
     end if
 #$do rank = dim, 1, -1
   end do
 #$end do
-  
-  mesh%NumCells = iCell 
-  mesh%NumBCCells = iBCCell
+  ! ----------------------
+  ! 3. TODO: apply plain indices sorting.
+  ! ----------------------
+  mesh%NumCells = iCell
+  mesh%NumBCCells = sum(mesh%BCMs)
   mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
-  allocate(mesh%CellMDIndex(mesh%Dim,mesh%NumCells))
-  allocate(mesh%CellToCell(-mesh%NumCellFaces/2:+mesh%NumCellFaces/2,mesh%NumAllCells))
-  print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells
-  
+  print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells, 'NAC:', mesh%NumAllCells
+  ! ----------------------
+  ! 4. Allocate the connectivity tables and fill them with data,
+  !    inverting the "Cell MD Index" ⟺ "Cell (Plain Index)" table.
+  ! ----------------------
+  associate(nac=>mesh%NumAllCells,ncf=>mesh%NumCellFaces)
+    allocate(mesh%CellMDIndex(mesh%Dim,nac))
+    allocate(mesh%CellToCell((-ncf/2):(+ncf/2),nac))
+  end associate
+  ! ----------------------
+  iBCCell = mesh%NumCells + 1
 #$do rank = dim, 1, -1
   do iCellMD$rank = 1, mesh%MDIndexBounds($rank) 
 #$end do
-#$define iCellMD @{iCellMD$$}@
     if (image($iCellMD) == fluidColor) then
       iCell = cache($iCellMD)
-      mesh%CellMDIndex(:,iCell) = [$iCellMD]
       mesh%CellToCell(0,iCell) = iCell
+      mesh%CellMDIndex(:,iCell) = [$iCellMD]
 #$for iCellFace,iCellFaceMD in STENCIL[dim]
-#$define jCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
-      mesh%CellToCell($iCellFace,iCell) = cache($jCellMD)
+#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+      if (image($iiCellMD) /= fluidColor) then
+        iBCM = Find(colorToBCM,image($iiCellMD))
+        mesh%CellToCell($iCellFace,iCell) = -iBCM
+      end if
 #$end for
-    end if
+  end if
 #$do rank = dim, 1, -1
   end do
 #$end do
-
+  ! ----------------------
+  ! Clean-up.
+#$del iCellMD, iiCellMD
   deallocate(cache)
-
+  ! ----------------------
+  ! 5. Allocate and fille the "BCM" ⟺ "BC Cell" 
+  !    and "BCM" ⟺ "BC Cell Face" CSR-style tables and fill it. 
+  ! ----------------------
+  associate(nbcc=>mesh%NumBCCells)
+    allocate(mesh%BCMToCell(nbcc),mesh%BCMToCellFace(nbcc))
+  end associate
+  ! ----------------------
+  iBCCell = mesh%NumCells + 1
+  do iCell = 1, mesh%NumCells
+    do iCellFace = -mesh%NumCellFaces/2, +mesh%NumCellFaces/2
+      iBCM = -mesh%CellToCell(+iCellFace,iCell) 
+      if (iBCM > 0) then
+        ! Classic CSR insertion procedure here.
+        associate(ptr=>mesh%BCMs(iBCM))
+          mesh%BCMToCell(ptr+1) = iBCCell
+          mesh%BCMToCellFace(ptr+1) = iCellFace; ptr = ptr + 1
+        end associate
+        ! Generate connectivity for BC cell and ghost cells.
+        mesh%CellToCell(+iCellFace,iCell) = iBCCell
+        do iGCell = iBCCell, iBCCell+numBCLayers
+          mesh%CellToCell(0,iGCell) = iGCell
+          mesh%CellToCell(+iCellFace,iGCell) = iGCell+1
+          mesh%CellToCell(-iCellFace,iGCell) = iGCell-1
+          ! Fill MD index information by linear extrapolation.
+          associate(iCellMD=>mesh%CellMDIndex(:,iCell), &
+            &      iiCellMD=>mesh%CellMDIndex(:,mesh%CellToCell(-iCellFace,iCell)))
+            mesh%CellMDIndex(:,iGCell) = &
+              & iCellMD + (iGCell-iBCCell+1)*(iCellMD-iiCellMD)
+          end associate
+        end do
+        mesh%CellToCell(-iCellFace,iBCCell) = iCell
+        mesh%CellToCell(+iCellFace,iBCCell+numBCLayers) = 0
+        ! Increment BC cell index.
+        iBCCell = iBCCell+numBCLayers
+      end if
+    end do
+  end do
+  ! ----------------------
+  ! Classic CSR pointer correction procedure.
+  mesh%BCMs(:) = eoshift(mesh%BCMs(:),shift=-1)
+  mesh%BCMs(:) = mesh%BCMs(:) + 1 
+  print *, 'ERROR PRONE CHECK:', iBCCell-1
+  ! ----------------------
 end subroutine Mesh2D_InitFromImage${dim}$D
 #$end do
 

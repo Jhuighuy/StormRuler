@@ -268,8 +268,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   end do
   ! ----------------------
   ! Classic CSR pointer correction procedure.
-  mesh%BCMs(:) = eoshift(mesh%BCMs(:),shift=-1)
-  mesh%BCMs(:) = mesh%BCMs(:) + 1 
+  mesh%BCMs(:) = eoshift(mesh%BCMs(:),shift=-1) + 1
   print *, 'ERROR PRONE CHECK:', iBCCell-1
   ! ----------------------
 end subroutine Mesh2D_InitFromImage${dim}$D

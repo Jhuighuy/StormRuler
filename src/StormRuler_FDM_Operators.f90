@@ -502,7 +502,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCell)
         dir = merge(dirAll,1_1,present(dirAll))
         dir = merge(dirFace(iCellFace),dir,present(dirFace))
         dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
-        dir = max(min(dir,+1_1),-1_1)
+        dir = max(-1_1,min(dir,+1_1))
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
@@ -649,7 +649,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
         dir = merge(dirAll,1_1,present(dirAll))
         dir = merge(dirFace(iCellFace),dir,present(dirFace))
         dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
-        dir = max(min(dir,+1_1),-1_1)
+        dir = max(-1_1,min(dir,+1_1))
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------

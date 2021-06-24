@@ -34,7 +34,7 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 
 implicit none
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Semi-structured 2D mesh.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 type :: Mesh2D
@@ -122,6 +122,7 @@ contains
   procedure :: InitRect => Mesh2D_InitRect
   procedure :: InitFromImage2D => Mesh2D_InitFromImage2D
   procedure :: InitFromImage3D => Mesh2D_InitFromImage3D
+  procedure :: PrintCellToCell_DOT => Mesh2D_PrintCellToCell_DOT
 end type Mesh2D
 !! -----------------------------------------------------------------  
 
@@ -149,12 +150,10 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   class(Mesh2D), intent(inout) :: mesh
   integer, intent(in) :: image(@{0:}@),fluidColor,colorToBCM(:),numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
-
-  #$define iCellMD @{iCellMD$$}@
+#$define iCellMD @{iCellMD$$}@
   integer :: iCell,iBCCell,iGCell,$iCellMD,iCellFace,iBCM
   integer, allocatable :: cache(@:)
-  allocate(cache,mold=image)
-  
+  allocate(cache,mold=image); cache(@:) = 0
   ! ----------------------
   ! Process image data in order to:
   ! 1. Generate initial "Cell MD Index" ⟺ "Cell (Plain Index)" table 
@@ -165,7 +164,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   mesh%NumCellFaces = ${2*dim}$
   mesh%MDIndexBounds = shape(image)-2
   mesh%NumBCMs = size(colorToBCM,dim=1)
-  allocate(mesh%BCMs(mesh%NumBCMs+1))
+  allocate(mesh%BCMs(mesh%NumBCMs+1)); mesh%BCMs(:) = 0
   ! ----------------------
   iCell = 0; mesh%BCMs(:) = 0
 #$do rank = dim, 1, -1
@@ -202,7 +201,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   ! ----------------------
   associate(nac=>mesh%NumAllCells,ncf=>mesh%NumCellFaces)
     allocate(mesh%CellMDIndex(mesh%Dim,nac))
-    allocate(mesh%CellToCell((-ncf/2):(+ncf/2),nac))
+    allocate(mesh%CellToCell((-ncf/2):(+ncf/2),nac)); mesh%CellToCell(:,:) = 0
   end associate
   ! ----------------------
   iBCCell = mesh%NumCells + 1
@@ -215,7 +214,9 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       mesh%CellMDIndex(:,iCell) = [$iCellMD]
 #$for iCellFace,iCellFaceMD in STENCIL[dim]
 #$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
-      if (image($iiCellMD) /= fluidColor) then
+      if (image($iiCellMD) == fluidColor) then
+        mesh%CellToCell($iCellFace,iCell) = cache($iiCellMD)
+      else
         iBCM = Find(colorToBCM,image($iiCellMD))
         mesh%CellToCell($iCellFace,iCell) = -iBCM
       end if
@@ -229,11 +230,12 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
 #$del iCellMD, iiCellMD
   deallocate(cache)
   ! ----------------------
-  ! 5. Allocate and fille the "BCM" ⟺ "BC Cell" 
+  ! 5. Allocate and fill the "BCM" ⟺ "BC Cell" 
   !    and "BCM" ⟺ "BC Cell Face" CSR-style tables and fill it. 
   ! ----------------------
   associate(nbcc=>mesh%NumBCCells)
-    allocate(mesh%BCMToCell(nbcc),mesh%BCMToCellFace(nbcc))
+    allocate(mesh%BCMToCell(nbcc))
+    allocate(mesh%BCMToCellFace(nbcc))
   end associate
   ! ----------------------
   iBCCell = mesh%NumCells + 1
@@ -248,7 +250,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
         end associate
         ! Generate connectivity for BC cell and ghost cells.
         mesh%CellToCell(+iCellFace,iCell) = iBCCell
-        do iGCell = iBCCell, iBCCell+numBCLayers
+        do iGCell = iBCCell, iBCCell+numBCLayers-1
           mesh%CellToCell(0,iGCell) = iGCell
           mesh%CellToCell(+iCellFace,iGCell) = iGCell+1
           mesh%CellToCell(-iCellFace,iGCell) = iGCell-1
@@ -260,7 +262,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
           end associate
         end do
         mesh%CellToCell(-iCellFace,iBCCell) = iCell
-        mesh%CellToCell(+iCellFace,iBCCell+numBCLayers) = 0
+        mesh%CellToCell(+iCellFace,iBCCell+numBCLayers-1) = 0
         ! Increment BC cell index.
         iBCCell = iBCCell+numBCLayers
       end if
@@ -275,6 +277,63 @@ end subroutine Mesh2D_InitFromImage${dim}$D
 #$end do
 
 #$del STENCIL
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Print mesh connectivity in '.dot' format.
+!! Output may be visualized with: 'neato -n -Tpng c2c.dot > c2c.png' 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh2D_PrintCellToCell_DOT(mesh,file)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(Mesh2D), intent(inout) :: mesh
+  character(len=*), intent(in) :: file
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: unit
+  integer :: iCell,iiCell,iCellFace,iBCM,iCellBCM
+  integer, parameter :: DPI=72
+  open(newunit=unit,file=file,status='replace')
+  write(unit,'(A)') 'digraph {'
+  ! ----------------------
+  ! Dump cell MD indices of the interior cells as graph nodes.
+  ! ----------------------
+  do iCell = 1, mesh%NumCells
+    associate(iCellPos=>DPI*mesh%CellMDIndex(:,iCell))
+      write(unit,'("  ",A,"[label=",A," ","pos=",A,"]")') &
+        & 'C'//I2S(iCell), '"C"', '"'//I2S(iCellPos(1))//','//I2S(iCellPos(2))//'!"'
+    end associate
+  end do
+  ! ----------------------
+  ! Dump cell MD indices of the BC and ghost cells as graph nodes.
+  ! Difference node shapes are use for different face directions.
+  ! ----------------------
+  do iBCM = 1, mesh%NumBCMs
+    do iCellBCM = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+      iCell = mesh%BCMToCell(iCellBCM)
+      iCellFace = mesh%BCMToCellFace(iCellBCM)
+      do while(iCell /= 0)
+        associate(iCellPos=>DPI*mesh%CellMDIndex(:,iCell))
+          write(unit,'("  ",A,"[label=",A," pos=",A," shape=",A,"]")') &
+            & 'C'//I2S(iCell), '"B'//I2S(iBCM)//'"', &
+            & '"'//I2S(iCellPos(1))//','//I2S(iCellPos(2))//'!"', &
+            & MergeString('box','diamond',abs(iCellFace)==1)
+        end associate
+        iCell = mesh%CellToCell(iCellFace,iCell)
+      end do
+    end do
+  end do
+  ! ----------------------
+  ! Dump cell to cell connectivity as graph edges.
+  ! ----------------------
+  do iCell = 1, mesh%NumAllCells
+    do iCellFace = -mesh%NumCellFaces/2, +mesh%NumCellFaces/2
+      iiCell = mesh%CellToCell(iCellFace,iCell)
+      if ((iiCell > 0).and.(iiCell /= iCell)) then
+        write(unit,'("  ",A,"->",A)') 'C'//I2S(iCell), 'C'//I2S(iiCell) 
+      end if
+    end do
+  end do
+  write(unit,'(A)') '}'
+  close(unit)
+end subroutine Mesh2D_PrintCellToCell_DOT
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.

@@ -359,7 +359,6 @@ end function FD1_F1
 real(dp) elemental function FD1_F2(u,u_r,u_rr)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: u,u_r,u_rr
-  real(dp) :: du
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F2 = &
     & (-1.5_dp)*u   + &

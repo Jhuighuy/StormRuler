@@ -105,16 +105,17 @@ program nsch
   print *, Find([1,2,3],4), Find([1,2,3],3)
 
   allocate(mesh1)
-  call Load_PPM('test/Domain1.ppm',pixels)
+  call Load_PPM('test/Domain-100.ppm',pixels)
   !pixels(:,:) = 0
   !pixels(0,:) = 1
   !pixels(319,:) = 1
   !pixels(:,0) = 1
   !pixels(:,319) = 1
   colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
-  call mesh1%InitFromImage2D(pixels,0,colorToBCM,10)
+  call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
   !call Save_PPM('test/Domain1.ppm',pixels)
 
+  call mesh1%PrintCellToCell_DOT('test/c2c.dot')
 
   allocate(mesh)
   mesh%dt = dt

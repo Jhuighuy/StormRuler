@@ -47,14 +47,15 @@ contains
 
 !! -----------------------------------------------------------------  
 !! Convert an integer to string.
-function IntToString(value) result(string)
+function I2S(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   integer, intent(in) :: value
-  character(len=20) :: string
+  character(len=:), allocatable :: I2S
   ! >>>>>>>>>>>>>>>>>>>>>>
-  write(string, *) value
-  string = adjustl(string)
-end function IntToString
+  character(len=20) :: buffer
+  write(buffer, *) value
+  I2S = trim(adjustl(buffer))
+end function I2S
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -63,7 +64,20 @@ pure function Find(array,value) result(index)
   integer, intent(in) :: array(:), value
   integer :: index
   index = findloc(array,value,dim=1)
-end function
+end function Find
+
+function MergeString(trueString,falseString,condition) result(string)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  character(len=*), intent(in) :: trueString,falseString
+  logical, intent(in) :: condition
+  character(len=:), allocatable :: string
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  if (condition)  then
+    string = trueString
+  else
+    string = falseString
+  end if
+end function MergeString
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

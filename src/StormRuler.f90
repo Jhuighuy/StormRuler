@@ -115,7 +115,7 @@ program nsch
   call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
   !call Save_PPM('test/Domain1.ppm',pixels)
 
-  call mesh1%PrintCellToCell_DOT('test/c2c.dot')
+  call mesh1%PrintCellToCell_Neato('test/c2c.dot')
 
   allocate(mesh)
   mesh%dt = dt

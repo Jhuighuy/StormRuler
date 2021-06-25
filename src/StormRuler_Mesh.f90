@@ -1,27 +1,27 @@
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! Copyright (C) 2021 Oleg Butakov
-!! 
-!! Permission is hereby granted, free of charge, to any person 
-!! obtaining a copy of this software and associated documentation 
-!! files (the "Software"), to deal in the Software without 
-!! restriction, including without limitation the rights  to use, 
+!!
+!! Permission is hereby granted, free of charge, to any person
+!! obtaining a copy of this software and associated documentation
+!! files (the "Software"), to deal in the Software without
+!! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the  
-!! Software is furnished to do so, subject to the following 
+!! sell copies of the Software, and to permit persons to whom the 
+!! Software is furnished to do so, subject to the following
 !! conditions:
-!! 
-!! The above copyright notice and this permission notice shall be 
+!!
+!! The above copyright notice and this permission notice shall be
 !! included in all copies or substantial portions of the Software.
-!! 
-!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 !! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Mesh
 
 use StormRuler_Helpers
@@ -396,16 +396,17 @@ end subroutine Mesh2D_PrintTo_Neato
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Print mesh in Legacy VTK '.vtk' format.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,u)
+subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(inout) :: mesh
   character(len=*), intent(in) :: file
-  real(dp), intent(in), optional :: u(:) 
+  type(IOList), intent(in), optional :: fields
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: unit
   integer :: numVTKCells,iVTKCell
   integer :: iCell,iiCell,iCellFace,jiCell,jCellFace
   logical, allocatable :: cellToCellIsAllInternal(:)
+  class(IOListItem), pointer :: item
   ! ----------------------
   if ((mesh%Dim /= 2).and.(mesh%Dim /= 3)) then
     error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
@@ -504,12 +505,28 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,u)
   ! ----------------------
 600 format('POINT_DATA ',A)
 700 format('SCALARS ',A,' double 1')
-  if (present(u)) then
-    write(unit,600) I2S(mesh%NumCells)
-    write(unit,700) 'NBC' 
-    write(unit,'(A)') 'LOOKUP_TABLE default'
-    do iCell = 1, mesh%NumCells
-      write(unit,'(A)') R2S(u(iCell))
+800 format('VECTORS ',A,' double')
+  write(unit,600) I2S(mesh%NumCells)
+  if (present(fields)) then
+    item => fields%first
+    do while(associated(item))
+      select type(item)
+        ! Scalar field.
+        class is (IOListItem0)
+          write(unit,700) item%name 
+          write(unit,'(A)') 'LOOKUP_TABLE default'
+          do iCell = 1, mesh%NumCells
+            write(unit,'(A)') R2S(item%values(iCell))
+          end do
+        ! Vector field.
+        class is (IOListItem1)
+          write(unit,800) item%name 
+          do iCell = 1, mesh%NumCells
+            write(unit,'(A," ",A," ",A)') R2S(item%values(1,iCell)), R2S(item%values(2,iCell)), '0'
+          end do
+      end select
+      write(unit,'(A)') ''
+      item => item%next
     end do
   end if
   ! ----------------------

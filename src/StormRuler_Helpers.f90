@@ -75,7 +75,11 @@ end function R2S
 pure function Find(array,value) result(index)
   integer, intent(in) :: array(:), value
   integer :: index
-  index = findloc(array,value,dim=1)
+  !index = findloc(array,value,dim=1)
+  do index = 1, size(array)
+    if (array(index) == value) return
+  end do
+  index = 0
 end function Find
 
 function MergeString(trueString,falseString,condition) result(string)

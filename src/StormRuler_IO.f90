@@ -1,36 +1,86 @@
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! Copyright (C) 2021 Oleg Butakov
-!! 
-!! Permission is hereby granted, free of charge, to any person 
-!! obtaining a copy of this software and associated documentation 
-!! files (the "Software"), to deal in the Software without 
-!! restriction, including without limitation the rights  to use, 
+!!
+!! Permission is hereby granted, free of charge, to any person
+!! obtaining a copy of this software and associated documentation
+!! files (the "Software"), to deal in the Software without
+!! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the  
-!! Software is furnished to do so, subject to the following 
+!! sell copies of the Software, and to permit persons to whom the 
+!! Software is furnished to do so, subject to the following
 !! conditions:
-!! 
-!! The above copyright notice and this permission notice shall be 
+!!
+!! The above copyright notice and this permission notice shall be
 !! included in all copies or substantial portions of the Software.
-!! 
-!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 !! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_IO
 
 use StormRuler_Helpers
+#$use 'StormRuler_Parameters.f90'
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+type, abstract :: IOListItem
+  character(len=:), allocatable :: name
+  class(IOListItem), pointer :: next => null()
+end type IOListItem
+
+#$do rank = 0, NUM_RANKS
+type, extends(IOListItem) :: IOListItem$rank
+  real(dp), pointer :: values(@:,:) => null()
+end type !IOListItem$rank
+#$end do
+
+type :: IOList
+  class(IOListItem), pointer :: first => null()
 contains
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  generic :: Add=>Add0,Add1,Add2
+#$do rank = 0, NUM_RANKS
+  procedure :: Add$rank=>IOList_Add$rank
+#$end do
+end type IOList
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+contains
+
+#$do rank = 0, NUM_RANKS
+subroutine IOList_Add$rank(list,name,values)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(IOList), intent(inout) :: list
+  character(len=*), intent(in) :: name
+  real(dp), target, intent(in) :: values(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  class(IOListItem$rank), pointer :: item
+  ! ----------------------
+  ! Generate item.
+  ! ----------------------
+  allocate(item)
+  item%name = name
+  item%values => values
+  ! ----------------------
+  ! Append item.
+  ! ----------------------
+  item%next => list%first
+  list%first => item
+end subroutine IOList_Add$rank
+#$end do
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -----------------------------------------------------------------  
 pure function PixelToInt(colorChannels) result(int)

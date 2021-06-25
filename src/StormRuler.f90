@@ -1,75 +1,38 @@
 module helpers
-  use StormRuler_Mesh
-  implicit none
-  real(8), parameter :: pi = 4*atan(1.0D0)
-  Integer, Parameter :: Nx = 100, Ny = 100  
-  Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
-  contains
-  Function to_str(k)
-    Integer, Intent(In) :: k
-    Character(Len=20) :: to_str
-    Write (to_str, *) k
-    to_str = adjustl(to_str)
-  End Function to_str  
-  
-  Subroutine print_grid2(C, l)
-    Integer, Intent(In) :: l
-    Real(8), Dimension(0:Nx+1,0:Ny+1), Intent(InOut) :: C
-    Integer :: output
-    Write(*,*) l
-    Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
-    Write (output, *) 'x,y,z,c'
-    Block
-      Integer :: Ix,Iy
-      Do Ix=1,Nx
-        Do Iy=1,Ny
-          Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
-            Dx*Ix, ',', Dy*Iy, ',', 0.0, ',', C(Ix,Iy), ','
-        End Do
-      End Do
-    End Block
-    Close(output)
-  End Subroutine print_grid2
+use StormRuler_Mesh
+implicit none
+real(8), parameter :: pi = 4*atan(1.0D0)
+Integer, Parameter :: Nx = 100, Ny = 100  
+Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
+contains
 
-  Subroutine print_mesh2(mesh, u, l)
-    class(Mesh2D), intent(in) :: mesh
-    Real(8), Dimension(:), Intent(in) :: u
-    Integer, Intent(In) :: l
-    Integer :: output
-    Write(*,*) l
-    Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
-    Write (output, *) 'x,y,z,c'
-    Block
-      integer :: iCell
-      do iCell = 1, mesh%NumAllCells
-        associate(r => mesh%CellCenter(iCell,:))
-          Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
-            r(1), ',', r(2), ',', r(3), ',', u(iCell), ','
-        end associate
-      end do
-    End Block
-    Close(output)
-  End Subroutine print_mesh2
-  Subroutine print_mesh3(mesh, u,p,c, l)
-    class(Mesh2D), intent(in) :: mesh
-    Real(8), Dimension(:,:), Intent(in) :: u
-    Real(8), Dimension(:), Intent(in) :: p,c
-    Integer, Intent(In) :: l
-    Integer :: output
-    Write(*,*) l
-    Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
-    Write (output, *) 'x,y,z,vx,vy,p,c'
-    Block
-      integer :: iCell
-      do iCell = 1, mesh%NumAllCells
-        associate(r => mesh%CellCenter(iCell,:))
-          Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
-            r(1), ',', r(2), ',', r(3), ',', u(1,iCell), ',', u(2,iCell), ',', p(iCell), ',', c(iCell), ','
-        end associate
-      end do
-    End Block
-    Close(output)
-  End Subroutine print_mesh3
+Function to_str(k)
+  Integer, Intent(In) :: k
+  Character(Len=20) :: to_str
+  Write (to_str, *) k
+  to_str = adjustl(to_str)
+End Function to_str  
+
+Subroutine print_mesh3(mesh, u,p,c, l)
+  class(Mesh2D), intent(in) :: mesh
+  Real(8), Dimension(:,:), Intent(in) :: u
+  Real(8), Dimension(:), Intent(in) :: p,c
+  Integer, Intent(In) :: l
+  Integer :: output
+  Write(*,*) l
+  Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
+  Write (output, *) 'x,y,z,vx,vy,p,c'
+  Block
+    integer :: iCell
+    do iCell = 1, mesh%NumAllCells
+      associate(r => mesh%CellCenter(iCell,:))
+        Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
+          r(1), ',', r(2), ',', r(3), ',', u(1,iCell), ',', u(2,iCell), ',', p(iCell), ',', c(iCell), ','
+      end associate
+    end do
+  End Block
+  Close(output)
+End Subroutine print_mesh3
 end module helpers
   
 program nsch
@@ -83,10 +46,11 @@ program nsch
 
   Integer :: L,M,iCell
   integer, allocatable :: pixels(:,:)
-  Real(8), Dimension(:), Allocatable :: C,p,s
-  Real(8), Dimension(:,:), Allocatable :: w,v,f
+  Real(8), Dimension(:), Allocatable, target :: C,p,s
+  Real(8), Dimension(:,:), Allocatable, target :: w,v,f
   type(CahnHilliardParams) :: CH
   class(Mesh2D), allocatable :: mesh, mesh1
+  type(IOList) :: fields
   integer, allocatable :: colorToBCM(:)
   
   ! ----------------------
@@ -102,23 +66,17 @@ program nsch
   print *, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
   print *, ''
 
-  print *, Find([1,2,3],4), Find([1,2,3],3)
-
-  allocate(mesh1)
-  call Load_PPM('test/Domain-318.ppm',pixels)
-  colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
-  call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
-  !call Save_PPM('test/Domain1.ppm',pixels)
-
-  call mesh1%PrintTo_Neato('test/c2c.dot')
-  call mesh1%PrintTo_LegacyVTK('test/c2c.vtk')
+  !allocate(mesh1)
+  !call Load_PPM('test/Domain-318.ppm',pixels)
+  !colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
+  !call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
+  !call mesh1%PrintTo_Neato('test/c2c.dot')
+  !call mesh1%PrintTo_LegacyVTK('test/c2c.vtk')
 
   allocate(mesh)
   mesh%dt = dt
   call mesh%InitRect(dx,nx,.true.,dy,ny,.true.,20)
 
-  !allocate(u(1:mesh%NumAllCells))
-  !allocate(v(1:mesh%NumAllCells))
   allocate(c(1:mesh%NumAllCells))
   allocate(s(1:mesh%NumAllCells))
   allocate(p(1:mesh%NumAllCells))
@@ -126,50 +84,28 @@ program nsch
   allocate(v(1:2,1:mesh%NumAllCells))
   allocate(f(1:2,1:mesh%NumAllCells))
 
-  !do iCell = 1, mesh%NumAllCells
-  !  associate(r => mesh%CellCenter(iCell,:))
-  !    !if (r(1)>=0.25.and.r(1)<=0.75) v(:,iCell)=[1,0]
-  !    p(iCell) = -0.25_dp*(cos(2*r(1))+cos(2*r(2)))
-  !    v(:,iCell) = [+cos(r(1))*sin(r(2))&
-  !           ,-sin(r(1))*cos(r(2))]
-  !  end associate
-  !End Do
+  call fields%Add('v',v)
+  call fields%Add('p',p)
+  call fields%Add('c',c)
 
   do iCell = 1, mesh%NumAllCells
     associate(r => mesh%CellCenter(iCell,:)-[pi,pi])
-      p(iCell) = 1
-      c(iCell) = 1
+      p(iCell) = 1.0_dp
+      c(iCell) = 1.0_dp
       v(:,iCell) = [0.0,0.0]
       f(:,iCell) = [0.0,-1.0]
       if ((abs(r(1)) < 1).and.((abs(r(2)) < 1))) c(iCell) = -1
     end associate
-  End Do
+  end Do
 
   CH%EpsSqr = 0.01D0
-  Call print_mesh3(mesh, v,p,c, 0)
-  call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',c)
+  call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
   Do L=1,200
     Do M=1,10
       Call CahnHilliard_ImplicitSchemeStep(mesh, c,s,v, CH)
       Call NavierStokes_PredictVelocity(mesh,v,p,c,s,f,0.1_dp,1.0_dp,0.0_dp)
     End Do
-    Call print_mesh3(mesh, v,p,c, L)
-    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',c)
-End Do
-
-  !CH%EpsSqr = 0.01D0
-  !Block
-  !  do iCell = 1, mesh%NumAllCells
-  !    Call RANDOM_NUMBER(C(iCell))
-  !    C(iCell) = 2*C(iCell) - 1
-  !  End Do
-  !End Block
-  !Call print_mesh2(mesh, C, 0)
-  !Do L=1,200
-  !  Do M=1,1
-  !    Call CahnHilliard_ImplicitSchemeStep(mesh, C,s,v, CH)
-  !  End Do
-  !  Call print_mesh2(mesh, C, L)
-  !End Do
+    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',fields)
+  End Do
 
 end program nsch

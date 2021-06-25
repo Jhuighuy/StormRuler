@@ -175,7 +175,7 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell1, &
+      &   cellToCell=>mesh%CellToCell, &
       &        drInv=>lambda*SafeInverse(mesh%dr))
     ! ----------------------
     !$omp parallel do default(none) shared(u,vBar)
@@ -267,7 +267,7 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell1, &
+      &   cellToCell=>mesh%CellToCell, &
       &        drInv=>lambda*SafeInverse(mesh%dr))
     ! ----------------------
     !$omp parallel do default(none) shared(uBar,v)
@@ -485,7 +485,7 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCell)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell1, &
+      &   cellToCell=>mesh%CellToCell, &
       &        drInv=>lambda*SafeInverse(mesh%dr))
     ! ----------------------
     !$omp parallel do default(none) shared(u,vBar) &
@@ -632,7 +632,7 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell1, &
+      &   cellToCell=>mesh%CellToCell, &
       &        drInv=>lambda*SafeInverse(mesh%dr))
     ! ----------------------
     !$omp parallel do default(none) shared(uBar,v) &
@@ -872,7 +872,7 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
       & numCellFaces=>mesh%NumCellFaces, &
-      &   cellToCell=>mesh%CellToCell1, &
+      &   cellToCell=>mesh%CellToCell, &
       &     dlSqrInv=>lambda/(mesh%dl**2))
     ! ----------------------
     !$omp parallel do default(none) shared(u,v)

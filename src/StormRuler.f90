@@ -105,17 +105,13 @@ program nsch
   print *, Find([1,2,3],4), Find([1,2,3],3)
 
   allocate(mesh1)
-  call Load_PPM('test/Domain-100.ppm',pixels)
-  !pixels(:,:) = 0
-  !pixels(0,:) = 1
-  !pixels(319,:) = 1
-  !pixels(:,0) = 1
-  !pixels(:,319) = 1
+  call Load_PPM('test/Domain-318.ppm',pixels)
   colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
   call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
   !call Save_PPM('test/Domain1.ppm',pixels)
 
-  call mesh1%PrintCellToCell_Neato('test/c2c.dot')
+  call mesh1%PrintTo_Neato('test/c2c.dot')
+  call mesh1%PrintTo_LegacyVTK('test/c2c.vtk')
 
   allocate(mesh)
   mesh%dt = dt
@@ -151,13 +147,15 @@ program nsch
 
   CH%EpsSqr = 0.01D0
   Call print_mesh3(mesh, v,p,c, 0)
+  call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',c)
   Do L=1,200
     Do M=1,10
       Call CahnHilliard_ImplicitSchemeStep(mesh, c,s,v, CH)
       Call NavierStokes_PredictVelocity(mesh,v,p,c,s,f,0.1_dp,1.0_dp,0.0_dp)
     End Do
     Call print_mesh3(mesh, v,p,c, L)
-  End Do
+    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',c)
+End Do
 
   !CH%EpsSqr = 0.01D0
   !Block

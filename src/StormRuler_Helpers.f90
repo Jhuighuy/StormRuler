@@ -57,6 +57,18 @@ function I2S(value)
   I2S = trim(adjustl(buffer))
 end function I2S
 
+!! -----------------------------------------------------------------  
+!! Convert a real number to string.
+function R2S(value)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: value
+  character(len=:), allocatable :: R2S
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  character(len=50) :: buffer
+  write(buffer, *) value
+  R2S = trim(adjustl(buffer))
+end function R2S
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

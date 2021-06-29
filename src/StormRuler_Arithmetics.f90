@@ -92,8 +92,8 @@ end interface
 abstract interface
   pure function MathFunc$rank(x) result(f)
     import dp
-    real(dp), intent(in) :: x(@:)
-    real(dp) :: f(@{size(x,dim=$$)}@)
+    real(dp), intent(in) :: x(^:)
+    real(dp) :: f(^{size(x,dim=$$)}^)
   end function MathFunc$rank
 end interface
 #$end do
@@ -117,15 +117,15 @@ subroutine Fill$rank(mesh,u,alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
   real(dp), intent(in), optional :: alpha
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a
   a = merge(alpha,0.0_dp,present(alpha))
   ! ----------------------
-  !$omp parallel do default(none) shared(u,a)
+  !$omp parallel do schedule(static) 
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = a
+    u(^:,iCell) = a
   end do
   !$omp end parallel do
 end subroutine Fill$rank
@@ -138,14 +138,14 @@ end subroutine Fill$rank
 subroutine Set$rank(mesh,u,v)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:)
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in) :: v(^:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do default(none) shared(u,v)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = v(@:,iCell)
+    u(^:,iCell) = v(^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Set$rank
@@ -158,19 +158,21 @@ end subroutine Set$rank
 function Dot$rank(mesh,u,v) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: u(^:,:), v(^:,:)
   real(dp) :: d
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
   d = 0.0_dp
   associate(dv=>product(mesh%dl))
-    !$omp parallel do default(none) shared(u,v) reduction(+:d)
+    !$omp parallel do reduction(+:d) schedule(static)
     do iCell = 1, mesh%NumCells
 #$if rank == 0
-      d += dv*u(iCell)*v(iCell)
+      d = d + dv*u(iCell)*v(iCell)
+#$else if rank == 1
+      d = d + dv*dot_product(u(:,iCell),v(:,iCell))
 #$else
-      d += dv*sum(u(@:,iCell)*v(@:,iCell))
+      d = d + dv*sum(u(^:,iCell)*v(^:,iCell))
 #$end if
     end do
     !$omp end parallel do
@@ -188,18 +190,18 @@ end function Dot$rank
 subroutine Add$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:),w(@:,:)
+  real(dp), intent(in) :: v(^:,:),w(^:,:)
   real(dp), intent(in), optional :: alpha,beta
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a,b
   a = merge(alpha,1.0_dp,present(alpha))
   b = merge(beta,1.0_dp,present(beta))
   ! ----------------------
-  !$omp parallel do default(none) shared(u,v,w,a,b)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = b*v(@:,iCell) + a*w(@:,iCell)
+    u(^:,iCell) = b*v(^:,iCell) + a*w(^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Add$rank
@@ -213,18 +215,18 @@ end subroutine Add$rank
 subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:),w(@:,:)
+  real(dp), intent(in) :: v(^:,:),w(^:,:)
   real(dp), intent(in), optional :: alpha,beta
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   real(dp) :: a,b
   a = merge(alpha,1.0_dp,present(alpha))
   b = merge(beta,1.0_dp,present(beta))
   ! ----------------------
-  !$omp parallel do default(none) shared(u,v,w,a,b)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = b*v(@:,iCell) - a*w(@:,iCell)
+    u(^:,iCell) = b*v(^:,iCell) - a*w(^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Sub$rank
@@ -240,14 +242,14 @@ end subroutine Sub$rank
 subroutine Mul$rank(mesh,u,v,w)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: v(:),w(@:,:)
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in) :: v(:),w(^:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do default(none) shared(u,v,w)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = v(iCell)*w(@:,iCell)
+    u(^:,iCell) = v(iCell)*w(^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul$rank
@@ -260,14 +262,14 @@ end subroutine Mul$rank
 subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:),wBar(:,@:,:)
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in) :: vBar(:,:),wBar(:,^:,:)
+  real(dp), intent(out) :: u(^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do default(none) shared(u,vBar,wBar)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
+    u(^:,iCell) = vBar(:,iCell).inner.wBar(:,^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul_Inner$rank
@@ -280,14 +282,14 @@ end subroutine Mul_Inner$rank
 subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:),wBar(@:,:)
-  real(dp), intent(out) :: uHat(:,@:,:)
+  real(dp), intent(in) :: vBar(:,:),wBar(^:,:)
+  real(dp), intent(out) :: uHat(:,^:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do default(none) shared(uHat,vBar,wBar)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
+    uHat(:,^:,iCell) = vBar(:,iCell).outer.wBar(^:,iCell)
   end do
   !$omp end parallel do
 end subroutine Mul_Outer$rank
@@ -303,15 +305,15 @@ end subroutine Mul_Outer$rank
 subroutine ApplyFunc$rank(mesh,v,u,f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(out) :: v(@:,:)
+  real(dp), intent(in) :: u(^:,:)
+  real(dp), intent(out) :: v(^:,:)
   procedure(MathFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  !$omp parallel do default(none) shared(v,u)
+  !$omp parallel do schedule(static)
   do iCell = 1, mesh%NumCells
-    v(@:,iCell) = f(u(@:,iCell))
+    v(^:,iCell) = f(u(^:,iCell))
   end do
   !$omp end parallel do
 end subroutine ApplyFunc$rank

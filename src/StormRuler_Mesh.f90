@@ -69,9 +69,10 @@ type :: Mesh2D
   ! ----------------------
   integer, allocatable :: CellToCell(:,:)
   ! ----------------------
-  ! 
+  ! Logical table for the periodic face connections.
+  ! Shape is [-NumFaces/2,+NumFaces/2]×[1,NumAllCells].
   ! ----------------------
-  logical, allocatable :: CellFacePeriodic(:,:)
+  logical, allocatable, private :: CellFacePeriodic_(:,:)
 
   ! ----------------------
   ! Multidimensional index bounds table.
@@ -123,6 +124,9 @@ type :: Mesh2D
   real(dp), allocatable :: CellCenter(:,:)
 
 contains
+  ! ----------------------
+  procedure :: CellFacePeriodic => Mesh2D_CellFacePeriodic
+  ! ----------------------
   procedure :: InitRect => Mesh2D_InitRect
   procedure :: InitFromImage2D => Mesh2D_InitFromImage2D
   procedure :: InitFromImage3D => Mesh2D_InitFromImage3D
@@ -140,6 +144,21 @@ private Mesh2D_InitRect
 
 contains
 
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+logical pure function Mesh2D_CellFacePeriodic(mesh,iCellFace,iCell)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(Mesh2D), intent(in) :: mesh
+  integer, intent(in) :: iCell,iCellFace
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  Mesh2D_CellFacePeriodic = &
+    & allocated(mesh%CellFacePeriodic_).and. &
+    & mesh%CellFacePeriodic_(iCellFace,iCell)
+end function Mesh2D_CellFacePeriodic
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
 #$let STENCIL = { &
   & 2:{ +1:[+1,0],-1:[-1,0],   &
   &     +2:[0,+1],-2:[0,-1] }, &
@@ -154,12 +173,14 @@ contains
 subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(Mesh2D), intent(inout) :: mesh
-  integer, intent(in) :: image(@{0:}@),fluidColor,colorToBCM(:),numBCLayers
+  integer, intent(in) :: image(^{0:}^),fluidColor,colorToBCM(:),numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
-#$define iCellMD @{iCellMD$$}@
+
+#$define iCellMD ^{iCellMD$$}^
   integer :: iCell,$iCellMD,iBCM,iBCCell
-  integer, allocatable :: cache(@:)
-  allocate(cache,mold=image); cache(@:) = 0
+  integer, allocatable :: cache(^:)
+  allocate(cache,mold=image); cache(^:) = 0
+  
   ! ----------------------
   ! Process image data in order to:
   ! 1. Generate initial "Cell MD Index" ⟺ "Cell (Plain Index)" table 
@@ -180,7 +201,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       iCell = iCell + 1
       cache($iCellMD) = iCell
 #$for iCellFace,iCellFaceMD in STENCIL[dim]
-#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+#$define iiCellMD ^{iCellMD$$+${iCellFaceMD[$$-1]}$}^
       if (image($iiCellMD) /= fluidColor) then
         iBCM = Find(colorToBCM,image($iiCellMD))
         if (iBCM == 0) then
@@ -194,6 +215,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
 #$do rank = dim, 1, -1
   end do
 #$end do
+  
   ! ----------------------
   ! 3. TODO: apply plain indices sorting.
   ! ----------------------
@@ -201,6 +223,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   mesh%NumBCCells = sum(mesh%BCMs)
   mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
   print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells, 'NAC:', mesh%NumAllCells
+
   ! ----------------------
   ! 4. Allocate the connectivity tables and fill them with data,
   !    inverting the "Cell MD Index" ⟺ "Cell (Plain Index)" table.
@@ -219,7 +242,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       mesh%CellToCell(0,iCell) = iCell
       mesh%CellMDIndex(:,iCell) = [$iCellMD]
 #$for iCellFace,iCellFaceMD in STENCIL[dim]
-#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
+#$define iiCellMD ^{iCellMD$$+${iCellFaceMD[$$-1]}$}^
       if (image($iiCellMD) == fluidColor) then
         mesh%CellToCell($iCellFace,iCell) = cache($iiCellMD)
       else
@@ -227,14 +250,16 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
         mesh%CellToCell($iCellFace,iCell) = -iBCM
       end if
 #$end for
-  end if
+    end if
 #$do rank = dim, 1, -1
   end do
 #$end do
+  
   ! ----------------------
   ! Clean-up.
 #$del iCellMD, iiCellMD
   deallocate(cache)
+  
   ! ----------------------
   ! Proceed to the next steps..
   ! ----------------------
@@ -252,7 +277,9 @@ subroutine Mesh2D_GenerateBCCells(mesh,numBCLayers)
   class(Mesh2D), intent(inout) :: mesh
   integer, intent(in) :: numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell,iCellFace,iBCCell,iGCell,iBCM
+  
+  integer :: iCell,iCellFace,iBCM,iBCCell,iGCell
+  
   ! ----------------------
   ! 5. Allocate and fill the "BCM" ⟺ "BC Cell" 
   !    and "BCM" ⟺ "BC Cell Face" CSR-style tables and fill it. 
@@ -292,6 +319,7 @@ subroutine Mesh2D_GenerateBCCells(mesh,numBCLayers)
       end if
     end do
   end do
+  
   ! ----------------------
   ! 6. Classic CSR pointer correction procedure.
   ! ----------------------
@@ -311,6 +339,7 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
   class(Mesh2D), intent(inout) :: mesh
   character(len=*), intent(in) :: file
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   integer :: unit
   integer :: iCell,iiCell,iCellFace
   integer :: iBCM,iBCMPtr,iBCCell,iiBCCell,iBCCellFace
@@ -320,24 +349,26 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
     & [character(len=10) :: 'box', 'diamond']
   character(len=10), parameter :: PALETTE(3) = &
     & [character(len=10) :: 'red', 'green', 'blue']
+  
   ! ----------------------
   if (mesh%Dim /= 2) then
     error stop 'Only 2D meshes can be printed to Neato'
   end if
   print *, 'Print to Neato: ', file
+  
   ! ----------------------
   open(newunit=unit,file=file,status='replace')
-  write(unit,'(A)') '# Generated by StromRuler/Mesh2Neato'
-  write(unit,'(A)') 'digraph Mesh {'
+  write(unit,"(A)") '# Generated by StormRuler/Mesh2Neato'
+  write(unit,"(A)") 'digraph Mesh {'
+  
   ! ----------------------
   ! Write cell MD indices of the cells as graph nodes.
   ! Difference node shapes are use for different face 
   ! directions of the BC/ghost cells faces.
   ! ----------------------
-100 format('  ',A,'[label=',A,' ','pos=',A,']')
-200 format('  ',A,'[label=',A,' pos=',A,' shape=',A,']')
   do iCell = 1, mesh%NumCells
     associate(iCellPos=>DPI*mesh%CellMDIndex(:,iCell))
+      100 format('  ',A,'[label=',A,' ','pos=',A,']')
       write(unit,100) 'C'//I2S(iCell), &
         & '"C"', '"'//I2S(iCellPos(1))//','//I2S(iCellPos(2))//'!"'
     end associate
@@ -348,6 +379,7 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
       iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
       do while(iBCCell /= 0)
         associate(iBCCellPos=>DPI*mesh%CellMDIndex(:,iBCCell))
+          200 format('  ',A,'[label=',A,' pos=',A,' shape=',A,']')
           write(unit,200) 'C'//I2S(iBCCell), '"B'//I2S(iBCM)//'"', &
             & '"'//I2S(iBCCellPos(1))//','//I2S(iBCCellPos(2))//'!"', &
             & trim(SHAPES(abs(iBCCellFace)))
@@ -356,19 +388,17 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
       end do
     end do
   end do
+  
   ! ----------------------
   ! Write cell to cell connectivity as graph edges.
   ! BC/ghost cells are colored by the BC mark.
   ! ----------------------
-300 format('  ',A,'->',A)
-400 format('  ',A,'->',A,' [color=',A,']')
   do iCell = 1, mesh%NumCells
     do iCellFace = -mesh%NumCellFaces/2, +mesh%NumCellFaces/2
       if (iCellFace == 0) cycle
-      if (allocated(mesh%CellFacePeriodic).and. &
-        & mesh%CellFacePeriodic(iCellFace,iCell)) cycle
+      if (mesh%CellFacePeriodic(iCellFace,iCell)) cycle
       iiCell = mesh%CellToCell(iCellFace,iCell)
-      write(unit,300) 'C'//I2S(iCell), 'C'//I2S(iiCell)
+      write(unit,"('  ',A,'->',A)") 'C'//I2S(iCell), 'C'//I2S(iiCell)
     end do
   end do
   do iBCM = 1, mesh%NumBCMs
@@ -378,18 +408,20 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
       do
         associate(color=>PALETTE(iBCM))
           iiBCCell = mesh%CellToCell(-iBCCellFace,iBCCell) 
-          write(unit,400) 'C'//I2S(iBCCell), 'C'//I2S(iiBCCell), trim(color)
+          300 format('  ',A,'->',A,' [color=',A,']')
+          write(unit,300) 'C'//I2S(iBCCell), 'C'//I2S(iiBCCell), trim(color)
           iiBCCell = mesh%CellToCell(+iBCCellFace,iBCCell); if (iiBCCell == 0) exit
-          write(unit,400) 'C'//I2S(iBCCell), 'C'//I2S(iiBCCell), trim(color)
+          write(unit,300) 'C'//I2S(iBCCell), 'C'//I2S(iiBCCell), trim(color)
         end associate
         iBCCell = iiBCCell
       end do
     end do
   end do
+  
   ! ----------------------
   ! Close file and exit.
   ! ----------------------
-  write(unit,'(A)') '}'
+  write(unit,"(A)") '}'
   close(unit)
 end subroutine Mesh2D_PrintTo_Neato
 
@@ -402,35 +434,38 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
   character(len=*), intent(in) :: file
   type(IOList), intent(in), optional :: fields
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   integer :: unit
   integer :: numVTKCells,iVTKCell
   integer :: iCell,iiCell,iCellFace,jiCell,jCellFace
   logical, allocatable :: cellToCellIsAllInternal(:)
   class(IOListItem), pointer :: item
+  
   ! ----------------------
   if ((mesh%Dim /= 2).and.(mesh%Dim /= 3)) then
     error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
   end if
   print *, 'Print to Legacy VTK: ', file
+  
   ! ----------------------
   open(newunit=unit,file=file,status='replace')
-  write(unit,'(A)') '# vtk DataFile Version 2.0'
-  write(unit,'(A)') '# Generated by StromRuler/Mesh2VTK'
-  write(unit,'(A)') 'ASCII'
-  write(unit,'(A)') 'DATASET UNSTRUCTURED_GRID'
-  write(unit,'(A)') ''
+  write(unit,"(A)") '# vtk DataFile Version 2.0'
+  write(unit,"(A)") '# Generated by StormRuler/Mesh2VTK'
+  write(unit,"(A)") 'ASCII'
+  write(unit,"(A)") 'DATASET UNSTRUCTURED_GRID'
+  write(unit,"(A)") ''
+  
   ! ----------------------
   ! Write cell centers as VTK nodes.
   ! ----------------------
-100 format('POINTS ',A,' double')
-200 format(A,' ',A,' ',A)
-  write(unit,100) I2S(mesh%NumCells)
+  write(unit,"('POINTS ',A,' double')") I2S(mesh%NumCells)
   do iCell = 1, mesh%NumCells
     associate(iCellMD=>[mesh%CellMDIndex(:,iCell),0])
-      write(unit,200) I2S(iCellMD(1)), I2S(iCellMD(2)), I2S(iCellMD(3))
+      write(unit,"(A,' ',A,' ',A)") I2S(iCellMD(1)), I2S(iCellMD(2)), I2S(iCellMD(3))
     end associate
   end do
-  write(unit,'(A)') ''
+  write(unit,"(A)") ''
+  
   ! ----------------------
   ! Precompute if cell is far away from boundaries.
   ! ----------------------
@@ -441,34 +476,40 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
       & all(mesh%CellToCell(:,iCell) <= mesh%NumCells)
   end do
   !$omp end parallel do
+  
   ! ----------------------
   ! Write VTK cells.
   ! VTK cell connectivity is generated on the fly via parity algorithm.
   ! ----------------------
-300 format('CELLS ',A,' ',A)
-400 format('3 ',A,' ',A,' ',A)
-  numVTKCells = 0
 #$do writePass = 1, 2
 #$if writePass == 1
+  numVTKCells = 0
   !$omp parallel do reduction(+:numVTKCells) &
   !$omp private(iCellFace,iiCell,jCellFace,jiCell)
 #$end if
   do iCell = 1, mesh%NumCells
+    ! ----------------------
+    ! Locate the first cell (VTK cell node).
+    ! ----------------------
     do iCellFace = -mesh%NumCellFaces/2, +mesh%NumCellFaces/2
-      ! Locate the first cell (VTK cell node).
       if (iCellFace == 0) cycle
-      if (allocated(mesh%CellFacePeriodic).and. &
-        & mesh%CellFacePeriodic(iCellFace,iCell)) cycle
+      if (mesh%CellFacePeriodic(iCellFace,iCell)) cycle
       iiCell = mesh%CellToCell(iCellFace,iCell)
       if (iiCell > mesh%NumCells) cycle
+
+      ! ----------------------
+      ! Locate the second cell (VTK cell node).
+      ! ----------------------
       do jCellFace = -mesh%NumCellFaces/2, +mesh%NumCellFaces/2
-        ! Locate the second cell (VTK cell node).
-        if ( (jCellFace == 0).or. &
-          &  (abs(jCellFace) == abs(iCellFace)) ) cycle
-        if (allocated(mesh%CellFacePeriodic).and. &
-          & mesh%CellFacePeriodic(jCellFace,iCell)) cycle
+        if (jCellFace == 0) cycle
+        if (abs(jCellFace) == abs(iCellFace)) cycle
+        if (mesh%CellFacePeriodic(jCellFace,iCell)) cycle
         jiCell = mesh%CellToCell(jCellFace,iCell)
         if (jiCell > mesh%NumCells) cycle
+    
+        ! ----------------------
+        ! Generate the VTK cell.
+        ! ----------------------
         ! Denote cells with same MD index components parity as primary.
         ! Primary cells are used to generate VTK cells around them.
         ! Secondary cells are used to generate VTK cells near boundaries.
@@ -482,7 +523,7 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
 #$if writePass == 1
         numVTKCells = numVTKCells + 1
 #$else
-        write(unit,400) I2S(iCell-1), I2S(iiCell-1), I2S(jiCell-1)
+        write(unit,"('3 ',A,' ',A,' ',A)") I2S(iCell-1), I2S(iiCell-1), I2S(jiCell-1)
 #$end if
       end do
     end do
@@ -490,45 +531,46 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
 #$if writePass == 1
   !$omp end parallel do
   associate(numVTKCellNodes=>numVTKCells*(mesh%Dim+2))
-    write(unit,300) I2S(numVTKCells), I2S(numVTKCellNodes)
+    write(unit,"('CELLS ',A,' ',A)") I2S(numVTKCells), I2S(numVTKCellNodes)
   end associate
 #$end if
 #$end do
-500 format('CELL_TYPES ',A)
-  write(unit,500) I2S(numVTKCells)
+  write(unit,"('CELL_TYPES ',A)") I2S(numVTKCells)
   do iVTKCell = 1, numVTKCells
-    write(unit,'(A)') '5'
+    write(unit,"(A)") '5'
   end do
-  write(unit,'(A)') ''
+  write(unit,"(A)") ''
+  
   ! ----------------------
   ! Write fields.
   ! ----------------------
-600 format('POINT_DATA ',A)
-700 format('SCALARS ',A,' double 1')
-800 format('VECTORS ',A,' double')
-  write(unit,600) I2S(mesh%NumCells)
+  write(unit,"('POINT_DATA ',A)") I2S(mesh%NumCells)
   if (present(fields)) then
     item => fields%first
     do while(associated(item))
       select type(item)
         ! Scalar field.
         class is (IOListItem0)
-          write(unit,700) item%name 
-          write(unit,'(A)') 'LOOKUP_TABLE default'
+          write(unit,"('SCALARS ',A,' double 1')") item%name 
+          write(unit,"(A)") 'LOOKUP_TABLE default'
           do iCell = 1, mesh%NumCells
-            write(unit,'(A)') R2S(item%values(iCell))
+            write(unit,"(A)") R2S(item%values(iCell))
           end do
+        ! ----------------------
         ! Vector field.
         class is (IOListItem1)
-          write(unit,800) item%name 
+          write(unit,"('VECTORS ',A,' double')") item%name 
           do iCell = 1, mesh%NumCells
-            write(unit,'(A," ",A," ",A)') R2S(item%values(1,iCell)), R2S(item%values(2,iCell)), '0'
+            associate(v=>[item%values(:,iCell),0.0_dp])
+              write(unit,'(A," ",A," ",A)') R2S(v(1)), R2S(v(2)), R2S(v(3))
+            end associate
           end do
       end select
-      write(unit,'(A)') ''
+      write(unit,"(A)") ''
       item => item%next
     end do
   end if
+  
   ! ----------------------
   ! Close file and exit.
   ! ----------------------
@@ -637,7 +679,7 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
     mesh%NumCellFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells,1:3))
     allocate(mesh%CellToCell(-2:2,mesh%NumAllCells))
-    allocate(mesh%CellFacePeriodic(-2:2,mesh%NumAllCells))
+    allocate(mesh%CellFacePeriodic_(-2:2,mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2,mesh%NumAllCells))
     associate(cellCenter => mesh%CellCenter &
             , cellToCell => mesh%CellToCell)
@@ -658,11 +700,11 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
             &  cellToIndex(xCell+1,yCell), &
             &  cellToIndex(xCell,yCell+1)]
           !---
-          mesh%CellFacePeriodic(:,iCell) = .false.
-          if (xCell==1) mesh%CellFacePeriodic(-1,iCell) = .true.
-          if (yCell==1) mesh%CellFacePeriodic(-2,iCell) = .true.
-          if (xCell==xNumCells) mesh%CellFacePeriodic(+1,iCell) = .true.
-          if (yCell==yNumCells) mesh%CellFacePeriodic(+2,iCell) = .true.
+          mesh%CellFacePeriodic_(:,iCell) = .false.
+          if (xCell==1) mesh%CellFacePeriodic_(-1,iCell) = .true.
+          if (yCell==1) mesh%CellFacePeriodic_(-2,iCell) = .true.
+          if (xCell==xNumCells) mesh%CellFacePeriodic_(+1,iCell) = .true.
+          if (yCell==yNumCells) mesh%CellFacePeriodic_(+2,iCell) = .true.
         end do
       end do
       !$omp end parallel do

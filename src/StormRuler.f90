@@ -66,46 +66,61 @@ program nsch
   print *, '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
   print *, ''
 
-  !allocate(mesh1)
-  !call Load_PPM('test/Domain-318.ppm',pixels)
-  !colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
-  !call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
-  !call mesh1%PrintTo_Neato('test/c2c.dot')
-  !call mesh1%PrintTo_LegacyVTK('test/c2c.vtk')
+  if (.false.) then  
+    allocate(mesh1)
+    call Load_PPM('test/Domain-100.ppm',pixels)
+    colorToBCM = [PixelToInt([255,255,255]),PixelToInt([255,0,0])]
+    call mesh1%InitFromImage2D(pixels,0,colorToBCM,3)
+    call mesh1%PrintTo_Neato('test/c2c.dot')
+    call mesh1%PrintTo_LegacyVTK('test/c2c.vtk')
 
-  allocate(mesh)
-  mesh%dt = dt
-  call mesh%InitRect(dx,nx,.true.,dy,ny,.true.,20)
+    allocate(c(1:mesh1%NumAllCells))
+    allocate(s(1:mesh1%NumAllCells))
+    s(:) = 1.0_dp
+    c(:) = 1.0_dp
 
-  allocate(c(1:mesh%NumAllCells))
-  allocate(s(1:mesh%NumAllCells))
-  allocate(p(1:mesh%NumAllCells))
-  allocate(w(1:2,1:mesh%NumAllCells))
-  allocate(v(1:2,1:mesh%NumAllCells))
-  allocate(f(1:2,1:mesh%NumAllCells))
+    call fields%Add('c',c)
+    call fields%Add('s',s)
 
-  call fields%Add('v',v)
-  call fields%Add('p',p)
-  call fields%Add('c',c)
+    call SolvePoisson(mesh1,s,c)
+    call mesh1%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
+  end if
 
-  do iCell = 1, mesh%NumAllCells
-    associate(r => mesh%CellCenter(iCell,:)-[pi,pi])
-      p(iCell) = 1.0_dp
-      c(iCell) = 1.0_dp
-      v(:,iCell) = [0.0,0.0]
-      f(:,iCell) = [0.0,-1.0]
-      if ((abs(r(1)) < 1).and.((abs(r(2)) < 1))) c(iCell) = -1
-    end associate
-  end Do
+  if (.true.) then
+    allocate(mesh)
+    mesh%dt = dt
+    call mesh%InitRect(dx,nx,.true.,dy,ny,.true.,20)
 
-  CH%EpsSqr = 0.01D0
-  call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
-  Do L=1,200
-    Do M=1,10
-      Call CahnHilliard_ImplicitSchemeStep(mesh, c,s,v, CH)
-      Call NavierStokes_PredictVelocity(mesh,v,p,c,s,f,0.1_dp,1.0_dp,0.0_dp)
+    allocate(c(1:mesh%NumAllCells))
+    allocate(s(1:mesh%NumAllCells))
+    allocate(p(1:mesh%NumAllCells))
+    allocate(w(1:2,1:mesh%NumAllCells))
+    allocate(v(1:2,1:mesh%NumAllCells))
+    allocate(f(1:2,1:mesh%NumAllCells))
+
+    call fields%Add('v',v)
+    call fields%Add('p',p)
+    call fields%Add('c',c)
+
+    do iCell = 1, mesh%NumAllCells
+      associate(r => mesh%CellCenter(iCell,:)-[pi,pi])
+        p(iCell) = 1.0_dp
+        c(iCell) = 1.0_dp
+        v(:,iCell) = [0.0,0.0]
+        f(:,iCell) = [0.0,-1.0]
+        if ((abs(r(1)) < 1).and.((abs(r(2)) < 1))) c(iCell) = -1
+      end associate
+    end Do
+
+    CH%EpsSqr = 0.01D0
+    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
+    Do L=1,200
+      Do M=1,10
+        Call CahnHilliard_ImplicitSchemeStep(mesh, c,s,v, CH)
+        Call NavierStokes_PredictVelocity(mesh,v,p,c,s,f,0.1_dp,1.0_dp,0.0_dp)
+      End Do
+      call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',fields)
     End Do
-    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',fields)
-  End Do
+  end if
 
 end program nsch

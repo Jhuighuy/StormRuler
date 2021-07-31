@@ -24,8 +24,10 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_IO
 
-use StormRuler_Helpers
 #$use 'StormRuler_Parameters.f90'
+  
+use StormRuler_Parameters, only: dp
+use StormRuler_Helpers, only: PixelToInt,IntToPixel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -39,14 +41,14 @@ end type IOListItem
 
 #$do rank = 0, NUM_RANKS
 type, extends(IOListItem) :: IOListItem$rank
-  real(dp), pointer :: values(@:,:) => null()
+  real(dp), pointer :: values(^:,:) => null()
 end type !IOListItem$rank
 #$end do
 
 type :: IOList
   class(IOListItem), pointer :: first => null()
 contains
-  generic :: Add=>Add0,Add1,Add2
+  generic :: Add=>^{Add$$^|^0,NUM_RANKS}^
 #$do rank = 0, NUM_RANKS
   procedure :: Add$rank=>IOList_Add$rank
 #$end do
@@ -81,28 +83,6 @@ end subroutine IOList_Add$rank
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! -----------------------------------------------------------------  
-pure function PixelToInt(colorChannels) result(int)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: colorChannels(3)
-  integer :: int
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  int = ior(iand(255,colorChannels(1)), &
-            ior(ishft(iand(255,colorChannels(2)),8), &
-                ishft(iand(255,colorChannels(3)),16)))
-end function PixelToInt
-!! -----------------------------------------------------------------  
-
-pure function IntToPixel(int) result(colorChannels)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: int
-  integer :: colorChannels(3)
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  colorChannels(1) = iand(255,int)
-  colorChannels(2) = iand(255,ishft(int,-8))
-  colorChannels(3) = iand(255,ishft(int,-16))
-end function IntToPixel
 
 !! -----------------------------------------------------------------
 !! Load PPM image.

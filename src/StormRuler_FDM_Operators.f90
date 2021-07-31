@@ -22,20 +22,22 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
 module StormRuler_FDM_Operators
 
-use StormRuler_Helpers
-use StormRuler_Mesh, only: Mesh2D
-use StormRuler_Arithmetics
 #$use 'StormRuler_Parameters.f90'
+
+use StormRuler_Parameters, only: dp
+use StormRuler_Helpers, only: Flip,SafeInverse, &
+  & ^{MathFunc$$^|^0,NUM_RANKS}^,operator(.inner.),operator(.outer.)
+use StormRuler_Mesh, only: Mesh2D
+use StormRuler_BLAS, only: Fill,Mul_Outer,ApplyFunc
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-integer, parameter :: ACCURACY_ORDER = 4
+integer, parameter :: ACCURACY_ORDER = 2
 
 private :: FD1_C2,FD1_C4,FD1_C6,FD1_C8
 
@@ -182,21 +184,21 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces/2
+      do iCellFace = 1, numCellFaces, 2
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
-        rCell = cellToCell(+iCellFace,iCell)
-        lCell = cellToCell(-iCellFace,iCell)
-        if (ACCURACY_ORDER>=3) then
-          rrCell = cellToCell(+iCellFace,rCell)
-          llCell = cellToCell(-iCellFace,lCell)
-          if (ACCURACY_ORDER>=5) then
-            rrrCell = cellToCell(+iCellFace,rrCell)
-            lllCell = cellToCell(-iCellFace,llCell)
-            if (ACCURACY_ORDER>=7) then
-              rrrrCell = cellToCell(+iCellFace,rrrCell)
-              llllCell = cellToCell(-iCellFace,lllCell)
+        rCell = cellToCell(iCellFace,iCell)
+        lCell = cellToCell(Flip(iCellFace),iCell)
+        if (ACCURACY_ORDER >= 3) then
+          rrCell = cellToCell(iCellFace,rCell)
+          llCell = cellToCell(Flip(iCellFace),lCell)
+          if (ACCURACY_ORDER >= 5) then
+            rrrCell = cellToCell(iCellFace,rrCell)
+            lllCell = cellToCell(Flip(iCellFace),llCell)
+            if (ACCURACY_ORDER >= 7) then
+              rrrrCell = cellToCell(iCellFace,rrrCell)
+              llllCell = cellToCell(Flip(iCellFace),lllCell)
             end if
           end if
         end if
@@ -207,8 +209,8 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
           case(1:2)
             vBar(:,^:,iCell) = vBar(:,^:,iCell) - &
               &       ( drInv(:,iCellFace).outer. &
-              &               FD1_C2(u(^:,rCell), &
-              &                      u(^:,lCell)) )
+              &               FD1_C2(u(^:,lCell), &
+              &                      u(^:,rCell)) )
           ! ----------------------
           case(3:4)
             vBar(:,^:,iCell) = vBar(:,^:,iCell) - &
@@ -274,21 +276,21 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces/2
+      do iCellFace = 1, numCellFaces, 2
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
-        rCell = cellToCell(+iCellFace,iCell)
-        lCell = cellToCell(-iCellFace,iCell)
-        if (ACCURACY_ORDER>=3) then
-          rrCell = cellToCell(+iCellFace,rCell)
-          llCell = cellToCell(-iCellFace,lCell)
-          if (ACCURACY_ORDER>=5) then
-            rrrCell = cellToCell(+iCellFace,rrCell)
-            lllCell = cellToCell(-iCellFace,llCell)
-            if (ACCURACY_ORDER>=7) then
-              rrrrCell = cellToCell(+iCellFace,rrrCell)
-              llllCell = cellToCell(-iCellFace,lllCell)
+        rCell = cellToCell(iCellFace,iCell)
+        lCell = cellToCell(Flip(iCellFace),iCell)
+        if (ACCURACY_ORDER >= 3) then
+          rrCell = cellToCell(iCellFace,rCell)
+          llCell = cellToCell(Flip(iCellFace),lCell)
+          if (ACCURACY_ORDER >= 5) then
+            rrrCell = cellToCell(iCellFace,rrCell)
+            lllCell = cellToCell(Flip(iCellFace),llCell)
+            if (ACCURACY_ORDER >= 7) then
+              rrrrCell = cellToCell(iCellFace,rrrCell)
+              llllCell = cellToCell(Flip(iCellFace),lllCell)
             end if
           end if
         end if
@@ -494,35 +496,37 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCell)
       integer :: rCell,rrCell,rrrCell,rrrrCell,rrrrrCell
       integer :: lCell,llCell,lllCell,llllCell,lllllCell
       integer(kind=1) :: dir
-      do iCellFace = 1, numCellFaces/2
+      do iCellFace = 1, numCellFaces, 2
         ! ----------------------
         ! Determine FD direction.
         ! ----------------------
         dir = merge(dirAll,1_1,present(dirAll))
-        dir = merge(dirFace(iCellFace),dir,present(dirFace))
-        dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
+        !dir = merge(dirFace(iCellFace),dir,present(dirFace))
+        !dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
         dir = max(-1_1,min(dir,+1_1))
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
-        rCell = cellToCell(dir*iCellFace,iCell)
-        lCell = cellToCell(dir*iCellFace,iCell)
-        if (ACCURACY_ORDER>=2) then
-          rrCell = cellToCell(dir*iCellFace,rCell)
-          llCell = cellToCell(dir*iCellFace,lCell)
-          if (ACCURACY_ORDER>=4) then
-            rrrCell = cellToCell(dir*iCellFace,rrCell)
-            lllCell = cellToCell(dir*iCellFace,llCell)
-            if (ACCURACY_ORDER>=6) then
-              rrrrCell = cellToCell(dir*iCellFace,rrrCell)
-              llllCell = cellToCell(dir*iCellFace,lllCell)
-              if (ACCURACY_ORDER>=8) then
-                rrrrrCell = cellToCell(dir*iCellFace,rrrrCell)
-                lllllCell = cellToCell(dir*iCellFace,llllCell)
+        associate(fCellFace=>Flip(iCellFace,dir))
+          rCell = cellToCell(fCellFace,iCell)
+          lCell = cellToCell(Flip(fCellFace),iCell)
+          if (ACCURACY_ORDER >= 2) then
+            rrCell = cellToCell(Flip(iCellFace,dir),rCell)
+            llCell = cellToCell(Flip(fCellFace),lCell)
+            if (ACCURACY_ORDER >= 4) then
+              rrrCell = cellToCell(fCellFace,rrCell)
+              lllCell = cellToCell(Flip(fCellFace),llCell)
+              if (ACCURACY_ORDER >= 6) then
+                rrrrCell = cellToCell(fCellFace,rrrCell)
+                llllCell = cellToCell(Flip(fCellFace),lllCell)
+                if (ACCURACY_ORDER >= 8) then
+                  rrrrrCell = cellToCell(fCellFace,rrrrCell)
+                  lllllCell = cellToCell(Flip(fCellFace),llllCell)
+                end if
               end if
             end if
           end if
-        end if
+        end associate
         ! ----------------------
         ! Compute FDM-approximate gradient increment.
         ! ----------------------
@@ -641,35 +645,37 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar, &
       integer :: rCell,rrCell,rrrCell,rrrrCell,rrrrrCell
       integer :: lCell,llCell,lllCell,llllCell,lllllCell
       integer(kind=1) :: dir
-      do iCellFace = 1, numCellFaces/2
+      do iCellFace = 1, numCellFaces, 2
         ! ----------------------
         ! Determine FD direction.
         ! ----------------------
         dir = merge(dirAll,1_1,present(dirAll))
-        dir = merge(dirFace(iCellFace),dir,present(dirFace))
-        dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
+        !dir = merge(dirFace(iCellFace),dir,present(dirFace))
+        !dir = merge(dirCell(iCellFace,iCell),dir,present(dirCell))
         dir = max(-1_1,min(dir,+1_1))
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
-        rCell = cellToCell(dir*iCellFace,iCell)
-        lCell = cellToCell(dir*iCellFace,iCell)
-        if (ACCURACY_ORDER>=2) then
-          rrCell = cellToCell(dir*iCellFace,rCell)
-          llCell = cellToCell(dir*iCellFace,lCell)
-          if (ACCURACY_ORDER>=4) then
-            rrrCell = cellToCell(dir*iCellFace,rrCell)
-            lllCell = cellToCell(dir*iCellFace,llCell)
-            if (ACCURACY_ORDER>=6) then
-              rrrrCell = cellToCell(dir*iCellFace,rrrCell)
-              llllCell = cellToCell(dir*iCellFace,lllCell)
-              if (ACCURACY_ORDER>=8) then
-                rrrrrCell = cellToCell(dir*iCellFace,rrrrCell)
-                lllllCell = cellToCell(dir*iCellFace,llllCell)
+        associate(fCellFace=>Flip(iCellFace,dir))
+          rCell = cellToCell(fCellFace,iCell)
+          lCell = cellToCell(Flip(fCellFace),iCell)
+          if (ACCURACY_ORDER >= 2) then
+            rrCell = cellToCell(Flip(iCellFace,dir),rCell)
+            llCell = cellToCell(Flip(fCellFace),lCell)
+            if (ACCURACY_ORDER >= 4) then
+              rrrCell = cellToCell(Flip(iCellFace,dir),rrCell)
+              lllCell = cellToCell(Flip(fCellFace),llCell)
+              if (ACCURACY_ORDER >= 6) then
+                rrrrCell = cellToCell(Flip(iCellFace,dir),rrrCell)
+                llllCell = cellToCell(Flip(fCellFace),lllCell)
+                if (ACCURACY_ORDER >= 8) then
+                  rrrrrCell = cellToCell(Flip(iCellFace,dir),rrrrCell)
+                  lllllCell = cellToCell(Flip(fCellFace),llllCell)
+                end if
               end if
             end if
           end if
-        end if
+        end associate
         ! ----------------------
         ! Compute FDM-approximate divergence increment.
         ! ----------------------
@@ -879,21 +885,21 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
     do iCell = 1, numCells; block
       integer :: rCell,rrCell,rrrCell,rrrrCell
       integer :: lCell,llCell,lllCell,llllCell
-      do iCellFace = 1, numCellFaces/2
+      do iCellFace = 1, numCellFaces, 2
         ! ----------------------
         ! Find indices of the adjacent cells.
         ! ----------------------
-        rCell = cellToCell(+iCellFace,iCell)
-        lCell = cellToCell(-iCellFace,iCell)
-        if (ACCURACY_ORDER>=3) then
-          rrCell = cellToCell(+iCellFace,rCell)
-          llCell = cellToCell(-iCellFace,lCell)
-          if (ACCURACY_ORDER>=5) then
-            rrrCell = cellToCell(+iCellFace,rrCell)
-            lllCell = cellToCell(-iCellFace,llCell)
-            if (ACCURACY_ORDER>=7) then
-              rrrrCell = cellToCell(+iCellFace,rrrCell)
-              llllCell = cellToCell(-iCellFace,lllCell)
+        rCell = cellToCell(iCellFace,iCell)
+        lCell = cellToCell(Flip(iCellFace),iCell)
+        if (ACCURACY_ORDER >= 3) then
+          rrCell = cellToCell(iCellFace,rCell)
+          llCell = cellToCell(Flip(iCellFace),lCell)
+          if (ACCURACY_ORDER >= 5) then
+            rrrCell = cellToCell(iCellFace,rrCell)
+            lllCell = cellToCell(Flip(iCellFace),llCell)
+            if (ACCURACY_ORDER >= 7) then
+              rrrrCell = cellToCell(iCellFace,rrrCell)
+              llllCell = cellToCell(Flip(iCellFace),lllCell)
             end if
           end if
         end if

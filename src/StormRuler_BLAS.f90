@@ -22,11 +22,14 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Arithmetics
+module StormRuler_BLAS
 
-use StormRuler_Mesh
-use StormRuler_Parameters
 #$use 'StormRuler_Parameters.f90'
+  
+use StormRuler_Parameters, only: dp
+use StormRuler_Helpers, only: ^{MathFunc$$^|^0,NUM_RANKS}^, &
+  & operator(.inner.), operator(.outer.)
+use StormRuler_Mesh, only: Mesh2D
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -81,27 +84,10 @@ interface Mul_Outer
 #$end do
 end interface Mul_Outer
 
-abstract interface
-  pure function MathFunc$0(x) result(f)
-    import dp
-    real(dp), intent(in) :: x
-    real(dp) :: f
-  end function MathFunc$0
-end interface
-#$do rank = 1, NUM_RANKS
-abstract interface
-  pure function MathFunc$rank(x) result(f)
-    import dp
-    real(dp), intent(in) :: x(^:)
-    real(dp) :: f(^{size(x,dim=$$)}^)
-  end function MathFunc$rank
-end interface
-#$end do
-
 interface ApplyFunc
 #$do rank = 0, NUM_RANKS
   module procedure ApplyFunc$rank
-#$end do
+#$end do 
 end interface ApplyFunc
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -164,7 +150,7 @@ function Dot$rank(mesh,u,v) result(d)
   integer :: iCell
   ! ----------------------
   d = 0.0_dp
-  associate(dv=>product(mesh%dl))
+  associate(dv=>sqrt(product(mesh%dl)))
     !$omp parallel do reduction(+:d) schedule(static)
     do iCell = 1, mesh%NumCells
 #$if rank == 0
@@ -319,4 +305,4 @@ subroutine ApplyFunc$rank(mesh,v,u,f)
 end subroutine ApplyFunc$rank
 #$end do
 
-end module StormRuler_Arithmetics
+end module StormRuler_BLAS

@@ -40,6 +40,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 ## -----------------------------------------------------------------  
 ## StormRuler executable.
+#set(CMAKE_Fortran_FLAGS "-g -O0 -fbounds-check")
 set(CMAKE_Fortran_FLAGS "-g -Ofast -fopenmp -march=native")
 file(GLOB SOURCES src/*.f90) 
 add_executable("StormRuler.out" ${SOURCES})

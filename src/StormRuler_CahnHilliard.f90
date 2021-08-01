@@ -27,6 +27,7 @@ module StormRuler_CahnHilliard
 use StormRuler_Helpers
 use StormRuler_Mesh
 use StormRuler_FDM_Operators
+use StormRuler_ConvParams
 use StormRuler_KrylovSolvers
   
 implicit none
@@ -39,11 +40,13 @@ contains
 end type CahnHilliardParams
 
 contains  
+
 pure function CahnHilliardParams_DoubleWell(C) result(F)
   real(8), intent(in) :: C
   real(8) :: F
   F = 0.25*(1 - C**2)**2
 end function CahnHilliardParams_DoubleWell
+
 pure function CahnHilliardParams_ddCDoubleWell(C) result(F)
   real(8), intent(in) :: C
   real(8) :: F
@@ -51,50 +54,10 @@ pure function CahnHilliardParams_ddCDoubleWell(C) result(F)
 end function CahnHilliardParams_ddCDoubleWell
 
 !! -----------------------------------------------------------------  
-!! Estimate the Ginzburg-Landau free energy functional value.
-function CahnHilliard_FreeEnergy(nX,nY,dl,dY, C,CHPhysParams) result(E)
-  integer, intent(in) :: nX, nY
-  real(8), intent(in) :: dl, dY
-  real(8), dimension(0:nX+1,0:nY+1), intent(inout) :: C
-  class(CahnHilliardParams), intent(in) :: CHPhysParams
-  real(8) :: E
-  block
-    integer :: iX, iY
-    E = 0
-    ! ----------------------
-    ! E_phobic := <1,F(C)ij>
-    !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
-    do iY = 1, nY
-      do iX = 1, nX
-        E = E + dl*dY*CHPhysParams%F(C(iX,iY))
-      end do
-    end do
-    !$omp end parallel do
-    ! ----------------------
-    ! E_philic := EpsSqr/2*<(Nabla)F(C),(Nabla)F(C)>
-    !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
-    do iY = 1, nY
-      do iX = 0, nX
-        E = E + 0.5*CHPhysParams%EpsSqr * (dY/dl)*(C(iX+1,iY) - C(iX,iY))
-      end do
-    end do
-    !$omp end parallel do
-    !$omp parallel do private(iX,iY) collapse(2) reduction(+:E)
-    do iY = 0, nY
-      do iX = 1, nX
-        E = E + 0.5*CHPhysParams%EpsSqr * (dl/dY)*(C(iX,iY+1) - C(iX,iY))
-      end do
-    end do
-    !$omp end parallel do
-    ! ----------------------
-  end block
-end function CahnHilliard_FreeEnergy
-
-!! -----------------------------------------------------------------  
 !! Estimate the RHS for the implicit scheme SLAE 
 !! b ← φ + dt⋅(ΔF'(φ)-∇⋅φv).   
 subroutine CahnHilliard_ImplicitSchemeRHS(mesh, C,v,B,physParams)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: C
   real(dp), intent(inout) :: v(:,:)
   real(8), dimension(:), intent(out) :: B
@@ -113,7 +76,7 @@ end subroutine CahnHilliard_ImplicitSchemeRHS
 !! -----------------------------------------------------------------  
 !! Apply a operator estimate for the implicit scheme SLAE.
 subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: u,c
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   associate(dt=>mesh%dt,eps=>CHPhysParams%EpsSqr)
@@ -125,7 +88,7 @@ subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
   end associate
 end subroutine CahnHilliard_ImplicitSchemeOperator
 subroutine CahnHilliard_ImplicitSchemeOperatorHelper(mesh,u,c,aCHPhysParams)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: u,c
   class(*), intent(in) :: aCHPhysParams
   select type(aCHPhysParams)
@@ -139,11 +102,11 @@ end subroutine CahnHilliard_ImplicitSchemeOperatorHelper
 !! -----------------------------------------------------------------  
 !! Solve the SLAE of the implicit scheme (using Conjugate Gradients method).
 subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: C
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams
-  class(ConvParameters), allocatable :: Params
+  class(tConvParams), allocatable :: Params
   real(8), allocatable :: b(:)
   ! ----------------------
   ! Initialize iterations.
@@ -160,7 +123,7 @@ end subroutine CahnHilliard_ImplicitSchemeSolve
 !! -----------------------------------------------------------------  
 !! Compute Cahn-Hilliard time step with an implicit scheme.
 subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   real(8), dimension(:), intent(inout) :: C,S
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams

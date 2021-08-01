@@ -28,7 +28,7 @@ module StormRuler_Mesh
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: Flip,IndexOf,I2S,R2S,IntToPixel
-use StormRuler_IO, only: IOList,IOListItem,^{IOListItem$$^|^0,NUM_RANKS}^
+use StormRuler_IO, only: IOList,IOListItem,@{IOListItem$$@|@0,NUM_RANKS}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 
@@ -40,7 +40,7 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Semi-structured multidimensional mesh.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-type :: Mesh2D
+type :: tMesh
   ! ----------------------
   ! Mesh dimension.
   ! ----------------------
@@ -129,19 +129,19 @@ type :: Mesh2D
 
 contains
   ! ----------------------
-  procedure :: CellFacePeriodic => Mesh2D_CellFacePeriodic
+  procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
   ! ----------------------
-  procedure :: InitRect => Mesh2D_InitRect
-  procedure :: InitFromImage2D => Mesh2D_InitFromImage2D
-  procedure :: InitFromImage3D => Mesh2D_InitFromImage3D
+  procedure :: InitRect => tMesh_InitRect
+  procedure :: InitFromImage2D => tMesh_InitFromImage2D
+  procedure :: InitFromImage3D => tMesh_InitFromImage3D
   ! ----------------------
-  procedure, private :: GenerateBCCells => Mesh2D_GenerateBCCells
+  procedure, private :: GenerateBCCells => tMesh_GenerateBCCells
   ! ----------------------
-  procedure :: PrintTo_Neato => Mesh2D_PrintTo_Neato
-  procedure :: PrintTo_LegacyVTK => Mesh2D_PrintTo_LegacyVTK
-end type Mesh2D
+  procedure :: PrintTo_Neato => tMesh_PrintTo_Neato
+  procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
+end type tMesh
 
-private Mesh2D_InitRect
+private tMesh_InitRect
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -150,15 +150,15 @@ contains
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
-logical pure function Mesh2D_CellFacePeriodic(mesh,iCellFace,iCell)
+logical pure function tMesh_CellFacePeriodic(mesh,iCellFace,iCell)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   integer, intent(in) :: iCell,iCellFace
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Mesh2D_CellFacePeriodic = &
+  tMesh_CellFacePeriodic = &
     & allocated(mesh%CellFacePeriodic_).and. &
     & mesh%CellFacePeriodic_(iCellFace,iCell)
-end function Mesh2D_CellFacePeriodic
+end function tMesh_CellFacePeriodic
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -174,16 +174,16 @@ end function Mesh2D_CellFacePeriodic
 !! Initialize a mesh from image.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do dim = 2, 3
-subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLayers)
+subroutine tMesh_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
-  integer, intent(in) :: image(^{0:}^),fluidColor,colorToBCM(:),numBCLayers
+  class(tMesh), intent(inout) :: mesh
+  integer, intent(in) :: image(@{0:}@),fluidColor,colorToBCM(:),numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-#$define iCellMD ^{iCellMD$$}^
+#$define iCellMD @{iCellMD$$}@
   integer :: iCell,$iCellMD,iBCM,iBCCell
-  integer, allocatable :: cache(^:)
-  allocate(cache,mold=image); cache(^:) = 0
+  integer, allocatable :: cache(@:)
+  allocate(cache,mold=image); cache(@:) = 0
 
   !! TODO:
   allocate(mesh%dl(1:4))
@@ -209,7 +209,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       iCell = iCell + 1
       cache($iCellMD) = iCell
 #$for iCellFace,iCellFaceMD in STENCIL[dim].items()
-#$define iiCellMD ^{iCellMD$$+${iCellFaceMD[$$-1]}$}^
+#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
       if (image($iiCellMD) /= fluidColor) then
         iBCM = IndexOf(image($iiCellMD),colorToBCM)
         if (iBCM == 0) then
@@ -249,7 +249,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
       iCell = cache($iCellMD)
       mesh%CellMDIndex(:,iCell) = [$iCellMD]
 #$for iCellFace,iCellFaceMD in STENCIL[dim].items()
-#$define iiCellMD ^{iCellMD$$+${iCellFaceMD[$$-1]}$}^
+#$define iiCellMD @{iCellMD$$+${iCellFaceMD[$$-1]}$}@
       if (image($iiCellMD) == fluidColor) then
         mesh%CellToCell($iCellFace,iCell) = cache($iiCellMD)
       else
@@ -271,7 +271,7 @@ subroutine Mesh2D_InitFromImage${dim}$D(mesh,image,fluidColor,colorToBCM,numBCLa
   ! Proceed to the next steps..
   ! ----------------------
   call mesh%GenerateBCCells(numBCLayers)
-end subroutine Mesh2D_InitFromImage${dim}$D
+end subroutine tMesh_InitFromImage${dim}$D
 #$end do
 
 #$del STENCIL
@@ -279,9 +279,9 @@ end subroutine Mesh2D_InitFromImage${dim}$D
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Generate BC/ghost cells.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_GenerateBCCells(mesh,numBCLayers)
+subroutine tMesh_GenerateBCCells(mesh,numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
+  class(tMesh), intent(inout) :: mesh
   integer, intent(in) :: numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
   
@@ -331,7 +331,7 @@ subroutine Mesh2D_GenerateBCCells(mesh,numBCLayers)
   ! ----------------------
   mesh%BCMs = eoshift(mesh%BCMs,shift=-1) + 1
   print *, 'ERROR PRONE CHECK:', iBCCell-1
-end subroutine Mesh2D_GenerateBCCells
+end subroutine tMesh_GenerateBCCells
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -340,9 +340,9 @@ end subroutine Mesh2D_GenerateBCCells
 !! Print mesh connectivity in '.dot' format.
 !! Output may be visualized with: 'neato -n -Tpng c2c.dot > c2c.png' 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_PrintTo_Neato(mesh,file)
+subroutine tMesh_PrintTo_Neato(mesh,file)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
+  class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
   ! >>>>>>>>>>>>>>>>>>>>>>
   
@@ -428,14 +428,14 @@ subroutine Mesh2D_PrintTo_Neato(mesh,file)
   ! ----------------------
   write(unit,"(A)") '}'
   close(unit)
-end subroutine Mesh2D_PrintTo_Neato
+end subroutine tMesh_PrintTo_Neato
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Print mesh in Legacy VTK '.vtk' format.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
+subroutine tMesh_PrintTo_LegacyVTK(mesh,file,fields)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(inout) :: mesh
+  class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
   type(IOList), intent(in), optional :: fields
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -578,16 +578,16 @@ subroutine Mesh2D_PrintTo_LegacyVTK(mesh,file,fields)
   ! Close file and exit.
   ! ----------------------
   close(unit)
-end subroutine Mesh2D_PrintTo_LegacyVTK
+end subroutine tMesh_PrintTo_LegacyVTK
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -----------------------------------------------------------------  
 !! Initialize a 2D rectangular mesh.
-subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
+subroutine tMesh_InitRect(mesh,xDelta,xNumCells,xPeriodic &
                                ,yDelta,yNumCells,yPeriodic,numLayers)
-  class(Mesh2D), intent(inout) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: xDelta,yDelta
   integer, intent(in) :: xNumCells,yNumCells
   logical, intent(in) :: xPeriodic,yPeriodic
@@ -751,6 +751,6 @@ subroutine Mesh2D_InitRect(mesh,xDelta,xNumCells,xPeriodic &
       !$omp end parallel do
     end associate
   end block
-end subroutine Mesh2D_InitRect
+end subroutine tMesh_InitRect
 
 end module StormRuler_Mesh

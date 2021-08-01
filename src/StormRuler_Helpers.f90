@@ -49,8 +49,8 @@ abstract interface
 #$do rank = 1, NUM_RANKS
   pure function MathFunc$rank(u) result(v)
     import dp
-    real(dp), intent(in) :: u(^:)
-    real(dp) :: v(^{size(u,dim=$$)}^)
+    real(dp), intent(in) :: u(@:)
+    real(dp) :: v(@{size(u,dim=$$)}@)
   end function MathFunc$rank
 #$end do
 end interface
@@ -64,8 +64,8 @@ abstract interface
 #$do rank = 1, NUM_RANKS
   pure function MathSpatialFunc$rank(x,u) result(v)
     import dp
-    real(dp), intent(in) :: x(:),u(^:,:)
-    real(dp) :: v(^{size(u,dim=$$)}^)
+    real(dp), intent(in) :: x(:),u(@:,:)
+    real(dp) :: v(@{size(u,dim=$$)}@)
   end function MathSpatialFunc$rank
 #$end do
 end interface
@@ -104,7 +104,7 @@ integer pure function CFlip(value,dir)
   integer, intent(in) :: value
   integer(1), intent(in) :: dir
   ! >>>>>>>>>>>>>>>>>>>>>>
-  CFlip = merge(value, Flip(value), dir == 1_1)
+  CFlip = merge(value, Flip(value), dir > 0_1)
 end function CFlip
 
 !! ----------------------------------------------------------------- !!
@@ -180,18 +180,18 @@ pure function Inner$0(vBar,wHat) result(uHat)
   real(dp), intent(in) :: vBar(:),wHat(:)
   real(dp) :: uHat
   ! >>>>>>>>>>>>>>>>>>>>>>
-  uHat = dot_product(vBar, wHat)
+  uHat = dot_product(vBar,wHat)
 end function Inner$0
 #$do rank = 1, NUM_RANKS-1
 pure function Inner$rank(vBar,wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat(:,^:)
-  real(dp) :: uHat(^{size(wHat, dim=$$)}^)
+  real(dp), intent(in) :: vBar(:), wHat(:,@:)
+  real(dp) :: uHat(@{size(wHat,dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
-  uHat(^:) = 0.0_dp
+  uHat(@:) = 0.0_dp
   do i = 1, size(vBar)
-    uHat(^:) = uHat(^:) + vBar(i)*wHat(i,^:)
+    uHat(@:) = uHat(@:) + vBar(i)*wHat(i,@:)
   end do
 end function Inner$rank
 #$end do
@@ -209,12 +209,12 @@ end function Outer$0
 #$do rank = 1, NUM_RANKS-1
 pure function Outer$rank(vBar,wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat(^:)
-  real(dp) :: uHat(size(vBar,dim=1),^{size(wHat,dim=$$)}^)
+  real(dp), intent(in) :: vBar(:), wHat(@:)
+  real(dp) :: uHat(size(vBar,dim=1),@{size(wHat,dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
   do i = 1, size(vBar,dim=1)
-    uHat(i,^:) = vBar(i)*wHat(^:)
+    uHat(i,@:) = vBar(i)*wHat(@:)
   end do
 end function Outer$rank
 #$end do
@@ -257,7 +257,7 @@ function MergeString(trueString,falseString,condition) result(string)
   logical, intent(in) :: condition
   character(len=:), allocatable :: string
   ! >>>>>>>>>>>>>>>>>>>>>>
-  if (condition)  then
+  if (condition) then
     string = trueString
   else
     string = falseString

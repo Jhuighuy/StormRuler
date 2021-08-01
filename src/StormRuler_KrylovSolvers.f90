@@ -27,9 +27,9 @@ module StormRuler_KrylovSolvers
 #$use 'StormRuler_Parameters.f90'
   
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: SafeInverse,SafeDivide, &
-  & EnsurePositive,EnsureNonNegative
-use StormRuler_Mesh, only: Mesh2D
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Helpers, only: SafeDivide
+use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill,Set,Dot,Add,Sub
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -37,26 +37,12 @@ use StormRuler_BLAS, only: Fill,Set,Dot,Add,Sub
 
 implicit none
 
-!! ----------------------------------------------------------------- !!
-!! A class that controls convergence for the iterative algorithms. 
-!! ----------------------------------------------------------------- !!
-type :: ConvParameters
-  integer :: NumIterations
-  integer :: MaxNumIterations
-  real(dp) :: AbsoluteTolerance
-  real(dp) :: RelativeTolerance
-contains
-  procedure :: Init => ConvParameters_Init
-  procedure :: Check => ConvParameters_Check
-end type
-private ConvParameters_Init, ConvParameters_Check
-
 abstract interface
 #$do rank = 0, NUM_RANKS
   subroutine MeshOperator$rank(mesh,u,c,opParams)
-    import Mesh2D, dp
-    class(Mesh2D), intent(in) :: mesh
-    real(dp), intent(inout) :: u(^:,:),c(^:,:)
+    import tMesh, dp
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(inout) :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator$rank
 #$end do
@@ -79,83 +65,6 @@ end interface Solve_BiCGStab
 
 contains
 
-!! ----------------------------------------------------------------- !!
-!! Initialize iteration parameters.
-!! ----------------------------------------------------------------- !!
-subroutine ConvParameters_Init(params, &
-    & absoluteTolerance,relativeTolerance,maxNumIterations)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(ConvParameters), intent(out) :: params
-  real(dp), intent(in) :: absoluteTolerance
-  real(dp), intent(in), optional :: relativeTolerance
-  integer, intent(in), optional :: maxNumIterations
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  ! ----------------------
-  ! Initialize errors.
-  ! ----------------------
-  call EnsurePositive(absoluteTolerance)
-  params%AbsoluteTolerance = absoluteTolerance
-  if (present(relativeTolerance)) then
-    call EnsurePositive(relativeTolerance)
-    params%RelativeTolerance = relativeTolerance
-  end if
-  ! ----------------------
-  ! Initialize iterations.
-  ! ----------------------
-  params%NumIterations = 0
-  if (present(maxNumIterations)) then
-    call EnsurePositive(relativeTolerance)
-    params%MaxNumIterations = maxNumIterations
-  else
-    params%MaxNumIterations = huge(params%MaxNumIterations)
-  end if
-  !print *, 'Init iterations:', & 
-  !  & params%AbsoluteTolerance, &
-  !  & params%RelativeTolerance, params%MaxNumIterations
-end subroutine ConvParameters_Init
-
-!! ----------------------------------------------------------------- !!
-!! Check convergence of the iterations process.  
-!! ----------------------------------------------------------------- !!
-logical function ConvParameters_Check(params,absoluteError,relativeError)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(ConvParameters), intent(inout) :: params
-  real(dp), intent(in) :: absoluteError
-  real(dp), intent(in), optional :: relativeError
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  ! ----------------------
-  ! Check whether number of iterations has exceeded.
-  ! ----------------------
-  associate(numIterations=>params%NumIterations, &
-      &  maxNumIterations=>params%MaxNumIterations)
-    numIterations = numIterations + 1
-    if (numIterations >= params%MaxNumIterations) then
-      ConvParameters_Check = .true.; return
-    end if
-  end associate
-  ! ----------------------
-  ! Check convergence by absolute and relative errors.
-  ! ----------------------
-  associate(absoluteTolerance=>params%AbsoluteTolerance, &
-      &     relativeTolerance=>params%RelativeTolerance)
-    call EnsureNonNegative(absoluteError)
-    !print *, absoluteError
-    if (absoluteError <= absoluteTolerance) then
-      ConvParameters_Check = .true.; return
-    end if
-    if (present(relativeError).and.(relativeTolerance > 0)) then
-      call EnsureNonNegative(relativeError)
-      if (relativeError <= relativeTolerance) then
-        ConvParameters_Check = .true.; return
-      end if
-    end if
-  end associate
-  ConvParameters_Check = .false.
-end function ConvParameters_Check
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
 !! operator equation: Au = b, using the Conjugate Gradients method.
@@ -163,14 +72,14 @@ end function ConvParameters_Check
 #$do rank = 0, NUM_RANKS
 subroutine Solve_CG$rank(mesh,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(^:,:),b(^:,:)
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(inout) :: u(@:,:),b(@:,:)
   procedure(MeshOperator$rank) :: LOp
   class(*), intent(in) :: opParams
-  type(ConvParameters), intent(inout) :: convParams
+  type(tConvParams), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta
-  real(dp), allocatable :: p(^:,:),r(^:,:),t(^:,:)
+  real(dp), allocatable :: p(@:,:),r(@:,:),t(@:,:)
   allocate(p,r,t, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -216,14 +125,14 @@ end subroutine Solve_CG$rank
 #$do rank = 0, NUM_RANKS
 subroutine Solve_BiCGStab$rank(mesh,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(Mesh2D), intent(in) :: mesh
-  real(dp), intent(inout) :: u(^:,:),b(^:,:)
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(inout) :: u(@:,:),b(@:,:)
   procedure(MeshOperator$rank) :: LOp
   class(*), intent(in) :: opParams
-  type(ConvParameters), intent(inout) :: convParams
+  type(tConvParams), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta,mu,rho,omega
-  real(dp), allocatable :: h(^:,:),p(^:,:),r(^:,:),s(^:,:),t(^:,:),v(^:,:)
+  real(dp), allocatable :: h(@:,:),p(@:,:),r(@:,:),s(@:,:),t(@:,:),v(@:,:)
   allocate(h,p,r,s,t,v, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -238,8 +147,8 @@ subroutine Solve_BiCGStab$rank(mesh,u,b,LOp,opParams,convParams)
   ! p ← 0, v ← 0,
   ! ρ ← 1, α ← 1, ω ← 1. 
   call Set(mesh,h,r)
-  call Fill(mesh,p)
-  call Fill(mesh,v)
+  call Fill(mesh,p,0.0_dp)
+  call Fill(mesh,v,0.0_dp)
   rho = 1.0_dp; alpha = 1.0_dp; omega = 1.0_dp
   ! ----------------------
   do
@@ -269,7 +178,7 @@ subroutine Solve_BiCGStab$rank(mesh,u,b,LOp,opParams,convParams)
     call Sub(mesh,r,s,t,omega)
     call Sub(mesh,u,u,s,omega)
     call Add(mesh,u,u,p,alpha)
-    ! γ ← <r,r>,
+    ! γ ← <r⋅r>,
     ! check convergence for √γ and √γ/√δ.
     gamma = Dot(mesh,r,r)
     if (convParams%Check(sqrt(gamma),sqrt(gamma/delta))) return

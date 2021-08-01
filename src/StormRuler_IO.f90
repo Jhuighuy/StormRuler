@@ -41,14 +41,14 @@ end type IOListItem
 
 #$do rank = 0, NUM_RANKS
 type, extends(IOListItem) :: IOListItem$rank
-  real(dp), pointer :: values(^:,:) => null()
+  real(dp), pointer :: values(@:,:) => null()
 end type !IOListItem$rank
 #$end do
 
 type :: IOList
   class(IOListItem), pointer :: first => null()
 contains
-  generic :: Add=>^{Add$$^|^0,NUM_RANKS}^
+  generic :: Add=>@{Add$$@|@0,NUM_RANKS}@
 #$do rank = 0, NUM_RANKS
   procedure :: Add$rank=>IOList_Add$rank
 #$end do

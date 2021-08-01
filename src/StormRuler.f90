@@ -14,7 +14,7 @@ Function to_str(k)
 End Function to_str  
 
 Subroutine print_mesh3(mesh, u,p,c, l)
-  class(Mesh2D), intent(in) :: mesh
+  class(tMesh), intent(in) :: mesh
   Real(8), Dimension(:,:), Intent(in) :: u
   Real(8), Dimension(:), Intent(in) :: p,c
   Integer, Intent(In) :: l
@@ -49,7 +49,7 @@ program nsch
   Real(8), Dimension(:), Allocatable, target :: C,p,s
   Real(8), Dimension(:,:), Allocatable, target :: w,v,f
   type(CahnHilliardParams) :: CH
-  class(Mesh2D), allocatable :: mesh, mesh1
+  class(tMesh), allocatable :: mesh, mesh1
   type(IOList) :: fields
   integer, allocatable :: colorToBCM(:)
   

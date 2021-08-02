@@ -6,7 +6,7 @@
 !! files (the "Software"), to deal in the Software without
 !! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the 
+!! sell copies of the Software, and to permit persons to whom the
 !! Software is furnished to do so, subject to the following
 !! conditions:
 !!
@@ -28,9 +28,9 @@ module StormRuler_FDM_Operators
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: Flip,SafeInverse, &
-  & @{MathFunc$$@|@0,NUM_RANKS}@,operator(.inner.),operator(.outer.)
+  & @{MFunc$$@|@0,NUM_RANKS}@,operator(.inner.),operator(.outer.)
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill,Mul_Outer,ApplyFunc
+use StormRuler_BLAS, only: Fill,Mul_Outer,FuncProd
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -117,10 +117,10 @@ real(dp) elemental function FD1_C4(u_ll,u_l,u_r,u_rr)
   real(dp), intent(in) :: u_ll,u_l,u_r,u_rr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_C4 = &
-    & (-01.0_dp/12.0_dp)*u_rr + &
-    & (+02.0_dp/03.0_dp)*u_r  + &
-    & (-02.0_dp/03.0_dp)*u_l  + &
-    & (+01.0_dp/12.0_dp)*u_ll
+    & ( (-01.0_dp/12.0_dp)*u_rr + &
+    &   (+02.0_dp/03.0_dp)*u_r  + &
+    &   (-02.0_dp/03.0_dp)*u_l  + &
+    &   (+01.0_dp/12.0_dp)*u_ll )
 end function FD1_C4
 
 !! ----------------------------------------------------------------- !!
@@ -131,12 +131,12 @@ real(dp) elemental function FD1_C6(u_lll,u_ll,u_l,u_r,u_rr,u_rrr)
   real(dp), intent(in) :: u_lll,u_ll,u_l,u_r,u_rr,u_rrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_C6 = &
-    & (+01.0_dp/60.0_dp)*u_rrr + &
-    & (-03.0_dp/20.0_dp)*u_rr  + &
-    & (+03.0_dp/04.0_dp)*u_r   + &
-    & (-03.0_dp/04.0_dp)*u_l   + &
-    & (+03.0_dp/20.0_dp)*u_ll  + &
-    & (-01.0_dp/60.0_dp)*u_lll
+    & ( (+01.0_dp/60.0_dp)*u_rrr + &
+    &   (-03.0_dp/20.0_dp)*u_rr  + &
+    &   (+03.0_dp/04.0_dp)*u_r   + &
+    &   (-03.0_dp/04.0_dp)*u_l   + &
+    &   (+03.0_dp/20.0_dp)*u_ll  + &
+    &   (-01.0_dp/60.0_dp)*u_lll )
 end function FD1_C6
 
 !! ----------------------------------------------------------------- !!
@@ -147,25 +147,25 @@ real(dp) elemental function FD1_C8(u_llll,u_lll,u_ll,u_l,u_r,u_rr,u_rrr,u_rrrr)
   real(dp), intent(in) :: u_llll,u_lll,u_ll,u_l,u_r,u_rr,u_rrr,u_rrrr
    ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_C8 = &
-    & (-001.0_dp/280.0_dp)*u_rrrr + &
-    & (+004.0_dp/105.0_dp)*u_rrr  + &
-    & (-001.0_dp/005.0_dp)*u_rr   + &
-    & (+004.0_dp/005.0_dp)*u_r    + &
-    & (-004.0_dp/005.0_dp)*u_l    + &
-    & (+001.0_dp/005.0_dp)*u_ll   + &
-    & (-004.0_dp/105.0_dp)*u_lll  + &
-    & (+001.0_dp/280.0_dp)*u_llll
+    & ( (-001.0_dp/280.0_dp)*u_rrrr + &
+    &   (+004.0_dp/105.0_dp)*u_rrr  + &
+    &   (-001.0_dp/005.0_dp)*u_rr   + &
+    &   (+004.0_dp/005.0_dp)*u_r    + &
+    &   (-004.0_dp/005.0_dp)*u_l    + &
+    &   (+001.0_dp/005.0_dp)*u_ll   + &
+    &   (-004.0_dp/105.0_dp)*u_lll  + &
+    &   (+001.0_dp/280.0_dp)*u_llll )
 end function FD1_C8
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate gradient: v̅ ← v̅ - λ∇u.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),lambda
-  real(dp), intent(inout) :: vBar(:,@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:),vBar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell,iCellFace
   ! ----------------------
@@ -214,39 +214,39 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
         select case(ACCURACY_ORDER)
           case(1:2)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &       ( drInv(:,iCellFace).outer. &
-              &               FD1_C2(u(@:,lCell), &
-              &                      u(@:,rCell)) )
+              &         ( drInv(:,iCellFace).outer. &
+              &                   FD1_C2(u(@:,lCell), &
+              &                          u(@:,rCell)) )
           ! ----------------------
           case(3:4)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &       ( drInv(:,iCellFace).outer. &
-              &              FD1_C4(u(@:,llCell), &
-              &                     u(@:, lCell), &
-              &                     u(@:, rCell), &
-              &                     u(@:,rrCell)) )
+              &         ( drInv(:,iCellFace).outer. &
+              &                  FD1_C4(u(@:,llCell), &
+              &                         u(@:, lCell), &
+              &                         u(@:, rCell), &
+              &                         u(@:,rrCell)) )
           ! ----------------------
           case(5:6)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &       ( drInv(:,iCellFace).outer. &
-              &             FD1_C6(u(@:,lllCell), &
-              &                    u(@:, llCell), &
-              &                    u(@:,  lCell), &
-              &                    u(@:,  rCell), &
-              &                    u(@:, rrCell), &
-              &                    u(@:,rrrCell)) )
+              &         ( drInv(:,iCellFace).outer. &
+              &                 FD1_C6(u(@:,lllCell), &
+              &                        u(@:, llCell), &
+              &                        u(@:,  lCell), &
+              &                        u(@:,  rCell), &
+              &                        u(@:, rrCell), &
+              &                        u(@:,rrrCell)) )
           ! ----------------------
           case(7:8)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &       ( drInv(:,iCellFace).outer. &
-              &            FD1_C8(u(@:,llllCell), &
-              &                   u(@:, lllCell), &
-              &                   u(@:,  llCell), &
-              &                   u(@:,   lCell), &
-              &                   u(@:,   rCell), &
-              &                   u(@:,  rrCell), &
-              &                   u(@:, rrrCell), &
-              &                   u(@:,rrrrCell)) )
+              &         ( drInv(:,iCellFace).outer. &
+              &                FD1_C8(u(@:,llllCell), &
+              &                       u(@:, lllCell), &
+              &                       u(@:,  llCell), &
+              &                       u(@:,   lCell), &
+              &                       u(@:,   rCell), &
+              &                       u(@:,  rrCell), &
+              &                       u(@:, rrrCell), &
+              &                       u(@:,rrrrCell)) )
         end select
       end do
     end block; end do
@@ -255,15 +255,15 @@ subroutine FDM_Gradient_Central$rank(mesh,vBar,lambda,u)
 end subroutine FDM_Gradient_Central$rank
 #$end do
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate divergence: v ← v - λ∇⋅u̅.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: uBar(:,@:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: uBar(:,@:,:),v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell,iCellFace
   ! ----------------------
@@ -313,26 +313,26 @@ subroutine FDM_Divergence_Central$rank(mesh,v,lambda,uBar)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) - &
               & ( drInv(:,iCellFace).inner. &
-              &    FD1_C2(uBar(:,@:,lCell), &
-              &           uBar(:,@:,rCell)) )
+              &      FD1_C2(uBar(:,@:,lCell), &
+              &             uBar(:,@:,rCell)) )
           ! ----------------------
           case(3:4)
             v(@:,iCell) = v(@:,iCell) - &
               & ( drInv(:,iCellFace).inner. &
-              &   FD1_C4(uBar(:,@:,llCell), &
-              &          uBar(:,@:, lCell), &
-              &          uBar(:,@:, rCell), &
-              &          uBar(:,@:,rrCell)) )
+              &     FD1_C4(uBar(:,@:,llCell), &
+              &            uBar(:,@:, lCell), &
+              &            uBar(:,@:, rCell), &
+              &            uBar(:,@:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(@:,iCell) = v(@:,iCell) - &
               & ( drInv(:,iCellFace).inner. &
-              &   FD1_C6(uBar(:,@:,lllCell), &
-              &          uBar(:,@:, llCell), &
-              &          uBar(:,@:,  lCell), &
-              &          uBar(:,@:,  rCell), &
-              &          uBar(:,@:, rrCell), &
-              &          uBar(:,@:,rrrCell)) )
+              &    FD1_C6(uBar(:,@:,lllCell), &
+              &           uBar(:,@:, llCell), &
+              &           uBar(:,@:,  lCell), &
+              &           uBar(:,@:,  rCell), &
+              &           uBar(:,@:, rrCell), &
+              &           uBar(:,@:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(@:,iCell) = v(@:,iCell) - &
@@ -374,9 +374,9 @@ real(dp) elemental function FD1_F2(u,u_r,u_rr)
   real(dp), intent(in) :: u,u_r,u_rr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F2 = &
-    & (-1.5_dp)*u   + &
-    & (+2.0_dp)*u_r + &
-    & (-0.5_dp)*u_rr
+    & ( (-1.5_dp)*u   + &
+    &   (+2.0_dp)*u_r + &
+    &   (-0.5_dp)*u_rr )
 end function FD1_F2
 
 !! ----------------------------------------------------------------- !!
@@ -387,10 +387,10 @@ real(dp) elemental function FD1_F3(u_l,u,u_r,u_rr)
   real(dp), intent(in) :: u_l,u,u_r,u_rr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F3 = &
-    & (-1.0_dp/3.0_dp)*u_l + &
-    & (-1.0_dp/2.0_dp)*u   + &
-    &                  u_r + &
-    & (-1.0_dp/6.0_dp)*u_rr
+    & ( (-1.0_dp/3.0_dp)*u_l + &
+    &   (-1.0_dp/2.0_dp)*u   + &
+    &                    u_r + &
+    &   (-1.0_dp/6.0_dp)*u_rr )
 end function FD1_F3
 
 !! ----------------------------------------------------------------- !!
@@ -401,11 +401,11 @@ real(dp) elemental function FD1_F4(u_l,u,u_r,u_rr,u_rrr)
   real(dp), intent(in) :: u_l,u,u_r,u_rr,u_rrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F4 = &
-    & (-01.0_dp/04.0_dp)*u_l  + &
-    & (-05.0_dp/06.0_dp)*u    + &
-    & (+03.0_dp/02.0_dp)*u_r  + &
-    & (-01.0_dp/02.0_dp)*u_rr + &
-    & (+01.0_dp/12.0_dp)*u_rrr
+    & ( (-01.0_dp/04.0_dp)*u_l  + &
+    &   (-05.0_dp/06.0_dp)*u    + &
+    &   (+03.0_dp/02.0_dp)*u_r  + &
+    &   (-01.0_dp/02.0_dp)*u_rr + &
+    &   (+01.0_dp/12.0_dp)*u_rrr )
 end function FD1_F4
 
 !! ----------------------------------------------------------------- !!
@@ -416,12 +416,12 @@ real(dp) elemental function FD1_F5(u_ll,u_l,u,u_r,u_rr,u_rrr)
   real(dp), intent(in) :: u_ll,u_l,u,u_r,u_rr,u_rrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F5 = &
-    & (+01.0_dp/20.0_dp)*u_ll + &
-    & (-01.0_dp/02.0_dp)*u_l  + &
-    & (-01.0_dp/03.0_dp)*u    + &
-    &                    u_r  + &
-    & (-01.0_dp/04.0_dp)*u_rr + &
-    & (+01.0_dp/30.0_dp)*u_rrr
+    & ( (+01.0_dp/20.0_dp)*u_ll + &
+    &   (-01.0_dp/02.0_dp)*u_l  + &
+    &   (-01.0_dp/03.0_dp)*u    + &
+    &                      u_r  + &
+    &   (-01.0_dp/04.0_dp)*u_rr + &
+    &   (+01.0_dp/30.0_dp)*u_rrr )
 end function FD1_F5
 
 !! ----------------------------------------------------------------- !!
@@ -432,13 +432,13 @@ real(dp) elemental function FD1_F6(u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr)
   real(dp), intent(in) :: u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F6 = &
-    & (+01.0_dp/30.0_dp)*u_ll  + &
-    & (-02.0_dp/05.0_dp)*u_l   + &
-    & (-07.0_dp/12.0_dp)*u     + &
-    & (+04.0_dp/03.0_dp)*u_r   + &
-    & (-01.0_dp/02.0_dp)*u_rr  + &
-    & (+02.0_dp/15.0_dp)*u_rrr + &
-    & (-01.0_dp/60.0_dp)*u_rrrr
+    & ( (+01.0_dp/30.0_dp)*u_ll  + &
+    &   (-02.0_dp/05.0_dp)*u_l   + &
+    &   (-07.0_dp/12.0_dp)*u     + &
+    &   (+04.0_dp/03.0_dp)*u_r   + &
+    &   (-01.0_dp/02.0_dp)*u_rr  + &
+    &   (+02.0_dp/15.0_dp)*u_rrr + &
+    &   (-01.0_dp/60.0_dp)*u_rrrr )
 end function FD1_F6
 
 !! ----------------------------------------------------------------- !!
@@ -449,14 +449,14 @@ real(dp) elemental function FD1_F7(u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr)
   real(dp), intent(in) :: u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F7 = &
-    & (-001.0_dp/105.0_dp)*u_lll + &
-    & (+001.0_dp/010.0_dp)*u_ll  + &
-    & (-003.0_dp/005.0_dp)*u_l   + &
-    & (-001.0_dp/004.0_dp)*u     + &
-    &                      u_r   + &
-    & (-003.0_dp/010.0_dp)*u_rr  + &
-    & (+001.0_dp/015.0_dp)*u_rrr + &
-    & (-001.0_dp/140.0_dp)*u_rrrr
+    & ( (-001.0_dp/105.0_dp)*u_lll + &
+    &   (+001.0_dp/010.0_dp)*u_ll  + &
+    &   (-003.0_dp/005.0_dp)*u_l   + &
+    &   (-001.0_dp/004.0_dp)*u     + &
+    &                        u_r   + &
+    &   (-003.0_dp/010.0_dp)*u_rr  + &
+    &   (+001.0_dp/015.0_dp)*u_rrr + &
+    &   (-001.0_dp/140.0_dp)*u_rrrr )
 end function FD1_F7
 
 !! ----------------------------------------------------------------- !!
@@ -467,26 +467,26 @@ real(dp) elemental function FD1_F8(u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr,u_rrrr
   real(dp), intent(in) :: u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr,u_rrrrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F8 = &
-    & (-001.0_dp/168.0_dp)*u_lll  + &
-    & (+001.0_dp/014.0_dp)*u_ll   + &
-    & (-001.0_dp/002.0_dp)*u_l    + &
-    & (-009.0_dp/020.0_dp)*u      + &
-    & (+005.0_dp/004.0_dp)*u_r    + &
-    & (-001.0_dp/002.0_dp)*u_rr   + &
-    & (+001.0_dp/006.0_dp)*u_rrr  + &
-    & (-001.0_dp/028.0_dp)*u_rrrr + &
-    & (+001.0_dp/280.0_dp)*u_rrrrr
+    & ( (-001.0_dp/168.0_dp)*u_lll  + &
+    &   (+001.0_dp/014.0_dp)*u_ll   + &
+    &   (-001.0_dp/002.0_dp)*u_l    + &
+    &   (-009.0_dp/020.0_dp)*u      + &
+    &   (+005.0_dp/004.0_dp)*u_r    + &
+    &   (-001.0_dp/002.0_dp)*u_rr   + &
+    &   (+001.0_dp/006.0_dp)*u_rrr  + &
+    &   (-001.0_dp/028.0_dp)*u_rrrr + &
+    &   (+001.0_dp/280.0_dp)*u_rrrrr )
 end function FD1_F8
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The forward FDM-approximate gradient: v̅ ← v̅ - λ∇u.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),lambda
-  real(dp), intent(inout) :: vBar(:,@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:),vBar(:,@:,:)
   integer(1), intent(in), optional :: dirAll,dirFace(:),dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell,iCellFace
@@ -505,9 +505,10 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCellFa
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell,iCellFace) shared(u,vBar,dirAll,dirFace,dirCellFace)
+    !$omp default(none) private(iCell,iCellFace) &
+    !$omp shared(u,vBar,dirAll,dirFace,dirCellFace)
     do iCell = 1, numCells; block
-      integer(1) :: dir, inc
+      integer(1) :: dir
       integer :: rCell,rrCell,rrrCell,rrrrCell,rrrrrCell
       integer :: lCell,llCell,lllCell,llllCell,lllllCell
       do iCellFace = 1, numCellFaces, 2
@@ -516,32 +517,33 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCellFa
         ! ----------------------
         dir = 1_1
         if (present(dirAll)) dir = dirAll
-        if (present(dirFace)) dir = dirFace(iCellFace) 
-        if (present(dirCellFace)) dir = dirCellFace(iCellFace,iCell) 
+        if (present(dirFace)) dir = dirFace(iCellFace)
+        if (present(dirCellFace)) dir = dirCellFace(iCellFace,iCell)
         ! ----------------------
         ! Find indices of the adjacent cells using the FD direction.
         ! ----------------------
-        inc = (1_1 - dir)/2_1
-        associate(rCellFace=>iCellFace+inc, &
-          &       lCellFace=>Flip(iCellFace+inc))
-          rCell = cellToCell(rCellFace,iCell)
-          lCell = cellToCell(lCellFace,iCell)
-          if (ACCURACY_ORDER >= 2) then
-            rrCell = cellToCell(rCellFace,rCell)
-            llCell = cellToCell(lCellFace,lCell)
-            if (ACCURACY_ORDER >= 4) then
-              rrrCell = cellToCell(rCellFace,rrCell)
-              lllCell = cellToCell(lCellFace,llCell)
-              if (ACCURACY_ORDER >= 6) then
-                rrrrCell = cellToCell(rCellFace,rrrCell)
-                llllCell = cellToCell(lCellFace,lllCell)
-                if (ACCURACY_ORDER >= 8) then
-                  rrrrrCell = cellToCell(rCellFace,rrrrCell)
-                  lllllCell = cellToCell(lCellFace,llllCell)
+        associate(inc=>(1_1 - dir)/2_1)
+          associate(rCellFace=>iCellFace+inc, &
+            &       lCellFace=>Flip(iCellFace+inc))
+            rCell = cellToCell(rCellFace,iCell)
+            lCell = cellToCell(lCellFace,iCell)
+            if (ACCURACY_ORDER >= 2) then
+              rrCell = cellToCell(rCellFace,rCell)
+              llCell = cellToCell(lCellFace,lCell)
+              if (ACCURACY_ORDER >= 4) then
+                rrrCell = cellToCell(rCellFace,rrCell)
+                lllCell = cellToCell(lCellFace,llCell)
+                if (ACCURACY_ORDER >= 6) then
+                  rrrrCell = cellToCell(rCellFace,rrrCell)
+                  llllCell = cellToCell(lCellFace,lllCell)
+                  if (ACCURACY_ORDER >= 8) then
+                    rrrrrCell = cellToCell(rCellFace,rrrrCell)
+                    lllllCell = cellToCell(lCellFace,llllCell)
+                  end if
                 end if
               end if
             end if
-          end if
+          end associate
         end associate
         ! ----------------------
         ! Compute FDM-approximate gradient increment.
@@ -549,79 +551,79 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCellFa
         select case(ACCURACY_ORDER)
           case(1)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &               FD1_F1(u(@:,iCell), &
-              &                      u(@:,rCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                   FD1_F1(u(@:,iCell), &
+              &                          u(@:,rCell)) )
           ! ----------------------
           case(2)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &              FD1_F2(u(@:, iCell), &
-              &                     u(@:, rCell), &
-              &                     u(@:,rrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                  FD1_F2(u(@:, iCell), &
+              &                         u(@:, rCell), &
+              &                         u(@:,rrCell)) )
           ! ----------------------
           case(3)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &              FD1_F3(u(@:, lCell), &
-              &                     u(@:, iCell), &
-              &                     u(@:, rCell), &
-              &                     u(@:,rrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                  FD1_F3(u(@:, lCell), &
+              &                         u(@:, iCell), &
+              &                         u(@:, rCell), &
+              &                         u(@:,rrCell)) )
           ! ----------------------
           case(4)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &             FD1_F4(u(@:,  lCell), &
-              &                    u(@:,  iCell), &
-              &                    u(@:,  rCell), &
-              &                    u(@:, rrCell), &
-              &                    u(@:,rrrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                 FD1_F4(u(@:,  lCell), &
+              &                        u(@:,  iCell), &
+              &                        u(@:,  rCell), &
+              &                        u(@:, rrCell), &
+              &                        u(@:,rrrCell)) )
           ! ----------------------
           case(5)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &             FD1_F5(u(@:, llCell), &
-              &                    u(@:,  lCell), &
-              &                    u(@:,  iCell), &
-              &                    u(@:,  rCell), &
-              &                    u(@:, rrCell), &
-              &                    u(@:,rrrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                 FD1_F5(u(@:, llCell), &
+              &                        u(@:,  lCell), &
+              &                        u(@:,  iCell), &
+              &                        u(@:,  rCell), &
+              &                        u(@:, rrCell), &
+              &                        u(@:,rrrCell)) )
           ! ----------------------
           case(6)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &            FD1_F6(u(@:,  llCell), &
-              &                   u(@:,   lCell), &
-              &                   u(@:,   iCell), &
-              &                   u(@:,   rCell), &
-              &                   u(@:,  rrCell), &
-              &                   u(@:, rrrCell), &
-              &                   u(@:,rrrrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                FD1_F6(u(@:,  llCell), &
+              &                       u(@:,   lCell), &
+              &                       u(@:,   iCell), &
+              &                       u(@:,   rCell), &
+              &                       u(@:,  rrCell), &
+              &                       u(@:, rrrCell), &
+              &                       u(@:,rrrrCell)) )
           ! ----------------------
           case(7)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &            FD1_F7(u(@:, lllCell), &
-              &                   u(@:,  llCell), &
-              &                   u(@:,   lCell), &
-              &                   u(@:,   iCell), &
-              &                   u(@:,   rCell), &
-              &                   u(@:,  rrCell), &
-              &                   u(@:, rrrCell), &
-              &                   u(@:,rrrrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &                FD1_F7(u(@:, lllCell), &
+              &                       u(@:,  llCell), &
+              &                       u(@:,   lCell), &
+              &                       u(@:,   iCell), &
+              &                       u(@:,   rCell), &
+              &                       u(@:,  rrCell), &
+              &                       u(@:, rrrCell), &
+              &                       u(@:,rrrrCell)) )
           ! ----------------------
           case(8)
             vBar(:,@:,iCell) = vBar(:,@:,iCell) - &
-              &   dir*( drInv(:,iCellFace).outer. &
-              &           FD1_F8(u(@:,  lllCell), &
-              &                  u(@:,   llCell), &
-              &                  u(@:,    lCell), &
-              &                  u(@:,    iCell), &
-              &                  u(@:,    rCell), &
-              &                  u(@:,   rrCell), &
-              &                  u(@:,  rrrCell), &
-              &                  u(@:, rrrrCell), &
-              &                  u(@:,rrrrrCell)) )
+              &     dir*( drInv(:,iCellFace).outer. &
+              &               FD1_F8(u(@:,  lllCell), &
+              &                      u(@:,   llCell), &
+              &                      u(@:,    lCell), &
+              &                      u(@:,    iCell), &
+              &                      u(@:,    rCell), &
+              &                      u(@:,   rrCell), &
+              &                      u(@:,  rrrCell), &
+              &                      u(@:, rrrrCell), &
+              &                      u(@:,rrrrrCell)) )
         end select
       end do
     end block; end do
@@ -630,15 +632,15 @@ subroutine FDM_Gradient_Forward$rank(mesh,vBar,lambda,u,dirAll,dirFace,dirCellFa
 end subroutine FDM_Gradient_Forward$rank
 #$end do
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The backward FDM-approximate divergence: v ← v - λ∇⋅u̅.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar,dirAll,dirFace,dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: uBar(:,@:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: uBar(:,@:,:),v(@:,:)
   integer(1), intent(in), optional :: dirAll,dirFace(:),dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell,iCellFace
@@ -657,9 +659,10 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar,dirAll,dirFace,dirCel
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell,iCellFace) shared(uBar,v,dirAll,dirFace,dirCellFace)
+    !$omp default(none) private(iCell,iCellFace) &
+    !$omp shared(uBar,v,dirAll,dirFace,dirCellFace)
     do iCell = 1, numCells; block
-      integer(1) :: dir, inc
+      integer(1) :: dir
       integer :: rCell,rrCell,rrrCell,rrrrCell,rrrrrCell
       integer :: lCell,llCell,lllCell,llllCell,lllllCell
       do iCellFace = 1, numCellFaces, 2
@@ -668,32 +671,33 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar,dirAll,dirFace,dirCel
         ! ----------------------
         dir = -1_1
         if (present(dirAll)) dir = dirAll
-        if (present(dirFace)) dir = dirFace(iCellFace) 
+        if (present(dirFace)) dir = dirFace(iCellFace)
         if (present(dirCellFace)) dir = dirCellFace(iCellFace,iCell)
         ! ----------------------
         ! Find indices of the adjacent cells using the FD direction.
         ! ----------------------
-        inc = (1_1 - dir)/2_1
-        associate(rCellFace=>iCellFace+inc, &
-          &       lCellFace=>Flip(iCellFace+inc))
-          rCell = cellToCell(rCellFace,iCell)
-          lCell = cellToCell(lCellFace,iCell)
-          if (ACCURACY_ORDER >= 2) then
-            rrCell = cellToCell(rCellFace,rCell)
-            llCell = cellToCell(lCellFace,lCell)
-            if (ACCURACY_ORDER >= 4) then
-              rrrCell = cellToCell(rCellFace,rrCell)
-              lllCell = cellToCell(lCellFace,llCell)
-              if (ACCURACY_ORDER >= 6) then
-                rrrrCell = cellToCell(rCellFace,rrrCell)
-                llllCell = cellToCell(lCellFace,lllCell)
-                if (ACCURACY_ORDER >= 8) then
-                  rrrrrCell = cellToCell(rCellFace,rrrrCell)
-                  lllllCell = cellToCell(lCellFace,llllCell)
+        associate(inc=>(1_1 - dir)/2_1)
+          associate(rCellFace=>iCellFace+inc, &
+            &       lCellFace=>Flip(iCellFace+inc))
+            rCell = cellToCell(rCellFace,iCell)
+            lCell = cellToCell(lCellFace,iCell)
+            if (ACCURACY_ORDER >= 2) then
+              rrCell = cellToCell(rCellFace,rCell)
+              llCell = cellToCell(lCellFace,lCell)
+              if (ACCURACY_ORDER >= 4) then
+                rrrCell = cellToCell(rCellFace,rrCell)
+                lllCell = cellToCell(lCellFace,llCell)
+                if (ACCURACY_ORDER >= 6) then
+                  rrrrCell = cellToCell(rCellFace,rrrCell)
+                  llllCell = cellToCell(lCellFace,lllCell)
+                  if (ACCURACY_ORDER >= 8) then
+                    rrrrrCell = cellToCell(rCellFace,rrrrCell)
+                    lllllCell = cellToCell(lCellFace,llllCell)
+                  end if
                 end if
               end if
             end if
-          end if
+          end associate
         end associate
         ! ----------------------
         ! Compute FDM-approximate divergence increment.
@@ -702,42 +706,42 @@ subroutine FDM_Divergence_Backward$rank(mesh,v,lambda,uBar,dirAll,dirFace,dirCel
           case(1)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( drInv(:,iCellFace).inner. &
-              &        FD1_F1(uBar(:,@:,rCell), &
-              &               uBar(:,@:,iCell)) )
+              &          FD1_F1(uBar(:,@:,rCell), &
+              &                 uBar(:,@:,iCell)) )
           ! ----------------------
           case(2)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( drInv(:,iCellFace).inner. &
-              &       FD1_F2(uBar(:,@:, iCell), &
-              &              uBar(:,@:, rCell), &
-              &              uBar(:,@:,rrCell)) )
+              &         FD1_F2(uBar(:,@:, iCell), &
+              &                uBar(:,@:, rCell), &
+              &                uBar(:,@:,rrCell)) )
           ! ----------------------
           case(3)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( drInv(:,iCellFace).inner. &
-              &       FD1_F3(uBar(:,@:, lCell), &
-              &              uBar(:,@:, iCell), &
-              &              uBar(:,@:, rCell), &
-              &              uBar(:,@:,rrCell)) )
+              &         FD1_F3(uBar(:,@:, lCell), &
+              &                uBar(:,@:, iCell), &
+              &                uBar(:,@:, rCell), &
+              &                uBar(:,@:,rrCell)) )
           ! ----------------------
           case(4)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( drInv(:,iCellFace).inner. &
-              &       FD1_F4(uBar(:,@:,  lCell), &
-              &              uBar(:,@:,  iCell), &
-              &              uBar(:,@:,  rCell), &
-              &              uBar(:,@:, rrCell), &
-              &              uBar(:,@:,rrrCell)) )
+              &         FD1_F4(uBar(:,@:,  lCell), &
+              &                uBar(:,@:,  iCell), &
+              &                uBar(:,@:,  rCell), &
+              &                uBar(:,@:, rrCell), &
+              &                uBar(:,@:,rrrCell)) )
           ! ----------------------
           case(5)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( drInv(:,iCellFace).inner. &
-              &       FD1_F5(uBar(:,@:, llCell), &
-              &              uBar(:,@:,  lCell), &
-              &              uBar(:,@:,  iCell), &
-              &              uBar(:,@:,  rCell), &
-              &              uBar(:,@:, rrCell), &
-              &              uBar(:,@:,rrrCell)) )
+              &         FD1_F5(uBar(:,@:, llCell), &
+              &                uBar(:,@:,  lCell), &
+              &                uBar(:,@:,  iCell), &
+              &                uBar(:,@:,  rCell), &
+              &                uBar(:,@:, rrCell), &
+              &                uBar(:,@:,rrrCell)) )
           ! ----------------------
           case(6)
             v(@:,iCell) = v(@:,iCell) - &
@@ -785,17 +789,17 @@ end subroutine FDM_Divergence_Backward$rank
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate convection: v ← v - λ∇⋅uw̅.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Convection_Central$rank(mesh,v,lambda,u,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),wBar(:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: lambda 
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:),wBar(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: fBar(:,@:,:)
+  real(dp), allocatable, target :: fBar(:,@:,:)
   allocate(fBar(size(wBar,dim=1),@{size(u,dim=$$)}@,size(wBar,dim=2)))
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -833,11 +837,11 @@ real(dp) elemental function FD2_C4(u_ll,u_l,u,u_r,u_rr)
   real(dp), intent(in) :: u_ll,u_l,u,u_r,u_rr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C4 = &
-    & (-1.0_dp/12.0_dp)*u_ll + &
-    & (+4.0_dp/03.0_dp)*u_l  + &
-    & (-5.0_dp/02.0_dp)*u    + &
-    & (+4.0_dp/03.0_dp)*u_r  + &
-    & (-1.0_dp/12.0_dp)*u_rr
+    & ( (-1.0_dp/12.0_dp)*u_ll + &
+    &   (+4.0_dp/03.0_dp)*u_l  + &
+    &   (-5.0_dp/02.0_dp)*u    + &
+    &   (+4.0_dp/03.0_dp)*u_r  + &
+    &   (-1.0_dp/12.0_dp)*u_rr )
 end function FD2_C4
 
 !! ----------------------------------------------------------------- !!
@@ -848,13 +852,13 @@ real(dp) elemental function FD2_C6(u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr)
   real(dp), intent(in) :: u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C6 = &
-    & (+01.0_dp/90.0_dp)*u_lll + &
-    & (-03.0_dp/20.0_dp)*u_ll  + &
-    & (+03.0_dp/02.0_dp)*u_l   + &
-    & (-49.0_dp/18.0_dp)*u     + &
-    & (+03.0_dp/02.0_dp)*u_r   + &
-    & (-03.0_dp/20.0_dp)*u_rr  + &
-    & (+01.0_dp/90.0_dp)*u_rrr
+    & ( (+01.0_dp/90.0_dp)*u_lll + &
+    &   (-03.0_dp/20.0_dp)*u_ll  + &
+    &   (+03.0_dp/02.0_dp)*u_l   + &
+    &   (-49.0_dp/18.0_dp)*u     + &
+    &   (+03.0_dp/02.0_dp)*u_r   + &
+    &   (-03.0_dp/20.0_dp)*u_rr  + &
+    &   (+01.0_dp/90.0_dp)*u_rrr )
 end function FD2_C6
 
 !! ----------------------------------------------------------------- !!
@@ -865,26 +869,26 @@ real(dp) elemental function FD2_C8(u_llll,u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr
   real(dp), intent(in) :: u_llll,u_lll,u_ll,u_l,u,u_r,u_rr,u_rrr,u_rrrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C8 = &
-    & (-001.0_dp/560.0_dp)*u_llll + &
-    & (+008.0_dp/315.0_dp)*u_lll  + &
-    & (-001.0_dp/005.0_dp)*u_ll   + &
-    & (+008.0_dp/005.0_dp)*u_l    + &
-    & (-205.0_dp/072.0_dp)*u      + &
-    & (+008.0_dp/005.0_dp)*u_r    + &
-    & (-001.0_dp/005.0_dp)*u_rr   + &
-    & (+008.0_dp/315.0_dp)*u_rrr  + &
-    & (-001.0_dp/560.0_dp)*u_rrrr
+    & ( (-001.0_dp/560.0_dp)*u_llll + &
+    &   (+008.0_dp/315.0_dp)*u_lll  + &
+    &   (-001.0_dp/005.0_dp)*u_ll   + &
+    &   (+008.0_dp/005.0_dp)*u_l    + &
+    &   (-205.0_dp/072.0_dp)*u      + &
+    &   (+008.0_dp/005.0_dp)*u_r    + &
+    &   (-001.0_dp/005.0_dp)*u_rr   + &
+    &   (+008.0_dp/315.0_dp)*u_rrr  + &
+    &   (-001.0_dp/560.0_dp)*u_rrrr )
 end function FD2_C8
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The FDM-approximate Laplacian: v ← v + λΔu.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell,iCellFace
   ! ----------------------
@@ -933,43 +937,43 @@ subroutine FDM_Laplacian_Central$rank(mesh,v,lambda,u)
         select case(ACCURACY_ORDER)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dlSqrInv(iCellFace) * &
-              &     FD2_C2(u(@:,lCell), &
-              &            u(@:,iCell), &
-              &            u(@:,rCell)) )
+              &   ( dlSqrInv(iCellFace) * &
+              &       FD2_C2(u(@:,lCell), &
+              &              u(@:,iCell), &
+              &              u(@:,rCell)) )
           ! ----------------------
           case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dlSqrInv(iCellFace) * &
-              &    FD2_C4(u(@:,llCell), &
-              &           u(@:, lCell), &
-              &           u(@:, iCell), &
-              &           u(@:, rCell), &
-              &           u(@:,rrCell)) )
+              &   ( dlSqrInv(iCellFace) * &
+              &        FD2_C4(u(@:,llCell), &
+              &               u(@:, lCell), &
+              &               u(@:, iCell), &
+              &               u(@:, rCell), &
+              &               u(@:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dlSqrInv(iCellFace) * &
-              &   FD2_C6(u(@:,lllCell), &
-              &          u(@:, llCell), &
-              &          u(@:,  lCell), &
-              &          u(@:,  iCell), &
-              &          u(@:,  rCell), &
-              &          u(@:, rrCell), &
-              &          u(@:,rrrCell)) )
+              &   ( dlSqrInv(iCellFace) * &
+              &       FD2_C6(u(@:,lllCell), &
+              &              u(@:, llCell), &
+              &              u(@:,  lCell), &
+              &              u(@:,  iCell), &
+              &              u(@:,  rCell), &
+              &              u(@:, rrCell), &
+              &              u(@:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dlSqrInv(iCellFace) * &
-              &   FD2_C8(u(@:,llllCell), &
-              &          u(@:, lllCell), &
-              &          u(@:,  llCell), &
-              &          u(@:,   lCell), &
-              &          u(@:,   iCell), &
-              &          u(@:,   rCell), &
-              &          u(@:,  rrCell), &
-              &          u(@:, rrrCell), &
-              &          u(@:,rrrrCell)) )
+              &   ( dlSqrInv(iCellFace) * &
+              &     FD2_C8(u(@:,llllCell), &
+              &            u(@:, lllCell), &
+              &            u(@:,  llCell), &
+              &            u(@:,   lCell), &
+              &            u(@:,   iCell), &
+              &            u(@:,   rCell), &
+              &            u(@:,  rrCell), &
+              &            u(@:, rrrCell), &
+              &            u(@:,rrrrCell)) )
         end select
       end do
     end block; end do
@@ -985,11 +989,11 @@ end subroutine FDM_Laplacian_Central$rank
 subroutine FDM_LaplacianF_Central$rank(mesh,v,lambda,f,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
-  procedure(MathFunc$rank) :: f
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
+  procedure(MFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: w(@:,:)
+  real(dp), allocatable, target :: w(@:,:)
   allocate(w,mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -1001,7 +1005,7 @@ subroutine FDM_LaplacianF_Central$rank(mesh,v,lambda,f,u)
   ! w ← f(u),
   ! v ← v + λΔw.
   ! ----------------------
-  call ApplyFunc(mesh,w,u,f)
+  call FuncProd(mesh,w,u,f)
   call FDM_Laplacian_Central(mesh,v,lambda,w)
 end subroutine FDM_LaplacianF_Central$rank
 #$end do
@@ -1013,10 +1017,10 @@ end subroutine FDM_LaplacianF_Central$rank
 subroutine FDM_Bilaplacian_Central$rank(mesh,v,lambda,u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:),lambda
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: w(@:,:)
+  real(dp), allocatable, target :: w(@:,:)
   allocate(w,mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.

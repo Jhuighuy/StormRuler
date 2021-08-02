@@ -25,9 +25,10 @@
 module StormRuler_BLAS
 
 #$use 'StormRuler_Parameters.f90'
-  
+
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: @{MathFunc$$@|@0,NUM_RANKS}@, &
+use StormRuler_Helpers, only: &
+  & @{MFunc$$,SMFunc$$@|@0,NUM_RANKS}@, &
   & operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 
@@ -84,11 +85,17 @@ interface Mul_Outer
 #$end do
 end interface Mul_Outer
 
-interface ApplyFunc
+interface FuncProd
 #$do rank = 0, NUM_RANKS
-  module procedure ApplyFunc$rank
+  module procedure FuncProd$rank
 #$end do 
-end interface ApplyFunc
+end interface FuncProd
+
+interface SFuncProd
+#$do rank = 0, NUM_RANKS
+  module procedure SFuncProd$rank
+#$end do 
+end interface SFuncProd
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -103,7 +110,7 @@ subroutine Fill$rank(mesh,u,alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: alpha
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -122,8 +129,7 @@ end subroutine Fill$rank
 subroutine Set$rank(mesh,u,v)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:)
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -146,7 +152,7 @@ end subroutine Set$rank
 function Dot$rank(mesh,u,v) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:), v(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
   real(dp) :: d
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -181,7 +187,7 @@ end function Dot$rank
 subroutine Add$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:),v(@:,:),w(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:),w(@:,:)
   real(dp), intent(in), optional :: alpha,beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -209,7 +215,7 @@ end subroutine Add$rank
 subroutine Sub$rank(mesh,u,v,w,alpha,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:),v(@:,:),w(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:),w(@:,:)
   real(dp), intent(in), optional :: alpha,beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -239,7 +245,7 @@ end subroutine Sub$rank
 subroutine Mul$rank(mesh,u,v,w)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:),v(:),w(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),v(:),w(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -262,8 +268,7 @@ end subroutine Mul$rank
 subroutine Mul_Inner$rank(mesh,u,vBar,wHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:),wHat(:,@:,:)
-  real(dp), intent(out) :: u(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),vBar(:,:),wHat(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -286,8 +291,7 @@ end subroutine Mul_Inner$rank
 subroutine Mul_Outer$rank(mesh,uHat,vBar,wHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:),wHat(@:,:)
-  real(dp), intent(out) :: uHat(:,@:,:)
+  real(dp), intent(in), pointer :: uHat(:,@:,:),vBar(:,:),wHat(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -310,12 +314,11 @@ end subroutine Mul_Outer$rank
 !! Compute a function product: v ← f(u).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine ApplyFunc$rank(mesh,v,u,f)
+subroutine FuncProd$rank(mesh,v,u,f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(out) :: v(@:,:)
-  procedure(MathFunc$rank) :: f
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
+  procedure(MFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -328,7 +331,32 @@ subroutine ApplyFunc$rank(mesh,v,u,f)
     end do
     !$omp end parallel do
   end associate
-end subroutine ApplyFunc$rank
+end subroutine FuncProd$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute a function product: v ← f(u).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine SFuncProd$rank(mesh,v,u,f)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in), pointer :: u(@:,:),v(@:,:)
+  procedure(SMFunc$rank) :: f
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell
+  ! ----------------------
+  associate(numCells=>mesh%NumCells, &
+          cellCoords=>mesh%CellMDIndex)
+    ! ----------------------
+    ! $ omp parallel do schedule(static) &
+    ! $ omp default(none) private(iCell) shared(u,v)
+    do iCell = 1, numCells
+      v(@:,iCell) = f(1.0_dp*cellCoords(:,iCell),u(@:,iCell))
+    end do
+    ! $ omp end parallel do
+  end associate
+end subroutine SFuncProd$rank
 #$end do
 
 end module StormRuler_BLAS

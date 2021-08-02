@@ -37,7 +37,7 @@ contains
    
 subroutine SolvePoisson(mesh,u,f)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: u(:),f(:)
+  real(8), dimension(:), intent(inout), target :: u(:),f(:)
   class(tConvParams), allocatable :: Params
   ! ----------------------
   ! Initialize iterations.
@@ -51,7 +51,7 @@ subroutine SolvePoisson(mesh,u,f)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)
     class(tMesh), intent(in) :: mesh
-    real(8), dimension(:), intent(inout) :: v,u
+    real(dp), dimension(:), intent(in), pointer :: v,u
     class(*), intent(in) :: opParams
     !call FDM_ApplyBCs(mesh,2,u,0.00_dp,1.0_dp,0.0_dp)
     !call FDM_ApplyBCs(mesh,1,u,1.00_dp,0.0_dp,0.0_dp)
@@ -63,10 +63,10 @@ end subroutine SolvePoisson
 subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: v(:,:),g(:,:),p(:),c(:),s(:)
+  real(dp), intent(inout), target :: v(:,:),g(:,:),p(:),c(:),s(:)
   real(dp), intent(in) :: nu,rho,beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable :: z(:,:),w(:,:),d(:),h(:)
+  real(dp), allocatable, target :: z(:,:),w(:,:),d(:),h(:)
   allocate(w,z,mold=v)
   allocate(d,h,mold=p)
   associate(dt=>mesh%dt)

@@ -58,9 +58,9 @@ end function CahnHilliardParams_ddCDoubleWell
 !! b ← φ + dt⋅(ΔF'(φ)-∇⋅φv).   
 subroutine CahnHilliard_ImplicitSchemeRHS(mesh, C,v,B,physParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: C
-  real(dp), intent(inout) :: v(:,:)
-  real(8), dimension(:), intent(out) :: B
+  real(8), dimension(:), intent(inout), target :: C
+  real(dp), intent(inout), target :: v(:,:)
+  real(8), dimension(:), intent(out), target :: B
   class(CahnHilliardParams), intent(in) :: physParams
   associate(dt=>mesh%dt)
     ! ----------------------
@@ -77,7 +77,7 @@ end subroutine CahnHilliard_ImplicitSchemeRHS
 !! Apply a operator estimate for the implicit scheme SLAE.
 subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: u,c
+  real(8), dimension(:), intent(inout), target :: u,c
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   associate(dt=>mesh%dt,eps=>CHPhysParams%EpsSqr)
     ! ----------------------
@@ -89,7 +89,7 @@ subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
 end subroutine CahnHilliard_ImplicitSchemeOperator
 subroutine CahnHilliard_ImplicitSchemeOperatorHelper(mesh,u,c,aCHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: u,c
+  real(8), dimension(:), intent(in), pointer :: u,c
   class(*), intent(in) :: aCHPhysParams
   select type(aCHPhysParams)
     class is (CahnHilliardParams)
@@ -124,13 +124,13 @@ end subroutine CahnHilliard_ImplicitSchemeSolve
 !! Compute Cahn-Hilliard time step with an implicit scheme.
 subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: C,S
+  real(8), dimension(:), intent(inout), target :: C,S
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   call CahnHilliard_ImplicitSchemeSolve(mesh, C,v,CHPhysParams)
   ! s ← F'(c)
   ! s ← s + (-ε)⋅Δc
-  call ApplyFunc(mesh,s,c,CahnHilliardParams_ddCDoubleWell)
+  call FuncProd(mesh,s,c,CahnHilliardParams_ddCDoubleWell)
   call FDM_Laplacian_Central(mesh,s,-CHPhysParams%EpsSqr,c)
 end subroutine CahnHilliard_ImplicitSchemeStep
   

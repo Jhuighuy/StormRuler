@@ -31,7 +31,7 @@ cmake_minimum_required(VERSION 3.5.1)
 ## -----------------------------------------------------------------  
 ## StormRuler project definitions.
 project(StormRuler)
-enable_language(Fortran)
+enable_language(Fortran CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
@@ -42,7 +42,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 ## StormRuler executable.
 #set(CMAKE_Fortran_FLAGS "-g -O0 -fbounds-check")
 set(CMAKE_Fortran_FLAGS "-g -Ofast -fopenmp -march=native -Wall")
-file(GLOB SOURCES src/*.f90) 
+file(GLOB SOURCES src/*.f90 src/*.cpp) 
 add_executable("StormRuler.out" ${SOURCES})
 set_target_properties("StormRuler.out" PROPERTIES LINKER_LANGUAGE Fortran)
 ## -----------------------------------------------------------------  

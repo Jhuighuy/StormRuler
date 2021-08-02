@@ -35,38 +35,33 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 
 implicit none  
 
-interface Flip
-  module procedure Flip
-  module procedure CFlip
-end interface Flip
-
 abstract interface
-  pure function MathFunc$0(u) result(v)
+  pure function MFunc$0(u) result(v)
     import dp
     real(dp), intent(in) :: u
     real(dp) :: v
-  end function MathFunc$0
+  end function MFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function MathFunc$rank(u) result(v)
+  pure function MFunc$rank(u) result(v)
     import dp
     real(dp), intent(in) :: u(@:)
     real(dp) :: v(@{size(u,dim=$$)}@)
-  end function MathFunc$rank
+  end function MFunc$rank
 #$end do
 end interface
 
 abstract interface
-  pure function MathSpatialFunc$0(x,u) result(v)
+  pure function SMFunc$0(x,u) result(v)
     import dp
-    real(dp), intent(in) :: x(:),u(:)
+    real(dp), intent(in) :: x(:),u
     real(dp) :: v
-  end function MathSpatialFunc$0
+  end function SMFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function MathSpatialFunc$rank(x,u) result(v)
+  pure function SMFunc$rank(x,u) result(v)
     import dp
-    real(dp), intent(in) :: x(:),u(@:,:)
+    real(dp), intent(in) :: x(:),u(@:)
     real(dp) :: v(@{size(u,dim=$$)}@)
-  end function MathSpatialFunc$rank
+  end function SMFunc$rank
 #$end do
 end interface
 
@@ -96,16 +91,6 @@ integer pure function Flip(value)
   ! >>>>>>>>>>>>>>>>>>>>>>
   Flip = merge(value+1, value-1, mod(value,2) == 1)
 end function Flip
-
-!! ----------------------------------------------------------------- !!
-!! ----------------------------------------------------------------- !!
-integer pure function CFlip(value,dir)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: value
-  integer(1), intent(in) :: dir
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  CFlip = merge(value, Flip(value), dir > 0_1)
-end function CFlip
 
 !! ----------------------------------------------------------------- !!
 !! Find value index in the array.

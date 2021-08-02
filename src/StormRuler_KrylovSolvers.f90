@@ -42,7 +42,7 @@ abstract interface
   subroutine MeshOperator$rank(mesh,u,c,opParams)
     import tMesh, dp
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(inout) :: u(@:,:),c(@:,:)
+    real(dp), intent(in), pointer :: u(@:,:),c(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator$rank
 #$end do
@@ -73,13 +73,13 @@ contains
 subroutine Solve_CG$rank(mesh,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:),b(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),b(@:,:)
   procedure(MeshOperator$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta
-  real(dp), allocatable :: p(@:,:),r(@:,:),t(@:,:)
+  real(dp), allocatable, target :: p(@:,:),r(@:,:),t(@:,:)
   allocate(p,r,t, mold=u)
   ! ----------------------
   ! t ← Au,
@@ -126,13 +126,13 @@ end subroutine Solve_CG$rank
 subroutine Solve_BiCGStab$rank(mesh,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(inout) :: u(@:,:),b(@:,:)
+  real(dp), intent(in), target :: u(@:,:),b(@:,:)
   procedure(MeshOperator$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: convParams
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp) :: alpha,beta,gamma,delta,mu,rho,omega
-  real(dp), allocatable :: h(@:,:),p(@:,:),r(@:,:),s(@:,:),t(@:,:),v(@:,:)
+  real(dp), allocatable, target :: h(@:,:),p(@:,:),r(@:,:),s(@:,:),t(@:,:),v(@:,:)
   allocate(h,p,r,s,t,v, mold=u)
   ! ----------------------
   ! t ← Au,

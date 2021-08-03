@@ -103,11 +103,11 @@ end subroutine CahnHilliard_ImplicitSchemeOperatorHelper
 !! Solve the SLAE of the implicit scheme (using Conjugate Gradients method).
 subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout) :: C
+  real(8), dimension(:), intent(inout), target :: C
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   class(tConvParams), allocatable :: Params
-  real(8), allocatable :: b(:)
+  real(8), allocatable, target :: b(:)
   ! ----------------------
   ! Initialize iterations.
   allocate(Params)

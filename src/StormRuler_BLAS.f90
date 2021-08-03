@@ -239,7 +239,7 @@ end subroutine Sub$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute product: u̅ ← v̅w.
+!! Compute product: u̅ ← vw̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Mul$rank(mesh,u,v,w)
@@ -262,22 +262,22 @@ end subroutine Mul$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an inner product: u ← v̅⋅ŵ.
+!! Compute an inner product: u ← v̅⋅w̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
-subroutine Mul_Inner$rank(mesh,u,vBar,wHat)
+subroutine Mul_Inner$rank(mesh,u,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:),vBar(:,:),wHat(:,@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),vBar(:,:),wBar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
   associate(numCells=>mesh%NumCells)
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell) shared(u,vBar,wHat)
+    !$omp default(none) private(iCell) shared(u,vBar,wBar)
     do iCell = 1, numCells
-      u(@:,iCell) = vBar(:,iCell).inner.wHat(:,@:,iCell)
+      u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
     end do
     !$omp end parallel do
   end associate
@@ -285,22 +285,22 @@ end subroutine Mul_Inner$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an outer product: û ← v̅⊗ŵ.
+!! Compute an outer product: û ← v̅⊗w̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
-subroutine Mul_Outer$rank(mesh,uHat,vBar,wHat)
+subroutine Mul_Outer$rank(mesh,uHat,vBar,wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: uHat(:,@:,:),vBar(:,:),wHat(@:,:)
+  real(dp), intent(in), pointer :: uHat(:,@:,:),vBar(:,:),wBar(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
   associate(numCells=>mesh%NumCells)
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell) shared(uHat,vBar,wHat)
+    !$omp default(none) private(iCell) shared(uHat,vBar,wBar)
     do iCell = 1, numCells
-      uHat(:,@:,iCell) = vBar(:,iCell).outer.wHat(@:,iCell)
+      uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
     end do
     !$omp end parallel do
   end associate
@@ -347,14 +347,15 @@ subroutine SFuncProd$rank(mesh,v,u,f)
   integer :: iCell
   ! ----------------------
   associate(numCells=>mesh%NumCells, &
-          cellCoords=>mesh%CellMDIndex)
+         cellMDIndex=>mesh%CellMDIndex, &
+                  dl=>mesh%dl(::2))
     ! ----------------------
-    ! $ omp parallel do schedule(static) &
-    ! $ omp default(none) private(iCell) shared(u,v)
+    !$omp parallel do schedule(static) &
+    !$omp default(none) private(iCell) shared(u,v)
     do iCell = 1, numCells
-      v(@:,iCell) = f(1.0_dp*cellCoords(:,iCell),u(@:,iCell))
+      v(@:,iCell) = f(dl*cellMDIndex(:,iCell),u(@:,iCell))
     end do
-    ! $ omp end parallel do
+    !$omp end parallel do
   end associate
 end subroutine SFuncProd$rank
 #$end do

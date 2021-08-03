@@ -39,10 +39,10 @@ implicit none
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine MeshOperator$rank(mesh,u,c,opParams)
+  subroutine MeshOperator$rank(mesh,v,w,opParams)
     import tMesh, dp
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: u(@:,:),c(@:,:)
+    real(dp), intent(in), pointer :: v(@:,:),w(@:,:)
     class(*), intent(in) :: opParams
   end subroutine MeshOperator$rank
 #$end do
@@ -126,7 +126,7 @@ end subroutine Solve_CG$rank
 subroutine Solve_BiCGStab$rank(mesh,u,b,LOp,opParams,convParams)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), target :: u(@:,:),b(@:,:)
+  real(dp), intent(in), pointer :: u(@:,:),b(@:,:)
   procedure(MeshOperator$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: convParams

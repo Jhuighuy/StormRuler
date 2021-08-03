@@ -1,23 +1,23 @@
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! Copyright (C) 2021 Oleg Butakov
-!! 
-!! Permission is hereby granted, free of charge, to any person 
-!! obtaining a copy of this software and associated documentation 
-!! files (the "Software"), to deal in the Software without 
-!! restriction, including without limitation the rights  to use, 
+!!
+!! Permission is hereby granted, free of charge, to any person
+!! obtaining a copy of this software and associated documentation
+!! files (the "Software"), to deal in the Software without
+!! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the  
-!! Software is furnished to do so, subject to the following 
+!! sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following
 !! conditions:
-!! 
-!! The above copyright notice and this permission notice shall be 
+!!
+!! The above copyright notice and this permission notice shall be
 !! included in all copies or substantial portions of the Software.
-!! 
-!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 !! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
@@ -31,11 +31,17 @@ use StormRuler_Helpers
 use StormRuler_IO
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: &
-  & Fill,Set,Dot,Add,Sub,FuncProd,SFuncProd
+  & Fill,Set,Dot,Add,Sub,Mul, &
+  & Mul_Inner,Mul_Outer,FuncProd,SFuncProd
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient_Central,FDM_Divergence_Central, &
   & FDM_Gradient_Forward,FDM_Divergence_Backward, &
   & FDM_Laplacian_Central
+use StormRuler_FDM_Operators, only: &
+  & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_KrylovSolvers, only: &
+  & Solve_CG, Solve_BiCGStab
 
 use, intrinsic :: iso_c_binding
 use, intrinsic :: iso_fortran_env, only: error_unit
@@ -55,7 +61,7 @@ implicit none
 ! Field wrapper.
 #$do rank = 0, NUM_RANKS
 type :: tField$rank
-  real(dp), allocatable :: Data(@:,:)
+  real(dp), pointer :: Data(@:,:)
 end type !tField$rank
 #$end do
 
@@ -101,7 +107,23 @@ abstract interface
 #$end do
 end interface
 
+! Mesh operator function wrapper.
+abstract interface
+#$do rank = 0, NUM_RANKS
+  subroutine tLibMeshOperator$rank(pV,pW,env)
+    import :: dp,c_int,c_ptr
+    type(c_ptr), intent(in), value :: pV,pW
+    type(c_ptr), intent(in), value :: env
+  end subroutine tLibMeshOperator$rank
+#$end do
+end interface
+
+! Global mesh object.
 class(tMesh), allocatable :: gMesh
+
+! Global IO list object.
+class(IOList), allocatable :: gIOList
+integer :: L, M
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -119,17 +141,16 @@ namespace StormRuler {{ &
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 ${writeIncLine(fr'''// &
-// EXPORT LIB MESH & FIELDS ALLOCATION  &
+// EXPORT LIB MESH & FIELDS ALLOCATION & FIELDS IO &
 //''')}$
 
 subroutine Lib_InitializeMesh() &
   & bind(c,name='Lib_InitializeMesh')
   ! <<<<<<<<<<<<<<<<<<<<<<
   ! >>>>>>>>>>>>>>>>>>>>>>
-
-#$if False
+#$if True
   real(8), parameter :: pi = 4*atan(1.0D0)
-  Integer, Parameter :: Nx = 100, Ny = 100  
+  Integer, Parameter :: Nx = 100, Ny = 100
   Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
   allocate(gMesh)
   gMesh%dt = dt
@@ -144,6 +165,7 @@ subroutine Lib_InitializeMesh() &
   call gMesh%PrintTo_Neato('test/c2c.dot')
   call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
 #$endif
+  L = 0
 end subroutine Lib_InitializeMesh
 ${writeIncLine('EXTERN void Lib_InitializeMesh();')}$
 ${writeIncLine('')}$
@@ -154,21 +176,21 @@ tField<rank> AllocateField();''')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_AllocateField$rank(pField) &
-  & bind(c,name='Lib_AllocateField$rank')
+  & bind(c,name='_Lib_AllocateField$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(out) :: pField
   ! >>>>>>>>>>>>>>>>>>>>>>
   type(tField$rank), pointer :: field
   allocate(field)
-  allocate(field%Data(@{gMesh%Dim}@,gMesh%NumAllCells)); field%Data(@:,:) = 1488.0_dp
+  allocate(field%Data(@{gMesh%Dim}@,gMesh%NumAllCells)); field%Data(@:,:) = 2.0_dp
   pField = c_loc(field)
 end subroutine Lib_AllocateField$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_AllocateField{rank}(void**); &
+fr'''EXTERN void _Lib_AllocateField{rank}(void**); &
 template<> &
 tField<{rank}> AllocateField<{rank}>() {{ &
   void* pData; &
-  Lib_AllocateField{rank}(&pData); &
+  _Lib_AllocateField{rank}(&pData); &
   return tField<{rank}>(pData); &
 }}''')}$
 #$end do
@@ -176,11 +198,11 @@ ${writeIncLine('')}$
 
 ${writeIncLine( &
 fr'''template<int rank> &
-void DeallocateField(tField<rank>);''')}$
+void DeallocateField(void*);''')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_DeallocateField$rank(pField) &
-  & bind(c,name='Lib_DeallocateField$rank')
+  & bind(c,name='_Lib_DeallocateField$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pField
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -190,14 +212,12 @@ subroutine Lib_DeallocateField$rank(pField) &
   deallocate(field)
 end subroutine Lib_DeallocateField$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_DeallocateField{rank}(void*); &
+fr'''EXTERN void _Lib_DeallocateField{rank}(void*); &
 template<> &
-void DeallocateField<{rank}>(tField<{rank}> field) {{ &
-  Lib_DeallocateField{rank}(field.Data()); &
+void DeallocateField<{rank}>(void* pData) {{ &
+  _Lib_DeallocateField{rank}(pData); &
 }}''')}$
 #$end do
-${writeIncLine('')}$
-
 ${writeIncLine('')}$
 
 !! ----------------------------------------------------------------- !!
@@ -215,6 +235,52 @@ function DEREF$rank(pField) result(u)
 end function DEREF$rank
 #$end do
 
+subroutine Lib_IO_Begin() &
+  & bind(c,name='_Lib_IO_Begin')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  allocate(gIOList)
+  M = 1
+end subroutine Lib_IO_Begin
+${writeIncLine( &
+fr'''EXTERN void _Lib_IO_Begin();''')}$
+${writeIncLine('')}$
+
+#$do rank = 0, NUM_RANKS
+subroutine Lib_IO_Add$rank(pU) &
+  & bind(c,name='_Lib_IO_Add$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pU
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  character(len=1), parameter :: NAMES(3) = [character(len=1) :: 'v', 'p', 'c']
+  real(dp), pointer :: u(@:,:)
+  u=>DEREF$rank(pU)
+  ! ----------------------
+  call gIOList%Add(NAMES(M),u)
+  M = M + 1
+end subroutine Lib_IO_Add$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_IO_Add{rank}(void*); &
+void _Lib_IO_Add(tField<{rank}> u) {{ &
+  _Lib_IO_Add{rank}(u.Data()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+subroutine Lib_IO_End() &
+  & bind(c,name='_Lib_IO_End')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  call gMesh%PrintTo_LegacyVTK('out/fld-'//I2S(L)//'.vtk',gIOList)
+  deallocate(gIOList)
+  L = L + 1
+end subroutine Lib_IO_End
+${writeIncLine( &
+fr'''EXTERN void _Lib_IO_End();''')}$
+${writeIncLine('')}$
+
+${writeIncLine('')}$
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -224,7 +290,7 @@ ${writeIncLine(fr'''// &
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_Fill$rank(pU,alpha) &
-  & bind(c,name='Lib_BLAS_Fill$rank')
+  & bind(c,name='_Lib_BLAS_Fill$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: alpha
   type(c_ptr), intent(in), value :: pU
@@ -235,77 +301,141 @@ subroutine Lib_BLAS_Fill$rank(pU,alpha) &
   call Fill(gMesh,u,alpha)
 end subroutine Lib_BLAS_Fill$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_Fill{rank}(void*, double); &
+fr'''EXTERN void _Lib_BLAS_Fill{rank}(void*, double); &
 void BLAS_Fill(tField<{rank}> u, double alpha) {{ &
-  Lib_BLAS_Fill{rank}(u.Data(), alpha); &
+  _Lib_BLAS_Fill{rank}(u.Data(), alpha); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_Set$rank(pU,pV) &
-  & bind(c,name='Lib_BLAS_Set$rank')
+  & bind(c,name='_Lib_BLAS_Set$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pU,pV
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:),v(@:,:)
-  u=>DEREF$rank(pU); v=>DEREF$rank(pV) 
+  u=>DEREF$rank(pU); v=>DEREF$rank(pV)
   ! ----------------------
   call Set(gMesh,u,v)
 end subroutine Lib_BLAS_Set$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_Set{rank}(void*, void*); &
+fr'''EXTERN void _Lib_BLAS_Set{rank}(void*, void*); &
 void BLAS_Set(tField<{rank}> u, tField<{rank}> v) {{ &
-  Lib_BLAS_Set{rank}(u.Data(), v.Data()); &
+  _Lib_BLAS_Set{rank}(u.Data(), v.Data()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_Add$rank(pU,pV,pW,alpha,beta) &
-  & bind(c,name='Lib_BLAS_Add$rank')
+  & bind(c,name='_Lib_BLAS_Add$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: alpha,beta
   type(c_ptr), intent(in), value :: pU,pV,pW
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:),v(@:,:),w(@:,:)
-  u=>DEREF$rank(pU); v=>DEREF$rank(pV); w=>DEREF$rank(pW)  
+  u=>DEREF$rank(pU); v=>DEREF$rank(pV); w=>DEREF$rank(pW)
   ! ----------------------
   call Add(gMesh,u,v,w,alpha,beta)
 end subroutine Lib_BLAS_Add$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_Add{rank}(void*, void*, void*, double, double); &
+fr'''EXTERN void _Lib_BLAS_Add{rank}( &
+  void*, void*, void*, double, double); &
 void BLAS_Add(tField<{rank}> u, tField<{rank}> v, &
               tField<{rank}> w, double alpha, double beta) {{ &
-  Lib_BLAS_Add{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
+  _Lib_BLAS_Add{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_Sub$rank(pU,pV,pW,alpha,beta) &
-  & bind(c,name='Lib_BLAS_Sub$rank')
+  & bind(c,name='_Lib_BLAS_Sub$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: alpha,beta
   type(c_ptr), intent(in), value :: pU,pV,pW
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:),v(@:,:),w(@:,:)
-  u=>DEREF$rank(pU); v=>DEREF$rank(pV); w=>DEREF$rank(pW)  
+  u=>DEREF$rank(pU); v=>DEREF$rank(pV); w=>DEREF$rank(pW)
   ! ----------------------
   call Sub(gMesh,u,v,w,alpha,beta)
 end subroutine Lib_BLAS_Sub$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_Sub{rank}(void*, void*, void*, double, double); &
+fr'''EXTERN void _Lib_BLAS_Sub{rank}( &
+  void*, void*, void*, double, double); &
 void BLAS_Sub(tField<{rank}> u, tField<{rank}> v, &
               tField<{rank}> w, double alpha, double beta) {{ &
-  Lib_BLAS_Sub{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
+  _Lib_BLAS_Sub{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
+subroutine Lib_BLAS_Mul$rank(pU,pV,pW) &
+  & bind(c,name='_Lib_BLAS_Mul$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pU,pV,pW
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: u(@:,:),v(:),w(@:,:)
+  u=>DEREF$rank(pU); v=>DEREF$0(pV); w=>DEREF$rank(pW)
+  ! ----------------------
+  call Mul(gMesh,u,v,w)
+end subroutine Lib_BLAS_Mul$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_BLAS_Mul{rank}(void*, void*, void*); &
+void BLAS_Mul(tField<{rank}> u, &
+              tField<0> v, tField<{rank}> w) {{ &
+  _Lib_BLAS_Mul{rank}(u.Data(), v.Data(), w.Data()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+#$if False
+#$do rank = 0, NUM_RANKS-1
+subroutine Lib_BLAS_Mul_Inner$rank(pU,pVBar,pWBar) &
+  & bind(c,name='_Lib_BLAS_Mul_Inner$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pU,pVBar,pWBar
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: u(@:,:),vBar(:,:),wBar(:,@:,:)
+  u=>DEREF$rank(pU); vBar=>DEREF$1(pVBar); wBar=>DEREF${rank+1}$(pWBar)
+  ! ----------------------
+  call Mul_Inner(gMesh,u,vBar,wBar)
+end subroutine Lib_BLAS_Mul_Inner$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_BLAS_Mul_Inner{rank}(void*, void*, void*); &
+void BLAS_Mul_Inner(tField<{rank}> u, &
+                    tField<1> vBar, tField<{rank+1}> wBar) {{ &
+  _Lib_BLAS_Mul_Inner{rank}(u.Data(), vBar.Data(), wBar.Data()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+#$do rank = 0, NUM_RANKS-1
+subroutine Lib_BLAS_Mul_Outer$rank(pUHat,pVBar,pWBar) &
+  & bind(c,name='_Lib_BLAS_Mul_Outer$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pUHat,pVBar,pWBar
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: uHat(:,@:,:),vBar(:,:),wBar(@:,:)
+  uHat=>DEREF${rank+1}$(pUHat); vBar=>DEREF$1(pVBar); wBar=>DEREF$rank(pWBar)
+  ! ----------------------
+  call Mul_Outer(gMesh,uHat,vBar,wBar)
+end subroutine Lib_BLAS_Mul_Outer$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_BLAS_Mul_Outer{rank}(void*, void*, void*); &
+void BLAS_Mul_Outer(tField<{rank+1}> uHat, &
+                    tField<1> vBar, tField<{rank}> wBar) {{ &
+  _Lib_BLAS_Mul_Outer{rank}(uHat.Data(), vBar.Data(), wBar.Data()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+#$end if
+
+#$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_FuncProd$rank(pV,pU,pF,env) &
-  & bind(c,name='Lib_BLAS_FuncProd$rank')
+  & bind(c,name='_Lib_BLAS_FuncProd$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pU,pV
   type(c_funptr), intent(in), value :: pF
@@ -327,25 +457,30 @@ contains
     real(dp) :: v(@{size(u,dim=$$)}@)
 #$endif
     call f(shape(u),u,v,env)
-  end function wF 
+  end function wF
 end subroutine Lib_BLAS_FuncProd$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_FuncProd{rank}(void*, void*, tMFunc, void*); &
-template<typename tFunc> &
+fr'''EXTERN void _Lib_BLAS_FuncProd{rank}(void*, void*, tMFuncPtr, void*); &
+template<typename tMFunc> &
 void BLAS_FuncProd(tField<{rank}> v, &
-                   tField<{rank}> u, tFunc&& func) {{ &
-  Lib_BLAS_FuncProd{rank}(v.Data(), u.Data(), &
-                          [](int* shape, double* in, double* out, &
-                             void* env) {{ &
-    (*reinterpret_cast<tFunc*>(env))(in, out); &
-  }}, &func); &
+                   tField<{rank}> u, tMFunc&& func) {{ &
+  _Lib_BLAS_FuncProd{rank}(v.Data(), u.Data(), &
+    [](int* shape, double* in, double* out, void* env) {{ &
+      auto& func = *reinterpret_cast<tMFunc*>(env); ''')}$
+#$if rank == 0
+${writeIncLine('      *out = func(*in);')}$;
+#$else
+${writeIncLine('      func(in, out);')}$;
+#$endif
+${writeIncLine( &
+fr'''    }}, &func); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_BLAS_SFuncProd$rank(pV,pU,pF,env) &
-  & bind(c,name='Lib_BLAS_SFuncProd$rank')
+  & bind(c,name='_Lib_BLAS_SFuncProd$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pU,pV
   type(c_funptr), intent(in), value :: pF
@@ -367,19 +502,18 @@ contains
     real(dp) :: v(@{size(u,dim=$$)}@)
 #$endif
     call f(size(x),x,shape(u),u,v,env)
-  end function wF 
+  end function wF
 end subroutine Lib_BLAS_SFuncProd$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_BLAS_SFuncProd{rank}(void*, void*, tSMFunc, void*); &
-template<typename tFunc> &
+fr'''EXTERN void _Lib_BLAS_SFuncProd{rank}(void*, void*, tSMFuncPtr, void*); &
+template<typename tSMFunc> &
 void BLAS_SFuncProd(tField<{rank}> v, &
-                    tField<{rank}> u, tFunc&& func) {{ &
-  Lib_BLAS_SFuncProd{rank}(v.Data(), u.Data(), &
-                           [](int dim, double* x, &
-                              int* shape, double* in, double* out, &
-                              void* env) {{ &
-    (*reinterpret_cast<tFunc*>(env))(x, in, out); &
-  }}, &func); &
+                    tField<{rank}> u, tSMFunc&& func) {{ &
+  _Lib_BLAS_SFuncProd{rank}(v.Data(), u.Data(), &
+    [](int dim, double* x, int* shape, double* in, double* out, void* env) {{ &
+      auto& func = *reinterpret_cast<tSMFunc*>(env); & 
+      func(x, in, out); &
+    }}, &func); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -395,7 +529,7 @@ ${writeIncLine(fr'''// &
 
 #$do rank = 0, NUM_RANKS-1
 subroutine Lib_FDM_Gradient$rank(pVBar,lambda,pU,dir) &
-  & bind(c,name='Lib_FDM_Gradient$rank')
+  & bind(c,name='_Lib_FDM_Gradient$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU,pVBar
@@ -414,17 +548,17 @@ subroutine Lib_FDM_Gradient$rank(pVBar,lambda,pU,dir) &
   end select
 end subroutine Lib_FDM_Gradient$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_FDM_Gradient{rank}(void*, double, void*, char); &
+fr'''EXTERN void _Lib_FDM_Gradient{rank}(void*, double, void*, char); &
 void FDM_Gradient(tField<{rank+1}> vBar, &
                   double lambda, tField<{rank}> u, char dir) {{ &
-  Lib_FDM_Gradient{rank}(vBar.Data(), lambda, u.Data(), dir); &
+  _Lib_FDM_Gradient{rank}(vBar.Data(), lambda, u.Data(), dir); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS-1
 subroutine Lib_FDM_Divergence$rank(pV,lambda,pUBar,dir) &
-  & bind(c,name='Lib_FDM_Divergence$rank')
+  & bind(c,name='_Lib_FDM_Divergence$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pUBar,pV
@@ -443,17 +577,17 @@ subroutine Lib_FDM_Divergence$rank(pV,lambda,pUBar,dir) &
   end select
 end subroutine Lib_FDM_Divergence$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_FDM_Divergence{rank}(void*, double, void*, char); &
+fr'''EXTERN void _Lib_FDM_Divergence{rank}(void*, double, void*, char); &
 void FDM_Divergence(tField<{rank}> v, &
                     double lambda, tField<{rank+1}> uBar, char dir) {{ &
-  Lib_FDM_Divergence{rank}(v.Data(), lambda, uBar.Data(), dir); &
+  _Lib_FDM_Divergence{rank}(v.Data(), lambda, uBar.Data(), dir); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
 subroutine Lib_FDM_Laplacian$rank(pV,lambda,pU) &
-  & bind(c,name='Lib_FDM_Laplacian$rank')
+  & bind(c,name='_Lib_FDM_Laplacian$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU,pV
@@ -464,10 +598,10 @@ subroutine Lib_FDM_Laplacian$rank(pV,lambda,pU) &
   call FDM_Laplacian_Central(gMesh,v,lambda,u)
 end subroutine Lib_FDM_Laplacian$rank
 ${writeIncLine( &
-fr'''EXTERN void Lib_FDM_Laplacian{rank}(void*, double, void*); &
+fr'''EXTERN void _Lib_FDM_Laplacian{rank}(void*, double, void*); &
 void FDM_Laplacian(tField<{rank}> v, &
                    double lambda, tField<{rank}> u) {{ &
-  Lib_FDM_Laplacian{rank}(v.Data(), lambda, u.Data()); &
+  _Lib_FDM_Laplacian{rank}(v.Data(), lambda, u.Data()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -477,8 +611,90 @@ ${writeIncLine('')}$
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-${writeIncLine(fr''' &
-}} // namespace StormRuler &
+${writeIncLine(fr'''// &
+// EXPORT LIB FDM CONVECTION &
+//''')}$
+
+#$do rank = 0, NUM_RANKS-1
+subroutine Lib_FDM_Convection$rank(pV,lambda,pU,pWBar) &
+  & bind(c,name='_Lib_FDM_Convection$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in), value :: lambda
+  type(c_ptr), intent(in), value :: pU,pV,pWBar
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: u(@:,:),v(@:,:),wBar(:,:)
+  u=>DEREF$rank(pU); v=>DEREF$rank(pV); wBar=>DEREF$1(pWBar)
+  ! ----------------------
+  call FDM_Convection_Central(gMesh,v,lambda,u,wBar)
+end subroutine Lib_FDM_Convection$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_FDM_Convection{rank}(void*, double, void*, void*); &
+void FDM_Convection(tField<{rank}> v, &
+                    double lambda, tField<{rank}> u, tField<1> wBar) {{ &
+  _Lib_FDM_Convection{rank}(v.Data(), lambda, u.Data(), wBar.Data()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+${writeIncLine('')}$
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+${writeIncLine(fr'''// &
+// EXPORT LIB KRYLOV SOLVERS &
+//''')}$
+
+#$do rank = 0, NUM_RANKS
+subroutine Lib_Solve_BiCGStab$rank(pU,pB,pA,env) &
+  & bind(c,name='_Lib_Solve_BiCGStab$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pU,pB
+  type(c_funptr), intent(in), value :: pA
+  type(c_ptr), intent(in), value :: env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  class(tConvParams), allocatable :: Params
+  real(dp), pointer :: u(@:,:),b(@:,:)
+  procedure(tLibMeshOperator$rank), pointer :: A
+  u=>DEREF$rank(pU); b=>DEREF$rank(pB)
+  call c_f_procpointer(cptr=pA,fptr=A)
+  ! ----------------------
+  allocate(Params)
+  call Params%Init(gMesh%Dl(1)*gMesh%Dl(2)*1.0D-8, &
+    &              gMesh%Dl(1)*gMesh%Dl(1)*1.0D-8, 100000)
+  call Solve_CG(gMesh,u,b,wA,Params,Params)
+contains
+  subroutine wA(mesh,v,w,opParams)
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), pointer :: v(@:,:),w(@:,:)
+    class(*), intent(in) :: opParams
+    type(tField$rank), target :: fV, fW
+    type(c_ptr) :: pV, pW
+    fV%Data=>v; fW%Data=>w
+    pV = c_loc(fV); pW = c_loc(fW)
+    call A(pV,pW,env)
+  end subroutine wA
+end subroutine Lib_Solve_BiCGStab$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_Solve_BiCGStab{rank}(void*, void*, tMeshOperatorPtr, void*); &
+template<typename tMeshOperator> &
+void Solve_BiCGStab(tField<{rank}> u, &
+                    tField<{rank}> b, tMeshOperator&& meshOperator) {{ &
+  _Lib_Solve_BiCGStab{rank}(u.Data(), b.Data(), &
+    [](void* out, void* in, void* env) {{ &
+      auto& meshOperator = *reinterpret_cast<tMeshOperator*>(env); &
+      meshOperator(tField<{rank}>(in, nullptr), &
+                   tField<{rank}>(out, nullptr)); & 
+    }}, &meshOperator); &
+}}''')}$
+#$end do
+
+${writeIncLine('')}$
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+${writeIncLine(fr'''}} // namespace StormRuler &
 #undef EXTERN &
 // &
 // END OF THE AUTO-GENERATED FILE &

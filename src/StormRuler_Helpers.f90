@@ -36,32 +36,32 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 implicit none  
 
 abstract interface
-  pure function MFunc$0(u) result(v)
+  pure function tMapFunc$0(u) result(v)
     import dp
     real(dp), intent(in) :: u
     real(dp) :: v
-  end function MFunc$0
+  end function tMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function MFunc$rank(u) result(v)
+  pure function tMapFunc$rank(u) result(v)
     import dp
     real(dp), intent(in) :: u(@:)
     real(dp) :: v(@{size(u, dim=$$)}@)
-  end function MFunc$rank
+  end function tMapFunc$rank
 #$end do
 end interface
 
 abstract interface
-  pure function SMFunc$0(x, u) result(v)
+  pure function tSMapFunc$0(x, u) result(v)
     import dp
     real(dp), intent(in) :: x(:), u
     real(dp) :: v
-  end function SMFunc$0
+  end function tSMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function SMFunc$rank(x, u) result(v)
+  pure function tSMapFunc$rank(x, u) result(v)
     import dp
     real(dp), intent(in) :: x(:), u(@:)
     real(dp) :: v(@{size(u, dim=$$)}@)
-  end function SMFunc$rank
+  end function tSMapFunc$rank
 #$end do
 end interface
 
@@ -236,16 +236,16 @@ end function R2S
 !! ----------------------------------------------------------------- !!
 !! Ternary operator for strings.
 !! ----------------------------------------------------------------- !!
-function MergeString(trueString, falseString, condition) result(string)
+function MergeString(trueString, falseString, condition)
   ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: trueString, falseString
   logical, intent(in) :: condition
-  character(len=:), allocatable :: string
+  character(len=:), allocatable :: MergeString
   ! >>>>>>>>>>>>>>>>>>>>>>
   if (condition) then
-    string = trueString
+    MergeString = trueString
   else
-    string = falseString
+    MergeString = falseString
   end if
 end function MergeString
 

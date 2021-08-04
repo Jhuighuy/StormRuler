@@ -28,7 +28,7 @@ module StormRuler_FDM_Operators
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: Flip, SafeInverse, &
-  & @{MFunc$$@|@0, NUM_RANKS}@, operator(.inner.), operator(.outer.)
+  & @{tMapFunc$$@|@0, NUM_RANKS}@, operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 
@@ -183,7 +183,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell, iCellFace) shared(u, v_bar)
+    !$omp & default(none) private(iCell, iCellFace) shared(u, v_bar)
     do iCell = 1, numCells; block
       integer :: rCell, rrCell, rrrCell, rrrrCell
       integer :: lCell, llCell, lllCell, llllCell
@@ -281,7 +281,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell, iCellFace) shared(u_bar, v)
+    !$omp & default(none) private(iCell, iCellFace) shared(u_bar, v)
     do iCell = 1, numCells; block
       integer :: rCell, rrCell, rrrCell, rrrrCell
       integer :: lCell, llCell, lllCell, llllCell
@@ -504,8 +504,8 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, dirAll, dirFace, di
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell, iCellFace) &
-    !$omp shared(u, v_bar, dirAll, dirFace, dirCellFace)
+    !$omp & default(none) private(iCell, iCellFace) &
+    !$omp & shared(u, v_bar, dirAll, dirFace, dirCellFace)
     do iCell = 1, numCells; block
       integer(1) :: dir
       integer :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
@@ -521,7 +521,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, dirAll, dirFace, di
         ! ----------------------
         ! Find indices of the adjacent cells using the FD direction.
         ! ----------------------
-        associate(inc => (1_1 - dir)/2_1)
+        associate(inc => (1_1-dir)/2_1)
           associate(rCellFace => iCellFace+inc, &
             &       lCellFace => Flip(iCellFace+inc))
             rCell = cellToCell(rCellFace, iCell)
@@ -658,8 +658,8 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, dirAll, dirFace,
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell, iCellFace) &
-    !$omp shared(u_bar, v, dirAll, dirFace, dirCellFace)
+    !$omp & default(none) private(iCell, iCellFace) &
+    !$omp & shared(u_bar, v, dirAll, dirFace, dirCellFace)
     do iCell = 1, numCells; block
       integer(1) :: dir
       integer :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
@@ -675,7 +675,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, dirAll, dirFace,
         ! ----------------------
         ! Find indices of the adjacent cells using the FD direction.
         ! ----------------------
-        associate(inc => (1_1 - dir)/2_1)
+        associate(inc => (1_1-dir)/2_1)
           associate(rCellFace => iCellFace+inc, &
             &       lCellFace => Flip(iCellFace+inc))
             rCell = cellToCell(rCellFace, iCell)
@@ -905,7 +905,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
     ! For each positive cell face do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell, iCellFace) shared(u, v)
+    !$omp & default(none) private(iCell, iCellFace) shared(u, v)
     do iCell = 1, numCells; block
       integer :: rCell, rrCell, rrrCell, rrrrCell
       integer :: lCell, llCell, lllCell, llllCell
@@ -990,7 +990,7 @@ subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
-  procedure(MFunc$rank) :: f
+  procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable, target :: w(@:,:)
   allocate(w, mold=u)

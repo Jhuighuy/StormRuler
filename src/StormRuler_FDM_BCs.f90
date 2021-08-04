@@ -27,7 +27,7 @@ module StormRuler_FDM_BCs
 #$use 'StormRuler_Parameters.f90'
   
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: Flip, @{SMFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Helpers, only: Flip, @{tSMapFunc$$@|@0, NUM_RANKS}@
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -56,7 +56,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
   integer, intent(in) :: iBCM
   real(dp), intent(in) :: alpha, beta, gamma
   real(dp), intent(inout) :: u(@:,:)
-  procedure(SMFunc$rank), optional :: f
+  procedure(tSMapFunc$rank), optional :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iBCMPtr
   ! ----------------------
@@ -72,7 +72,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
     ! For each BC cell with the specific mark do:
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iBCMPtr) shared(u, alpha, beta, gamma)
+    !$omp & default(none) private(iBCMPtr) shared(u, alpha, beta, gamma)
     do iBCMPtr = bcmFirst, bcmLast; block
       integer :: iCell, iBCCell, iBCCellFace, iGCell
       iBCCell = bcmToCell(iBCMPtr)

@@ -722,7 +722,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
           cellToCell(iCell, :) &
             = [ cellToIndex(1, yCell), 0, 0, 0 ]
         end do
-        do xCell = xNumCells+1, xNumCells+xNumLayers
+        do xCell = xNumCells+1, xNumCells+xNumLayers 
           iCell = cellToIndex(xCell, yCell)
           cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                                , yDelta*(yCell+0.5_dp), 0.0_dp]

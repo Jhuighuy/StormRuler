@@ -45,22 +45,22 @@ abstract interface
   pure function MFunc$rank(u) result(v)
     import dp
     real(dp), intent(in) :: u(@:)
-    real(dp) :: v(@{size(u,dim=$$)}@)
+    real(dp) :: v(@{size(u, dim=$$)}@)
   end function MFunc$rank
 #$end do
 end interface
 
 abstract interface
-  pure function SMFunc$0(x,u) result(v)
+  pure function SMFunc$0(x, u) result(v)
     import dp
-    real(dp), intent(in) :: x(:),u
+    real(dp), intent(in) :: x(:), u
     real(dp) :: v
   end function SMFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function SMFunc$rank(x,u) result(v)
+  pure function SMFunc$rank(x, u) result(v)
     import dp
-    real(dp), intent(in) :: x(:),u(@:)
-    real(dp) :: v(@{size(u,dim=$$)}@)
+    real(dp), intent(in) :: x(:), u(@:)
+    real(dp) :: v(@{size(u, dim=$$)}@)
   end function SMFunc$rank
 #$end do
 end interface
@@ -89,15 +89,15 @@ integer pure function Flip(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   integer, intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Flip = merge(value+1, value-1, mod(value,2) == 1)
+  Flip = merge(value+1, value-1, mod(value, 2) == 1)
 end function Flip
 
 !! ----------------------------------------------------------------- !!
 !! Find value index in the array.
 !! ----------------------------------------------------------------- !!
-integer pure function IndexOf(value,array)
+integer pure function IndexOf(value, array)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: value,array(:)
+  integer, intent(in) :: value, array(:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   do IndexOf = 1, size(array)
     if (array(IndexOf) == value) return
@@ -116,7 +116,7 @@ subroutine EnsurePositive(value)
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
   if (isnan(value).or.(value <= 0)) then
-    write(error_unit,*) 'NEGATIVE, ZERO OR NaN VALUE', value
+    write(error_unit, *) 'NEGATIVE, ZERO OR NaN VALUE', value
     error stop 1
   end if
 end subroutine EnsurePositive
@@ -129,14 +129,14 @@ subroutine EnsureNonNegative(value)
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
   if (isnan(value).or.(value < 0)) then
-    write(error_unit,*) 'NEGATIVE OR NaN VALUE', value
+    write(error_unit, *) 'NEGATIVE OR NaN VALUE', value
     error stop 1
   end if
 end subroutine EnsureNonNegative
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
-real(dp) function SafeDivide(a,b)
+real(dp) function SafeDivide(a, b)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a, b
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -160,23 +160,23 @@ end function SafeInverse
 !! ----------------------------------------------------------------- !!
 !! Inner inner vector-tensor product: û ← v̅⋅ŵ.
 !! ----------------------------------------------------------------- !!
-pure function Inner$0(vBar,wHat) result(uHat)
+pure function Inner$0(vBar, wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:),wHat(:)
+  real(dp), intent(in) :: vBar(:), wHat(:)
   real(dp) :: uHat
   ! >>>>>>>>>>>>>>>>>>>>>>
-  uHat = dot_product(vBar,wHat)
+  uHat = dot_product(vBar, wHat)
 end function Inner$0
 #$do rank = 1, NUM_RANKS-1
-pure function Inner$rank(vBar,wHat) result(uHat)
+pure function Inner$rank(vBar, wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: vBar(:), wHat(:,@:)
-  real(dp) :: uHat(@{size(wHat,dim=$$)}@)
+  real(dp) :: uHat(@{size(wHat, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
   uHat(@:) = 0.0_dp
   do i = 1, size(vBar)
-    uHat(@:) = uHat(@:) + vBar(i)*wHat(i,@:)
+    uHat(@:) = uHat(@:) + vBar(i)*wHat(i, @:)
   end do
 end function Inner$rank
 #$end do
@@ -184,22 +184,22 @@ end function Inner$rank
 !! ----------------------------------------------------------------- !!
 !! Outer vector-tensor product: û ← v̅⊗ŵ.
 !! ----------------------------------------------------------------- !!
-pure function Outer$0(vBar,wHat) result(uHat)
+pure function Outer$0(vBar, wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:),wHat
+  real(dp), intent(in) :: vBar(:), wHat
   real(dp) :: uHat(size(vBar))
   ! >>>>>>>>>>>>>>>>>>>>>>
   uHat(:) = vBar(:)*wHat
 end function Outer$0
 #$do rank = 1, NUM_RANKS-1
-pure function Outer$rank(vBar,wHat) result(uHat)
+pure function Outer$rank(vBar, wHat) result(uHat)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: vBar(:), wHat(@:)
-  real(dp) :: uHat(size(vBar,dim=1),@{size(wHat,dim=$$)}@)
+  real(dp) :: uHat(size(vBar, dim=1), @{size(wHat, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: i
-  do i = 1, size(vBar,dim=1)
-    uHat(i,@:) = vBar(i)*wHat(@:)
+  do i = 1, size(vBar, dim=1)
+    uHat(i, @:) = vBar(i)*wHat(@:)
   end do
 end function Outer$rank
 #$end do
@@ -236,9 +236,9 @@ end function R2S
 !! ----------------------------------------------------------------- !!
 !! Ternary operator for strings.
 !! ----------------------------------------------------------------- !!
-function MergeString(trueString,falseString,condition) result(string)
+function MergeString(trueString, falseString, condition) result(string)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  character(len=*), intent(in) :: trueString,falseString
+  character(len=*), intent(in) :: trueString, falseString
   logical, intent(in) :: condition
   character(len=:), allocatable :: string
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -260,9 +260,9 @@ pure function PixelToInt(colorChannels) result(int)
   integer, intent(in) :: colorChannels(3)
   integer :: int
   ! >>>>>>>>>>>>>>>>>>>>>>
-  int = ior(iand(255,colorChannels(1)), &
-            ior(ishft(iand(255,colorChannels(2)),8), &
-                ishft(iand(255,colorChannels(3)),16)))
+  int = ior(iand(255, colorChannels(1)), &
+            ior(ishft(iand(255, colorChannels(2)), 8), &
+                ishft(iand(255, colorChannels(3)), 16)))
 end function PixelToInt
 
 !! ----------------------------------------------------------------- !!
@@ -273,9 +273,9 @@ pure function IntToPixel(int) result(colorChannels)
   integer, intent(in) :: int
   integer :: colorChannels(3)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  colorChannels(1) = iand(255,int)
-  colorChannels(2) = iand(255,ishft(int,-8))
-  colorChannels(3) = iand(255,ishft(int,-16))
+  colorChannels(1) = iand(255, int)
+  colorChannels(2) = iand(255, ishft(int, -8))
+  colorChannels(3) = iand(255, ishft(int, -16))
 end function IntToPixel
 
 end module StormRuler_Helpers

@@ -28,8 +28,10 @@
 
 namespace StormRuler {
 
+class tFieldBase;
+
 template<int rank> 
-void DeallocateField(void*);
+void DeallocateField(tFieldBase*);
 
 /**
  * Scalar/vector/tensor field class.
@@ -37,23 +39,22 @@ void DeallocateField(void*);
 template<int rank>
 class tField {
 private:
-  void* mData;
+  tFieldBase* mData;
   int* mRefCounter;
 
 public:
-  explicit tField(void* data) :
+  explicit tField(tFieldBase* data) :
     mData(data), mRefCounter(new int(1)) {
   }
-  explicit tField(void* data, std::nullptr_t) :
+  explicit tField(tFieldBase* data, std::nullptr_t) :
     mData(data), mRefCounter(nullptr) {
   }
   ~tField() {
     if (mRefCounter != nullptr) {
       *mRefCounter -= 1;
       if (*mRefCounter == 0) {
-        DeallocateField<rank>(mData); 
-        delete mRefCounter;
-        mData = mRefCounter = nullptr;
+        DeallocateField<rank>(mData); mData = nullptr; 
+        delete mRefCounter; mRefCounter = nullptr;
       }
     }
   }
@@ -70,7 +71,7 @@ public:
     return *this;
   }
   
-  void* Data() {
+  tFieldBase* Data() {
     return mData;
   }
 }; // class tField
@@ -84,7 +85,7 @@ using tSMFuncPtr = void(*)(
   int dim, double* x, int* shape, double* in, double* out, void* env);
 
 // Basic mesh operator function pointer (for Lib API).
-using tMeshOperatorPtr = void(*)(void* out, void* in, void* env);
+using tMeshOperatorPtr = void(*)(tFieldBase* out, tFieldBase* in, void* env);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //

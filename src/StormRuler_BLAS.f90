@@ -242,19 +242,21 @@ end subroutine Sub$rank
 !! Compute product: u̅ ← vw̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Mul$rank(mesh,u,v,w)
+subroutine Mul$rank(mesh,u,v,w,power)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in), pointer :: u(@:,:),v(:),w(@:,:)
+  integer, intent(in), optional :: power
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  integer :: iCell,p
+  p = 1; if (present(power)) p = power
   ! ----------------------
   associate(numCells=>mesh%NumCells)
     ! ----------------------
     !$omp parallel do schedule(static) &
-    !$omp default(none) private(iCell) shared(u,v,w)
+    !$omp default(none) private(iCell) shared(u,v,w,p)
     do iCell = 1, numCells
-      u(@:,iCell) = v(iCell)*w(@:,iCell)
+      u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
     end do
     !$omp end parallel do
   end associate

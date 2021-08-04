@@ -25,7 +25,7 @@
 module StormRuler_ConvParams
 
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: EnsurePositive,EnsureNonNegative
+use StormRuler_Helpers, only: EnsurePositive, EnsureNonNegative
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -56,7 +56,7 @@ contains
 !! Initialize iteration parameters.
 !! ----------------------------------------------------------------- !!
 subroutine tConvParams_Init(params, &
-    & absoluteTolerance,relativeTolerance,maxNumIterations)
+    & absoluteTolerance, relativeTolerance, maxNumIterations)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(out) :: params
   real(dp), intent(in) :: absoluteTolerance
@@ -90,7 +90,7 @@ end subroutine tConvParams_Init
 !! ----------------------------------------------------------------- !!
 !! Check convergence of the iterations process.  
 !! ----------------------------------------------------------------- !!
-logical function tConvParams_Check(params,absoluteError,relativeError)
+logical function tConvParams_Check(params, absoluteError, relativeError)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(inout) :: params
   real(dp), intent(in) :: absoluteError
@@ -110,8 +110,8 @@ logical function tConvParams_Check(params,absoluteError,relativeError)
   ! ----------------------
   ! Check convergence by absolute and relative errors.
   ! ----------------------
-  associate(absoluteTolerance=>params%AbsoluteTolerance, &
-      &     relativeTolerance=>params%RelativeTolerance)
+  associate(absoluteTolerance => params%AbsoluteTolerance, &
+    &       relativeTolerance => params%RelativeTolerance)
     call EnsureNonNegative(absoluteError)
     !print *, absoluteError
     if (absoluteError <= absoluteTolerance) then

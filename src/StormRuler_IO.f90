@@ -27,7 +27,7 @@ module StormRuler_IO
 #$use 'StormRuler_Parameters.f90'
   
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: PixelToInt,IntToPixel
+use StormRuler_Helpers, only: PixelToInt, IntToPixel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -48,9 +48,9 @@ end type !IOListItem$rank
 type :: IOList
   class(IOListItem), pointer :: first => null()
 contains
-  generic :: Add=>@{Add$$@|@0,NUM_RANKS}@
+  generic :: Add => @{Add$$@|@0, NUM_RANKS}@
 #$do rank = 0, NUM_RANKS
-  procedure :: Add$rank=>IOList_Add$rank
+  procedure :: Add$rank => IOList_Add$rank
 #$end do
 end type IOList
 
@@ -60,7 +60,7 @@ end type IOList
 contains
 
 #$do rank = 0, NUM_RANKS
-subroutine IOList_Add$rank(list,name,values)
+subroutine IOList_Add$rank(list, name, values)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(IOList), intent(inout) :: list
   character(len=*), intent(in) :: name
@@ -86,47 +86,47 @@ end subroutine IOList_Add$rank
 
 !! -----------------------------------------------------------------
 !! Load PPM image.
-subroutine Load_PPM(file,pixels)
+subroutine Load_PPM(file, pixels)
   ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
   integer, allocatable, intent(out) :: pixels(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: unit,offset
-  integer :: numRows,numColumns
+  integer :: unit, offset
+  integer :: numRows, numColumns
   ! ----------------------
   ! Parse PPM header.
   ! ----------------------
   block
     character(len=2) :: magic
     integer :: colorRange
-    open(newunit=unit,file=file, &
-         access='stream',form='formatted',status='old')
-    read(unit,'(A2)') magic
+    open(newunit=unit, file=file, &
+         access='stream', form='formatted', status='old')
+    read(unit, '(A2)') magic
     if (magic/='P6') &
       error stop 'unexpected PPM magic, "P6" expected'
-    read(unit,*) numRows,numColumns
-    read(unit,*) colorRange
+    read(unit, *) numRows, numColumns
+    read(unit, *) colorRange
     if (colorRange/=255) &
       error stop 'unsupported PPM color range value, "255" expected'
-    inquire(unit,pos=offset)
+    inquire(unit, pos=offset)
     close(unit)
   end block
   ! ----------------------
   ! Allocate and read image pixels.
   ! ----------------------
   block
-    character :: byte,bytes(3)
-    integer :: row,column,colorChannel
-    allocate(pixels(0:numRows-1,0:numColumns-1))
-    open(newunit=unit,file=file, &
-         access='stream',status='old')
-    read(unit,pos=offset-1) byte
+    character :: byte, bytes(3)
+    integer :: row, column, colorChannel
+    allocate(pixels(0:numRows-1, 0:numColumns-1))
+    open(newunit=unit, file=file, &
+         access='stream', status='old')
+    read(unit, pos=offset-1) byte
     do column = numColumns-1, 0, -1
       do row = 0, numRows-1
         do colorChannel = 1, 3
           read(unit) byte; bytes(colorChannel) = byte
         end do
-        pixels(row,column) = PixelToInt(iachar(bytes))
+        pixels(row, column) = PixelToInt(iachar(bytes))
       end do
     end do
     close(unit)
@@ -136,31 +136,31 @@ end subroutine Load_PPM
 
 !! -----------------------------------------------------------------
 !! Save PPM image.  
-subroutine Save_PPM(file,pixels)
+subroutine Save_PPM(file, pixels)
   ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
   integer, intent(in) :: pixels(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: unit
-  integer :: numRows,numColumns
-  integer :: row,column,colorChannel
+  integer :: numRows, numColumns
+  integer :: row, column, colorChannel
   ! ----------------------
   ! Write PPM header.
   ! ----------------------
-  numRows = size(pixels,dim=1) 
-  numColumns = size(pixels,dim=2)
-  open(newunit=unit,file=file,status='replace')
-  write(unit,'(A2)') 'P6'
-  write(unit,'(I0," ",I0)') numRows,numColumns
-  write(unit,'(I0)') 255
+  numRows = size(pixels, dim=1) 
+  numColumns = size(pixels, dim=2)
+  open(newunit=unit, file=file, status='replace')
+  write(unit, '(A2)') 'P6'
+  write(unit, '(I0, " ", I0)') numRows, numColumns
+  write(unit, '(I0)') 255
   ! ----------------------
   ! Write PPM image pixels.
   ! ----------------------
   do column = numColumns, 1, -1
     do row = 1, numRows
       do colorChannel = 0, 2
-        write(unit,'(A1)',advance='no') &
-          achar(iand(255,ishft(pixels(row,column),-8*colorChannel)))
+        write(unit, '(A1)', advance='no') &
+          achar(iand(255, ishft(pixels(row, column), -8*colorChannel)))
       end do
     end do
   end do

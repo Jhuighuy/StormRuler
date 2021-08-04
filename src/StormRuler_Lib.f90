@@ -60,50 +60,50 @@ implicit none
 
 ! Field wrapper.
 #$do rank = 0, NUM_RANKS
-type :: tField$rank
-  real(dp), pointer :: Data(@:,:)
-end type !tField$rank
+type :: tLibFieldBase$rank
+  real(dp), pointer :: Values(@:,:)
+end type !tLibFieldBase$rank
 #$end do
 
 ! Math function wrapper.
 abstract interface
-  pure subroutine tLibMFunc$0(shape, tU, tV, env)
+  pure subroutine tLibMapFunc$0(shape, tU, tV, env)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: tU
     real(dp), intent(out) :: tV
     type(c_ptr), intent(in), value :: env
-  end subroutine tLibMFunc$0
+  end subroutine tLibMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure subroutine tLibMFunc$rank(shape, tU, tV, env)
+  pure subroutine tLibMapFunc$rank(shape, tU, tV, env)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: tU(*)
     real(dp), intent(out) :: tV(*)
     type(c_ptr), intent(in), value :: env
-  end subroutine tLibMFunc$rank
+  end subroutine tLibMapFunc$rank
 #$end do
 end interface
 
 ! Spatial math function wrapper.
 abstract interface
-  pure subroutine tLibSMFunc$0(dim, x, shape, tU, tV, env)
+  pure subroutine tLibSMapFunc$0(dim, x, shape, tU, tV, env)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in), value :: dim
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: x(*), tU
     real(dp), intent(out) :: tV
     type(c_ptr), intent(in), value :: env
-  end subroutine tLibSMFunc$0
+  end subroutine tLibSMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure subroutine tLibSMFunc$rank(dim, x, shape, tU, tV, env)
+  pure subroutine tLibSMapFunc$rank(dim, x, shape, tU, tV, env)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in), value :: dim
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: x(*), tU(*)
     real(dp), intent(out) :: tV(*)
     type(c_ptr), intent(in), value :: env
-  end subroutine tLibSMFunc$rank
+  end subroutine tLibSMapFunc$rank
 #$end do
 end interface
 
@@ -123,7 +123,7 @@ class(tMesh), allocatable :: gMesh
 
 ! Global IO list object.
 class(IOList), allocatable :: gIOList
-integer :: L, M
+integer :: L
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -172,50 +172,48 @@ ${writeIncLine('')}$
 
 ${writeIncLine( &
 fr'''template<int rank> &
-tField<rank> AllocateField();''')}$
-
+tField<rank> AllocField();''')}$
 #$do rank = 0, NUM_RANKS
-subroutine Lib_AllocateField$rank(pField) &
-  & bind(c, name='_Lib_AllocateField$rank')
+subroutine Lib_AllocField$rank(ppField) &
+  & bind(c, name='_Lib_AllocField$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
-  type(c_ptr), intent(out) :: pField
+  type(c_ptr), intent(out) :: ppField
   ! >>>>>>>>>>>>>>>>>>>>>>
-  type(tField$rank), pointer :: field
-  allocate(field)
-  allocate(field%Data(@{gMesh%Dim}@, gMesh%NumAllCells)); field%Data(@:,:) = 2.0_dp
-  pField = c_loc(field)
-end subroutine Lib_AllocateField$rank
+  type(tLibFieldBase$rank), pointer :: pFieldBase
+  allocate(pFieldBase)
+  allocate(pFieldBase%Values(@{gMesh%Dim}@, gMesh%NumAllCells))
+  ppField = c_loc(pFieldBase)
+end subroutine Lib_AllocField$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_AllocateField{rank}(tFieldBase**); &
+fr'''EXTERN void _Lib_AllocField{rank}(tFieldBase**); &
 template<> &
-tField<{rank}> AllocateField<{rank}>() {{ &
-  tFieldBase* pData; &
-  _Lib_AllocateField{rank}(&pData); &
-  return tField<{rank}>(pData); &
+tField<{rank}> AllocField<{rank}>() {{ &
+  tFieldBase* pBase; &
+  _Lib_AllocField{rank}(&pBase); &
+  return tField<{rank}>(pBase); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 ${writeIncLine( &
 fr'''template<int rank> &
-void DeallocateField(tFieldBase*);''')}$
-
+void FreeField(tFieldBase*);''')}$
 #$do rank = 0, NUM_RANKS
-subroutine Lib_DeallocateField$rank(pField) &
-  & bind(c, name='_Lib_DeallocateField$rank')
+subroutine Lib_FreeField$rank(pField) &
+  & bind(c, name='_Lib_FreeField$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pField
   ! >>>>>>>>>>>>>>>>>>>>>>
-  type(tField$rank), pointer :: field
-  call c_f_pointer(cptr=pField, fptr=field)
-  deallocate(field%Data)
-  deallocate(field)
-end subroutine Lib_DeallocateField$rank
+  type(tLibFieldBase$rank), pointer :: pFieldBase
+  call c_f_pointer(cptr=pField, fptr=pFieldBase)
+  deallocate(pFieldBase%Values)
+  deallocate(pFieldBase)
+end subroutine Lib_FreeField$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_DeallocateField{rank}(tFieldBase*); &
+fr'''EXTERN void _Lib_FreeField{rank}(tFieldBase*); &
 template<> &
-void DeallocateField<{rank}>(tFieldBase* pData) {{ &
-  _Lib_DeallocateField{rank}(pData); &
+void FreeField<{rank}>(tFieldBase* pData) {{ &
+  if (pData != nullptr) _Lib_FreeField{rank}(pData); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -224,46 +222,73 @@ ${writeIncLine('')}$
 !! Dereference a C field pointer.
 !! ----------------------------------------------------------------- !!
 #$do rank = 0, NUM_RANKS
-function DEREF$rank(pField) result(u)
+function DEREF$rank(pField) result(field)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pField
-  real(dp), pointer :: u(@:,:)
+  real(dp), pointer :: field(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  type(tField$rank), pointer :: field
-  call c_f_pointer(cptr=pField, fptr=field)
-  u => field%Data
+  type(tLibFieldBase$rank), pointer :: pFieldBase
+  call c_f_pointer(cptr=pField, fptr=pFieldBase)
+  field => pFieldBase%Values
 end function DEREF$rank
 #$end do
+
+#$do rank = 0, NUM_RANKS
+subroutine Lib_GetFieldData$rank(pField, ppFieldData, pFieldDataSize) &
+  & bind(c, name='_Lib_GetFieldData$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(c_ptr), intent(in), value :: pField
+  type(c_ptr), intent(out) :: ppFieldData
+  integer(c_size_t), intent(out) :: pFieldDataSize
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: field(@:,:)
+  field => DEREF$rank(pField)
+  ppFieldData = c_loc(field); pFieldDataSize = size(field)
+end subroutine Lib_GetFieldData$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_GetFieldData{rank}(tFieldBase*, double**, int*); &
+void GetFieldData(tField<{rank}> field, &
+                  double** ppFieldData, int* pFieldDataSize) {{ &
+  _Lib_GetFieldData{rank}(field.Base(), ppFieldData, pFieldDataSize); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+!!
+!! TODO: add IO parameters:
+!! 'Begin' should allocate IO object of the specific type,
+!! 'End' should envoke the 'Write' action and deallocate it.
+!! 'Add' looks fine (for now).
+!!
 
 subroutine Lib_IO_Begin() &
   & bind(c, name='_Lib_IO_Begin')
   ! <<<<<<<<<<<<<<<<<<<<<<
   ! >>>>>>>>>>>>>>>>>>>>>>
   allocate(gIOList)
-  M = 1
 end subroutine Lib_IO_Begin
 ${writeIncLine( &
-fr'''EXTERN void _Lib_IO_Begin();''')}$
+fr'''EXTERN void _Lib_IO_Begin(...);''')}$
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
-subroutine Lib_IO_Add$rank(pU, pName, nameLen) &
+subroutine Lib_IO_Add$rank(pField, pName, nameLen) &
   & bind(c, name='_Lib_IO_Add$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
-  type(c_ptr), intent(in), value :: pU, pName
+  type(c_ptr), intent(in), value :: pField, pName
   integer(c_int), intent(in), value :: nameLen
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: u(@:,:)
+  real(dp), pointer :: field(@:,:)
   character(len=nameLen), pointer :: name
-  u => DEREF$rank(pU)
+  field => DEREF$rank(pField)
   call c_f_pointer(cptr=pName, fptr=name)
   ! ----------------------
-  call gIOList%Add(name, u)
+  call gIOList%Add(name, field)
 end subroutine Lib_IO_Add$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_IO_Add{rank}(tFieldBase*, const char*, int); &
-void _Lib_IO_Add(tField<{rank}> u, const std::string& name) {{ &
-  _Lib_IO_Add{rank}(u.Data(), name.c_str(), name.size()); &
+void _Lib_IO_Add(tField<{rank}> field, const std::string& name) {{ &
+  _Lib_IO_Add{rank}(field.Base(), name.c_str(), name.size()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -304,7 +329,7 @@ end subroutine Lib_BLAS_Fill$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_BLAS_Fill{rank}(tFieldBase*, double); &
 void BLAS_Fill(tField<{rank}> u, double alpha) {{ &
-  _Lib_BLAS_Fill{rank}(u.Data(), alpha); &
+  _Lib_BLAS_Fill{rank}(u.Base(), alpha); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -323,7 +348,7 @@ end subroutine Lib_BLAS_Set$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_BLAS_Set{rank}(tFieldBase*, tFieldBase*); &
 void BLAS_Set(tField<{rank}> u, tField<{rank}> v) {{ &
-  _Lib_BLAS_Set{rank}(u.Data(), v.Data()); &
+  _Lib_BLAS_Set{rank}(u.Base(), v.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -345,7 +370,7 @@ fr'''EXTERN void _Lib_BLAS_Add{rank}( &
   tFieldBase*, tFieldBase*, tFieldBase*, double, double); &
 void BLAS_Add(tField<{rank}> u, tField<{rank}> v, &
               tField<{rank}> w, double alpha, double beta) {{ &
-  _Lib_BLAS_Add{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
+  _Lib_BLAS_Add{rank}(u.Base(), v.Base(), w.Base(), alpha, beta); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -367,68 +392,70 @@ fr'''EXTERN void _Lib_BLAS_Sub{rank}( &
   tFieldBase*, tFieldBase*, tFieldBase*, double, double); &
 void BLAS_Sub(tField<{rank}> u, tField<{rank}> v, &
               tField<{rank}> w, double alpha, double beta) {{ &
-  _Lib_BLAS_Sub{rank}(u.Data(), v.Data(), w.Data(), alpha, beta); &
+  _Lib_BLAS_Sub{rank}(u.Base(), v.Base(), w.Base(), alpha, beta); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS
-subroutine Lib_BLAS_Mul$rank(pU, pV, pW) &
+subroutine Lib_BLAS_Mul$rank(pU, pV, pW, power) &
   & bind(c, name='_Lib_BLAS_Mul$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pU, pV, pW
+  integer(c_int), intent(in), value :: power
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:), v(:), w(@:,:)
   u => DEREF$rank(pU); v => DEREF$0(pV); w => DEREF$rank(pW)
   ! ----------------------
-  call Mul(gMesh, u, v, w)
+  call Mul(gMesh, u, v, w, power)
 end subroutine Lib_BLAS_Mul$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_BLAS_Mul{rank}(tFieldBase*, tFieldBase*, tFieldBase*); &
+fr'''EXTERN void _Lib_BLAS_Mul{rank}( &
+    tFieldBase*, tFieldBase*, tFieldBase*, int); &
 void BLAS_Mul(tField<{rank}> u, &
-              tField<0> v, tField<{rank}> w) {{ &
-  _Lib_BLAS_Mul{rank}(u.Data(), v.Data(), w.Data()); &
+              tField<0> v, tField<{rank}> w, int power = 1) {{ &
+  _Lib_BLAS_Mul{rank}(u.Base(), v.Base(), w.Base(), power); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$if False
 #$do rank = 0, NUM_RANKS-1
-subroutine Lib_BLAS_Mul_Inner$rank(pU, pVBar, pWBar) &
+subroutine Lib_BLAS_Mul_Inner$rank(pU, pV_bar, pW_bar) &
   & bind(c, name='_Lib_BLAS_Mul_Inner$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
-  type(c_ptr), intent(in), value :: pU, pVBar, pWBar
+  type(c_ptr), intent(in), value :: pU, pV_bar, pW_bar
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: u(@:,:), vBar(:,:), wBar(:,@:,:)
-  u => DEREF$rank(pU); vBar => DEREF$1(pVBar); wBar => DEREF${rank+1}$(pWBar)
+  real(dp), pointer :: u(@:,:), v_bar(:,:), w_bar(:,@:,:)
+  u => DEREF$rank(pU); v_bar => DEREF$1(pV_bar); w_bar => DEREF${rank+1}$(pW_bar)
   ! ----------------------
-  call Mul_Inner(gMesh, u, vBar, wBar)
+  call Mul_Inner(gMesh, u, v_bar, w_bar)
 end subroutine Lib_BLAS_Mul_Inner$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_BLAS_Mul_Inner{rank}(tFieldBase*, tFieldBase*, tFieldBase*); &
 void BLAS_Mul_Inner(tField<{rank}> u, &
-                    tField<1> vBar, tField<{rank+1}> wBar) {{ &
-  _Lib_BLAS_Mul_Inner{rank}(u.Data(), vBar.Data(), wBar.Data()); &
+                    tField<1> v_bar, tField<{rank+1}> w_bar) {{ &
+  _Lib_BLAS_Mul_Inner{rank}(u.Base(), v_bar.Base(), w_bar.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS-1
-subroutine Lib_BLAS_Mul_Outer$rank(pUHat, pVBar, pWBar) &
+subroutine Lib_BLAS_Mul_Outer$rank(pUHat, pV_bar, pW_bar) &
   & bind(c, name='_Lib_BLAS_Mul_Outer$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
-  type(c_ptr), intent(in), value :: pUHat, pVBar, pWBar
+  type(c_ptr), intent(in), value :: pUHat, pV_bar, pW_bar
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: uHat(:,@:,:), vBar(:,:), wBar(@:,:)
-  uHat => DEREF${rank+1}$(pUHat); vBar => DEREF$1(pVBar); wBar => DEREF$rank(pWBar)
+  real(dp), pointer :: uHat(:,@:,:), v_bar(:,:), w_bar(@:,:)
+  uHat => DEREF${rank+1}$(pUHat); v_bar => DEREF$1(pV_bar); w_bar => DEREF$rank(pW_bar)
   ! ----------------------
-  call Mul_Outer(gMesh, uHat, vBar, wBar)
+  call Mul_Outer(gMesh, uHat, v_bar, w_bar)
 end subroutine Lib_BLAS_Mul_Outer$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_BLAS_Mul_Outer{rank}(tFieldBase*, tFieldBase*, tFieldBase*); &
 void BLAS_Mul_Outer(tField<{rank+1}> uHat, &
-                    tField<1> vBar, tField<{rank}> wBar) {{ &
-  _Lib_BLAS_Mul_Outer{rank}(uHat.Data(), vBar.Data(), wBar.Data()); &
+                    tField<1> v_bar, tField<{rank}> w_bar) {{ &
+  _Lib_BLAS_Mul_Outer{rank}(uHat.Base(), v_bar.Base(), w_bar.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -443,7 +470,7 @@ subroutine Lib_BLAS_FuncProd$rank(pV, pU, pF, env) &
   type(c_ptr), intent(in), value :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:), v(@:,:)
-  procedure(tLibMFunc$rank), pointer :: f
+  procedure(tLibMapFunc$rank), pointer :: f
   u => DEREF$rank(pU); v => DEREF$rank(pV)
   call c_f_procpointer(cptr=pF, fptr=f)
   ! ----------------------
@@ -461,11 +488,12 @@ contains
   end function wF
 end subroutine Lib_BLAS_FuncProd$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_BLAS_FuncProd{rank}(tFieldBase*, tFieldBase*, tMFuncPtr, void*); &
+fr'''EXTERN void _Lib_BLAS_FuncProd{rank}( &
+    tFieldBase*, tFieldBase*, tMFuncPtr, void*); &
 template<typename tMFunc> &
 void BLAS_FuncProd(tField<{rank}> v, &
                    tField<{rank}> u, tMFunc&& func) {{ &
-  _Lib_BLAS_FuncProd{rank}(v.Data(), u.Data(), &
+  _Lib_BLAS_FuncProd{rank}(v.Base(), u.Base(), &
     [](int* shape, double* in, double* out, void* env) {{ &
       auto& func = *reinterpret_cast<tMFunc*>(env); ''')}$
 #$if rank == 0
@@ -488,7 +516,7 @@ subroutine Lib_BLAS_SFuncProd$rank(pV, pU, pF, env) &
   type(c_ptr), intent(in), value :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), pointer :: u(@:,:), v(@:,:)
-  procedure(tLibSMFunc$rank), pointer :: f
+  procedure(tLibSMapFunc$rank), pointer :: f
   u => DEREF$rank(pU); v => DEREF$rank(pV)
   call c_f_procpointer(cptr=pF, fptr=f)
   ! ----------------------
@@ -506,11 +534,12 @@ contains
   end function wF
 end subroutine Lib_BLAS_SFuncProd$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_BLAS_SFuncProd{rank}(tFieldBase*, tFieldBase*, tSMFuncPtr, void*); &
+fr'''EXTERN void _Lib_BLAS_SFuncProd{rank}( &
+    tFieldBase*, tFieldBase*, tSMFuncPtr, void*); &
 template<typename tSMFunc> &
 void BLAS_SFuncProd(tField<{rank}> v, &
                     tField<{rank}> u, tSMFunc&& func) {{ &
-  _Lib_BLAS_SFuncProd{rank}(v.Data(), u.Data(), &
+  _Lib_BLAS_SFuncProd{rank}(v.Base(), u.Base(), &
     [](int dim, double* x, int* shape, double* in, double* out, void* env) {{ &
       auto& func = *reinterpret_cast<tSMFunc*>(env); & 
       func(x, in, out); &
@@ -529,60 +558,61 @@ ${writeIncLine(fr'''// &
 //''')}$
 
 #$do rank = 0, NUM_RANKS-1
-subroutine Lib_FDM_Gradient$rank(pVBar, lambda, pU, dir) &
+subroutine Lib_FDM_Gradient$rank(pV_bar, lambda, pU, dir) &
   & bind(c, name='_Lib_FDM_Gradient$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
-  type(c_ptr), intent(in), value :: pU, pVBar
+  type(c_ptr), intent(in), value :: pU, pV_bar
   character(c_char), intent(in), value :: dir
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: u(@:,:), vBar(:,@:,:)
-  u => DEREF$rank(pU); vBar => DEREF${rank+1}$(pVBar)
+  real(dp), pointer :: u(@:,:), v_bar(:,@:,:)
+  u => DEREF$rank(pU); v_bar => DEREF${rank+1}$(pV_bar)
   ! ----------------------
   select case(dir)
     case('c')
-      call FDM_Gradient_Central(gMesh, vBar, lambda, u)
+      call FDM_Gradient_Central(gMesh, v_bar, lambda, u)
     case('f')
-      call FDM_Gradient_Forward(gMesh, vBar, lambda, u, dirAll=1_1)
+      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=1_1)
     case('b')
-      call FDM_Gradient_Forward(gMesh, vBar, lambda, u, dirAll=-1_1)
+      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=-1_1)
   end select
 end subroutine Lib_FDM_Gradient$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_FDM_Gradient{rank}( &
     tFieldBase*, double, tFieldBase*, char); &
-void FDM_Gradient(tField<{rank+1}> vBar, &
+void FDM_Gradient(tField<{rank+1}> v_bar, &
                   double lambda, tField<{rank}> u, char dir) {{ &
-  _Lib_FDM_Gradient{rank}(vBar.Data(), lambda, u.Data(), dir); &
+  _Lib_FDM_Gradient{rank}(v_bar.Base(), lambda, u.Base(), dir); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
 
 #$do rank = 0, NUM_RANKS-1
-subroutine Lib_FDM_Divergence$rank(pV, lambda, pUBar, dir) &
+subroutine Lib_FDM_Divergence$rank(pV, lambda, pU_bar, dir) &
   & bind(c, name='_Lib_FDM_Divergence$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
-  type(c_ptr), intent(in), value :: pUBar, pV
+  type(c_ptr), intent(in), value :: pU_bar, pV
   character(c_char), intent(in), value :: dir
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: uBar(:,@:,:), v(@:,:)
-  uBar => DEREF${rank+1}$(pUBar); v => DEREF$rank(pV)
+  real(dp), pointer :: u_bar(:,@:,:), v(@:,:)
+  u_bar => DEREF${rank+1}$(pU_bar); v => DEREF$rank(pV)
   ! ----------------------
   select case(dir)
     case('c')
-      call FDM_Divergence_Central(gMesh, v, lambda, uBar)
+      call FDM_Divergence_Central(gMesh, v, lambda, u_bar)
     case('f')
-      call FDM_Divergence_Backward(gMesh, v, lambda, uBar, dirAll=1_1)
+      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=1_1)
     case('b')
-      call FDM_Divergence_Backward(gMesh, v, lambda, uBar, dirAll=-1_1)
+      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=-1_1)
   end select
 end subroutine Lib_FDM_Divergence$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_FDM_Divergence{rank}(tFieldBase*, double, tFieldBase*, char); &
+fr'''EXTERN void _Lib_FDM_Divergence{rank}( &
+    tFieldBase*, double, tFieldBase*, char); &
 void FDM_Divergence(tField<{rank}> v, &
-                    double lambda, tField<{rank+1}> uBar, char dir) {{ &
-  _Lib_FDM_Divergence{rank}(v.Data(), lambda, uBar.Data(), dir); &
+                    double lambda, tField<{rank+1}> u_bar, char dir) {{ &
+  _Lib_FDM_Divergence{rank}(v.Base(), lambda, u_bar.Base(), dir); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -604,7 +634,7 @@ fr'''EXTERN void _Lib_FDM_Laplacian{rank}( &
     tFieldBase*, double, tFieldBase*); &
 void FDM_Laplacian(tField<{rank}> v, &
                    double lambda, tField<{rank}> u) {{ &
-  _Lib_FDM_Laplacian{rank}(v.Data(), lambda, u.Data()); &
+  _Lib_FDM_Laplacian{rank}(v.Base(), lambda, u.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -619,23 +649,23 @@ ${writeIncLine(fr'''// &
 //''')}$
 
 #$do rank = 0, NUM_RANKS-1
-subroutine Lib_FDM_Convection$rank(pV, lambda, pU, pWBar) &
+subroutine Lib_FDM_Convection$rank(pV, lambda, pU, pW_bar) &
   & bind(c, name='_Lib_FDM_Convection$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), value :: lambda
-  type(c_ptr), intent(in), value :: pU, pV, pWBar
+  type(c_ptr), intent(in), value :: pU, pV, pW_bar
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), pointer :: u(@:,:), v(@:,:), wBar(:,:)
-  u => DEREF$rank(pU); v => DEREF$rank(pV); wBar => DEREF$1(pWBar)
+  real(dp), pointer :: u(@:,:), v(@:,:), w_bar(:,:)
+  u => DEREF$rank(pU); v => DEREF$rank(pV); w_bar => DEREF$1(pW_bar)
   ! ----------------------
-  call FDM_Convection_Central(gMesh, v, lambda, u, wBar)
+  call FDM_Convection_Central(gMesh, v, lambda, u, w_bar)
 end subroutine Lib_FDM_Convection$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_FDM_Convection{rank}( &
     tFieldBase*, double, tFieldBase*, tFieldBase*); &
 void FDM_Convection(tField<{rank}> v, &
-                    double lambda, tField<{rank}> u, tField<1> wBar) {{ &
-  _Lib_FDM_Convection{rank}(v.Data(), lambda, u.Data(), wBar.Data()); &
+                    double lambda, tField<{rank}> u, tField<1> w_bar) {{ &
+  _Lib_FDM_Convection{rank}(v.Base(), lambda, u.Base(), w_bar.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$
@@ -672,19 +702,20 @@ contains
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: v(@:,:), w(@:,:)
     class(*), intent(in) :: opParams
-    type(tField$rank), target :: fV, fW
+    type(tLibFieldBase$rank), target :: fV, fW
     type(c_ptr) :: pV, pW
-    fV%Data => v; fW%Data => w
+    fV%Values => v; fW%Values => w
     pV = c_loc(fV); pW = c_loc(fW)
     call A(pV, pW, env)
   end subroutine wA
 end subroutine Lib_Solve_BiCGStab$rank
 ${writeIncLine( &
-fr'''EXTERN void _Lib_Solve_BiCGStab{rank}(tFieldBase*, tFieldBase*, tMeshOperatorPtr, void*); &
+fr'''EXTERN void _Lib_Solve_BiCGStab{rank}( &
+    tFieldBase*, tFieldBase*, tMeshOperatorPtr, void*); &
 template<typename tMeshOperator> &
 void Solve_BiCGStab(tField<{rank}> u, &
                     tField<{rank}> b, tMeshOperator&& meshOperator) {{ &
-  _Lib_Solve_BiCGStab{rank}(u.Data(), b.Data(), &
+  _Lib_Solve_BiCGStab{rank}(u.Base(), b.Base(), &
     [](tFieldBase* out, tFieldBase* in, void* env) {{ &
       auto& meshOperator = *reinterpret_cast<tMeshOperator*>(env); &
       meshOperator(tField<{rank}>(in, nullptr), &

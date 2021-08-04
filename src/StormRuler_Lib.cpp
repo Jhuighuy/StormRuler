@@ -54,6 +54,8 @@ constexpr auto type_name(T&&) noexcept {
 #include "StormRuler_Lib.hpp"
 using namespace StormRuler;
 
+#if 1
+
 double lerp(double x, const std::vector<double>& ivals) {
   x *= (ivals.size() - 1);
   double x0 = std::floor(x), x1 = std::ceil(x);
@@ -64,7 +66,7 @@ double lerp(double x, const std::vector<double>& ivals) {
   return (ivals[i0]*(x1 - x) + ivals[i1]*(x - x0))/(x1 - x0);
 }
 
-#if 0
+#if 1
 double dWdC(double c) {
   return -c*(1.0 - c*c);
 }
@@ -142,7 +144,7 @@ double dt = (M_PI/50)*(M_PI/50), Gamma = 0.01;
 
 void CahnHilliard_Step(tField<0> c, tField<1> v, 
                        tField<0> c_hat, tField<0> w_hat) {
-  tField<0> rhs = AllocateField<0>();
+  tField<0> rhs = AllocField<0>();
   rhs << MAP(&dWdC, c);
   rhs << c - dt*CONV(c, v) + dt*DIVGRAD(rhs);
 
@@ -161,16 +163,9 @@ double rho = 1.0, nu = 0.1, beta = 0.0;
 void NavierStokes_Step(tField<0> p, tField<1> v, 
                        tField<0> c, tField<0> w,
                        tField<0> p_hat, tField<1> v_hat) {
-  tField<1> f = AllocateField<1>();
-  // We want to write this:
-  //f << dt/rho*c*GRAD(w);
-  f << 0.0;
-  f -= 1.0/rho*GRAD(w);
-  BLAS_Mul(f, c, f);
+  v_hat << v - dt*CONV(v, v) - dt*beta/rho*GRAD(p) - dt/rho*(c*GRAD(w)) + dt/rho*nu*DIVGRAD(v);
 
-  v_hat << v + dt*f - dt*CONV(v, v) - dt*beta/rho*GRAD(p) + dt*nu*DIVGRAD(v);
-
-  tField<0> rhs = AllocateField<0>();
+  tField<0> rhs = AllocField<0>();
   rhs << 0.0;
   rhs += rho/dt*DIV(v_hat);
 
@@ -183,6 +178,33 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   v_hat -= dt/rho*GRAD(p_hat);
   p_hat << p_hat + beta*p;
 }
+
+double rho0 = 1.0, rho1 = 2.0;
+
+#if 0
+void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
+                                 tField<0> c, tField<0> w,
+                                 tField<0> p_hat, tField<1> v_hat) {
+  tField<0> rho = AllocField<0>();
+  rho << rho0;
+
+  v_hat << v - dt*CONV(v, v) - (0.0*v + dt*beta*GRAD(p) + dt*(c*GRAD(w)) - dt*nu*DIVGRAD(v))/rho;
+
+  tField<0> rhs = AllocField<0>();
+  rhs << (0.0*rhs + dt*DIV(v_hat));
+
+  p_hat << 0.0;
+  SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
+    out << 0.0;
+    out += DIVGRAD(in);
+  }, p_hat, rhs);
+
+  v_hat << v_hat - dt*GRAD(p_hat);
+  p_hat << p_hat + beta*p;
+}
+#else
+#define NavierStokes_VaDensity_Step NavierStokes_Step
+#endif
 
 double mu = 0.1e-3;
 
@@ -197,7 +219,7 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
     rho_hat << rho_hat + mol_mass[i]*nPart_hat[i];
   }
 
-  tField<1> f = AllocateField<1>();
+  tField<1> f = AllocField<1>();
   // We want to write this:
   //f << dt/rho*c*GRAD(w);
   f << 0.0;
@@ -206,7 +228,7 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
   v_hat << v + dt*f - dt*CONV(v, v) - dt*beta/rho*GRAD(p) + dt*nu*DIVGRAD(v);
 
-  tField<0> rhs = AllocateField<0>();
+  tField<0> rhs = AllocField<0>();
   rhs << 0.0;
   rhs += rho/dt*DIV(v_hat);
 
@@ -234,18 +256,26 @@ int main() {
   Lib_InitializeMesh();
 
   {
-    auto c = AllocateField<0>(), 
-      c_hat = AllocateField<0>(), w_hat = AllocateField<0>();
+    auto c = AllocField<0>(), 
+      c_hat = AllocField<0>(), w_hat = AllocField<0>();
 
     BLAS_SFuncProd(c, c, [&](double* coords, double* in, double* out) {
       double x = coords[0] - M_PI, y = coords[1] - M_PI;
-      out[0] = (abs(x) < 0.1 && abs(y) < 1.0) ? -1.0 : 1.0;
+      out[0] = 1.0;
+      if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
+      if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
+      // Uncomment the following lines to get some very interesting shape:
+      //if ((fabs(x - 1.8) < 0.2) && (fabs(y + 1.0) < 1.0)) out[0] = -1.0;
+      //if ((fabs(x + 1.8) < 0.2) && (fabs(y - 1.0) < 1.0)) out[0] = -1.0;
+      //if ((fabs(y + 1.8) < 0.2) && (fabs(x + 1.0) < 1.0)) out[0] = -1.0;
+      //if ((fabs(y - 1.8) < 0.2) && (fabs(x - 1.0) < 1.0)) out[0] = -1.0;
 
+      //double x = coords[0], y = coords[1];
       //out[0] = (abs(x - M_PI) < 1.0 && abs(y - M_PI) < 1.0) ? -1.0 : 1.0;
     });
-    auto p = AllocateField<0>(), p_hat = AllocateField<0>();
+    auto p = AllocField<0>(), p_hat = AllocField<0>();
     p << 1.0;
-    auto v = AllocateField<1>(), v_hat = AllocateField<1>();
+    auto v = AllocField<1>(), v_hat = AllocField<1>();
     v << 0.0;
 
     _Lib_IO_Begin();
@@ -257,7 +287,7 @@ int main() {
     for (int L = 1; L <= 200; ++L) {
       for (int M = 0; M < 10; ++M) {
         CahnHilliard_Step(c, v, c_hat, w_hat);
-        NavierStokes_Step(p, v, c_hat, w_hat, p_hat, v_hat);
+        NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
 
         std::swap(c, c_hat);
         std::swap(p, p_hat);
@@ -274,7 +304,7 @@ int main() {
 /*
   {
     double dt, gamma;
-    tField<0> rhs = AllocateField<0>(), c = AllocateField<0>(), u = AllocateField<0>(); 
+    tField<0> rhs = AllocField<0>(), c = AllocField<0>(), u = AllocField<0>(); 
     
     rhs << MAP(&dWdC, c);
     rhs += dt*DIVGRAD(rhs);
@@ -291,13 +321,13 @@ int main() {
 
 /*
   {
-    tField<1> u = AllocateField<1>();
-    tField<1> v = AllocateField<1>();
-    tField<1> w = AllocateField<1>();
+    tField<1> u = AllocField<1>();
+    tField<1> v = AllocField<1>();
+    tField<1> w = AllocField<1>();
 
     w << 1.0*u + 2.0*v + 3.0*w;
 
-    tField<0> q = AllocateField<0>();
+    tField<0> q = AllocField<0>();
     w << 1.0*u + 2.0*v - 3.0*15.0*GRAD(q) - 3.0*w;
     //w << v - GRAD(q);
 
@@ -309,10 +339,10 @@ int main() {
 
 /*
   {
-    auto u = AllocateField<0>();
-    auto v = AllocateField<0>();
-    auto w = AllocateField<0>();
-    auto q = AllocateField<1>();
+    auto u = AllocField<0>();
+    auto v = AllocField<0>();
+    auto w = AllocField<0>();
+    auto q = AllocField<1>();
 
     w << 1.0*u + 2.0*v - 3.0*15.0*DIV(q) - 4.0*w;
       BLAS_SFuncProd(w, w, [&](double* x, double* in, double* out) {
@@ -323,10 +353,10 @@ int main() {
 
 /*
   {
-    auto u = AllocateField<0>();
-    auto v = AllocateField<0>();
-    auto w = AllocateField<0>();
-    auto q = AllocateField<0>();
+    auto u = AllocField<0>();
+    auto v = AllocField<0>();
+    auto w = AllocField<0>();
+    auto q = AllocField<0>();
 
     w << 1.0*u + 2.0*v - 3.0*15.0*DIVGRAD(q) - 4.0*w;
       BLAS_SFuncProd(w, w, [&](double* x, double* in, double* out) {
@@ -354,3 +384,5 @@ int main() {
 
   return 0;
 }
+
+#endif

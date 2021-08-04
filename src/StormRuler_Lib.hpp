@@ -31,7 +31,7 @@ namespace StormRuler {
 class tFieldBase;
 
 template<int rank> 
-void DeallocateField(tFieldBase*);
+void FreeField(tFieldBase*);
 
 /**
  * Scalar/vector/tensor field class.
@@ -39,28 +39,28 @@ void DeallocateField(tFieldBase*);
 template<int rank>
 class tField {
 private:
-  tFieldBase* mData;
+  tFieldBase* mBase;
   int* mRefCounter;
 
 public:
   explicit tField(tFieldBase* data) :
-    mData(data), mRefCounter(new int(1)) {
+    mBase(data), mRefCounter(new int(1)) {
   }
   explicit tField(tFieldBase* data, std::nullptr_t) :
-    mData(data), mRefCounter(nullptr) {
+    mBase(data), mRefCounter(nullptr) {
   }
   ~tField() {
     if (mRefCounter != nullptr) {
       *mRefCounter -= 1;
       if (*mRefCounter == 0) {
-        DeallocateField<rank>(mData); mData = nullptr; 
+        FreeField<rank>(mBase); mBase = nullptr; 
         delete mRefCounter; mRefCounter = nullptr;
       }
     }
   }
 
   tField(const tField& other) :
-    mData(other.mData), mRefCounter(other.mRefCounter) {
+    mBase(other.mBase), mRefCounter(other.mRefCounter) {
     if (mRefCounter != nullptr) {
       *mRefCounter += 1;
     }
@@ -71,8 +71,8 @@ public:
     return *this;
   }
   
-  tFieldBase* Data() {
-    return mData;
+  tFieldBase* Base() {
+    return mBase;
   }
 }; // class tField
 
@@ -401,12 +401,12 @@ auto CONV(tField<rank> field, tField<1> velocityField) {
 // Initiate tmp field allocation.
 template<int rank, _TI_TYPENAME(tLeftExpr), _TI_TYPENAME(tRightExpr)>
 auto operator+(tLeftExpr<rank> left, tRightExpr<rank> right) {
-  auto tmp = AllocateField<rank>();
+  auto tmp = AllocField<rank>();
   return std::make_pair(tmp, left) + right;
 }
 template<int rank, _TI_TYPENAME(tLeftExpr), _TI_TYPENAME(tRightExpr)>
 auto operator-(tLeftExpr<rank> left, tRightExpr<rank> right) {
-  auto tmp = AllocateField<rank>();
+  auto tmp = AllocField<rank>();
   return std::make_pair(tmp, left) - right;
 }
 
@@ -431,6 +431,43 @@ auto operator-(std::pair<tField<rank>, tLeftExpr<rank>> leftExpr, tRightExpr rig
   } else {
     return std::make_pair(tmp, tmp - rightExpr);
   }
+}
+
+//
+// Temporary implementation for multiplication and division:
+//
+template<int rank, _TI_TYPENAME(tRightExpr)>
+auto operator*(tField<0> left, tRightExpr<rank> rightExpr) {
+  auto tmp = AllocField<rank>();
+  if constexpr (tRightExpr<rank>::cHasAssignEval) {
+    tmp << 0.0; tmp += rightExpr;
+  } else {
+    tmp << rightExpr;
+  } 
+  BLAS_Mul(tmp, left, tmp);
+  return tmp;
+}
+
+template<int rank, _TI_TYPENAME(tLeftExpr)>
+auto operator/(tField<rank> left, tField<0> right) {
+  auto tmp = AllocField<rank>();
+  BLAS_Mul(tmp, right, left, -1);
+  return tmp;
+}
+template<int rank, _TI_TYPENAME(tLeftExpr)>
+auto operator/(tLeftExpr<rank> leftExpr, tField<0> right) {
+  auto tmp = AllocField<rank>();
+  if constexpr (tLeftExpr<rank>::cHasAssignEval) {
+    tmp << 0.0; tmp += leftExpr;
+  } else {
+    tmp << leftExpr;
+  } 
+  BLAS_Mul(tmp, right, tmp, -1);
+  return tmp;
+}
+template<int rank, _TI_TYPENAME(tLeftExpr)>
+auto operator/(std::pair<tField<rank>, tLeftExpr<rank>> leftExpr, tField<0> right) {
+  return leftExpr.second/right;
 }
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

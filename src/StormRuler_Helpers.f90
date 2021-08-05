@@ -215,7 +215,7 @@ function I2S(value)
   integer, intent(in) :: value
   character(len=:), allocatable :: I2S
   ! >>>>>>>>>>>>>>>>>>>>>>
-  character(len=20) :: buffer
+  character(len=256) :: buffer
   write(buffer, *) value
   I2S = trim(adjustl(buffer))
 end function I2S
@@ -228,7 +228,7 @@ function R2S(value)
   real(dp), intent(in) :: value
   character(len=:), allocatable :: R2S
   ! >>>>>>>>>>>>>>>>>>>>>>
-  character(len=50) :: buffer
+  character(len=256) :: buffer
   write(buffer, *) value
   R2S = trim(adjustl(buffer))
 end function R2S

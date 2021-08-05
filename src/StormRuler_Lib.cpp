@@ -179,27 +179,38 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << p_hat + beta*p;
 }
 
-double rho0 = 1.0, rho1 = 2.0;
-
-#if 0
+double rho0 = 2.0, rho1 = 1.0;
+ 
+#if 1
 void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
                                  tField<0> c, tField<0> w,
                                  tField<0> p_hat, tField<1> v_hat) {
   tField<0> rho = AllocField<0>();
-  rho << rho0;
+  rho << MAP([](double c) {
+    c = std::min(1.0, std::max(c, -1.0)); 
+    return rho0*(1.0-c)/2 + rho1*(1.0+c)/2; 
+  }, c);
+  tField<0> rho_inv = AllocField<0>();
+  tField<0> one = AllocField<0>();
+  one << 1.0;
+  BLAS_Mul(rho_inv, rho, one, -1);
 
-  v_hat << v - dt*CONV(v, v) - (0.0*v + dt*beta*GRAD(p) + dt*(c*GRAD(w)) - dt*nu*DIVGRAD(v))/rho;
+  //v_hat << v - dt*CONV(v, v) - dt*beta*GRAD(p) - dt*(c*GRAD(w)) + dt*nu*DIVGRAD(v);
+  v_hat << v - dt*CONV(v, v) - 
+    dt*beta*(GRAD(p)/rho) - dt*((c*GRAD(w))/rho) + dt*nu*(DIVGRAD(v)/rho);
 
   tField<0> rhs = AllocField<0>();
-  rhs << (0.0*rhs + dt*DIV(v_hat));
+  rhs << 0.0;
+  rhs += (1.0/dt*DIV(v_hat));
 
   p_hat << 0.0;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
     out << 0.0;
-    out += DIVGRAD(in);
+    FDM_DivWGrad(out, 1.0, rho_inv, in);
+    //out += DIVGRAD(in);
   }, p_hat, rhs);
 
-  v_hat << v_hat - dt*GRAD(p_hat);
+  v_hat << v_hat - dt*(GRAD(p_hat)/rho);
   p_hat << p_hat + beta*p;
 }
 #else
@@ -213,32 +224,39 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
                              tField<0> c, tField<0> w, 
                              std::array<tField<0>, M> nPart_hat, tField<0> rho_hat,
                              tField<0> p_hat, tField<1> v_hat) {
+  /*rho_hat << MAP([](double c) {
+    c = std::min(1.0, std::max(c, -1.0)); 
+    return rho0*(1.0-c)/2 + rho1*(1.0+c)/2; 
+  }, c);*/
+
   rho_hat << 0.0;
   for (size_t i = 0; i < M; ++i) {
     nPart_hat[i] << MAP([&](double c){ return nPart(i, c); }, c);
     rho_hat << rho_hat + mol_mass[i]*nPart_hat[i];
   }
+  rho_hat << 0.0*rho_hat + 0.1*rho_hat;
+  tField<0> rho_inv = AllocField<0>();
+  tField<0> one = AllocField<0>();
+  one << 1.0;
+  BLAS_Mul(rho_inv, rho_hat, one, -1);
 
-  tField<1> f = AllocField<1>();
-  // We want to write this:
-  //f << dt/rho*c*GRAD(w);
-  f << 0.0;
-  f -= 1.0/rho*GRAD(w);
-  BLAS_Mul(f, c, f);
-
-  v_hat << v + dt*f - dt*CONV(v, v) - dt*beta/rho*GRAD(p) + dt*nu*DIVGRAD(v);
+  v_hat << v - dt*CONV(v, v) - 
+    dt*beta*(GRAD(p)/rho_hat) - dt*((c*GRAD(w))/rho_hat) + dt*nu*(DIVGRAD(v)/rho_hat);
 
   tField<0> rhs = AllocField<0>();
   rhs << 0.0;
-  rhs += rho/dt*DIV(v_hat);
+  rhs += (1.0/dt*DIV(v_hat));
+  //rho_hat << rhs;
+  //return;
 
   p_hat << 0.0;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
     out << 0.0;
-    out += DIVGRAD(in);
+    FDM_DivWGrad(out, 1.0, rho_inv, in);
+    //out += DIVGRAD(in);
   }, p_hat, rhs);
 
-  v_hat -= dt/rho*GRAD(p_hat);
+  v_hat << v_hat - dt*(GRAD(p_hat)/rho_hat);
   p_hat << p_hat + beta*p;
 }
 
@@ -262,8 +280,12 @@ int main() {
     BLAS_SFuncProd(c, c, [&](double* coords, double* in, double* out) {
       double x = coords[0] - M_PI, y = coords[1] - M_PI;
       out[0] = 1.0;
-      if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
-      if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
+      //if (hypot(x, y) < 1.0) out[0] = -1.0;
+      // Square.
+      if ((fabs(x) < 1.0) && (fabs(y) < 1.0)) out[0] = -1.0;
+      // Cross
+      //if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
+      //if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
       // Uncomment the following lines to get some very interesting shape:
       //if ((fabs(x - 1.8) < 0.2) && (fabs(y + 1.0) < 1.0)) out[0] = -1.0;
       //if ((fabs(x + 1.8) < 0.2) && (fabs(y - 1.0) < 1.0)) out[0] = -1.0;
@@ -277,17 +299,23 @@ int main() {
     p << 1.0;
     auto v = AllocField<1>(), v_hat = AllocField<1>();
     v << 0.0;
+    std::array<tField<0>, 5> nPart_hat = {
+      AllocField<0>(), AllocField<0>(), AllocField<0>(), AllocField<0>(), AllocField<0>()
+    };
+    auto rho_hat = AllocField<0>();
 
     _Lib_IO_Begin();
     _Lib_IO_Add(v, "velocity");
     _Lib_IO_Add(p, "pressure");
     _Lib_IO_Add(c, "phase");
+    _Lib_IO_Add(rho_hat, "rho");
     _Lib_IO_End();
 
     for (int L = 1; L <= 200; ++L) {
       for (int M = 0; M < 10; ++M) {
         CahnHilliard_Step(c, v, c_hat, w_hat);
-        NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
+        //NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
+        CustomNavierStokes_Step(p, v, c_hat, w_hat, nPart_hat, rho_hat, p_hat, v_hat);
 
         std::swap(c, c_hat);
         std::swap(p, p_hat);
@@ -298,6 +326,7 @@ int main() {
       _Lib_IO_Add(v, "velocity");
       _Lib_IO_Add(p, "pressure");
       _Lib_IO_Add(c, "phase");
+      _Lib_IO_Add(rho_hat, "rho");
       _Lib_IO_End();
     }
   }

@@ -43,6 +43,7 @@ private:
   int* mRefCounter;
 
 public:
+  static constexpr bool cHasAssignEval = false;
   explicit tField(tFieldBase* data) :
     mBase(data), mRefCounter(new int(1)) {
   }

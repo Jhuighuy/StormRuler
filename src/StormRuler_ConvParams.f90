@@ -115,11 +115,13 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
     call EnsureNonNegative(absoluteError)
     !print *, absoluteError
     if (absoluteError <= absoluteTolerance) then
+      !print *, '----------------'
       tConvParams_Check = .true.; return
     end if
     if (present(relativeError).and.(relativeTolerance > 0)) then
       call EnsureNonNegative(relativeError)
       if (relativeError <= relativeTolerance) then
+        !print *, '----------------'
         tConvParams_Check = .true.; return
       end if
     end if

@@ -409,7 +409,7 @@ subroutine Lib_BLAS_Mul$rank(pU, pV, pW, power) &
   real(dp), pointer :: u(@:,:), v(:), w(@:,:)
   u => DEREF$rank(pU); v => DEREF$0(pV); w => DEREF$rank(pW)
   ! ----------------------
-  call Mul(gMesh, u, v, w, power)
+  call Mul(gMesh, u, v, w, int(power))
 end subroutine Lib_BLAS_Mul$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_BLAS_Mul{rank}( &
@@ -486,7 +486,7 @@ contains
     real(dp), intent(in) :: u(@:)
     real(dp) :: v(@{size(u, dim=$$)}@)
 #$endif
-    call f(shape(u), u, v, env)
+    call f(int(shape(u), kind=c_int), u, v, env)
   end function wF
 end subroutine Lib_BLAS_FuncProd$rank
 ${writeIncLine( &
@@ -532,7 +532,7 @@ contains
     real(dp), intent(in) :: x(:), u(@:)
     real(dp) :: v(@{size(u, dim=$$)}@)
 #$endif
-    call f(size(x), x, shape(u), u, v, env)
+    call f(int(size(x), kind=c_int), x, int(shape(u), kind=c_int), u, v, env)
   end function wF
 end subroutine Lib_BLAS_SFuncProd$rank
 ${writeIncLine( &

@@ -36,15 +36,17 @@ use StormRuler_BLAS, only: &
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient_Central, FDM_Divergence_Central, &
   & FDM_Gradient_Forward, FDM_Divergence_Backward, &
-  & FDM_Laplacian_Central
+  & FDM_Laplacian_Central, FDM_DivWGrad_Central
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_KrylovSolvers, only: &
   & Solve_CG, Solve_BiCGStab
 
-use, intrinsic :: iso_c_binding
 use, intrinsic :: iso_fortran_env, only: error_unit
+use, intrinsic :: iso_c_binding, only: &
+  & c_char, c_int, c_size_t, c_ptr, c_funptr, &
+  & c_loc, c_f_pointer, c_f_procpointer   
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -635,6 +637,28 @@ fr'''EXTERN void _Lib_FDM_Laplacian{rank}( &
 void FDM_Laplacian(tField<{rank}> v, &
                    double lambda, tField<{rank}> u) {{ &
   _Lib_FDM_Laplacian{rank}(v.Base(), lambda, u.Base()); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
+#$do rank = 0, NUM_RANKS
+subroutine Lib_FDM_DivWGrad$rank(pV, lambda, pW, pU) &
+  & bind(c, name='_Lib_FDM_DivWGrad$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in), value :: lambda
+  type(c_ptr), intent(in), value :: pU, pV, pW
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  real(dp), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  u => DEREF$rank(pU); v => DEREF$rank(pV); w => DEREF$rank(pW)
+  ! ----------------------
+  call FDM_DivWGrad_Central(gMesh, v, lambda, w, u)
+end subroutine Lib_FDM_DivWGrad$rank
+${writeIncLine( &
+fr'''EXTERN void _Lib_FDM_DivWGrad{rank}( &
+    tFieldBase*, double, tFieldBase*, tFieldBase*); &
+void FDM_DivWGrad(tField<{rank}> v, &
+                  double lambda, tField<{rank}> w, tField<{rank}> u) {{ &
+  _Lib_FDM_DivWGrad{rank}(v.Base(), lambda, w.Base(), u.Base()); &
 }}''')}$
 #$end do
 ${writeIncLine('')}$

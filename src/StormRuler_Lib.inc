@@ -288,6 +288,25 @@ void FDM_Laplacian(tField<2> v,
   _Lib_FDM_Laplacian2(v.Base(), lambda, u.Base()); 
 }
 
+EXTERN void _Lib_FDM_DivWGrad0( 
+    tFieldBase*, double, tFieldBase*, tFieldBase*); 
+void FDM_DivWGrad(tField<0> v, 
+                  double lambda, tField<0> w, tField<0> u) { 
+  _Lib_FDM_DivWGrad0(v.Base(), lambda, w.Base(), u.Base()); 
+}
+EXTERN void _Lib_FDM_DivWGrad1( 
+    tFieldBase*, double, tFieldBase*, tFieldBase*); 
+void FDM_DivWGrad(tField<1> v, 
+                  double lambda, tField<1> w, tField<1> u) { 
+  _Lib_FDM_DivWGrad1(v.Base(), lambda, w.Base(), u.Base()); 
+}
+EXTERN void _Lib_FDM_DivWGrad2( 
+    tFieldBase*, double, tFieldBase*, tFieldBase*); 
+void FDM_DivWGrad(tField<2> v, 
+                  double lambda, tField<2> w, tField<2> u) { 
+  _Lib_FDM_DivWGrad2(v.Base(), lambda, w.Base(), u.Base()); 
+}
+
 
 // 
 // EXPORT LIB FDM CONVECTION 

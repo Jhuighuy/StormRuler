@@ -94,6 +94,14 @@ interface FDM_Bilaplacian_Central
 #$end do
 end interface FDM_Bilaplacian_Central
 
+private :: WFD2_C2, WFD2_C4, WFD2_C6, WFD2_C8
+
+interface FDM_DivWGrad_Central
+#$do rank = 0, NUM_RANKS
+  module procedure FDM_DivWGrad_Central$rank
+#$end do
+end interface FDM_DivWGrad_Central
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -825,7 +833,7 @@ real(dp) elemental function FD2_C2(u_l, u, u_r)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: u_l, u, u_r
   ! >>>>>>>>>>>>>>>>>>>>>>
-  FD2_C2 = u_l - 2.0_dp*u + u_r
+  FD2_C2 = u_r - 2.0_dp*u + u_l
 end function FD2_C2
 
 !! ----------------------------------------------------------------- !!
@@ -836,11 +844,11 @@ real(dp) elemental function FD2_C4(u_ll, u_l, u, u_r, u_rr)
   real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C4 = &
-    & ( (-1.0_dp/12.0_dp)*u_ll + &
-    &   (+4.0_dp/03.0_dp)*u_l  + &
-    &   (-5.0_dp/02.0_dp)*u    + &
+    & ( (-1.0_dp/12.0_dp)*u_rr + &
     &   (+4.0_dp/03.0_dp)*u_r  + &
-    &   (-1.0_dp/12.0_dp)*u_rr )
+    &   (-5.0_dp/02.0_dp)*u    + &
+    &   (+4.0_dp/03.0_dp)*u_l  + &
+    &   (-1.0_dp/12.0_dp)*u_ll )
 end function FD2_C4
 
 !! ----------------------------------------------------------------- !!
@@ -851,13 +859,13 @@ real(dp) elemental function FD2_C6(u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr)
   real(dp), intent(in) :: u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C6 = &
-    & ( (+01.0_dp/90.0_dp)*u_lll + &
-    &   (-03.0_dp/20.0_dp)*u_ll  + &
-    &   (+03.0_dp/02.0_dp)*u_l   + &
-    &   (-49.0_dp/18.0_dp)*u     + &
-    &   (+03.0_dp/02.0_dp)*u_r   + &
+    & ( (+01.0_dp/90.0_dp)*u_rrr + &
     &   (-03.0_dp/20.0_dp)*u_rr  + &
-    &   (+01.0_dp/90.0_dp)*u_rrr )
+    &   (+03.0_dp/02.0_dp)*u_r   + &
+    &   (-49.0_dp/18.0_dp)*u     + &
+    &   (+03.0_dp/02.0_dp)*u_l   + &
+    &   (-03.0_dp/20.0_dp)*u_ll  + &
+    &   (+01.0_dp/90.0_dp)*u_lll )
 end function FD2_C6
 
 !! ----------------------------------------------------------------- !!
@@ -868,15 +876,15 @@ real(dp) elemental function FD2_C8(u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr
   real(dp), intent(in) :: u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr
   ! >>>>>>>>>>>>>>>>>>>>>>
   FD2_C8 = &
-    & ( (-001.0_dp/560.0_dp)*u_llll + &
-    &   (+008.0_dp/315.0_dp)*u_lll  + &
-    &   (-001.0_dp/005.0_dp)*u_ll   + &
-    &   (+008.0_dp/005.0_dp)*u_l    + &
-    &   (-205.0_dp/072.0_dp)*u      + &
-    &   (+008.0_dp/005.0_dp)*u_r    + &
-    &   (-001.0_dp/005.0_dp)*u_rr   + &
+    & ( (-001.0_dp/560.0_dp)*u_rrrr + &
     &   (+008.0_dp/315.0_dp)*u_rrr  + &
-    &   (-001.0_dp/560.0_dp)*u_rrrr )
+    &   (-001.0_dp/005.0_dp)*u_rr   + &
+    &   (+008.0_dp/005.0_dp)*u_r    + &
+    &   (-205.0_dp/072.0_dp)*u      + &
+    &   (+008.0_dp/005.0_dp)*u_l    + &
+    &   (-001.0_dp/005.0_dp)*u_ll   + &
+    &   (+008.0_dp/315.0_dp)*u_lll  + &
+    &   (-001.0_dp/560.0_dp)*u_llll )
 end function FD2_C8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -937,9 +945,9 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv(iCellFace) * &
-              &       FD2_C2(u(@:,lCell), &
-              &              u(@:,iCell), &
-              &              u(@:,rCell)) )
+              &         FD2_C2(u(@:,lCell), &
+              &                u(@:,iCell), &
+              &                u(@:,rCell)) )
           ! ----------------------
           case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
@@ -1036,6 +1044,154 @@ subroutine FDM_Bilaplacian_Central$rank(mesh, v, lambda, u)
   call FDM_Laplacian_Central(mesh, w, 1.0_dp, u)
   call FDM_Laplacian_Central(mesh, v, lambda, w)
 end subroutine FDM_Bilaplacian_Central$rank
+#$end do
+
+!! ----------------------------------------------------------------- !!
+!! Second order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_l, u, u_r
+  real(dp), intent(in) :: w_l, w, w_r
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  WFD2_C2 = 0.5_dp*( (w_r+w)*(u_r-u) - (w+w_l)*(u-u_l) )
+end function WFD2_C2
+
+!! ----------------------------------------------------------------- !!
+!! Fourth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, u, w_r, u_r, w_rr, u_rr)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr
+  real(dp), intent(in) :: w_ll, w_l, w, w_r, w_rr
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  WFD2_C4 = WFD2_C2(w_l, u_l, w, u, w_r, u_r) ! TODO
+end function WFD2_C4
+
+!! ----------------------------------------------------------------- !!
+!! Sixth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, &
+  & w, u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr
+  real(dp), intent(in) :: w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  WFD2_C6 = WFD2_C2(w_l, u_l, w, u, w_r, u_r) ! TODO
+end function WFD2_C6
+
+!! ----------------------------------------------------------------- !!
+!! Eighth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, &
+  & w_l, u_l, w, u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr
+  real(dp), intent(in) :: w_llll, w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr, w_rrrr
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  WFD2_C8 = WFD2_C2(w_l, u_l, w, u, w_r, u_r) ! TODO
+end function WFD2_C8
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! The FDM-approximate weighted Laplacian: v ← v + λ∇⋅(w∇u).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: lambda
+  real(dp), intent(in), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  integer :: iCell, iCellFace
+  ! ----------------------
+  ! Fast exit in case λ=0.
+  ! ----------------------
+  if (lambda == 0.0_dp) then
+    return
+  end if
+  ! ----------------------
+  associate(numCells => mesh%NumCells, &
+    &   numCellFaces => mesh%NumCellFaces, &
+    &     cellToCell => mesh%CellToCell, &
+    &     dl_sqr_inv => lambda/(mesh%dl**2))
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
+    !$omp parallel do schedule(static) &
+    !$omp & default(none) private(iCell, iCellFace) shared(u, v, w)
+    do iCell = 1, numCells; block
+      integer :: rCell, rrCell, rrrCell, rrrrCell
+      integer :: lCell, llCell, lllCell, llllCell
+      do iCellFace = 1, numCellFaces, 2
+        ! ----------------------
+        ! Find indices of the adjacent cells.
+        ! ----------------------
+        associate(rCellFace => iCellFace, &
+          &       lCellFace => Flip(iCellFace))
+          rCell = cellToCell(rCellFace, iCell)
+          lCell = cellToCell(lCellFace, iCell)
+          if (pAccuracyOrder >= 3) then
+            rrCell = cellToCell(rCellFace, rCell)
+            llCell = cellToCell(lCellFace, lCell)
+            if (pAccuracyOrder >= 5) then
+              rrrCell = cellToCell(rCellFace, rrCell)
+              lllCell = cellToCell(lCellFace, llCell)
+              if (pAccuracyOrder >= 7) then
+                rrrrCell = cellToCell(rCellFace, rrrCell)
+                llllCell = cellToCell(lCellFace, lllCell)
+              end if
+            end if
+          end if
+        end associate
+        ! ----------------------
+        ! Compute FDM-approximate weighted Laplacian increment.
+        ! ----------------------
+        select case(pAccuracyOrder)
+          case(1:2)
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv(iCellFace) * &
+              &   WFD2_C2(w(@:,lCell), u(@:,lCell), &
+              &           w(@:,lCell), u(@:,iCell), &
+              &           w(@:,lCell), u(@:,rCell)) )
+          ! ----------------------
+          case(3:4)
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv(iCellFace) * &
+              &   WFD2_C4(w(@:,llCell), u(@:,llCell), &
+              &           w(@:, lCell), u(@:, lCell), &
+              &           w(@:, iCell), u(@:, iCell), &
+              &           w(@:, rCell), u(@:, rCell), &
+              &           w(@:,rrCell), u(@:,rrCell)) )
+          ! ----------------------
+          case(5:6)
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv(iCellFace) * &
+              &   WFD2_C6(w(@:,lllCell), u(@:,lllCell), &
+              &           w(@:, llCell), u(@:, llCell), &
+              &           w(@:,  lCell), u(@:,  lCell), &
+              &           w(@:,  iCell), u(@:,  iCell), &
+              &           w(@:,  rCell), u(@:,  rCell), &
+              &           w(@:, rrCell), u(@:, rrCell), &
+              &           w(@:,rrrCell), u(@:,rrrCell)) )
+          ! ----------------------
+          case(7:8)
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv(iCellFace) * &
+              &   WFD2_C8(w(@:,llllCell), u(@:,llllCell), &
+              &           w(@:, lllCell), u(@:, lllCell), &
+              &           w(@:,  llCell), u(@:,  llCell), &
+              &           w(@:,   lCell), u(@:,   lCell), &
+              &           w(@:,   iCell), u(@:,   iCell), &
+              &           w(@:,   rCell), u(@:,   rCell), &
+              &           w(@:,  rrCell), u(@:,  rrCell), &
+              &           w(@:, rrrCell), u(@:, rrrCell), &
+              &           w(@:,rrrrCell), u(@:,rrrrCell)) )
+        end select
+      end do
+    end block; end do
+    !$omp end parallel do
+  end associate
+end subroutine FDM_DivWGrad_Central$rank
 #$end do
 
 end module StormRuler_FDM_Operators

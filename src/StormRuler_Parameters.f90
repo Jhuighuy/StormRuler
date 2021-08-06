@@ -26,6 +26,8 @@ module StormRuler_Parameters
 
 #$let NUM_RANKS = 2
 
+#$let HAS_MKL = True
+
 use, intrinsic :: iso_c_binding
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

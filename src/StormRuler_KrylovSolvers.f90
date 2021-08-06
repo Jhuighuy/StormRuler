@@ -28,9 +28,7 @@ module StormRuler_KrylovSolvers
 
 use StormRuler_Parameters, only: dp
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -39,152 +37,62 @@ implicit none
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine MeshOperator$rank(mesh, v, w, opParams)
-    import tMesh, dp
+  module subroutine tMeshOperator$rank(mesh, Au, u, opParams)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: v(@:,:), w(@:,:)
+    real(dp), intent(in), pointer :: Au(@:,:), u(@:,:)
     class(*), intent(in) :: opParams
-  end subroutine MeshOperator$rank
+  end subroutine tMeshOperator$rank
 #$end do
 end interface
 
 interface Solve_CG
 #$do rank = 0, NUM_RANKS
-  module procedure Solve_CG$rank
+  module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+    procedure(tMeshOperator$rank) :: LOp
+    class(*), intent(in) :: opParams
+    type(tConvParams), intent(inout) :: params
+  end subroutine Solve_CG$rank
 #$end do
 end interface Solve_CG
 
 interface Solve_BiCGStab
 #$do rank = 0, NUM_RANKS
-  module procedure Solve_BiCGStab$rank
+  module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+    procedure(tMeshOperator$rank) :: LOp
+    class(*), intent(in) :: opParams
+    type(tConvParams), intent(inout) :: params
+  end subroutine Solve_BiCGStab$rank
 #$end do
 end interface Solve_BiCGStab
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-contains
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear self-adjoint definite 
-!! operator equation: Au = b, using the Conjugate Gradients method.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$if HAS_MKL
+interface Solve_CG_MKL
 #$do rank = 0, NUM_RANKS
-subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, convParams)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(MeshOperator$rank) :: LOp
-  class(*), intent(in) :: opParams
-  type(tConvParams), intent(inout) :: convParams
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp) :: alpha, beta, gamma, delta
-  real(dp), allocatable, target :: p(@:,:), r(@:,:), t(@:,:)
-  allocate(p, r, t, mold=u)
-  ! ----------------------
-  ! t ← Au,
-  ! r ← b - t.
-  call LOp(mesh, t, u, opParams)
-  call Sub(mesh, r, b, t)
-  ! δ ← <r⋅r>,
-  ! check convergence for √δ.
-  delta = Dot(mesh, r, r)
-  if (convParams%Check(sqrt(delta))) return
-  ! p ← r.
-  ! γ ← δ.
-  call Set(mesh, p, r)
-  gamma = delta
-  ! ----------------------
-  do
-    ! t ← Ap,
-    ! α ← γ/<p⋅t>,
-    ! u ← u + α⋅z,
-    ! r ← r - α⋅g,
-    call LOp(mesh, t, p, opParams)
-    alpha = SafeDivide(gamma, Dot(mesh, p, t))
-    call Add(mesh, u, u, p, alpha)
-    call Sub(mesh, r, r, t, alpha)
-    ! α ← <r, r>,
-    ! check convergence for √α and √α/√δ.
-    alpha = Dot(mesh, r, r)
-    if (convParams%Check(sqrt(alpha), sqrt(alpha/delta))) return
-    ! β ← α/γ,
-    ! p ← β⋅z + r.
-    beta = SafeDivide(alpha, gamma)
-    call Add(mesh, p, r, p, beta)
-    ! γ ← α.
-    gamma = alpha
-  end do
-end subroutine Solve_CG$rank
+  module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+    procedure(tMeshOperator$rank) :: LOp
+    class(*), intent(in) :: opParams
+    type(tConvParams), intent(inout) :: params
+  end subroutine Solve_CG_MKL$rank
 #$end do
+end interface Solve_CG_MKL
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: Au = b, using 
-!! the good old Biconjugate Gradients (stabilized) method.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+interface Solve_FGMRES_MKL
 #$do rank = 0, NUM_RANKS
-subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, convParams)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(MeshOperator$rank) :: LOp
-  class(*), intent(in) :: opParams
-  type(tConvParams), intent(inout) :: convParams
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  real(dp), allocatable, target :: &
-    & h(@:,:), p(@:,:), r(@:,:), s(@:,:), t(@:,:), v(@:,:)
-  allocate(h, p, r, s, t, v, mold=u)
-  ! ----------------------
-  ! t ← Au,
-  ! r ← b - t.
-  call LOp(mesh, t, u, opParams)
-  call Sub(mesh, r, b, t)
-  ! δ ← <r⋅r>,
-  ! check convergence for √δ.
-  delta = Dot(mesh, r, r)
-  if (convParams%Check(sqrt(delta))) return
-  ! h ← r,
-  ! p ← 0, v ← 0,
-  ! ρ ← 1, α ← 1, ω ← 1. 
-  call Set(mesh, h, r)
-  call Fill(mesh, p, 0.0_dp)
-  call Fill(mesh, v, 0.0_dp)
-  rho = 1.0_dp; alpha = 1.0_dp; omega = 1.0_dp
-  ! ----------------------
-  do
-    ! μ ← <h⋅r>
-    ! β ← (μ/ρ)⋅(α/ω),
-    ! ρ ← μ.
-    mu = Dot(mesh, h, r)
-    beta = SafeDivide(mu, rho)*SafeDivide(alpha, omega)
-    rho = mu
-    ! p ← p - ω⋅v,
-    ! p ← r + β⋅p,
-    ! v ← Ap.
-    call Sub(mesh, p, p, v, omega)
-    call Add(mesh, p, r, p, beta)
-    call LOp(mesh, v, p, opParams)
-    ! α ← ρ/<h⋅v>,
-    ! s ← r - α⋅v,
-    ! t ← As.
-    alpha = SafeDivide(rho, Dot(mesh, h, v))
-    call Sub(mesh, s, r, v, alpha)
-    call LOp(mesh, t, s, opParams)
-    ! ω ← <t⋅s>/<t⋅t>,
-    ! r ← s - ω⋅t,
-    ! u ← u - ω⋅s,
-    ! u ← u + α⋅p,
-    omega = SafeDivide(Dot(mesh, t, s), Dot(mesh, t, t))
-    call Sub(mesh, r, s, t, omega)
-    call Sub(mesh, u, u, s, omega)
-    call Add(mesh, u, u, p, alpha)
-    ! γ ← <r⋅r>,
-    ! check convergence for √γ and √γ/√δ.
-    gamma = Dot(mesh, r, r)
-    if (convParams%Check(sqrt(gamma), sqrt(gamma/delta))) return
-  end do
-end subroutine Solve_BiCGStab$rank
+  module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+    procedure(tMeshOperator$rank) :: LOp
+    class(*), intent(in) :: opParams
+    type(tConvParams), intent(inout) :: params
+  end subroutine Solve_FGMRES_MKL$rank
 #$end do
+end interface Solve_FGMRES_MKL
+#$end if
 
 end module StormRuler_KrylovSolvers

@@ -1,0 +1,273 @@
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! Copyright (C) 2021 Oleg Butakov
+!!
+!! Permission is hereby granted, free of charge, to any person
+!! obtaining a copy of this software and associated documentation
+!! files (the "Software"), to deal in the Software without
+!! restriction, including without limitation the rights  to use,
+!! copy, modify, merge, publish, distribute, sublicense, and/or
+!! sell copies of the Software, and to permit persons to whom the 
+!! Software is furnished to do so, subject to the following
+!! conditions:
+!!
+!! The above copyright notice and this permission notice shall be
+!! included in all copies or substantial portions of the Software.
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+!! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+!! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+!! OTHER DEALINGS IN THE SOFTWARE.
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+submodule (StormRuler_KrylovSolvers) StormRuler_KrylovSolvers_MKL
+
+#$use 'StormRuler_Parameters.f90'
+
+use StormRuler_Helpers, only: SafeDivide
+
+use, intrinsic :: iso_fortran_env, only: error_unit
+use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+implicit none
+
+logical, parameter :: &
+  & gMKL_RCI_printDebugInformation = .false.
+
+integer, parameter :: &
+  & gFGMRES_MKL_numNonRestartedIterations = 150
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+contains
+#$if HAS_MKL
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear self-adjoint definite 
+!! operator equation: Au = b, using the MKL CG RCI solver.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$do rank = 0, NUM_RANKS
+module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
+  include 'mkl_rci.fi'
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+  procedure(tMeshOperator$rank) :: LOp
+  class(*), intent(in) :: opParams
+  type(tConvParams), intent(inout) :: params
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  integer(4) :: rci_request
+  integer(4) :: n, iparams(0:127)
+  real(dp) :: dparams(0:127)
+  real(dp), allocatable, target :: tmp(:)
+  real(dp), pointer :: in(@:,:), out(@:,:)
+
+  ! ----------------------
+  ! Preallocate storage.
+  ! ----------------------
+  n = size(u) 
+  allocate(tmp(0:(3*n - 1)))
+  call c_f_pointer( &
+    & cptr=c_loc(tmp(0)), fptr=in, shape=shape(u))
+  call c_f_pointer( &
+    & cptr=c_loc(tmp(n)), fptr=out, shape=shape(b))
+
+  ! ----------------------
+  ! Initialize and configure MKL CG.
+  ! ----------------------
+  call dcg_init(n, u, b, rci_request, iparams, dparams, tmp)
+  if (rci_request /= 0) then
+    write(error_unit, *) 'MKL DCG_INIT FAILED'
+    error stop 1
+  end if
+  associate( &
+    &       outputWarningsAndErrors => iparams(1), &
+    &              maxNumIterations => iparams(4), &
+    & enableStopAtMaxIterationsTest => iparams(7), &
+    &            enableResidualTest => iparams(8), &
+    &         relativeTolerance_sqr => dparams(0), &
+    &         absoluteTolerance_sqr => dparams(1), &
+    &              enableCustomTest => iparams(9), &
+    &         enablePreconditioning => iparams(10) )
+    outputWarningsAndErrors = 6
+    if (params%MaxNumIterations /= 0) then
+      enableStopAtMaxIterationsTest = 1
+      maxNumIterations = params%MaxNumIterations
+    end if
+    if (params%RelativeTolerance * &
+      & params%AbsoluteTolerance > 0.0_dp) then
+      enableResidualTest = 1
+      relativeTolerance_sqr = params%RelativeTolerance
+      absoluteTolerance_sqr = params%AbsoluteTolerance
+    end if
+    enableCustomTest = 0
+    enablePreconditioning = 0
+  end associate
+  call dcg_check(n, u, b, rci_request, iparams, dparams, tmp)
+  if (rci_request /= 0) then
+    write(error_unit, *) 'MKL DCG_CHECK FAILED'
+    error stop 1
+  end if
+
+  ! ----------------------
+  ! Iterate MKL CG.
+  ! ----------------------
+  associate( &
+    & initialResidualNorm_sqr => dparams(2), &
+    & currentResidualNorm_sqr => dparams(4) )
+    do
+      call dcg(n, u, b, rci_request, iparams, dparams, tmp)
+      if (rci_request == 0) exit
+      if (rci_request == 1) then
+        if (gMKL_RCI_printDebugInformation) &
+          & print *, 'AE=', currentResidualNorm_sqr, &
+            & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
+        call LOp(mesh, out, in, opParams)
+      else
+        write(error_unit, *) 'MKL DCG FAILED'
+        error stop 1
+      end if
+    end do
+  end associate
+end subroutine Solve_CG_MKL$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear operator equation: Au = b, 
+!! using the MKL FGMRES RCI solver.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$do rank = 0, NUM_RANKS
+module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
+  include 'mkl_rci.fi'
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
+  procedure(tMeshOperator$rank) :: LOp
+  class(*), intent(in) :: opParams
+  type(tConvParams), intent(inout) :: params
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer(4) :: rci_request
+  integer(4) :: n, iparams(0:127), itercount
+  real(dp) :: dparams(0:127)
+  real(dp), allocatable, target :: tmp(:)
+  real(dp), pointer :: in(@:,:), out(@:,:)
+
+  ! ----------------------
+  ! Preallocate storage.
+  ! ----------------------
+  ! Formula is used:
+  ! (2*ipar[14] + 1)*n + ipar[14]*(ipar[14] + 9)/2 + 1)
+  n = size(u)
+  associate(k => gFGMRES_MKL_numNonRestartedIterations)
+    associate(m => (2*k + 1)*n + k*(k + 9)/2 + 1)
+      allocate(tmp(0:(m-1)))
+    end associate
+  end associate
+
+  ! ----------------------
+  ! Initialize and configure MKL FGMRES.
+  ! ----------------------
+  call dfgmres_init(n, u, b, rci_request, iparams, dparams, tmp)
+  if (rci_request /= 0) then
+    write(error_unit, *) &
+      & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request
+    error stop 1
+  end if
+  associate( &
+    &       outputWarningsAndErrors => iparams( 1), &
+    &              maxNumIterations => iparams( 4), &
+    & enableStopAtMaxIterationsTest => iparams( 7), &
+    &            enableResidualTest => iparams( 8), &
+    &         relativeTolerance_sqr => dparams( 0), &
+    &         absoluteTolerance_sqr => dparams( 1), &
+    &              enableCustomTest => iparams( 9), &
+    &         enableCGVZeroNormTest => iparams(11), &
+    &      cgvZeroNormTolerance_sqr => dparams( 7), &
+    &         enablePreconditioning => iparams(10), &
+    &   dfgmres_getRoutineBehaviour => iparams(12), &
+    &     numNonRestartedIterations => iparams(14) )
+    outputWarningsAndErrors = 6
+    if (params%MaxNumIterations /= 0) then
+      enableStopAtMaxIterationsTest = 1
+      maxNumIterations = params%MaxNumIterations
+    end if
+    if (params%RelativeTolerance * &
+      & params%AbsoluteTolerance > 0.0_dp) then
+      enableResidualTest = 1
+      relativeTolerance_sqr = params%RelativeTolerance
+      absoluteTolerance_sqr = params%AbsoluteTolerance
+    end if
+    enablePreconditioning = 0
+    enableCustomTest = 0
+    ! What the fuck is the 'currently generated vector'?
+    enableCGVZeroNormTest = 1
+    cgvZeroNormTolerance_sqr = 1.0e-12_dp
+    ! value = 0: update inplace,
+    ! value > 0: write to RHS vector,
+    ! value < 0: only get the iteration number.
+    dfgmres_getRoutineBehaviour = 0
+    numNonRestartedIterations = &
+      & gFGMRES_MKL_numNonRestartedIterations
+  end associate
+  call dfgmres_check(n, u, b, rci_request, iparams, dparams, tmp)
+  if (rci_request /= 0) then
+    write(error_unit, *) &
+      & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
+    error stop 1
+  end if
+
+  ! ----------------------
+  ! Iterate MKL FGMRES.
+  ! ----------------------
+  associate( &
+    & initialResidualNorm_sqr => dparams(2), &
+    & currentResidualNorm_sqr => dparams(4) )
+    do
+      call dfgmres(n, u, b, rci_request, iparams, dparams, tmp)
+      if (rci_request == 0) exit
+      if (rci_request == 1) then
+        associate(inOffset => (iparams(21) - 1), &
+          &      outOffset => (iparams(22) - 1))
+          if (gMKL_RCI_printDebugInformation) &
+            & print *, 'IN/OUT=', inOffset/n, outOffset/n
+          call c_f_pointer( &
+            & cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
+          call c_f_pointer( &
+            & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
+        end associate
+          if (gMKL_RCI_printDebugInformation) &
+            & print *, 'AE=', currentResidualNorm_sqr, &
+              & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
+        call LOp(mesh, out, in, opParams)
+      else
+        write(error_unit, *) &
+          & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request
+        error stop 1
+      end if
+    end do
+  end associate
+
+  ! ----------------------
+  ! Get MKL FGMRES solution.
+  ! ----------------------
+  call dfgmres_get(n, u, b, rci_request, iparams, dparams, tmp, itercount)
+  if (rci_request /= 0) then
+    write(error_unit, *) &
+      & 'MKL DFGMRES_GET FAILED, RCI_REQUEST=', rci_request
+    error stop 1
+  end if
+  if (gMKL_RCI_printDebugInformation) &
+    & print *, 'ITERCOUNT=', itercount
+end subroutine Solve_FGMRES_MKL$rank
+#$end do
+
+#$end if
+end submodule StormRuler_KrylovSolvers_MKL

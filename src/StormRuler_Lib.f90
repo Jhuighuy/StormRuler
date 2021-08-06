@@ -42,6 +42,10 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_KrylovSolvers, only: &
   & Solve_CG, Solve_BiCGStab
+#$if HAS_MKL
+use StormRuler_KrylovSolvers, only: &
+  & Solve_CG_MKL, Solve_FGMRES_MKL
+#$end if
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: &
@@ -718,9 +722,9 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   call c_f_procpointer(cptr=pA, fptr=A)
   ! ----------------------
   allocate(Params)
-  call Params%Init(gMesh%Dl(1)*gMesh%Dl(2)*1.0D-8, &
-    &              gMesh%Dl(1)*gMesh%Dl(1)*1.0D-8, 100000)
-  call Solve_CG(gMesh, u, b, wA, Params, Params)
+  call Params%Init(1.0D-8, &
+    &              1.0D-8, 100000)
+  call Solve_FGMRES_MKL(gMesh, u, b, wA, Params, Params)
 contains
   subroutine wA(mesh, v, w, opParams)
     class(tMesh), intent(in) :: mesh

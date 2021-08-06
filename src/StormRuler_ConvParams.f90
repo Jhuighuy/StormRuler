@@ -79,8 +79,6 @@ subroutine tConvParams_Init(params, &
   if (present(maxNumIterations)) then
     call EnsurePositive(relativeTolerance)
     params%MaxNumIterations = maxNumIterations
-  else
-    params%MaxNumIterations = huge(params%MaxNumIterations)
   end if
   !print *, 'Init iterations:', & 
   !  & params%AbsoluteTolerance, &
@@ -100,10 +98,10 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
   ! ----------------------
   ! Check whether number of iterations has exceeded.
   ! ----------------------
-  associate(numIterations=>params%NumIterations, &
-      &  maxNumIterations=>params%MaxNumIterations)
+  associate(numIterations => params%NumIterations, &
+      &  maxNumIterations => params%MaxNumIterations)
     numIterations = numIterations + 1
-    if (numIterations >= params%MaxNumIterations) then
+    if ((maxNumIterations /= 0).and.(numIterations >= maxNumIterations)) then
       tConvParams_Check = .true.; return
     end if
   end associate

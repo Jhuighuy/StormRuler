@@ -157,19 +157,18 @@ function Dot$rank(mesh, u, v) result(d)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
-  associate(numCells => mesh%NumCells, &
-    &             dv => sqrt(product(mesh%dl)))
+  associate(numCells => mesh%NumCells)
     d = 0.0_dp
     ! ----------------------
     !$omp parallel do reduction(+:d) schedule(static) &
     !$omp & default(none) private(iCell) shared(u, v)
     do iCell = 1, numCells
 #$if rank == 0
-      d = d + dv*u(iCell)*v(iCell)
+      d = d + u(iCell)*v(iCell)
 #$else if rank == 1
-      d = d + dv*dot_product(u(:,iCell), v(:,iCell))
+      d = d + dot_product(u(:,iCell), v(:,iCell))
 #$else
-      d = d + dv*sum(u(@:,iCell)*v(@:,iCell))
+      d = d + sum(u(@:,iCell)*v(@:,iCell))
 #$end if
     end do
     !$omp end parallel do

@@ -37,7 +37,7 @@ use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 
 implicit none
 
-integer, parameter :: gAccuracyOrder = 8
+integer, parameter :: gAccuracyOrder = 2
 
 private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
 

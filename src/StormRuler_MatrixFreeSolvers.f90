@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_KrylovSolvers
+module StormRuler_MatrixFreeSolvers
 
 #$use 'StormRuler_Parameters.f90'
 
@@ -37,11 +37,11 @@ implicit none
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  module subroutine tMeshOperator$rank(mesh, Au, u, opParams)
+  module subroutine tMatmulFunc$rank(mesh, Au, u, opParams)
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: Au(@:,:), u(@:,:)
     class(*), intent(in) :: opParams
-  end subroutine tMeshOperator$rank
+  end subroutine tMatmulFunc$rank
 #$end do
 end interface
 
@@ -50,7 +50,7 @@ interface Solve_CG
   module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMeshOperator$rank) :: LOp
+    procedure(tMatmulFunc$rank) :: LOp
     class(*), intent(in) :: opParams
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_CG$rank
@@ -62,7 +62,7 @@ interface Solve_BiCGStab
   module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMeshOperator$rank) :: LOp
+    procedure(tMatmulFunc$rank) :: LOp
     class(*), intent(in) :: opParams
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_BiCGStab$rank
@@ -75,7 +75,7 @@ interface Solve_CG_MKL
   module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMeshOperator$rank) :: LOp
+    procedure(tMatmulFunc$rank) :: LOp
     class(*), intent(in) :: opParams
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_CG_MKL$rank
@@ -87,7 +87,7 @@ interface Solve_FGMRES_MKL
   module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMeshOperator$rank) :: LOp
+    procedure(tMatmulFunc$rank) :: LOp
     class(*), intent(in) :: opParams
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_FGMRES_MKL$rank
@@ -95,4 +95,9 @@ interface Solve_FGMRES_MKL
 end interface Solve_FGMRES_MKL
 #$end if
 
-end module StormRuler_KrylovSolvers
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+contains
+
+end module StormRuler_MatrixFreeSolvers

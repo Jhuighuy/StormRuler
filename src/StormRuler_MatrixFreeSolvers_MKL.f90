@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-submodule (StormRuler_KrylovSolvers) StormRuler_KrylovSolvers_MKL
+submodule (StormRuler_MatrixFreeSolvers) StormRuler_MatrixFreeSolvers_MKL
 
 #$use 'StormRuler_Parameters.f90'
 
@@ -58,7 +58,7 @@ module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMeshOperator$rank) :: LOp
+  procedure(tMatmulFunc$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -149,7 +149,7 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMeshOperator$rank) :: LOp
+  procedure(tMatmulFunc$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -218,10 +218,13 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
       & gFGMRES_MKL_numNonRestartedIterations
   end associate
   call dfgmres_check(n, u, b, rci_request, iparams, dparams, tmp)
-  if (rci_request /= 0) then
+  if (rci_request == -1100) then
     write(error_unit, *) &
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
+  else
+    write(error_unit, *) &
+      & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if
 
   ! ----------------------
@@ -270,4 +273,5 @@ end subroutine Solve_FGMRES_MKL$rank
 #$end do
 
 #$end if
-end submodule StormRuler_KrylovSolvers_MKL
+
+end submodule StormRuler_MatrixFreeSolvers_MKL

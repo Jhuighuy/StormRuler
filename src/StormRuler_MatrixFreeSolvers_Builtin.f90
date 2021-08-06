@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-submodule (StormRuler_KrylovSolvers) StormRuler_KrylovSolvers_Builtin
+submodule (StormRuler_MatrixFreeSolvers) StormRuler_MatrixFreeSolvers_Builtin
 
 #$use 'StormRuler_Parameters.f90'
 
@@ -48,7 +48,7 @@ module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMeshOperator$rank) :: LOp
+  procedure(tMatmulFunc$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -116,7 +116,7 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMeshOperator$rank) :: LOp
+  procedure(tMatmulFunc$rank) :: LOp
   class(*), intent(in) :: opParams
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -197,4 +197,4 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
 end subroutine Solve_BiCGStab$rank
 #$end do
 
-end submodule StormRuler_KrylovSolvers_Builtin
+end submodule StormRuler_MatrixFreeSolvers_Builtin

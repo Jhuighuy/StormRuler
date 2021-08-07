@@ -724,11 +724,12 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   allocate(Params)
   call Params%Init(1.0D-8, &
     &              1.0D-8, 100000)
-  call Solve_FGMRES_MKL(gMesh, u, b, wA, Params, Params)
+  call Solve_CG(gMesh, u, b, wA, Params, Params)
 contains
   subroutine wA(mesh, v, w, opParams)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: v(@:,:), w(@:,:)
+    real(dp), intent(in), target :: w(@:,:)
+    real(dp), intent(inout), target :: v(@:,:)
     class(*), intent(in) :: opParams
     type(tLibFieldBase$rank), target :: fV, fW
     type(c_ptr) :: pV, pW

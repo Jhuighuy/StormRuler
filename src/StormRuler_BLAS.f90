@@ -110,7 +110,7 @@ subroutine Fill$rank(mesh, u, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: alpha
-  real(dp), intent(in), pointer :: u(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -129,7 +129,8 @@ end subroutine Fill$rank
 subroutine Set$rank(mesh, u, v)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: v(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -152,7 +153,7 @@ end subroutine Set$rank
 function Dot$rank(mesh, u, v) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: u(@:,:), v(@:,:)
   real(dp) :: d
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -186,7 +187,8 @@ end function Dot$rank
 subroutine Add$rank(mesh, u, v, w, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), intent(in) :: v(@:,:), w(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -205,7 +207,6 @@ subroutine Add$rank(mesh, u, v, w, alpha, beta)
   end associate
 end subroutine Add$rank
 #$end do
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: u ← βv - αw.
@@ -214,7 +215,8 @@ end subroutine Add$rank
 subroutine Sub$rank(mesh, u, v, w, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), intent(in) :: v(@:,:), w(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -244,7 +246,8 @@ end subroutine Sub$rank
 subroutine Mul$rank(mesh, u, v, w, power)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(:), w(@:,:)
+  real(dp), intent(in) :: v(:), w(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   integer, intent(in), optional :: power
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, p
@@ -269,7 +272,8 @@ end subroutine Mul$rank
 subroutine Mul_Inner$rank(mesh, u, vBar, wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), vBar(:,:), wBar(:,@:,:)
+  real(dp), intent(in) :: vBar(:,:), wBar(:,@:,:)
+  real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -292,7 +296,8 @@ end subroutine Mul_Inner$rank
 subroutine Mul_Outer$rank(mesh, uHat, vBar, wBar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: uHat(:,@:,:), vBar(:,:), wBar(@:,:)
+  real(dp), intent(in) :: vBar(:,:), wBar(@:,:)
+  real(dp), intent(inout) :: uHat(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
   ! ----------------------
@@ -318,7 +323,8 @@ end subroutine Mul_Outer$rank
 subroutine FuncProd$rank(mesh, v, u, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: u(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell
@@ -342,7 +348,8 @@ end subroutine FuncProd$rank
 subroutine SFuncProd$rank(mesh, v, u, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: u(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   procedure(tSMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell

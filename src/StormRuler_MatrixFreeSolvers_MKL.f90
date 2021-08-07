@@ -28,8 +28,10 @@ submodule (StormRuler_MatrixFreeSolvers) StormRuler_MatrixFreeSolvers_MKL
 
 use StormRuler_Helpers, only: SafeDivide
 
+#$if HAS_MKL
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
+#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -37,7 +39,7 @@ use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
 implicit none
 
 logical, parameter :: &
-  & gMKL_RCI_printDebugInformation = .false.
+  & gMKL_RCI_printDebugInformation = .true.
 
 integer, parameter :: &
   & gFGMRES_MKL_numNonRestartedIterations = 150
@@ -53,13 +55,14 @@ contains
 !! operator equation: Au = b, using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
+module subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMatmulFunc$rank) :: LOp
-  class(*), intent(in) :: opParams
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatMulFunc$rank) :: MatMul
+  class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
@@ -129,7 +132,7 @@ module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
         if (gMKL_RCI_printDebugInformation) &
           & print *, 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        call LOp(mesh, out, in, opParams)
+        call MatMul(mesh, out, in, env)
       else
         write(error_unit, *) 'MKL DCG FAILED'
         error stop 1
@@ -144,13 +147,14 @@ end subroutine Solve_CG_MKL$rank
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
+module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMatmulFunc$rank) :: LOp
-  class(*), intent(in) :: opParams
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatMulFunc$rank) :: MatMul
+  class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -222,8 +226,8 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
     write(error_unit, *) &
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
-  else
-    write(error_unit, *) &
+  else if (gMKL_RCI_printDebugInformation) then
+    print *, &
       & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if
 
@@ -246,10 +250,10 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
           call c_f_pointer( &
             & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
         end associate
-          if (gMKL_RCI_printDebugInformation) &
-            & print *, 'AE=', currentResidualNorm_sqr, &
-              & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        call LOp(mesh, out, in, opParams)
+        if (gMKL_RCI_printDebugInformation) &
+          & print *, 'AE=', currentResidualNorm_sqr, &
+            & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
+        call MatMul(mesh, out, in, env)
       else
         write(error_unit, *) &
           & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request

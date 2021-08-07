@@ -37,21 +37,24 @@ implicit none
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  module subroutine tMatmulFunc$rank(mesh, Au, u, opParams)
+  subroutine tMatMulFunc$rank(mesh, Au, u, env)
+    import :: dp, tMesh
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: Au(@:,:), u(@:,:)
-    class(*), intent(in) :: opParams
-  end subroutine tMatmulFunc$rank
+    real(dp), intent(in), target :: u(@:,:)
+    real(dp), intent(inout), target :: Au(@:,:)
+    class(*), intent(in) :: env
+  end subroutine tMatMulFunc$rank
 #$end do
 end interface
 
 interface Solve_CG
 #$do rank = 0, NUM_RANKS
-  module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
+  module subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMatmulFunc$rank) :: LOp
-    class(*), intent(in) :: opParams
+    real(dp), intent(in) :: b(@:,:)
+    real(dp), intent(inout) :: u(@:,:)
+    procedure(tMatMulFunc$rank) :: MatMul
+    class(*), intent(in) :: env
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_CG$rank
 #$end do
@@ -59,11 +62,12 @@ end interface Solve_CG
 
 interface Solve_BiCGStab
 #$do rank = 0, NUM_RANKS
-  module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
+  module subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMatmulFunc$rank) :: LOp
-    class(*), intent(in) :: opParams
+    real(dp), intent(in) :: b(@:,:)
+    real(dp), intent(inout) :: u(@:,:)
+    procedure(tMatMulFunc$rank) :: MatMul
+    class(*), intent(in) :: env
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_BiCGStab$rank
 #$end do
@@ -72,11 +76,12 @@ end interface Solve_BiCGStab
 #$if HAS_MKL
 interface Solve_CG_MKL
 #$do rank = 0, NUM_RANKS
-  module subroutine Solve_CG_MKL$rank(mesh, u, b, LOp, opParams, params)
+  module subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMatmulFunc$rank) :: LOp
-    class(*), intent(in) :: opParams
+    real(dp), intent(in) :: b(@:,:)
+    real(dp), intent(inout) :: u(@:,:)
+    procedure(tMatMulFunc$rank) :: MatMul
+    class(*), intent(in) :: env
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_CG_MKL$rank
 #$end do
@@ -84,11 +89,12 @@ end interface Solve_CG_MKL
 
 interface Solve_FGMRES_MKL
 #$do rank = 0, NUM_RANKS
-  module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, LOp, opParams, params)
+  module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-    procedure(tMatmulFunc$rank) :: LOp
-    class(*), intent(in) :: opParams
+    real(dp), intent(in) :: b(@:,:)
+    real(dp), intent(inout) :: u(@:,:)
+    procedure(tMatMulFunc$rank) :: MatMul
+    class(*), intent(in) :: env
     type(tConvParams), intent(inout) :: params
   end subroutine Solve_FGMRES_MKL$rank
 #$end do

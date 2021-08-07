@@ -179,7 +179,7 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << p_hat + beta*p;
 }
 
-double rho0 = 2.0, rho1 = 1.0;
+double rho0 = 10.0, rho1 = 1.0;
  
 #if 1
 void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
@@ -260,7 +260,9 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << p_hat + beta*p;
 }
 
-int main() {
+///////////////////////////////////////////////
+
+int false_main() {
   std::cout << "Hello from C++" << std::endl;
 
   {
@@ -282,10 +284,10 @@ int main() {
       out[0] = 1.0;
       //if (hypot(x, y) < 1.0) out[0] = -1.0;
       // Square.
-      if ((fabs(x) < 1.0) && (fabs(y) < 1.0)) out[0] = -1.0;
+      //if ((fabs(x) < 1.0) && (fabs(y) < 1.0)) out[0] = -1.0;
       // Cross
-      //if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
-      //if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
+      if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
+      if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
       // Uncomment the following lines to get some very interesting shape:
       //if ((fabs(x - 1.8) < 0.2) && (fabs(y + 1.0) < 1.0)) out[0] = -1.0;
       //if ((fabs(x + 1.8) < 0.2) && (fabs(y - 1.0) < 1.0)) out[0] = -1.0;
@@ -314,8 +316,8 @@ int main() {
     for (int L = 1; L <= 200; ++L) {
       for (int M = 0; M < 10; ++M) {
         CahnHilliard_Step(c, v, c_hat, w_hat);
-        //NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
-        CustomNavierStokes_Step(p, v, c_hat, w_hat, nPart_hat, rho_hat, p_hat, v_hat);
+        NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
+        //CustomNavierStokes_Step(p, v, c_hat, w_hat, nPart_hat, rho_hat, p_hat, v_hat);
 
         std::swap(c, c_hat);
         std::swap(p, p_hat);

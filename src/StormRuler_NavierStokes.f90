@@ -51,7 +51,8 @@ subroutine SolvePoisson(mesh,u,f)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)
     class(tMesh), intent(in) :: mesh
-    real(dp), dimension(:), intent(in), pointer :: v,u
+    real(dp), dimension(:), intent(in), target :: u
+    real(dp), dimension(:), intent(inout), target :: v
     class(*), intent(in) :: opParams
     !call FDM_ApplyBCs(mesh,2,u,0.00_dp,1.0_dp,0.0_dp)
     !call FDM_ApplyBCs(mesh,1,u,1.00_dp,0.0_dp,0.0_dp)

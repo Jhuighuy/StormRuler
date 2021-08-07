@@ -44,24 +44,25 @@ contains
 !! operator equation: Au = b, using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
+module subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMatmulFunc$rank) :: LOp
-  class(*), intent(in) :: opParams
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatMulFunc$rank) :: MatMul
+  class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta
-  real(dp), allocatable, target :: p(@:,:), r(@:,:), t(@:,:)
+  real(dp), allocatable :: p(@:,:), r(@:,:), t(@:,:)
   allocate(p, r, t, mold=u)
 
   ! ----------------------
   ! t ← Au,
   ! r ← b - t.
   ! ----------------------
-  call LOp(mesh, t, u, opParams)
+  call MatMul(mesh, t, u, env)
   call Sub(mesh, r, b, t)
   ! ----------------------
   ! δ ← <r⋅r>,
@@ -83,7 +84,7 @@ module subroutine Solve_CG$rank(mesh, u, b, LOp, opParams, params)
     ! u ← u + α⋅z,
     ! r ← r - α⋅g,
     ! ----------------------
-    call LOp(mesh, t, p, opParams)
+    call MatMul(mesh, t, p, env)
     alpha = SafeDivide(gamma, Dot(mesh, p, t))
     call Add(mesh, u, u, p, alpha)
     call Sub(mesh, r, r, t, alpha)
@@ -112,17 +113,18 @@ end subroutine Solve_CG$rank
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
+module subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in), pointer :: u(@:,:), b(@:,:)
-  procedure(tMatmulFunc$rank) :: LOp
-  class(*), intent(in) :: opParams
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatMulFunc$rank) :: MatMul
+  class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  real(dp), allocatable, target :: &
+  real(dp), allocatable :: &
     & h(@:,:), p(@:,:), r(@:,:), s(@:,:), t(@:,:), v(@:,:)
   allocate(h, p, r, s, t, v, mold=u)
 
@@ -130,7 +132,7 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
   ! t ← Au,
   ! r ← b - t.
   ! ----------------------
-  call LOp(mesh, t, u, opParams)
+  call MatMul(mesh, t, u, env)
   call Sub(mesh, r, b, t)
   ! ----------------------
   ! δ ← <r⋅r>,
@@ -165,7 +167,7 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
     ! ----------------------
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
-    call LOp(mesh, v, p, opParams)
+    call MatMul(mesh, v, p, env)
     
     ! ----------------------
     ! α ← ρ/<h⋅v>,
@@ -174,7 +176,7 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, LOp, opParams, params)
     ! ----------------------
     alpha = SafeDivide(rho, Dot(mesh, h, v))
     call Sub(mesh, s, r, v, alpha)
-    call LOp(mesh, t, s, opParams)
+    call MatMul(mesh, t, s, env)
     
     ! ----------------------
     ! ω ← <t⋅s>/<t⋅t>,

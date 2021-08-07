@@ -172,8 +172,8 @@ end function FD1_C8
 subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v_bar(:,@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:)
+  real(dp), intent(inout) :: v_bar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
   ! ----------------------
@@ -271,7 +271,8 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u_bar(:,@:,:), v(@:,:)
+  real(dp), intent(in) :: u_bar(:,@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
   ! ----------------------
@@ -493,8 +494,8 @@ end function FD1_F8
 subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, dirAll, dirFace, dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v_bar(:,@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:)
+  real(dp), intent(inout) :: v_bar(:,@:,:)
   integer(1), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
@@ -646,8 +647,8 @@ end subroutine FDM_Gradient_Forward$rank
 subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, dirAll, dirFace, dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u_bar(:,@:,:), v(@:,:)
+  real(dp), intent(in) :: lambda, u_bar(:,@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   integer(1), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
@@ -803,8 +804,8 @@ end subroutine FDM_Divergence_Backward$rank
 subroutine FDM_Convection_Central$rank(mesh, v, lambda, u, w_bar)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda 
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:), w_bar(:,:)
+  real(dp), intent(in) :: lambda, u(@:,:), w_bar(:,:)
+  real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   real(dp), allocatable, target :: f_bar(:,@:,:)
   allocate(f_bar(size(w_bar, dim=1), @{size(u, dim=$$)}@, size(w_bar, dim=2)))
@@ -894,8 +895,8 @@ end function FD2_C8
 subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
   ! ----------------------
@@ -996,11 +997,11 @@ end subroutine FDM_Laplacian_Central$rank
 subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable, target :: w(@:,:)
+  real(dp), allocatable :: w(@:,:)
   allocate(w, mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -1024,10 +1025,10 @@ end subroutine FDM_LaplacianF_Central$rank
 subroutine FDM_Bilaplacian_Central$rank(mesh, v, lambda, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  real(dp), allocatable, target :: w(@:,:)
+  real(dp), allocatable :: w(@:,:)
   allocate(w, mold=u)
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -1099,8 +1100,8 @@ end function WFD2_C8
 subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), intent(in) :: lambda, u(@:,:), w(@:,:)
+  real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer :: iCell, iCellFace
   ! ----------------------

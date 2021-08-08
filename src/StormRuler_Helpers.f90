@@ -29,6 +29,7 @@ module StormRuler_Helpers
 use StormRuler_Parameters, only: dp
 
 use, intrinsic :: iso_fortran_env, only: error_unit
+use, intrinsic :: ieee_arithmetic
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -115,7 +116,7 @@ subroutine EnsurePositive(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
-  if (isnan(value).or.(value <= 0)) then
+  if (ieee_is_nan(value).or.(value <= 0)) then
     write(error_unit, *) 'NEGATIVE, ZERO OR NaN VALUE', value
     error stop 1
   end if
@@ -128,7 +129,7 @@ subroutine EnsureNonNegative(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
-  if (isnan(value).or.(value < 0)) then
+  if (ieee_is_nan(value).or.(value < 0)) then
     write(error_unit, *) 'NEGATIVE OR NaN VALUE', value
     error stop 1
   end if

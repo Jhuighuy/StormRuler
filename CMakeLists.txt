@@ -16,7 +16,7 @@
 ## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
 ## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
 ## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-## NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+## NONINFRINGEMENT. IN NO EVENmT SHALL THE AUTHORS OR COPYRIGHT 
 ## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 ## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
@@ -24,6 +24,7 @@
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ##
 
 cmake_minimum_required(VERSION 3.12)
+set(CMAKE_CXX_STANDARD 17)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Setup StormRuler project, using Fortran and C++.
@@ -37,6 +38,10 @@ project(StormRuler
 ## Gather Fortran and C++ sources.
 file(GLOB fortran_source_list "src/*.f90") 
 file(GLOB cxx_source_list "src/*.cpp")
+
+add_executable(StormRuler ${fortran_sources} ${cxx_source_list})
+
+set_target_properties(StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Set binary output directory.
@@ -52,8 +57,37 @@ set(CMAKE_Fortran_MODULE_DIRECTORY
   "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Fortran preprocessing.
+## Libraries and preprocessing.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+set(fortiel_defines "")
+
+# Find OpenMP.
+find_package(OpenMP)
+if(OpenMP_Fortran_FOUND)
+  #set(fortiel_defines "${fortiel_defines} -DHAS_OPENMP=True")
+  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+endif()
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+# Find MKL.
+set(MKL_INTERFACE "lp64")
+if(OpenMP_Fortran_FOUND)
+  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
+    set(MKL_THREADING "intel_thread")
+  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+    set(MKL_THREADING "gnu_thread")
+  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+    set(MKL_THREADING "pgi_thread")
+  endif()
+endif()
+find_package(MKL)
+if(MKL_FOUND)
+  #set(fortiel_defines "${fortiel_defines} -DHAS_MKL=True")
+  target_link_libraries(StormRuler PUBLIC MKL::MKL)
+endif()
 
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
@@ -68,37 +102,18 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src_gen")
 
 # Preprocess Fortran sources.
 foreach(fortran_source IN LISTS fortran_source_list)
-  file(RELATIVE_PATH fortran_source_gen
+  file(RELATIVE_PATH fortran_preprocessed_source
        "${CMAKE_CURRENT_BINARY_DIR}/src" "${fortran_source}")
-  set(fortran_source_gen 
-      "${CMAKE_CURRENT_BINARY_DIR}/src_gen/${fortran_source_gen}")
+  set(fortran_preprocessed_source 
+      "${CMAKE_CURRENT_BINARY_DIR}/src_gen/${fortran_preprocessed_source}")
   add_custom_command(
-    OUTPUT "${fortran_source_gen}"
+    OUTPUT "${fortran_preprocessed_source}"
     COMMAND "${Python3_EXECUTABLE}" "${fortiel_path}" 
-            "${fortran_source}" -o "${fortran_source_gen}"
+            "${fortran_source}" -o "${fortran_preprocessed_source}"
     MAIN_DEPENDENCY "${fortran_source}"
     VERBATIM)
-  list(APPEND fortran_sources_gen "${fortran_source_gen}")
+  list(APPEND fortran_preprocessed_source_list "${fortran_preprocessed_source}")
 endforeach()
-
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Fortran preprocessing.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-#find_package(OpenMP REQUIRED)
-
-## -----------------------------------------------------------------  
-## StormRuler executable.
-set(CMAKE_Fortran_FLAGS "-g -O0 -fbounds-check")
-#set(CMAKE_Fortran_FLAGS "-g -Ofast -fopenmp -march=native -Wall")
-
-#set(MKLROOT $ENV{MKLROOT})
-#set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -m64 -I${MKLROOT}/include")
-#set(CMAKE_EXE_LINKER_FLAGS
-#    "${CMAKE_EXE_LINKER_FLAGS}  -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl")
-
-set(CMAKE_CXX_STANDARD 17)
-add_executable(StormRuler ${fortran_sources_gen} ${cxx_source_list})
-set_target_properties(StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
+target_sources(StormRuler PRIVATE ${fortran_preprocessed_source_list})
 
 ## -----------------------------------------------------------------  

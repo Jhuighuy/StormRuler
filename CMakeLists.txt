@@ -49,10 +49,10 @@ set_target_properties(
 
 set_target_properties(
   StormRuler PROPERTIES 
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib"
-  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib"
+  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries and preprocessing.
@@ -101,29 +101,39 @@ if(MKL_FOUND)
     StormRuler PUBLIC $<LINK_ONLY:MKL::MKL>)
 endif()
 
+# Find Git and update submodules.
+find_package(Git)
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE GIT_SUBMOD_RESULT)
+  if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+    message(FATAL_ERROR "`git submodule update --init --recursive` failed with ${GIT_SUBMOD_RESULT}.")
+  endif()
+endif()
+
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
 # Find Fortiel preprocessor.
-if(NOT DEFINED ENV{Fortiel_PATH})
-  message(FATAL_ERROR 
-          "Environmental variable $Fortiel_PATH is not set.")
+set(Fortiel_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/fortiel/src")
+if(NOT EXISTS "${Fortiel_PATH}/fortiel.py")
+  message(FATAL_ERROR "Broken Fortiel submodule.")
 endif()
-set(Fortiel_PATH "$ENV{Fortiel_PATH}/fortiel.py")
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src_gen")
 
 # Preprocess Fortran sources.
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src_gen")
 foreach(SOURCE_Fortran IN LISTS SOURCES_Fortran)
   file(RELATIVE_PATH SOURCE_Fortran_PREPROCESSED
-       "${CMAKE_CURRENT_BINARY_DIR}/src" "${SOURCE_Fortran}")
+       "${CMAKE_CURRENT_SOURCE_DIR}/src" "${SOURCE_Fortran}")
   get_filename_component(
     SOURCE_Fortran_PREPROCESSED "${SOURCE_Fortran_PREPROCESSED}" NAME_WE)
   set(SOURCE_Fortran_PREPROCESSED 
-      "${CMAKE_CURRENT_BINARY_DIR}/src_gen/${SOURCE_Fortran_PREPROCESSED}.out.f90")
-  message(${SOURCE_Fortran_PREPROCESSED})
+      "${CMAKE_CURRENT_SOURCE_DIR}/src_gen/${SOURCE_Fortran_PREPROCESSED}.out.f90")
   add_custom_command(
     OUTPUT "${SOURCE_Fortran_PREPROCESSED}"
-    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}" 
+    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py" 
             "${SOURCE_Fortran}" -o "${SOURCE_Fortran_PREPROCESSED}"
     MAIN_DEPENDENCY "${SOURCE_Fortran}"
     VERBATIM)

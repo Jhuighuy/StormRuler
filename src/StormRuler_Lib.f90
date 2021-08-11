@@ -40,10 +40,10 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_MatrixFreeSolvers, only: &
+use StormRuler_KrylovSolvers, only: &
   & Solve_CG, Solve_BiCGStab
 #$if HAS_MKL
-use StormRuler_MatrixFreeSolvers, only: &
+use StormRuler_KrylovSolvers_MKL, only: &
   & Solve_CG_MKL, Solve_FGMRES_MKL
 #$end if
 
@@ -724,7 +724,7 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   allocate(Params)
   call Params%Init(1.0D-8, &
     &              1.0D-8, 100000)
-  call Solve_FGMRES_MKL(gMesh, u, b, wA, Params, Params)
+  call Solve_BiCGStab(gMesh, u, b, wA, Params, Params)
 contains
   subroutine wA(mesh, v, w, opParams)
     class(tMesh), intent(in) :: mesh

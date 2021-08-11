@@ -1,6 +1,16 @@
-# StormRuler
+<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
+# ♂StormRuler♂ — A very high order CFD solver
+<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 **StormRuler** is a very high order multidimensional CFD solver, 
-written in modern Fortran.
+written in Fortran 2008 and C++17.
+
+Supported compilers:
+* _GCC_ version _9.0_ and more recent 
+  (tested on _v. 10.3.0_).
+* _Intel Classic compilers_ version _19.0_ and more recent
+  (tested on _v. 2021.3.0_).
+* _PGI Compilers_ (from _nvidia HPC kit_) version 21 and more recent 
+  (tested on _v. 21.07_).
 
 <!----------------------------------------------------------------->
 ## Equations solved

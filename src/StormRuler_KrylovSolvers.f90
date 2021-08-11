@@ -22,10 +22,13 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-submodule (StormRuler_MatrixFreeSolvers) StormRuler_MatrixFreeSolvers_Builtin
+module StormRuler_KrylovSolvers
 
 #$use 'StormRuler_Parameters.f90'
 
+use StormRuler_Parameters, only: dp
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Mesh, only: tMesh
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 
@@ -33,6 +36,30 @@ use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+abstract interface
+#$do rank = 0, NUM_RANKS
+  subroutine tMatMulFunc$rank(mesh, Au, u, env)
+    import :: dp, tMesh
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), target :: u(@:,:)
+    real(dp), intent(inout), target :: Au(@:,:)
+    class(*), intent(in) :: env
+  end subroutine tMatMulFunc$rank
+#$end do
+end interface
+
+interface Solve_CG
+#$do rank = 0, NUM_RANKS
+  module procedure Solve_CG$rank
+#$end do
+end interface Solve_CG
+
+interface Solve_BiCGStab
+#$do rank = 0, NUM_RANKS
+  module procedure Solve_BiCGStab$rank
+#$end do
+end interface Solve_BiCGStab
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -44,7 +71,7 @@ contains
 !! operator equation: Au = b, using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
@@ -113,7 +140,7 @@ end subroutine Solve_CG$rank
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
@@ -199,4 +226,4 @@ module subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
 end subroutine Solve_BiCGStab$rank
 #$end do
 
-end submodule StormRuler_MatrixFreeSolvers_Builtin
+end module StormRuler_KrylovSolvers

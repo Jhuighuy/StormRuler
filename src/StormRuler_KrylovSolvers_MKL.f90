@@ -22,11 +22,14 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-submodule (StormRuler_MatrixFreeSolvers) StormRuler_MatrixFreeSolvers_MKL
+module StormRuler_KrylovSolvers_MKL
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Helpers, only: SafeDivide
+use StormRuler_Parameters, only: dp
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Mesh, only: tMesh
+use StormRuler_KrylovSolvers, only: @{tMatMulFunc$$@|@0, NUM_RANKS}@
 
 #$if HAS_MKL
 use, intrinsic :: iso_fortran_env, only: error_unit
@@ -44,18 +47,34 @@ logical, parameter :: &
 integer, parameter :: &
   & gFGMRES_MKL_numNonRestartedIterations = 150
 
+#$if HAS_MKL
+interface Solve_CG_MKL
+#$do rank = 0, NUM_RANKS
+  module procedure Solve_CG_MKL$rank
+#$end do
+end interface Solve_CG_MKL
+#$end if
+
+#$if HAS_MKL
+interface Solve_FGMRES_MKL
+#$do rank = 0, NUM_RANKS
+  module procedure Solve_FGMRES_MKL$rank
+#$end do
+end interface Solve_FGMRES_MKL
+#$end if
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
-#$if HAS_MKL
 
+#$if HAS_MKL
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
 !! operator equation: Au = b, using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
@@ -141,13 +160,15 @@ module subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
   end associate
 end subroutine Solve_CG_MKL$rank
 #$end do
+#$end if
 
+#$if HAS_MKL
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: Au = b, 
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
@@ -182,7 +203,7 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   call dfgmres_init(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request /= 0) then
     write(error_unit, *) &
-      & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request
+      & 'MKL DFGMRES_INIT FAILED, RCI_REQUEST=', rci_request
     error stop 1
   end if
   associate( &
@@ -275,7 +296,6 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
     & print *, 'ITERCOUNT=', itercount
 end subroutine Solve_FGMRES_MKL$rank
 #$end do
-
 #$end if
 
-end submodule StormRuler_MatrixFreeSolvers_MKL
+end module StormRuler_KrylovSolvers_MKL

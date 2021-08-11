@@ -39,14 +39,15 @@ file(GLOB SOURCES_CXX "src/*.cpp")
 
 add_executable(StormRuler ${SOURCES_Fortran} ${SOURCES_CXX})
 
+# Require C++17.
 set_target_properties(
-  StormRuler PROPERTIES 
-  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
+  StormRuler PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
+# Main is located in C++, so let C++ linker work.
 set_target_properties(
-  StormRuler PROPERTIES 
-  LINKER_LANGUAGE Fortran)
+  StormRuler PROPERTIES LINKER_LANGUAGE CXX)
 
+# Specify compilation output directories.
 set_target_properties(
   StormRuler PROPERTIES 
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
@@ -65,7 +66,7 @@ find_package(OpenMP)
 if(OpenMP_Fortran_FOUND)
   message(STATUS "Fortran OpenMP enabled.")
   set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
-  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+  #target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
 endif()
 if(OpenMP_CXX_FOUND)
   # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
@@ -91,6 +92,8 @@ if(OpenMP_Fortran_FOUND)
     set(MKL_THREADING "pgi_thread")
   endif()
 endif()
+# Configure MKL to use 32-bit integers.
+set(MKL_INTERFACE lp64)
 find_package(MKL CONFIG)
 if(MKL_FOUND)
   target_compile_options(
@@ -143,5 +146,4 @@ target_sources(StormRuler PRIVATE ${SOURCES_Fortran_PREPROCESSED})
 
 ## -----------------------------------------------------------------  
 
-#set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")

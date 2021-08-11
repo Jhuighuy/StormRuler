@@ -1,67 +1,64 @@
-## ----------------------------------------------------------------- ##
-## Fortiel generated files.
-## ----------------------------------------------------------------- ##
-*.out.f90
-*.f90.txt
-__pycache__
+## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ##
+## Copyright (C) 2021 Oleg Butakov
+## 
+## Permission is hereby granted, free of charge, to any person 
+## obtaining a copy of this software and associated documentation 
+## files (the "Software"), to deal in the Software without 
+## restriction, including without limitation the rights  to use, 
+## copy, modify, merge, publish, distribute, sublicense, and/or
+## sell copies of the Software, and to permit persons to whom the  
+## Software is furnished to do so, subject to the following 
+## conditions:
+## 
+## The above copyright notice and this permission notice shall be 
+## included in all copies or substantial portions of the Software.
+## 
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+## NONINFRINGEMENT. IN NO EVENmT SHALL THE AUTHORS OR COPYRIGHT 
+## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+## OTHER DEALINGS IN THE SOFTWARE.
+## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ##
 
-## ----------------------------------------------------------------- ##
-## Output Files.
-## ----------------------------------------------------------------- ##
-bin/**
-src_gen/**
-out/**
-doc/**
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Ignore everything by default, but scan all directories.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-## ----------------------------------------------------------------- ##
-## IDE files.
-## ----------------------------------------------------------------- ##
+*
 *~
-.idea/
-.vscode/
+!*/
 
 ## ----------------------------------------------------------------- ##
-## CMake configration files. 
+## Source files.
 ## ----------------------------------------------------------------- ##
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
+
+# Fortran and C/C++.
+!*.f
+!*.f90
+*.out.f90
+!*.fi
+!*.c
+!*.cc
+!*.cpp
+!*.cxx
+!*.h
+!*.hh
+!*.hpp
+!*.hxx
+
+# Input files.
+!*.ppm
+
+# CMake.
+!*.cmake
+!CMakeLists.txt
 cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-*ninja*
-*.v[cf]*
-*.sln
+CMakeFiles/
 
-## ----------------------------------------------------------------- ##
-## Fortran compilation files. 
-## ----------------------------------------------------------------- ##
-*.d
-*.slo
-*.lo
-*.o
-*.obj
-*.gch
-*.pch
-*.so
-*.dylib
-*.dll
-*.mod
-*.smod
-*.lai
-*.la
-*.a
-*.lib
-*.exe
-*.out
-*.app
-
-## ----------------------------------------------------------------- ##
-## Other files.
-## ----------------------------------------------------------------- ##
-*.bak
+# Git, Markdown, Doxygen, etc.
+!.git*
+!*.md
+!Doxyfile

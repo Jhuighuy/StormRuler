@@ -23,6 +23,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+#define _USE_MATH_DEFINES 1
+
 #include <cmath>
 #include <iostream>
 #include <typeinfo>
@@ -33,7 +35,7 @@
 #include <algorithm>
 
 template <typename T>
-constexpr auto type_name(T&&) noexcept {
+auto type_name(T&&) noexcept {
   std::string name;
 #ifdef __clang__
   name = __PRETTY_FUNCTION__;
@@ -179,7 +181,7 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << p_hat + beta*p;
 }
 
-double rho0 = 10.0, rho1 = 1.0;
+double rho0 = 1.0, rho1 = 1.0;
  
 #if 1
 void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
@@ -262,7 +264,7 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
 ///////////////////////////////////////////////
 
-int false_main() {
+int main() {
   std::cout << "Hello from C++" << std::endl;
 
   {

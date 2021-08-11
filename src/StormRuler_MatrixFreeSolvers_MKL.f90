@@ -39,7 +39,7 @@ use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
 implicit none
 
 logical, parameter :: &
-  & gMKL_RCI_printDebugInformation = .true.
+  & gMKL_RCI_printDebugInformation = .false.
 
 integer, parameter :: &
   & gFGMRES_MKL_numNonRestartedIterations = 150
@@ -66,8 +66,8 @@ module subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(4) :: rci_request
-  integer(4) :: n, iparams(0:127)
+  integer :: rci_request
+  integer :: n, iparams(0:127)
   real(dp) :: dparams(0:127)
   real(dp), allocatable, target :: tmp(:)
   real(dp), pointer :: in(@:,:), out(@:,:)
@@ -158,8 +158,8 @@ module subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(4) :: rci_request
-  integer(4) :: n, iparams(0:127), itercount
+  integer :: rci_request
+  integer :: n, iparams(0:127), itercount
   real(dp) :: dparams(0:127)
   real(dp), allocatable, target :: tmp(:)
   real(dp), pointer :: in(@:,:), out(@:,:)

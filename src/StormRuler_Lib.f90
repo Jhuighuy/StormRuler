@@ -73,7 +73,7 @@ end type !tLibFieldBase$rank
 
 ! Math function wrapper.
 abstract interface
-  pure subroutine tLibMapFunc$0(shape, tU, tV, env)
+  pure subroutine tLibMapFunc$0(shape, tU, tV, env) bind(c)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: tU
@@ -81,7 +81,7 @@ abstract interface
     type(c_ptr), intent(in), value :: env
   end subroutine tLibMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure subroutine tLibMapFunc$rank(shape, tU, tV, env)
+  pure subroutine tLibMapFunc$rank(shape, tU, tV, env) bind(c)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in) :: shape(*)
     real(dp), intent(in) :: tU(*)
@@ -93,7 +93,7 @@ end interface
 
 ! Spatial math function wrapper.
 abstract interface
-  pure subroutine tLibSMapFunc$0(dim, x, shape, tU, tV, env)
+  pure subroutine tLibSMapFunc$0(dim, x, shape, tU, tV, env) bind(c)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in), value :: dim
     integer(c_int), intent(in) :: shape(*)
@@ -102,7 +102,7 @@ abstract interface
     type(c_ptr), intent(in), value :: env
   end subroutine tLibSMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure subroutine tLibSMapFunc$rank(dim, x, shape, tU, tV, env)
+  pure subroutine tLibSMapFunc$rank(dim, x, shape, tU, tV, env) bind(c)
     import :: dp, c_int, c_ptr
     integer(c_int), intent(in), value :: dim
     integer(c_int), intent(in) :: shape(*)
@@ -116,7 +116,7 @@ end interface
 ! Mesh operator function wrapper.
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine tLibMeshOperator$rank(pV, pW, env)
+  subroutine tLibMeshOperator$rank(pV, pW, env) bind(c)
     import :: dp, c_int, c_ptr
     type(c_ptr), intent(in), value :: pV, pW
     type(c_ptr), intent(in), value :: env
@@ -724,7 +724,7 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   allocate(Params)
   call Params%Init(1.0D-8, &
     &              1.0D-8, 100000)
-  call Solve_CG(gMesh, u, b, wA, Params, Params)
+  call Solve_FGMRES_MKL(gMesh, u, b, wA, Params, Params)
 contains
   subroutine wA(mesh, v, w, opParams)
     class(tMesh), intent(in) :: mesh

@@ -24,7 +24,6 @@
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ##
 
 cmake_minimum_required(VERSION 3.12)
-set(CMAKE_CXX_STANDARD 17)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Setup StormRuler project, using Fortran and C++.
@@ -35,45 +34,47 @@ project(StormRuler
         DESCRIPTION "A very high order CFD solver"
         LANGUAGES Fortran CXX)
 
-## Gather Fortran and C++ sources.
-file(GLOB fortran_source_list "src/*.f90") 
-file(GLOB cxx_source_list "src/*.cpp")
+file(GLOB SOURCES_Fortran "src/*.f90") 
+file(GLOB SOURCES_CXX "src/*.cpp")
 
-add_executable(StormRuler ${fortran_sources} ${cxx_source_list})
+add_executable(StormRuler ${SOURCES_Fortran} ${SOURCES_CXX})
 
-set_target_properties(StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
+set_target_properties(
+  StormRuler PROPERTIES 
+  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Set binary output directory.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+set_target_properties(
+  StormRuler PROPERTIES 
+  LINKER_LANGUAGE Fortran)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
-  "${CMAKE_CURRENT_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY 
-  "${CMAKE_CURRENT_BINARY_DIR}/bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY 
-  "${CMAKE_CURRENT_BINARY_DIR}/lib")
-set(CMAKE_Fortran_MODULE_DIRECTORY 
-  "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set_target_properties(
+  StormRuler PROPERTIES 
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib"
+  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries and preprocessing.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-set(fortiel_defines "")
+set(Fortiel_Defines "")
 
 # Find OpenMP.
-find_package(OpenMP)
-if(OpenMP_Fortran_FOUND)
-  #set(fortiel_defines "${fortiel_defines} -DHAS_OPENMP=True")
-  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
-endif()
-if(OpenMP_CXX_FOUND)
-  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+# Enable OpenMP only in case Fortran and C++ compilers vendors match.
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+  find_package(OpenMP)
+  if(OpenMP_Fortran_FOUND)
+    set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
+    target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+  endif()
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+  endif()
 endif()
 
 # Find MKL.
-set(MKL_INTERFACE "lp64")
+# Configure OpenMP library to the Fortran compiler native one.
 if(OpenMP_Fortran_FOUND)
   if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
     set(MKL_THREADING "intel_thread")
@@ -83,37 +84,47 @@ if(OpenMP_Fortran_FOUND)
     set(MKL_THREADING "pgi_thread")
   endif()
 endif()
-find_package(MKL)
+find_package(MKL CONFIG)
 if(MKL_FOUND)
-  #set(fortiel_defines "${fortiel_defines} -DHAS_MKL=True")
-  target_link_libraries(StormRuler PUBLIC MKL::MKL)
+  target_compile_options(
+    StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
+  target_include_directories(
+    StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
+  target_link_libraries(
+    StormRuler PUBLIC $<LINK_ONLY:MKL::MKL>)
 endif()
 
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
 # Find Fortiel preprocessor.
-if(NOT DEFINED ENV{FORTIEL_PATH})
+if(NOT DEFINED ENV{Fortiel_PATH})
   message(FATAL_ERROR 
-          "Environmental variable $FORTIEL_PATH is not set.")
+          "Environmental variable $Fortiel_PATH is not set.")
 endif()
-set(fortiel_path "$ENV{FORTIEL_PATH}/fortiel.py")
+set(Fortiel_PATH "$ENV{Fortiel_PATH}/fortiel.py")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/src_gen")
 
 # Preprocess Fortran sources.
-foreach(fortran_source IN LISTS fortran_source_list)
-  file(RELATIVE_PATH fortran_preprocessed_source
-       "${CMAKE_CURRENT_BINARY_DIR}/src" "${fortran_source}")
-  set(fortran_preprocessed_source 
-      "${CMAKE_CURRENT_BINARY_DIR}/src_gen/${fortran_preprocessed_source}")
+foreach(SOURCE_Fortran IN LISTS SOURCES_Fortran)
+  file(RELATIVE_PATH SOURCE_Fortran_PREPROCESSED
+       "${CMAKE_CURRENT_BINARY_DIR}/src" "${SOURCE_Fortran}")
+  get_filename_component(
+    SOURCE_Fortran_PREPROCESSED "${SOURCE_Fortran_PREPROCESSED}" NAME_WE)
+  set(SOURCE_Fortran_PREPROCESSED 
+      "${CMAKE_CURRENT_BINARY_DIR}/src_gen/${SOURCE_Fortran_PREPROCESSED}.out.f90")
+  message(${SOURCE_Fortran_PREPROCESSED})
   add_custom_command(
-    OUTPUT "${fortran_preprocessed_source}"
-    COMMAND "${Python3_EXECUTABLE}" "${fortiel_path}" 
-            "${fortran_source}" -o "${fortran_preprocessed_source}"
-    MAIN_DEPENDENCY "${fortran_source}"
+    OUTPUT "${SOURCE_Fortran_PREPROCESSED}"
+    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}" 
+            "${SOURCE_Fortran}" -o "${SOURCE_Fortran_PREPROCESSED}"
+    MAIN_DEPENDENCY "${SOURCE_Fortran}"
     VERBATIM)
-  list(APPEND fortran_preprocessed_source_list "${fortran_preprocessed_source}")
+  list(APPEND SOURCES_Fortran_PREPROCESSED "${SOURCE_Fortran_PREPROCESSED}")
 endforeach()
-target_sources(StormRuler PRIVATE ${fortran_preprocessed_source_list})
+target_sources(StormRuler PRIVATE ${SOURCES_Fortran_PREPROCESSED})
 
 ## -----------------------------------------------------------------  
+
+#set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -g -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")

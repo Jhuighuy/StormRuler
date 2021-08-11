@@ -66,13 +66,13 @@ find_package(OpenMP)
 if(OpenMP_Fortran_FOUND)
   message(STATUS "Fortran OpenMP enabled.")
   set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
-  #target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
 endif()
 if(OpenMP_CXX_FOUND)
   # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
   # Mixing different OpenMP runtimes is generally not a good idea.
-  # TODO: here may be some exceptions, e.g. NAG uses gcc as a backend on Linux
-  # so, the restriction may be relaxed.
+  # TODO: here may be some exceptions, e.g. NAG uses system C compiler as a backend,
+  # which can theoretically match used C++ compiler.
   if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
     message(STATUS "C++ OpenMP enabled.")
     target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
@@ -96,12 +96,14 @@ endif()
 set(MKL_INTERFACE lp64)
 find_package(MKL CONFIG)
 if(MKL_FOUND)
-  target_compile_options(
-    StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
-  target_include_directories(
-    StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
-  target_link_libraries(
-    StormRuler PUBLIC $<LINK_ONLY:MKL::MKL>)
+  target_link_libraries(StormRuler PRIVATE MKL::MKL)
+  # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
+  #target_compile_options(
+  #  StormRuler PRIVATE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
+  #target_include_directories(
+  #  StormRuler PRIVATE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
+  #target_link_libraries(
+  #  StormRuler PRIVATE $<LINK_ONLY:MKL::MKL>)
 endif()
 
 # Find Git and update submodules.
@@ -110,9 +112,10 @@ if(GIT_FOUND)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    RESULT_VARIABLE GIT_SUBMOD_RESULT)
-  if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-    message(FATAL_ERROR "`git submodule update --init --recursive` failed with ${GIT_SUBMOD_RESULT}.")
+    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
+  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
+    message(FATAL_ERROR 
+            "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
 endif()
 

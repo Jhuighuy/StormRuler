@@ -61,15 +61,22 @@ set_target_properties(
 set(Fortiel_Defines "")
 
 # Find OpenMP.
-# Enable OpenMP only in case Fortran and C++ compilers vendors match.
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
-  find_package(OpenMP)
-  if(OpenMP_Fortran_FOUND)
-    set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
-    target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
-  endif()
-  if(OpenMP_CXX_FOUND)
+find_package(OpenMP)
+if(OpenMP_Fortran_FOUND)
+  message(STATUS "Fortran OpenMP enabled.")
+  set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
+  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+endif()
+if(OpenMP_CXX_FOUND)
+  # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
+  # Mixing different OpenMP runtimes is generally not a good idea.
+  # TODO: here may be some exceptions, e.g. NAG uses gcc as a backend on Linux
+  # so, the restriction may be relaxed.
+  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+    message(STATUS "C++ OpenMP enabled.")
     target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+  else()
+    message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
   endif()
 endif()
 

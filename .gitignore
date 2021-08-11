@@ -60,5 +60,6 @@ CMakeFiles/
 
 # Git, Markdown, Doxygen, etc.
 !.git*
+!ext/*
 !*.md
 !Doxyfile

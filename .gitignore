@@ -49,6 +49,10 @@
 !*.hpp
 !*.hxx
 
+# Scripts.
+!*.sh
+!*.bat
+
 # Input files.
 !*.ppm
 

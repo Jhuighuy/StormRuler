@@ -6,7 +6,7 @@
 !! files (the "Software"), to deal in the Software without
 !! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the 
+!! sell copies of the Software, and to permit persons to whom the
 !! Software is furnished to do so, subject to the following
 !! conditions:
 !!
@@ -22,26 +22,13 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Parameters
+module StormRuler_Symbolic
 
-#$let NUM_RANKS = 2
-
-#$let KERNEL_TYPES = ['r', 's']
-
-#$let TYPENAME(t) = {'r': 'real(dp)', 's': 'type(tSymbol)'}[t]
-
-#$let HAS_MKL = False
-
-#$let NAG_COMPILER = True
-
-use, intrinsic :: iso_c_binding
+use StormRuler_Symbolic_Interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-!! Double persicion kind for real numbers.
-integer, parameter:: dp = c_double
-
-end module StormRuler_Parameters
+end module StormRuler_Symbolic

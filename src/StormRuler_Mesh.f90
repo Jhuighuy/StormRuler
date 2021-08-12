@@ -181,7 +181,7 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$define iCellMD @{iCellMD$$}@
-  integer :: iCell, $iCellMD, iBCM, iBCCell
+  integer :: iCell, $iCellMD, iBCM
   integer, allocatable :: cache(@:)
   allocate(cache, mold=image); cache(@:) = 0
 
@@ -241,7 +241,6 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
     allocate(mesh%CellToCell(ncf, nac)); mesh%CellToCell(:,:) = 0
   end associate
   ! ----------------------
-  iBCCell = mesh%NumCells + 1
 #$do rank = dim, 1, -1
   do iCellMD$rank = 1, mesh%MDIndexBounds($rank) 
 #$end do
@@ -684,72 +683,69 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
     allocate(mesh%CellFacePeriodic_(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
-    associate(cellCenter => mesh%CellCenter &
-            , cellToCell => mesh%CellToCell)
-      ! ----------------------
-      ! Fill the cell information for the interior cells.
-      !$omp parallel do private(iCell, yCell, xCell) collapse(2)
-      do yCell = 1, yNumCells
-        do xCell = 1, xNumCells
-          iCell = cellToIndex(xCell, yCell)
-          mesh%CellMDIndex(:,iCell) = [xCell, yCell]
-          cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                                ,yDelta*(yCell+0.5_dp), 0.0_dp]
-          !---
-          cellToCell(:,iCell) = &
-            & [cellToIndex(xCell+1, yCell), &
-            &  cellToIndex(xCell-1, yCell), &
-            &  cellToIndex(xCell, yCell+1), &
-            &  cellToIndex(xCell, yCell-1)]
-          !---
-          mesh%CellFacePeriodic_(:,iCell) = .false.
-          if (xCell==1) mesh%CellFacePeriodic_(2, iCell) = .true.
-          if (yCell==1) mesh%CellFacePeriodic_(4, iCell) = .true.
-          if (xCell==xNumCells) mesh%CellFacePeriodic_(1, iCell) = .true.
-          if (yCell==yNumCells) mesh%CellFacePeriodic_(3, iCell) = .true.
-        end do
-      end do
-      !$omp end parallel do
-      ! ----------------------
-      ! Fill the cell information for the ghost cells.
-      ! (Remember, the the ghost cells have a single connection to the interior cell.)
-      !$omp parallel do private(iCell, yCell, xCell)
-      do yCell = 1, yNumCells
-        do xCell = 1-xNumLayers, 0
-          iCell = cellToIndex(xCell, yCell)
-          cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                                ,yDelta*(yCell+0.5_dp), 0.0_dp]
-          cellToCell(iCell, :) &
-            = [ cellToIndex(1, yCell), 0, 0, 0 ]
-        end do
-        do xCell = xNumCells+1, xNumCells+xNumLayers 
-          iCell = cellToIndex(xCell, yCell)
-          cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                               , yDelta*(yCell+0.5_dp), 0.0_dp]
-          cellToCell(iCell, :) &
-            = [ 0, cellToIndex(xNumCells, yCell), 0, 0 ]
-        end do
-      end do
-      !$omp end parallel do
-      !$omp parallel do private(iCell, yCell, xCell)
+    ! ----------------------
+    ! Fill the cell information for the interior cells.
+    !$omp parallel do private(iCell, yCell, xCell) collapse(2)
+    do yCell = 1, yNumCells
       do xCell = 1, xNumCells
-        do yCell = 1-yNumLayers, 0
-          iCell = cellToIndex(xCell, yCell)
-          cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                                ,yDelta*(yCell+0.5_dp), 0.0_dp]
-          cellToCell(iCell, :) &
-            = [ 0, 0, cellToIndex(xCell, 1), 0 ]
-        end do
-        do yCell = yNumCells+1, yNumCells+yNumLayers
-          iCell = cellToIndex(xCell, yCell)
-          cellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                                ,yDelta*(yCell+0.5_dp), 0.0_dp]
-          cellToCell(iCell, :) &
-            = [ 0, 0, 0, cellToIndex(xCell, yNumCells) ]
-        end do
+        iCell = cellToIndex(xCell, yCell)
+        mesh%CellMDIndex(:,iCell) = [xCell, yCell]
+        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+                                    ,yDelta*(yCell+0.5_dp), 0.0_dp]
+        !---
+        mesh%CellToCell(:,iCell) = &
+          & [cellToIndex(xCell+1, yCell), &
+          &  cellToIndex(xCell-1, yCell), &
+          &  cellToIndex(xCell, yCell+1), &
+          &  cellToIndex(xCell, yCell-1)]
+        !---
+        mesh%CellFacePeriodic_(:,iCell) = .false.
+        if (xCell==1) mesh%CellFacePeriodic_(2, iCell) = .true.
+        if (yCell==1) mesh%CellFacePeriodic_(4, iCell) = .true.
+        if (xCell==xNumCells) mesh%CellFacePeriodic_(1, iCell) = .true.
+        if (yCell==yNumCells) mesh%CellFacePeriodic_(3, iCell) = .true.
       end do
-      !$omp end parallel do
-    end associate
+    end do
+    !$omp end parallel do
+    ! ----------------------
+    ! Fill the cell information for the ghost cells.
+    ! (Remember, the the ghost cells have a single connection to the interior cell.)
+    !$omp parallel do private(iCell, yCell, xCell)
+    do yCell = 1, yNumCells
+      do xCell = 1-xNumLayers, 0
+        iCell = cellToIndex(xCell, yCell)
+        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
+        mesh%CellToCell(iCell, :) &
+          = [ cellToIndex(1, yCell), 0, 0, 0 ]
+      end do
+      do xCell = xNumCells+1, xNumCells+xNumLayers 
+        iCell = cellToIndex(xCell, yCell)
+        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+                              , yDelta*(yCell+0.5_dp), 0.0_dp]
+        mesh%CellToCell(iCell, :) &
+          = [ 0, cellToIndex(xNumCells, yCell), 0, 0 ]
+      end do
+    end do
+    !$omp end parallel do
+    !$omp parallel do private(iCell, yCell, xCell)
+    do xCell = 1, xNumCells
+      do yCell = 1-yNumLayers, 0
+        iCell = cellToIndex(xCell, yCell)
+        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
+        mesh%CellToCell(iCell, :) &
+          = [ 0, 0, cellToIndex(xCell, 1), 0 ]
+      end do
+      do yCell = yNumCells+1, yNumCells+yNumLayers
+        iCell = cellToIndex(xCell, yCell)
+        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
+        mesh%CellToCell(iCell, :) &
+          = [ 0, 0, 0, cellToIndex(xCell, yNumCells) ]
+      end do
+    end do
+    !$omp end parallel do
   end block
 end subroutine tMesh_InitRect
 

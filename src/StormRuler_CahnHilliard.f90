@@ -34,7 +34,7 @@ use StormRuler_KrylovSolvers
 implicit none
    
 type CahnHilliardParams
-  real(8) :: EpsSqr
+  real(dp) :: EpsSqr
 contains
   procedure, nopass :: F => CahnHilliardParams_DoubleWell
   procedure, nopass :: dFdC => CahnHilliardParams_ddCDoubleWell
@@ -43,14 +43,14 @@ end type CahnHilliardParams
 contains  
 
 pure function CahnHilliardParams_DoubleWell(C) result(F)
-  real(8), intent(in) :: C
-  real(8) :: F
+  real(dp), intent(in) :: C
+  real(dp) :: F
   F = 0.25*(1 - C**2)**2
 end function CahnHilliardParams_DoubleWell
 
 pure function CahnHilliardParams_ddCDoubleWell(C) result(F)
-  real(8), intent(in) :: C
-  real(8) :: F
+  real(dp), intent(in) :: C
+  real(dp) :: F
   F = -C*(1 - C**2)
 end function CahnHilliardParams_ddCDoubleWell
 
@@ -59,9 +59,9 @@ end function CahnHilliardParams_ddCDoubleWell
 !! b ← φ + dt⋅(ΔF'(φ)-∇⋅φv).   
 subroutine CahnHilliard_ImplicitSchemeRHS(mesh, C,v,B,physParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout), target :: C
+  real(dp), dimension(:), intent(inout), target :: C
   real(dp), intent(inout), target :: v(:,:)
-  real(8), dimension(:), intent(out), target :: B
+  real(dp), dimension(:), intent(out), target :: B
   class(CahnHilliardParams), intent(in) :: physParams
   associate(dt=>mesh%dt)
     ! ----------------------
@@ -78,8 +78,8 @@ end subroutine CahnHilliard_ImplicitSchemeRHS
 !! Apply a operator estimate for the implicit scheme SLAE.
 subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(in), target :: c
-  real(8), dimension(:), intent(inout), target :: u
+  real(dp), dimension(:), intent(in), target :: c
+  real(dp), dimension(:), intent(inout), target :: u
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   associate(dt=>mesh%dt,eps=>CHPhysParams%EpsSqr)
     ! ----------------------
@@ -91,8 +91,8 @@ subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
 end subroutine CahnHilliard_ImplicitSchemeOperator
 subroutine CahnHilliard_ImplicitSchemeOperatorHelper(mesh,u,c,aCHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(in), target :: c
-  real(8), dimension(:), intent(inout), target :: u
+  real(dp), dimension(:), intent(in), target :: c
+  real(dp), dimension(:), intent(inout), target :: u
   class(*), intent(in) :: aCHPhysParams
   select type(aCHPhysParams)
     class is (CahnHilliardParams)
@@ -106,11 +106,11 @@ end subroutine CahnHilliard_ImplicitSchemeOperatorHelper
 !! Solve the SLAE of the implicit scheme (using Conjugate Gradients method).
 subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout), target :: C
+  real(dp), dimension(:), intent(inout), target :: C
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   class(tConvParams), allocatable :: Params
-  real(8), allocatable, target :: b(:)
+  real(dp), allocatable, target :: b(:)
   ! ----------------------
   ! Initialize iterations.
   allocate(Params)
@@ -127,7 +127,7 @@ end subroutine CahnHilliard_ImplicitSchemeSolve
 !! Compute Cahn-Hilliard time step with an implicit scheme.
 subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
-  real(8), dimension(:), intent(inout), target :: C,S
+  real(dp), dimension(:), intent(inout), target :: C,S
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(in) :: CHPhysParams
   call CahnHilliard_ImplicitSchemeSolve(mesh, C,v,CHPhysParams)

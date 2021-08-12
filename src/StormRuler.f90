@@ -1,9 +1,9 @@
 module helpers
 use StormRuler_Mesh
 implicit none
-real(8), parameter :: pi = 4*atan(1.0D0)
+real(dp), parameter :: pi = 4*atan(1.0D0)
 Integer, Parameter :: Nx = 100, Ny = 100  
-Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
+Real(dp), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
 contains
 
 Function to_str(k)
@@ -15,8 +15,8 @@ End Function to_str
 
 Subroutine print_mesh3(mesh, u,p,c, l)
   class(tMesh), intent(in) :: mesh
-  Real(8), Dimension(:,:), Intent(in) :: u
-  Real(8), Dimension(:), Intent(in) :: p,c
+  Real(dp), Dimension(:,:), Intent(in) :: u
+  Real(dp), Dimension(:), Intent(in) :: p,c
   Integer, Intent(In) :: l
   Integer :: output
   Write(*,*) l
@@ -35,7 +35,7 @@ Subroutine print_mesh3(mesh, u,p,c, l)
 End Subroutine print_mesh3
 end module helpers
   
-#$if False
+#$if True
 program nsch
   use helpers
   use StormRuler_Helpers
@@ -47,8 +47,8 @@ program nsch
 
   Integer :: L,M,iCell
   integer, allocatable :: pixels(:,:)
-  Real(8), Dimension(:), Allocatable, target :: C,p,s
-  Real(8), Dimension(:,:), Allocatable, target :: w,v,f
+  Real(dp), Dimension(:), Allocatable, target :: C,p,s
+  Real(dp), Dimension(:,:), Allocatable, target :: w,v,f
   type(CahnHilliardParams) :: CH
   class(tMesh), allocatable :: mesh, mesh1
   type(IOList) :: fields
@@ -99,9 +99,9 @@ program nsch
     allocate(v(1:2,1:mesh%NumAllCells))
     allocate(f(1:2,1:mesh%NumAllCells))
 
-    call fields%Add('v',v)
-    call fields%Add('p',p)
-    call fields%Add('c',c)
+    call fields%Add('velocity',v)
+    call fields%Add('pressure',p)
+    call fields%Add('phase',c)
 
     do iCell = 1, mesh%NumAllCells
       associate(r => mesh%CellCenter(iCell,:)-[pi,pi])

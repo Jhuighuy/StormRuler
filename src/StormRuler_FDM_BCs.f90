@@ -71,8 +71,8 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
     ! ----------------------
     ! For each BC cell with the specific mark do:
     ! ----------------------
-    !$omp parallel do schedule(static) &
-    !$omp & default(none) private(iBCMPtr) shared(u, alpha, beta, gamma)
+    !#omp parallel do schedule(static) &
+    !#omp & default(none) private(iBCMPtr) shared(u, alpha, beta, gamma)
     do iBCMPtr = bcmFirst, bcmLast; block
       integer :: iCell, iBCCell, iBCCellFace, iGCell
       iBCCell = bcmToCell(iBCMPtr)
@@ -100,7 +100,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
         iGCell = cellToCell(iBCCellFace, iGCell)
       end do
     end block; end do
-    !$omp end parallel do    
+    !#omp end parallel do    
   end associate
 end subroutine FDM_ApplyBCs$rank
 #$end do

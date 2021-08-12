@@ -103,7 +103,7 @@ abstract interface
   end function iSymbolicDriver_Symbolic_BinaryFunc
 end interface
 
-class(iSymbolicDriver), allocatable :: gSymbolicDriver
+class(iSymbolicDriver), pointer :: gSymbolicDriver
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Symbolic expression container class.
@@ -112,47 +112,22 @@ type :: tSymbol
   class(*), allocatable :: inner
 end type tSymbol
 
-interface operator(+)
-  module procedure Symbol_Plus_Symbol
-  module procedure Symbol_Plus_Constant
-  module procedure Constant_Plus_Symbol
+interface assignment(=)
+  module procedure Symbol_Assign_Symbol
+  module procedure Symbol_Assign_Constant
 end interface
 
-private :: Symbol_Plus_Symbol, &
-  & Symbol_Plus_Constant, Constant_Plus_Symbol
+#$let OPERATORS = [ &
+  & ('+', 'Plus'), ('-', 'Minus'), &
+  & ('*', 'Times'), ('/', 'Over'), ('**', 'Power'), ]
 
-interface operator(-)
-  module procedure Symbol_Minus_Symbol
-  module procedure Symbol_Minus_Constant
-  module procedure Constant_Minus_Symbol
+#$for operator, operatorName in OPERATORS
+interface operator($operator)
+  module procedure Symbol_${operatorName}$_Symbol
+  module procedure Symbol_${operatorName}$_Constant
+  module procedure Constant_${operatorName}$_Symbol
 end interface
-
-private :: Symbol_Minus_Symbol, &
-  & Symbol_Minus_Constant, Constant_Minus_Symbol
-
-interface operator(*)
-  module procedure Symbol_Times_Symbol
-  module procedure Symbol_Times_Constant
-  module procedure Constant_Times_Symbol
-end interface
-
-private :: Symbol_Times_Symbol, &
-  & Symbol_Times_Constant, Constant_Times_Symbol
-
-interface operator(/)
-  module procedure Symbol_Over_Symbol
-  module procedure Symbol_Over_Constant
-  module procedure Constant_Over_Symbol
-end interface
-
-private :: Symbol_Over_Symbol, &
-  & Symbol_Over_Constant, Constant_Over_Symbol
-
-interface operator(**)
-  module procedure Symbol_Power_Symbol
-  module procedure Symbol_Power_Constant
-  module procedure Constant_Power_Symbol
-end interface
+#$end for
 
 private :: Symbol_Power_Symbol, &
   & Symbol_Power_Constant, Constant_Power_Symbol
@@ -160,17 +135,17 @@ private :: Symbol_Power_Symbol, &
 #$let UNARY_FUNCTIONS = [ &
   & 'acos', 'acosd', 'acosh', 'asin', 'asind', 'asinh', &
   & 'atan', 'atand', 'atanh', 'bessel_j0', 'bessel_j1', &
-  & 'bessel_y0', 'bessel_y1', 'cos', 'cosd', 'cosh', &
-  & 'contan', 'cotand', 'erf', 'erfc', 'exp', 'log', &
-  & 'log_gamma', 'sign', 'sin', 'sind', 'sinh', 'sqrt' ]
+  & 'bessel_y0', 'bessel_y1', 'cos', 'cosd', 'cosh',    &
+  & 'contan', 'cotand', 'erf', 'erfc', 'exp', 'log',    &
+  & 'log_gamma', 'sign', 'sin', 'sind', 'sinh', 'sqrt', ]
 
 #$let BINARY_FUNCTIONS = [ &
-  & 'atan2', 'atan2d', 'hypot', 'max', 'min' ]
+  & 'atan2', 'atan2d', 'hypot', 'max', 'min', ]
 
-#$for Func in (UNARY_FUNCTIONS + BINARY_FUNCTIONS)
-interface $Func
-  module procedure Symbolic_$Func
-end interface $Func
+#$for func in (UNARY_FUNCTIONS + BINARY_FUNCTIONS)
+interface X$func
+  module procedure Symbolic_$func
+end interface X$func
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -178,195 +153,79 @@ end interface $Func
 
 contains
 
+elemental subroutine Symbol_Assign_Symbol(left, right)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(tSymbol), intent(out) :: left
+  type(tSymbol), intent(in) :: right
+  ! >>>>>>>>>>>>>>>>>>>>>>
+end subroutine Symbol_Assign_Symbol
+
+elemental subroutine Symbol_Assign_Constant(left, right)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  type(tSymbol), intent(out) :: left
+  real(dp), intent(in) :: right
+  ! >>>>>>>>>>>>>>>>>>>>>>
+end subroutine Symbol_Assign_Constant
+
+#$for operator, operatorName in OPERATORS
 !! ----------------------------------------------------------------- !!
-!! 'symbol' + 'symbol' operator.
+!! 'symbol' $operator 'symbol' operator.
 !! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Plus_Symbol(left, right)
+elemental type(tSymbol) function Symbol_${operatorName}$_Symbol(left, right)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(tSymbol), intent(in) :: left, right
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Plus_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Symbol('+', left%inner, right%inner) )
-end function Symbol_Plus_Symbol
+  Symbol_${operatorName}$_Symbol = tSymbol( &
+    & gSymbolicDriver%On_Symbol_Symbol('$operator', left%inner, right%inner) )
+end function Symbol_${operatorName}$_Symbol
 !! ----------------------------------------------------------------- !!
-!! 'symbol' + 'constant' operator.
+!! 'symbol' $operator 'constant' operator.
 !! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Plus_Constant(left, right)
+elemental type(tSymbol) function Symbol_${operatorName}$_Constant(left, right)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(tSymbol), intent(in) :: left 
   real(dp), intent(in) :: right
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Plus_Constant = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Constant('+', left%inner, right) )
-end function Symbol_Plus_Constant
+  Symbol_${operatorName}$_Constant = tSymbol( &
+    & gSymbolicDriver%On_Symbol_Constant('$operator', left%inner, right) )
+end function Symbol_${operatorName}$_Constant
 !! ----------------------------------------------------------------- !!
-!! 'constant' + 'symbol' operator.
+!! 'constant' $operator 'symbol' operator.
 !! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Constant_Plus_Symbol(left, right)
+elemental type(tSymbol) function Constant_${operatorName}$_Symbol(left, right)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: left
   type(tSymbol), intent(in) :: right 
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Constant_Plus_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Constant_Symbol('+', left, right%inner) )
-end function Constant_Plus_Symbol
+  Constant_${operatorName}$_Symbol = tSymbol( &
+    & gSymbolicDriver%On_Constant_Symbol('$operator', left, right%inner) )
+end function Constant_${operatorName}$_Symbol
+#$end for
 
+#$for func in UNARY_FUNCTIONS
 !! ----------------------------------------------------------------- !!
-!! 'symbol' - 'symbol' operator.
+!! $func('symbol') intrinsic overload.
 !! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Minus_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left, right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Minus_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Symbol('-', left%inner, right%inner) )
-end function Symbol_Minus_Symbol
-!! ----------------------------------------------------------------- !!
-!! 'symbol' - 'constant' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Minus_Constant(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left 
-  real(dp), intent(in) :: right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Minus_Constant = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Constant('-', left%inner, right) )
-end function Symbol_Minus_Constant
-!! ----------------------------------------------------------------- !!
-!! 'constant' - 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Constant_Minus_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: left
-  type(tSymbol), intent(in) :: right 
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Constant_Minus_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Constant_Symbol('-', left, right%inner) )
-end function Constant_Minus_Symbol
-
-!! ----------------------------------------------------------------- !!
-!! 'symbol' * 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Times_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left, right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Times_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Symbol('*', left%inner, right%inner) )
-end function Symbol_Times_Symbol
-!! ----------------------------------------------------------------- !!
-!! 'symbol' * 'constant' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Times_Constant(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left 
-  real(dp), intent(in) :: right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Times_Constant = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Constant('*', left%inner, right) )
-end function Symbol_Times_Constant
-!! ----------------------------------------------------------------- !!
-!! 'constant' * 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Constant_Times_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: left
-  type(tSymbol), intent(in) :: right 
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Constant_Times_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Constant_Symbol('*', left, right%inner) )
-end function Constant_Times_Symbol
-
-!! ----------------------------------------------------------------- !!
-!! 'symbol' / 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Over_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left, right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Over_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Symbol('/', left%inner, right%inner) )
-end function Symbol_Over_Symbol
-!! ----------------------------------------------------------------- !!
-!! 'symbol' / 'constant' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Over_Constant(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left 
-  real(dp), intent(in) :: right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Over_Constant = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Constant('/', left%inner, right) )
-end function Symbol_Over_Constant
-!! ----------------------------------------------------------------- !!
-!! 'constant' / 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Constant_Over_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: left
-  type(tSymbol), intent(in) :: right 
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Constant_Over_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Constant_Symbol('/', left, right%inner) )
-end function Constant_Over_Symbol
-
-!! ----------------------------------------------------------------- !!
-!! 'symbol' ** 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Power_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left, right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Power_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Symbol('**', left%inner, right%inner) )
-end function Symbol_Power_Symbol
-!! ----------------------------------------------------------------- !!
-!! 'symbol' ** 'constant' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbol_Power_Constant(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  type(tSymbol), intent(in) :: left 
-  real(dp), intent(in) :: right
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbol_Power_Constant = tSymbol( &
-    & gSymbolicDriver%On_Symbol_Constant('**', left%inner, right) )
-end function Symbol_Power_Constant
-!! ----------------------------------------------------------------- !!
-!! 'constant' ** 'symbol' operator.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Constant_Power_Symbol(left, right)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: left
-  type(tSymbol), intent(in) :: right 
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  Constant_Power_Symbol = tSymbol( &
-    & gSymbolicDriver%On_Constant_Symbol('**', left, right%inner) )
-end function Constant_Power_Symbol
-
-#$for Func in UNARY_FUNCTIONS
-!! ----------------------------------------------------------------- !!
-!! $Func('symbol') intrinsic overload.
-!! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbolic_$Func(argument)
+elemental type(tSymbol) function Symbolic_$func(argument)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(tSymbol), intent(in) :: argument 
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbolic_$Func = tSymbol( &
-    & gSymbolicDriver%On_Symbolic_Func('$Func', argument%inner) )
-end function Symbolic_$Func
+  Symbolic_$func = tSymbol( &
+    & gSymbolicDriver%On_Symbolic_Func('$func', argument%inner) )
+end function Symbolic_$func
 #$end for
 
-#$for BinaryFunc in BINARY_FUNCTIONS
+#$for binaryFunc in BINARY_FUNCTIONS
 !! ----------------------------------------------------------------- !!
-!! $BinaryFunc('symbol', 'symbol') intrinsic overload.
+!! $binaryFunc('symbol', 'symbol') intrinsic overload.
 !! ----------------------------------------------------------------- !!
-elemental type(tSymbol) function Symbolic_$BinaryFunc(first, second)
+elemental type(tSymbol) function Symbolic_$binaryFunc(first, second)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(tSymbol), intent(in) :: first, second
   ! >>>>>>>>>>>>>>>>>>>>>>
-  Symbolic_$BinaryFunc = tSymbol( &
-    & gSymbolicDriver%On_Symbolic_BinaryFunc('$BinaryFunc', first%inner, second%inner) )
-end function Symbolic_$BinaryFunc
+  Symbolic_$binaryFunc = tSymbol( &
+    & gSymbolicDriver%On_Symbolic_BinaryFunc('$binaryFunc', first%inner, second%inner) )
+end function Symbolic_$binaryFunc
 #$end for
 
 end module StormRuler_Symbolic_Interface

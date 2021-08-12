@@ -6,11 +6,13 @@ written in Fortran 2008 and C++17.
 
 Supported compilers:
 * _GCC_ version _9.0_ and more recent 
-  (tested on _v. 10.3.0_).
+  (tested on _10.3.0_).
 * _Intel Classic compilers_ version _19.0_ and more recent
-  (tested on _v. 2021.3.0_).
-* _PGI Compilers_ (from _nvidia HPC kit_) version 21 and more recent 
-  (tested on _v. 21.07_).
+  (tested on _2021.3.0_).
+* _PGI Compilers_ (from _NVIDIA HPC SDK_) version 21 and more recent 
+  (tested on _21.07_).
+* _NAG Fortran Compiler_ version 7.0 and more recent
+  (tested on _7.0 build 7048_).
 
 <!----------------------------------------------------------------->
 ## Equations solved

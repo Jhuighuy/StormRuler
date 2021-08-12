@@ -45,15 +45,22 @@ set_target_properties(
 
 # Main is located in C++, so let C++ linker work.
 set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE CXX)
+  StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
 
 # Specify compilation output directories.
 set_target_properties(
   StormRuler PROPERTIES 
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib"
-  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+# Bug in CMake or NAG?
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+else()
+  set_target_properties(
+    StormRuler PROPERTIES 
+    Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries and preprocessing.
@@ -94,7 +101,7 @@ if(OpenMP_Fortran_FOUND)
 endif()
 # Configure MKL to use 32-bit integers.
 set(MKL_INTERFACE lp64)
-find_package(MKL CONFIG)
+#find_package(MKL CONFIG)
 if(MKL_FOUND)
   target_link_libraries(StormRuler PRIVATE MKL::MKL)
   # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
@@ -147,6 +154,11 @@ foreach(SOURCE_Fortran IN LISTS SOURCES_Fortran)
 endforeach()
 target_sources(StormRuler PRIVATE ${SOURCES_Fortran_PREPROCESSED})
 
-## -----------------------------------------------------------------  
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Compilation options.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+  target_compile_options(
+    StormRuler PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
+endif()

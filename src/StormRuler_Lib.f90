@@ -503,9 +503,9 @@ void BLAS_FuncProd(tField<{rank}> v, &
     [](int* shape, double* in, double* out, void* env) {{ &
       auto& func = *reinterpret_cast<tMFunc*>(env); ''')}$
 #$if rank == 0
-${writeIncLine('      *out = func(*in);')}$;
+${writeIncLine('      *out = func(*in);')}$
 #$else
-${writeIncLine('      func(in, out);')}$;
+${writeIncLine('      func(in, out);')}$
 #$endif
 ${writeIncLine( &
 fr'''    }}, &func); &

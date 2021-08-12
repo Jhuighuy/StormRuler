@@ -724,7 +724,7 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   allocate(Params)
   call Params%Init(1.0D-8, &
     &              1.0D-8, 100000)
-  call Solve_BiCGStab(gMesh, u, b, wA, Params, Params)
+  call Solve_CG(gMesh, u, b, wA, Params, Params)
 contains
   subroutine wA(mesh, v, w, opParams)
     class(tMesh), intent(in) :: mesh

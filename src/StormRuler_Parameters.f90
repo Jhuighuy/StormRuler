@@ -26,13 +26,9 @@ module StormRuler_Parameters
 
 #$let NUM_RANKS = 2
 
-#$let KERNEL_TYPES = ['r', 's']
-
-#$let TYPENAME(t) = {'r': 'real(dp)', 's': 'type(tSymbol)'}[t]
-
 #$let HAS_MKL = True
 
-#$let NAG_COMPILER = True
+#$let NAG_COMPILER = False
 
 use, intrinsic :: iso_c_binding
 

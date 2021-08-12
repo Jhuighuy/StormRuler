@@ -30,7 +30,7 @@ module StormRuler_Parameters
 
 #$let TYPENAME(t) = {'r': 'real(dp)', 's': 'type(tSymbol)'}[t]
 
-#$let HAS_MKL = False
+#$let HAS_MKL = True
 
 #$let NAG_COMPILER = True
 

@@ -35,7 +35,7 @@ Subroutine print_mesh3(mesh, u,p,c, l)
 End Subroutine print_mesh3
 end module helpers
   
-#$if True
+#$if False
 program nsch
   use helpers
   use StormRuler_Helpers

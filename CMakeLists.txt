@@ -34,10 +34,10 @@ project(StormRuler
         DESCRIPTION "A very high order CFD solver"
         LANGUAGES Fortran CXX)
 
-file(GLOB SOURCES_Fortran "src/*.f90") 
-file(GLOB SOURCES_CXX "src/*.cpp")
+file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
+file(GLOB_RECURSE CXX_SOURCES "src/*.cpp")
 
-add_executable(StormRuler ${SOURCES_Fortran} ${SOURCES_CXX})
+add_executable(StormRuler ${Fortran_SOURCES} ${CXX_SOURCES})
 
 # Require C++17.
 set_target_properties(
@@ -45,7 +45,7 @@ set_target_properties(
 
 # Main is located in C++, so let C++ linker work.
 set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
+  StormRuler PROPERTIES LINKER_LANGUAGE CXX)
 
 # Specify compilation output directories.
 set_target_properties(
@@ -54,25 +54,28 @@ set_target_properties(
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 # Bug in CMake or NAG?
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-else()
-  set_target_properties(
+if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+set_target_properties(
     StormRuler PROPERTIES 
     Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+else()
+  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries and preprocessing.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-set(Fortiel_Defines "")
+set(Fortiel_DEFINES "")
+
+# TODO: we should check for quality of the OpenMP implementation,
+# e.g. support of block constructs inside of the parallel loops.
 
 # Find OpenMP.
 find_package(OpenMP)
 if(OpenMP_Fortran_FOUND)
   message(STATUS "Fortran OpenMP enabled.")
-  set(Fortiel_Defines "${Fortiel_Defines} -DHAS_OPENMP=True")
+  set(Fortiel_DEFINES "${Fortiel_DEFINES} -DHAS_OPENMP=True")
   target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
 endif()
 if(OpenMP_CXX_FOUND)
@@ -101,7 +104,7 @@ if(OpenMP_Fortran_FOUND)
 endif()
 # Configure MKL to use 32-bit integers.
 set(MKL_INTERFACE lp64)
-#find_package(MKL CONFIG)
+find_package(MKL CONFIG)
 if(MKL_FOUND)
   target_link_libraries(StormRuler PRIVATE MKL::MKL)
   # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
@@ -137,22 +140,22 @@ endif()
 
 # Preprocess Fortran sources.
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src_gen")
-foreach(SOURCE_Fortran IN LISTS SOURCES_Fortran)
-  file(RELATIVE_PATH SOURCE_Fortran_PREPROCESSED
-       "${CMAKE_CURRENT_SOURCE_DIR}/src" "${SOURCE_Fortran}")
+foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
+  file(RELATIVE_PATH Fortran_SOURCE_PREPROCESSED
+       "${CMAKE_CURRENT_SOURCE_DIR}/src" "${Fortran_SOURCE}")
   get_filename_component(
-    SOURCE_Fortran_PREPROCESSED "${SOURCE_Fortran_PREPROCESSED}" NAME_WE)
-  set(SOURCE_Fortran_PREPROCESSED 
-      "${CMAKE_CURRENT_SOURCE_DIR}/src_gen/${SOURCE_Fortran_PREPROCESSED}.out.f90")
+    Fortran_SOURCE_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}" NAME_WE)
+  set(Fortran_SOURCE_PREPROCESSED 
+      "${CMAKE_CURRENT_SOURCE_DIR}/src_gen/${Fortran_SOURCE_PREPROCESSED}.out.f90")
   add_custom_command(
-    OUTPUT "${SOURCE_Fortran_PREPROCESSED}"
+    OUTPUT "${Fortran_SOURCE_PREPROCESSED}"
     COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py" 
-            "${SOURCE_Fortran}" -o "${SOURCE_Fortran_PREPROCESSED}"
-    MAIN_DEPENDENCY "${SOURCE_Fortran}"
+            "${Fortran_SOURCE}" -o "${Fortran_SOURCE_PREPROCESSED}"
+    MAIN_DEPENDENCY "${Fortran_SOURCE}"
     VERBATIM)
-  list(APPEND SOURCES_Fortran_PREPROCESSED "${SOURCE_Fortran_PREPROCESSED}")
+  list(APPEND Fortran_SOURCES_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}")
 endforeach()
-target_sources(StormRuler PRIVATE ${SOURCES_Fortran_PREPROCESSED})
+target_sources(StormRuler PRIVATE ${Fortran_SOURCES_PREPROCESSED})
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Compilation options.

@@ -264,7 +264,7 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
 ///////////////////////////////////////////////
 
-int false_main() {
+int main() {
   std::cout << "Hello from C++" << std::endl;
 
   {

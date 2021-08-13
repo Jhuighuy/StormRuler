@@ -2,12 +2,12 @@ module helpers
 use StormRuler_Mesh
 implicit none
 real(dp), parameter :: pi = 4*atan(1.0D0)
-Integer, Parameter :: Nx = 100, Ny = 100  
+integer(ip), Parameter :: Nx = 100, Ny = 100  
 Real(dp), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
 contains
 
 Function to_str(k)
-  Integer, Intent(In) :: k
+  integer(ip), Intent(In) :: k
   Character(Len=20) :: to_str
   Write (to_str, *) k
   to_str = adjustl(to_str)
@@ -17,13 +17,13 @@ Subroutine print_mesh3(mesh, u,p,c, l)
   class(tMesh), intent(in) :: mesh
   Real(dp), Dimension(:,:), Intent(in) :: u
   Real(dp), Dimension(:), Intent(in) :: p,c
-  Integer, Intent(In) :: l
-  Integer :: output
+  integer(ip), Intent(In) :: l
+  integer(ip) :: output
   Write(*,*) l
   Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
   Write (output, *) 'x,y,z,vx,vy,p,c'
   Block
-    integer :: iCell
+    integer(ip) :: iCell
     do iCell = 1, mesh%NumAllCells
       associate(r => mesh%CellCenter(iCell,:))
         Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
@@ -45,14 +45,14 @@ program nsch
   use StormRuler_IO
   implicit none
 
-  Integer :: L,M,iCell
-  integer, allocatable :: pixels(:,:)
+  integer(ip) :: L,M,iCell
+  integer(ip), allocatable :: pixels(:,:)
   Real(dp), Dimension(:), Allocatable, target :: C,p,s
   Real(dp), Dimension(:,:), Allocatable, target :: w,v,f
   type(CahnHilliardParams) :: CH
   class(tMesh), allocatable :: mesh, mesh1
   type(IOList) :: fields
-  integer, allocatable :: colorToBCM(:)
+  integer(ip), allocatable :: colorToBCM(:)
   
   ! ----------------------
   ! Print an epic banner.

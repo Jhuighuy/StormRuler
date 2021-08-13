@@ -26,7 +26,7 @@ module StormRuler_Helpers
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: ieee_arithmetic
@@ -84,22 +84,24 @@ end interface
 contains
 
 !! ----------------------------------------------------------------- !!
-!! Flip integer oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
+!! Flip integer(ip) oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
 !! ----------------------------------------------------------------- !!
-integer pure function Flip(value)
+integer(ip) pure function Flip(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: value
+  integer(ip), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   Flip = merge(value+1, value-1, mod(value, 2) == 1)
 end function Flip
 
 !! ----------------------------------------------------------------- !!
 !! Find value index in the array.
 !! ----------------------------------------------------------------- !!
-integer pure function IndexOf(value, array)
+integer(ip) pure function IndexOf(value, array)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: value, array(:)
+  integer(ip), intent(in) :: value, array(:)
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   do IndexOf = 1, size(array)
     if (array(IndexOf) == value) return
   end do
@@ -116,6 +118,7 @@ subroutine EnsurePositive(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   if (ieee_is_nan(value).or.(value <= 0)) then
     write(error_unit, *) 'NEGATIVE, ZERO OR NaN VALUE', value
     error stop 1
@@ -129,6 +132,7 @@ subroutine EnsureNonNegative(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   if (ieee_is_nan(value).or.(value < 0)) then
     write(error_unit, *) 'NEGATIVE OR NaN VALUE', value
     error stop 1
@@ -141,6 +145,7 @@ real(dp) function SafeDivide(a, b)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a, b
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   call EnsurePositive(abs(b))
   SafeDivide = a/b
 end function SafeDivide
@@ -152,6 +157,7 @@ real(dp) elemental function SafeInverse(a)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   SafeInverse = merge(0.0_dp, 1.0_dp/a, a==0.0_dp)
 end function SafeInverse
 
@@ -166,6 +172,7 @@ pure function Inner$0(vBar, wHat) result(uHat)
   real(dp), intent(in) :: vBar(:), wHat(:)
   real(dp) :: uHat
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   uHat = dot_product(vBar, wHat)
 end function Inner$0
 #$do rank = 1, NUM_RANKS-1
@@ -174,7 +181,8 @@ pure function Inner$rank(vBar, wHat) result(uHat)
   real(dp), intent(in) :: vBar(:), wHat(:,@:)
   real(dp) :: uHat(@{size(wHat, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: i
+  
+  integer(ip) :: i
   uHat(@:) = 0.0_dp
   do i = 1, size(vBar)
     uHat(@:) = uHat(@:) + vBar(i)*wHat(i, @:)
@@ -190,6 +198,7 @@ pure function Outer$0(vBar, wHat) result(uHat)
   real(dp), intent(in) :: vBar(:), wHat
   real(dp) :: uHat(size(vBar))
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   uHat(:) = vBar(:)*wHat
 end function Outer$0
 #$do rank = 1, NUM_RANKS-1
@@ -198,7 +207,8 @@ pure function Outer$rank(vBar, wHat) result(uHat)
   real(dp), intent(in) :: vBar(:), wHat(@:)
   real(dp) :: uHat(size(vBar, dim=1), @{size(wHat, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: i
+  
+  integer(ip) :: i
   do i = 1, size(vBar, dim=1)
     uHat(i, @:) = vBar(i)*wHat(@:)
   end do
@@ -209,13 +219,14 @@ end function Outer$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Convert an integer to string.
+!! Convert an integer(ip) to string.
 !! ----------------------------------------------------------------- !!
 function I2S(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: value
+  integer(ip), intent(in) :: value
   character(len=:), allocatable :: I2S
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   character(len=256) :: buffer
   write(buffer, *) value
   I2S = trim(adjustl(buffer))
@@ -229,6 +240,7 @@ function R2S(value)
   real(dp), intent(in) :: value
   character(len=:), allocatable :: R2S
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   character(len=256) :: buffer
   write(buffer, *) value
   R2S = trim(adjustl(buffer))
@@ -243,6 +255,7 @@ function MergeString(trueString, falseString, condition)
   logical, intent(in) :: condition
   character(len=:), allocatable :: MergeString
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   if (condition) then
     MergeString = trueString
   else
@@ -254,26 +267,28 @@ end function MergeString
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Convert RGB pixel to integer.
+!! Convert RGB pixel to integer(ip).
 !! ----------------------------------------------------------------- !!
 pure function PixelToInt(colorChannels) result(int)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: colorChannels(3)
-  integer :: int
+  integer(ip), intent(in) :: colorChannels(3)
+  integer(ip) :: int
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   int = ior(iand(255, colorChannels(1)), &
             ior(ishft(iand(255, colorChannels(2)), 8), &
                 ishft(iand(255, colorChannels(3)), 16)))
 end function PixelToInt
 
 !! ----------------------------------------------------------------- !!
-!! Convert integer to RGB pixel.
+!! Convert integer(ip) to RGB pixel.
 !! ----------------------------------------------------------------- !!
 pure function IntToPixel(int) result(colorChannels)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer, intent(in) :: int
-  integer :: colorChannels(3)
+  integer(ip), intent(in) :: int
+  integer(ip) :: colorChannels(3)
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   colorChannels(1) = iand(255, int)
   colorChannels(2) = iand(255, ishft(int, -8))
   colorChannels(3) = iand(255, ishft(int, -16))

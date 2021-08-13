@@ -26,7 +26,7 @@ module StormRuler_BLAS
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: &
   & @{tMapFunc$$, tSMapFunc$$@|@0, NUM_RANKS}@, &
   & operator(.inner.), operator(.outer.)
@@ -112,7 +112,9 @@ subroutine Fill$rank(mesh, u, alpha)
   real(dp), intent(in) :: alpha
   real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+
+  integer(ip) :: iCell
+  
   ! ----------------------
   !$omp parallel do schedule(static) 
   do iCell = 1, mesh%NumCells
@@ -132,7 +134,9 @@ subroutine Set$rank(mesh, u, v)
   real(dp), intent(in) :: v(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp default(private) shared(mesh, u, v)
@@ -153,7 +157,9 @@ function Dot$rank(mesh, u, v) result(d)
   real(dp), intent(in) :: u(@:,:), v(@:,:)
   real(dp) :: d
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
+  
   d = 0.0_dp
   ! ----------------------
   !$omp parallel do reduction(+:d) schedule(static) &
@@ -185,10 +191,12 @@ subroutine Add$rank(mesh, u, v, w, alpha, beta)
   real(dp), intent(inout) :: u(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, a, b, u, v, w)
@@ -210,10 +218,12 @@ subroutine Sub$rank(mesh, u, v, w, alpha, beta)
   real(dp), intent(inout) :: u(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, a, b, u, v, w)
@@ -236,10 +246,12 @@ subroutine Mul$rank(mesh, u, v, w, power)
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: v(:), w(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  integer, intent(in), optional :: power
+  integer(ip), intent(in), optional :: power
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell, p
+  
+  integer(ip) :: iCell, p
   p = 1; if (present(power)) p = power
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, u, v, w, p)
@@ -260,7 +272,9 @@ subroutine Mul_Inner$rank(mesh, u, vBar, wBar)
   real(dp), intent(in) :: vBar(:,:), wBar(:,@:,:)
   real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, u, vBar, wBar)
@@ -281,7 +295,9 @@ subroutine Mul_Outer$rank(mesh, uHat, vBar, wBar)
   real(dp), intent(in) :: vBar(:,:), wBar(@:,:)
   real(dp), intent(inout) :: uHat(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
+  
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, uHat, vBar, wBar)
@@ -306,7 +322,9 @@ subroutine FuncProd$rank(mesh, v, u, f)
   real(dp), intent(inout) :: v(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+  
+  integer(ip) :: iCell
+  
   ! ----------------------
 #$if not NAG_COMPILER
   !$omp parallel do schedule(static) &
@@ -332,7 +350,9 @@ subroutine SFuncProd$rank(mesh, v, u, f)
   real(dp), intent(inout) :: v(@:,:)
   procedure(tSMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
-  integer :: iCell
+
+  integer(ip) :: iCell
+
   ! ----------------------
 #$if not NAG_COMPILER
   !$omp parallel do schedule(static) &

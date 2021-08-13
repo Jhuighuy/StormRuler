@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_ConvParams
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: EnsurePositive, EnsureNonNegative
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -36,8 +36,8 @@ implicit none
 !! A class that controls convergence for the iterative algorithms. 
 !! ----------------------------------------------------------------- !!
 type :: tConvParams
-  integer :: NumIterations
-  integer :: MaxNumIterations
+  integer(ip) :: NumIterations
+  integer(ip) :: MaxNumIterations
   real(dp) :: AbsoluteTolerance
   real(dp) :: RelativeTolerance
 contains
@@ -61,8 +61,9 @@ subroutine tConvParams_Init(params, &
   class(tConvParams), intent(out) :: params
   real(dp), intent(in) :: absoluteTolerance
   real(dp), intent(in), optional :: relativeTolerance
-  integer, intent(in), optional :: maxNumIterations
+  integer(ip), intent(in), optional :: maxNumIterations
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   ! ----------------------
   ! Initialize errors.
   ! ----------------------
@@ -72,6 +73,7 @@ subroutine tConvParams_Init(params, &
     call EnsurePositive(relativeTolerance)
     params%RelativeTolerance = relativeTolerance
   end if
+
   ! ----------------------
   ! Initialize iterations.
   ! ----------------------
@@ -94,7 +96,9 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
   real(dp), intent(in) :: absoluteError
   real(dp), intent(in), optional :: relativeError
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   tConvParams_Check = .false.
+
   ! ----------------------
   ! Check whether number of iterations has exceeded.
   ! ----------------------
@@ -105,6 +109,7 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
       tConvParams_Check = .true.; return
     end if
   end associate
+  
   ! ----------------------
   ! Check convergence by absolute and relative errors.
   ! ----------------------

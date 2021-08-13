@@ -129,7 +129,7 @@ class(tMesh), allocatable :: gMesh
 
 ! Global IO list object.
 class(IOList), allocatable :: gIOList
-integer :: L
+integer(ip) :: L
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -156,14 +156,14 @@ subroutine Lib_InitializeMesh() &
   ! >>>>>>>>>>>>>>>>>>>>>>
 #$if True
   real(8), parameter :: pi = 4*atan(1.0D0)
-  Integer, Parameter :: Nx = 100, Ny = 100
+  integer(ip), Parameter :: Nx = 100, Ny = 100
   Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
   allocate(gMesh)
   gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
 #$else
-  integer, allocatable :: pixels(:,:)
-  integer, allocatable :: colorToBCM(:)
+  integer(ip), allocatable :: pixels(:,:)
+  integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)
   call Load_PPM('test/Domain-10.ppm', pixels)
   colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]

@@ -26,7 +26,7 @@ module StormRuler_KrylovSolvers_MKL
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Mesh, only: tMesh
 use StormRuler_KrylovSolvers, only: @{tMatMulFunc$$@|@0, NUM_RANKS}@
@@ -44,7 +44,7 @@ implicit none
 logical, parameter :: &
   & gMKL_RCI_printDebugInformation = .false.
 
-integer, parameter :: &
+integer(ip), parameter :: &
   & gFGMRES_MKL_numNonRestartedIterations = 150
 
 #$if HAS_MKL
@@ -85,8 +85,8 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer :: rci_request
-  integer :: n, iparams(0:127)
+  integer(ip) :: rci_request
+  integer(ip) :: n, iparams(0:127)
   real(dp) :: dparams(0:127)
   real(dp), allocatable, target :: tmp(:)
   real(dp), pointer :: in(@:,:), out(@:,:)
@@ -179,8 +179,8 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: rci_request
-  integer :: n, iparams(0:127), itercount
+  integer(ip) :: rci_request
+  integer(ip) :: n, iparams(0:127), itercount
   real(dp) :: dparams(0:127)
   real(dp), allocatable, target :: tmp(:)
   real(dp), pointer :: in(@:,:), out(@:,:)

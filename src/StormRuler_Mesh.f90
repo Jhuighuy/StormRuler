@@ -26,7 +26,7 @@ module StormRuler_Mesh
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip, IndexOf, I2S, R2S, IntToPixel
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, NUM_RANKS}@
 
@@ -44,34 +44,34 @@ type :: tMesh
   ! ----------------------
   ! Mesh dimension.
   ! ----------------------
-  integer :: Dim
+  integer(ip) :: Dim
 
   ! ----------------------
   ! Number of faces (edges in 2D) per each cell.
   ! ----------------------
-  integer :: NumCellFaces
+  integer(ip) :: NumCellFaces
 
   ! ----------------------
   ! Number of interior cells.
   ! This value should be used for field operations.
   ! ----------------------
-  integer :: NumCells
+  integer(ip) :: NumCells
   ! ----------------------
   ! Number of boundary cells 
   ! (domain-exterior cells, first in the ghost layers).
   ! Cells may be counted multiple times..
   ! ----------------------
-  integer :: NumBCCells
+  integer(ip) :: NumBCCells
   ! ----------------------
   ! Total number of cells (including interior and ghost cells).
   ! This value should be used for field allocation.
   ! ----------------------
-  integer :: NumAllCells
+  integer(ip) :: NumAllCells
   ! ----------------------
   ! Cell connectivity table.
   ! Shape is [1, NumFaces]×[1, NumAllCells].
   ! ----------------------
-  integer, allocatable :: CellToCell(:,:)
+  integer(ip), allocatable :: CellToCell(:,:)
   ! ----------------------
   ! Logical table for the periodic face connections.
   ! Shape is [1, NumFaces]×[1, NumAllCells].
@@ -82,30 +82,30 @@ type :: tMesh
   ! Multidimensional index bounds table.
   ! Shape is [1, Dim].
   ! ----------------------
-  integer, allocatable :: MDIndexBounds(:)
+  integer(ip), allocatable :: MDIndexBounds(:)
   ! ----------------------
   ! Cell multidimensional index table.
   ! Shape is [1, Dim]×[1, NumCells].
   ! ----------------------
-  integer, allocatable :: CellMDIndex(:,:)
+  integer(ip), allocatable :: CellMDIndex(:,:)
 
   ! ----------------------
   ! Number of boundary condition marks.
   ! ----------------------
-  integer :: NumBCMs
+  integer(ip) :: NumBCMs
   ! ----------------------
   ! BC mark to boundary cell index (in CSR format).
   ! Shape is [1, NumBCMs].
   ! ----------------------
-  integer, allocatable :: BCMs(:)
+  integer(ip), allocatable :: BCMs(:)
   ! ----------------------
   ! Shape is [1, NumBCCells].
   ! ----------------------
-  integer, allocatable :: BCMToCell(:)
+  integer(ip), allocatable :: BCMToCell(:)
   ! ----------------------
   ! Shape is [1, NumBCCells].
   ! ----------------------
-  integer, allocatable :: BCMToCellFace(:)
+  integer(ip), allocatable :: BCMToCellFace(:)
 
   ! ----------------------
   ! Temporal step value.
@@ -153,8 +153,9 @@ contains
 logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  integer, intent(in) :: iCell, iCellFace
+  integer(ip), intent(in) :: iCell, iCellFace
   ! >>>>>>>>>>>>>>>>>>>>>>
+  
   tMesh_CellFacePeriodic = &
     & allocated(mesh%CellFacePeriodic_).and. &
     & mesh%CellFacePeriodic_(iCellFace, iCell)
@@ -177,12 +178,12 @@ end function tMesh_CellFacePeriodic
 subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  integer, intent(in) :: image(@{0:}@), fluidColor, colorToBCM(:), numBCLayers
+  integer(ip), intent(in) :: image(@{0:}@), fluidColor, colorToBCM(:), numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$define iCellMD @{iCellMD$$}@
-  integer :: iCell, $iCellMD, iBCM
-  integer, allocatable :: cache(@:)
+  integer(ip) :: iCell, $iCellMD, iBCM
+  integer(ip), allocatable :: cache(@:)
   allocate(cache, mold=image); cache(@:) = 0
 
   !! TODO:
@@ -281,10 +282,10 @@ end subroutine tMesh_InitFromImage${dim}$D
 subroutine tMesh_GenerateBCCells(mesh, numBCLayers)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  integer, intent(in) :: numBCLayers
+  integer(ip), intent(in) :: numBCLayers
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer :: iCell, iCellFace, iBCM, iBCCell, iGCell
+  integer(ip) :: iCell, iCellFace, iBCM, iBCCell, iGCell
   
   ! ----------------------
   ! 5. Allocate and fill the "BCM" ⟺ "BC Cell" 
@@ -345,11 +346,11 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
   character(len=*), intent(in) :: file
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer :: unit
-  integer :: iCell, iiCell, iCellFace
-  integer :: iBCM, iBCMPtr, iBCCell, iiBCCell, iBCCellFace
+  integer(ip) :: unit
+  integer(ip) :: iCell, iiCell, iCellFace
+  integer(ip) :: iBCM, iBCMPtr, iBCCell, iiBCCell, iBCCellFace
   ! ----------------------
-  integer, parameter :: DPI = 72
+  integer(ip), parameter :: DPI = 72
   character(len=10), parameter :: SHAPES(2) = &
     & [character(len=10) :: 'box', 'diamond']
   character(len=10), parameter :: PALETTE(3) = &
@@ -439,9 +440,9 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   type(IOList), intent(in), optional :: fields
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer :: unit
-  integer :: numVTKCells, iVTKCell
-  integer :: iCell, iiCell, iCellFace, jiCell, jCellFace
+  integer(ip) :: unit
+  integer(ip) :: numVTKCells, iVTKCell
+  integer(ip) :: iCell, iiCell, iCellFace, jiCell, jCellFace
   logical, allocatable :: cellToCellIsAllInternal(:)
   class(IOListItem), pointer :: item
   
@@ -567,7 +568,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
               write(unit, '(A, " ", A, " ", A)') R2S(v(1)), R2S(v(2)), R2S(v(3))
             end associate
           end do
-      end select
+        end select
       write(unit, "(A)") ''
       item => item%next
     end do
@@ -588,11 +589,11 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
                                ,yDelta, yNumCells, yPeriodic, numLayers)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: xDelta, yDelta
-  integer, intent(in) :: xNumCells, yNumCells
+  integer(ip), intent(in) :: xNumCells, yNumCells
   logical, intent(in) :: xPeriodic, yPeriodic
-  integer, intent(in), optional :: numLayers
-  integer :: xNumLayers, yNumLayers
-  integer, allocatable :: cellToIndex(:,:)
+  integer(ip), intent(in), optional :: numLayers
+  integer(ip) :: xNumLayers, yNumLayers
+  integer(ip), allocatable :: cellToIndex(:,:)
   ! ----------------------
   ! Set up amount of layers.
   mesh%Dim = 2
@@ -607,7 +608,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
   ! ----------------------
   ! Build a 2D to 1D index mapping.
   block
-    integer :: xCell, yCell
+    integer(ip) :: xCell, yCell
     allocate(cellToIndex(1-xNumLayers:xNumCells+xNumLayers &
                        , 1-yNumLayers:yNumCells+yNumLayers))
     ! ----------------------
@@ -670,7 +671,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
   ! ----------------------
   ! Fill the cell geometry and connectivity.
   block
-    integer :: iCell, xCell, yCell
+    integer(ip) :: iCell, xCell, yCell
     allocate(mesh%dl(1:4))
     mesh%dl(:) = [xDelta, xDelta, yDelta, yDelta]
     allocate(mesh%dr(1:2, 1:4))

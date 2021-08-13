@@ -26,14 +26,14 @@ module StormRuler_FDM_Operators
 
 #$use 'StormRuler_Parameters.f90'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip, SafeInverse, &
   & @{tMapFunc$$@|@0, NUM_RANKS}@, operator(.inner.), operator(.outer.)
 use StormRuler_Symbolic
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: &
   & Fill, Mul_Outer, FuncProd
-use StormRuler_FDM_Coefs, only: &
+use StormRuler_FDM_UFDs, only: &
   & FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
   & FD1_F1, FD1_F2, FD1_F3, FD1_F4, &
   & FD1_F5, FD1_F6, FD1_F7, FD1_F8, &
@@ -45,7 +45,7 @@ use StormRuler_FDM_Coefs, only: &
 
 implicit none
 
-integer, parameter :: gAccuracyOrder = 8
+integer(ip), parameter :: gAccuracyOrder = 8
 
 private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
 
@@ -81,7 +81,7 @@ end interface FDM_Convection_Central
 
 interface FDM_Laplacian_Central
 #$do rank = 0, NUM_RANKS
-#$for T in ['R', 'S']
+#$for T, _ in SCALAR_TYPES
   module procedure FDM_Laplacian_Central$rank$T
 #$end for
 #$end do
@@ -103,7 +103,7 @@ private :: WFD2_C2, WFD2_C4, WFD2_C6, WFD2_C8
 
 interface FDM_DivWGrad_Central
 #$do rank = 0, NUM_RANKS
-#$for T in ['R', 'S']
+#$for T, _ in SCALAR_TYPES
   module procedure FDM_DivWGrad_Central$rank$T
 #$end for
 #$end do
@@ -125,9 +125,9 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   real(dp), intent(inout) :: v_bar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell
-  integer :: lCell, llCell, lllCell, llllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell
 
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -220,9 +220,9 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell
-  integer :: lCell, llCell, lllCell, llllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell
 
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -319,9 +319,9 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   integer(1), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-  integer :: lCell, llCell, lllCell, llllCell, lllllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
   integer(1) :: dir
 
   ! ----------------------
@@ -467,9 +467,9 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   integer(1), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-  integer :: lCell, llCell, lllCell, llllCell, lllllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
   integer(1) :: dir
 
   ! ----------------------
@@ -642,18 +642,18 @@ end subroutine FDM_Convection_Central$rank
 !! The FDM-approximate Laplacian: v ← v + λΔu.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-#$for T, typename in [('R', 'real(dp)'), ('S', 'type(tSymbol)')]
+#$for T, tScalar in SCALAR_TYPES
 subroutine FDM_Laplacian_Central$rank$T(mesh, v, lambda, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
-  $typename, intent(in) :: u(@:,:)
-  $typename, intent(inout) :: v(@:,:)
+  $tScalar, intent(in) :: u(@:,:)
+  $tScalar, intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell
-  integer :: lCell, llCell, lllCell, llllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell
 
   ! ----------------------
   ! Fast exit in case λ=0.
@@ -750,14 +750,17 @@ subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
   real(dp), intent(inout) :: v(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   real(dp), allocatable :: w(@:,:)
   allocate(w, mold=u)
+
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
   end if
+
   ! ----------------------
   ! w ← f(u),
   ! v ← v + λΔw.
@@ -777,14 +780,17 @@ subroutine FDM_Bilaplacian_Central$rank(mesh, v, lambda, u)
   real(dp), intent(in) :: lambda, u(@:,:)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   real(dp), allocatable :: w(@:,:)
   allocate(w, mold=u)
+
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
   end if
+  
   ! ----------------------
   ! w ← 0,
   ! w ← w + Δw.
@@ -800,19 +806,19 @@ end subroutine FDM_Bilaplacian_Central$rank
 !! The FDM-approximate weighted Laplacian: v ← v + λ∇⋅(w∇u).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-#$for T, typename in [('R', 'real(dp)'), ('S', 'type(tSymbol)')]
+#$for T, tScalar in SCALAR_TYPES
 subroutine FDM_DivWGrad_Central$rank$T(mesh, v, lambda, w, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda 
   real(dp), intent(in) :: w(@:,:)
-  $typename, intent(in) :: u(@:,:)
-  $typename, intent(inout) :: v(@:,:)
+  $tScalar, intent(in) :: u(@:,:)
+  $tScalar, intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: iCell, iCellFace
-  integer :: rCell, rrCell, rrrCell, rrrrCell
-  integer :: lCell, llCell, lllCell, llllCell
+  integer(ip) :: iCell, iCellFace
+  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+  integer(ip) :: lCell, llCell, lllCell, llllCell
 
   ! ----------------------
   ! Fast exit in case λ=0.

@@ -26,10 +26,13 @@ module StormRuler_Parameters
 
 #$let NUM_RANKS = 2
 
+#$let SCALAR_TYPES = [('R', 'real(dp)'), ('S', 'type(tSymbol)')]
+
 #$let HAS_MKL = True
 
 #$let NAG_COMPILER = False
 
+use, intrinsic :: iso_fortran_env, only: int32
 use, intrinsic :: iso_c_binding
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -38,6 +41,8 @@ use, intrinsic :: iso_c_binding
 implicit none
 
 !! Double persicion kind for real numbers.
-integer, parameter:: dp = c_double
+integer, parameter :: dp = c_double
+
+integer, parameter :: ip = int32
 
 end module StormRuler_Parameters

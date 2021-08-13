@@ -66,7 +66,9 @@ subroutine IOList_Add$rank(list, name, values)
   character(len=*), intent(in) :: name
   real(dp), target, intent(in) :: values(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   class(IOListItem$rank), pointer :: item
+
   ! ----------------------
   ! Generate item.
   ! ----------------------
@@ -91,8 +93,10 @@ subroutine Load_PPM(file, pixels)
   character(len=*), intent(in) :: file
   integer, allocatable, intent(out) :: pixels(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   integer :: unit, offset
   integer :: numRows, numColumns
+
   ! ----------------------
   ! Parse PPM header.
   ! ----------------------
@@ -141,9 +145,11 @@ subroutine Save_PPM(file, pixels)
   character(len=*), intent(in) :: file
   integer, intent(in) :: pixels(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
+
   integer :: unit
   integer :: numRows, numColumns
   integer :: row, column, colorChannel
+  
   ! ----------------------
   ! Write PPM header.
   ! ----------------------

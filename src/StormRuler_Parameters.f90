@@ -28,11 +28,11 @@ module StormRuler_Parameters
 
 #$let SCALAR_TYPES = [('R', 'real(dp)'), ('S', 'type(tSymbol)')]
 
-#$let HAS_MKL = True
+#$let HAS_MKL = False
 
-#$let NAG_COMPILER = False
+#$let NAG_COMPILER = True
 
-use, intrinsic :: iso_fortran_env, only: int32
+use, intrinsic :: iso_fortran_env, only: int8, int32
 use, intrinsic :: iso_c_binding
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -44,5 +44,7 @@ implicit none
 integer, parameter :: dp = c_double
 
 integer, parameter :: ip = int32
+
+integer, parameter :: i8 = int8
 
 end module StormRuler_Parameters

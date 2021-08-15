@@ -84,7 +84,7 @@ end interface
 contains
 
 !! ----------------------------------------------------------------- !!
-!! Flip integer(ip) oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
+!! Flip integer oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
 !! ----------------------------------------------------------------- !!
 integer(ip) pure function Flip(value)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -183,6 +183,7 @@ pure function Inner$rank(vBar, wHat) result(uHat)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
+
   uHat(@:) = 0.0_dp
   do i = 1, size(vBar)
     uHat(@:) = uHat(@:) + vBar(i)*wHat(i, @:)
@@ -209,6 +210,7 @@ pure function Outer$rank(vBar, wHat) result(uHat)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
+  
   do i = 1, size(vBar, dim=1)
     uHat(i, @:) = vBar(i)*wHat(@:)
   end do

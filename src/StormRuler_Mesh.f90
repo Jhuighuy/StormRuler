@@ -553,7 +553,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
     do while(associated(item))
       select type(item)
         ! Scalar field.
-        class is (IOListItem$0)
+        class is(IOListItem$0)
           write(unit, "('SCALARS ', A, ' double 1')") item%name 
           write(unit, "(A)") 'LOOKUP_TABLE default'
           do iCell = 1, mesh%NumCells
@@ -561,7 +561,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
           end do
         ! ----------------------
         ! Vector field.
-        class is (IOListItem$1)
+        class is(IOListItem$1)
           write(unit, "('VECTORS ', A, ' double')") item%name 
           do iCell = 1, mesh%NumCells
             associate(v => [item%values(:,iCell), 0.0_dp])

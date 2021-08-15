@@ -574,14 +574,14 @@ subroutine Lib_FDM_Gradient$rank(pV_bar, lambda, pU, dir) &
   real(dp), pointer :: u(@:,:), v_bar(:,@:,:)
   u => DEREF$rank(pU); v_bar => DEREF${rank+1}$(pV_bar)
   ! ----------------------
-  select case(dir)
-    case('c')
+  !select case(dir)
+  ! case('c')
       call FDM_Gradient_Central(gMesh, v_bar, lambda, u)
-    case('f')
-      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=1_1)
-    case('b')
-      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=-1_1)
-  end select
+  !  case('f')
+  !    call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=1_1)
+  !  case('b')
+  !    call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=-1_1)
+  !end select
 end subroutine Lib_FDM_Gradient$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_FDM_Gradient{rank}( &
@@ -604,14 +604,14 @@ subroutine Lib_FDM_Divergence$rank(pV, lambda, pU_bar, dir) &
   real(dp), pointer :: u_bar(:,@:,:), v(@:,:)
   u_bar => DEREF${rank+1}$(pU_bar); v => DEREF$rank(pV)
   ! ----------------------
-  select case(dir)
-    case('c')
+  !select case(dir)
+  !  case('c')
       call FDM_Divergence_Central(gMesh, v, lambda, u_bar)
-    case('f')
-      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=1_1)
-    case('b')
-      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=-1_1)
-  end select
+  !  case('f')
+  !    call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=1_1)
+  !  case('b')
+  !    call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=-1_1)
+  !end select
 end subroutine Lib_FDM_Divergence$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_FDM_Divergence{rank}( &

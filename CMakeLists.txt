@@ -72,48 +72,70 @@ set(Fortiel_DEFINES "")
 # e.g. support of block constructs inside of the parallel loops.
 
 # Find OpenMP.
-find_package(OpenMP)
-if(OpenMP_Fortran_FOUND)
-  message(STATUS "Fortran OpenMP enabled.")
-  set(Fortiel_DEFINES "${Fortiel_DEFINES} -DHAS_OPENMP=True")
-  target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
-endif()
-if(OpenMP_CXX_FOUND)
-  # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
-  # Mixing different OpenMP runtimes is generally not a good idea.
-  # TODO: here may be some exceptions, e.g. NAG uses system C compiler as a backend,
-  # which can theoretically match used C++ compiler.
-  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
-    message(STATUS "C++ OpenMP enabled.")
-    target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
-  else()
-    message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
+if(StormRuler_NO_OpenMP)
+  message(STATUS "StormRuler OpenMP was disabled by user.")
+else()
+  find_package(OpenMP)
+  if(OpenMP_Fortran_FOUND)
+    # TODO: NAG has linking problems for OpenMP builds.
+    if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+      set(OpenMP_Fortran_ENABLED 1)
+    endif()
+    if(OpenMP_Fortran_ENABLED)
+      message(STATUS "Fortran OpenMP enabled.")
+      set(Fortiel_DEFINES "${Fortiel_DEFINES} -DHAS_OPENMP=True")
+      target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+    endif()
+  endif()
+  if(OpenMP_CXX_FOUND)
+    if(OpenMP_Fortran_ENABLED)
+      # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
+      # Mixing different OpenMP runtimes is generally not a good idea.
+      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+        set(OpenMP_CXX_ENABLED 1)
+      endif()
+      # NAG uses system C compiler as a backend,
+      # which can should theoretically match used C++ compiler.
+      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+        set(OpenMP_CXX_ENABLED 1)
+      endif()
+    endif()
+    if(OpenMP_CXX_ENABLED)
+      message(STATUS "C++ OpenMP enabled.")
+      target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+    else()
+      message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
+    endif()
   endif()
 endif()
 
 # Find MKL.
 # Configure OpenMP library to the Fortran compiler native one.
-if(OpenMP_Fortran_FOUND)
-  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
-    set(MKL_THREADING "intel_thread")
-  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-    set(MKL_THREADING "gnu_thread")
-  elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
-    set(MKL_THREADING "pgi_thread")
+if(StormRuler_NO_MKL)
+  message(STATUS "StormRuler MKL was disabled by user.")
+else()
+  if(OpenMP_Fortran_FOUND)
+    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
+      set(MKL_THREADING "intel_thread")
+    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+      set(MKL_THREADING "gnu_thread")
+    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+      set(MKL_THREADING "pgi_thread")
+    endif()
   endif()
-endif()
-# Configure MKL to use 32-bit integers.
-set(MKL_INTERFACE lp64)
-find_package(MKL CONFIG)
-if(MKL_FOUND)
-  target_link_libraries(StormRuler PRIVATE MKL::MKL)
-  # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
-  #target_compile_options(
-  #  StormRuler PRIVATE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
-  #target_include_directories(
-  #  StormRuler PRIVATE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
-  #target_link_libraries(
-  #  StormRuler PRIVATE $<LINK_ONLY:MKL::MKL>)
+  # Configure MKL to use 32-bit integers.
+  set(MKL_INTERFACE lp64)
+  find_package(MKL CONFIG)
+  if(MKL_FOUND)
+    target_link_libraries(StormRuler PUBLIC MKL::MKL)
+    # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
+    #target_compile_options(
+    #  StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
+    #target_include_directories(
+    #  StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
+    #target_link_libraries(
+    #  StormRuler PUBLIC $<LINK_ONLY:MKL::MKL>)
+  endif()
 endif()
 
 # Find Git and update submodules.
@@ -161,7 +183,12 @@ target_sources(StormRuler PRIVATE ${Fortran_SOURCES_PREPROCESSED})
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
+# NAG (unexpectedly) uses some wierd notation for kinds by default.
+# Switch to the normal system.
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
   target_compile_options(
     StormRuler PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
 endif()
+
+target_compile_options(
+  StormRuler PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast>)

@@ -278,8 +278,8 @@ pure function PixelToInt(colorChannels) result(int)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   int = ior(iand(255, colorChannels(1)), &
-            ior(ishft(iand(255, colorChannels(2)), 8), &
-                ishft(iand(255, colorChannels(3)), 16)))
+    &       ior(ishft(iand(255, colorChannels(2)), 8), &
+    &           ishft(iand(255, colorChannels(3)), 16)))
 end function PixelToInt
 
 !! ----------------------------------------------------------------- !!

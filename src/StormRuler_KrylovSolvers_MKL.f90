@@ -29,7 +29,7 @@ module StormRuler_KrylovSolvers_MKL
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Mesh, only: tMesh
-use StormRuler_KrylovSolvers, only: @{tMatMulFunc$$@|@0, NUM_RANKS}@
+use StormRuler_KrylovSolvers, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
 
 #$if HAS_MKL
 use, intrinsic :: iso_fortran_env, only: error_unit
@@ -41,11 +41,11 @@ use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
 
 implicit none
 
-logical, parameter :: &
-  & gMKL_RCI_printDebugInformation = .false.
+integer(ip), parameter :: &
+  & gMKL_RCI_DebugLevel = 1
 
 integer(ip), parameter :: &
-  & gFGMRES_MKL_numNonRestartedIterations = 150
+  & gFGMRES_MKL_NumNonRestartedIterations = 150
 
 #$if HAS_MKL
 interface Solve_CG_MKL
@@ -74,13 +74,13 @@ contains
 !! operator equation: Au = b, using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatMulFunc$rank) :: MatMul
+  procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -148,10 +148,10 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatMul, env, params)
       call dcg(n, u, b, rci_request, iparams, dparams, tmp)
       if (rci_request == 0) exit
       if (rci_request == 1) then
-        if (gMKL_RCI_printDebugInformation) &
+        if (gMKL_RCI_DebugLevel > 0) &
           & print *, 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        call MatMul(mesh, out, in, env)
+        call MatVec(mesh, out, in, env)
       else
         write(error_unit, *) 'MKL DCG FAILED'
         error stop 1
@@ -168,13 +168,13 @@ end subroutine Solve_CG_MKL$rank
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
   include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatMulFunc$rank) :: MatMul
+  procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -191,7 +191,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
   ! Formula is used:
   ! (2*ipar[14] + 1)*n + ipar[14]*(ipar[14] + 9)/2 + 1)
   n = size(u)
-  associate(k => gFGMRES_MKL_numNonRestartedIterations)
+  associate(k => gFGMRES_MKL_MaxNumNonRestartedIterations)
     associate(m => (2*k + 1)*n + k*(k + 9)/2 + 1)
       allocate(tmp(0:(m-1)))
     end associate
@@ -240,14 +240,14 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
     ! value < 0: only get the iteration number.
     dfgmres_getRoutineBehaviour = 0
     numNonRestartedIterations = &
-      & gFGMRES_MKL_numNonRestartedIterations
+      & gFGMRES_MKL_MaxNumNonRestartedIterations
   end associate
   call dfgmres_check(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request == -1100) then
     write(error_unit, *) &
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
-  else if (gMKL_RCI_printDebugInformation) then
+  else if (gMKL_RCI_DebugLevel > 0) then
     print *, &
       & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if
@@ -264,17 +264,17 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
       if (rci_request == 1) then
         associate(inOffset => (iparams(21) - 1), &
           &      outOffset => (iparams(22) - 1))
-          if (gMKL_RCI_printDebugInformation) &
+          if (gMKL_RCI_DebugLevel > 1) &
             & print *, 'IN/OUT=', inOffset/n, outOffset/n
           call c_f_pointer( &
             & cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
           call c_f_pointer( &
             & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
         end associate
-        if (gMKL_RCI_printDebugInformation) &
+        if (gMKL_RCI_DebugLevel > 0) &
           & print *, 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        call MatMul(mesh, out, in, env)
+        call MatVec(mesh, out, in, env)
       else
         write(error_unit, *) &
           & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request
@@ -292,7 +292,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatMul, env, params)
       & 'MKL DFGMRES_GET FAILED, RCI_REQUEST=', rci_request
     error stop 1
   end if
-  if (gMKL_RCI_printDebugInformation) &
+  if (gMKL_RCI_DebugLevel > 1) &
     & print *, 'ITERCOUNT=', itercount
 end subroutine Solve_FGMRES_MKL$rank
 #$end do

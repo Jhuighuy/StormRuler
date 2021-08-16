@@ -564,8 +564,8 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
         class is(IOListItem$1)
           write(unit, "('VECTORS ', A, ' double')") item%name 
           do iCell = 1, mesh%NumCells
-            associate(v => [item%values(:,iCell), 0.0_dp])
-              write(unit, '(A, " ", A, " ", A)') R2S(v(1)), R2S(v(2)), R2S(v(3))
+            associate(v => item%values(:,iCell))
+              write(unit, '(A, " ", A, " ", A)') R2S(v(1)), R2S(v(2)), '0.0'
             end associate
           end do
         end select

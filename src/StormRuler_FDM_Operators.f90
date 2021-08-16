@@ -38,7 +38,7 @@ use StormRuler_BLAS, only: &
 
 implicit none
 
-integer(ip), parameter :: gAccuracyOrder = 8
+integer(ip), parameter :: gFDM_AccuracyOrder = 2
 
 private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
 
@@ -197,7 +197,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar)
-  do iCell = 1, mesh%NumCells;  block
+  do iCell = 1, mesh%NumCells; block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -206,13 +206,13 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gAccuracyOrder >= 3) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gAccuracyOrder >= 5) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gAccuracyOrder >= 7) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -224,7 +224,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1:2)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               &  ( dr_inv.outer.FD1_C2(u(@:,lCell), &
@@ -301,13 +301,13 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
           &     lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gAccuracyOrder >= 3) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gAccuracyOrder >= 5) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gAccuracyOrder >= 7) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -319,7 +319,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C2(u_bar(:,@:,lCell), &
@@ -540,16 +540,16 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (gAccuracyOrder >= 2) then
+          if (gFDM_AccuracyOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (gAccuracyOrder >= 4) then
+            if (gFDM_AccuracyOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (gAccuracyOrder >= 6) then
+              if (gFDM_AccuracyOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (gAccuracyOrder >= 8) then
+                if (gFDM_AccuracyOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -563,7 +563,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F1(u(@:,iCell), &
@@ -688,16 +688,16 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (gAccuracyOrder >= 2) then
+          if (gFDM_AccuracyOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (gAccuracyOrder >= 4) then
+            if (gFDM_AccuracyOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (gAccuracyOrder >= 6) then
+              if (gFDM_AccuracyOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (gAccuracyOrder >= 8) then
+                if (gFDM_AccuracyOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -711,7 +711,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F1(u_bar(:,@:,rCell), &
@@ -925,13 +925,13 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gAccuracyOrder >= 3) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gAccuracyOrder >= 5) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gAccuracyOrder >= 7) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -943,7 +943,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
       ! Compute FDM-approximate Laplacian increment.
       ! ----------------------
       associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * FD2_C2(u(@:,lCell), &
@@ -1140,13 +1140,13 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gAccuracyOrder >= 3) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gAccuracyOrder >= 5) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gAccuracyOrder >= 7) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -1158,7 +1158,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
       ! Compute FDM-approximate weighted Laplacian increment.
       ! ----------------------
       associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
-        select case(gAccuracyOrder)
+        select case(gFDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C2(w(@:,lCell), u(@:,lCell), &

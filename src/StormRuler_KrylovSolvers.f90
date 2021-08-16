@@ -39,13 +39,13 @@ implicit none
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine tMatMulFunc$rank(mesh, Au, u, env)
+  subroutine tMatVecFunc$rank(mesh, Au, u, env)
     import :: dp, tMesh
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), target :: u(@:,:)
     real(dp), intent(inout), target :: Au(@:,:)
     class(*), intent(in) :: env
-  end subroutine tMatMulFunc$rank
+  end subroutine tMatVecFunc$rank
 #$end do
 end interface
 
@@ -71,12 +71,12 @@ contains
 !! operator equation: Au = b, using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatMulFunc$rank) :: MatMul
+  procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -89,7 +89,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
   ! t ← Au,
   ! r ← b - t.
   ! ----------------------
-  call MatMul(mesh, t, u, env)
+  call MatVec(mesh, t, u, env)
   call Sub(mesh, r, b, t)
   ! ----------------------
   ! δ ← <r⋅r>,
@@ -111,7 +111,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatMul, env, params)
     ! u ← u + α⋅z,
     ! r ← r - α⋅g,
     ! ----------------------
-    call MatMul(mesh, t, p, env)
+    call MatVec(mesh, t, p, env)
     alpha = SafeDivide(gamma, Dot(mesh, p, t))
     call Add(mesh, u, u, p, alpha)
     call Sub(mesh, r, r, t, alpha)
@@ -140,12 +140,12 @@ end subroutine Solve_CG$rank
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
+subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatMulFunc$rank) :: MatMul
+  procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(in) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -159,7 +159,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
   ! t ← Au,
   ! r ← b - t.
   ! ----------------------
-  call MatMul(mesh, t, u, env)
+  call MatVec(mesh, t, u, env)
   call Sub(mesh, r, b, t)
   ! ----------------------
   ! δ ← <r⋅r>,
@@ -194,7 +194,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
     ! ----------------------
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
-    call MatMul(mesh, v, p, env)
+    call MatVec(mesh, v, p, env)
     
     ! ----------------------
     ! α ← ρ/<h⋅v>,
@@ -203,7 +203,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatMul, env, params)
     ! ----------------------
     alpha = SafeDivide(rho, Dot(mesh, h, v))
     call Sub(mesh, s, r, v, alpha)
-    call MatMul(mesh, t, s, env)
+    call MatVec(mesh, t, s, env)
     
     ! ----------------------
     ! ω ← <t⋅s>/<t⋅t>,

@@ -26,8 +26,8 @@ module StormRuler_IO
 
 #$use 'StormRuler_Parameters.f90'
   
-use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: PixelToInt, IntToPixel
+use StormRuler_Parameters, only: dp, ip
+use StormRuler_Helpers, only: I2S, PixelToInt, IntToPixel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -88,23 +88,23 @@ end subroutine IOList_Add$rank
 
 !! -----------------------------------------------------------------
 !! Load PPM image.
-subroutine Load_PPM(file, pixels)
+subroutine Load_PPM(file, image)
   ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
-  integer, allocatable, intent(out) :: pixels(:,:)
+  integer(ip), allocatable, intent(out) :: image(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: unit, offset
-  integer :: numRows, numColumns
+  integer(ip) :: unit, offset
+  integer(ip) :: numRows, numColumns
 
   ! ----------------------
   ! Parse PPM header.
   ! ----------------------
   block
     character(len=2) :: magic
-    integer :: colorRange
+    integer(ip) :: colorRange
     open(newunit=unit, file=file, &
-         access='stream', form='formatted', status='old')
+      &  access='stream', form='formatted', status='old')
     read(unit, '(A2)') magic
     if (magic/='P6') &
       error stop 'unexpected PPM magic, "P6" expected'
@@ -116,21 +116,21 @@ subroutine Load_PPM(file, pixels)
     close(unit)
   end block
   ! ----------------------
-  ! Allocate and read image pixels.
+  ! Allocate and read image image.
   ! ----------------------
   block
     character :: byte, bytes(3)
-    integer :: row, column, colorChannel
-    allocate(pixels(0:numRows-1, 0:numColumns-1))
+    integer(ip) :: iRow, iColumn, iColorChannel
+    allocate(image(0:numRows-1, 0:numColumns-1))
     open(newunit=unit, file=file, &
          access='stream', status='old')
     read(unit, pos=offset-1) byte
-    do column = numColumns-1, 0, -1
-      do row = 0, numRows-1
-        do colorChannel = 1, 3
-          read(unit) byte; bytes(colorChannel) = byte
+    do iColumn = numColumns-1, 0, -1
+      do iRow = 0, numRows-1
+        do iColorChannel = 1, 3
+          read(unit) byte; bytes(iColorChannel) = byte
         end do
-        pixels(row, column) = PixelToInt(iachar(bytes))
+        image(iRow, iColumn) = PixelToInt(iachar(bytes))
       end do
     end do
     close(unit)
@@ -138,40 +138,43 @@ subroutine Load_PPM(file, pixels)
 end subroutine Load_PPM
 !! -----------------------------------------------------------------  
 
-!! -----------------------------------------------------------------
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Save PPM image.  
-subroutine Save_PPM(file, pixels)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Save_PPM(file, image)
   ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
-  integer, intent(in) :: pixels(:,:)
+  integer(ip), intent(in) :: image(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer :: unit
-  integer :: numRows, numColumns
-  integer :: row, column, colorChannel
+  integer(ip) :: unit
+  character :: bytes(3)
+  integer(ip) :: iRow, numRows, iColumn, numColumns
   
+  open(newunit=unit, file=file, access='stream', status='replace')
+
   ! ----------------------
   ! Write PPM header.
   ! ----------------------
-  numRows = size(pixels, dim=1) 
-  numColumns = size(pixels, dim=2)
-  open(newunit=unit, file=file, status='replace')
-  write(unit, '(A2)') 'P6'
-  write(unit, '(I0, " ", I0)') numRows, numColumns
-  write(unit, '(I0)') 255
+  numRows = size(image, dim=1) 
+  numColumns = size(image, dim=2)
+  write(unit) 'P6'//char(10)
+  write(unit) I2S(numRows)//' '//I2S(numColumns)//char(10)
+  write(unit) '255'//char(10)
+  
   ! ----------------------
-  ! Write PPM image pixels.
+  ! Write PPM image image.
   ! ----------------------
-  do column = numColumns, 1, -1
-    do row = 1, numRows
-      do colorChannel = 0, 2
-        write(unit, '(A1)', advance='no') &
-          achar(iand(255, ishft(pixels(row, column), -8*colorChannel)))
-      end do
+  do iColumn = 1, numColumns
+    do iRow = 1, numRows
+      bytes(:) = achar( IntToPixel(image(iRow, iColumn)) )
+      write(unit) bytes(1)
+      write(unit) bytes(2)
+      write(unit) bytes(3)
     end do
   end do
+
   close(unit)
 end subroutine Save_PPM
-!! -----------------------------------------------------------------  
 
 end module StormRuler_IO

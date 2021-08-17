@@ -30,6 +30,9 @@ use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: &
   & @{tMapFunc$$, tSMapFunc$$@|@0, NUM_RANKS}@, &
   & operator(.inner.), operator(.outer.)
+#$if HAS_MKL
+use StormRuler_Helpers, only: SameAddresses
+#$end if
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -222,17 +225,19 @@ subroutine Add$rank(mesh, z, y, x, alpha, beta)
   b = 1.0_dp; if (present(beta)) b = beta
 
   block
-#$if HAS_MKL
+#$if HAS_MKL and False
 
-    integer :: n
+    !integer :: n
 
-    ! ----------------------
-    ! y → z,
-    ! αx + βz → z.
-    ! ----------------------
-    n = int( mesh%FieldSize(z) )
-    call dcopy(n, y, 1, z, 1)
-    call daxpby(n, a, x, 1, b, z, 1)
+    !n = int( mesh%FieldSize(z) )
+    !if (SameAddresses(z, x)) then
+    !  call daxpby(n, b, y, 1, a, z, 1)
+    !else
+    !  if (.not.SameAddresses(z, y)) then
+    !    call dcopy(n, y, 1, z, 1)
+    !  end if
+    !  call daxpby(n, a, x, 1, b, z, 1)
+    !end if
 
 #$else
 
@@ -270,15 +275,7 @@ subroutine Sub$rank(mesh, z, y, x, alpha, beta)
   block
 #$if HAS_MKL and False
 
-    integer :: n
-
-    ! ----------------------
-    ! z ← y,
-    ! z ← (-α)x + βy
-    ! ----------------------
-    n = int( mesh%FieldSize(z) )
-    call dcopy(n, y, 1, z, 1)
-    call daxpby(n, -a, x, 1, b, z, 1)
+    !call Add(mesh, z, y, x, -a, b)
 
 #$else
 

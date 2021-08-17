@@ -27,7 +27,7 @@ module StormRuler_Matrix
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: I2S, R2S, PixelToInt
+use StormRuler_Helpers, only: I2S, R2S, BubbleSort, PixelToInt
 use StormRuler_Mesh, only: tMesh
 use StormRuler_KrylovSolvers, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
 
@@ -58,6 +58,8 @@ type :: tSparseMatrix
   ! Shape is [1, NumRowColumns]×[1, NumRows].
   ! ----------------------
   real(dp), allocatable :: RowColumnValues(:,:)
+
+  integer(ip), allocatable :: RowColumnPtr(:)
 end type tSparseMatrix
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -163,6 +165,8 @@ subroutine MakeMatrix_Basic$rank(mesh, mat, stencilHalfWidth, symmetric, MatVec,
         mat%RowColumnIndices(iRowColumn, iCell) = iiCell
       end do
     end do
+
+    call BubbleSort( mat%RowColumnIndices(:, iCell) )
   end do
   !#omp end parallel do
 
@@ -191,6 +195,77 @@ subroutine MakeMatrix_Basic$rank(mesh, mat, stencilHalfWidth, symmetric, MatVec,
     end do
   end do
 end subroutine MakeMatrix_Basic$rank
+#$end do
+
+#$do rank = 0, 0*NUM_RANKS
+subroutine Solve_DSS_MKL$rank(mesh, u, b, MatVec, env)
+  include 'mkl_dss.fi'
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(in) :: env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  type(tSparseMatrix) :: mat
+  integer(ip) :: iCell
+
+  integer(8) :: handle
+  integer :: ierr
+
+  call MakeMatrix_Basic0(mesh, mat, 1, .true., MatVec, env)
+  allocate( mat%RowColumnPtr(mat%NumRows + 1) )
+  mat%RowColumnPtr(1) = 1
+  do iCell = 1, mat%NumRows
+    mat%RowColumnPtr(iCell + 1) = &
+      & mat%RowColumnPtr(iCell) + mat%NumRowColumns
+  end do
+
+  !print *, 'dss_create'
+  ierr = dss_create(handle, MKL_DSS_DEFAULTS)
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'DSS_CREATE FAILED'
+    error stop 1
+  end if
+  
+  !print *, 'dss_define_structure'
+  ierr = dss_define_structure( &
+    & handle, MKL_DSS_NON_SYMMETRIC, mat%RowColumnPtr, mat%NumRows, mat%NumRows, &
+    & mat%RowColumnIndices, mat%NumRows*mat%NumRowColumns )
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'dss_define_structure FAILED'
+    error stop 1
+  end if
+  
+  !print *, 'dss_reorder'
+  ierr = dss_reorder(handle, MKL_DSS_AUTO_ORDER, [0])
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'dss_reorder FAILED'
+    error stop 1
+  end if
+
+  !print *, 'dss_factor_real_d'
+  ierr = dss_factor_real_d(handle, MKL_DSS_POSITIVE_DEFINITE, mat%RowColumnValues)
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'dss_factor_real_d FAILED'
+    error stop 1
+  end if
+
+  !print *, 'dss_solve_real_d'
+  ierr = dss_solve_real_d(handle, MKL_DSS_DEFAULTS, b, 1, u)
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'dss_solve_real_d FAILED'
+    error stop 1
+  end if
+
+  !print *, 'dss_delete'
+  ierr = dss_delete(handle, MKL_DSS_DEFAULTS)
+  if (ierr /= MKL_DSS_SUCCESS) then
+    print *, 'dss_solve_real_d FAILED'
+    error stop 1
+  end if
+end subroutine Solve_DSS_MKL$rank
 #$end do
 
 end module StormRuler_Matrix

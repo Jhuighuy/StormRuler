@@ -49,17 +49,11 @@ subroutine SolvePoisson(mesh,u,f)
   !call Params%Init(1.0D-8, 1.0D-8, 100000)
   ! ----------------------
 
-  !block
-  !  type(tSparseMatrix) :: mat
-  !  call MakeMatrix_Basic0(mesh, mat, 4, .true., PoissonOperator, Params)
-  !  print *, 'done'
-  !  call Matrix_SaveTo_MatrixMarket(mat, 'test/mm.mtx')
-  !  error stop 1488
-  !end block
 
   call Fill(mesh,u,0.0_dp)
   !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
-  call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
+  !call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
+  call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)
     class(tMesh), intent(in) :: mesh

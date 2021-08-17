@@ -53,7 +53,7 @@ program nsch
   class(tMesh), allocatable :: mesh, mesh1
   type(IOList) :: fields
   integer(ip), allocatable :: colorToBCM(:)
-  
+
   ! ----------------------
   ! Print an epic banner.
   print *, ''

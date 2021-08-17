@@ -34,39 +34,41 @@ project(StormRuler
         DESCRIPTION "A very high order CFD solver"
         LANGUAGES Fortran CXX)
 
-file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
-file(GLOB_RECURSE CXX_SOURCES "src/*.cpp")
-
-add_executable(StormRuler ${Fortran_SOURCES} ${CXX_SOURCES})
-
-# Require C++17.
-set_target_properties(
-  StormRuler PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
-
-# Main is located in C++, so let C++ linker work.
-set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE CXX)
-
-# Specify compilation output directories.
-set_target_properties(
-  StormRuler PROPERTIES 
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-# Bug in CMake or NAG?
-if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-set_target_properties(
-    StormRuler PROPERTIES 
-    Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-else()
-  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-endif()
+# A container library that stores all the properties.
+add_library(StormRuler_BASE INTERFACE)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Libraries and preprocessing.
+## Compilation options.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+# NAG (unexpectedly) uses some wierd notation for kinds by default.
+# Switch to the normal system.
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+  target_compile_options(
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
+endif()
+
+target_compile_options(
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast>)
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Libraries.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 set(Fortiel_DEFINES "")
+
+# Find Git and update submodules.
+find_package(Git)
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
+  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
+    message(FATAL_ERROR 
+            "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
+  endif()
+endif()
 
 # TODO: we should check for quality of the OpenMP implementation,
 # e.g. support of block constructs inside of the parallel loops.
@@ -84,7 +86,7 @@ else()
     if(OpenMP_Fortran_ENABLED)
       message(STATUS "Fortran OpenMP enabled.")
       set(Fortiel_DEFINES "${Fortiel_DEFINES} -DHAS_OPENMP=True")
-      target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_Fortran)
+      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
     endif()
   endif()
   if(OpenMP_CXX_FOUND)
@@ -102,7 +104,7 @@ else()
     endif()
     if(OpenMP_CXX_ENABLED)
       message(STATUS "C++ OpenMP enabled.")
-      target_link_libraries(StormRuler PUBLIC OpenMP::OpenMP_CXX)
+      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
     else()
       message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
     endif()
@@ -127,29 +129,36 @@ else()
   set(MKL_INTERFACE lp64)
   find_package(MKL CONFIG)
   if(MKL_FOUND)
-    target_link_libraries(StormRuler PUBLIC MKL::MKL)
+    set(MKL_ENABLED 1)
+    message(STATUS "MKL enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
     # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
     #target_compile_options(
-    #  StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
+    #  StormRuler_BASE INTERFACE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
     #target_include_directories(
-    #  StormRuler PUBLIC $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
+    #  StormRuler_BASE INTERFACE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
     #target_link_libraries(
-    #  StormRuler PUBLIC $<LINK_ONLY:MKL::MKL>)
+    #  StormRuler_BASE INTERFACE $<LINK_ONLY:MKL::MKL>)
   endif()
 endif()
 
-# Find Git and update submodules.
-find_package(Git)
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
-  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
-    message(FATAL_ERROR 
-            "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
-  endif()
+# Build MUDPACK.
+if(StormRuler_NO_MUDPACK)
+  message(STATUS "StormRuler MUDPACK was disabled by user.")
+else()
+  set(MUDPACK_ENABLED 1)
+  message(STATUS "MUDPACK enabled.")
+  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/mudpack")
+  target_link_libraries(StormRuler_BASE INTERFACE MUDPACK)
 endif()
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Sources and preprocessing.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+# Locate the Fortran and C++ sources.
+file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
+file(GLOB_RECURSE CXX_SOURCES "src/*.cpp")
 
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
@@ -177,18 +186,34 @@ foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
     VERBATIM)
   list(APPEND Fortran_SOURCES_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}")
 endforeach()
-target_sources(StormRuler PRIVATE ${Fortran_SOURCES_PREPROCESSED})
+set(Fortran_SOURCES ${Fortran_SOURCES_PREPROCESSED})
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Compilation options.
+## Main executable.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-# NAG (unexpectedly) uses some wierd notation for kinds by default.
-# Switch to the normal system.
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-  target_compile_options(
-    StormRuler PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
+add_executable(StormRuler ${Fortran_SOURCES} ${CXX_SOURCES})
+
+# Link with the base target.
+target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
+
+# Specify compilation output directories.
+set_target_properties(
+  StormRuler PROPERTIES 
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+# Bug in CMake or NAG?
+if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+set_target_properties(
+  StormRuler PROPERTIES 
+    Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+else()
+  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 endif()
 
-target_compile_options(
-  StormRuler PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast>)
+# Require C++17.
+set_target_properties(
+  StormRuler PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
+
+# Main is located in C++, so let C++ linker work.
+set_target_properties(
+  StormRuler PROPERTIES LINKER_LANGUAGE Fortran)

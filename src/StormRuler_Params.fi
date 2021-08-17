@@ -22,21 +22,9 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Parameters
 
-use, intrinsic :: iso_fortran_env, only: int8, int32
-use, intrinsic :: iso_c_binding
+#$let NUM_RANKS = 2
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+#$let HAS_MKL = True
 
-implicit none
-
-!! Double persicion kind for real numbers.
-integer, parameter :: dp = c_double
-
-integer, parameter :: ip = int32
-
-integer, parameter :: i8 = int8
-
-end module StormRuler_Parameters
+#$let NAG_COMPILER = True

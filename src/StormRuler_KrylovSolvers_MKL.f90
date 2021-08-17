@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_KrylovSolvers_MKL
 
-#$use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_ConvParams, only: tConvParams
@@ -41,11 +41,15 @@ use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
 
 implicit none
 
-integer(ip), parameter :: &
-  & gMKL_RCI_DebugLevel = 1
+#$if HAS_MKL
+include 'mkl_rci.fi'
+#$end if
 
 integer(ip), parameter :: &
-  & gFGMRES_MKL_NumNonRestartedIterations = 150
+  & gMKL_RCI_DebugLevel = 1_ip
+
+integer(ip), parameter :: &
+  & gFGMRES_MKL_MaxNumNonRestartedIterations = 150_ip
 
 #$if HAS_MKL
 interface Solve_CG_MKL
@@ -75,7 +79,6 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
-  include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
@@ -148,7 +151,7 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
       call dcg(n, u, b, rci_request, iparams, dparams, tmp)
       if (rci_request == 0) exit
       if (rci_request == 1) then
-        if (gMKL_RCI_DebugLevel > 0) &
+        if (gMKL_RCI_DebugLevel > 0_ip) &
           & print *, 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
         call MatVec(mesh, out, in, env)
@@ -169,7 +172,6 @@ end subroutine Solve_CG_MKL$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
-  include 'mkl_rci.fi'
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: b(@:,:)
@@ -192,8 +194,8 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
   ! (2*ipar[14] + 1)*n + ipar[14]*(ipar[14] + 9)/2 + 1)
   n = size(u)
   associate(k => gFGMRES_MKL_MaxNumNonRestartedIterations)
-    associate(m => (2*k + 1)*n + k*(k + 9)/2 + 1)
-      allocate(tmp(0:(m-1)))
+    associate(m => (2_ip*k + 1_ip)*n + k*(k + 9_ip)/2_ip + 1_ip)
+      allocate(tmp(0_ip:(m-1_ip)))
     end associate
   end associate
 
@@ -247,7 +249,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
     write(error_unit, *) &
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
-  else if (gMKL_RCI_DebugLevel > 0) then
+  else if (gMKL_RCI_DebugLevel > 0_ip) then
     print *, &
       & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if
@@ -264,14 +266,14 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
       if (rci_request == 1) then
         associate(inOffset => (iparams(21) - 1), &
           &      outOffset => (iparams(22) - 1))
-          if (gMKL_RCI_DebugLevel > 1) &
+          if (gMKL_RCI_DebugLevel > 1_ip) &
             & print *, 'IN/OUT=', inOffset/n, outOffset/n
           call c_f_pointer( &
             & cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
           call c_f_pointer( &
             & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
         end associate
-        if (gMKL_RCI_DebugLevel > 0) &
+        if (gMKL_RCI_DebugLevel > 0_ip) &
           & print *, 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
         call MatVec(mesh, out, in, env)

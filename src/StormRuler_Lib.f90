@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Lib
 
-#$use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers

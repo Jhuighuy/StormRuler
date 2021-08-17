@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Mesh
 
-#$use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip, IndexOf, I2S, R2S, IntToPixel
@@ -130,6 +130,10 @@ type :: tMesh
 contains
   ! ----------------------
   procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
+  generic :: FieldSize => @{FieldSize$$@|@0, NUM_RANKS}@
+#$do rank = 0, NUM_RANKS
+  procedure :: FieldSize$rank => tMesh_FieldSize$rank
+#$end do
   ! ----------------------
   procedure :: InitRect => tMesh_InitRect
   procedure :: InitFromImage2D => tMesh_InitFromImage2D
@@ -147,6 +151,18 @@ private tMesh_InitRect
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
+
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+#$do rank = 0, NUM_RANKS
+integer(ip) function tMesh_FieldSize$rank(mesh, field)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: field(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  tMesh_FieldSize$rank = size(field)*mesh%NumCells/mesh%NumAllCells
+end function tMesh_FieldSize$rank
+#$end do
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!

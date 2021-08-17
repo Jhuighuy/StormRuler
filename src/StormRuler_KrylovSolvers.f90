@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_KrylovSolvers
 
-#$use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
 use StormRuler_ConvParams, only: tConvParams
@@ -117,7 +117,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
     call Sub(mesh, r, r, t, alpha)
 
     ! ----------------------
-    ! α ← <r, r>,
+    ! α ← <r⋅r>,
     ! check convergence for √α and √α/√δ.
     ! ----------------------
     alpha = Dot(mesh, r, r)
@@ -125,7 +125,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
 
     ! ----------------------
     ! β ← α/γ,
-    ! p ← β⋅z + r.
+    ! p ← r + β⋅p.
     ! γ ← α.
     ! ----------------------
     beta = SafeDivide(alpha, gamma)
@@ -151,8 +151,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  real(dp), allocatable :: &
-    & h(@:,:), p(@:,:), r(@:,:), s(@:,:), t(@:,:), v(@:,:)
+  real(dp), allocatable :: h(@:,:), p(@:,:), r(@:,:), s(@:,:), t(@:,:), v(@:,:)
   allocate(h, p, r, s, t, v, mold=u)
 
   ! ----------------------

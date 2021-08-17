@@ -24,7 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_BLAS
 
-#$use 'StormRuler_Parameters.f90'
+#$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: &
@@ -36,6 +36,10 @@ use StormRuler_Mesh, only: tMesh
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+#$if HAS_MKL
+include 'mkl_blas.fi'
+#$end if
 
 interface Fill
 #$do rank = 0, NUM_RANKS
@@ -103,14 +107,14 @@ end interface SFuncProd
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components: u ← α.
+!! Fill vector components: y ← α.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Fill$rank(mesh, u, alpha)
+subroutine Fill$rank(mesh, y, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: alpha
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: iCell
@@ -118,62 +122,83 @@ subroutine Fill$rank(mesh, u, alpha)
   ! ----------------------
   !$omp parallel do schedule(static) 
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = alpha
+    y(@:,iCell) = alpha
   end do
   !$omp end parallel do
 end subroutine Fill$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! u ← v
+!! Assign: y ← x.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Set$rank(mesh, u, v)
+subroutine Set$rank(mesh, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
+#$if HAS_MKL
+
+  integer :: n
+
+  n = int( mesh%FieldSize(y) )
+  call dcopy(n, x, 1, y, 1)
+    
+#$else
+
   integer(ip) :: iCell
-  
+
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp default(private) shared(mesh, u, v)
   do iCell = 1, mesh%NumCells
-    u(@:,iCell) = v(@:,iCell)
+    y(@:,iCell) = x(@:,iCell)
   end do
   !$omp end parallel do
+  
+#$end if
 end subroutine Set$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute dot product: d ← <u⋅v>.
+!! Compute dot product: d ← <x⋅y>.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-function Dot$rank(mesh, u, v) result(d)
+function Dot$rank(mesh, x, y) result(d)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:), v(@:,:)
+  real(dp), intent(in) :: x(@:,:), y(@:,:)
   real(dp) :: d
   ! >>>>>>>>>>>>>>>>>>>>>>
   
+#$if HAS_MKL
+
+  integer :: n
+
+  n = int( mesh%FieldSize(x) )
+  d = ddot(n, x, 1, y, 1)
+
+#$else
+
   integer(ip) :: iCell
   
   d = 0.0_dp
+
   ! ----------------------
   !$omp parallel do reduction(+:d) schedule(static) &
-  !$omp & default(private) shared(mesh, u, v)
+  !$omp & default(private) shared(mesh, x, y)
   do iCell = 1, mesh%NumCells
 #$if rank == 0
-    d = d + u(iCell)*v(iCell)
-#$else if rank == 1
-    d = d + dot_product(u(:,iCell), v(:,iCell))
+    d = d + x(iCell) * y(iCell)
 #$else
-    d = d + sum(u(@:,iCell)*v(@:,iCell))
+    d = d + sum(x(@:,iCell) * y(@:,iCell))
 #$end if
   end do
   !$omp end parallel do
+
+#$end if
 end function Dot$rank
 #$end do
 
@@ -181,56 +206,94 @@ end function Dot$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute linear combination: u ← βv + αw.
+!! Compute linear combination: z ← βy + αx.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Add$rank(mesh, u, v, w, alpha, beta)
+subroutine Add$rank(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:), w(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(in) :: x(@:,:), y(@:,:)
+  real(dp), intent(inout) :: z(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(mesh, a, b, u, v, w)
-  do iCell = 1, mesh%NumCells
-    u(@:,iCell) = b*v(@:,iCell) + a*w(@:,iCell)
-  end do
-  !$omp end parallel do
+
+  block
+#$if HAS_MKL
+
+    integer :: n
+
+    ! ----------------------
+    ! y → z,
+    ! αx + βz → z.
+    ! ----------------------
+    n = int( mesh%FieldSize(z) )
+    call dcopy(n, y, 1, z, 1)
+    call daxpby(n, a, x, 1, b, z, 1)
+
+#$else
+
+    integer(ip) :: iCell
+
+    ! ----------------------
+    !$omp parallel do schedule(static) &
+    !$omp & default(private) shared(mesh, a, b, x, y, z)
+    do iCell = 1, mesh%NumCells
+      z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
+    end do
+    !$omp end parallel do
+
+#$end if
+  end block
 end subroutine Add$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute linear combination: u ← βv - αw.
+!! Compute linear combination: z ← βy - αx.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Sub$rank(mesh, u, v, w, alpha, beta)
+subroutine Sub$rank(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: v(@:,:), w(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(in) :: x(@:,:), y(@:,:)
+  real(dp), intent(inout) :: z(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(mesh, a, b, u, v, w)
-  do iCell = 1, mesh%NumCells
-    u(@:,iCell) = b*v(@:,iCell) - a*w(@:,iCell)
-  end do
-  !$omp end parallel do
+
+  block
+#$if HAS_MKL and False
+
+    integer :: n
+
+    ! ----------------------
+    ! z ← y,
+    ! z ← (-α)x + βy
+    ! ----------------------
+    n = int( mesh%FieldSize(z) )
+    call dcopy(n, y, 1, z, 1)
+    call daxpby(n, -a, x, 1, b, z, 1)
+
+#$else
+
+    integer(ip) :: iCell
+    
+    ! ----------------------
+    !$omp parallel do schedule(static) &
+    !$omp & default(private) shared(mesh, a, b, x, y, z)
+    do iCell = 1, mesh%NumCells
+      z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
+    end do
+    !$omp end parallel do
+
+#$end if
+  end block
 end subroutine Sub$rank
 #$end do
 

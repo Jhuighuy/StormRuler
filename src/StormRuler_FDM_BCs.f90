@@ -24,8 +24,8 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FDM_BCs
 
-#$use 'StormRuler_Parameters.f90'
-  
+#$use 'StormRuler_Params.fi'
+
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip, @{tSMapFunc$$@|@0, NUM_RANKS}@
 use StormRuler_Mesh, only: tMesh

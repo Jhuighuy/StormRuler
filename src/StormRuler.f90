@@ -57,6 +57,8 @@ program nsch
   integer(ip), allocatable :: colorToBCM(:)
   type(tConvParams) :: params
 
+  call system('pause')
+
   ! ----------------------
   ! Print an epic banner.
   print *, ''

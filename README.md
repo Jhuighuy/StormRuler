@@ -77,3 +77,7 @@ amount of the matrix-vector products required to construct it.
     (for the general nonlinear problems),
   * _(planned)_ Jacobian-Free Newton-Raphson solver 
     (for the general nonlinear problems),
+
+- Specialized solvers:
+  * _MUDPACK 5.0.1_ based solvers for various elliptic problems,
+    like ∇⋅(κ∇u) + λu = b, in a rectangular domain.

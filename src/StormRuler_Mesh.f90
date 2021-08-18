@@ -481,8 +481,14 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! ----------------------
   write(unit, "('POINTS ', A, ' double')") I2S(mesh%NumCells)
   do iCell = 1, mesh%NumCells
-    associate(iCellMD => [mesh%CellMDIndex(:,iCell), 0])
-      write(unit, "(A, ' ', A, ' ', A)") I2S(iCellMD(1)), I2S(iCellMD(2)), I2S(iCellMD(3))
+    associate(iCellCenter => mesh%dl(::2)*mesh%CellMDIndex(:,iCell))
+      if (mesh%Dim == 2) then
+        write(unit, "(A, ' ', A, ' ', A)") &
+          & R2S(iCellCenter(1)), R2S(iCellCenter(2)), '0.0'
+      else
+        write(unit, "(A, ' ', A, ' ', A)") &
+          & R2S(iCellCenter(1)), R2S(iCellCenter(2)), R2S(iCellCenter(3))
+      end if
     end associate
   end do
   write(unit, "(A)") ''

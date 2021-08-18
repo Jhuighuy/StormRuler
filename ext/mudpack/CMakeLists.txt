@@ -36,5 +36,11 @@ target_link_libraries(
   MUDPACK PUBLIC StormRuler_BASE)
 
 # Use unlimited line length in fixed mode.
-target_compile_options(
-  MUDPACK INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-ffixed-line-length-none>)
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(
+    MUDPACK INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-ffixed-line-length-none>)
+else()
+  target_compile_options(
+    MUDPACK INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-extend-source=132>)
+endif()
+  

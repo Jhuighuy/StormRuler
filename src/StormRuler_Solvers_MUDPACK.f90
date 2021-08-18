@@ -60,7 +60,7 @@ end interface
 interface
   subroutine mud2sa( &
     & iparm,fparm,work,sigx,sigy,xlmbda,bndyc,rhs,phi,mgopt,ierror)
-    import dp
+    import dp, tFunc_mud2sa, tBoundary_mud2sa
     integer :: iparm(17), mgopt(4), ierror
     real(dp) :: fparm(6), work(*), rhs(*), phi(*)
     procedure(tFunc_mud2sa) :: sigx, sigy, xlmbda
@@ -76,9 +76,10 @@ private :: mud2sa!, mud3sa
 contains
 
 !! ----------------------------------------------------------------- !!
-!! Solve equation: coef*( 2**(exp-1) ) + 1 == size, coef > 1.
+!! Split size into the coefficient and exponent: 
+!! coef*( 2**(exp-1) ) + 1 == size, coef > 1.
 !! ----------------------------------------------------------------- !!
-subroutine SplitSize(size, coef, exp)
+subroutine SplitSize_MUDPACK(size, coef, exp)
   ! <<<<<<<<<<<<<<<<<<<<<<
   integer, intent(in) :: size
   integer, intent(out) :: coef, exp
@@ -96,8 +97,7 @@ subroutine SplitSize(size, coef, exp)
     end associate
   end do
   coef = size - 1; exp = 1
-
-end subroutine SplitSize
+end subroutine SplitSize_MUDPACK
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve second-order approximate variable weight Laplacian
@@ -169,8 +169,8 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
     ! numNodes_y = numNodes_x_coef*( 2**(numNodes_y_exp-1) ) + 1
     numNodes_x = mesh%MDIndexBounds(1) + 1
     numNodes_y = mesh%MDIndexBounds(2) + 1
-    call SplitSize(numNodes_x, numNodes_x_coef, numNodes_x_exp)
-    call SplitSize(numNodes_y, numNodes_y_coef, numNodes_y_exp)
+    call SplitSize_MUDPACK(numNodes_x, numNodes_x_coef, numNodes_x_exp)
+    call SplitSize_MUDPACK(numNodes_y, numNodes_y_coef, numNodes_y_exp)
 
     ! ----------------------
     ! Set up initial guess and method.
@@ -240,6 +240,7 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   ! ----------------------
   ! Convert the solution back to our format.
   ! ----------------------
+  !$omp parallel do schedule(static)
   do iCell = 1_ip, mesh%NumCells
     associate(iCellMD => mesh%CellMDIndex(:,iCell))
       u(iCell) = ( phi(iCellMD(1) + 0, iCellMD(2) + 0) + &
@@ -248,6 +249,7 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
                    phi(iCellMD(1) + 1, iCellMD(2) + 1) )/4.0_dp
     end associate
   end do
+  !$omp end parallel do
 
 contains
   real(dp) function sigma(x, y)

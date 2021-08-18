@@ -49,7 +49,7 @@ c
 c
       subroutine mud34(work,phi,ierror)
       implicit none
-      real phi(*),work(*)
+      double precision phi(*),work(*)
       integer ierror
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
@@ -72,7 +72,7 @@ c
       subroutine md34(nx,ny,nz,phi,wk)
       implicit none
       integer nx,ny,nz
-      real phi(nx,ny,nz),wk(*)
+      double precision phi(nx,ny,nz),wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
@@ -176,20 +176,20 @@ c     estimate truncation error using second order approximation in u
 c
       implicit none
       integer nx,ny,nz
-      real cof(nx,ny,nz,8),u(nx,ny,nz)
+      double precision cof(nx,ny,nz,8),u(nx,ny,nz)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
-      real dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/pde3com/dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,
      +               dlx4,dly4,dlz4
       integer i,j,k,istart,ifinal,jstart,jfinal,kstart,kfinal
-      real tx,ty,tz,cxx,cyy,czz,ux3,ux4,uy3,uy4,uz3,uz4,cx,cy,cz
+      double precision tx,ty,tz,cxx,cyy,czz,ux3,ux4,uy3,uy4,uz3,uz4,cx,cy,cz
       do k=1,nz
 	do j=1,ny
 	  do i=1,nx

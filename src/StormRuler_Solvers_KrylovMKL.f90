@@ -22,28 +22,25 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_KrylovSolvers_MKL
+module StormRuler_Solvers_KrylovMKL
 
 #$use 'StormRuler_Params.fi'
+#$if HAS_MKL
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Mesh, only: tMesh
-use StormRuler_KrylovSolvers, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Solvers_Krylov, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
 
-#$if HAS_MKL
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
-#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-#$if HAS_MKL
 include 'mkl_rci.fi'
-#$end if
 
 integer(ip), parameter :: &
   & gMKL_RCI_DebugLevel = 1_ip
@@ -51,28 +48,23 @@ integer(ip), parameter :: &
 integer(ip), parameter :: &
   & gFGMRES_MKL_MaxNumNonRestartedIterations = 150_ip
 
-#$if HAS_MKL
 interface Solve_CG_MKL
 #$do rank = 0, NUM_RANKS
   module procedure Solve_CG_MKL$rank
 #$end do
 end interface Solve_CG_MKL
-#$end if
 
-#$if HAS_MKL
 interface Solve_FGMRES_MKL
 #$do rank = 0, NUM_RANKS
   module procedure Solve_FGMRES_MKL$rank
 #$end do
 end interface Solve_FGMRES_MKL
-#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
 
-#$if HAS_MKL
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
 !! operator equation: Au = b, using the MKL CG RCI solver.
@@ -163,9 +155,7 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
   end associate
 end subroutine Solve_CG_MKL$rank
 #$end do
-#$end if
 
-#$if HAS_MKL
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: Au = b, 
 !! using the MKL FGMRES RCI solver.
@@ -298,6 +288,6 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
     & print *, 'ITERCOUNT=', itercount
 end subroutine Solve_FGMRES_MKL$rank
 #$end do
-#$end if
 
-end module StormRuler_KrylovSolvers_MKL
+#$end if
+end module StormRuler_Solvers_KrylovMKL

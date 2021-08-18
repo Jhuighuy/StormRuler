@@ -48,11 +48,11 @@ c
       subroutine muh24(wk,iwk,phi,ierror)
       implicit none
       integer iwk(*)
-      real phi(*),wk(*)
+      double precision phi(*),wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
@@ -77,9 +77,9 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
-      real phi(nx,ny),wk(*)
+      double precision phi(nx,ny),wk(*)
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -174,11 +174,11 @@ c     estimate truncation error using second order approximation in u
 c
       implicit none
       integer nx,ny
-      real cof(nx,ny,6),u(nx,ny)
+      double precision cof(nx,ny,6),u(nx,ny)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
@@ -186,10 +186,10 @@ c
       common/fmud2/xa,xb,yc,yd,tolmax,relmax
       common/mud2c/kpbgn(50),kcbgn(50),ktxbgn(50),ktybgn(50),
      +nxk(50),nyk(50),isx,jsy
-      real dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
+      double precision dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
       common/pde2com/dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
       integer i,j,istart,ifinal,jstart,jfinal
-      real cxx,cx,cyy,cy,tx,ty,ux3,ux4,uy3,uy4
+      double precision cxx,cx,cyy,cy,tx,ty,ux3,ux4,uy3,uy4
       do j=1,ny
 	do i=1,nx
 	  cof(i,j,6) = 0.0

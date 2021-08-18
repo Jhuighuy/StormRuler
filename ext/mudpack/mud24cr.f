@@ -48,12 +48,12 @@ c
 c
       subroutine mud24cr(work,coef,bndyc,phi,ierror)
       implicit none
-      real work(*),phi(*)
+      double precision work(*),phi(*)
       integer ierror
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
@@ -76,11 +76,11 @@ c
       subroutine mu24cr(nx,ny,phi,coef,bndyc,wk)
       implicit none
       integer nx,ny,ipf,irf,i,j,ij
-      real phi(nx,ny),wk(*)
+      double precision phi(nx,ny),wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
@@ -178,32 +178,32 @@ c     estimate truncation error using second order approximation in phi
 c
       implicit none
       integer nx,ny
-      real phi(nx,ny),cof(nx,ny,10),frhs(nx,ny)
+      double precision phi(nx,ny),cof(nx,ny,10),frhs(nx,ny)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
       common/fmud2cr/xa,xb,yc,yd,tolmax,relmax
-      real dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
+      double precision dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
      +             dlxy4,dxxxy4,dxyyy4,dxxyy,tdlx3,tdly3,dlx4,dly4,
      +             dlxxx,dlyyy
       common/com2dcr/dyox,dxoy,dlx2,dly2,dlxy,dlxy2,dlxy4,
      +               dxxxy4,dxyyy4,dxxyy,dlxxx,dlyyy
       common/pde2com/dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
-      real x,y,cxx,cxy,cyy,cx,cy,ce
-      real alfaa,alfab,alfac,alfad,betaa,betab,betac,betad
-      real gamaa,gamab,gamac,gamad
-      real alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
-      real alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
-      real gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
-      real gbdya,gbdyb,gbdyc,gbdyd
+      double precision x,y,cxx,cxy,cyy,cx,cy,ce
+      double precision alfaa,alfab,alfac,alfad,betaa,betab,betac,betad
+      double precision gamaa,gamab,gamac,gamad
+      double precision alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
+      double precision alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
+      double precision gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
+      double precision gbdya,gbdyb,gbdyc,gbdyd
       integer i,j,isrt,ifnl,jsrt,jfnl,ii,jj,kbdy
-      real txx,txy,tyy,tx,ty,tim1,ti,tip1,tjm1,tj,tjp1,ta,tb,tc,td
-      real c1,c2,c3,c4,c5,c6,c7,c8
-      real px4,px3y,px2y2,pxy3,py4,px3,py3,px3im1,py3jm1,px3jm1,py3im1
+      double precision txx,txy,tyy,tx,ty,tim1,ti,tip1,tjm1,tj,tjp1,ta,tb,tc,td
+      double precision c1,c2,c3,c4,c5,c6,c7,c8
+      double precision px4,px3y,px2y2,pxy3,py4,px3,py3,px3im1,py3jm1,px3jm1,py3im1
       external coef,bndyc
 c
 c    preset truncation estimate to zero
@@ -841,17 +841,17 @@ c     estimate truncation on deep interior
 c
       implicit none
       integer nx,ny
-      real cof(nx,ny,10),u(nx,ny),frhs(nx,ny)
-      real dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
+      double precision cof(nx,ny,10),u(nx,ny),frhs(nx,ny)
+      double precision dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
      +             dlxy4,dxxxy4,dxyyy4,dxxyy,tdlx3,tdly3,dlx4,dly4,
      +             dlxxx,dlyyy
       common/com2dcr/dyox,dxoy,dlx2,dly2,dlxy,dlxy2,dlxy4,
      +               dxxxy4,dxyyy4,dxxyy,dlxxx,dlyyy
       common/pde2com/dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
-      real cxx,cxy,cyy,cx,cy
+      double precision cxx,cxy,cyy,cx,cy
       integer i,j
-      real txx,txy,tyy,tx,ty
-      real px4,px3y,pxy3,py4,px3,py3
+      double precision txx,txy,tyy,tx,ty
+      double precision px4,px3y,pxy3,py4,px3,py3
 !$OMP PARALLEL DO PRIVATE(i,j,px3,px4,py3,py4,px3y,pxy3)
 !$OMP+PRIVATE(cxx,cx,cyy,cy,cxy,tx,ty,txx,tyy,txy)
 !$OMP+SHARED (frhs,u,cof,nx,ny)

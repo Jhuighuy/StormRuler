@@ -56,10 +56,10 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real fparm(6),xa,xb,yc,yd,tolmax,relmax
+      double precision fparm(6),xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer int,k,kb,nx,ny,ic,itx,ity,iw
-      real wk(*),phi(*),rhs(*)
+      double precision wk(*),phi(*),rhs(*)
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -244,11 +244,11 @@ c
       subroutine muh21(nx,ny,rhsf,phif,coef,bndyc,wk,iwk)
       implicit none
       integer nx,ny,iwk(*)
-      real phif(nx,ny),rhsf(nx,ny),wk(*)
+      double precision phif(nx,ny),rhsf(nx,ny),wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax,phmax
+      double precision xa,xb,yc,yd,tolmax,relmax,phmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer k,kb,ip,ic,ir,ipc,irc,icc
       integer ncx,ncy,jj,ij,i,j,iter
@@ -378,13 +378,13 @@ c     execute multigrid k cycle from kcur grid level
 c     kcycle=1 for v cycles, kcycle=2 for w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer iwk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
       integer nx,ny,ip,ic,ipc,irc,itx,ity,ncx,ncy,l,nrel
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
@@ -579,11 +579,11 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer iwk(*),nx,ny,ist,ifn,jst,jfn,i,j,kbdy,l,im1,jm1,ier
-      real cof(nx,ny,6),tx(nx,ny,*),ty(ny,nx,*)
-      real wk(*),dlx,dlx2,dlxx,dly,dly2,dlyy,cmin,alfmax,cemax
-      real x,y,cxx,cyy,cx,cy,ce,c1,c2,c3,c4,c5,alfa,gbdy
+      double precision cof(nx,ny,6),tx(nx,ny,*),ty(ny,nx,*)
+      double precision wk(*),dlx,dlx2,dlxx,dly,dly2,dlyy,cmin,alfmax,cemax
+      double precision x,y,cxx,cyy,cx,cy,ce,c1,c2,c3,c4,c5,alfa,gbdy
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -864,7 +864,7 @@ c     decompose nonperiodic block coefficient matrix
 c
       implicit none
       integer nx,ny,nxa
-      real cof(nx,ny,6),beta(nx,nx,*),alfa(nx,nx,*)
+      double precision cof(nx,ny,6),beta(nx,nx,*),alfa(nx,nx,*)
       integer index(nx,ny)
       integer iz,i1,jcur,jm1,l,i
       i1 = 1
@@ -902,8 +902,8 @@ c     direct solve at coarsest grid
 c
       implicit none
       integer nx,ny,index(nx,ny)
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6)
-      real beta(nx,nx,*),alfa(nx,nx,*)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6)
+      double precision beta(nx,nx,*),alfa(nx,nx,*)
 c     forward sweep
       call for2(nx,ny,phi,cof(1,1,6),alfa)
 c     backward sweep
@@ -917,7 +917,7 @@ c     forward sweep
 c
       implicit none
       integer nx,ny,i,j,l
-      real phi(0:nx+1,0:ny+1),frhs(nx,ny),alfa(nx,nx,*),sum
+      double precision phi(0:nx+1,0:ny+1),frhs(nx,ny),alfa(nx,nx,*),sum
       do j=1,ny
 	do i=1,nx
 	  phi(i,j)=frhs(i,j)
@@ -939,7 +939,7 @@ c
 c
       implicit none
       integer nx,ny,index(nx,ny)
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),beta(nx,nx,*)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),beta(nx,nx,*)
       integer iz,j,jb,i
       iz = 0
       call sgsl(beta(1,1,ny),nx,nx,index(1,ny),phi(1,ny),iz)
@@ -956,8 +956,8 @@ c
       subroutine lud2p(nx,ny,cof,beta,alfa,zmat,dmat,index,nxa)
       implicit none
       integer nx,ny,index(nx,ny),i,iz,j,l,jcur,jm1,i1,nxa
-      real cof(nx,ny,6),alfa(nx,nx,*),beta(nx,nx,*)
-      real dmat(nx,nx,*),zmat(nx,nx,*),sum
+      double precision cof(nx,ny,6),alfa(nx,nx,*),beta(nx,nx,*)
+      double precision dmat(nx,nx,*),zmat(nx,nx,*),sum
       jcur = 1
 c
 c     set dmat(1)=alfa(1)
@@ -1101,9 +1101,9 @@ c     direct method for periodic b.c.
 c
       implicit none
       integer nx,ny,index(nx,ny)
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6)
-      real beta(nx,nx,*),alfa(nx,nx,*)
-      real zmat(nx,nx,*), dmat(nx,nx,*)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6)
+      double precision beta(nx,nx,*),alfa(nx,nx,*)
+      double precision zmat(nx,nx,*), dmat(nx,nx,*)
 c     forward sweep
       call for2p(nx,ny,phi,cof(1,1,6),alfa,zmat)
 c     backward sweep
@@ -1114,8 +1114,8 @@ c     backward sweep
       subroutine for2p(nx,ny,phi,frhs,alfa,zmat)
       implicit none
       integer nx,ny,i,j,jcur,l,k
-      real phi(0:nx+1,0:ny+1),frhs(nx,ny),sum
-      real alfa(nx,nx,*),zmat(nx,nx,*)
+      double precision phi(0:nx+1,0:ny+1),frhs(nx,ny),sum
+      double precision alfa(nx,nx,*),zmat(nx,nx,*)
       do j=1,ny-1
 	do i=1,nx
 	  phi(i,j)=frhs(i,j)
@@ -1150,8 +1150,8 @@ c
 c
       implicit none
       integer nx,ny,index(nx,ny),iz,i,l,kb,k
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),beta(nx,nx,ny),dmat(nx,nx,*)
-      real sum
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),beta(nx,nx,ny),dmat(nx,nx,*)
+      double precision sum
       iz = 0
       call sgsl(beta(1,1,ny-1),nx,nx,index(1,ny-1),phi(1,ny-1),iz)
 c
@@ -1195,7 +1195,7 @@ c     set diagonal matrix on block
 c
       implicit none
       integer nx,ny,jcur,nxa,i,l,j
-      real cof(nx,ny,6),beta(nx,nx,*)
+      double precision cof(nx,ny,6),beta(nx,nx,*)
       j = jcur
       do i=1,nx
 	do l=1,nx
@@ -1221,7 +1221,7 @@ c
       subroutine setalfa(nx,ny,cof,alfa,jcur)
       implicit none
       integer nx,ny,jcur,i,l
-      real cof(nx,ny,6),alfa(nx,nx,*)
+      double precision cof(nx,ny,6),alfa(nx,nx,*)
       do i=1,nx
 	do l=1,nx
 	  alfa(i,l,jcur)=0.0
@@ -1239,11 +1239,11 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer nx,ny,ist,ifn,jst,jfn,i,j,kbdy
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6)
-      real dlx,dlx2,dlxx,dly,dly2,dlyy
-      real x,y,cxx,cyy,cx,cy,ce,c1,c2,c3,c4,alfa,gbdy
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6)
+      double precision dlx,dlx2,dlxx,dly,dly2,dlyy
+      double precision x,y,cxx,cyy,cx,cy,ce,c1,c2,c3,c4,alfa,gbdy
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -1361,9 +1361,9 @@ c
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real rhsc(ncx,ncy),resf(nx,ny)
-      real phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
-      real cof(nx,ny,6)
+      double precision rhsc(ncx,ncy),resf(nx,ny)
+      double precision phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
+      double precision cof(nx,ny,6)
 c
 c     set phic zero
 c
@@ -1399,7 +1399,7 @@ c     relaxation for muh2
 c
       implicit none
       integer nx,ny
-      real phi(*),cof(*),tx(*),ty(*),sum(*)
+      double precision phi(*),cof(*),tx(*),ty(*),sum(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -1431,7 +1431,7 @@ c
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6)
 c
 c    periodic adjustment bypass block
 c
@@ -1589,7 +1589,7 @@ c
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),tx(nx,ny,*),sum(ny)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),tx(nx,ny,*),sum(ny)
 c
 c     replace line x with point gauss-seidel if
 c     x direction is periodic and nx = 3 (coarsest)
@@ -1763,7 +1763,7 @@ c
       common/imud2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),ty(ny,nx,*),sum(nx)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),ty(ny,nx,*),sum(nx)
 c
 c     replace line y with point gauss-seidel if
 c     y direction is periodic and ny = 3

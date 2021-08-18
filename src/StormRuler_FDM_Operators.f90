@@ -1105,7 +1105,7 @@ elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w
 end function WFD2_C8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate weighted Laplacian: v ← v + λ∇⋅(w∇u).
+!! The FDM-approximate variable coefficient Laplacian: v ← v + λ∇⋅(w∇u).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)

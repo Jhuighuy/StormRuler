@@ -690,6 +690,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     integer(ip) :: iCell, xCell, yCell
     allocate(mesh%dl(1:4))
     mesh%dl(:) = [xDelta, xDelta, yDelta, yDelta]
+    mesh%MDIndexBounds = [xNumCells, yNumCells]
     allocate(mesh%dr(1:2, 1:4))
     mesh%dr(:,1) = [mesh%dl(1), 0.0_dp]
     mesh%dr(:,2) = [mesh%dl(1), 0.0_dp]

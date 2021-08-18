@@ -54,14 +54,14 @@ c
      +                  phi,mgopt,ierror)
       implicit none
       integer iparm(23),mgopt(4),ierror
-      real work(*),phi(*),rhs(*),fparm(8)
+      double precision work(*),phi(*),rhs(*),fparm(8)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
@@ -70,7 +70,7 @@ c
       integer sxy,sxz,syz,kpspace,kcspace,int
       integer m,lxy,lxz,lyz,isx,jsy,ksz,iisx,jjsy,kksz
       integer nx,ny,nz,itx,ity,itz,k,kb,kkb,kk,ip,ic
-      real sgx,sgy,sgz,xlmbda
+      double precision sgx,sgy,sgz,xlmbda
       external sgx,sgy,sgz,xlmbda,bndyc
       data int / 0 /
       save int
@@ -381,19 +381,19 @@ c
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       integer nx,ny,nz,ip,ic,ir,icc,irc,ncx,ncy,ncz,ipc
       integer i,j,k,kb,jk,kk,kkb,ijk,iter
-      real phif(nx,ny,nz),rhsf(nx,ny,nz),wk(*),phmax
+      double precision phif(nx,ny,nz),rhsf(nx,ny,nz),wk(*),phmax
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/mud3c/kpbgn(50),kcbgn(50),ktxbgn(50),ktybgn(50),
      +ktzbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
-      real sgx,sgy,sgz,xlmbda
+      double precision sgx,sgy,sgz,xlmbda
       external sgx,sgy,sgz,xlmbda,bndyc
       nx = nxk(ngrid)
       ny = nyk(ngrid)
@@ -580,7 +580,7 @@ c     kcycle = 1 corresponds to v cycles
 c     kcycle = 2 corresponds to w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
@@ -749,8 +749,8 @@ c
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
-      real rhsc(ncx,ncy,ncz),resf(nx,ny,nz),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
+      double precision rhsc(ncx,ncy,ncz),resf(nx,ny,nz),cof(nx,ny,nz,8)
       integer ic,jc,kc,i,j,k
 c
 c     initialize phic to zero
@@ -795,12 +795,12 @@ c     discretize the 3-d elliptic pde
 c
       implicit none
       integer nx,ny,nz,ier
-      real cof(nx,ny,nz,8)
-      real tx(nx,ny,nz,*),ty(ny,nx,nz,*),tz(nz,nx,ny,*),wk(*)
+      double precision cof(nx,ny,nz,8)
+      double precision tx(nx,ny,nz,*),ty(ny,nx,nz,*),tz(nz,nx,ny,*),wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -809,13 +809,13 @@ c
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/mud3c/kpbgn(50),kcbgn(50),ktxbgn(50),ktybgn(50),
      +ktzbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,alfmax
-      real odlxx,odlyy,odlzz
-      real sgxm,sgxp,sgym,sgyp,sgzm,sgzp,sigmin,xlm,xlmin,xlmax
-      real alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6,c7
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,alfmax
+      double precision odlxx,odlyy,odlzz
+      double precision sgxm,sgxp,sgym,sgyp,sgzm,sgzp,sigmin,xlm,xlmin,xlmax
+      double precision alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6,c7
       integer i,j,k,l,ist,ifn,jst,jfn,kst,kfn,kbdy
       integer nxny,nxnz,nynz,im1,jm1,km1
-      real sgx,sgy,sgz,xlmbda
+      double precision sgx,sgy,sgz,xlmbda
       external sgx,sgy,sgz,xlmbda,bndyc
 c
 c     set current grid increments
@@ -1224,11 +1224,11 @@ c     (i.e., values in cof have not changed)
 c
       implicit none
       integer nx,ny,nz
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -1237,11 +1237,11 @@ c
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/mud3c/kpbgn(50),kcbgn(50),ktxbgn(50),ktybgn(50),
      +ktzbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,odlxx,odlyy,odlzz
-      real alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
-      real sgxm,sgxp,sgym,sgyp,sgzm,sgzp
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,odlxx,odlyy,odlzz
+      double precision alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
+      double precision sgxm,sgxp,sgym,sgyp,sgzm,sgzp
       integer i,j,k,ist,ifn,jst,jfn,kst,kfn,kbdy
-      real sgx,sgy,sgz,xlmbda
+      double precision sgx,sgy,sgz,xlmbda
       external sgx,sgy,sgz,xlmbda,bndyc
 c
 c     set current grid increments
@@ -1426,11 +1426,11 @@ c     use point or line relaxation in the x and/or y and/or z
 c     or planar relaxation in the x,y or x,z or y,z planes
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -1541,7 +1541,7 @@ c
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
       integer i,j,k,nper
 c
 c     set periodic b.c. indicator

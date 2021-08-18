@@ -64,14 +64,14 @@ c
      +                  mgopt,ierror)
       implicit none
       integer iparm(22),mgopt(4),ierror
-      real work(*),phi(*),rhs(*),fparm(8)
+      double precision work(*),phi(*),rhs(*),fparm(8)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/imud3sp/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,
      +kez,nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/fmud3sp/xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,krbgn,kcxbgn,kcybgn,kczbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
@@ -262,21 +262,21 @@ c
       subroutine mud3sp1(nx,ny,nz,rhsf,phif,cfx,cfy,cfz,bndyc,wk)
       implicit none
       integer nx,ny,nz
-      real rhsf(nx,ny,nz),phif(nx,ny,nz),wk(*)
+      double precision rhsf(nx,ny,nz),phif(nx,ny,nz),wk(*)
       common/imud3sp/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,
      +kez,nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,krbgn,kcxbgn,kcybgn,kczbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/mud3spc/kpbgn(50),krbgn(50),kcxbgn(50),kcybgn(50),
      +kczbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
       integer ip,ir,irc,ncx,ncy,ncz,ipc
       integer i,j,k,kb,jk,kk,ijk,iter
-      real phmax
+      double precision phmax
       common/fmud3sp/xa,xb,yc,yd,ze,zf,tolmax,relmax
       external cfx,cfy,cfz,bndyc
       nx = nxk(ngrid)
@@ -409,7 +409,7 @@ c     kcycle = 1 corresponds to v cycles
 c     kcycle = 2 corresponds to w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
@@ -585,9 +585,9 @@ c
       common/imud3sp/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,
      +kez,nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
-      real rhs(nx,ny,nz),rhsc(ncx,ncy,ncz),resf(nx,ny,nz)
-      real cofx(nx,3),cofy(ny,3),cofz(nz,3)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
+      double precision rhs(nx,ny,nz),rhsc(ncx,ncy,ncz),resf(nx,ny,nz)
+      double precision cofx(nx,3),cofy(ny,3),cofz(nz,3)
       integer ic,jc,kc,i,j,k,ist,ifn,jst,jfn,kst,kfn
 c
 c     initialize phic to zero
@@ -654,11 +654,11 @@ c     discretize the 3-d elliptic pde
 c
       implicit none
       integer nx,ny,nz,ier
-      real cofx(nx,3),cofy(ny,3),cofz(nz,3)
+      double precision cofx(nx,3),cofy(ny,3),cofz(nz,3)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,krbgn,kcxbgn,kcybgn,kczbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/mud3spc/kpbgn(50),krbgn(50),kcxbgn(50),kcybgn(50),
@@ -667,8 +667,8 @@ c
      +kez,nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/fmud3sp/xa,xb,yc,yd,ze,zf,tolmax,relmax
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,cmin,cemax,alfmax
-      real cxx,cyy,czz,cx,cy,cz,cex,cey,cez,alfa,gbdy,x,y,z,c1,c2
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,cmin,cemax,alfmax
+      double precision cxx,cyy,czz,cx,cy,cz,cex,cey,cez,alfa,gbdy,x,y,z,c1,c2
       integer i,j,k,ist,ifn,jst,jfn,kst,kfn,kbdy
       external bndyc,cfx,cfy,cfz
 c
@@ -884,11 +884,11 @@ c     (i.e., values in cof have not changed)
 c
       implicit none
       integer nx,ny,nz
-      real phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,krbgn,kcxbgn,kcybgn,kczbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/mud3spc/kpbgn(50),krbgn(50),kcxbgn(50),kcybgn(50),
@@ -897,8 +897,8 @@ c
      +kez,nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/fmud3sp/xa,xb,yc,yd,ze,zf,tolmax,relmax
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz
-      real cxx,cyy,czz,cx,cy,cz,cex,cey,cez,alfa,gbdy,x,y,z,c1,c2
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz
+      double precision cxx,cyy,czz,cx,cy,cz,cex,cey,cez,alfa,gbdy,x,y,z,c1,c2
       integer i,j,k,ist,ifn,jst,jfn,kst,kfn,kbdy
       external bndyc,cfx,cfy,cfz
 c
@@ -1087,11 +1087,11 @@ c     use point or line relaxation in the x and/or y and/or z
 c     or planar relaxation in the x,y or x,z or y,z planes
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,krbgn,kcxbgn,kcybgn,kczbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/mud3spc/kpbgn(50),krbgn(50),kcxbgn(50),kcybgn(50),
@@ -1128,8 +1128,8 @@ c     (4) red (x,y) on even z planes
 c
       implicit none
       integer nx,ny,nz
-      real phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
-      real cofx(nx,3),cofy(ny,3),cofz(nz,3)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
+      double precision cofx(nx,3),cofy(ny,3),cofz(nz,3)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol

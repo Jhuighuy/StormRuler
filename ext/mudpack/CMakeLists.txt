@@ -31,5 +31,10 @@ file(GLOB MUDPACK_SOURCES "*.f")
 
 add_library(MUDPACK ${MUDPACK_SOURCES})
 
+# Inherit base options.
 target_link_libraries(
   MUDPACK PUBLIC StormRuler_BASE)
+
+# Use unlimited line length in fixed mode.
+target_compile_options(
+  MUDPACK INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-ffixed-line-length-none>)

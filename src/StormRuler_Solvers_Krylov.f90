@@ -22,14 +22,14 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_KrylovSolvers
+module StormRuler_Solvers_Krylov
 
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
-use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Mesh, only: tMesh
 use StormRuler_Helpers, only: SafeDivide
+use StormRuler_Mesh, only: tMesh
+use StormRuler_ConvParams, only: tConvParams
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -225,4 +225,4 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params)
 end subroutine Solve_BiCGStab$rank
 #$end do
 
-end module StormRuler_KrylovSolvers
+end module StormRuler_Solvers_Krylov

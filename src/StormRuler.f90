@@ -2,7 +2,7 @@ module helpers
 use StormRuler_Mesh
 implicit none
 real(dp), parameter :: pi = 4*atan(1.0D0)
-integer(ip), Parameter :: Nx = 100, Ny = 100  
+integer(ip), Parameter :: Nx = 128, Ny = 128  
 Real(dp), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
 contains
 
@@ -43,6 +43,8 @@ program nsch
   use StormRuler_CahnHilliard
   use StormRuler_NavierStokes
   use StormRuler_IO
+  use StormRuler_ConvParams
+  use StormRuler_Solvers_MUDPACK
   implicit none
 
   integer(ip) :: L,M,iCell
@@ -53,6 +55,7 @@ program nsch
   class(tMesh), allocatable :: mesh, mesh1
   type(IOList) :: fields
   integer(ip), allocatable :: colorToBCM(:)
+  type(tConvParams) :: params
 
   ! ----------------------
   ! Print an epic banner.
@@ -112,6 +115,11 @@ program nsch
         if ((abs(r(1)) < 1).and.((abs(r(2)) < 1))) c(iCell) = -1
       end associate
     end Do
+
+    call Solve_DivWGrad_MUDPACK(mesh, c, p, p, params)
+    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
+    call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(1)//'.vtk',fields)
+    error stop 228
 
     CH%EpsSqr = 0.01D0
     call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)

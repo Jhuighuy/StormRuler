@@ -40,10 +40,10 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_KrylovSolvers, only: &
+use StormRuler_Solvers_Krylov, only: &
   & Solve_CG, Solve_BiCGStab
 #$if HAS_MKL
-use StormRuler_KrylovSolvers_MKL, only: &
+use StormRuler_Solvers_KrylovMKL, only: &
   & Solve_CG_MKL, Solve_FGMRES_MKL
 #$end if
 

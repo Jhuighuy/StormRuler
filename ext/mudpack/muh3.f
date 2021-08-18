@@ -56,14 +56,14 @@ c
       subroutine muh3(iparm,fparm,wk,iwk,coef,bndyc,rhs,phi,mopt,ierror)
       implicit none
       integer iwk(*),iparm(23),mopt(4),ierror
-      real wk(*),phi(*),rhs(*),fparm(8)
+      double precision wk(*),phi(*),rhs(*),fparm(8)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       common/fmud3/xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
@@ -419,12 +419,12 @@ c
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       integer nx,ny,nz,ip,ic,ir,irc,ncx,ncy,ncz,ipc,icc
       integer i,j,k,kb,jk,kk,kkb,ijk,iter
-      real phif(nx,ny,nz),rhsf(nx,ny,nz),wk(*),phmax
+      double precision phif(nx,ny,nz),rhsf(nx,ny,nz),wk(*),phmax
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
@@ -618,7 +618,7 @@ c     kcycle = 1 corresponds to v cycles
 c     kcycle = 2 corresponds to w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer iwk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
@@ -836,8 +836,8 @@ c
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
-      real rhsc(ncx,ncy,ncz),resf(nx,ny,nz),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
+      double precision rhsc(ncx,ncy,ncz),resf(nx,ny,nz),cof(nx,ny,nz,8)
 c
 c     initialize phic to zero
 c
@@ -880,13 +880,13 @@ c     discretize the 3-d elliptic pde
 c
       implicit none
       integer nx,ny,nz,ier
-      real cof(nx,ny,nz,8)
-      real tx(nx,ny,nz,*),ty(ny,nx,nz,*),tz(nz,nx,ny,*),wk(*)
+      double precision cof(nx,ny,nz,8)
+      double precision tx(nx,ny,nz,*),ty(ny,nx,nz,*),tz(nz,nx,ny,*),wk(*)
       integer iwk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -897,8 +897,8 @@ c
      +ktzbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
       integer ibeta,ialfa,izmat,idmat
       common/muh3c/ibeta,ialfa,izmat,idmat
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,cmin,cemax,alfmax
-      real cxx,cyy,czz,cx,cy,cz,ce,alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz,cmin,cemax,alfmax
+      double precision cxx,cyy,czz,cx,cy,cz,ce,alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
       integer i,j,k,l,ist,ifn,jst,jfn,kst,kfn,kbdy
       integer nxny,nxnz,nynz,im1,jm1,km1
       external bndyc,coef
@@ -1330,11 +1330,11 @@ c     (i.e., values in cof have not changed)
 c
       implicit none
       integer nx,ny,nz
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -1345,8 +1345,8 @@ c
      +ktzbgn(50),nxk(50),nyk(50),nzk(50),ngrid,klevel,kcur,kps
       integer ibeta,ialfa,izmat,idmat
       common/muh3c/ibeta,ialfa,izmat,idmat
-      real dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz
-      real cxx,cyy,czz,cx,cy,cz,ce,alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
+      double precision dlx,dly,dlz,dlx2,dly2,dlz2,dlxx,dlyy,dlzz
+      double precision cxx,cyy,czz,cx,cy,cz,ce,alfa,gbdy,x,y,z,c1,c2,c3,c4,c5,c6
       integer i,j,k,ist,ifn,jst,jfn,kst,kfn,kbdy
       external bndyc,coef
 c
@@ -1535,11 +1535,11 @@ c     use point or line relaxation in the x and/or y and/or z
 c     or planar relaxation in the x,y or x,z or y,z planes
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,ktzbgn,nxk,nyk,nzk,ngrid,
      +        klevel,kcur,kps
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
@@ -1652,7 +1652,7 @@ c
       common/imud3/intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
 c
 c     set periodic b.c. indicator
 c
@@ -1805,7 +1805,7 @@ c     coming from 3-d  PDE discretization
 c
       implicit none
       integer nxny,nx,ny,nz,nxa,nyc
-      real cof(nx,ny,nz,8),beta(nxny,nxny,*),alfa(nxny,nxny,*)
+      double precision cof(nx,ny,nz,8),beta(nxny,nxny,*),alfa(nxny,nxny,*)
       integer index(nxny,nz)
       integer iz,i1,kcur,ii,ll,il,jl,km1
       iz = 0
@@ -1855,9 +1855,9 @@ c     direct solve at coarsest grid
 c
       implicit none
       integer nxny,nx,ny,nz,index(nxny,ny)
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
-      real phxy(nxny)
-      real beta(nxny,nxny,*),alfa(nxny,nxny,*)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision phxy(nxny)
+      double precision beta(nxny,nxny,*),alfa(nxny,nxny,*)
 c     forward sweep
       call for3(nxny,nx,ny,nz,phi,cof(1,1,1,8),alfa)
 c     backward sweep
@@ -1871,9 +1871,9 @@ c     forward sweep
 c
       implicit none
       integer nxny,nx,ny,nz,i,j,k,ii,ll,il,jl
-      real phi(0:nx+1,0:ny+1,0:nz+1)
-      real frhs(nx,ny,nz),alfa(nxny,nxny,*)
-      real sum
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision frhs(nx,ny,nz),alfa(nxny,nxny,*)
+      double precision sum
       do k=1,nz
 	do j=1,ny
 	  do i=1,nx
@@ -1906,8 +1906,8 @@ C     backward sweep
 c
       implicit none
       integer nxny,nx,ny,nz,index(nxny,nz)
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
-      real beta(nxny,nxny,*),phxy(nxny)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision beta(nxny,nxny,*),phxy(nxny)
       integer iz,i,j,k,kb,ij
 C
 C     solve beta*phi(nz)=phi(nz)
@@ -1963,8 +1963,8 @@ C     DO LUD DECOMPOSITION OF BLOCK periodic TRIDIAGONAL MATRIX EQUATION
 c
       implicit none
       integer nxny,nx,ny,nz,index(nxny,nz),nxa,nyc
-      real cof(nx,ny,nz,8),alfa(nxny,nxny,*),beta(nxny,nxny,*)
-      real dmat(nxny,nxny,*),zmat(nxny,nxny,*),sum
+      double precision cof(nx,ny,nz,8),alfa(nxny,nxny,*),beta(nxny,nxny,*)
+      double precision dmat(nxny,nxny,*),zmat(nxny,nxny,*),sum
       integer iz,kcur,ii,jj,ll,i1,km1,il,jl,i,j,ij
       kcur = 1
 c
@@ -2128,10 +2128,10 @@ C     direct solution of periodic block matrix at coarsest level
 c
       implicit none
       integer nxny,nx,ny,nz,index(nxny,nz)
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
-      real beta(nxny,nxny,*),alfa(nxny,nxny,*)
-      real zmat(nxny,nxny,*), dmat(nxny,nxny,*)
-      real phxy(nxny)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision beta(nxny,nxny,*),alfa(nxny,nxny,*)
+      double precision zmat(nxny,nxny,*), dmat(nxny,nxny,*)
+      double precision phxy(nxny)
 c     forward sweep for periodic
       call for3p(nxny,nx,ny,nz,phi,cof(1,1,1,8),alfa,zmat)
 c     backward sweep for periodic
@@ -2146,9 +2146,9 @@ C     periodic FACTORED BLOCK TRIDIAGONAL SYSTEM
 C                                                                               
       implicit none
       integer nxny,nx,ny,nz
-      real phi(0:nx+1,0:ny+1,0:nz+1)
-      real frhs(nx,ny,nz)
-      real alfa(nxny,nxny,*),zmat(nxny,nxny,*),sum
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision frhs(nx,ny,nz)
+      double precision alfa(nxny,nxny,*),zmat(nxny,nxny,*),sum
       integer i,j,k,kcur,ii,ll,il,jl
 C     SET RHS IN PHI ADJUSTED AT DIRICHLET BOUNDARIES                           
       do k=1,nz-1
@@ -2197,9 +2197,9 @@ C     DO BACKWARD SWEEP
 c
       implicit none
       integer nxny,nx,ny,nz,index(nxny,nz)
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
-      real beta(nxny,nxny,nz),dmat(nxny,nxny,nz)
-      real phxy(nxny),sum
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8)
+      double precision beta(nxny,nxny,nz),dmat(nxny,nxny,nz)
+      double precision phxy(nxny),sum
       integer iz,ii,ll,il,jl,k,kb,i,j,ij
 C
 C     solve beta(nz-1)*phi(nz-1) = phi(nz-1)
@@ -2294,7 +2294,7 @@ c     set diagonal matrix on block for k = kcur
 c
       implicit none
       integer nxny,nx,ny,nz,nxa,nyc
-      real cof(nx,ny,nz,8),beta(nxny,nxny,*)
+      double precision cof(nx,ny,nz,8),beta(nxny,nxny,*)
       integer k,kcur,ii,ll,ij,jj,i,j
       k = kcur
       do ii = 1,nxny
@@ -2365,7 +2365,7 @@ C     set block subdiagonal matrix for k = kcur
 C                                                                               
       implicit none
       integer nxny,nx,ny,nz,kcur
-      real cof(nx,ny,nz,8),alfa(nxny,nxny,*)
+      double precision cof(nx,ny,nz,8),alfa(nxny,nxny,*)
       integer k,j,i,ij,ll
       k = kcur
       do j=1,ny

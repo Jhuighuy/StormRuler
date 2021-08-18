@@ -36,7 +36,7 @@ c
 c ... purpose
 c
 c     mud3ln.f contains subroutines for line relaxation in the x and y
-c     and z direction.  This file must be loaded with any of the real
+c     and z direction.  This file must be loaded with any of the double precision
 c     3-d mudpack solvers except mud3sp.
 c
       subroutine slxmd3(nx,ny,nz,phi,cof,tx,sum,nxa,nyc,nze)
@@ -47,8 +47,8 @@ c
       implicit none
       integer nx,ny,nz,i,ib,j,k
       integer nxa,nyc,nze,nper
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),tx(nx,ny,nz,*)
-      real sum(ny,nz)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),tx(nx,ny,nz,*)
+      double precision sum(ny,nz)
 c
 c     set periodic indicator
 c
@@ -371,8 +371,8 @@ c
       implicit none
       integer nx,ny,nz,i,j,jb,k
       integer nxa,nyc,nze,nper
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),ty(ny,nx,nz,*)
-      real sum(nx,nz)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),ty(ny,nx,nz,*)
+      double precision sum(nx,nz)
 c
 c     set periodic indicator
 c
@@ -690,8 +690,8 @@ c
       implicit none
       integer nx,ny,nz,i,j,k,kb
       integer nxa,nyc,nze,nper
-      real phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),tz(nz,nx,ny,*)
-      real sum(nx,ny)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),cof(nx,ny,nz,8),tz(nz,nx,ny,*)
+      double precision sum(nx,ny)
 c
 c     set periodic indicator
 c

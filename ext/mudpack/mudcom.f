@@ -36,18 +36,18 @@ c
 c ... purpose
 c
 c     mudcom.f is a file containing subroutines called by some or all 
-c     of the real two- and three-dimensional mudpack solvers.  It must 
-c     be loaded with any real mudpack solver.
+c     of the double precision two- and three-dimensional mudpack solvers.  It must 
+c     be loaded with any double precision mudpack solver.
 c
       subroutine swk2(nfx,nfy,phif,rhsf,phi,rhs)
 c
 c     set phif,rhsf input in arrays which include
-c     virtual boundaries for phi (for all 2-d real codes)
+c     virtual boundaries for phi (for all 2-d double precision codes)
 c
       implicit none
       integer nfx,nfy,i,j
-      real phif(nfx,nfy),rhsf(nfx,nfy)
-      real phi(0:nfx+1,0:nfy+1),rhs(nfx,nfy)
+      double precision phif(nfx,nfy),rhsf(nfx,nfy)
+      double precision phi(0:nfx+1,0:nfy+1),rhs(nfx,nfy)
       do j=1,nfy
 	do i=1,nfx
 	  phi(i,j) = phif(i,j)
@@ -74,8 +74,8 @@ c     transfer fine grid to coarse grid
 c
       implicit none
       integer nx,ny,ncx,ncy,i,j,ic,jc
-      real phi(0:nx+1,0:ny+1),rhs(nx,ny)
-      real phic(0:ncx+1,0:ncy+1),rhsc(ncx,ncy)
+      double precision phi(0:nx+1,0:ny+1),rhs(nx,ny)
+      double precision phic(0:ncx+1,0:ncy+1),rhsc(ncx,ncy)
 c
 c     set virtual boundaries in phic to zero
 c
@@ -133,9 +133,9 @@ c
       integer i,j,ic,jc,im1,ip1,jm1,jp1,ix,jy
 c
 c     restrict fine grid residual in resf to coarse grid in rhsc
-c     using full weighting for all real 2d codes
+c     using full weighting for all double precision 2d codes
 c
-      real resf(nx,ny),rhsc(ncx,ncy)
+      double precision resf(nx,ny),rhsc(ncx,ncy)
 c
 c     set x,y coarsening integer subscript scales
 c
@@ -271,7 +271,7 @@ c
       subroutine prolon2(ncx,ncy,p,nx,ny,q,nxa,nxb,nyc,nyd,intpol)
       implicit none
       integer ncx,ncy,nx,ny,intpol,nxa,nxb,nyc,nyd
-      real p(0:ncx+1,0:ncy+1),q(0:nx+1,0:ny+1)
+      double precision p(0:ncx+1,0:ncy+1),q(0:nx+1,0:ny+1)
       integer i,j,jc,ist,ifn,jst,jfn,joddst,joddfn
       ist = 1
       ifn = nx
@@ -414,7 +414,7 @@ c
       subroutine prolon1(ncx,p,nx,q,nxa,nxb,intpol)
       implicit none
       integer intpol,nxa,nxb,ncx,nx,i,ic,ist,ifn,ioddst,ioddfn
-      real p(0:ncx+1),q(0:nx+1)
+      double precision p(0:ncx+1),q(0:nx+1)
       ist = 1
       ioddst = 1
       ifn = nx
@@ -517,8 +517,8 @@ c     in phif using linear or cubic interpolation
 c
       implicit none
       integer i,j,nx,ny,ncx,ncy,nxa,nxb,nyc,nyd,intpol,ist,ifn,jst,jfn
-      real phif(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
-      real phcor(0:nx+1,0:ny+1)
+      double precision phif(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
+      double precision phcor(0:nx+1,0:ny+1)
       do j=0,ny+1
 	do i=0,nx+1
 	  phcor(i,j) = 0.0
@@ -564,9 +564,9 @@ c
       subroutine pde2(nx,ny,u,i,j,ux3,ux4,uy3,uy4,nxa,nyc)
       implicit none
       integer nx,ny,i,j,nxa,nyc
-      real u(nx,ny),dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
+      double precision u(nx,ny),dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
       common/pde2com/dlx,dly,dlxx,dlyy,tdlx3,tdly3,dlx4,dly4
-      real ux3,ux4,uy3,uy4
+      double precision ux3,ux4,uy3,uy4
 c
 c     use second order approximation in u to estimate (second order)
 c     third and fourth partial derivatives in the x and y direction
@@ -690,12 +690,12 @@ c
       subroutine swk3(nfx,nfy,nfz,phif,rhsf,phi,rhs)
 c
 c     set phif,rhsf input in arrays which include
-c     virtual boundaries for phi (for all 2-d real codes)
+c     virtual boundaries for phi (for all 2-d double precision codes)
 c
       implicit none
       integer nfx,nfy,nfz,i,j,k
-      real phif(nfx,nfy,nfz),rhsf(nfx,nfy,nfz)
-      real phi(0:nfx+1,0:nfy+1,0:nfz+1),rhs(nfx,nfy,nfz)
+      double precision phif(nfx,nfy,nfz),rhsf(nfx,nfy,nfz)
+      double precision phi(0:nfx+1,0:nfy+1,0:nfz+1),rhs(nfx,nfy,nfz)
       do k=1,nfz
 	do j=1,nfy
 	  do i=1,nfx
@@ -734,8 +734,8 @@ c     transfer fine grid to coarse grid
 c
       implicit none
       integer nx,ny,nz,ncx,ncy,ncz,i,j,k,ic,jc,kc,ix,jy,kz
-      real phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
-      real phic(0:ncx+1,0:ncy+1,0:ncz+1),rhsc(ncx,ncy,ncz)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),rhs(nx,ny,nz)
+      double precision phic(0:ncx+1,0:ncy+1,0:ncz+1),rhsc(ncx,ncy,ncz)
 c
 c     set virtual boundaries in phic to zero
 c
@@ -803,12 +803,12 @@ c
       implicit none
       integer nx,ny,nz,ncx,ncy,ncz,nxa,nxb,nyc,nyd,nze,nzf
       integer ix,jy,kz,i,j,k,ic,jc,kc,im1,ip1,jm1,jp1,km1,kp1
-      real rm,rk,rp
+      double precision rm,rk,rp
 c
 c     restrict fine grid residual in resf to coarse grid in rhsc
 c     using full weighting
 c
-      real resf(nx,ny,nz),rhsc(ncx,ncy,ncz)
+      double precision resf(nx,ny,nz),rhsc(ncx,ncy,ncz)
 c
 c     set x,y,z coarsening integer subscript scales
 c
@@ -1131,7 +1131,7 @@ c
      +                   nze,nzf,intpol)
       implicit none
       integer ncx,ncy,ncz,nx,ny,nz,intpol,nxa,nxb,nyc,nyd,nze,nzf
-      real p(0:ncx+1,0:ncy+1,0:ncz+1),q(0:nx+1,0:ny+1,0:nz+1)
+      double precision p(0:ncx+1,0:ncy+1,0:ncz+1),q(0:nx+1,0:ny+1,0:nz+1)
       integer i,j,k,kc,ist,ifn,jst,jfn,kst,kfn,koddst,koddfn
       ist = 1
       ifn = nx
@@ -1307,8 +1307,8 @@ c
 c     add coarse grid correction in phic to fine grid approximation
 c     in phif using linear or cubic interpolation
 c
-      real phif(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
-      real phcor(0:nx+1,0:ny+1,0:nz+1)
+      double precision phif(0:nx+1,0:ny+1,0:nz+1),phic(0:ncx+1,0:ncy+1,0:ncz+1)
+      double precision phcor(0:nx+1,0:ny+1,0:nz+1)
       do k=0,nz+1
 	do j=0,ny+1
 	  do i=0,nx+1
@@ -1379,7 +1379,7 @@ c     in three dimensions (for all 3-d solvers)
 c
       implicit none
       integer nx,ny,nz,nxa,nyc,nze,j,k,i
-      real phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
       if (nxa.eq.0) then
 	do k=1,nz
 	  do j=1,ny
@@ -1416,16 +1416,16 @@ c     compute mixed partial derivative approximations
 c
       implicit none
       integer nx,ny,i,j,n1,n2,n3,n4,m1,m2,m3,m4
-      real u(nx,ny),ux3y,uxy3,ux2y2
+      double precision u(nx,ny),ux3y,uxy3,ux2y2
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
       common/fmud2cr/xa,xb,yc,yd,tolmax,relmax
-      real dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
+      double precision dlx,dly,dyox,dxoy,dlx2,dly2,dlxx,dlxy,dlyy,dlxy2,
      +             dlxy4,dxxxy4,dxyyy4,dxxyy,tdlx3,tdly3,dlx4,dly4,
      +             dlxxx,dlyyy
       common/com2dcr/dyox,dxoy,dlx2,dly2,dlxy,dlxy2,dlxy4,
@@ -1715,11 +1715,11 @@ c     estimate third and fourth partial derivatives in x,y,z
 c
       implicit none
       integer nx,ny,nz,i,j,k,nxa,nyc,nze
-      real u(nx,ny,nz)
-      real dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
+      double precision u(nx,ny,nz)
+      double precision dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
       common/pde3com/dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,
      +               dlx4,dly4,dlz4
-      real ux3,ux4,uy3,uy4,uz3,uz4
+      double precision ux3,ux4,uy3,uy4,uz3,uz4
 c
 c     x,y partial derivatives
 c
@@ -1791,11 +1791,11 @@ c     third and fourth partial derivatives in x and y
 c
       implicit none
       integer nx,ny,i,j,nxa,nyc,l
-      real u(nx,ny)
-      real dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
+      double precision u(nx,ny)
+      double precision dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
       common/pde3com/dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,
      +               dlx4,dly4,dlz4
-      real ux3,ux4,uy3,uy4
+      double precision ux3,ux4,uy3,uy4
       l=ny
 c
 c     x partial derivatives
@@ -1865,11 +1865,11 @@ c     third and fourth derivatives in x
 c
       implicit none
       integer nx,i,nxa,k
-      real u(nx)
-      real dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
+      double precision u(nx)
+      double precision dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,dlx4,dly4,dlz4
       common/pde3com/dlx,dly,dlz,dlxx,dlyy,dlzz,tdlx3,tdly3,tdlz3,
      +               dlx4,dly4,dlz4
-      real ux3,ux4
+      double precision ux3,ux4
       k = nx
       if (nxa.ne.0) then
 c
@@ -1921,7 +1921,7 @@ c
 c
 c
 c     factri and factrip are:
-c     subroutines called by any real mudpack solver which uses line
+c     subroutines called by any double precision mudpack solver which uses line
 c     relaxation(s) within multigrid iteration.  these subroutines do
 c     a vectorized factorization of m simultaneous tridiagonal systems
 c     of order n arising from nonperiodic or periodic discretizations
@@ -1932,7 +1932,7 @@ c     factor the m simultaneous tridiagonal systems of order n
 c
       implicit none
       integer m,n,i,j
-      real a(n,m),b(n,m),c(n,m)
+      double precision a(n,m),b(n,m),c(n,m)
       do i=2,n
 	do j=1,m
 	  a(i-1,j) = a(i-1,j)/b(i-1,j)
@@ -1950,7 +1950,7 @@ c     (so sweeps below only go from i=1,2,...,n-1) n > 3 is necessary
 c
       implicit none
       integer m,n,i,j
-      real a(n,m),b(n,m),c(n,m),d(n,m),e(n,m),sum(m)
+      double precision a(n,m),b(n,m),c(n,m),d(n,m),e(n,m),sum(m)
       do j=1,m
 	d(1,j) = a(1,j)
       end do
@@ -2000,11 +2000,11 @@ c
 
       subroutine transp(n,amat)
 c
-c     transpose n by n real matrix
+c     transpose n by n double precision matrix
 c
       implicit none
       integer n,i,j
-      real amat(n,n),temp
+      double precision amat(n,n),temp
       do i=1,n-1
 	do j=i+1,n
 	  temp = amat(i,j)
@@ -2017,8 +2017,8 @@ c
 
       subroutine sgfa (a,lda,n,ipvt,info)
       integer lda,n,ipvt(1),info                                                
-      real a(lda,1)                                                             
-      real t                                                                    
+      double precision a(lda,1)                                                             
+      double precision t                                                                    
       integer isfmax,j,k,kp1,l,nm1
       info = 0                                                                  
       nm1 = n - 1                                                               
@@ -2056,8 +2056,8 @@ c
                                                                                 
       subroutine sgsl (a,lda,n,ipvt,b,job)
       integer lda,n,ipvt(1),job                                                 
-      real a(lda,1),b(1)                                                        
-      real sdt,t
+      double precision a(lda,1),b(1)                                                        
+      double precision sdt,t
       integer k,kb,l,nm1                                                        
       nm1 = n - 1                                                               
       if (job .ne. 0) go to 50                                                  
@@ -2100,8 +2100,8 @@ c
       return                                                                    
       end                                                                       
                                                                                 
-      real function sdt(n,sx,incx,sy,incy)
-      real sx(1),sy(1),stemp                                                    
+      double precision function sdt(n,sx,incx,sy,incy)
+      double precision sx(1),sy(1),stemp                                                    
       integer i,incx,incy,ix,iy,m,mp1,n                                         
       stemp = 0.0e0                                                             
       sdt = 0.0e0
@@ -2134,7 +2134,7 @@ c
       end                                                                       
                                                                                 
       integer function isfmax(n,sx,incx)
-      real sx(1),smax                                                           
+      double precision sx(1),smax                                                           
       integer i,incx,ix,n                                                       
       isfmax = 0
       if( n .lt. 1 ) return                                                     
@@ -2161,7 +2161,7 @@ c
       end                                                                       
 
       subroutine sxpy(n,sa,sx,incx,sy,incy)
-      real sx(1),sy(1),sa                                                       
+      double precision sx(1),sy(1),sa                                                       
       integer i,incx,incy,ix,iy,m,mp1,n                                         
       if(n.le.0)return                                                          
       if (sa .eq. 0.0) return                                                   
@@ -2193,7 +2193,7 @@ c
       end                                                                       
 
       subroutine sscl(n,sa,sx,incx)
-      real sa,sx(1)                                                             
+      double precision sa,sx(1)                                                             
       integer i,incx,m,mp1,n,nincx                                              
       if(n.le.0)return                                                          
       if(incx.eq.1)go to 20                                                     

@@ -36,7 +36,7 @@ c
 c ... purpose
 c
 c     mud3pn.f contains subroutines for planar relaxation in the x or
-c     y or z direction.  This file must be loaded with any of the real
+c     y or z direction.  This file must be loaded with any of the double precision
 c     3-d mudpack solvers except mud3sp.
 c
       subroutine planxy(wk)
@@ -44,13 +44,13 @@ c
 c     planar relaxation on (x,y) planes in z direction
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer iparm(16),mgo(4)
-      real fparm(6)
+      double precision fparm(6)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,
      +ktzbgn,nxk,nyk,nzk,ngrid,klevel,kcur,kps
       integer nx,ny,nz,k,kb,kset,kl,ixy,icxy,ip,ic,isx,jsy,kst,kfn
@@ -166,8 +166,8 @@ c     to allow 2-d relaxation
 c
       implicit none
       integer kset,nx,ny,nz,i,j,k
-      real cof(nx,ny,nz,8),cofxy(nx,ny,6)
-      real phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision cof(nx,ny,nz,8),cofxy(nx,ny,6)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
       k = kset
       do j=1,ny
 	do i=1,nx
@@ -186,7 +186,7 @@ c
       subroutine setpxy(kset,nx,ny,nz,phi,phxy,ixy)
       implicit none
       integer kset,nx,ny,nz,i,j,ixy
-      real phi(0:nx+1,0:ny+1,0:nz+1),phxy(0:nx+1,0:ny+1)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phxy(0:nx+1,0:ny+1)
       if (ixy.eq.0) then
 	do j=0,ny+1
 	  do i=0,nx+1
@@ -208,13 +208,13 @@ c
 c     planar relaxation on (x,z) planes in y direction
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer iparm(16),mgo(4)
-      real fparm(6)
+      double precision fparm(6)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,
      +ktzbgn,nxk,nyk,nzk,ngrid,klevel,kcur,kps
       integer nx,ny,nz,j,kb,jset,kl,ixz,icxz,ip,ic,isx,ksz,jst,jfn
@@ -327,8 +327,8 @@ c     to allow 2-d relaxation
 c
       implicit none
       integer jset,nx,ny,nz,i,j,k
-      real cof(nx,ny,nz,8),cofxz(nx,nz,6)
-      real phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision cof(nx,ny,nz,8),cofxz(nx,nz,6)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
       j = jset
       do k=1,nz
 	do i=1,nx
@@ -347,7 +347,7 @@ c
       subroutine setpxz(jset,nx,ny,nz,phi,phxz,ixz)
       implicit none
       integer jset,nx,ny,nz,i,k,ixz
-      real phi(0:nx+1,0:ny+1,0:nz+1),phxz(0:nx+1,0:nz+1)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phxz(0:nx+1,0:nz+1)
       if (ixz.eq.0) then
 	do k=0,nz+1
 	  do i=0,nx+1
@@ -369,13 +369,13 @@ c
 c     planar relaxation on (y,z) planes in x direction
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer iparm(16),mgo(4)
-      real fparm(6)
+      double precision fparm(6)
       integer intl,nxa,nxb,nyc,nyd,nze,nzf,ixp,jyq,kzr,iex,jey,kez,
      +nfx,nfy,nfz,iguess,maxcy,method,meth2,nwork,lwork,itero,
      +kcycle,iprer,ipost,intpol
-      real xa,xb,yc,yd,ze,zf,tolmax,relmax
+      double precision xa,xb,yc,yd,ze,zf,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,
      +ktzbgn,nxk,nyk,nzk,ngrid,klevel,kcur,kps
       integer nx,ny,nz,i,kb,iset,kl,iyz,icyz,ip,ic,jsy,ksz,ist,ifn
@@ -488,8 +488,8 @@ c     to allow 2-d relaxation
 c
       implicit none
       integer iset,nx,ny,nz,i,j,k
-      real cof(nx,ny,nz,8),cofyz(ny,nz,6)
-      real phi(0:nx+1,0:ny+1,0:nz+1)
+      double precision cof(nx,ny,nz,8),cofyz(ny,nz,6)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1)
       i = iset
       do k=1,nz
 	do j=1,ny
@@ -508,7 +508,7 @@ c
       subroutine setpyz(iset,nx,ny,nz,phi,phyz,iyz)
       implicit none
       integer iset,nx,ny,nz,iyz,j,k
-      real phi(0:nx+1,0:ny+1,0:nz+1),phyz(0:ny+1,0:nz+1)
+      double precision phi(0:nx+1,0:ny+1,0:nz+1),phyz(0:ny+1,0:nz+1)
       if (iyz.eq.0) then
 	do k=0,nz+1
 	  do j=0,ny+1
@@ -537,11 +537,11 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real fparm,xa,xb,yc,yd,tolmax,relmax
+      double precision fparm,xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer iw,k,kb,nx,ny,ic,itx,ity
       dimension iparm(16),fparm(6),mgopt(4)
-      real work(*)
+      double precision work(*)
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -617,7 +617,7 @@ c
 
       subroutine mup21(wk)
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer iter
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
@@ -645,12 +645,12 @@ c     execute multigrid k cycle from kcur grid level
 c     kcycle=1 for v cycles, kcycle=2 for w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
       integer nx,ny,ip,ic,ipc,irc,itx,ity,ncx,ncy,l,nrel
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
@@ -809,7 +809,7 @@ c
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
       integer nx,ny,i,j,im1,jm1
-      real tx(nx,ny,*),ty(ny,nx,*),cof(nx,ny,6),sum(*)
+      double precision tx(nx,ny,*),ty(ny,nx,*),cof(nx,ny,6),sum(*)
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -898,9 +898,9 @@ c
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real rhsc(ncx,ncy),resf(nx,ny)
-      real phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
-      real cof(nx,ny,6)
+      double precision rhsc(ncx,ncy),resf(nx,ny)
+      double precision phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
+      double precision cof(nx,ny,6)
 c
 c     set phic zero
 c
@@ -936,7 +936,7 @@ c     relaxation for mud2
 c
       implicit none
       integer nx,ny
-      real phi(*),cof(*),tx(*),ty(*),sum(*)
+      double precision phi(*),cof(*),tx(*),ty(*),sum(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -968,7 +968,7 @@ c
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6)
 c
 c    periodic adjustment bypass block
 c
@@ -1122,7 +1122,7 @@ c
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),tx(nx,ny,*),sum(ny)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),tx(nx,ny,*),sum(ny)
 c
 c     replace line x with point gauss-seidel if
 c     x direction is periodic and nx = 3 (coarsest)
@@ -1294,7 +1294,7 @@ c
       common/imup2/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,6),ty(ny,nx,*),sum(nx)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,6),ty(ny,nx,*),sum(nx)
 c
 c     replace line y with point gauss-seidel if
 c     y direction is periodic and ny = 3

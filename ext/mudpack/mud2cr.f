@@ -58,11 +58,11 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real fparm,xa,xb,yc,yd,tolmax,relmax
+      double precision fparm,xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer int,iw,k,kb,nx,ny,ic,itx,ity
       dimension iparm(17),fparm(6),mgopt(4)
-      real work(*),phi(*),rhs(*)
+      double precision work(*),phi(*),rhs(*)
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
@@ -216,11 +216,11 @@ c
       subroutine mud2cr1(nx,ny,rhsf,phif,coef,bndyc,wk)
       implicit none
       integer nx,ny
-      real phif(nx,ny),rhsf(nx,ny),wk(*)
+      double precision phif(nx,ny),rhsf(nx,ny),wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax,phmax
+      double precision xa,xb,yc,yd,tolmax,relmax,phmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       integer k,kb,ip,ic,ir,ipc,irc,icc
       integer ncx,ncy,jj,ij,i,j,iter
@@ -348,12 +348,12 @@ c     execute multigrid k cycle from kcur grid level
 c     kcycle=1 for v cycles, kcycle=2 for w cycles
 c
       implicit none
-      real wk(*)
+      double precision wk(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
       integer nx,ny,ip,ic,ipc,irc,itx,ity,ncx,ncy,l,nrel
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer kpbgn,kcbgn,ktxbgn,ktybgn,nxk,nyk,isx,jsy
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
@@ -511,18 +511,18 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer nx,ny,i,j,kbdy,l,im1,jm1,ier,jc
-      real cf(nx,ny,10),tx(nx,ny,*),ty(ny,nx,*)
-      real wk(*),dlx,dlx2,dlxx,dly,dly2,dlyy,cmin,alfmax,cemax
-      real x,y,cxx,cxy,cyy,cx,cy,ce,c1,c2,c3,c4,c5
-      real c6,c7,c8,c9
-      real alfaa,alfab,alfac,alfad,betaa,betab,betac,betad,det
-      real gamaa,gamab,gamac,gamad,dxoy,dyox,dlxy,dlxy2,dlxy4
-      real alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
-      real alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
-      real gammax,gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
-      real gbdya,gbdyb,gbdyc,gbdyd
+      double precision cf(nx,ny,10),tx(nx,ny,*),ty(ny,nx,*)
+      double precision wk(*),dlx,dlx2,dlxx,dly,dly2,dlyy,cmin,alfmax,cemax
+      double precision x,y,cxx,cxy,cyy,cx,cy,ce,c1,c2,c3,c4,c5
+      double precision c6,c7,c8,c9
+      double precision alfaa,alfab,alfac,alfad,betaa,betab,betac,betad,det
+      double precision gamaa,gamab,gamac,gamad,dxoy,dyox,dlxy,dlxy2,dlxy4
+      double precision alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
+      double precision alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
+      double precision gammax,gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
+      double precision gbdya,gbdyb,gbdyc,gbdyd
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
@@ -1281,18 +1281,18 @@ c
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
-      real xa,xb,yc,yd,tolmax,relmax
+      double precision xa,xb,yc,yd,tolmax,relmax
       integer nx,ny,i,j,kbdy
-      real cf(nx,ny,10),phi(0:nx+1,0:ny+1)
-      real dlx,dlx2,dlxx,dly,dly2,dlyy,dlxy,dlxy2,dlxy4,dxoy,dyox
-      real x,y,cxx,cxy,cyy,cx,cy,ce,c1,c2,c3,c4,c5
-      real c6,c7,c8
-      real alfaa,alfab,alfac,alfad,betaa,betab,betac,betad,det
-      real gamaa,gamab,gamac,gamad
-      real alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
-      real alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
-      real gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
-      real gbdya,gbdyb,gbdyc,gbdyd
+      double precision cf(nx,ny,10),phi(0:nx+1,0:ny+1)
+      double precision dlx,dlx2,dlxx,dly,dly2,dlyy,dlxy,dlxy2,dlxy4,dxoy,dyox
+      double precision x,y,cxx,cxy,cyy,cx,cy,ce,c1,c2,c3,c4,c5
+      double precision c6,c7,c8
+      double precision alfaa,alfab,alfac,alfad,betaa,betab,betac,betad,det
+      double precision gamaa,gamab,gamac,gamad
+      double precision alfim1,alfi,alfip1,betim1,beti,betip1,gamim1,gami,gamip1
+      double precision alfjm1,alfj,alfjp1,betjm1,betj,betjp1,gamjm1,gamj,gamjp1
+      double precision gbdim1,gbdi,gbdip1,gbdj,gbdjm1,gbdjp1
+      double precision gbdya,gbdyb,gbdyc,gbdyd
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
@@ -1633,9 +1633,9 @@ c
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
-      real rhsc(ncx,ncy),resf(nx,ny)
-      real phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
-      real cof(nx,ny,10)
+      double precision rhsc(ncx,ncy),resf(nx,ny)
+      double precision phi(0:nx+1,0:ny+1),phic(0:ncx+1,0:ncy+1)
+      double precision cof(nx,ny,10)
 c
 c     set phic zero
 c
@@ -1675,7 +1675,7 @@ c     relaxation for mud2
 c
       implicit none
       integer nx,ny
-      real phi(*),cof(*),tx(*),ty(*),sum(*)
+      double precision phi(*),cof(*),tx(*),ty(*),sum(*)
       integer intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,iguess,
      +             maxcy,method,nwork,lwork,itero,ngrid,klevel,kcur,
      +             kcycle,iprer,ipost,intpol,kps
@@ -1707,7 +1707,7 @@ c
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,10)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,10)
       i1 = 1
       i2 = 4
       i3 = 3
@@ -1811,7 +1811,7 @@ c
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,10),tx(nx,ny,*),sum(ny)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,10),tx(nx,ny,*),sum(ny)
 c
 c     replace line x with point gauss-seidel if
 c     x direction is periodic and nx = 3 (coarsest)
@@ -1998,7 +1998,7 @@ c
       common/imud2cr/intl,nxa,nxb,nyc,nyd,ixp,jyq,iex,jey,nfx,nfy,
      +               iguess, maxcy,method,nwork,lwork,itero,ngrid,
      +               klevel,kcur,kcycle,iprer,ipost,intpol,kps
-      real phi(0:nx+1,0:ny+1),cof(nx,ny,10),ty(ny,nx,*),sum(nx)
+      double precision phi(0:nx+1,0:ny+1),cof(nx,ny,10),ty(ny,nx,*),sum(nx)
 c
 c     replace line y with point gauss-seidel if
 c     y direction is periodic and ny = 3

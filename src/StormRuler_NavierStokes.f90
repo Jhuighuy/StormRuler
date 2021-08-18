@@ -29,7 +29,7 @@ use StormRuler_BLAS
 use StormRuler_FDM_Operators
 use StormRuler_FDM_BCs
 use StormRuler_ConvParams
-use StormRuler_KrylovSolvers
+use StormRuler_Solvers_Krylov
 
 use StormRuler_Matrix
 use StormRuler_IO

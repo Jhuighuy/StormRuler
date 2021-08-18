@@ -25,6 +25,10 @@
 
 #$let NUM_RANKS = 2
 
+#$let HAS_OpenMP = True
+
 #$let HAS_MKL = True
+
+#$let HAS_MUDPACK = True
 
 #$let NAG_COMPILER = True

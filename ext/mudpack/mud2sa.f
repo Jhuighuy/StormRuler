@@ -316,8 +316,8 @@ c
 	    jj = j*(nfx+2)
 	    do i=1,nfx
 	      ij = jj+i+1
-	      phmax = amax1(phmax,abs(wk(ij)))
-	      relmax = amax1(relmax,abs(wk(ij)-phif(i,j)))
+	      phmax = max(phmax,abs(wk(ij)))
+	      relmax = max(relmax,abs(wk(ij)-phif(i,j)))
 	      phif(i,j) = wk(ij)
 	    end do
 	  end do
@@ -562,9 +562,9 @@ c
 c
 c     monitor possible nonfatal coefficient errors
 c
-	  sigmin = amin1(sigmin,sigx(x,y),sigy(x,y))
-	  xlmin = amin1(xlmin,xlm)
-	  xlmax = amax1(abs(xlm),xlmax)
+	  sigmin = min(sigmin,sigx(x,y),sigy(x,y))
+	  xlmin = min(xlmin,xlm)
+	  xlmax = max(abs(xlm),xlmax)
 	  c1 = sgxm*odlxx
 	  c2 = sgxp*odlxx
 	  c3 = sgym*odlyy
@@ -605,7 +605,7 @@ c
 	  cof(i,j,1) = 0.0
 	  cof(i,j,2) = cof(i,j,2)+c1
 	  cof(i,j,5) = cof(i,j,5)+dlx2*alfa*c1
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nxb.eq.2) then
@@ -619,7 +619,7 @@ c
 	  cof(i,j,1) = cof(i,j,1)+c2
 	  cof(i,j,2) = 0.0
 	  cof(i,j,5) = cof(i,j,5)-dlx2*alfa*c2
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nyc.eq.2) then
@@ -633,7 +633,7 @@ c
 	  cof(i,j,3) = 0.0
 	  cof(i,j,4) = cof(i,j,4)+c3
 	  cof(i,j,5) = cof(i,j,5)+dly2*alfa*c3
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nyd.eq.2) then
@@ -647,7 +647,7 @@ c
 	  cof(i,j,3) = cof(i,j,3)+c4
 	  cof(i,j,4) = 0.0
 	  cof(i,j,5) = cof(i,j,5)-dly2*c4*alfa
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
 	if (xlmax.eq.0.0.and.alfmax.eq.0.0) then

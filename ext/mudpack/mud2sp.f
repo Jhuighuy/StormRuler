@@ -318,8 +318,8 @@ c
 	    jj = j*(nfx+2)
 	    do i=1,nfx
 	      ij = jj+i+1
-	      phmax = amax1(phmax,abs(wk(ij)))
-	      relmax = amax1(relmax,abs(wk(ij)-phif(i,j)))
+	      phmax = max(phmax,abs(wk(ij)))
+	      relmax = max(relmax,abs(wk(ij)-phif(i,j)))
 	      phif(i,j) = wk(ij)
 	    end do
 	  end do
@@ -567,8 +567,8 @@ c
       do j=jst,jfn
 	y = yc+(j-1)*dly
 	call cfy(y,cyy,cy,cey)
-	cmin = amin1(cmin,cyy)
-	cemax = amax1(abs(cey),cemax)
+	cmin = min(cmin,cyy)
+	cemax = max(abs(cey),cemax)
 c
 c     flag hyperbolic pde if necessary
 c
@@ -577,7 +577,7 @@ c
 	    ier = -4
 	  end if
 	end if
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c1 = cyy/dlyy-cy/dly2
 	c2 = cyy/dlyy+cy/dly2
 	c3 = cey-(c1+c2)
@@ -588,8 +588,8 @@ c
       do i=ist,ifn
 	x = xa+(i-1)*dlx
 	call cfx(x,cxx,cx,cex)
-	cmin = amin1(cmin,cxx)
-	cemax = amax1(abs(cex),cemax)
+	cmin = min(cmin,cxx)
+	cemax = max(abs(cex),cemax)
 c
 c      flag hyperbolic pde if necessary
 c
@@ -598,7 +598,7 @@ c
 	    ier = -4
 	  end if
 	end if
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	c1 = cxx/dlxx-cx/dlx2
 	c2 = cxx/dlxx+cx/dlx2
 	c3 = cex-(c1+c2)
@@ -620,7 +620,7 @@ c
 c     compute constant coefficient alfa
 c
 	call bndyc(kbdy,y,alfa,gbdy)
-	alfmax = amax1(alfmax,abs(alfa))
+	alfmax = max(alfmax,abs(alfa))
 	cofx(i,3) = cofx(i,3)+dlx2*alfa*c1
       end if
       if (nxb.eq.2) then
@@ -635,7 +635,7 @@ c
 	cofx(i,1) = cofx(i,1)+c2
 	cofx(i,2) = 0.0
 	cofx(i,3) = cofx(i,3)-dlx2*alfa*c2
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nyc.eq.2) then
 	kbdy = 3
@@ -649,7 +649,7 @@ c
 	cofy(j,1) = 0.0
 	cofy(j,2) = cofy(j,2) + c1
 	cofy(j,3) = cofy(j,3) + dly2*alfa*c1
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nyd.eq.2) then
 	kbdy = 4
@@ -663,7 +663,7 @@ c
 	cofy(j,2) = 0.0
 	cofy(j,1) = cofy(j,1) + c2
 	cofy(j,3) = cofy(j,3) - dly2*c2*alfa
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
 c
 c     if detected then flag singular pde
@@ -820,7 +820,7 @@ c
 	x = xa
 	i = 1
 	call cfx(x,cxx,cx,cex)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	c1 = cxx/dlxx-cx/dlx2
 	do j=jst,jfn
 	  y = yc+(j-1)*dly
@@ -833,7 +833,7 @@ c
 	x = xb
 	i = nx
 	call cfx(x,cxx,cx,cex)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	c2 = cxx/dlxx+cx/dlx2
 	do j=jst,jfn
 	  y = yc+(j-1)*dly
@@ -846,7 +846,7 @@ c
 	y = yc
 	j = 1
 	call cfy(y,cyy,cy,cey)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c1 = cyy/dlyy-cy/dly2
 	do i=ist,ifn
 	  x = xa+(i-1)*dlx
@@ -859,7 +859,7 @@ c
 	y = yd
 	j = ny
 	call cfy(y,cyy,cy,cey)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c2 = cyy/dlyy+cy/dly2
 	do i=ist,ifn
 	  x = xa+(i-1)*dlx

@@ -335,8 +335,8 @@ c
 	    jj = j*(nfx+2)
 	    do i=1,nfx
 	      ij = jj+i+1
-	      phmax = amax1(phmax,abs(wk(ij)))
-	      relmax = amax1(relmax,abs(wk(ij)-phif(i,j)))
+	      phmax = max(phmax,abs(wk(ij)))
+	      relmax = max(relmax,abs(wk(ij)-phif(i,j)))
 	      phif(i,j) = wk(ij)
 	    end do
 	  end do
@@ -609,8 +609,8 @@ c
 	do i=1,nx
 	  x = xa+(i-1)*dlx
 	  call coef(x,y,cxx,cxy,cyy,cx,cy,ce)
-	  cmin = amin1(cmin,cxx*cyy)
-	  cemax = amax1(abs(ce),cemax)
+	  cmin = min(cmin,cxx*cyy)
+	  cemax = max(abs(ce),cemax)
 c
 c     flag hyperbolic pde
 c
@@ -620,8 +620,8 @@ c
 	      ier = -4
 	    end if
 	  end if
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c1=cxx/dlxx+cx/dlx2
 	  c2=cxy/dlxy4
 	  c3=cyy/dlyy+cy/dly2
@@ -700,12 +700,12 @@ c
 	i = 1
 	call bndyc(kbdy,yc,alfjm1,betjm1,gamjm1,gbdjm1)
 	call bndyc(kbdy,yc+dly,alfj,betj,gamj,gbdj)
-	gammax = amax1(abs(gamjm1),abs(gamj),gammax)
+	gammax = max(abs(gamjm1),abs(gamj),gammax)
 	do j=2,ny-1
 	  jc = j
 	  y = yc+j*dly
 	  call bndyc(kbdy,y,alfjp1,betjp1,gamjp1,gbdjp1)
-	  gammax = amax1(abs(gamjp1),gammax)
+	  gammax = max(abs(gamjp1),gammax)
 c
 c     check for illegal tangential derivative b.c.
 c
@@ -746,12 +746,12 @@ c
 	i = nx
 	call bndyc(kbdy,yc,alfjm1,betjm1,gamjm1,gbdjm1)
 	call bndyc(kbdy,yc+dly,alfj,betj,gamj,gbdj)
-	gammax = amax1(abs(gamjm1),abs(gamj),gammax)
+	gammax = max(abs(gamjm1),abs(gamj),gammax)
 	do j=2,ny-1
 	  jc = j
 	  y = yc+j*dly
 	  call bndyc(kbdy,y,alfjp1,betjp1,gamjp1,gbdjp1)
-	  gammax = amax1(abs(gamjp1),gammax)
+	  gammax = max(abs(gamjp1),gammax)
 c
 c     check for illegal tangential derivative b.c.
 c
@@ -791,11 +791,11 @@ c
 	jc = 1
 	call bndyc(kbdy,xa,alfim1,betim1,gamim1,gbdim1)
 	call bndyc(kbdy,xa+dlx,alfi,beti,gami,gbdi)
-	gammax = amax1(abs(gamim1),abs(gami),gammax)
+	gammax = max(abs(gamim1),abs(gami),gammax)
 	do i=2,nx-1
 	  x=xa+i*dlx
 	  call bndyc(kbdy,x,alfip1,betip1,gamip1,gbdip1)
-	  gammax = amax1(abs(gamip1),gammax)
+	  gammax = max(abs(gamip1),gammax)
 c
 c     check for illegal tangential derivative b.c.
 c
@@ -838,11 +838,11 @@ c     advance scalars for next pass
 	kbdy=4
 	call bndyc(kbdy,xa,alfim1,betim1,gamim1,gbdim1)
 	call bndyc(kbdy,xa+dlx,alfi,beti,gami,gbdi)
-	gammax = amax1(abs(gamim1),abs(gami),gammax)
+	gammax = max(abs(gamim1),abs(gami),gammax)
 	do i=2,nx-1
 	  x=xa+i*dlx
 	  call bndyc(kbdy,x,alfip1,betip1,gamip1,gbdip1)
-	  gammax = amax1(abs(gamip1),gammax)
+	  gammax = max(abs(gamip1),gammax)
 c
 c     check for illegal tangential derivative b.c.
 c
@@ -1952,8 +1952,8 @@ c
 	  x=xa+i*dlx
 	  call bndyc(kbdy,x,alfip1,betip1,gamip1,gbdip1)
 	  call coef(x-dlx,yc,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c6=cxy/dlxy4
 	  c7=cyy/dlyy-cy/dly2
 	  c8=-c6
@@ -1969,16 +1969,16 @@ c
 	  call bndyc(kbdy,xa,alfi,beti,gami,gbdi)
 	  call bndyc(kbdy,xa+dlx,alfip1,betip1,gamip1,gbdip1)
 	  call coef(xa,yc,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c7=cyy/dlyy-cy/dly2+cxy/dlxy2
 	  c8=-cxy/dlxy2
 	  cf(1,1,10)=cf(1,1,10)+dly2*(c8*gbdip1/betip1+c7*gbdi/beti)
 	  call bndyc(kbdy,xb-dlx,alfim1,betim1,gamim1,gbdim1)
 	  call bndyc(kbdy,xb,alfi,beti,gami,gbdi)
 	  call coef(xb,yc,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c6=cxy/dlxy2
 	  c7=cyy/dlyy-cy/dly2-c6
 	  cf(nx,1,10)=cf(nx,1,10)+dly2*(c6*gbdim1/betim1+c7*gbdi/beti)
@@ -1988,8 +1988,8 @@ c
 	  kbdy=1
 	  call bndyc(kbdy,yc+dly,alfaa,betaa,gamaa,gbdya)
 	  call coef(xa,yc,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c4=-cxy/dlxy2
 	  c8=c4
 	  c5=cxx/dlxx-cx/dlx2-c4
@@ -2013,8 +2013,8 @@ c     correct for mixed-mixed at (xb,yc)
 	  kbdy=2
 	  call bndyc(kbdy,yc+dly,alfab,betab,gamab,gbdyb)
 	  call coef(xb,yc,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c2=cxy/dlxy2
 	  c6=c2
 	  c1=cxx/dlxx+cx/dlx2-c2
@@ -2043,8 +2043,8 @@ c     mixed along x=xb
 	  y=yc+j*dly
 	  call bndyc(kbdy,y,alfjp1,betjp1,gamjp1,gbdjp1)
 	  call coef(xb,y-dly,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c1=cxx/dlxx+cx/dlx2
 	  c2=cxy/dlxy4
 	  c8=-c2
@@ -2065,8 +2065,8 @@ c     mixed along x=xb
 	  x=xa+i*dlx
 	  call bndyc(kbdy,x,alfip1,betip1,gamip1,gbdip1)
 	  call coef(x-dlx,yd,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c2=cxy/dlxy4
 	  c3=cyy/dlyy+cy/dly2
 	  c4=-c2
@@ -2083,16 +2083,16 @@ c     correct for periodic-mixed at (xa,yd), (xb,yd)
 	  call bndyc(kbdy,xa,alfi,beti,gami,gbdi)
 	  call bndyc(kbdy,xa+dlx,alfip1,betip1,gamip1,gbdip1)
 	  call coef(xa,yd,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c2=cxy/dlxy2
 	  c3=cyy/dlyy+cy/dly2-c2
 	  cf(1,ny,10)=cf(1,ny,10)-dly2*(c3*gbdi/beti+c2*gbdip1/betip1)
 	  call bndyc(kbdy,xb-dlx,alfim1,betim1,gamim1,gbdim1)
 	  call bndyc(kbdy,xb,alfi,beti,gami,gbdi)
 	  call coef(xb,yd,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c4=-cxy/dlxy2
 	  c3=cyy/dlyy+cy/dly2-c4
 	  cf(nx,ny,10)=cf(nx,ny,10)-dly2*(c3*gbdi/beti+c4*gbdim1/betim1)
@@ -2100,8 +2100,8 @@ c     correct for periodic-mixed at (xa,yd), (xb,yd)
 c     correct for mixed-mixed at (xa,yd)
 c     phase 1
 	  call coef(xa,yd,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c2=cxy/dlxy2
 	  c6=c2
 	  c3=cyy/dlyy+cy/dly2-c2
@@ -2126,8 +2126,8 @@ c     phase 2
 	if (nxb.eq.2) then
 c     correct ofr mixed-mixed at (xb,yd)
 	  call coef(xb,yd,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c4=-cxy/dlxy2
 	  c8=c4
 	  c1=cxx/dlxx+cx/dlx2-c4
@@ -2160,8 +2160,8 @@ c     mixed along x=xa
 	  y=yc+j*dly
 	  call bndyc(kbdy,y,alfjp1,betjp1,gamjp1,gbdjp1)
 	  call coef(xa,y-dly,cxx,cxy,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c4=-cxy/dlxy4
 	  c5=cxx/dlxx-cx/dlx2
 	  c6=-c4
@@ -2182,8 +2182,8 @@ c
 	call bndyc(kbdy,yc,alfj,betj,gamj,gbdj)
 	call bndyc(kbdy,yc+dly,alfjp1,betjp1,gamjp1,gbdjp1)
 	call coef(xa,yc,cxx,cxy,cyy,cx,cy,ce)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c4 = -cxy/dlxy2
 	c5 = cxx/dlxx-cx/dlx2-c4
 	cf(1,1,10) = cf(1,1,10)+dlx2*(c4*gbdjp1/alfjp1+c5*gbdj/alfj)
@@ -2193,8 +2193,8 @@ c
 	call bndyc(kbdy,yd-dly,alfjm1,betjm1,gamjm1,gbdjm1)
 	call bndyc(kbdy,yd,alfj,betj,gamj,gbdj)
 	call coef(xa,yd,cxx,cxy,cyy,cx,cy,ce)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c6=cxy/dlxy2
 	c5 = cxx/dlxx-cx/dlx2-c6
 	cf(1,ny,10)=cf(1,ny,10)+dlx2*(c6*gbdjm1/alfjm1+c5*gbdj/alfj)
@@ -2208,16 +2208,16 @@ c
 	call bndyc(kbdy,yc,alfj,betj,gamj,gbdj)
 	call bndyc(kbdy,yc+dly,alfjp1,betjp1,gamjp1,gbdjp1)
 	call coef(xb,yc,cxx,cxy,cyy,cx,cy,ce)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c2 = cxy/dlxy2
 	c1 = cxx/dlxx+cx/dlx2-c2
 	cf(nx,1,10) = cf(nx,1,10)-dlx2*(c1*gbdj/alfj+c2*gbdjp1/alfjp1)
 	call bndyc(kbdy,yd-dly,alfjm1,betjm1,gamjm1,gbdjm1)
 	call bndyc(kbdy,yd,alfj,betj,gamj,gbdj)
 	call coef(xb,yd,cxx,cxy,cyy,cx,cy,ce)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c8 = -cxy/dlxy2
 	c1 = cxx/dlxx+cx/dlx2-c8
 	cf(nx,ny,10) = cf(nx,ny,10)-dlx2*(c1*gbdj/alfj+c8*gbdjm1/alfjm1)

@@ -20,7 +20,11 @@ platform where the code is compiled and run.
 # Custom modifications
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 **MUDPACK** was modified in order to utilize the double precision 
-real arithmetics.
+real arithmetics:
+
+* `real` type was replaces with `double precision`.
+
+* `amin1` and `amax1` intrinsics were replaced with `min` and `max`.
 
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 # Licence

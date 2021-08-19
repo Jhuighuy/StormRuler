@@ -582,8 +582,8 @@ c
 	      jk = kk+j*(nfx+2)
 	      do i=1,nfx
 		ijk = jk+i+1
-		phmax = amax1(phmax,abs(wk(ijk)))
-		relmax = amax1(relmax,abs(wk(ijk)-phif(i,j,k)))
+		phmax = max(phmax,abs(wk(ijk)))
+		relmax = max(relmax,abs(wk(ijk)-phif(i,j,k)))
 		phif(i,j,k) = wk(ijk)
 	      end do
 	    end do
@@ -939,8 +939,8 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cmin = amin1(cmin,cxx,cyy,czz)
-	    cemax = amax1(abs(ce),cemax)
+	    cmin = min(cmin,cxx,cyy,czz)
+	    cemax = max(abs(ce),cemax)
 c
 c     check if pde is "hyperbolic" at finest grid level
 c
@@ -954,9 +954,9 @@ c     adjust second order coefficients so that pde is not "hyperbolic"
 c     this is especially possible on coarser grids if there are non-zero
 c     first order terms
 c
-	    cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	    cyy = amax1(cyy,abs(cy)*dly*0.5)
-	    czz = amax1(czz,abs(cz)*dlz*0.5)
+	    cxx = max(cxx,abs(cx)*dlx*0.5)
+	    cyy = max(cyy,abs(cy)*dly*0.5)
+	    czz = max(czz,abs(cz)*dlz*0.5)
 	    c1 = cxx/dlxx-cx/dlx2
 	    c2 = cxx/dlxx+cx/dlx2
 	    c3 = cyy/dlyy-cy/dly2
@@ -992,7 +992,7 @@ c
 	  do j=jst,jfn
 	    y = yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c1 = cof(i,j,k,1)
 	    cof(i,j,k,1) = 0.0
 	    cof(i,j,k,2) = cof(i,j,k,2)+c1
@@ -1009,7 +1009,7 @@ c
 	  do j=jst,jfn
 	    y = yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c2 = cof(i,j,k,2)
 	    cof(i,j,k,1) = cof(i,j,k,1)+c2
 	    cof(i,j,k,2) = 0.0
@@ -1026,7 +1026,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c3 = cof(i,j,k,3)
 	    cof(i,j,k,3) = 0.0
 	    cof(i,j,k,4) = cof(i,j,k,4)+c3
@@ -1043,7 +1043,7 @@ c
 	do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c4 = cof(i,j,k,4)
 	    cof(i,j,k,3) = cof(i,j,k,3)+c4
 	    cof(i,j,k,4) = 0.0
@@ -1060,7 +1060,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c5 = cof(i,j,k,5)
 	    cof(i,j,k,5) = 0.0
 	    cof(i,j,k,6) = cof(i,j,k,6)+c5
@@ -1077,7 +1077,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c6 = cof(i,j,k,6)
 	    cof(i,j,k,5) = cof(i,j,k,5)+c6
 	    cof(i,j,k,6) = 0.0
@@ -1389,7 +1389,7 @@ c
 	    y=yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	    cxx = max(cxx,abs(cx)*dlx*0.5)
 	    c1 = cxx/dlxx-cx/dlx2
 	    cof(i,j,k,8) = cof(i,j,k,8)+dlx2*c1*gbdy
 	  end do
@@ -1405,7 +1405,7 @@ c
 	    y=yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	    cxx = max(cxx,abs(cx)*dlx*0.5)
 	    c2 = cxx/dlxx+cx/dlx2
 	    cof(i,j,k,8) = cof(i,j,k,8)-dlx2*c2*gbdy
 	  end do
@@ -1421,7 +1421,7 @@ c
 	    x=xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cyy = amax1(cyy,abs(cy)*dly*0.5)
+	    cyy = max(cyy,abs(cy)*dly*0.5)
 	    c3 = cyy/dlyy-cy/dly2
 	    cof(i,j,k,8) = cof(i,j,k,8)+dly2*c3*gbdy
 	  end do
@@ -1437,7 +1437,7 @@ c
 	    x=xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cyy = amax1(cyy,abs(cy)*dly*0.5)
+	    cyy = max(cyy,abs(cy)*dly*0.5)
 	    c4 = cyy/dlyy+cy/dly2
 	    cof(i,j,k,8) = cof(i,j,k,8)-dly2*c4*gbdy
 	  end do
@@ -1453,7 +1453,7 @@ c
 	    x=xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    czz = amax1(czz,abs(cz)*dlz*0.5)
+	    czz = max(czz,abs(cz)*dlz*0.5)
 	    c5 = czz/dlzz-cz/dlz2
 	    cof(i,j,k,8) = cof(i,j,k,8)+dlz2*c5*gbdy
 	  end do
@@ -1469,7 +1469,7 @@ c
 	    x=xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    czz = amax1(czz,abs(cz)*dlz*0.5)
+	    czz = max(czz,abs(cz)*dlz*0.5)
 	    c6 = czz/dlzz+cz/dlz2
 	    cof(i,j,k,8) = cof(i,j,k,8)-dlz2*c6*gbdy
 	  end do

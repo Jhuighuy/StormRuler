@@ -522,8 +522,8 @@ c
 	  do k=1,nfz
 	    do j=1,nfy
 	      do i=1,nfx
-		pmax = amax1(abs(phi(i,j,k)),pmax)
-		difmax = amax1(difmax,abs(phi(i,j,k)-phif(i,j,k)))
+		pmax = max(abs(phi(i,j,k)),pmax)
+		difmax = max(difmax,abs(phi(i,j,k)-phif(i,j,k)))
 	      end do
 	    end do
 	  end do
@@ -918,8 +918,8 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call coef(x,y,z,cxx,cyy,czz,cx,cy,cz,ce)
-	    cmin = amin1(cmin,cxx,cyy,czz)
-	    cemax = amax1(abs(ce),cemax)
+	    cmin = min(cmin,cxx,cyy,czz)
+	    cemax = max(abs(ce),cemax)
 c
 c     check if pde is "hyperbolic" at finest grid level
 c
@@ -933,9 +933,9 @@ c     adjust second order coefficients so that pde is not "hyperbolic"
 c     this is especially possible on coarser grids if there are non-zero
 c     first order terms
 c
-	    cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	    cyy = amax1(cyy,abs(cy)*dly*0.5)
-	    czz = amax1(czz,abs(cz)*dlz*0.5)
+	    cxx = max(cxx,abs(cx)*dlx*0.5)
+	    cyy = max(cyy,abs(cy)*dly*0.5)
+	    czz = max(czz,abs(cz)*dlz*0.5)
 	    c1 = cxx/dlxx-cx/dlx2
 	    c2 = cxx/dlxx+cx/dlx2
 	    c3 = cyy/dlyy-cy/dly2
@@ -1036,7 +1036,7 @@ c
 	    y = yc+(j-1)*dly
 	    call bnd3cr(kbdy,y,z,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c1 = cof(i,j,k,1)
 	    cof(i,j,k,1) = 0.0
 	    cof(i,j,k,2) = cof(i,j,k,2)+c1
@@ -1054,7 +1054,7 @@ c
 	    y = yc+(j-1)*dly
 	    call bnd3cr(kbdy,y,z,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c2 = cof(i,j,k,2)
 	    cof(i,j,k,1) = cof(i,j,k,1)+c2
 	    cof(i,j,k,2) = 0.0
@@ -1072,7 +1072,7 @@ c
 	    x = xa+(i-1)*dlx
 	    call bnd3cr(kbdy,x,z,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c3 = cof(i,j,k,3)
 	    cof(i,j,k,3) = 0.0
 	    cof(i,j,k,4) = cof(i,j,k,4)+c3
@@ -1090,7 +1090,7 @@ c
 	    x = xa+(i-1)*dlx
 	    call bnd3cr(kbdy,x,z,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c4 = cof(i,j,k,4)
 	    cof(i,j,k,3) = cof(i,j,k,3)+c4
 	    cof(i,j,k,4) = 0.0
@@ -1108,7 +1108,7 @@ c
 	    x = xa+(i-1)*dlx
 	    call bnd3cr(kbdy,x,y,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c5 = cof(i,j,k,5)
 	    cof(i,j,k,5) = 0.0
 	    cof(i,j,k,6) = cof(i,j,k,6)+c5
@@ -1126,7 +1126,7 @@ c
 	    x = xa+(i-1)*dlx
 	    call bnd3cr(kbdy,x,y,a,b,c,g)
 	    alfa = c
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c6 = cof(i,j,k,6)
 	    cof(i,j,k,5) = cof(i,j,k,5)+c6
 	    cof(i,j,k,6) = 0.0

@@ -544,8 +544,8 @@ c
 	      jk = kk+j*(nfx+2)
 	      do i=1,nfx
 		ijk = jk+i+1
-		phmax = amax1(phmax,abs(wk(ijk)))
-		relmax = amax1(relmax,abs(wk(ijk)-phif(i,j,k)))
+		phmax = max(phmax,abs(wk(ijk)))
+		relmax = max(relmax,abs(wk(ijk)-phif(i,j,k)))
 		phif(i,j,k) = wk(ijk)
 	      end do
 	    end do
@@ -867,9 +867,9 @@ c
 c
 c     monitor possible nonfatal coefficient errors
 c
-	    sigmin = amin1(sigmin,sgx(x,y,z),sgy(x,y,z),sgz(x,y,z))
-	    xlmin = amin1(xlmin,xlm)
-	    xlmax = amax1(abs(xlm),xlmax)
+	    sigmin = min(sigmin,sgx(x,y,z),sgy(x,y,z),sgz(x,y,z))
+	    xlmin = min(xlmin,xlm)
+	    xlmax = max(abs(xlm),xlmax)
 	    c1 = sgxm*odlxx
 	    c2 = sgxp*odlxx
 	    c3 = sgym*odlyy
@@ -914,7 +914,7 @@ c
 	  do j=jst,jfn
 	    y = yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c1 = cof(i,j,k,1)
 	    cof(i,j,k,1) = 0.0
 	    cof(i,j,k,2) = cof(i,j,k,2)+c1
@@ -931,7 +931,7 @@ c
 	  do j=jst,jfn
 	    y = yc+(j-1)*dly
 	    call bndyc(kbdy,y,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c2 = cof(i,j,k,2)
 	    cof(i,j,k,1) = cof(i,j,k,1)+c2
 	    cof(i,j,k,2) = 0.0
@@ -948,7 +948,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c3 = cof(i,j,k,3)
 	    cof(i,j,k,3) = 0.0
 	    cof(i,j,k,4) = cof(i,j,k,4)+c3
@@ -965,7 +965,7 @@ c
 	do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,z,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c4 = cof(i,j,k,4)
 	    cof(i,j,k,3) = cof(i,j,k,3)+c4
 	    cof(i,j,k,4) = 0.0
@@ -982,7 +982,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c5 = cof(i,j,k,5)
 	    cof(i,j,k,5) = 0.0
 	    cof(i,j,k,6) = cof(i,j,k,6)+c5
@@ -999,7 +999,7 @@ c
 	  do i=ist,ifn
 	    x = xa+(i-1)*dlx
 	    call bndyc(kbdy,x,y,alfa,gbdy)
-	    alfmax = amax1(abs(alfa),alfmax)
+	    alfmax = max(abs(alfa),alfmax)
 	    c6 = cof(i,j,k,6)
 	    cof(i,j,k,5) = cof(i,j,k,5)+c6
 	    cof(i,j,k,6) = 0.0

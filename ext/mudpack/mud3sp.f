@@ -373,8 +373,8 @@ c
 	      jk = kk+j*(nfx+2)
 	      do i=1,nfx
 		ijk = jk+i+1
-		phmax = amax1(phmax,abs(wk(ijk)))
-		relmax = amax1(relmax,abs(wk(ijk)-phif(i,j,k)))
+		phmax = max(phmax,abs(wk(ijk)))
+		relmax = max(relmax,abs(wk(ijk)-phif(i,j,k)))
 		phif(i,j,k) = wk(ijk)
 	      end do
 	    end do
@@ -704,8 +704,8 @@ c
       do i=ist,ifn
 	x = xa+(i-1)*dlx
 	call cfx(x,cxx,cx,cex)
-	cmin = amin1(cmin,cxx)
-	cemax = amax1(abs(cex),cemax)
+	cmin = min(cmin,cxx)
+	cemax = max(abs(cex),cemax)
 c
 c     check if pde is "hyperbolic" at finest grid level
 c
@@ -717,7 +717,7 @@ c     adjust second order coefficients so that pde is not "hyperbolic"
 c     this is especially possible on coarser grids if there are non-zero
 c     first order terms
 c
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	cofx(i,1) = cxx/dlxx-cx/dlx2
 	cofx(i,2) = cxx/dlxx+cx/dlx2
 	cofx(i,3) = cex-(cofx(i,1)+cofx(i,2))
@@ -725,8 +725,8 @@ c
       do j=jst,jfn
 	y = yc+(j-1)*dly
 	call cfy(y,cyy,cy,cey)
-	cmin = amin1(cmin,cyy)
-	cemax = amax1(abs(cey),cemax)
+	cmin = min(cmin,cyy)
+	cemax = max(abs(cey),cemax)
 c
 c     check if pde is "hyperbolic" at finest grid level
 c
@@ -738,7 +738,7 @@ c     adjust second order coefficients so that pde is not "hyperbolic"
 c     this is especially possible on coarser grids if there are non-zero
 c     first order terms
 c
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	cofy(j,1) = cyy/dlyy-cy/dly2
 	cofy(j,2) = cyy/dlyy+cy/dly2
 	cofy(j,3) = cey-(cofy(j,1)+cofy(j,2))
@@ -746,8 +746,8 @@ c
       do k=kst,kfn
 	z = ze+(k-1)*dlz
 	call cfz(z,czz,cz,cez)
-	cmin = amin1(cmin,czz)
-	cemax = amax1(abs(cez),cemax)
+	cmin = min(cmin,czz)
+	cemax = max(abs(cez),cemax)
 c
 c     check if pde is "hyperbolic" at finest grid level
 c
@@ -759,7 +759,7 @@ c     adjust second order coefficients so that pde is not "hyperbolic"
 c     this is especially possible on coarser grids if there are non-zero
 c     first order terms
 c
-	czz = amax1(czz,abs(cz)*dlz*0.5)
+	czz = max(czz,abs(cz)*dlz*0.5)
 	cofz(k,1) = czz/dlzz-cz/dlz2
 	cofz(k,2) = czz/dlzz+cz/dlz2
 	cofz(k,3) = cez-(cofz(k,1)+cofz(k,2))
@@ -784,7 +784,7 @@ c
 c     compute constant coefficient alfa
 c
 	call bndyc(kbdy,y,z,alfa,gbdy)
-	alfmax = amax1(alfmax,abs(alfa))
+	alfmax = max(alfmax,abs(alfa))
 	cofx(i,3) = cofx(i,3)+dlx2*alfa*c1
       end if
       if (nxb.eq.2) then
@@ -800,7 +800,7 @@ c
 	cofx(i,1) = cofx(i,1)+c2
 	cofx(i,2) = 0.0
 	cofx(i,3) = cofx(i,3)-dlx2*alfa*c2
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nyc.eq.2) then
 	kbdy = 3
@@ -815,7 +815,7 @@ c
 	cofy(j,1) = 0.0
 	cofy(j,2) = cofy(j,2) + c1
 	cofy(j,3) = cofy(j,3) + dly2*alfa*c1
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nyd.eq.2) then
 	kbdy = 4
@@ -830,7 +830,7 @@ c
 	cofy(j,2) = 0.0
 	cofy(j,1) = cofy(j,1) + c2
 	cofy(j,3) = cofy(j,3) - dly2*c2*alfa
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nze.eq.2) then
 	kbdy = 5
@@ -845,7 +845,7 @@ c
 	cofz(k,1) = 0.0
 	cofz(k,2) = cofz(k,2) + c1
 	cofz(k,3) = cofz(k,3) + dlz2*alfa*c1
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
       if (nzf.eq.2) then
 	kbdy = 6
@@ -860,7 +860,7 @@ c
 	cofz(k,2) = 0.0
 	cofz(k,1) = cofz(k,1) + c2
 	cofz(k,3) = cofz(k,3) - dlz2*alfa*c2
-	alfmax = amax1(abs(alfa),alfmax)
+	alfmax = max(abs(alfa),alfmax)
       end if
 c
 c     flag continuous singular elliptic pde if detected
@@ -936,7 +936,7 @@ c
 	x=xa
 	i = 1
 	call cfx(x,cxx,cx,cex)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	c1 = cxx/dlxx-cx/dlx2
 	do k=kst,kfn
 	  z=ze+(k-1)*dlz
@@ -952,7 +952,7 @@ c
 	x=xb
 	i = nx
 	call cfx(x,cxx,cx,cex)
-	cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	cxx = max(cxx,abs(cx)*dlx*0.5)
 	c2 = cxx/dlxx+cx/dlx2
 	do k=kst,kfn
 	  z=ze+(k-1)*dlz
@@ -968,7 +968,7 @@ c
 	y=yc
 	j = 1
 	call cfy(y,cyy,cy,cey)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c1 = cyy/dlyy-cy/dly2
 	do k=kst,kfn
 	  z=ze+(k-1)*dlz
@@ -984,7 +984,7 @@ c
 	y=yd
 	j = ny
 	call cfy(y,cyy,cy,cey)
-	cyy = amax1(cyy,abs(cy)*dly*0.5)
+	cyy = max(cyy,abs(cy)*dly*0.5)
 	c2 = cyy/dlyy+cy/dly2
 	do k=kst,kfn
 	  z=ze+(k-1)*dlz
@@ -1000,7 +1000,7 @@ c
 	k = 1
 	z=ze
 	call cfz(z,czz,cz,cez)
-	czz = amax1(czz,abs(cz)*dlz*0.5)
+	czz = max(czz,abs(cz)*dlz*0.5)
 	c1 = czz/dlzz-cz/dlz2
 	do j=jst,jfn
 	  y=yc+(j-1)*dly
@@ -1016,7 +1016,7 @@ c
 	z=zf
 	k = nz
 	call cfz(z,czz,cz,cez)
-	czz = amax1(czz,abs(cz)*dlz*0.5)
+	czz = max(czz,abs(cz)*dlz*0.5)
 	c2 = czz/dlzz+cz/dlz2
 	do j=jst,jfn
 	  y=yc+(j-1)*dly

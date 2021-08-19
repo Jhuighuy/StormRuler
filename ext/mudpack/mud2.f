@@ -316,8 +316,8 @@ c
 	    jj = j*(nfx+2)
 	    do i=1,nfx
 	      ij = jj+i+1
-	      phmax = amax1(phmax,abs(wk(ij)))
-	      relmax = amax1(relmax,abs(wk(ij)-phif(i,j)))
+	      phmax = max(phmax,abs(wk(ij)))
+	      relmax = max(relmax,abs(wk(ij)-phif(i,j)))
 	      phif(i,j) = wk(ij)
 	    end do
 	  end do
@@ -549,8 +549,8 @@ c
 	do i=ist,ifn
 	  x = xa+(i-1)*dlx
 	  call coef(x,y,cxx,cyy,cx,cy,ce)
-	  cmin = amin1(cmin,cxx*cyy)
-	  cemax = amax1(abs(ce),cemax)
+	  cmin = min(cmin,cxx*cyy)
+	  cemax = max(abs(ce),cemax)
 c
 c     flag hyperbolic pde
 c
@@ -560,8 +560,8 @@ c
 	      ier = -4
 	    end if
 	  end if
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c1 = cxx/dlxx-cx/dlx2
 	  c2 = cxx/dlxx+cx/dlx2
 	  c3 = cyy/dlyy-cy/dly2
@@ -588,7 +588,7 @@ c
 	  cof(i,j,1) = 0.0
 	  cof(i,j,2) = cof(i,j,2)+c1
 	  cof(i,j,5) = cof(i,j,5)+dlx2*alfa*c1
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nxb.eq.2) then
@@ -602,7 +602,7 @@ c
 	  cof(i,j,1) = cof(i,j,1)+c2
 	  cof(i,j,2) = 0.0
 	  cof(i,j,5) = cof(i,j,5)-dlx2*alfa*c2
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nyc.eq.2) then
@@ -616,7 +616,7 @@ c
 	  cof(i,j,3) = 0.0
 	  cof(i,j,4) = cof(i,j,4)+c3
 	  cof(i,j,5) = cof(i,j,5)+dly2*alfa*c3
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
       if (nyd.eq.2) then
@@ -630,7 +630,7 @@ c
 	  cof(i,j,3) = cof(i,j,3)+c4
 	  cof(i,j,4) = 0.0
 	  cof(i,j,5) = cof(i,j,5)-dly2*c4*alfa
-	  alfmax = amax1(abs(alfa),alfmax)
+	  alfmax = max(abs(alfa),alfmax)
 	end do
       end if
 	if (cemax.eq.0.0.and.alfmax.eq.0.0) then
@@ -808,7 +808,7 @@ c
 	  y = yc+(j-1)*dly
 	  call bndyc(kbdy,y,alfa,gbdy)
 	  call coef(x,y,cxx,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
 	  c1 = cxx/dlxx-cx/dlx2
 	  cof(i,j,6) = cof(i,j,6)+dlx2*c1*gbdy
 	end do
@@ -821,7 +821,7 @@ c
 	  y = yc+(j-1)*dly
 	  call bndyc(kbdy,y,alfa,gbdy)
 	  call coef(x,y,cxx,cyy,cx,cy,ce)
-	  cxx = amax1(cxx,abs(cx)*dlx*0.5)
+	  cxx = max(cxx,abs(cx)*dlx*0.5)
 	  c2 = cxx/dlxx+cx/dlx2
 	  cof(i,j,6) = cof(i,j,6)-dlx2*c2*gbdy
 	end do
@@ -834,7 +834,7 @@ c
 	  x = xa+(i-1)*dlx
 	  call bndyc(kbdy,x,alfa,gbdy)
 	  call coef(x,y,cxx,cyy,cx,cy,ce)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c3 = cyy/dlyy-cy/dly2
 	  cof(i,j,6) = cof(i,j,6)+dly2*c3*gbdy
 	end do
@@ -847,7 +847,7 @@ c
 	  x = xa+(i-1)*dlx
 	  call bndyc(kbdy,x,alfa,gbdy)
 	  call coef(x,y,cxx,cyy,cx,cy,ce)
-	  cyy = amax1(cyy,abs(cy)*dly*0.5)
+	  cyy = max(cyy,abs(cy)*dly*0.5)
 	  c4 = cyy/dlyy+cy/dly2
 	  cof(i,j,6) = cof(i,j,6)-dly2*c4*gbdy
 	end do

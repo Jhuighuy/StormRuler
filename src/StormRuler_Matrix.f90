@@ -29,7 +29,7 @@ module StormRuler_Matrix
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: I2S, R2S, BubbleSort, PixelToInt
 use StormRuler_Mesh, only: tMesh
-use StormRuler_KrylovSolvers, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Krylov, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

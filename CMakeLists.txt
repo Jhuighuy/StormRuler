@@ -49,7 +49,7 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
 endif()
 
 target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast>)
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
@@ -186,13 +186,13 @@ foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
     VERBATIM)
   list(APPEND Fortran_SOURCES_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}")
 endforeach()
-set(Fortran_SOURCES ${Fortran_SOURCES_PREPROCESSED})
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main executable.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-add_executable(StormRuler ${Fortran_SOURCES} ${CXX_SOURCES})
+add_executable(StormRuler 
+  ${Fortran_SOURCES} ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)

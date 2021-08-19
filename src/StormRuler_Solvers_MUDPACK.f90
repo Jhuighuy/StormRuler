@@ -31,6 +31,8 @@ use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_ConvParams, only: tConvParams
 
+use StormRuler_Helpers
+
 use, intrinsic :: iso_fortran_env, only: error_unit
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -131,7 +133,8 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
   ! Initialize and configure MUDPACK.
   ! ----------------------
   iparam(:) = 0; dparam(:) = 0.0_dp
-  associate(          phase => iparam( 1), & ! intl
+  associate( &
+    &                 phase => iparam( 1), & ! intl
     &    domainLength_x_min => dparam( 1), & ! xa
     &    domainLength_x_max => dparam( 2), & ! xb
     &    domainLength_y_min => dparam( 3), & ! yc
@@ -186,9 +189,9 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
     ! value = 1: line relaxation in X direction,
     ! value = 2: line relaxation in Y direction,
     ! value = 3: line relaxation in both X and Y directions.
-    relaxationMethod = 3
-    maxNumCycles = 15000!params%MaxNumIterations
-    relativeTolerance = 1e-8!params%RelativeTolerance
+    relaxationMethod = 0
+    maxNumCycles = params%MaxNumIterations
+    relativeTolerance = params%RelativeTolerance
     ! value = 0: default cycle (W).
     ! value = 1: V cycle.
     ! value = 2: W cycle.
@@ -211,16 +214,17 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
   end associate
 
   ! ----------------------
-  ! Interpolate the fields from cell to nodes.
+  ! Unwrap and interpolate the fields from cell to nodes.
   ! ----------------------
   associate( &
     & numCells_x => mesh%MDIndexBounds(1), &
     & numCells_y => mesh%MDIndexBounds(2) )
-    allocate( &
-      & w_MD_cc(numCells_x, numCells_y), &
-      & b_MD_cc(numCells_x, numCells_y) )
+    allocate(w_MD_cc(numCells_x, numCells_y))
+    allocate(b_MD_cc(numCells_x, numCells_y))
   end associate
   !$omp parallel do schedule(static) &
+  ! 'w' is unwraped for fast lookup,
+  ! 'b' is unrapped to be interpolated to nodes.
   !$omp & default(private) shared(mesh, w, w_MD_cc, b, b_MD_cc)
   do iCell = 1_ip, mesh%NumCells
     associate(iCellMD => mesh%CellMDIndex(:,iCell))
@@ -229,55 +233,15 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
     end associate
   end do
   !$omp end parallel do
+  ! Interpolate 'b' to nodes.
   associate( &
     & numNodes_x => mesh%MDIndexBounds(1) + 1, &
     & numNodes_y => mesh%MDIndexBounds(2) + 1 )
     allocate( &
       & u_MD_nc(numNodes_x, numNodes_y), &
       & b_MD_nc(numNodes_x, numNodes_y) )
-    ! ----------------------
-    ! Corner interpolation.
-    ! ----------------------
-    u_MD_nc(1, 1) = 0.0_dp
-    b_MD_nc(1, 1) = b_MD_cc(1, 1)
-    u_MD_nc(numNodes_x, 1) = 0.0_dp
-    b_MD_nc(numNodes_x, 1) = b_MD_cc(numNodes_x-1, 1)
-    u_MD_nc(1, numNodes_y) = 0.0_dp
-    b_MD_nc(1, numNodes_y) = b_MD_cc(1, numNodes_y-1)
-    u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
-    b_MD_nc(numNodes_x, numNodes_y) = b_MD_cc(numNodes_x-1,numNodes_y-1)
-    !u_MD_nc(1, 1) = 0.0_dp
-    !b_MD_nc(1, 1) = 2.0_dp*b_MD_cc(1, 1) - b_MD_cc(2, 2)
-    !u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
-    !b_MD_nc(numNodes_x, numNodes_y) = 2.0_dp*b_MD_cc(numNodes_x-1,numNodes_y-1) - b_MD_cc(numNodes_x-2,numNodes_y-2)
-    !u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
-    !b_MD_nc(numNodes_x, numNodes_y) = 2.0_dp*b_MD_cc(numNodes_x-1,numNodes_y-1) - b_MD_cc(numNodes_x-2,numNodes_y-2)
-    ! ----------------------
-    ! Boundary interpolation.
-    ! ----------------------
-    u_MD_nc(1, 2:numNodes_y-1) = 0.0_dp
-    b_MD_nc(1, 2:numNodes_y-1) = b_MD_cc(1, 2:numNodes_y-1)
-    u_MD_nc(numNodes_x, 2:numNodes_y-1) = 0.0_dp
-    b_MD_nc(numNodes_x, 2:numNodes_y-1) = b_MD_cc(numNodes_x-1, 2:numNodes_y-1)
-    u_MD_nc(2:numNodes_x-1, 1) = 0.0_dp
-    b_MD_nc(2:numNodes_x-1, 1) = b_MD_cc(2:numNodes_x-1, 1)
-    u_MD_nc(2:numNodes_x-1, numNodes_y) = 0.0_dp
-    b_MD_nc(2:numNodes_y-1, numNodes_y) = b_MD_cc(2:numNodes_y-1, numNodes_y-1)
-    ! ----------------------
-    ! Interior interpolation.
-    ! ----------------------
-    !$omp parallel do schedule(static)
-    do iNode_y = 2, numNodes_y-1
-      do iNode_x = 2, numNodes_x-1
-        u_MD_nc(iNode_x, iNode_y) = 0.0_dp
-        b_MD_nc(iNode_x, iNode_y) = &
-          & ( b_MD_cc(iNode_x - 1, iNode_y - 1) + &
-          &   b_MD_cc(iNode_x - 1, iNode_y + 0) + &
-          &   b_MD_cc(iNode_x + 0, iNode_y - 1) + &
-          &   b_MD_cc(iNode_x + 0, iNode_y + 0) )*0.25_dp
-      end do
-    end do
-    !$omp end parallel do
+    call Interpolate2D_CellToNode0(b_MD_nc, b_MD_cc)
+    deallocate(b_MD_cc)
   end associate
 
   ! ----------------------
@@ -336,14 +300,14 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: x, y
     ! >>>>>>>>>>>>>>>>>>>>>>
-    w_wrapper = 2.0
+    w_wrapper = 1.0
   end function w_wrapper
 
   real(dp) function lambda_wrapper(x, y)
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: x, y
     ! >>>>>>>>>>>>>>>>>>>>>>
-    lambda_wrapper = max(1.0e-8_dp, lambda)
+    lambda_wrapper = max(0.0e-8_dp, lambda)
   end function lambda_wrapper
 
   subroutine boundary(kbdy, xory, alfa, gbdy)

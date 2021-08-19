@@ -31,14 +31,24 @@ use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_ConvParams, only: tConvParams
 
-use StormRuler_Helpers
-
 use, intrinsic :: iso_fortran_env, only: error_unit
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface Interp2D_CellToNode_MUDPACK
+#$do rank = 0, NUM_RANKS-1
+  module procedure Interp2D_CellToNode_MUDPACK$rank
+#$end do
+end interface Interp2D_CellToNode_MUDPACK
+
+interface Interp3D_CellToNode_MUDPACK
+#$do rank = 0, NUM_RANKS-1
+  module procedure Interp3D_CellToNode_MUDPACK$rank
+#$end do
+end interface Interp3D_CellToNode_MUDPACK
 
 abstract interface
   function tFunc_mud2sa(x, y)
@@ -103,6 +113,275 @@ subroutine SplitSize_MUDPACK(size, coef, exp)
   end do
   coef = size - 1; exp = 1
 end subroutine SplitSize_MUDPACK
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
+!! Second order linear interpolation.
+!! ----------------------------------------------------------------- !!
+elemental function INTRP_2(u_l, u_r)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_l, u_r
+  real(dp) :: INTRP_2
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  INTRP_2 = 0.5_dp*(u_l + u_r)
+end function INTRP_2
+
+!! ----------------------------------------------------------------- !!
+!! Second order linear extrapolation.
+!! ----------------------------------------------------------------- !!
+elemental function EXTRP_2(u_l, u_r)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: u_l, u_r
+  real(dp) :: EXTRP_2
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  EXTRP_2 = 2.0_dp*u_l - u_r
+end function EXTRP_2
+
+!! ----------------------------------------------------------------- !!
+!! Interpolate cell-centered 2D values to node-centered values.
+!! ----------------------------------------------------------------- !!
+#$do rank = 0, NUM_RANKS
+subroutine Interp2D_CellToNode_MUDPACK$rank(mesh, u_node, u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: u(@:,:,:)
+  real(dp), intent(out) :: u_node(@:,:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer(ip) :: i, j, n, m
+
+  n = mesh%MDIndexBounds(1)
+  m = mesh%MDIndexBounds(2)
+
+  ! ----------------------
+  ! Corner interpolation.
+  ! ----------------------    
+  !
+  !       (1,m+1)                  2<--(i,m+1)-->n                  (n+1,m+1)
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       |  1,m  |       |        | i-1,m |  i,m  |        |       |  n,m  |
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       |       | 2,m-1 |        |i-1,m-1| i,m-1 |        |n-1,m-1|       |
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       |       |       |        |       |       |        |       |       |
+  !
+  !   m   |       |       |        |       |       |        |       |       |    m   
+  !   ^   o-------o-------o---  ---o-------o-------o---  ---o-------o-------o    ^   
+  !   |   |  1,j  |  2,j  |        | i-1,j |  i,j  |        | n-1,j |  n,j  |    |   
+  ! (1,j) o-------o-------o---  ---o-------o-------o---  ---o-------o-------o (n+1,j)
+  !   |   | 1,j-1 | 2,j-1 |        |i-1,j-1| i,j-1 |        |n-1,j-1| n,j-1 |    |   
+  !   v   o-------o-------o---  ---o-------o-------o---  ---o-------o-------o    v   
+  !   2   |       |       |        |       |       |        |       |       |    2   
+  !
+  !       |       |       |        |       |       |        |       |       | 
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       |       |  2,2  |        | i-1,2 |  i,2  |        | n-1,2 |       |
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       |  1,1  |       |        | i-1,1 |  i,1  |        |       |  n,1  |
+  !       o-------o-------o---  ---o-------o-------o---  ---o-------o-------o
+  !       (1,1)                      2<--(i,1)-->n                    (n+1,1)
+  !
+  u_node(@:,1,1) = EXTRP_2(u(@:,1,1), u(@:,2,2))
+  !
+  !
+  !
+  ! 
+  !
+  u_node(@:,n+1,1) = EXTRP_2(u(@:,n,1), u(@:,n-1,2))
+  ! 
+  !  
+  ! 
+  ! 
+  ! 
+  ! 
+  ! 
+  u_node(@:,n+1,m+1) = EXTRP_2(u(@:,n,m), u(@:,n-1,m-1))
+  u_node(@:,1,m+1) = EXTRP_2(u(@:,1,m), u(@:,2,m-1))
+
+  ! ----------------------
+  ! Border interpolation.
+  ! ----------------------
+  !$omp parallel do schedule(static) &
+  !$omp & default(private) shared(n, m, u_node, u)
+  do j = 2, m
+    !
+    !
+    u_node(@:,1,j) = &
+      & EXTRP_2( INTRP_2(u(@:,1,j), u(@:,1,j-1) ), &
+      &          INTRP_2(u(@:,2,j), u(@:,2,j-1) ) )
+    ! 
+    !   
+    !   
+    !   
+    !   
+    !   
+    !   
+    !   
+    !
+    u_node(@:,n+1,j) = &
+      & EXTRP_2( INTRP_2(u(@:,n-0,j), u(@:,n-0,j-1)), &
+      &          INTRP_2(u(@:,n-1,j), u(@:,n-1,j-1)) )
+  end do
+  !$omp end parallel do
+  ! ----------------------
+  !$omp parallel do schedule(static) &
+  !$omp & default(private) shared(n, m, u_node, u)
+  do i = 2, n
+    !
+    ! 
+    ! 
+    ! 
+    ! 
+    ! 
+    ! 
+    ! 
+    !
+    u_node(@:,i,1) = &
+      & EXTRP_2( INTRP_2(u(@:,i-1,1), u(@:,i,1)), &
+      &          INTRP_2(u(@:,i-1,2), u(@:,i,2)) )
+    !
+    !  
+    !  
+    !  
+    !  
+    !  
+    !  
+    !  
+    !
+    u_node(@:,i,m+1) = &
+      & EXTRP_2( INTRP_2(u(@:,i-1,m-0), u(@:,i,m-0)), &
+      &          INTRP_2(u(@:,i-1,m-1), u(@:,i,m-1)) )
+  end do
+  !$omp end parallel do
+
+  ! ----------------------
+  ! Interior interpolation.
+  ! ----------------------
+  !
+  !    m
+  !    ^
+  !    |
+  !  (i,j)
+  !    |
+  !    v
+  !    2
+  !      2<--(i,j)-->n
+  !
+  !$omp parallel do schedule(static) collapse(2) &
+  !$omp & default(private) shared(n, m, u_node, u)
+  do j = 2, m
+    do i = 2, n
+      u_node(@:,i,j) = &
+        & INTRP_2( INTRP_2(u(@:,i-1,j-1), u(@:,i-1,j)), &
+        &          INTRP_2(u(@:,i-0,j-1), u(@:,i-0,j)) )
+    end do
+  end do
+  !$omp end parallel do
+end subroutine Interp2D_CellToNode_MUDPACK$rank
+#$end do
+
+!! ----------------------------------------------------------------- !!
+!! Interpolate cell-centered 2D values to node-centered values.
+!! ----------------------------------------------------------------- !!
+#$do rank = 0, NUM_RANKS
+subroutine Interp3D_CellToNode_MUDPACK$rank(mesh, u_node, u)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: u(@:,:,:,:)
+  real(dp), intent(out) :: u_node(@:,:,:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer(ip) :: i, j, k, n, m, l
+
+  n = mesh%MDIndexBounds(1)
+  m = mesh%MDIndexBounds(2)
+  l = mesh%MDIndexBounds(3)
+
+  ! ----------------------
+  ! Lower corner interpolation.
+  ! ----------------------
+  !
+  !              |             |             |
+  !              o-------------o-------------o
+  !             /|            /|            /|
+  !           |/ |          |/ |          |/ |
+  !           o-------------o-------------o----
+  !           | /|          | /|  2,2,2   | /|
+  !           |/ |          |/ |          |/ |
+  !           o-------------o-------------o----
+  !          /| /          /| /          /| /
+  !        |/ |/         |/ |/         |/ |/
+  !        o-------------o-------------o----
+  !        | /   1,1,1   | /           | /
+  !        |/            |/            |/
+  !        o-------------o-------------o----
+  ! (1,1,1)
+  u_node(@:,1,1,1) = EXTRP_2(u(@:,1,1,1), u(@:,2,2,2))
+  !
+  !     |             |             |
+  ! ----o-------------o-------------o
+  !     |\            |\            |\
+  !     | \|          | \|          | \|
+  !    ----o-------------o-------------o
+  !     |\ |  n-1,2,2 |\ |          |\ |
+  !     | \|          | \|          | \|
+  !    ----o-------------o-------------o
+  !      \ |\          \ |\          \ |\
+  !       \| \|         \| \|         \| \|
+  !       ----o-------------o-------------o
+  !         \ |           \ |   n,1,1   \ |
+  !          \|            \|            \|
+  !       ----o-------------o-------------o
+  !                                        (n+1,1,1)
+  u_node(@:,n+1,1,1) = EXTRP_2(u(@:,n,1,1), u(@:,n-1,2,2))
+
+  ! ----------------------
+  ! Upper corner interpolation.
+  ! ----------------------
+  !                                        (n+1,m+1,l+1)
+  !       ----o-------------o-------------o
+  !          /|            /|            /|
+  !         / |           / |           / |
+  !    ----o-------------o-------------o  o
+  !        | /|          | /|  n,m,l   | /|
+  !        |/ |          |/ |          |/ |
+  !    ----o-------------o-------------o  o
+  !       /| /          /| /          /| /|
+  !     |/ |/         |/ |/         |/ |/
+  ! ----o-------------o-------------o  o
+  !     | /n-1,m-1,l-1| /           | /|
+  !     |/            |/            |/
+  ! ----o-------------o-------------o
+  !    /|            /|            /|
+  !
+  u_node(@:,n,m,l) = EXTRP_2(u(@:,n,m,l), u(@:,n-1,m-1,l-1))
+  !
+  ! (1,m+1,l+1)
+  !            o-------------o-------------o----
+  !            |\            |\            |\
+  !            | \           | \           | \
+  !            o  o-------------o-------------o----
+  !            |\ |    1,m,l |\ |          |\ |
+  !            | \|          | \|          | \|
+  !            o  o-------------o-------------o----
+  !             \ |\          \ |\          \ |\
+  !              \| \|         \| \|         \| \|
+  !               o  o-------------o-------------o----
+  !                \ |           \ | 2,m-1,l-1 \ |
+  !                 \|            \|            \|
+  !                  o-------------o-------------o----
+  !
+  u_node(@:,n,m,l) = EXTRP_2(u(@:,1,m,l), u(@:,2,m-1,l-1))
+
+end subroutine Interp3D_CellToNode_MUDPACK$rank
+#$end do
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve second-order approximate variable weight Laplacian
@@ -240,7 +519,7 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
     allocate( &
       & u_MD_nc(numNodes_x, numNodes_y), &
       & b_MD_nc(numNodes_x, numNodes_y) )
-    call Interpolate2D_CellToNode0(b_MD_nc, b_MD_cc)
+    call Interp2D_CellToNode_MUDPACK(mesh, b_MD_nc, b_MD_cc)
     deallocate(b_MD_cc)
   end associate
 

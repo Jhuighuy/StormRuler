@@ -197,8 +197,8 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -206,13 +206,13 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gFDM_AccuracyOrder >= 3_ip) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gFDM_AccuracyOrder >= 5_ip) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gFDM_AccuracyOrder >= 7_ip) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -225,19 +225,19 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(gFDM_AccuracyOrder)
-          case(1_ip:2_ip)
+          case(1:2)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               &  ( dr_inv.outer.FD1_C2(u(@:,lCell), &
               &                        u(@:,rCell)) )
           ! ----------------------
-          case(3_ip:4_ip)
+          case(3:4)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & ( dr_inv.outer.FD1_C4(u(@:,llCell), &
               &                       u(@:, lCell), &
               &                       u(@:, rCell), &
               &                       u(@:,rrCell)) )
           ! ----------------------
-          case(5_ip:6_ip)
+          case(5:6)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & ( dr_inv.outer.FD1_C6(u(@:,lllCell), &
               &                       u(@:, llCell), &
@@ -246,7 +246,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
               &                       u(@:, rrCell), &
               &                       u(@:,rrrCell)) )
           ! ----------------------
-          case(7_ip:8_ip)
+          case(7:8)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & ( dr_inv.outer.FD1_C8(u(@:,llllCell), &
               &                       u(@:, lllCell), &
@@ -292,8 +292,8 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp default(private) shared(mesh, lambda, u_bar, v)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -301,13 +301,13 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
           &     lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gFDM_AccuracyOrder >= 3_ip) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gFDM_AccuracyOrder >= 5_ip) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gFDM_AccuracyOrder >= 7_ip) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -320,19 +320,19 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(gFDM_AccuracyOrder)
-          case(1_ip:2_ip)
+          case(1:2)
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C2(u_bar(:,@:,lCell), &
               &                       u_bar(:,@:,rCell)) )
           ! ----------------------
-          case(3_ip:4_ip)
+          case(3:4)
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C4(u_bar(:,@:,llCell), &
               &                       u_bar(:,@:, lCell), &
               &                       u_bar(:,@:, rCell), &
               &                       u_bar(:,@:,rrCell)) )
           ! ----------------------
-          case(5_ip:6_ip)
+          case(5:6)
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C6(u_bar(:,@:,lllCell), &
               &                       u_bar(:,@:, llCell), &
@@ -341,7 +341,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
               &                       u_bar(:,@:, rrCell), &
               &                       u_bar(:,@:,rrrCell)) )
           ! ----------------------
-          case(7_ip:8_ip)
+          case(7:8)
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C8(u_bar(:,@:,llllCell), &
               &                       u_bar(:,@:, lllCell), &
@@ -522,8 +522,8 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Determine FD direction (default is forward).
       ! ----------------------
@@ -540,16 +540,16 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (gFDM_AccuracyOrder >= 2_ip) then
+          if (gFDM_AccuracyOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (gFDM_AccuracyOrder >= 4_ip) then
+            if (gFDM_AccuracyOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (gFDM_AccuracyOrder >= 6_ip) then
+              if (gFDM_AccuracyOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (gFDM_AccuracyOrder >= 8_ip) then
+                if (gFDM_AccuracyOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -564,25 +564,25 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(gFDM_AccuracyOrder)
-          case(1_ip)
+          case(1)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F1(u(@:,iCell), &
               &                           u(@:,rCell)) )
           ! ----------------------
-          case(2_ip)
+          case(2)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F2(u(@:, iCell), &
               &                           u(@:, rCell), &
               &                           u(@:,rrCell)) )
           ! ----------------------
-          case(3_ip)
+          case(3)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F3(u(@:, lCell), &
               &                           u(@:, iCell), &
               &                           u(@:, rCell), &
               &                           u(@:,rrCell)) )
           ! ----------------------
-          case(4_ip)
+          case(4)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F4(u(@:,  lCell), &
               &                           u(@:,  iCell), &
@@ -590,7 +590,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
               &                           u(@:, rrCell), &
               &                           u(@:,rrrCell)) )
           ! ----------------------
-          case(5_ip)
+          case(5)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F5(u(@:, llCell), &
               &                           u(@:,  lCell), &
@@ -599,7 +599,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
               &                           u(@:, rrCell), &
               &                           u(@:,rrrCell)) )
           ! ----------------------
-          case(6_ip)
+          case(6)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F6(u(@:,  llCell), &
               &                           u(@:,   lCell), &
@@ -609,7 +609,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
               &                           u(@:, rrrCell), &
               &                           u(@:,rrrrCell)) )
           ! ----------------------
-          case(7_ip)
+          case(7)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F7(u(@:, lllCell), &
               &                           u(@:,  llCell), &
@@ -620,7 +620,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
               &                           u(@:, rrrCell), &
               &                           u(@:,rrrrCell)) )
           ! ----------------------
-          case(8_ip)
+          case(8)
             v_bar(:,@:,iCell) = v_bar(:,@:,iCell) - &
               & dir*( dr_inv.outer.FD1_F8(u(@:,  lllCell), &
               &                           u(@:,   llCell), &
@@ -670,8 +670,8 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u_bar, v) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Determine FD direction (default is backward).
       ! ----------------------
@@ -688,16 +688,16 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (gFDM_AccuracyOrder >= 2_ip) then
+          if (gFDM_AccuracyOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (gFDM_AccuracyOrder >= 4_ip) then
+            if (gFDM_AccuracyOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (gFDM_AccuracyOrder >= 6_ip) then
+              if (gFDM_AccuracyOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (gFDM_AccuracyOrder >= 8_ip) then
+                if (gFDM_AccuracyOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -712,25 +712,25 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
       ! ----------------------
       associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(gFDM_AccuracyOrder)
-          case(1_ip)
+          case(1)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F1(u_bar(:,@:,rCell), &
               &                           u_bar(:,@:,iCell)) )
           ! ----------------------
-          case(2_ip)
+          case(2)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F2(u_bar(:,@:, iCell), &
               &                           u_bar(:,@:, rCell), &
               &                           u_bar(:,@:,rrCell)) )
           ! ----------------------
-          case(3_ip)
+          case(3)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F3(u_bar(:,@:, lCell), &
               &                           u_bar(:,@:, iCell), &
               &                           u_bar(:,@:, rCell), &
               &                           u_bar(:,@:,rrCell)) )
           ! ----------------------
-          case(4_ip)
+          case(4)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F4(u_bar(:,@:,  lCell), &
               &                           u_bar(:,@:,  iCell), &
@@ -738,7 +738,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
               &                           u_bar(:,@:, rrCell), &
               &                           u_bar(:,@:,rrrCell)) )
           ! ----------------------
-          case(5_ip)
+          case(5)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F5(u_bar(:,@:, llCell), &
               &                           u_bar(:,@:,  lCell), &
@@ -747,7 +747,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
               &                           u_bar(:,@:, rrCell), &
               &                           u_bar(:,@:,rrrCell)) )
           ! ----------------------
-          case(6_ip)
+          case(6)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F6(u_bar(:,@:,  llCell), &
               &                           u_bar(:,@:,   lCell), &
@@ -757,7 +757,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
               &                           u_bar(:,@:, rrrCell), &
               &                           u_bar(:,@:,rrrrCell)) )
           ! ----------------------
-          case(7_ip)
+          case(7)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F7(u_bar(:,@:, lllCell), &
               &                           u_bar(:,@:,  llCell), &
@@ -768,7 +768,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
               &                           u_bar(:,@:, rrrCell), &
               &                           u_bar(:,@:,rrrrCell)) )
           ! ----------------------
-          case(8_ip)
+          case(8)
             v(@:,iCell) = v(@:,iCell) - &
               & dir*( dr_inv.inner.FD1_F8(u_bar(:,@:,  lllCell), &
               &                           u_bar(:,@:,   llCell), &
@@ -916,8 +916,8 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u, v)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -925,13 +925,13 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gFDM_AccuracyOrder >= 3_ip) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gFDM_AccuracyOrder >= 5_ip) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gFDM_AccuracyOrder >= 7_ip) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -944,13 +944,13 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
       ! ----------------------
       associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
         select case(gFDM_AccuracyOrder)
-          case(1_ip:2_ip)
+          case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * FD2_C2(u(@:,lCell), &
               &                       u(@:,iCell), &
               &                       u(@:,rCell)) )
           ! ----------------------
-          case(3_ip:4_ip)
+          case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * FD2_C4(u(@:,llCell), &
               &                       u(@:, lCell), &
@@ -958,7 +958,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
               &                       u(@:, rCell), &
               &                       u(@:,rrCell)) )
           ! ----------------------
-          case(5_ip:6_ip)
+          case(5:6)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * FD2_C6(u(@:,lllCell), &
               &                       u(@:, llCell), &
@@ -968,7 +968,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
               &                       u(@:, rrCell), &
               &                       u(@:,rrrCell)) )
           ! ----------------------
-          case(7_ip:8_ip)
+          case(7:8)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * FD2_C8(u(@:,llllCell), &
               &                       u(@:, lllCell), &
@@ -1131,8 +1131,8 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   ! ----------------------
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, lambda, u, v, w)
-  do iCell = 1_ip, mesh%NumCells; block
-    do iCellFace = 1_ip, mesh%NumCellFaces, 2_ip
+  do iCell = 1, mesh%NumCells; block
+    do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -1140,13 +1140,13 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (gFDM_AccuracyOrder >= 3_ip) then
+        if (gFDM_AccuracyOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (gFDM_AccuracyOrder >= 5_ip) then
+          if (gFDM_AccuracyOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (gFDM_AccuracyOrder >= 7_ip) then
+            if (gFDM_AccuracyOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -1159,13 +1159,13 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
       ! ----------------------
       associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
         select case(gFDM_AccuracyOrder)
-          case(1_ip:2_ip)
+          case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C2(w(@:,lCell), u(@:,lCell), &
               &                        w(@:,lCell), u(@:,iCell), &
               &                        w(@:,lCell), u(@:,rCell)) )
           ! ----------------------
-          case(3_ip:4_ip)
+          case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C4(w(@:,llCell), u(@:,llCell), &
               &                        w(@:, lCell), u(@:, lCell), &
@@ -1173,7 +1173,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
               &                        w(@:, rCell), u(@:, rCell), &
               &                        w(@:,rrCell), u(@:,rrCell)) )
           ! ----------------------
-          case(5_ip:6_ip)
+          case(5:6)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C6(w(@:,lllCell), u(@:,lllCell), &
               &                        w(@:, llCell), u(@:, llCell), &
@@ -1183,7 +1183,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
               &                        w(@:, rrCell), u(@:, rrCell), &
               &                        w(@:,rrrCell), u(@:,rrrCell)) )
           ! ----------------------
-          case(7_ip:8_ip)
+          case(7:8)
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C8(w(@:,llllCell), u(@:,llllCell), &
               &                        w(@:, lllCell), u(@:, lllCell), &

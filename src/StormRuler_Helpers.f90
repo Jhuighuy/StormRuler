@@ -1,27 +1,27 @@
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! Copyright (C) 2021 Oleg Butakov
-!! 
-!! Permission is hereby granted, free of charge, to any person 
-!! obtaining a copy of this software and associated documentation 
-!! files (the "Software"), to deal in the Software without 
-!! restriction, including without limitation the rights  to use, 
+!!
+!! Permission is hereby granted, free of charge, to any person
+!! obtaining a copy of this software and associated documentation
+!! files (the "Software"), to deal in the Software without
+!! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the  
-!! Software is furnished to do so, subject to the following 
+!! sell copies of the Software, and to permit persons to whom the
+!! Software is furnished to do so, subject to the following
 !! conditions:
-!! 
-!! The above copyright notice and this permission notice shall be 
+!!
+!! The above copyright notice and this permission notice shall be
 !! included in all copies or substantial portions of the Software.
-!! 
-!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+!!
+!! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+!! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+!! OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+!! NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+!! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 !! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Helpers
 
 #$use 'StormRuler_Params.fi'
@@ -300,7 +300,7 @@ end function MergeString
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Convert RGB pixel to integer(ip).
+!! Convert RGB pixel to integer.
 !! ----------------------------------------------------------------- !!
 pure function PixelToInt(colorChannels) result(int)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -326,168 +326,5 @@ pure function IntToPixel(int) result(colorChannels)
   colorChannels(2) = iand(255, ishft(int, -8))
   colorChannels(3) = iand(255, ishft(int, -16))
 end function IntToPixel
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-elemental function INTR_2(u_l, u_r)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: u_l, u_r
-  real(dp) :: INTR_2
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  INTR_2 = 0.5_dp*(u_l + u_r)
-end function INTR_2
-
-elemental function EXTR_2(u_l, u_r)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: u_l, u_r
-  real(dp) :: EXTR_2
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  EXTR_2 = 2.0_dp*u_l - u_r
-end function EXTR_2
-
-!! ----------------------------------------------------------------- !!
-!! Interpolate cell-centered 2D values to node-centered values.
-!! ----------------------------------------------------------------- !!
-#$do rank = 0, NUM_RANKS
-subroutine Interpolate2D_CellToNode$rank(u_2D_nc, u_2D_cc)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: u_2D_cc(@:,:,:)
-  real(dp), intent(out) :: u_2D_nc(@:,:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  integer(ip) :: i, j, n, m
-
-  n = size(u_2D_cc, dim=$rank+1)
-  m = size(u_2D_cc, dim=$rank+2)
-
-  ! ----------------------
-  ! Corner interpolation.
-  ! ----------------------
-  !
-  !       |       |       |
-  !       o-------o-------o--
-  !       |       |  2,2  |
-  !       o-------o-------o--
-  !       |  1,1  |       |
-  ! (1,1) o-------o-------o--
-  !
-  u_2D_nc(@:,1,1) = EXTR_2(u_2D_cc(@:,1,1), u_2D_cc(@:,2,2))
-  ! 
-  !   |       |       |
-  ! --o-------o-------o
-  !   | n-1,2 |       |
-  ! --o-------o-------o
-  !   |       |  n,1  |
-  ! --o-------o-------o (n+1,1)
-  ! 
-  u_2D_nc(@:,n+1,1) = EXTR_2(u_2D_cc(@:,n,1), u_2D_cc(@:,n-1,2))
-  !
-  ! --o-------o-------o (n+1,m+1)
-  !   |       |  n,m  |
-  ! --o-------o-------o
-  !   |n-1,m-1|       |
-  ! --o-------o-------o
-  !   |       |       |
-  !
-  u_2D_nc(@:,n+1,m+1) = EXTR_2(u_2D_cc(@:,n,m), u_2D_cc(@:,n-1,m-1))
-  !
-  ! (1,m+1) o-------o-------o--
-  !         |  1,m  |       |
-  !         o-------o-------o--
-  !         |       | 2,m-1 |
-  !         o-------o-------o--
-  !         |       |       |
-  !
-  u_2D_nc(@:,1,m+1) = EXTR_2(u_2D_cc(@:,1,m), u_2D_cc(@:,2,m-1))
-
-  ! ----------------------
-  ! Border interpolation.
-  ! ----------------------
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(n, m, u_2D_nc, u_2D_cc)
-  do j = 2, m
-    !
-    !   m   |       |       |
-    !   ^   o-------o-------o--
-    !   |   |  1,j  |  2,j  |
-    ! (1,j) o-------o-------o--
-    !   |   | 1,j-1 | 2,j-1 |
-    !   v   o-------o-------o--
-    !   2   |       |       |
-    !
-    u_2D_nc(@:,1,j) = &
-      & EXTR_2( INTR_2(u_2D_cc(@:,1,j), u_2D_cc(@:,1,j-1) ), &
-      &         INTR_2(u_2D_cc(@:,2,j), u_2D_cc(@:,2,j-1) ) )
-    ! 
-    !   |       |       |     m
-    ! --o-------o-------o     ^
-    !   | n-1,j |  n,j  |     |
-    ! --o-------o-------o (n+1,j)
-    !   |n-1,j-1| n,j-1 |     |
-    ! --o-------o-------o     v
-    !   |       |       |     2
-    !
-    u_2D_nc(@:,n+1,j) = &
-      & EXTR_2( INTR_2(u_2D_cc(@:,n  ,j), u_2D_cc(@:,n  ,j-1)), &
-      &         INTR_2(u_2D_cc(@:,n-1,j), u_2D_cc(@:,n-1,j-1)) )
-  end do
-  !$omp end parallel do
-  ! ----------------------
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(n, m, u_2D_nc, u_2D_cc)
-  do i = 2, n
-    !
-    !   |       |       |
-    ! --o-------o-------o--
-    !   | i-1,2 |  i,2  |
-    ! --o-------o-------o--
-    !   | i-1,1 |  i,1  |
-    ! --o-------o-------o--
-    !     2<--(i,1)-->n
-    !
-    u_2D_nc(@:,i,1) = &
-      & EXTR_2( INTR_2(u_2D_cc(@:,i-1,1), u_2D_cc(@:,i,1)), &
-      &         INTR_2(u_2D_cc(@:,i-1,2), u_2D_cc(@:,i,2)) )
-    !
-    !    2<--(i,m+1)-->n
-    ! --o-------o-------o--
-    !   | i-1,m |  i,m  |
-    ! --o-------o-------o--
-    !   |i-1,m-1| i,m-1 |
-    ! --o-------o-------o--
-    !   |       |       |
-    !
-    u_2D_nc(@:,i,m+1) = &
-      & EXTR_2( INTR_2(u_2D_cc(@:,i-1,m  ), u_2D_cc(@:,i,m  )), &
-      &         INTR_2(u_2D_cc(@:,i-1,m-1), u_2D_cc(@:,i,m-1)) )
-  end do
-  !$omp end parallel do
-
-  ! ----------------------
-  ! Interior interpolation.
-  ! ----------------------
-  !
-  !   |       |       |     m
-  ! --o-------o-------o--   ^
-  !   | i-1,j |  i,j  |     |
-  ! --o-------o-------o-- (i,j)
-  !   |i-1,j-1| i,j-1 |     |
-  ! --o-------o-------o--   v
-  !   |       |       |     2
-  !     2<--(i,j)-->n
-  !
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(n, m, u_2D_nc, u_2D_cc)
-  do j = 2, m
-    do i = 2, n
-      u_2D_nc(@:,i,j) = &
-        & INTR_2( INTR_2(u_2D_cc(@:,i-1,j-1), u_2D_cc(@:,i-1,j)), &
-        &         INTR_2(u_2D_cc(@:,i  ,j-1), u_2D_cc(@:,i  ,j)) )
-    end do
-  end do
-  !$omp end parallel do
-end subroutine Interpolate2D_CellToNode$rank
-#$end do
 
 end module StormRuler_Helpers

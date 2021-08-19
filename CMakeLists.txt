@@ -142,16 +142,6 @@ else()
   endif()
 endif()
 
-# Build MUDPACK.
-if(StormRuler_NO_MUDPACK)
-  message(STATUS "StormRuler MUDPACK was disabled by user.")
-else()
-  set(MUDPACK_ENABLED 1)
-  message(STATUS "MUDPACK enabled.")
-  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/mudpack")
-  target_link_libraries(StormRuler_BASE INTERFACE MUDPACK)
-endif()
-
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Sources and preprocessing.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##

@@ -127,8 +127,12 @@ type :: tMesh
   ! ----------------------
   real(dp), allocatable :: CellCenter(:,:)
 
+  logical :: Parallel = .true.
+
 contains
   ! ----------------------
+  procedure :: FirstCell => tMesh_FirstCell
+  procedure :: LastCell => tMesh_LastCell
   procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
   generic :: FieldSize => @{FieldSize$$@|@0, NUM_RANKS}@
 #$do rank = 0, NUM_RANKS
@@ -145,12 +149,34 @@ contains
   procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
 end type tMesh
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type :: tDesc
+  logical :: parallel
+  integer(ip) :: first, last
+end type tDesc
+
 private tMesh_InitRect
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
+
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+pure integer(ip) function tMesh_FirstCell(mesh)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  tMesh_FirstCell = 1
+end function tMesh_FirstCell
+pure integer(ip) function tMesh_LastCell(mesh)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  tMesh_LastCell = mesh%NumCells
+end function tMesh_LastCell
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!

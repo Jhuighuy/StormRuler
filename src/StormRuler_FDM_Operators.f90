@@ -28,8 +28,9 @@ module StormRuler_FDM_Operators
 
 use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: Flip, SafeInverse, &
-  & @{tMapFunc$$@|@0, NUM_RANKS}@, operator(.inner.), operator(.outer.)
-use StormRuler_Mesh, only: tMesh
+  & @{tMapFunc$$@|@0, NUM_RANKS}@, &
+  & operator(.inner.), operator(.outer.)
+use StormRuler_Mesh, only: tMesh, tDesc
 use StormRuler_BLAS, only: &
   & Fill, Mul_Outer, FuncProd
 
@@ -195,9 +196,9 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -290,9 +291,9 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp default(private) shared(mesh, lambda, u_bar, v)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -519,10 +520,10 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Determine FD direction (default is forward).
@@ -667,10 +668,10 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp & default(private) shared(mesh, lambda, u_bar, v) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Determine FD direction (default is backward).
@@ -914,9 +915,9 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp & default(private) shared(mesh, lambda, u, v)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -1129,9 +1130,9 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel) &
   !$omp & default(private) shared(mesh, lambda, u, v, w)
-  do iCell = 1, mesh%NumCells; block
+  do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.

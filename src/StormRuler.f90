@@ -44,7 +44,7 @@ program nsch
   use StormRuler_NavierStokes
   use StormRuler_IO
   use StormRuler_ConvParams
-  use StormRuler_Solvers_MUDPACK
+  
   implicit none
 
   integer(ip) :: L,M,iCell

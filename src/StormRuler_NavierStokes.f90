@@ -31,8 +31,6 @@ use StormRuler_FDM_BCs
 use StormRuler_ConvParams
 use StormRuler_Solvers_Krylov
 
-use StormRuler_Solvers_MUDPACK
-
 implicit none
     
 contains
@@ -44,15 +42,14 @@ subroutine SolvePoisson(mesh,u,f)
   ! ----------------------
   ! Initialize iterations.
   allocate(Params)
-  call Params%Init(mesh%Dl(1)*mesh%Dl(2)*1.0D-4, mesh%Dl(1)*mesh%Dl(1)*1.0D-4, 100000)
-  !call Params%Init(1.0D-8, 1.0D-8, 100000)
+  !call Params%Init(mesh%Dl(1)*mesh%Dl(2)*1.0D-4, mesh%Dl(1)*mesh%Dl(1)*1.0D-4, 100000)
+  call Params%Init(1.0D-8, 1.0D-8, 100000)
   ! ----------------------
 
   call Fill(mesh,u,0.0_dp)
-  !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
+  call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
-  call Solve_DivWGrad_MUDPACK(mesh,u,1.0_dp,f,f,params)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)
     class(tMesh), intent(in) :: mesh

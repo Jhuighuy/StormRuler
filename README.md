@@ -39,6 +39,7 @@ In order to implement the high performance implicit schemes,
 several auxiliary problems, like systems of linear and nonlinear
 equations, have to be solved.
 
+<!--
 For the sake of convenience, all auxiliary solvers are implemented 
 in the matrix-free manner: no assembled matrix is required to find 
 a solution of the algebraic problem, only the matrix-vector product 
@@ -51,7 +52,7 @@ construct a suitable preconditioner or utilize a direct solver.
 **StormRuler** reconstructs a matrix using the matrix-vector 
 product function automatically, using the 
 _graph coloring based-algorithm_ in order to minimize an 
-amount of the matrix-vector products required to construct it.
+amount of the matrix-vector products required to construct it.-->
 
 **StormRuler** contains:
 - Matrix-free Linear iterative solvers: 
@@ -68,16 +69,13 @@ amount of the matrix-vector products required to construct it.
   * MKL Flexible generalized minimal residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/3s4XF9F)).
 
+<!--
 - Linear direct solvers (embedded into the matrix-free environment):
   * MKL Direct Sparse Solver 
-    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).
+    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
 
 - Nonlinear solvers:
   * _(planned)_ Newton-Raphson solver 
     (for the general nonlinear problems),
   * _(planned)_ Jacobian-Free Newton-Raphson solver 
     (for the general nonlinear problems),
-
-- Specialized solvers:
-  * _MUDPACK 5.0.1_ based solvers for various elliptic problems,
-    like ∇⋅(κ∇u) + λu = b, in a rectangular domain.

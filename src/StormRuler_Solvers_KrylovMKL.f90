@@ -239,7 +239,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
     write(error_unit, *) &
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
-  else if (gMKL_RCI_DebugLevel > 0_ip) then
+  else if ((rci_request /= 0).and.(gMKL_RCI_DebugLevel > 0_ip)) then
     print *, &
       & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if

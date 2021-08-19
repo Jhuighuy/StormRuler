@@ -116,9 +116,13 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   integer(ip) :: iCell
   integer(ip) :: iNode_x, iNode_y
 
+  real(dp), allocatable :: u_nc(:,:), b_nc(:,:)
+
   integer :: ierror, iparam(17), mgopt(4)
   real(dp) :: dparam(6)
-  real(dp), allocatable :: work(:), phi(:,:), rhs(:,:)
+  real(dp), allocatable :: work(:)
+
+  print *, 'HELLO, MUDPACK'
 
   ! ----------------------
   ! Initialize and configure MUDPACK.
@@ -143,7 +147,7 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
     & initialGuessSpecified => iparam(12), & ! iguess
     &          maxNumCycles => iparam(13), & ! maxcy
     &      relaxationMethod => iparam(14), & ! method
-    &    multigridCycleType =>  mgopt(1 ), & ! kcycle
+    &    multigridCycleType =>  mgopt( 1), & ! kcycle
     &         workspaceSize => iparam(15), & ! length
     & computedWorkspaceSize => iparam(16), & !
     &     relativeTolerance => dparam( 5) )  ! tolmax
@@ -196,26 +200,25 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
     phase = 0
     workspaceSize = 0
     call mud2sa( iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, rhs, phi, mgopt, ierror)
+      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
     if (ierror /= 9) then
       write(error_unit, *) &
         & 'MUD2SA FAILED WITH ERROR CODE OTHER THAN `9`', ierror
     end if
     workspaceSize = computedWorkspaceSize
     allocate( work(workspaceSize) )
-    print *, workspaceSize, ierror
   end associate
 
   ! ----------------------
-  ! Allocate the workspace.
+  ! Interpolate the fields from cell to nodes.
   ! ----------------------
   associate(numNodes_x => mesh%MDIndexBounds(1) + 1, &
      &      numNodes_y => mesh%MDIndexBounds(2) + 1)
-    allocate( phi(numNodes_x, numNodes_y), &
-      &       rhs(numNodes_x, numNodes_y) )
-    phi(:,:) = 0.0_dp
-    rhs(:,:) = 1.0_dp
-    rhs(65:65,65:65) = -100.0_dp
+    allocate( u_nc(numNodes_x, numNodes_y), &
+      &       b_nc(numNodes_x, numNodes_y) )
+    u_nc(:,:) = 0.0_dp
+    b_nc(:,:) = 1.0_dp
+    b_nc(65:65,65:65) = -1.0_dp
   end associate
 
   ! ----------------------
@@ -224,7 +227,15 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   associate(phase => iparam(1))
     phase = 0
     call mud2sa(iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, rhs, phi, mgopt, ierror)
+      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
+    if (ierror < 0) then
+      print *, &
+        & 'MUD2SA DISCRETIZATION PHASE WARNING, IERROR=', ierror
+    else if (ierror > 0) then
+      write(error_unit, *) &
+        & 'MUD2SA DISCRETIZATION PHASE FAILED, IERROR=', ierror
+      error stop 1
+    end if
   end associate
 
   ! ----------------------
@@ -233,20 +244,31 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   associate(phase => iparam(1))
     phase = 1
     call mud2sa(iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, rhs, phi, mgopt, ierror)
-    print *, ierror
+      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
+    if (ierror < 0) then
+      print *, &
+        & 'MUD2SA APPROXIMATION PHASE WARNING, IERROR=', ierror
+    else if (ierror > 0) then
+      write(error_unit, *) &
+        & 'MUD2SA APPROXIMATION PHASE FAILED, IERROR=', ierror
+      error stop 1
+    end if
   end associate
 
   ! ----------------------
-  ! Convert the solution back to our format.
+  ! Interpolate the solution from nodes to cells.
   ! ----------------------
-  !$omp parallel do schedule(static)
+  !$omp parallel do schedule(static) &
+  !$omp & default(private) shared(mesh, u, u_nc)
   do iCell = 1_ip, mesh%NumCells
     associate(iCellMD => mesh%CellMDIndex(:,iCell))
-      u(iCell) = ( phi(iCellMD(1) + 0, iCellMD(2) + 0) + &
-                   phi(iCellMD(1) + 0, iCellMD(2) + 1) + &
-                   phi(iCellMD(1) + 1, iCellMD(2) + 0) + &
-                   phi(iCellMD(1) + 1, iCellMD(2) + 1) )/4.0_dp
+      associate(iNodeMD => iCellMD)
+        u(iCell) = &
+          & ( u_nc(iNodeMD(1) + 0, iNodeMD(2) + 0) + &
+          &   u_nc(iNodeMD(1) + 0, iNodeMD(2) + 1) + &
+          &   u_nc(iNodeMD(1) + 1, iNodeMD(2) + 0) + &
+          &   u_nc(iNodeMD(1) + 1, iNodeMD(2) + 1) )*0.25_dp
+      end associate
     end associate
   end do
   !$omp end parallel do
@@ -258,7 +280,7 @@ contains
   end function sigma
   real(dp) function lambda(x, y)
     real(dp), intent(in) :: x, y
-    lambda = 1.0
+    lambda = 0.0e-8_dp
   end function lambda
   subroutine boundary(kbdy, xory, alfa, gbdy)
     integer kbdy

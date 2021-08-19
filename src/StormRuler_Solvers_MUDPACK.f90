@@ -38,12 +38,6 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 
 implicit none
 
-interface Solve_DivWGrad_MUDPACK
-#$do rank = 0, 0*NUM_RANKS
-  module procedure Solve_DivWGrad_MUDPACK$rank
-#$end do
-end interface Solve_DivWGrad_MUDPACK
-
 abstract interface
   function tFunc_mud2sa(x, y)
     import dp
@@ -58,17 +52,26 @@ abstract interface
 end interface
 
 interface
-  subroutine mud2sa( &
-    & iparm,fparm,work,sigx,sigy,xlmbda,bndyc,rhs,phi,mgopt,ierror)
-    import dp, tFunc_mud2sa, tBoundary_mud2sa
-    integer :: iparm(17), mgopt(4), ierror
-    real(dp) :: fparm(6), work(*), rhs(*), phi(*)
-    procedure(tFunc_mud2sa) :: sigx, sigy, xlmbda
+  subroutine mud2sa(iparam, dparam, work,  &
+      & sigma_x, sigma_y, lambda_wrapper, bndyc, rhs, phi, mgopt, ierror)
+    import tFunc_mud2sa, tBoundary_mud2sa
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer, intent(inout) :: iparam(17), mgopt(4), ierror
+    double precision, intent(inout) :: dparam(6)
+    double precision :: work(*), rhs(*), phi(*)
+    procedure(tFunc_mud2sa) :: sigma_x, sigma_y, lambda_wrapper
     procedure(tBoundary_mud2sa) :: bndyc
+    ! >>>>>>>>>>>>>>>>>>>>>>
   end subroutine mud2sa
 end interface
 
 private :: mud2sa!, mud3sa
+
+interface Solve_DivWGrad_MUDPACK
+#$do rank = 0, 0*NUM_RANKS
+  module procedure Solve_DivWGrad_MUDPACK$rank
+#$end do
+end interface Solve_DivWGrad_MUDPACK
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -101,35 +104,34 @@ end subroutine SplitSize_MUDPACK
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve second-order approximate variable weight Laplacian
-!! equation: ∇⋅(w∇u) = b on the rectangular domain
+!! equation: ∇⋅(w∇u) - λu = b on the rectangular domain
 !! using the MUDPACK library.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, 0*NUM_RANKS
-subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
+subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, lambda, w, b, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: w(@:,:), b(@:,:)
+  real(dp), intent(in) :: lambda, w(@:,:), b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: iCell
+  integer(ip) :: iCell_x, iCell_y
   integer(ip) :: iNode_x, iNode_y
 
-  real(dp), allocatable :: u_nc(:,:), b_nc(:,:)
+  real(dp), allocatable :: w_MD_cc(:,:), b_MD_cc(:,:)
+  real(dp), allocatable :: u_MD_nc(:,:), b_MD_nc(:,:)
 
   integer :: ierror, iparam(17), mgopt(4)
   real(dp) :: dparam(6)
   real(dp), allocatable :: work(:)
 
-  print *, 'HELLO, MUDPACK'
-
   ! ----------------------
   ! Initialize and configure MUDPACK.
   ! ----------------------
   iparam(:) = 0; dparam(:) = 0.0_dp
-  associate( &
-    &                 phase => iparam( 1), & ! intl
+  associate(          phase => iparam( 1), & ! intl
     &    domainLength_x_min => dparam( 1), & ! xa
     &    domainLength_x_max => dparam( 2), & ! xb
     &    domainLength_y_min => dparam( 3), & ! yc
@@ -193,14 +195,13 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
     multigridCycleType = 0
 
     ! ----------------------
-    ! Compute workspace size and allocate the workspace.
+    ! Allocate the workspace.
     ! ----------------------
     ! Set estimated size to 0 to force the MUDPACK
     ! to fail with error 9 and read the real workspace size.
-    phase = 0
     workspaceSize = 0
-    call mud2sa( iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
+    phase = 0; call mud2sa(iparam, dparam, work, &
+      & w_wrapper, w_wrapper, lambda_wrapper, boundary, b_MD_nc, u_MD_nc, mgopt, ierror)
     if (ierror /= 9) then
       write(error_unit, *) &
         & 'MUD2SA FAILED WITH ERROR CODE OTHER THAN `9`', ierror
@@ -212,24 +213,81 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   ! ----------------------
   ! Interpolate the fields from cell to nodes.
   ! ----------------------
-  associate(numNodes_x => mesh%MDIndexBounds(1) + 1, &
-     &      numNodes_y => mesh%MDIndexBounds(2) + 1)
-    allocate( u_nc(numNodes_x, numNodes_y), &
-      &       b_nc(numNodes_x, numNodes_y) )
-    u_nc(:,:) = 0.0_dp
-    b_nc(:,:) = 1.0_dp
-    b_nc(65:65,65:65) = -1.0_dp
+  associate( &
+    & numCells_x => mesh%MDIndexBounds(1), &
+    & numCells_y => mesh%MDIndexBounds(2) )
+    allocate( &
+      & w_MD_cc(numCells_x, numCells_y), &
+      & b_MD_cc(numCells_x, numCells_y) )
+  end associate
+  !$omp parallel do schedule(static) &
+  !$omp & default(private) shared(mesh, w, w_MD_cc, b, b_MD_cc)
+  do iCell = 1_ip, mesh%NumCells
+    associate(iCellMD => mesh%CellMDIndex(:,iCell))
+      w_MD_cc(iCellMD(1), iCellMD(2)) = w(iCell)
+      b_MD_cc(iCellMD(1), iCellMD(2)) = b(iCell)
+    end associate
+  end do
+  !$omp end parallel do
+  associate( &
+    & numNodes_x => mesh%MDIndexBounds(1) + 1, &
+    & numNodes_y => mesh%MDIndexBounds(2) + 1 )
+    allocate( &
+      & u_MD_nc(numNodes_x, numNodes_y), &
+      & b_MD_nc(numNodes_x, numNodes_y) )
+    ! ----------------------
+    ! Corner interpolation.
+    ! ----------------------
+    u_MD_nc(1, 1) = 0.0_dp
+    b_MD_nc(1, 1) = b_MD_cc(1, 1)
+    u_MD_nc(numNodes_x, 1) = 0.0_dp
+    b_MD_nc(numNodes_x, 1) = b_MD_cc(numNodes_x-1, 1)
+    u_MD_nc(1, numNodes_y) = 0.0_dp
+    b_MD_nc(1, numNodes_y) = b_MD_cc(1, numNodes_y-1)
+    u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
+    b_MD_nc(numNodes_x, numNodes_y) = b_MD_cc(numNodes_x-1,numNodes_y-1)
+    !u_MD_nc(1, 1) = 0.0_dp
+    !b_MD_nc(1, 1) = 2.0_dp*b_MD_cc(1, 1) - b_MD_cc(2, 2)
+    !u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
+    !b_MD_nc(numNodes_x, numNodes_y) = 2.0_dp*b_MD_cc(numNodes_x-1,numNodes_y-1) - b_MD_cc(numNodes_x-2,numNodes_y-2)
+    !u_MD_nc(numNodes_x, numNodes_y) = 0.0_dp
+    !b_MD_nc(numNodes_x, numNodes_y) = 2.0_dp*b_MD_cc(numNodes_x-1,numNodes_y-1) - b_MD_cc(numNodes_x-2,numNodes_y-2)
+    ! ----------------------
+    ! Boundary interpolation.
+    ! ----------------------
+    u_MD_nc(1, 2:numNodes_y-1) = 0.0_dp
+    b_MD_nc(1, 2:numNodes_y-1) = b_MD_cc(1, 2:numNodes_y-1)
+    u_MD_nc(numNodes_x, 2:numNodes_y-1) = 0.0_dp
+    b_MD_nc(numNodes_x, 2:numNodes_y-1) = b_MD_cc(numNodes_x-1, 2:numNodes_y-1)
+    u_MD_nc(2:numNodes_x-1, 1) = 0.0_dp
+    b_MD_nc(2:numNodes_x-1, 1) = b_MD_cc(2:numNodes_x-1, 1)
+    u_MD_nc(2:numNodes_x-1, numNodes_y) = 0.0_dp
+    b_MD_nc(2:numNodes_y-1, numNodes_y) = b_MD_cc(2:numNodes_y-1, numNodes_y-1)
+    ! ----------------------
+    ! Interior interpolation.
+    ! ----------------------
+    !$omp parallel do schedule(static)
+    do iNode_y = 2, numNodes_y-1
+      do iNode_x = 2, numNodes_x-1
+        u_MD_nc(iNode_x, iNode_y) = 0.0_dp
+        b_MD_nc(iNode_x, iNode_y) = &
+          & ( b_MD_cc(iNode_x - 1, iNode_y - 1) + &
+          &   b_MD_cc(iNode_x - 1, iNode_y + 0) + &
+          &   b_MD_cc(iNode_x + 0, iNode_y - 1) + &
+          &   b_MD_cc(iNode_x + 0, iNode_y + 0) )*0.25_dp
+      end do
+    end do
+    !$omp end parallel do
   end associate
 
   ! ----------------------
   ! Perform the discretization phase.
   ! ----------------------
   associate(phase => iparam(1))
-    phase = 0
-    call mud2sa(iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
+    phase = 0; call mud2sa(iparam, dparam, work, &
+      & w_wrapper, w_wrapper, lambda_wrapper, boundary, b_MD_nc, u_MD_nc, mgopt, ierror)
     if (ierror < 0) then
-      print *, &
+      write(error_unit, *) &
         & 'MUD2SA DISCRETIZATION PHASE WARNING, IERROR=', ierror
     else if (ierror > 0) then
       write(error_unit, *) &
@@ -242,11 +300,10 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   ! Perform the approximation phase.
   ! ----------------------
   associate(phase => iparam(1))
-    phase = 1
-    call mud2sa(iparam, dparam, work, &
-      & sigma, sigma, lambda, boundary, b_nc, u_nc, mgopt, ierror)
+    phase = 1; call mud2sa(iparam, dparam, work, &
+      & w_wrapper, w_wrapper, lambda_wrapper, boundary, b_MD_nc, u_MD_nc, mgopt, ierror)
     if (ierror < 0) then
-      print *, &
+      write(error_unit, *) &
         & 'MUD2SA APPROXIMATION PHASE WARNING, IERROR=', ierror
     else if (ierror > 0) then
       write(error_unit, *) &
@@ -259,29 +316,36 @@ subroutine Solve_DivWGrad_MUDPACK$rank(mesh, u, w, b, params)
   ! Interpolate the solution from nodes to cells.
   ! ----------------------
   !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(mesh, u, u_nc)
+  !$omp & default(private) shared(mesh, u, u_MD_nc)
   do iCell = 1_ip, mesh%NumCells
     associate(iCellMD => mesh%CellMDIndex(:,iCell))
-      associate(iNodeMD => iCellMD)
+      associate(iNode2D => iCellMD)
         u(iCell) = &
-          & ( u_nc(iNodeMD(1) + 0, iNodeMD(2) + 0) + &
-          &   u_nc(iNodeMD(1) + 0, iNodeMD(2) + 1) + &
-          &   u_nc(iNodeMD(1) + 1, iNodeMD(2) + 0) + &
-          &   u_nc(iNodeMD(1) + 1, iNodeMD(2) + 1) )*0.25_dp
+          & ( u_MD_nc(iNode2D(1) + 0, iNode2D(2) + 0) + &
+          &   u_MD_nc(iNode2D(1) + 0, iNode2D(2) + 1) + &
+          &   u_MD_nc(iNode2D(1) + 1, iNode2D(2) + 0) + &
+          &   u_MD_nc(iNode2D(1) + 1, iNode2D(2) + 1) )*0.25_dp
       end associate
     end associate
   end do
   !$omp end parallel do
 
 contains
-  real(dp) function sigma(x, y)
+  
+  real(dp) function w_wrapper(x, y)
+    ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: x, y
-    sigma = 2.0
-  end function sigma
-  real(dp) function lambda(x, y)
+    ! >>>>>>>>>>>>>>>>>>>>>>
+    w_wrapper = 2.0
+  end function w_wrapper
+
+  real(dp) function lambda_wrapper(x, y)
+    ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: x, y
-    lambda = 0.0e-8_dp
-  end function lambda
+    ! >>>>>>>>>>>>>>>>>>>>>>
+    lambda_wrapper = max(1.0e-8_dp, lambda)
+  end function lambda_wrapper
+
   subroutine boundary(kbdy, xory, alfa, gbdy)
     integer kbdy
     real(dp) xory, alfa, gbdy

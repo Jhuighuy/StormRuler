@@ -57,8 +57,6 @@ program nsch
   integer(ip), allocatable :: colorToBCM(:)
   type(tConvParams) :: params
 
-  call system('pause')
-
   ! ----------------------
   ! Print an epic banner.
   print *, ''
@@ -118,7 +116,7 @@ program nsch
       end associate
     end Do
 
-    call Solve_DivWGrad_MUDPACK(mesh, c, p, p, params)
+    call Solve_DivWGrad_MUDPACK(mesh, c, 0.0_dp, p, p, params)
     call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(0)//'.vtk',fields)
     call mesh%PrintTo_LegacyVTK('out/fld-'//I2S(1)//'.vtk',fields)
     error stop 228

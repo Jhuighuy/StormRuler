@@ -143,9 +143,11 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
       call dcg(n, u, b, rci_request, iparams, dparams, tmp)
       if (rci_request == 0) exit
       if (rci_request == 1) then
-        if (gMKL_RCI_DebugLevel > 0_ip) &
-          & print *, 'AE=', currentResidualNorm_sqr, &
+        if (gMKL_RCI_DebugLevel > 0_ip) then
+          write(error_unit, *) &
+            & 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
+        end if
         call MatVec(mesh, out, in, env)
       else
         write(error_unit, *) 'MKL DCG FAILED'
@@ -240,7 +242,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
       & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
     error stop 1
   else if ((rci_request /= 0).and.(gMKL_RCI_DebugLevel > 0_ip)) then
-    print *, &
+    write(error_unit, *) &
       & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
   end if
 
@@ -256,16 +258,20 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
       if (rci_request == 1) then
         associate(inOffset => (iparams(21) - 1), &
           &      outOffset => (iparams(22) - 1))
-          if (gMKL_RCI_DebugLevel > 1_ip) &
-            & print *, 'IN/OUT=', inOffset/n, outOffset/n
+          if (gMKL_RCI_DebugLevel > 1_ip) then
+            write(error_unit, *) &
+              & 'IN/OUT=', inOffset/n, outOffset/n
+          end if
           call c_f_pointer( &
             & cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
           call c_f_pointer( &
             & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
         end associate
-        if (gMKL_RCI_DebugLevel > 0_ip) &
-          & print *, 'AE=', currentResidualNorm_sqr, &
+        if (gMKL_RCI_DebugLevel > 0_ip) then
+          write(error_unit, *) &
+            & 'AE=', currentResidualNorm_sqr, &
             & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
+        end if
         call MatVec(mesh, out, in, env)
       else
         write(error_unit, *) &
@@ -284,8 +290,9 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
       & 'MKL DFGMRES_GET FAILED, RCI_REQUEST=', rci_request
     error stop 1
   end if
-  if (gMKL_RCI_DebugLevel > 1) &
-    & print *, 'ITERCOUNT=', itercount
+  if (gMKL_RCI_DebugLevel > 1) then
+    write(error_unit, *) 'ITERCOUNT=', itercount
+  end if
 end subroutine Solve_FGMRES_MKL$rank
 #$end do
 

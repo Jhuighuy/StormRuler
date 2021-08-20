@@ -31,6 +31,9 @@ use StormRuler_Helpers, only: Flip, IndexOf, I2S, R2S, IntToPixel
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, NUM_RANKS}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
+#$if HAS_OpenMP
+use :: omp_lib
+#$endif
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -76,7 +79,7 @@ type :: tMesh
   ! Logical table for the periodic face connections.
   ! Shape is [1, NumFaces]×[1, NumAllCells].
   ! ----------------------
-  logical, allocatable, private :: CellFacePeriodic_(:,:)
+  logical, allocatable, private :: mCellFacePeriodic(:,:)
 
   ! ----------------------
   ! Multidimensional index bounds table.
@@ -127,23 +130,41 @@ type :: tMesh
   ! ----------------------
   real(dp), allocatable :: CellCenter(:,:)
 
-  logical :: Parallel = .true.
+  ! ----------------------
+  ! Cell range indicators.
+  ! ----------------------
+  logical, private :: mParallel = .true.
+#$if HAS_OpenMP
+  integer(ip), allocatable, private :: mCellRange(:,:)
+#$else
+  integer(ip), private :: mCellRange(2)
+#$end if
 
 contains
+
   ! ----------------------
+  ! Mesh walkthough subroutines.
+  ! ----------------------
+  procedure :: SetRange => tMesh_SetRange
+  procedure :: Parallel => tMesh_Parallel
   procedure :: FirstCell => tMesh_FirstCell
   procedure :: LastCell => tMesh_LastCell
+
+  ! ----------------------
+  ! Field wrappers.
+  ! ----------------------
   procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
-  generic :: FieldSize => @{FieldSize$$@|@0, NUM_RANKS}@
-#$do rank = 0, NUM_RANKS
-  procedure :: FieldSize$rank => tMesh_FieldSize$rank
-#$end do
+
+  ! ----------------------
+  ! Initializers.
   ! ----------------------
   procedure :: InitRect => tMesh_InitRect
   procedure :: InitFromImage2D => tMesh_InitFromImage2D
   procedure :: InitFromImage3D => tMesh_InitFromImage3D
-  ! ----------------------
   procedure, private :: GenerateBCCells => tMesh_GenerateBCCells
+
+  ! ----------------------
+  ! Printers.
   ! ----------------------
   procedure :: PrintTo_Neato => tMesh_PrintTo_Neato
   procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
@@ -156,30 +177,96 @@ contains
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
-pure integer(ip) function tMesh_FirstCell(mesh)
+subroutine tMesh_SetRange(mesh, firstCell, lastCell)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
+  integer(ip), intent(in), optional :: firstCell, lastCell
   ! >>>>>>>>>>>>>>>>>>>>>>
-  tMesh_FirstCell = 1
-end function tMesh_FirstCell
-pure integer(ip) function tMesh_LastCell(mesh)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  tMesh_LastCell = mesh%NumCells
-end function tMesh_LastCell
+
+#$if HAS_OpenMP
+  ! Preallocate and reset the ranges.
+  !$omp single
+  if (.not.allocated(mesh%mCellRange)) then
+    allocate(mesh%mCellRange(2, omp_get_max_threads()))
+    mesh%mCellRange(1,:) = 1
+    mesh%mCellRange(2,:) = mesh%NumCells
+  end if
+  !$omp end single
+  if (present(firstCell)) then
+    !$omp single
+    mesh%mParallel = .false.
+    !$omp end single
+    mesh%mCellRange(:,omp_get_thread_num()+1) = firstCell
+    if (present(lastCell)) then
+      mesh%mCellRange(2,omp_get_thread_num()+1) = lastCell
+    end if
+  else
+    if (omp_in_parallel()) then
+      write(error_unit, *) &
+        & 'SetRange cannot be called without ', &
+        & 'arguments inside of the parallel section.'
+      error stop 2
+    end if
+    mesh%mParallel = .true.
+    mesh%mCellRange(1,:) = 1
+    mesh%mCellRange(2,:) = mesh%NumCells
+  end if
+#$else
+  if (present(firstCell)) then
+    mesh%mCellRange(:) = firstCell
+    if (present(lastCell)) then
+      mesh%mCellRange(2) = lastCell
+    end if
+  else
+    mesh%mCellRange(1) = 1
+    mesh%mCellRange(2) = mesh%NumCells
+  end if
+#$end if
+end subroutine tMesh_SetRange
 
 !! ----------------------------------------------------------------- !!
+!! Indicate if the computation should be performed in parallel.
 !! ----------------------------------------------------------------- !!
-#$do rank = 0, NUM_RANKS
-integer(ip) function tMesh_FieldSize$rank(mesh, field)
+pure logical function tMesh_Parallel(mesh)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: field(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
-  tMesh_FieldSize$rank = size(field)*mesh%NumCells/mesh%NumAllCells
-end function tMesh_FieldSize$rank
-#$end do
+
+  tMesh_Parallel = mesh%mParallel
+end function tMesh_Parallel
+
+!! ----------------------------------------------------------------- !!
+!! Get the lower cell bound for the current computation.
+!! ----------------------------------------------------------------- !!
+integer(ip) function tMesh_FirstCell(mesh)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+#$if HAS_OpenMP
+  tMesh_FirstCell = mesh%mCellRange(1, omp_get_thread_num()+1)
+#$else
+  tMesh_FirstCell = mesh%mCellRange(1)
+#$end if
+end function tMesh_FirstCell
+
+!! ----------------------------------------------------------------- !!
+!! Get the upper cell bound for the current computation.
+!! ----------------------------------------------------------------- !!
+integer(ip) function tMesh_LastCell(mesh)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+#$if HAS_OpenMP
+  tMesh_LastCell = mesh%mCellRange(2, omp_get_thread_num()+1)
+#$else
+  tMesh_LastCell = mesh%mCellRange(2)
+#$end if
+end function tMesh_LastCell
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
@@ -190,8 +277,8 @@ logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   tMesh_CellFacePeriodic = &
-    & allocated(mesh%CellFacePeriodic_).and. &
-    & mesh%CellFacePeriodic_(iCellFace, iCell)
+    & allocated(mesh%mCellFacePeriodic).and. &
+    & mesh%mCellFacePeriodic(iCellFace, iCell)
 end function tMesh_CellFacePeriodic
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -722,7 +809,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     mesh%NumCellFaces = 4
     allocate(mesh%CellCenter(1:mesh%NumAllCells, 1:3))
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
-    allocate(mesh%CellFacePeriodic_(4, mesh%NumAllCells))
+    allocate(mesh%mCellFacePeriodic(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
     ! ----------------------
     ! Fill the cell information for the interior cells.
@@ -740,11 +827,11 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
           &  cellToIndex(xCell, yCell+1), &
           &  cellToIndex(xCell, yCell-1)]
         !---
-        mesh%CellFacePeriodic_(:,iCell) = .false.
-        if (xCell==1) mesh%CellFacePeriodic_(2, iCell) = .true.
-        if (yCell==1) mesh%CellFacePeriodic_(4, iCell) = .true.
-        if (xCell==xNumCells) mesh%CellFacePeriodic_(1, iCell) = .true.
-        if (yCell==yNumCells) mesh%CellFacePeriodic_(3, iCell) = .true.
+        mesh%mCellFacePeriodic(:,iCell) = .false.
+        if (xCell==1) mesh%mCellFacePeriodic(2, iCell) = .true.
+        if (yCell==1) mesh%mCellFacePeriodic(4, iCell) = .true.
+        if (xCell==xNumCells) mesh%mCellFacePeriodic(1, iCell) = .true.
+        if (yCell==yNumCells) mesh%mCellFacePeriodic(3, iCell) = .true.
       end do
     end do
     !$omp end parallel do

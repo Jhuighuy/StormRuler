@@ -195,7 +195,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
@@ -290,7 +290,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp default(private) shared(mesh, lambda, u_bar, v)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
@@ -519,7 +519,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, lambda, u, v_bar) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
@@ -667,7 +667,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, lambda, u_bar, v) &
   !$omp & shared(dirAll, dirFace, dirCellFace)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
@@ -914,7 +914,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, lambda, u, v)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2
@@ -1129,7 +1129,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   ! ----------------------
   ! For each positive cell face do:
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, lambda, u, v, w)
   do iCell = mesh%FirstCell(), mesh%LastCell(); block
     do iCellFace = 1, mesh%NumCellFaces, 2

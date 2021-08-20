@@ -94,6 +94,7 @@ program nsch
     allocate(mesh)
     mesh%dt = dt
     call mesh%InitRect(dx,nx,.true.,dy,ny,.true.,20)
+    call mesh%SetRange()
 
     allocate(c(1:mesh%NumAllCells))
     allocate(s(1:mesh%NumAllCells))

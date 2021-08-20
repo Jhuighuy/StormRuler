@@ -29,25 +29,19 @@ module StormRuler_Solvers_Krylov
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_ConvParams, only: tConvParams
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
+use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Solvers_Base, only: &
+  & @{tMatVecFunc$$, tPreconditionerFunc$$@|@0, NUM_RANKS}@
+
+#$if HAS_OpenMP
+use :: omp_lib
+#$endif
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-abstract interface
-#$do rank = 0, NUM_RANKS
-  subroutine tMatVecFunc$rank(mesh, Au, u, env)
-    import :: dp, tMesh
-    class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Au(@:,:)
-    class(*), intent(inout) :: env
-  end subroutine tMatVecFunc$rank
-#$end do
-end interface
 
 interface Solve_CG
 #$do rank = 0, NUM_RANKS
@@ -62,10 +56,84 @@ interface Solve_BiCGStab
 #$end do
 end interface Solve_BiCGStab
 
+#$do rank = 0, NUM_RANKS
+type :: tPrecondEnv_Jacobi$rank
+  real(dp), allocatable :: diag_inv(@:,:)
+end type !tPrecondEnv_Jacobi$rank
+#$end do
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$do rank = 0, NUM_RANKS
+subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(in), target :: u(@:,:)
+  real(dp), intent(inout), target :: Pu(@:,:)
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(inout) :: env
+  class(*), intent(inout), allocatable, target :: precond_env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  class(tPrecondEnv_Jacobi$rank), pointer :: jacobi_env
+
+  ! ----------------------
+  ! Cast Jacobi preconditioner environment.
+  ! ----------------------
+  if (.not.allocated(precond_env)) then
+    allocate(tPrecondEnv_Jacobi$rank :: precond_env)
+  end if
+  select type(precond_env)
+    class is(tPrecondEnv_Jacobi$rank)
+      jacobi_env => precond_env
+  end select
+
+  ! ----------------------
+  ! Build the Jacobi preconditioner.
+  ! ----------------------
+  if (.not.allocated(jacobi_env%diag_inv)) then; block
+    ! ----------------------
+    ! TODO: we definitely need some more fashionable API to do this:
+    ! ----------------------
+    integer :: iCell
+    
+    real(dp), allocatable :: e(@:,:,:)
+    allocate(jacobi_env%diag_inv, mold=u)
+    allocate(e(@{size(u, dim=$$)}@, size(u, dim=$rank+1), omp_get_max_threads()))
+
+    !$omp parallel
+    call Fill(mesh, e(@:,:,omp_get_thread_num()+1), 0.0_dp)
+    !$omp end parallel
+    call Fill(mesh, jacobi_env%diag_inv, 0.0_dp)
+
+    !#omp parallel do
+    do iCell = 1, mesh%NumCells 
+      
+      e(@:,iCell,omp_get_thread_num()+1) = 1.0_dp
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, jacobi_env%diag_inv, e(@:,:,omp_get_thread_num()+1), env)
+      e(@:,iCell,omp_get_thread_num()+1) = 0.0_dp
+
+      jacobi_env%diag_inv(@:,iCell) = 1.0_dp/jacobi_env%diag_inv(@:,iCell)
+    end do
+    !#omp end parallel do
+    call mesh%SetRange()
+
+  end block; end if
+
+  ! ----------------------
+  ! Apply the Jacobi preconditioner.
+  ! ----------------------
+  Pu(@:,:) = jacobi_env%diag_inv(@:,:)*u(@:,:)
+
+end subroutine Precondition_Jacobi$rank
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
@@ -143,18 +211,20 @@ end subroutine Solve_CG$rank
 !! using the Preconditioned Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_PCG$rank(mesh, u, b, MatVec, env, P_MatVec, P_env, params)
+subroutine Solve_PCG$rank(mesh, u, b, MatVec, Preconditioner, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec, P_MatVec
-  class(*), intent(inout) :: env, P_env
+  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tPreconditionerFunc$rank) :: Preconditioner
+  class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta, theta
   real(dp), allocatable :: p(@:,:), r(@:,:), z(@:,:), t(@:,:)
+  class(*), allocatable :: precond_env
   allocate(p, r, z, t, mold=u)
 
   ! ----------------------
@@ -176,7 +246,7 @@ subroutine Solve_PCG$rank(mesh, u, b, MatVec, env, P_MatVec, P_env, params)
   ! p ← z,
   ! γ ← <r⋅z>,
   ! ----------------------
-  call P_MatVec(mesh, z, r, P_env)
+  call Preconditioner(mesh, z, r, MatVec, env, precond_env)
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -203,7 +273,7 @@ subroutine Solve_PCG$rank(mesh, u, b, MatVec, env, P_MatVec, P_env, params)
     ! z ← Pr
     ! α ← <r⋅z>,
     ! ----------------------
-    call P_MatVec(mesh, z, r, P_env)
+    call Preconditioner(mesh, z, r, MatVec, env, precond_env)
     alpha = Dot(mesh, r, z)
 
     ! ----------------------

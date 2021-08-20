@@ -36,7 +36,7 @@ implicit none
 contains
    
 subroutine SolvePoisson(mesh,u,f)
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), dimension(:), intent(inout), target :: u(:),f(:)
   class(tConvParams), allocatable :: Params
   ! ----------------------
@@ -47,7 +47,7 @@ subroutine SolvePoisson(mesh,u,f)
   ! ----------------------
 
   call Fill(mesh,u,0.0_dp)
-  call Solve_CG(mesh,u,f,PoissonOperator,Params,IdentityOperator,Params,Params)
+  call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
   !call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains
@@ -61,19 +61,11 @@ contains
     call Fill(mesh,v,0.0_dp)
     call FDM_Laplacian_Central(mesh,v,1.0_dp,u)
   end subroutine PoissonOperator
-  subroutine IdentityOperator(mesh,v,u,opParams)
-    class(tMesh), intent(in) :: mesh
-    real(dp), dimension(:), intent(in), target :: u
-    real(dp), dimension(:), intent(inout), target :: v
-    class(*), intent(inout) :: opParams
-    call Set(mesh,v,u)
-    v(:) = 0.5*v(:)
-  end subroutine IdentityOperator
 end subroutine SolvePoisson
 
 subroutine NavierStokes_PredictVelocity(mesh,v,p,c,s,g,nu,rho,beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(inout), target :: v(:,:),g(:,:),p(:),c(:),s(:)
   real(dp), intent(in) :: nu,rho,beta
   ! >>>>>>>>>>>>>>>>>>>>>>

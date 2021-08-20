@@ -116,7 +116,8 @@ subroutine Fill$rank(mesh, y, alpha)
   integer(ip) :: iCell
   
   ! ----------------------
-  !$omp parallel do schedule(static) 
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
+  !$omp & default(private) shared(mesh, alpha, y)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     y(@:,iCell) = alpha
   end do
@@ -138,7 +139,7 @@ subroutine Set$rank(mesh, y, x)
   integer(ip) :: iCell
 
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp default(private) shared(mesh, x, y)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     y(@:,iCell) = x(@:,iCell)
@@ -163,7 +164,7 @@ function Dot$rank(mesh, x, y) result(d)
   d = 0.0_dp
 
   ! ----------------------
-  !$omp parallel do reduction(+:d) schedule(static) &
+  !$omp parallel do reduction(+:d) schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, x, y)
   do iCell = mesh%FirstCell(), mesh%LastCell()
 #$if rank == 0
@@ -198,7 +199,7 @@ subroutine Add$rank(mesh, z, y, x, alpha, beta)
   b = 1.0_dp; if (present(beta)) b = beta
 
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, a, b, x, y, z)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
@@ -226,7 +227,7 @@ subroutine Sub$rank(mesh, z, y, x, alpha, beta)
   b = 1.0_dp; if (present(beta)) b = beta
 
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, a, b, x, y, z)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
@@ -254,7 +255,7 @@ subroutine Mul$rank(mesh, u, v, w, power)
   p = 1; if (present(power)) p = power
   
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, u, v, w, p)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
@@ -277,7 +278,7 @@ subroutine Mul_Inner$rank(mesh, u, vBar, wBar)
   integer(ip) :: iCell
   
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, u, vBar, wBar)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
@@ -300,7 +301,7 @@ subroutine Mul_Outer$rank(mesh, uHat, vBar, wBar)
   integer(ip) :: iCell
   
   ! ----------------------
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, uHat, vBar, wBar)
   do iCell = mesh%FirstCell(), mesh%LastCell()
     uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
@@ -327,16 +328,12 @@ subroutine FuncProd$rank(mesh, v, u, f)
   integer(ip) :: iCell
   
   ! ----------------------
-#$if not NAG_COMPILER
-  !$omp parallel do schedule(static) &
+  !$omp parallel do schedule(static) if(mesh%Parallel()) &
   !$omp & default(private) shared(mesh, u, v)
-#$end if
   do iCell = mesh%FirstCell(), mesh%LastCell()
     v(@:,iCell) = f(u(@:,iCell))
   end do
-#$if not NAG_COMPILER
   !$omp end parallel do
-#$end if
 end subroutine FuncProd$rank
 #$end do
 
@@ -355,16 +352,12 @@ subroutine SFuncProd$rank(mesh, v, u, f)
   integer(ip) :: iCell
 
   ! ----------------------
-#$if not NAG_COMPILER
   !$omp parallel do schedule(static) &
   !$omp & default(private) shared(mesh, u, v)
-#$end if
   do iCell = mesh%FirstCell(), mesh%LastCell()
     v(@:,iCell) = f(mesh%dl(::2)*mesh%CellMDIndex(:,iCell), u(@:,iCell))
   end do
-#$if not NAG_COMPILER
   !$omp end parallel do
-#$end if
 end subroutine SFuncProd$rank
 #$end do
 

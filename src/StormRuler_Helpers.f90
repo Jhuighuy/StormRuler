@@ -78,12 +78,6 @@ interface operator(.outer.)
 #$end do
 end interface
 
-interface
-  logical function SameAddresses(a, b) bind(c, name='SameAddresses')
-    type(*), intent(in) :: a(*), b(*)
-  end function SameAddresses
-end interface
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -115,29 +109,30 @@ integer(ip) pure function IndexOf(value, array)
 end function IndexOf
 
 !! ----------------------------------------------------------------- !!
+!! Bubble-sort the integer array.
 !! ----------------------------------------------------------------- !!
-subroutine BubbleSort(a)
+subroutine BubbleSort(array)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  integer(ip), intent(inout) :: a(:)
+  integer(ip), intent(inout) :: array(:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: temp
   integer(ip) :: i, j
   logical :: swapped
  
-  DO j = SIZE(a)-1, 1, -1
-    swapped = .FALSE.
-    DO i = 1, j
-      IF (a(i) > a(i+1)) THEN
-        temp = a(i)
-        a(i) = a(i+1)
-        a(i+1) = temp
-        swapped = .TRUE.
-      END IF
-    END DO
-    IF (.NOT. swapped) EXIT
-  END DO
-END subroutine BubbleSort
+  do j = size(array)-1, 1, -1
+    swapped = .false.
+    do i = 1, j
+      if (array(i) > array(i+1)) then
+        temp = array(i)
+        array(i) = array(i+1)
+        array(i+1) = temp
+        swapped = .true.
+      end if
+    end do
+    if (.not.swapped) exit
+  end do
+end subroutine BubbleSort
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

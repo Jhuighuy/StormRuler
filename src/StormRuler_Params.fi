@@ -29,6 +29,4 @@
 
 #$let HAS_MKL = True
 
-#$let HAS_MUDPACK = True
-
 #$let NAG_COMPILER = True

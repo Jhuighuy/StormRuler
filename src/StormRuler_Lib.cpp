@@ -47,10 +47,6 @@ auto type_name(T&&) noexcept {
   return name;
 }
 
-extern "C" bool SameAddresses(const void* a, const void* b) {
-  return a == b;
-}
-
 //
 // dx = 0.5*10^-9.
 // sigma = from ML

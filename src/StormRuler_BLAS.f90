@@ -203,6 +203,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
   end subroutine Add_Kernel
 end subroutine Add$rank
@@ -233,6 +234,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
   end subroutine Sub_Kernel
 end subroutine Sub$rank
@@ -263,6 +265,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
   end subroutine Mul_Kernel
 end subroutine Mul$rank
@@ -286,6 +289,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
   end subroutine Mul_Inner_Kernel
 end subroutine Mul_Inner$rank
@@ -309,6 +313,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
   end subroutine Mul_Outer_Kernel
 end subroutine Mul_Outer$rank
@@ -336,6 +341,7 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     v(@:,iCell) = f(u(@:,iCell))
   end subroutine FuncProd_Kernel
 end subroutine FuncProd$rank
@@ -360,7 +366,8 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
-    v(@:,iCell) = f(mesh%dl(::2)*mesh%CellMDIndex(:,iCell), u(@:,iCell))
+
+    v(@:,iCell) = f(mesh%CellCenter(iCell), u(@:,iCell))
   end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$rank
 #$end do

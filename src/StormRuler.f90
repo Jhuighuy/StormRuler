@@ -13,26 +13,6 @@ Function to_str(k)
   to_str = adjustl(to_str)
 End Function to_str  
 
-Subroutine print_mesh3(mesh, u,p,c, l)
-  class(tMesh), intent(in) :: mesh
-  Real(dp), Dimension(:,:), Intent(in) :: u
-  Real(dp), Dimension(:), Intent(in) :: p,c
-  integer(ip), Intent(In) :: l
-  integer(ip) :: output
-  Write(*,*) l
-  Open(NewUnit=output, file='out/fields-'//Trim(to_str(l))//'.csv', Status='replace')
-  Write (output, *) 'x,y,z,vx,vy,p,c'
-  Block
-    integer(ip) :: iCell
-    do iCell = 1, mesh%NumAllCells
-      associate(r => mesh%CellCenter(iCell,:))
-        Write(output, '(E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A,E12.6,A)') &
-          r(1), ',', r(2), ',', r(3), ',', u(1,iCell), ',', u(2,iCell), ',', p(iCell), ',', c(iCell), ','
-      end associate
-    end do
-  End Block
-  Close(output)
-End Subroutine print_mesh3
 end module helpers
   
 #$if True
@@ -108,7 +88,7 @@ program nsch
     call fields%Add('phase',c)
 
     do iCell = 1, mesh%NumAllCells
-      associate(r => mesh%CellCenter(iCell,:)-[pi,pi])
+      associate(r => mesh%CellCenter(iCell)-[pi,pi])
         p(iCell) = 1.0_dp
         c(iCell) = 1.0_dp
         v(:,iCell) = [0.0,0.0]

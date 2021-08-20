@@ -135,7 +135,7 @@ type :: tMesh
   ! Cell center coordinates.
   ! Shape is [1, Dim]×[1, NumCells].
   ! ----------------------
-  real(dp), allocatable :: CellCenter(:,:)
+  real(dp), allocatable :: mCellCenter(:,:)
 
   ! ----------------------
   ! Cell range indicators.
@@ -161,6 +161,7 @@ contains
   ! Field wrappers.
   ! ----------------------
   procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
+  procedure :: CellCenter => tMesh_CellCenter
 
   ! ----------------------
   ! Initializers.
@@ -306,6 +307,20 @@ logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
     & allocated(mesh%mCellFacePeriodic).and. &
     & mesh%mCellFacePeriodic(iCellFace, iCell)
 end function tMesh_CellFacePeriodic
+
+!! ----------------------------------------------------------------- !!
+!! Get cell center.
+!! ----------------------------------------------------------------- !!
+pure function tMesh_CellCenter(mesh, iCell)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: iCell
+  real(dp) :: tMesh_CellCenter(mesh%Dim)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  tMesh_CellCenter = &
+    & mesh%dl(::2)*mesh%CellMDIndex(:,iCell)
+end function tMesh_CellCenter
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -611,7 +626,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! ----------------------
   write(unit, "('POINTS ', A, ' double')") I2S(mesh%NumCells)
   do iCell = 1, mesh%NumCells
-    associate(iCellCenter => mesh%dl(::2)*mesh%CellMDIndex(:,iCell))
+    associate(iCellCenter => mesh%CellCenter(iCell))
       if (mesh%Dim == 2) then
         write(unit, "(A, ' ', A, ' ', A)") &
           & R2S(iCellCenter(1)), R2S(iCellCenter(2)), '0.0'
@@ -833,7 +848,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     mesh%dr(:,3) = [0.0_dp, mesh%dl(2)]
     mesh%dr(:,4) = [0.0_dp, mesh%dl(2)]
     mesh%NumCellFaces = 4
-    allocate(mesh%CellCenter(1:mesh%NumAllCells, 1:3))
+    allocate(mesh%mCellCenter(1:mesh%NumAllCells, 1:3))
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
     allocate(mesh%mCellFacePeriodic(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
@@ -844,7 +859,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
       do xCell = 1, xNumCells
         iCell = cellToIndex(xCell, yCell)
         mesh%CellMDIndex(:,iCell) = [xCell, yCell]
-        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                                     ,yDelta*(yCell+0.5_dp), 0.0_dp]
         !---
         mesh%CellToCell(:,iCell) = &
@@ -868,14 +883,14 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     do yCell = 1, yNumCells
       do xCell = 1-xNumLayers, 0
         iCell = cellToIndex(xCell, yCell)
-        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                               ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ cellToIndex(1, yCell), 0, 0, 0 ]
       end do
       do xCell = xNumCells+1, xNumCells+xNumLayers 
         iCell = cellToIndex(xCell, yCell)
-        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                               , yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, cellToIndex(xNumCells, yCell), 0, 0 ]
@@ -886,14 +901,14 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     do xCell = 1, xNumCells
       do yCell = 1-yNumLayers, 0
         iCell = cellToIndex(xCell, yCell)
-        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                               ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, 0, cellToIndex(xCell, 1), 0 ]
       end do
       do yCell = yNumCells+1, yNumCells+yNumLayers
         iCell = cellToIndex(xCell, yCell)
-        mesh%CellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
+        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
                               ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, 0, 0, cellToIndex(xCell, yNumCells) ]

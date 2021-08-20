@@ -44,7 +44,7 @@ abstract interface
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), target :: u(@:,:)
     real(dp), intent(inout), target :: Au(@:,:)
-    class(*), intent(in) :: env
+    class(*), intent(inout) :: env
   end subroutine tMatVecFunc$rank
 #$end do
 end interface
@@ -52,6 +52,7 @@ end interface
 interface Solve_CG
 #$do rank = 0, NUM_RANKS
   module procedure Solve_CG$rank
+  module procedure Solve_PCG$rank
 #$end do
 end interface Solve_CG
 
@@ -77,7 +78,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(in) :: env
+  class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
@@ -91,12 +92,14 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
   ! ----------------------
   call MatVec(mesh, t, u, env)
   call Sub(mesh, r, b, t)
+
   ! ----------------------
   ! δ ← <r⋅r>,
   ! check convergence for √δ.
   ! ----------------------
   delta = Dot(mesh, r, r)
   if (params%Check(sqrt(delta))) return
+  
   ! ----------------------
   ! p ← r.
   ! γ ← δ.
@@ -108,8 +111,8 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params)
     ! ----------------------
     ! t ← Ap,
     ! α ← γ/<p⋅t>,
-    ! u ← u + α⋅z,
-    ! r ← r - α⋅g,
+    ! u ← u + α⋅p,
+    ! r ← r - α⋅t,
     ! ----------------------
     call MatVec(mesh, t, p, env)
     alpha = SafeDivide(gamma, Dot(mesh, p, t))
@@ -136,6 +139,86 @@ end subroutine Solve_CG$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear self-adjoint definite operator equation: PAu = Pb, 
+!! using the Preconditioned Conjugate Gradients method.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$do rank = 0, NUM_RANKS
+subroutine Solve_PCG$rank(mesh, u, b, MatVec, env, P_MatVec, P_env, params)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatVecFunc$rank) :: MatVec, P_MatVec
+  class(*), intent(inout) :: env, P_env
+  type(tConvParams), intent(inout) :: params
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  real(dp) :: alpha, beta, gamma, delta, theta
+  real(dp), allocatable :: p(@:,:), r(@:,:), z(@:,:), t(@:,:)
+  allocate(p, r, z, t, mold=u)
+
+  ! ----------------------
+  ! t ← Au,
+  ! r ← b - t.
+  ! ----------------------
+  call MatVec(mesh, t, u, env)
+  call Sub(mesh, r, b, t)
+
+  ! ----------------------
+  ! δ ← <r⋅r>,
+  ! check convergence for √δ.
+  ! ----------------------
+  delta = Dot(mesh, r, r)
+  if (params%Check(sqrt(delta))) return
+  
+  ! ----------------------
+  ! z ← Pr,
+  ! p ← z,
+  ! γ ← <r⋅z>,
+  ! ----------------------
+  call P_MatVec(mesh, z, r, P_env)
+  call Set(mesh, p, z)
+  gamma = Dot(mesh, r, z)
+
+  do
+    ! ----------------------
+    ! t ← Ap,
+    ! α ← γ/<p⋅t>,
+    ! u ← u + α⋅p,
+    ! r ← r - α⋅t,
+    ! ----------------------
+    call MatVec(mesh, t, p, env)
+    alpha = SafeDivide(gamma, Dot(mesh, p, t))
+    call Add(mesh, u, u, p, alpha)
+    call Sub(mesh, r, r, t, alpha)
+
+    ! ----------------------
+    ! α ← <r⋅r>,
+    ! check convergence for √α and √α/√δ.
+    ! ----------------------
+    alpha = Dot(mesh, r, r)
+    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) return
+
+    ! ----------------------
+    ! z ← Pr
+    ! α ← <r⋅z>,
+    ! ----------------------
+    call P_MatVec(mesh, z, r, P_env)
+    alpha = Dot(mesh, r, z)
+
+    ! ----------------------
+    ! β ← α/γ,
+    ! p ← z + β⋅p.
+    ! γ ← α.
+    ! ----------------------
+    beta = SafeDivide(alpha, gamma)
+    call Add(mesh, p, z, p, beta)
+    gamma = alpha
+  end do
+end subroutine Solve_PCG$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: Au = b, using 
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -146,7 +229,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params)
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(in) :: env
+  class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   

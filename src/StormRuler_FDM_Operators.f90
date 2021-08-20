@@ -30,9 +30,8 @@ use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: Flip, SafeInverse, &
   & @{tMapFunc$$@|@0, NUM_RANKS}@, &
   & operator(.inner.), operator(.outer.)
-use StormRuler_Mesh, only: tMesh, tDesc
-use StormRuler_BLAS, only: &
-  & Fill, Mul_Outer, FuncProd
+use StormRuler_Mesh, only: tMesh
+use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

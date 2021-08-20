@@ -76,7 +76,7 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(in) :: env
+  class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
@@ -169,7 +169,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(in) :: env
+  class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
 

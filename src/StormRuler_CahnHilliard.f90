@@ -80,7 +80,7 @@ subroutine CahnHilliard_ImplicitSchemeOperator(mesh,U,C,CHPhysParams)
   class(tMesh), intent(in) :: mesh
   real(dp), dimension(:), intent(in), target :: c
   real(dp), dimension(:), intent(inout), target :: u
-  class(CahnHilliardParams), intent(in) :: CHPhysParams
+  class(CahnHilliardParams), intent(inout) :: CHPhysParams
   associate(dt=>mesh%dt,eps=>CHPhysParams%EpsSqr)
     ! ----------------------
     ! u ← c
@@ -93,7 +93,7 @@ subroutine CahnHilliard_ImplicitSchemeOperatorHelper(mesh,u,c,aCHPhysParams)
   class(tMesh), intent(in) :: mesh
   real(dp), dimension(:), intent(in), target :: c
   real(dp), dimension(:), intent(inout), target :: u
-  class(*), intent(in) :: aCHPhysParams
+  class(*), intent(inout) :: aCHPhysParams
   select type(aCHPhysParams)
     class is (CahnHilliardParams)
       call CahnHilliard_ImplicitSchemeOperator(mesh,u,c,aCHPhysParams)
@@ -108,7 +108,7 @@ subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
   real(dp), dimension(:), intent(inout), target :: C
   real(dp), intent(inout) :: v(:,:)
-  class(CahnHilliardParams), intent(in) :: CHPhysParams
+  class(CahnHilliardParams), intent(inout) :: CHPhysParams
   class(tConvParams), allocatable :: Params
   real(dp), allocatable, target :: b(:)
   ! ----------------------
@@ -129,7 +129,7 @@ subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
   class(tMesh), intent(in) :: mesh
   real(dp), dimension(:), intent(inout), target :: C,S
   real(dp), intent(inout) :: v(:,:)
-  class(CahnHilliardParams), intent(in) :: CHPhysParams
+  class(CahnHilliardParams), intent(inout) :: CHPhysParams
   call CahnHilliard_ImplicitSchemeSolve(mesh, C,v,CHPhysParams)
   ! s ← F'(c)
   ! s ← s + (-ε)⋅Δc

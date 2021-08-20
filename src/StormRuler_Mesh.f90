@@ -149,15 +149,6 @@ contains
   procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
 end type tMesh
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tDesc
-  logical :: parallel
-  integer(ip) :: first, last
-end type tDesc
-
-private tMesh_InitRect
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 

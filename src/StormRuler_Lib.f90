@@ -726,11 +726,13 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
     &              1.0D-8, 100000)
   call Solve_CG(gMesh, u, b, wA, Params, Params)
 contains
-  subroutine wA(mesh, v, w, opParams)
+  subroutine wA(mesh, v, w, wEnv)
+    ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(in) :: mesh
     real(dp), intent(in), target :: w(@:,:)
     real(dp), intent(inout), target :: v(@:,:)
-    class(*), intent(in) :: opParams
+    class(*), intent(inout) :: wEnv
+    ! >>>>>>>>>>>>>>>>>>>>>>
     type(tLibFieldBase$rank), target :: fV, fW
     type(c_ptr) :: pV, pW
     fV%Values => v; fW%Values => w

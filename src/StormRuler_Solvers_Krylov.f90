@@ -207,13 +207,13 @@ end subroutine Solve_CG$rank
 !! using the Preconditioned Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_PCG$rank(mesh, u, b, MatVec, Preconditioner, env, params)
+subroutine Solve_PCG$rank(mesh, u, b, MatVec, Precond, env, params)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  procedure(tPreconditionerFunc$rank) :: Preconditioner
+  procedure(tPreconditionerFunc$rank) :: Precond
   class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -242,7 +242,7 @@ subroutine Solve_PCG$rank(mesh, u, b, MatVec, Preconditioner, env, params)
   ! p ← z,
   ! γ ← <r⋅z>,
   ! ----------------------
-  call Preconditioner(mesh, z, r, MatVec, env, precond_env)
+  call Precond(mesh, z, r, MatVec, env, precond_env)
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -269,7 +269,7 @@ subroutine Solve_PCG$rank(mesh, u, b, MatVec, Preconditioner, env, params)
     ! z ← Pr
     ! α ← <r⋅z>,
     ! ----------------------
-    call Preconditioner(mesh, z, r, MatVec, env, precond_env)
+    call Precond(mesh, z, r, MatVec, env, precond_env)
     alpha = Dot(mesh, r, z)
 
     ! ----------------------

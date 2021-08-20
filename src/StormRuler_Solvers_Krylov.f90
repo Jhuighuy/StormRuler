@@ -103,26 +103,22 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
     ! ----------------------
     integer :: iCell
     
-    real(dp), allocatable :: e(@:,:,:)
-    allocate(jacobi_env%diag_inv, mold=u)
-    allocate(e(@{size(u, dim=$$)}@, size(u, dim=$rank+1), omp_get_max_threads()))
+    real(dp), allocatable :: e(@:,:)
 
-    !$omp parallel
-    call Fill(mesh, e(@:,:,omp_get_thread_num()+1), 0.0_dp)
-    !$omp end parallel
+    allocate(e, jacobi_env%diag_inv, mold=u)
+    call Fill(mesh, e, 0.0_dp)
     call Fill(mesh, jacobi_env%diag_inv, 0.0_dp)
 
-    !#omp parallel do
+    !$omp parallel do firstprivate(e)
     do iCell = 1, mesh%NumCells 
       
-      e(@:,iCell,omp_get_thread_num()+1) = 1.0_dp
+      e(@:,iCell) = 1.0_dp
       call mesh%SetRange(iCell)
-      call MatVec(mesh, jacobi_env%diag_inv, e(@:,:,omp_get_thread_num()+1), env)
-      e(@:,iCell,omp_get_thread_num()+1) = 0.0_dp
-
+      call MatVec(mesh, jacobi_env%diag_inv, e, env)
+      e(@:,iCell) = 0.0_dp
       jacobi_env%diag_inv(@:,iCell) = 1.0_dp/jacobi_env%diag_inv(@:,iCell)
     end do
-    !#omp end parallel do
+    !$omp end parallel do
     call mesh%SetRange()
 
   end block; end if

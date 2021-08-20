@@ -113,15 +113,15 @@ subroutine Fill$rank(mesh, y, alpha)
   real(dp), intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, alpha, y)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Fill_Kernel)
+
+contains
+  subroutine Fill_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     y(@:,iCell) = alpha
-  end do
-  !$omp end parallel do
+  end subroutine Fill_Kernel
 end subroutine Fill$rank
 #$end do
 
@@ -136,15 +136,15 @@ subroutine Set$rank(mesh, y, x)
   real(dp), intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
+  call mesh%RunCellKernel(Set_Kernel)
 
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp default(private) shared(mesh, x, y)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+contains
+  subroutine Set_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     y(@:,iCell) = x(@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Set_Kernel
 end subroutine Set$rank
 #$end do
 
@@ -164,9 +164,9 @@ function Dot$rank(mesh, x, y) result(d)
   d = 0.0_dp
 
   ! ----------------------
-  !$omp parallel do reduction(+:d) schedule(static) if(mesh%Parallel()) &
+  !$omp parallel do reduction(+:d) schedule(static) &
   !$omp & default(private) shared(mesh, x, y)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  do iCell = 1, mesh%NumCells
 #$if rank == 0
     d = d + x(iCell) * y(iCell)
 #$else
@@ -191,20 +191,20 @@ subroutine Add$rank(mesh, z, y, x, alpha, beta)
   real(dp), intent(inout) :: z(@:,:)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
-  
-  integer(ip) :: iCell
 
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
 
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, a, b, x, y, z)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Add_Kernel)
+
+contains
+  subroutine Add_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Add_Kernel
 end subroutine Add$rank
 #$end do
 
@@ -226,13 +226,15 @@ subroutine Sub$rank(mesh, z, y, x, alpha, beta)
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
 
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, a, b, x, y, z)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Sub_Kernel)
+
+contains
+  subroutine Sub_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Sub_Kernel
 end subroutine Sub$rank
 #$end do
 
@@ -251,16 +253,18 @@ subroutine Mul$rank(mesh, u, v, w, power)
   integer(ip), intent(in), optional :: power
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell, p
+  integer(ip) :: p
   p = 1; if (present(power)) p = power
   
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, u, v, w, p)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Mul_Kernel)
+
+contains
+  subroutine Mul_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Mul_Kernel
 end subroutine Mul$rank
 #$end do
 
@@ -275,15 +279,15 @@ subroutine Mul_Inner$rank(mesh, u, vBar, wBar)
   real(dp), intent(inout) :: u(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, u, vBar, wBar)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Mul_Inner_Kernel)
+
+contains
+  subroutine Mul_Inner_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Mul_Inner_Kernel
 end subroutine Mul_Inner$rank
 #$end do
 
@@ -298,15 +302,15 @@ subroutine Mul_Outer$rank(mesh, uHat, vBar, wBar)
   real(dp), intent(inout) :: uHat(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, uHat, vBar, wBar)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(Mul_Outer_Kernel)
+
+contains
+  subroutine Mul_Outer_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
-  end do
-  !$omp end parallel do
+  end subroutine Mul_Outer_Kernel
 end subroutine Mul_Outer$rank
 #$end do
 
@@ -324,16 +328,16 @@ subroutine FuncProd$rank(mesh, v, u, f)
   real(dp), intent(inout) :: v(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
+
+  call mesh%RunCellKernel(FuncProd_Kernel)
   
-  integer(ip) :: iCell
-  
-  ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, u, v)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+contains
+  subroutine FuncProd_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     v(@:,iCell) = f(u(@:,iCell))
-  end do
-  !$omp end parallel do
+  end subroutine FuncProd_Kernel
 end subroutine FuncProd$rank
 #$end do
 
@@ -349,15 +353,15 @@ subroutine SFuncProd$rank(mesh, v, u, f)
   procedure(tSMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell
-
-  ! ----------------------
-  !$omp parallel do schedule(static) &
-  !$omp & default(private) shared(mesh, u, v)
-  do iCell = mesh%FirstCell(), mesh%LastCell()
+  call mesh%RunCellKernel(SFuncProd_Kernel)
+  
+contains
+  subroutine SFuncProd_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
     v(@:,iCell) = f(mesh%dl(::2)*mesh%CellMDIndex(:,iCell), u(@:,iCell))
-  end do
-  !$omp end parallel do
+  end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$rank
 #$end do
 

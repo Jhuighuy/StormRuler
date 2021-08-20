@@ -40,6 +40,13 @@ use :: omp_lib
 
 implicit none
 
+abstract interface
+  subroutine tKernelFunc(iCell)
+    import ip
+    integer(ip), intent(in) :: iCell
+  end subroutine tKernelFunc
+end interface
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Semi-structured multidimensional mesh.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -146,9 +153,9 @@ contains
   ! Mesh walkthough subroutines.
   ! ----------------------
   procedure :: SetRange => tMesh_SetRange
-  procedure :: Parallel => tMesh_Parallel
   procedure :: FirstCell => tMesh_FirstCell
   procedure :: LastCell => tMesh_LastCell
+  procedure :: RunCellKernel => tMesh_RunCellKernel
 
   ! ----------------------
   ! Field wrappers.
@@ -185,17 +192,15 @@ subroutine tMesh_SetRange(mesh, firstCell, lastCell)
 
 #$if HAS_OpenMP
   ! Preallocate and reset the ranges.
-  !$omp single
   if (.not.allocated(mesh%mCellRange)) then
+    !$omp single
     allocate(mesh%mCellRange(2, omp_get_max_threads()))
     mesh%mCellRange(1,:) = 1
     mesh%mCellRange(2,:) = mesh%NumCells
-  end if
-  !$omp end single
-  if (present(firstCell)) then
-    !$omp single
-    mesh%mParallel = .false.
     !$omp end single
+  end if
+  if (present(firstCell)) then
+    mesh%mParallel = .false.
     mesh%mCellRange(:,omp_get_thread_num()+1) = firstCell
     if (present(lastCell)) then
       mesh%mCellRange(2,omp_get_thread_num()+1) = lastCell
@@ -264,6 +269,27 @@ integer(ip) function tMesh_LastCell(mesh)
   tMesh_LastCell = mesh%mCellRange(2)
 #$end if
 end function tMesh_LastCell
+
+subroutine tMesh_RunCellKernel(mesh, Kernel)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  procedure(tKernelFunc) :: Kernel
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer :: iCell
+
+  if (mesh%mParallel) then
+    !$omp parallel do schedule(static)
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      call Kernel(iCell)
+    end do
+    !$omp end parallel do
+  else
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      call Kernel(iCell)
+    end do
+  end if
+end subroutine tMesh_RunCellKernel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

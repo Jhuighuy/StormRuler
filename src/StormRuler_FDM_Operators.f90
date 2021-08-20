@@ -181,10 +181,6 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   real(dp), intent(inout) :: v_bar(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -193,12 +189,25 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-gradient kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, lambda, u, v_bar)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_Gradient_Central_Kernel)
+
+contains
+  subroutine FDM_Gradient_Central_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+    
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell
+
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -259,8 +268,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v_bar, lambda, u)
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_Gradient_Central_Kernel
 end subroutine FDM_Gradient_Central$rank
 #$end do
 
@@ -276,10 +284,6 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -288,12 +292,25 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-divergence kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp default(private) shared(mesh, lambda, u_bar, v)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_Divergence_Central_Kernel)
+
+contains
+  subroutine FDM_Divergence_Central_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+    
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell
+
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -354,8 +371,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u_bar)
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_Divergence_Central_Kernel
 end subroutine FDM_Divergence_Central$rank
 #$end do
 
@@ -504,11 +520,6 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
-  integer(i8) :: dir
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -517,13 +528,26 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-gradient kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, lambda, u, v_bar) &
-  !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_Gradient_Forward_Kernel)
+
+contains
+  subroutine FDM_Gradient_Forward_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
+    integer(i8) :: dir
+    
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Determine FD direction (default is forward).
       ! ----------------------
@@ -634,8 +658,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v_bar, lambda, u, &
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_Gradient_Forward_Kernel
 end subroutine FDM_Gradient_Forward$rank
 #$end do
 
@@ -652,11 +675,6 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
-  integer(i8) :: dir
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -665,13 +683,26 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-divergence kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, lambda, u_bar, v) &
-  !$omp & shared(dirAll, dirFace, dirCellFace)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_Divergence_Backward_Kernel)
+
+contains
+  subroutine FDM_Divergence_Backward_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
+    integer(i8) :: dir
+    
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Determine FD direction (default is backward).
       ! ----------------------
@@ -782,8 +813,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u_bar, &
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_Divergence_Backward_Kernel
 end subroutine FDM_Divergence_Backward$rank
 #$end do
 
@@ -900,10 +930,6 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -912,11 +938,23 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-Laplacian kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, lambda, u, v)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_Laplacian_Central_Kernel)
+
+contains
+  subroutine FDM_Laplacian_Central_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell
+    
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -982,8 +1020,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_Laplacian_Central_Kernel
 end subroutine FDM_Laplacian_Central$rank
 #$end do
 
@@ -1115,10 +1152,6 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   real(dp), intent(inout) :: v(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  integer(ip) :: iCell, iCellFace
-  integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
-  integer(ip) :: lCell, llCell, lllCell, llllCell
-
   ! ----------------------
   ! Fast exit in case λ=0.
   ! ----------------------
@@ -1127,11 +1160,23 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   end if
 
   ! ----------------------
-  ! For each positive cell face do:
+  ! Run the FDM-variable coefficient Laplacian kernel.
   ! ----------------------
-  !$omp parallel do schedule(static) if(mesh%Parallel()) &
-  !$omp & default(private) shared(mesh, lambda, u, v, w)
-  do iCell = mesh%FirstCell(), mesh%LastCell(); block
+  call mesh%RunCellKernel(FDM_DivWGrad_Central_Kernel)
+
+contains
+  subroutine FDM_DivWGrad_Central_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell
+  
+    ! ----------------------
+    ! For each positive cell face do:
+    ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -1155,7 +1200,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
       end associate
 
       ! ----------------------
-      ! Compute FDM-approximate weighted Laplacian increment.
+      ! Compute FDM-approximate variable coefficient Laplacian increment.
       ! ----------------------
       associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
         select case(gFDM_AccuracyOrder)
@@ -1197,8 +1242,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
         end select
       end associate
     end do
-  end block; end do
-  !$omp end parallel do
+  end subroutine FDM_DivWGrad_Central_Kernel
 end subroutine FDM_DivWGrad_Central$rank
 #$end do
 

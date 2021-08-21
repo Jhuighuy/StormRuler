@@ -45,6 +45,11 @@ abstract interface
     import ip
     integer(ip), intent(in) :: iCell
   end subroutine tKernelFunc
+  function tReduceKernelFunc(iCell) result(r)
+    import ip, dp
+    integer(ip), intent(in) :: iCell
+    real(dp) :: r
+  end function tReduceKernelFunc
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -156,6 +161,9 @@ contains
   procedure :: FirstCell => tMesh_FirstCell
   procedure :: LastCell => tMesh_LastCell
   procedure :: RunCellKernel => tMesh_RunCellKernel
+  procedure :: RunCellKernel_Sum => tMesh_RunCellKernel_Sum
+  procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
+  procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
 
   ! ----------------------
   ! Field wrappers.
@@ -291,6 +299,75 @@ subroutine tMesh_RunCellKernel(mesh, Kernel)
     end do
   end if
 end subroutine tMesh_RunCellKernel
+
+function tMesh_RunCellKernel_Sum(mesh, Kernel) result(sum)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: sum
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer :: iCell
+
+  sum = 0.0_dp
+  if (mesh%mParallel) then
+    !$omp parallel do schedule(static) reduction(+:sum)
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      sum = sum + Kernel(iCell)
+    end do
+    !$omp end parallel do
+  else
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      sum = sum + Kernel(iCell)
+    end do
+  end if
+end function tMesh_RunCellKernel_Sum
+
+function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: mMin
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer :: iCell
+
+  mMin = +huge(mMin)
+  if (mesh%mParallel) then
+    !$omp parallel do schedule(static) reduction(min:mMin)
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      mMin = min(mMin, Kernel(iCell))
+    end do
+    !$omp end parallel do
+  else
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      mMin = min(mMin, Kernel(iCell))
+    end do
+  end if
+end function tMesh_RunCellKernel_Min
+
+function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: mMax
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  integer :: iCell
+
+  mMax = -huge(mMax)
+  if (mesh%mParallel) then
+    !$omp parallel do schedule(static) reduction(max:mMax)
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      mMax = max(mMax, Kernel(iCell))
+    end do
+    !$omp end parallel do
+  else
+    do iCell = mesh%FirstCell(), mesh%LastCell()
+      mMax = max(mMax, Kernel(iCell))
+    end do
+  end if
+end function tMesh_RunCellKernel_Max
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -626,13 +703,13 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! ----------------------
   write(unit, "('POINTS ', A, ' double')") I2S(mesh%NumCells)
   do iCell = 1, mesh%NumCells
-    associate(iCellCenter => mesh%CellCenter(iCell))
+    associate(r => mesh%CellCenter(iCell))
       if (mesh%Dim == 2) then
         write(unit, "(A, ' ', A, ' ', A)") &
-          & R2S(iCellCenter(1)), R2S(iCellCenter(2)), '0.0'
+          & R2S(r(1)), R2S(r(2)), '0.0'
       else
         write(unit, "(A, ' ', A, ' ', A)") &
-          & R2S(iCellCenter(1)), R2S(iCellCenter(2)), R2S(iCellCenter(3))
+          & R2S(r(1)), R2S(r(2)), R2S(r(3))
       end if
     end associate
   end do

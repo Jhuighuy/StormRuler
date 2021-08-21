@@ -37,31 +37,31 @@ use, intrinsic :: ieee_arithmetic
 implicit none  
 
 abstract interface
-  pure function tMapFunc$0(u) result(v)
+  pure function tMapFunc$0(z) result(v)
     import dp
-    real(dp), intent(in) :: u
+    real(dp), intent(in) :: z
     real(dp) :: v
   end function tMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function tMapFunc$rank(u) result(v)
+  pure function tMapFunc$rank(z) result(v)
     import dp
-    real(dp), intent(in) :: u(@:)
-    real(dp) :: v(@{size(u, dim=$$)}@)
+    real(dp), intent(in) :: z(@:)
+    real(dp) :: v(@{size(z, dim=$$)}@)
   end function tMapFunc$rank
 #$end do
 end interface
 
 abstract interface
-  pure function tSMapFunc$0(x, u) result(v)
+  pure function tSMapFunc$0(x, z) result(v)
     import dp
-    real(dp), intent(in) :: x(:), u
+    real(dp), intent(in) :: x(:), z
     real(dp) :: v
   end function tSMapFunc$0
 #$do rank = 1, NUM_RANKS
-  pure function tSMapFunc$rank(x, u) result(v)
+  pure function tSMapFunc$rank(x, z) result(v)
     import dp
-    real(dp), intent(in) :: x(:), u(@:)
-    real(dp) :: v(@{size(u, dim=$$)}@)
+    real(dp), intent(in) :: x(:), z(@:)
+    real(dp) :: v(@{size(z, dim=$$)}@)
   end function tSMapFunc$rank
 #$end do
 end interface
@@ -191,55 +191,59 @@ end function SafeInverse
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Inner inner vector-tensor product: û ← v̅⋅ŵ.
+!! Inner vector-vector product: z ← y⋅x.
 !! ----------------------------------------------------------------- !!
-pure function Inner$0(vBar, wHat) result(uHat)
+pure function Inner$0(y, x) result(z)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat(:)
-  real(dp) :: uHat
+  real(dp), intent(in) :: y(:), x(:)
+  real(dp) :: z
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  uHat = dot_product(vBar, wHat)
+  z = dot_product(y, x)
+
 end function Inner$0
 #$do rank = 1, NUM_RANKS-1
-pure function Inner$rank(vBar, wHat) result(uHat)
+pure function Inner$rank(y, x) result(z)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat(:,@:)
-  real(dp) :: uHat(@{size(wHat, dim=$$)}@)
+  real(dp), intent(in) :: y(:), x(:,@:)
+  real(dp) :: z(@{size(x, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
 
-  uHat(@:) = 0.0_dp
-  do i = 1, size(vBar)
-    uHat(@:) = uHat(@:) + vBar(i)*wHat(i, @:)
+  z(@:) = 0.0_dp
+  do i = 1, size(y)
+    z(@:) = z(@:) + y(i)*x(i,@:)
   end do
+
 end function Inner$rank
 #$end do
 
 !! ----------------------------------------------------------------- !!
-!! Outer vector-tensor product: û ← v̅⊗ŵ.
+!! Outer vector-tensor product: z ← y⊗x.
 !! ----------------------------------------------------------------- !!
-pure function Outer$0(vBar, wHat) result(uHat)
+pure function Outer$0(y, x) result(z)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat
-  real(dp) :: uHat(size(vBar))
+  real(dp), intent(in) :: y(:), x
+  real(dp) :: z(size(y))
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  uHat(:) = vBar(:)*wHat
+  z(:) = y(:)*x
+
 end function Outer$0
 #$do rank = 1, NUM_RANKS-1
-pure function Outer$rank(vBar, wHat) result(uHat)
+pure function Outer$rank(y, x) result(z)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: vBar(:), wHat(@:)
-  real(dp) :: uHat(size(vBar, dim=1), @{size(wHat, dim=$$)}@)
+  real(dp), intent(in) :: y(:), x(@:)
+  real(dp) :: z(size(y, dim=1), @{size(x, dim=$$)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
   
-  do i = 1, size(vBar, dim=1)
-    uHat(i, @:) = vBar(i)*wHat(@:)
+  do i = 1, size(y, dim=1)
+    z(i,@:) = y(i)*x(@:)
   end do
+
 end function Outer$rank
 #$end do
 
@@ -247,7 +251,7 @@ end function Outer$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Convert an integer(ip) to string.
+!! Convert an integer to string.
 !! ----------------------------------------------------------------- !!
 function I2S(value)
   ! <<<<<<<<<<<<<<<<<<<<<<

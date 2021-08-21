@@ -37,6 +37,30 @@ use StormRuler_Mesh, only: tMesh
 
 implicit none
 
+interface Dot
+#$do rank = 0, NUM_RANKS
+  module procedure Dot$rank
+#$end do
+end interface Dot
+
+interface Norm1
+#$do rank = 0, NUM_RANKS
+  module procedure Norm1$rank
+#$end do
+end interface Norm1
+
+interface Norm2
+#$do rank = 0, NUM_RANKS
+  module procedure Norm2$rank
+#$end do
+end interface Norm2
+
+interface NormC
+#$do rank = 0, NUM_RANKS
+  module procedure NormC$rank
+#$end do
+end interface NormC
+
 interface Fill
 #$do rank = 0, NUM_RANKS
   module procedure Fill$rank
@@ -48,12 +72,6 @@ interface Set
   module procedure Set$rank
 #$end do
 end interface Set
-
-interface Dot
-#$do rank = 0, NUM_RANKS
-  module procedure Dot$rank
-#$end do
-end interface Dot
 
 interface Add
 #$do rank = 0, NUM_RANKS
@@ -103,6 +121,105 @@ end interface SFuncProd
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute dot product: d ← <x⋅y>.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+real(dp) function Dot$rank(mesh, x, y)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:), y(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  Dot$rank = mesh%RunCellKernel_Sum(Dot_Kernel)
+
+contains
+  real(dp) function Dot_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+#$if rank == 0
+    Dot_Kernel = x(iCell) * y(iCell)
+#$else
+    Dot_Kernel = sum(x(@:,iCell) * y(@:,iCell))
+#$end if
+    
+  end function Dot_Kernel
+end function Dot$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute L₁-norm: d ← ‖x‖₁.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+real(dp) function Norm1$rank(mesh, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  Norm1$rank = mesh%RunCellKernel_Sum(Norm1_Kernel)
+
+contains
+  real(dp) function Norm1_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+#$if rank == 0
+    Norm1_Kernel = abs(x(iCell))
+#$else
+    Norm1_Kernel = sum(abs(x(@:,iCell)))
+#$end if
+    
+  end function Norm1_Kernel
+end function Norm1$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute L₂-norm: d ← ‖x‖₂.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+real(dp) function Norm2$rank(mesh, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  Norm2$rank = sqrt(Dot(mesh, x, x))
+
+end function Norm2$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute L∞-norm: d ← ‖x‖∞.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+real(dp) function NormC$rank(mesh, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  NormC$rank = mesh%RunCellKernel_Max(NormC_Kernel)
+
+contains
+  real(dp) function NormC_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+#$if rank == 0
+    NormC_Kernel = abs(x(iCell))
+#$else
+    NormC_Kernel = maxval(abs(x(@:,iCell)))
+#$end if
+    
+  end function NormC_Kernel
+end function NormC$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: y ← α.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
@@ -120,13 +237,15 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     y(@:,iCell) = alpha
+    
   end subroutine Fill_Kernel
 end subroutine Fill$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Assign: y ← x.
+!! Set: y ← x.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Set$rank(mesh, y, x)
@@ -143,42 +262,12 @@ contains
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
+
     y(@:,iCell) = x(@:,iCell)
+
   end subroutine Set_Kernel
 end subroutine Set$rank
 #$end do
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute dot product: d ← <x⋅y>.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS
-function Dot$rank(mesh, x, y) result(d)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:), y(@:,:)
-  real(dp) :: d
-  ! >>>>>>>>>>>>>>>>>>>>>>
-  
-  integer(ip) :: iCell
-  
-  d = 0.0_dp
-
-  ! ----------------------
-  !$omp parallel do reduction(+:d) schedule(static) &
-  !$omp & default(private) shared(mesh, x, y)
-  do iCell = 1, mesh%NumCells
-#$if rank == 0
-    d = d + x(iCell) * y(iCell)
-#$else
-    d = d + sum(x(@:,iCell) * y(@:,iCell))
-#$end if
-  end do
-  !$omp end parallel do
-end function Dot$rank
-#$end do
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: z ← βy + αx.
@@ -205,6 +294,7 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
+
   end subroutine Add_Kernel
 end subroutine Add$rank
 #$end do
@@ -221,8 +311,6 @@ subroutine Sub$rank(mesh, z, y, x, alpha, beta)
   real(dp), intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  integer(ip) :: iCell
-
   real(dp) :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
@@ -236,12 +324,10 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
+    
   end subroutine Sub_Kernel
 end subroutine Sub$rank
 #$end do
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute product: u̅ ← vw̅.
@@ -267,19 +353,20 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
+
   end subroutine Mul_Kernel
 end subroutine Mul$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an inner product: u ← v̅⋅w̅.
+!! Compute an inner product: z ← y⋅x.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
-subroutine Mul_Inner$rank(mesh, u, vBar, wBar)
+subroutine Mul_Inner$rank(mesh, z, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:), wBar(:,@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(in) :: y(:,:), x(:,@:,:)
+  real(dp), intent(inout) :: z(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Mul_Inner_Kernel)
@@ -290,20 +377,21 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    u(@:,iCell) = vBar(:,iCell).inner.wBar(:,@:,iCell)
+    z(@:,iCell) = y(:,iCell).inner.x(:,@:,iCell)
+
   end subroutine Mul_Inner_Kernel
 end subroutine Mul_Inner$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an outer product: û ← v̅⊗w̅.
+!! Compute an outer product: z ← y⊗x.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
-subroutine Mul_Outer$rank(mesh, uHat, vBar, wBar)
+subroutine Mul_Outer$rank(mesh, z, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: vBar(:,:), wBar(@:,:)
-  real(dp), intent(inout) :: uHat(:,@:,:)
+  real(dp), intent(in) :: y(:,:), x(@:,:)
+  real(dp), intent(inout) :: z(:,@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Mul_Outer_Kernel)
@@ -314,7 +402,8 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    uHat(:,@:,iCell) = vBar(:,iCell).outer.wBar(@:,iCell)
+    z(:,@:,iCell) = y(:,iCell).outer.x(@:,iCell)
+
   end subroutine Mul_Outer_Kernel
 end subroutine Mul_Outer$rank
 #$end do
@@ -343,12 +432,13 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     v(@:,iCell) = f(u(@:,iCell))
+
   end subroutine FuncProd_Kernel
 end subroutine FuncProd$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute a function product: v ← f(u).
+!! Compute a function product: v ← f(r,u).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine SFuncProd$rank(mesh, v, u, f)
@@ -368,6 +458,7 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     v(@:,iCell) = f(mesh%CellCenter(iCell), u(@:,iCell))
+
   end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$rank
 #$end do

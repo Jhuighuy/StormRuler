@@ -29,12 +29,10 @@ module StormRuler_Solvers_Krylov
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub, &
-  & @{tMatVecFunc$$@|@0, NUM_RANKS}@, MatVecProd_Diagonal, &
-  & MatVecProd_Triangular, Solve_Triangular
+use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
+  & Fill, Set, Dot, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Base, only: &
-  & @{tPrecondFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Base, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -54,122 +52,10 @@ interface Solve_BiCGStab
 #$end do
 end interface Solve_BiCGStab
 
-#$do rank = 0, NUM_RANKS
-type :: tPrecondEnv_Diag$rank
-  real(dp), allocatable :: diag(@:,:)
-end type !tPrecondEnv_Diag$rank
-#$end do
-
-#$do rank = 0, NUM_RANKS
-type, extends(tPrecondEnv_Diag$rank) :: tPrecondEnv_Jacobi$rank
-end type !tPrecondEnv_Jacobi$rank
-#$end do
-
-#$do rank = 0, NUM_RANKS
-type, extends(tPrecondEnv_Diag$rank) :: tPrecondEnv_SSOR$rank
-end type !tPrecondEnv_SSOR$rank
-#$end do
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Jacobi preconditioner: P ← diag(A)⁻¹.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: u(@:,:)
-  real(dp), intent(inout), target :: Pu(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(inout) :: env
-  class(*), intent(inout), allocatable, target :: precond_env
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  class(tPrecondEnv_Jacobi$rank), pointer :: jacobi_env
-
-  ! ----------------------
-  ! Cast Jacobi preconditioner environment.
-  ! ----------------------
-  if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_Jacobi$rank :: precond_env)
-  end if
-  select type(precond_env)
-    class is(tPrecondEnv_Jacobi$rank)
-      jacobi_env => precond_env
-  end select
-
-  ! ----------------------
-  ! Build the Jacobi preconditioner.
-  ! ----------------------
-  if (.not.allocated(jacobi_env%diag)) then
-    allocate(jacobi_env%diag, mold=u)
-
-    call Fill(mesh, Pu, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, jacobi_env%diag, Pu, MatVec, env)
-  end if
-
-  ! ----------------------
-  ! Pu ← diag(A)⁻¹u.
-  ! ----------------------
-  Pu(@:,:) = u(@:,:)/jacobi_env%diag(@:,:)
-
-end subroutine Precondition_Jacobi$rank
-#$end do
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! SSOR preconditioner: P ← tril(A)⁻¹⋅diag(A)⋅triu(A)⁻¹.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Precondition_SSOR$rank(mesh, Pu, u, MatVec, env, precond_env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: u(@:,:)
-  real(dp), intent(inout), target :: Pu(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(inout) :: env
-  class(*), intent(inout), allocatable, target :: precond_env
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  class(tPrecondEnv_SSOR$rank), pointer :: ssor_env
-  real(dp), allocatable :: v(@:,:)
-  allocate(v, mold=u)
-
-  ! ----------------------
-  ! Cast SSOR preconditioner environment.
-  ! ----------------------
-  if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_SSOR$rank :: precond_env)
-  end if
-  select type(precond_env)
-    class is(tPrecondEnv_SSOR$rank)
-      ssor_env => precond_env
-  end select
-
-  ! ----------------------
-  ! Build the SSOR preconditioner.
-  ! ----------------------
-  if (.not.allocated(ssor_env%diag)) then
-    allocate(ssor_env%diag, mold=u)
-
-    call Fill(mesh, Pu, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, ssor_env%diag, Pu, MatVec, env)
-  end if
-
-  ! ----------------------
-  !  v ← triu(A)⁻¹u,
-  !  v ← diag(A)  v,
-  ! Pu ← tril(A)⁻¹v.
-  ! ----------------------
-  call Solve_Triangular(mesh, v, u, ssor_env%diag, 'U', MatVec, env)
-  v(@:,:) = ssor_env%diag(@:,:)*v(@:,:)
-  call Solve_Triangular(mesh, Pu, v, ssor_env%diag, 'L', MatVec, env)
-
-end subroutine Precondition_SSOR$rank
-#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
@@ -396,12 +282,12 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params)
     ! ----------------------
     ! ω ← <t⋅s>/<t⋅t>,
     ! r ← s - ω⋅t,
-    ! u ← u - ω⋅s,
+    ! u ← u + ω⋅s,
     ! u ← u + α⋅p,
     ! ----------------------
     omega = SafeDivide(Dot(mesh, t, s), Dot(mesh, t, t))
     call Sub(mesh, r, s, t, omega)
-    call Sub(mesh, u, u, s, omega)
+    call Add(mesh, u, u, s, omega)
     call Add(mesh, u, u, p, alpha)
     
     ! ----------------------

@@ -643,6 +643,7 @@ contains
     do iCell = lastCell - 1, firstCell, -1
       call mesh%SetRange(iCell)
       call MatVec(mesh, Au, u, env)
+      ! TODO: this is not a correct diagonal solution in block case!
       u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
     end do
 
@@ -664,6 +665,7 @@ contains
     do iCell = firstCell + 1, lastCell
       call mesh%SetRange(iCell)
       call MatVec(mesh, Au, u, env)
+      ! TODO: this is not a correct diagonal solution in block case!
       u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
     end do
 

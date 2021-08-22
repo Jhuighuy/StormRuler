@@ -30,6 +30,7 @@ use StormRuler_FDM_Operators
 use StormRuler_FDM_BCs
 use StormRuler_ConvParams
 use StormRuler_Solvers_Krylov
+use StormRuler_Solvers_Precond
 
 implicit none
     
@@ -50,8 +51,8 @@ subroutine SolvePoisson(mesh,u,f)
   !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
   
-  call Solve_CG(mesh,u,f,PoissonOperator,Precondition_SSOR$0,Params,Params)
-  !call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
+  !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_SSOR$0,Params,Params)
+  call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)

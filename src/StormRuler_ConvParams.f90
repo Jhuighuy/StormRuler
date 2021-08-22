@@ -36,10 +36,20 @@ implicit none
 !! A class that controls convergence for the iterative algorithms. 
 !! ----------------------------------------------------------------- !!
 type :: tConvParams
+  character(len=:), allocatable :: Name
+
+  ! ----------------------
+  ! Number of iterations counter.
+  ! ----------------------
   integer(ip) :: NumIterations
   integer(ip) :: MaxNumIterations
+
+  ! ----------------------
+  ! Convergence tolerances.
+  ! ----------------------
   real(dp) :: AbsoluteTolerance
   real(dp) :: RelativeTolerance
+
 contains
   procedure :: Init => tConvParams_Init
   procedure :: Check => tConvParams_Check
@@ -56,13 +66,17 @@ contains
 !! Initialize iteration parameters.
 !! ----------------------------------------------------------------- !!
 subroutine tConvParams_Init(params, &
-    & absoluteTolerance, relativeTolerance, maxNumIterations)
+    & absoluteTolerance, relativeTolerance, maxNumIterations, name)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(out) :: params
   real(dp), intent(in) :: absoluteTolerance
   real(dp), intent(in), optional :: relativeTolerance
   integer(ip), intent(in), optional :: maxNumIterations
+  character(len=*), intent(in), optional :: name
   ! >>>>>>>>>>>>>>>>>>>>>>
+
+  params%Name = ''
+  if (present(name)) params%Name = name
 
   ! ----------------------
   ! Initialize errors.
@@ -116,15 +130,15 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
   associate(absoluteTolerance => params%AbsoluteTolerance, &
     &       relativeTolerance => params%RelativeTolerance)
     call EnsureNonNegative(absoluteError)
-    !print *, absoluteError
     if (absoluteError <= absoluteTolerance) then
-      !print *, '----------------'
+      !print *, '----------------', params%Name, params%NumIterations
       tConvParams_Check = .true.; return
     end if
     if (present(relativeError).and.(relativeTolerance > 0)) then
       call EnsureNonNegative(relativeError)
+      !print *, relativeError
       if (relativeError <= relativeTolerance) then
-        !print *, '----------------'
+        !print *, '----------------', params%Name, params%NumIterations
         tConvParams_Check = .true.; return
       end if
     end if

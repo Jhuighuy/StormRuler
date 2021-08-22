@@ -129,6 +129,24 @@ abstract interface
 #$end do
 end interface
 
+interface MatVecProd_Diagonal
+#$do rank = 0, NUM_RANKS
+  module procedure MatVecProd_Diagonal$rank
+#$end do
+end interface MatVecProd_Diagonal
+
+interface MatVecProd_Triangular
+#$do rank = 0, NUM_RANKS
+  module procedure MatVecProd_Triangular$rank
+#$end do
+end interface MatVecProd_Triangular
+
+interface Solve_Triangular
+#$do rank = 0, NUM_RANKS
+  module procedure Solve_Triangular$rank
+#$end do
+end interface Solve_Triangular
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -475,6 +493,182 @@ contains
 
   end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Multiply a vector by diagonal of the matrix: Du ← diag(A)u.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine MatVecProd_Diagonal$rank(mesh, Du, u, MatVec, env)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(in) :: u(@:,:)
+  real(dp), intent(inout) :: Du(@:,:)
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(inout) :: env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  call mesh%RunCellKernel_Block(MatVecProd_Diagonal_BlockKernel)
+  call mesh%SetRange()
+
+contains
+  subroutine MatVecProd_Diagonal_BlockKernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    real(dp), allocatable :: e(@:,:)
+    allocate(e, mold=u)
+
+    e(@:,:) = 0.0_dp
+
+    do iCell = firstCell, lastCell
+      e(@:,iCell) = u(@:,iCell)
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, Du, e, env)
+      e(@:,iCell) = 0.0_dp
+    end do
+
+  end subroutine MatVecProd_Diagonal_BlockKernel  
+end subroutine MatVecProd_Diagonal$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Multiply a vector by a lower/upper triangular 
+!! part of the matrix: : Tu ← triu(A)u or Tu ← tril(A)u.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine MatVecProd_Triangular$rank(mesh, Tu, u, UpLo, MatVec, env)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(in) :: u(@:,:)
+  real(dp), intent(inout) :: Tu(@:,:)
+  character :: UpLo
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(inout) :: env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  if (UpLo == 'U') then
+    call mesh%RunCellKernel_Block(MatVecProd_UpperTriangular_BlockKernel)
+  else if (UpLo == 'L') then
+    call mesh%RunCellKernel_Block(MatVecProd_LowerTriangular_BlockKernel)
+  end if
+  call mesh%SetRange()
+
+contains
+  subroutine MatVecProd_UpperTriangular_BlockKernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    real(dp), allocatable :: e(@:,:)
+    allocate(e, mold=u)
+
+    e(@:,:firstCell-1) = 0.0_dp
+    e(@:,firstCell:) = u(@:,firstCell:)
+
+    do iCell = firstCell, lastCell
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, Tu, e, env)
+      e(@:,iCell) = 0.0_dp
+    end do
+
+  end subroutine MatVecProd_UpperTriangular_BlockKernel 
+  subroutine MatVecProd_LowerTriangular_BlockKernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    real(dp), allocatable :: e(@:,:)
+    allocate(e, mold=u)
+
+    e(@:,:lastCell) = u(@:,:lastCell)
+    e(@:,lastCell+1:) = 0.0_dp
+    
+    do iCell = lastCell, firstCell, -1
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, Tu, e, env)
+      e(@:,iCell) = 0.0_dp
+    end do
+
+  end subroutine MatVecProd_LowerTriangular_BlockKernel 
+end subroutine MatVecProd_Triangular$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Solve a linear system with a lower/upper 
+!! triangular part of the matrix: triu(A)u = b or tril(A)u = b.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Solve_Triangular$rank(mesh, u, b, diag, UpLo, MatVec, env)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(in) :: b(@:,:), diag(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  character :: UpLo
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(inout) :: env
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  ! TODO: not very parallel..
+  call mesh%SetRange(parallel=.false.)
+  if (UpLo == 'U') then
+    call mesh%RunCellKernel_Block(Solve_UpperTriangular_BlockKernel)
+  else if (UpLo == 'L') then
+    call mesh%RunCellKernel_Block(Solve_LowerTriangular_BlockKernel)
+  end if
+  call mesh%SetRange()
+
+contains
+  subroutine Solve_UpperTriangular_BlockKernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    real(dp), allocatable :: Au(@:,:)
+    allocate(Au, mold=u)
+
+    u(@:,:) = 0.0_dp
+    Au(@:,:) = 0.0_dp
+
+    u(@:,lastCell) = b(@:,lastCell)/diag(@:,lastCell)
+    do iCell = lastCell - 1, firstCell, -1
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, Au, u, env)
+      u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
+    end do
+
+  end subroutine Solve_UpperTriangular_BlockKernel 
+  subroutine Solve_LowerTriangular_BlockKernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    real(dp), allocatable :: Au(@:,:)
+    allocate(Au, mold=u)
+
+    u(@:,:) = 0.0_dp
+    Au(@:,:) = 0.0_dp
+
+    u(@:,firstCell) = b(@:,firstCell)/diag(@:,firstCell)
+    do iCell = firstCell + 1, lastCell
+      call mesh%SetRange(iCell)
+      call MatVec(mesh, Au, u, env)
+      u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
+    end do
+
+  end subroutine Solve_LowerTriangular_BlockKernel 
+end subroutine Solve_Triangular$rank
 #$end do
 
 end module StormRuler_BLAS

@@ -43,11 +43,14 @@ subroutine SolvePoisson(mesh,u,f)
   ! Initialize iterations.
   allocate(Params)
   !call Params%Init(mesh%Dl(1)*mesh%Dl(2)*1.0D-4, mesh%Dl(1)*mesh%Dl(1)*1.0D-4, 100000)
-  call Params%Init(1.0D-8, 1.0D-8, 100000)
+  call Params%Init(1.0D-8, 1.0D-8, 100000, 'PCG SSOR')
   ! ----------------------
 
   call Fill(mesh,u,0.0_dp)
-  call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
+  !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
+  !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
+  
+  call Solve_CG(mesh,u,f,PoissonOperator,Precondition_SSOR$0,Params,Params)
   !call Solve_BiCGStab(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains

@@ -28,6 +28,7 @@ module StormRuler_Solvers_Base
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
+use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -35,28 +36,11 @@ use StormRuler_Mesh, only: tMesh
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Matrix-vector product function.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-abstract interface
-#$do rank = 0, NUM_RANKS
-  subroutine tMatVecFunc$rank(mesh, Au, u, env)
-    import :: dp, tMesh
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Au(@:,:)
-    class(*), intent(inout) :: env
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tMatVecFunc$rank
-#$end do
-end interface
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Preconsitioner matrix-vector product function.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine tPreconditionerFunc$rank(mesh, Pu, u, MatVec, env, precond_env)
+  subroutine tPrecondFunc$rank(mesh, Pu, u, MatVec, env, precond_env)
     import :: dp, tMesh, tMatVecFunc$rank
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(inout) :: mesh
@@ -66,7 +50,7 @@ abstract interface
     class(*), intent(inout) :: env
     class(*), intent(inout), allocatable, target :: precond_env
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tPreconditionerFunc$rank
+  end subroutine tPrecondFunc$rank
 #$end do
 end interface
 

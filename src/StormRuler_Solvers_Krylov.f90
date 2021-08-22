@@ -29,14 +29,11 @@ module StormRuler_Solvers_Krylov
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
+use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub, &
+  & @{tMatVecFunc$$@|@0, NUM_RANKS}@
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Base, only: &
-  & @{tMatVecFunc$$, tPreconditionerFunc$$@|@0, NUM_RANKS}@
-
-#$if HAS_OpenMP
-use :: omp_lib
-#$endif
+  & @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -109,7 +106,7 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
     call Fill(mesh, e, 0.0_dp)
     call Fill(mesh, jacobi_env%diag_inv, 0.0_dp)
 
-    !$omp parallel do firstprivate(e)
+    !#omp parallel do firstprivate(e)
     do iCell = 1, mesh%NumCells 
       
       e(@:,iCell) = 1.0_dp
@@ -118,7 +115,8 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
       e(@:,iCell) = 0.0_dp
       jacobi_env%diag_inv(@:,iCell) = 1.0_dp/jacobi_env%diag_inv(@:,iCell)
     end do
-    !$omp end parallel do
+    !#omp end parallel do
+    
     call mesh%SetRange()
 
   end block; end if
@@ -127,6 +125,7 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! Apply the Jacobi preconditioner.
   ! ----------------------
   Pu(@:,:) = jacobi_env%diag_inv(@:,:)*u(@:,:)
+  !Pu(@:,:) = u(@:,:)
 
 end subroutine Precondition_Jacobi$rank
 #$end do
@@ -213,12 +212,12 @@ subroutine Solve_PCG$rank(mesh, u, b, MatVec, Precond, env, params)
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
-  procedure(tPreconditionerFunc$rank) :: Precond
+  procedure(tPrecondFunc$rank) :: Precond
   class(*), intent(inout) :: env
   type(tConvParams), intent(inout) :: params
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp) :: alpha, beta, gamma, delta, theta
+  real(dp) :: alpha, beta, gamma, delta
   real(dp), allocatable :: p(@:,:), r(@:,:), z(@:,:), t(@:,:)
   class(*), allocatable :: precond_env
   allocate(p, r, z, t, mold=u)

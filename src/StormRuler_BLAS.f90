@@ -115,6 +115,20 @@ interface SFuncProd
 #$end do 
 end interface SFuncProd
 
+abstract interface
+#$do rank = 0, NUM_RANKS
+  subroutine tMatVecFunc$rank(mesh, Au, u, env)
+    import :: dp, tMesh
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    class(tMesh), intent(in) :: mesh
+    real(dp), intent(in), target :: u(@:,:)
+    real(dp), intent(inout), target :: Au(@:,:)
+    class(*), intent(inout) :: env
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end subroutine tMatVecFunc$rank
+#$end do
+end interface
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 

@@ -232,7 +232,8 @@ contains
       ! ----------------------
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dr_inv => &
+        & lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(:,@:,iCell) = v(:,@:,iCell) - &
@@ -335,7 +336,8 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dr_inv => &
+        & lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) - &
@@ -586,7 +588,8 @@ contains
       ! ----------------------
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dr_inv => &
+        & lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(FDM_AccuracyOrder)
           case(1)
             v(:,@:,iCell) = v(:,@:,iCell) - &
@@ -741,7 +744,8 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dr_inv => &
+        & lambda*SafeInverse(mesh%dr(:,iCellFace)))
         select case(FDM_AccuracyOrder)
           case(1)
             v(@:,iCell) = v(@:,iCell) - &
@@ -955,6 +959,7 @@ contains
     ! For each positive cell face do:
     ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------

@@ -15,6 +15,15 @@ Supported compilers:
   (tested on _7.0 build 7048_).
 
 <!----------------------------------------------------------------->
+## Compiling
+<!----------------------------------------------------------------->
+
+macOS with Intel compilers:
+```bash
+export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+```
+
+<!----------------------------------------------------------------->
 ## Equations solved
 <!----------------------------------------------------------------->
 **StormRuler** features support of the various set of the
@@ -59,7 +68,7 @@ amount of the matrix-vector products required to construct it.-->
   * Conjugate Gradients solver 
     (`CG`, for the definite symmetric linear problems),
   * MKL Conjugate Gradients solver 
-    (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3s4XF9F)),
+    (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
   * _(planned)_ MINRES solver
     (for the indefinite symmetric linear problems),
   * Biconjugate Gradients (stabilized) solver
@@ -67,7 +76,7 @@ amount of the matrix-vector products required to construct it.-->
   * _(planned)_ Generalized minimal residual method solver
     (`GMRES`, for the general SLAE),
   * MKL Flexible generalized minimal residual method solver
-    (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/3s4XF9F)).
+    (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner,

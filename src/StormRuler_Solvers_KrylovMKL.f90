@@ -29,7 +29,7 @@ module StormRuler_Solvers_KrylovMKL
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@
+use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, Set
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Base, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
@@ -44,7 +44,7 @@ implicit none
 include 'mkl_rci.fi'
 
 integer(ip), parameter :: &
-  & gMKL_RCI_DebugLevel = 1_ip
+  & gMKL_RCI_DebugLevel = 2_ip
 
 integer(ip), parameter :: &
   & gFGMRES_MKL_MaxNumNonRestartedIterations = 150_ip
@@ -71,91 +71,79 @@ contains
 !! operator equation: Au = b, using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params)
+subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
-  type(tConvParams), intent(inout) :: params
+  class(tConvParams), intent(inout) :: params
+  procedure(tPrecondFunc$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: rci_request
-  integer(ip) :: n, iparams(0:127)
-  real(dp) :: dparams(0:127)
-  real(dp), allocatable, target :: tmp(:)
-  real(dp), pointer :: in(@:,:), out(@:,:)
+  integer(ip) :: n, iparams(128)
+  real(dp) :: dparams(128)
+  real(dp), allocatable :: tmp(@:,:,:)
+  class(*), allocatable :: precond_env
 
   ! ----------------------
   ! Preallocate storage.
   ! ----------------------
-  n = size(u) 
-  allocate(tmp(0:(3*n - 1)))
-  call c_f_pointer( &
-    & cptr=c_loc(tmp(0)), fptr=in, shape=shape(u))
-  call c_f_pointer( &
-    & cptr=c_loc(tmp(n)), fptr=out, shape=shape(b))
+  n = size(u)
+  allocate(tmp(@{size(u, dim=$$)}@, &
+    & size(u, dim=$rank+1), merge(4, 3, present(Precond))))
 
   ! ----------------------
   ! Initialize and configure MKL CG.
   ! ----------------------
   call dcg_init(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request /= 0) then
-    write(error_unit, *) 'MKL DCG_INIT FAILED'
+    write(error_unit, *) 'MKL dcg_init failed, RCI_REQUEST=', rci_request
     error stop 1
   end if
   associate( &
-    &       outputWarningsAndErrors => iparams(1), &
-    &              maxNumIterations => iparams(4), &
-    & enableStopAtMaxIterationsTest => iparams(7), &
-    &            enableResidualTest => iparams(8), &
-    &         relativeTolerance_sqr => dparams(0), &
-    &         absoluteTolerance_sqr => dparams(1), &
-    &              enableCustomTest => iparams(9), &
-    &         enablePreconditioning => iparams(10) )
+    & outputWarningsAndErrors => iparams( 2), &
+    & enableNumIterationsTest => iparams( 8), &
+    &        enableCustomTest => iparams(10), &
+    &   enablePreconditioning => iparams(11) )
     outputWarningsAndErrors = 6
-    if (params%MaxNumIterations /= 0) then
-      enableStopAtMaxIterationsTest = 1
-      maxNumIterations = params%MaxNumIterations
-    end if
-    if (params%RelativeTolerance * &
-      & params%AbsoluteTolerance > 0.0_dp) then
-      enableResidualTest = 1
-      relativeTolerance_sqr = params%RelativeTolerance
-      absoluteTolerance_sqr = params%AbsoluteTolerance
-    end if
-    enableCustomTest = 0
-    enablePreconditioning = 0
+    enableNumIterationsTest = 0
+    enableCustomTest = 1
+    enablePreconditioning = merge(1, 0, present(Precond))
   end associate
   call dcg_check(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request /= 0) then
-    write(error_unit, *) 'MKL DCG_CHECK FAILED'
+    write(error_unit, *) 'MKL dcg_check failed, RCI_REQUEST=', rci_request
     error stop 1
   end if
 
   ! ----------------------
   ! Iterate MKL CG.
   ! ----------------------
-  associate( &
-    & initialResidualNorm_sqr => dparams(2), &
-    & currentResidualNorm_sqr => dparams(4) )
-    do
-      call dcg(n, u, b, rci_request, iparams, dparams, tmp)
-      if (rci_request == 0) exit
-      if (rci_request == 1) then
-        if (gMKL_RCI_DebugLevel > 0_ip) then
-          write(error_unit, *) &
-            & 'AE=', currentResidualNorm_sqr, &
-            & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        end if
-        call MatVec(mesh, out, in, env)
-      else
-        write(error_unit, *) 'MKL DCG FAILED'
-        error stop 1
-      end if
-    end do
-  end associate
+  do
+    call dcg(n, u, b, rci_request, iparams, dparams, tmp)
+    if (rci_request == 1) then
+      call MatVec(mesh, tmp(@:,:,2), tmp(@:,:,1), env)
+      cycle
+    end if
+    if (rci_request == 2) then
+      associate( &
+        & initialResidualNorm => sqrt(dparams(3)), &
+        & currentResidualNorm => sqrt(dparams(5)) )
+        if (params%Check(currentResidualNorm, &
+          & currentResidualNorm/initialResidualNorm)) exit
+      end associate
+      cycle
+    end if
+    if (rci_request == 3) then
+      call Precond(mesh, tmp(@:,:,4), tmp(@:,:,3), MatVec, env, precond_env)
+      cycle
+    end if
+    write(error_unit, *) 'MKL dcg failed, RCI_REQUEST=', rci_request
+    error stop 1
+  end do
 end subroutine Solve_CG_MKL$rank
 #$end do
 
@@ -164,135 +152,116 @@ end subroutine Solve_CG_MKL$rank
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params)
+subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
-  type(tConvParams), intent(inout) :: params
+  class(tConvParams), intent(inout) :: params
+  procedure(tPrecondFunc$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: rci_request
-  integer(ip) :: n, iparams(0:127), itercount
-  real(dp) :: dparams(0:127)
-  real(dp), allocatable, target :: tmp(:)
-  real(dp), pointer :: in(@:,:), out(@:,:)
+  integer(ip) :: n, iparams(128), itercount
+  real(dp) :: dparams(128)
+  real(dp), pointer :: tmp(:), in(@:,:), out(@:,:)
+  real(dp) :: trueInitialResidualNorm
+  class(*), allocatable :: precond_env
 
   ! ----------------------
   ! Preallocate storage.
   ! ----------------------
   ! Formula is used:
-  ! (2*ipar[14] + 1)*n + ipar[14]*(ipar[14] + 9)/2 + 1)
+  ! (2*ipar(15) + 1)*n + ipar(15)*(ipar(15) + 9)/2 + 1)
   n = size(u)
   associate(k => gFGMRES_MKL_MaxNumNonRestartedIterations)
-    associate(m => (2_ip*k + 1_ip)*n + k*(k + 9_ip)/2_ip + 1_ip)
-      allocate(tmp(0_ip:(m-1_ip)))
-    end associate
+    allocate(tmp((2*k + 1)*n + k*(k + 9)/2 + 1))
   end associate
+  trueInitialResidualNorm = 0.0_dp
 
   ! ----------------------
   ! Initialize and configure MKL FGMRES.
   ! ----------------------
   call dfgmres_init(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request /= 0) then
-    write(error_unit, *) &
-      & 'MKL DFGMRES_INIT FAILED, RCI_REQUEST=', rci_request
+    write(error_unit, *) 'MKL dfgmres_init failed, RCI_REQUEST=', rci_request
     error stop 1
   end if
   associate( &
-    &       outputWarningsAndErrors => iparams( 1), &
-    &              maxNumIterations => iparams( 4), &
-    & enableStopAtMaxIterationsTest => iparams( 7), &
-    &            enableResidualTest => iparams( 8), &
-    &         relativeTolerance_sqr => dparams( 0), &
-    &         absoluteTolerance_sqr => dparams( 1), &
-    &              enableCustomTest => iparams( 9), &
-    &         enableCGVZeroNormTest => iparams(11), &
-    &      cgvZeroNormTolerance_sqr => dparams( 7), &
-    &         enablePreconditioning => iparams(10), &
-    &   dfgmres_getRoutineBehaviour => iparams(12), &
-    &     numNonRestartedIterations => iparams(14) )
+    &     outputWarningsAndErrors => iparams( 2), &
+    &     enableNumIterationsTest => iparams( 8), &
+    &            enableCustomTest => iparams(10), &
+    &       enableCGVZeroNormTest => iparams(12), &
+    &       enablePreconditioning => iparams(11), &
+    & dfgmres_getRoutineBehaviour => iparams(13), &
+    &   numNonRestartedIterations => iparams(15) )
     outputWarningsAndErrors = 6
-    if (params%MaxNumIterations /= 0) then
-      enableStopAtMaxIterationsTest = 1
-      maxNumIterations = params%MaxNumIterations
-    end if
-    if (params%RelativeTolerance * &
-      & params%AbsoluteTolerance > 0.0_dp) then
-      enableResidualTest = 1
-      relativeTolerance_sqr = params%RelativeTolerance
-      absoluteTolerance_sqr = params%AbsoluteTolerance
-    end if
-    enablePreconditioning = 0
-    enableCustomTest = 0
-    ! What the fuck is the 'currently generated vector'?
+    enableNumIterationsTest = 0
+    enableCustomTest = 1
+    ! CGV stands for 'currently generated vector'.
     enableCGVZeroNormTest = 1
-    cgvZeroNormTolerance_sqr = 1.0e-12_dp
+    enablePreconditioning = merge(1, 0, present(Precond))
     ! value = 0: update inplace,
     ! value > 0: write to RHS vector,
     ! value < 0: only get the iteration number.
     dfgmres_getRoutineBehaviour = 0
-    numNonRestartedIterations = &
-      & gFGMRES_MKL_MaxNumNonRestartedIterations
+    numNonRestartedIterations = gFGMRES_MKL_MaxNumNonRestartedIterations
   end associate
   call dfgmres_check(n, u, b, rci_request, iparams, dparams, tmp)
   if (rci_request == -1100) then
-    write(error_unit, *) &
-      & 'MKL DFGMRES_CHECK FAILED, RCI_REQUEST=', rci_request
+    write(error_unit, *) 'MKL dfgmres_check failed, RCI_REQUEST=', rci_request
     error stop 1
   else if ((rci_request /= 0).and.(gMKL_RCI_DebugLevel > 0_ip)) then
-    write(error_unit, *) &
-      & 'MKL DFGMRES_CHECK ALTERED PARAMETERS, RCI_REQUEST=', rci_request
+    write(error_unit, *) 'MKL dfgmres_check altered parameters, RCI_REQUEST=', rci_request
   end if
 
   ! ----------------------
   ! Iterate MKL FGMRES.
   ! ----------------------
-  associate( &
-    & initialResidualNorm_sqr => dparams(2), &
-    & currentResidualNorm_sqr => dparams(4) )
-    do
-      call dfgmres(n, u, b, rci_request, iparams, dparams, tmp)
-      if (rci_request == 0) exit
-      if (rci_request == 1) then
-        associate(inOffset => (iparams(21) - 1), &
-          &      outOffset => (iparams(22) - 1))
-          if (gMKL_RCI_DebugLevel > 1_ip) then
-            write(error_unit, *) &
-              & 'IN/OUT=', inOffset/n, outOffset/n
-          end if
-          call c_f_pointer( &
-            & cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
-          call c_f_pointer( &
-            & cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(b))
-        end associate
-        if (gMKL_RCI_DebugLevel > 0_ip) then
-          write(error_unit, *) &
-            & 'AE=', currentResidualNorm_sqr, &
-            & 'RE=', currentResidualNorm_sqr/initialResidualNorm_sqr
-        end if
-        call MatVec(mesh, out, in, env)
-      else
-        write(error_unit, *) &
-          & 'MKL DFGMRES FAILED, RCI_REQUEST=', rci_request
-        error stop 1
-      end if
-    end do
-  end associate
+  do
+    call dfgmres(n, u, b, rci_request, iparams, dparams, tmp)
+    if (rci_request == 1) then
+      associate(inOffset => iparams(22), outOffset => iparams(23))
+        call c_f_pointer(cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
+        call c_f_pointer(cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(u))
+      end associate
+      call MatVec(mesh, out, in, env)
+      cycle
+    end if
+    if (rci_request == 2) then
+      associate( &
+        & initialResidualNorm => sqrt(dparams(3)), &
+        & currentResidualNorm => sqrt(dparams(5)) )
+        ! Initial residual norm is reset after the restart, so we
+        ! should keep the true one for the correct relative error test.
+        if (trueInitialResidualNorm == 0.0_dp) &
+          & trueInitialResidualNorm = initialResidualNorm
+        if (params%Check(currentResidualNorm, &
+          & currentResidualNorm/trueInitialResidualNorm)) exit
+      end associate
+      cycle
+    end if
+    if (rci_request == 3) then
+      associate(inOffset => iparams(22), outOffset => iparams(23))
+        call c_f_pointer(cptr=c_loc(tmp(inOffset)), fptr=in, shape=shape(u))
+        call c_f_pointer(cptr=c_loc(tmp(outOffset)), fptr=out, shape=shape(u))
+      end associate
+      call Precond(mesh, out, in, MatVec, env, precond_env)
+      cycle
+    end if
+    write(error_unit, *) 'MKL dfgmres failed, RCI_REQUEST=', rci_request
+    error stop 1
+  end do
 
   ! ----------------------
   ! Get MKL FGMRES solution.
   ! ----------------------
   call dfgmres_get(n, u, b, rci_request, iparams, dparams, tmp, itercount)
   if (rci_request /= 0) then
-    write(error_unit, *) &
-      & 'MKL DFGMRES_GET FAILED, RCI_REQUEST=', rci_request
+    write(error_unit, *) 'MKL dfgmres_get failed, RCI_REQUEST=', rci_request
     error stop 1
-  end if
-  if (gMKL_RCI_DebugLevel > 1) then
-    write(error_unit, *) 'ITERCOUNT=', itercount
   end if
 end subroutine Solve_FGMRES_MKL$rank
 #$end do

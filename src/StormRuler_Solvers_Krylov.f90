@@ -102,7 +102,8 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
   ! p ← z,
   ! γ ← <r⋅z>,
   ! ----------------------
-  if (present(Precond)) call Precond(mesh, z, r, MatVec, env, precond_env)
+  if (present(Precond)) &
+    & call Precond(mesh, z, r, MatVec, env, precond_env)
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -129,9 +130,8 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
     ! z ← Pr
     ! α ← <r⋅z>,
     ! ----------------------
-    if (present(Precond)) then
-      call Precond(mesh, z, r, MatVec, env, precond_env)
-    end if
+    if (present(Precond)) &
+      & call Precond(mesh, z, r, MatVec, env, precond_env)
     alpha = Dot(mesh, r, z)
 
     ! ----------------------
@@ -214,7 +214,8 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     ! ----------------------
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
-    if (present(Precond)) call Precond(mesh, y, p, MatVec, env, precond_env)
+    if (present(Precond)) &
+      & call Precond(mesh, y, p, MatVec, env, precond_env)
     call MatVec(mesh, v, y, env)
     
     ! ----------------------
@@ -225,7 +226,8 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     ! ----------------------
     alpha = SafeDivide(rho, Dot(mesh, r_tilde, v))
     call Sub(mesh, s, r, v, alpha)
-    if (present(Precond)) call Precond(mesh, z, s, MatVec, env, precond_env)
+    if (present(Precond)) &
+      & call Precond(mesh, z, s, MatVec, env, precond_env)
     call MatVec(mesh, t, z, env)
     
     ! ----------------------
@@ -235,7 +237,8 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     ! u ← u + ω⋅z,
     ! u ← u + α⋅y,
     ! ----------------------
-    if (present(Precond)) call Precond(mesh, w, t, MatVec, env, precond_env)
+    if (present(Precond)) &
+      & call Precond(mesh, w, t, MatVec, env, precond_env)
     omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
     call Sub(mesh, r, s, t, omega)
     call Add(mesh, u, u, z, omega)

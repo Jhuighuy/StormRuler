@@ -45,6 +45,18 @@ type :: tPrecondEnv_Diag$rank
 end type !tPrecondEnv_Diag$rank
 #$end do
 
+interface Precondition_Jacobi
+#$do rank = 0, NUM_RANKS
+  module procedure Precondition_Jacobi$rank
+#$end do
+end interface Precondition_Jacobi
+
+interface Precondition_LU_SGS
+#$do rank = 0, NUM_RANKS
+  module procedure Precondition_LU_SGS$rank
+#$end do
+end interface Precondition_LU_SGS
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -98,10 +110,10 @@ end subroutine Precondition_Jacobi$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! SSOR preconditioner: P ← tril(A)⁻¹⋅diag(A)⋅triu(A)⁻¹.
+!! LU-SGS preconditioner: P ← tril(A)⁻¹⋅diag(A)⋅triu(A)⁻¹.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Precondition_SSOR$rank(mesh, Pu, u, MatVec, env, precond_env)
+subroutine Precondition_LU_SGS$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: u(@:,:)
@@ -146,7 +158,7 @@ subroutine Precondition_SSOR$rank(mesh, Pu, u, MatVec, env, precond_env)
   v(@:,:) = diag_env%diag(@:,:)*v(@:,:)
   call Solve_Triangular(mesh, Pu, v, diag_env%diag, 'L', MatVec, env)
 
-end subroutine Precondition_SSOR$rank
+end subroutine Precondition_LU_SGS$rank
 #$end do
 
 end module StormRuler_Solvers_Precond

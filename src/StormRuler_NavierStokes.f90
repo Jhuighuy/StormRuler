@@ -51,8 +51,8 @@ subroutine SolvePoisson(mesh,u,f)
   !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
   
-  !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_SSOR$0,Params,Params)
-  call Solve_BiCGStab(mesh,u,f,PoissonOperator,Precondition_SSOR$0,Params,Params)
+  !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_LU_SGS$0,Params,Params)
+  call Solve_CG(mesh,u,f,PoissonOperator,Params,Params,Precondition_LU_SGS$0)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)

@@ -105,7 +105,7 @@ end subroutine CahnHilliard_ImplicitSchemeOperatorHelper
 !! -----------------------------------------------------------------  
 !! Solve the SLAE of the implicit scheme (using Conjugate Gradients method).
 subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), dimension(:), intent(inout), target :: C
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(inout) :: CHPhysParams
@@ -119,14 +119,13 @@ subroutine CahnHilliard_ImplicitSchemeSolve(mesh, C,v, CHPhysParams)
   allocate(b, mold=c)
   call CahnHilliard_ImplicitSchemeRHS(mesh,c,v,b,CHPhysParams)
   call Solve_BiCGStab(mesh,c,b&
-    ,CahnHilliard_ImplicitSchemeOperatorHelper,CHPhysParams &
-    ,Params)
+    ,CahnHilliard_ImplicitSchemeOperatorHelper,CHPhysParams,Params)
 end subroutine CahnHilliard_ImplicitSchemeSolve
 
 !! -----------------------------------------------------------------  
 !! Compute Cahn-Hilliard time step with an implicit scheme.
 subroutine CahnHilliard_ImplicitSchemeStep(mesh, C,S,v, CHPhysParams)
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), dimension(:), intent(inout), target :: C,S
   real(dp), intent(inout) :: v(:,:)
   class(CahnHilliardParams), intent(inout) :: CHPhysParams

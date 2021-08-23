@@ -69,6 +69,10 @@ amount of the matrix-vector products required to construct it.-->
   * MKL Flexible generalized minimal residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/3s4XF9F)).
 
+- Matrix-free preconditioners:
+  * Block Jacobi preconditioner,
+  * Block LU-SGS preconditioner.
+
 <!--
 - Linear direct solvers (embedded into the matrix-free environment):
   * MKL Direct Sparse Solver 

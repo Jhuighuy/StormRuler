@@ -64,7 +64,7 @@ _graph coloring based-algorithm_ in order to minimize an
 amount of the matrix-vector products required to construct it.-->
 
 **StormRuler** contains:
-- Matrix-free Linear iterative solvers: 
+- Matrix-free linear iterative solvers: 
   * Conjugate Gradients solver 
     (`CG`, for the definite symmetric linear problems),
   * MKL Conjugate Gradients solver 
@@ -77,6 +77,10 @@ amount of the matrix-vector products required to construct it.-->
     (`GMRES`, for the general SLAE),
   * MKL Flexible generalized minimal residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
+
+- Matrix-free linear least squares solvers:
+  * LSQR solver:
+    (`LSQR`, for the general singular linear problems).
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner,

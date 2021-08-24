@@ -43,23 +43,23 @@ interface Dot
 #$end do
 end interface Dot
 
-interface Norm1
+interface Norm_1
 #$do rank = 0, NUM_RANKS
-  module procedure Norm1$rank
+  module procedure Norm_1$rank
 #$end do
-end interface Norm1
+end interface Norm_1
 
-interface Norm2
+interface Norm_2
 #$do rank = 0, NUM_RANKS
-  module procedure Norm2$rank
+  module procedure Norm_2$rank
 #$end do
-end interface Norm2
+end interface Norm_2
 
-interface NormC
+interface Norm_C
 #$do rank = 0, NUM_RANKS
-  module procedure NormC$rank
+  module procedure Norm_C$rank
 #$end do
-end interface NormC
+end interface Norm_C
 
 interface Fill
 #$do rank = 0, NUM_RANKS
@@ -72,6 +72,12 @@ interface Set
   module procedure Set$rank
 #$end do
 end interface Set
+
+interface Scale
+#$do rank = 0, NUM_RANKS
+  module procedure Scale$rank
+#$end do
+end interface Scale
 
 interface Add
 #$do rank = 0, NUM_RANKS
@@ -184,13 +190,13 @@ end function Dot$rank
 !! Compute L₁-norm: d ← ‖x‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Norm1$rank(mesh, x)
+real(dp) function Norm_1$rank(mesh, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  Norm1$rank = mesh%RunCellKernel_Sum(Norm1_Kernel)
+  Norm_1$rank = mesh%RunCellKernel_Sum(Norm1_Kernel)
 
 contains
   real(dp) function Norm1_Kernel(iCell)
@@ -205,35 +211,35 @@ contains
 #$end if
     
   end function Norm1_Kernel
-end function Norm1$rank
+end function Norm_1$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute L₂-norm: d ← ‖x‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Norm2$rank(mesh, x)
+real(dp) function Norm_2$rank(mesh, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  Norm2$rank = sqrt(Dot(mesh, x, x))
+  Norm_2$rank = sqrt(Dot(mesh, x, x))
 
-end function Norm2$rank
+end function Norm_2$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute L∞-norm: d ← ‖x‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function NormC$rank(mesh, x)
+real(dp) function Norm_C$rank(mesh, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  NormC$rank = mesh%RunCellKernel_Max(NormC_Kernel)
+  Norm_C$rank = mesh%RunCellKernel_Max(NormC_Kernel)
 
 contains
   real(dp) function NormC_Kernel(iCell)
@@ -248,7 +254,7 @@ contains
 #$end if
     
   end function NormC_Kernel
-end function NormC$rank
+end function Norm_C$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -299,6 +305,32 @@ contains
 
   end subroutine Set_Kernel
 end subroutine Set$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Scale: y ← αx.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Scale$rank(mesh, y, x, alpha)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
+  real(dp), intent(in) :: alpha
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  call mesh%RunCellKernel(Scale_Kernel)
+
+contains
+  subroutine Scale_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    y(@:,iCell) = alpha*x(@:,iCell)
+
+  end subroutine Scale_Kernel
+end subroutine Scale$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

@@ -52,7 +52,7 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear least squares problem
-!! minimize ‖[P]Ax - [P]b‖₂, using the LSQR method.
+!! minimize ‖A[P]y - b‖₂, where x = [P]y, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
@@ -76,12 +76,20 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! β ← ‖b‖, u ← b/β,
-  ! s ← Aᵀu,
+  ! +----------+----------+
+  ! | t ← Aᵀu, |          |
+  ! | s ← Pᵀt, | s ← Aᵀu, |
+  ! +----------+----------+
   ! α ← ‖s‖, v ← s/α,
   ! w ← v.
   ! ----------------------
   beta = Norm_2(mesh, b); call Scale(mesh, u, b, 1.0_dp/beta)
-  call MatVec(mesh, s, u, env)
+  if (present(Precond)) then
+    call MatVec(mesh, t, u, env)
+    call Precond(mesh, s, t, MatVec, env, precond_env)
+  else
+    call MatVec(mesh, s, u, env)
+  end if
   alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
   call Set(mesh, w, v)
 
@@ -101,17 +109,33 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
   
   do
     ! ----------------------
-    ! t ← Av,
+    ! +----------+----------+
+    ! | s ← Pv,  |          |
+    ! | t ← As,  | t ← Pv   |
+    ! +----------+----------+
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! s ← Aᵀu,
+    ! +----------+----------+
+    ! | t ← Aᵀu, |          |
+    ! | s ← Pᵀt, | s ← Aᵀu, |
+    ! +----------+----------+
     ! s ← s - βv,
     ! α ← ‖s‖, v ← s/α.
     ! ----------------------
-    call MatVec(mesh, t, v, env)
+    if (present(Precond)) then
+      call Precond(mesh, s, v, MatVec, env, precond_env)
+      call MatVec(mesh, t, s, env)
+    else
+      call MatVec(mesh, t, v, env)
+    end if
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
-    call MatVec(mesh, s, u, env)
+    if (present(Precond)) then
+      call MatVec(mesh, t, u, env)
+      call Precond(mesh, s, t, MatVec, env, precond_env)
+    else
+      call MatVec(mesh, s, u, env)
+    end if
     call Sub(mesh, s, s, v, beta)
     alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
     
@@ -133,8 +157,17 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
     ! ----------------------
     call Add(mesh, x, x, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
-    if (params%Check(phi_bar, phi_bar/phi_tilde)) return
+    if (params%Check(phi_bar, phi_bar/phi_tilde)) exit
   end do
+
+  ! ----------------------
+  ! t ← x,
+  ! x ← Pt.
+  ! ----------------------
+  if (present(Precond)) then
+    call Set(mesh, t, x)
+    call Precond(mesh, x, t, MatVec, env, precond_env)
+  end if
 end subroutine Solve_LSQR$rank
 #$end do
 

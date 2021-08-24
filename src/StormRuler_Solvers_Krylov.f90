@@ -124,7 +124,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
     ! check convergence for √α and √α/√δ.
     ! ----------------------
     alpha = Dot(mesh, r, r)
-    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) return
+    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
 
     ! ----------------------
     ! z ← Pr
@@ -249,7 +249,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     ! check convergence for √γ and √γ/√δ.
     ! ----------------------
     gamma = Dot(mesh, r, r)
-    if (params%Check(sqrt(gamma), sqrt(gamma/delta))) return
+    if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
   end do
 end subroutine Solve_BiCGStab$rank
 #$end do

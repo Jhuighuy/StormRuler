@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
-  & Norm_2, Fill, Set, Scale, Add, Sub
+  & Dot, Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Base, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
@@ -51,7 +51,7 @@ end interface Solve_LSQR
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear least squares problem
+!! Solve a right preconditioned linear least squares problem:
 !! minimize ‖A[P]y - b‖₂, where x = [P]y, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
@@ -67,8 +67,17 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   procedure(tPrecondFunc$rank), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
+  ! ----------------------
+  ! [1] Paige, C. and M. Saunders. 
+  !     “LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares.” 
+  !     ACM Trans. Math. Softw. 8 (1982): 43-71.
+  ! [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
+  !     “A preconditioner for the LSQR algorithm.” 
+  !     Journal of applied mathematics & informatics 26 (2008): 213-222.
+  ! ----------------------
+
   real(dp) :: alpha, beta, rho, rho_bar, &
-    & theta, phi, phi_bar, phi_tilde, cc, ss
+    & theta, phi, phi_bar, phi_tilde, cs, sn
   real(dp), pointer :: s(@:,:), t(@:,:), u(@:,:), v(@:,:), w(@:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
@@ -76,8 +85,8 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   ! ----------------------
   ! β ← ‖b‖, u ← b/β,
-  ! t ← Aᵀu, ||
-  ! s ← Pᵀt, || s ← Aᵀu,
+  ! t ← Aᵀu,
+  ! s ← Pᵀt, OR: s ← Aᵀu,
   ! α ← ‖s‖, v ← s/α,
   ! w ← v.
   ! ----------------------
@@ -107,12 +116,12 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   
   do
     ! ----------------------
-    ! s ← Pv, ||
-    ! t ← As, || t ← Pv
+    ! s ← Pv,
+    ! t ← As, OR: t ← Pv
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! t ← Aᵀu, ||
-    ! s ← Pᵀt, || s ← Aᵀu,
+    ! t ← Aᵀu,
+    ! s ← Pᵀt, OR: s ← Aᵀu,
     ! s ← s - βv,
     ! α ← ‖s‖, v ← s/α.
     ! ----------------------
@@ -135,14 +144,14 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     
     ! ----------------------
     ! ρ ← √(ρ̅² + β²),
-    ! cc ← ρ̅/ρ, ss ← β/ρ,
+    ! cs ← ρ̅/ρ, sn ← β/ρ,
     ! θ ← ssα, ρ̅ ← -ccα,
     ! ϕ ← ccϕ̅, ϕ̅ ← ssϕ̅.
     ! ----------------------
     rho = hypot(rho_bar, beta)
-    cc = rho_bar/rho; ss = beta/rho
-    theta = ss*alpha; rho_bar = -cc*alpha
-    phi = cc*phi_bar; phi_bar = ss*phi_bar
+    cs = rho_bar/rho; sn = beta/rho
+    theta = sn*alpha; rho_bar = -cs*alpha
+    phi = cs*phi_bar; phi_bar = sn*phi_bar
 
     ! ----------------------
     ! x ← x + (ϕ/ρ)w,
@@ -156,14 +165,129 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   end do
 
   ! ----------------------
-  ! t ← x,  ||
-  ! x ← Pt. || do nothing.
+  ! t ← x,
+  ! x ← Pt. OR: do nothing.
   ! ----------------------
   if (present(Precond)) then
     call Set(mesh, t, x)
     call Precond(mesh, x, t, MatVec, env, precond_env)
   end if
 end subroutine Solve_LSQR$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Solve a linear symmetric indefinite least squares problem:
+!! minimize ‖Ax - b‖₂ over σ(r₀,Ar₀,A²r₀,…), where r₀ = b - Ax₀, 
+!! using the Minimal Residual (MINRES) method.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+#$do rank = 0, NUM_RANKS
+subroutine Solve_MINRES_DE$rank(mesh, u, b, MatVec, env, params)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(in) :: b(@:,:)
+  real(dp), intent(inout) :: u(@:,:)
+  procedure(tMatVecFunc$rank) :: MatVec
+  class(*), intent(inout) :: env
+  class(tConvParams), intent(inout) :: params
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  logical :: first
+  real(dp) :: alpha, beta, delta, &
+    & gamma, gamma_bar, gamma_bar_bar
+  real(dp), pointer :: r(@:,:), t(@:,:), &
+    & p(@:,:), p_bar(@:,:), p_bar_bar(@:,:), &
+    & s(@:,:), s_bar(@:,:), s_bar_bar(@:,:)
+
+  first = .true.
+  allocate(r, &
+    & p, p_bar, p_bar_bar, &
+    & s, s_bar, s_bar_bar, mold=u)
+
+  ! ----------------------
+  ! s ← Au,
+  ! r ← b - s.
+  ! ----------------------
+  call MatVec(mesh, s, u, env)
+  call Sub(mesh, r, b, s)
+
+  ! ----------------------
+  ! δ ← <r⋅r>,
+  ! check convergence for √δ.
+  ! ----------------------
+  delta = Dot(mesh, r, r)
+  if (params%Check(sqrt(delta))) return
+  
+  ! ----------------------
+  ! p̅ ← r,
+  ! s̅ ← Ap̅,
+  ! γ̅ ← <s̅⋅s̅>.
+  ! ----------------------
+  call Set(mesh, p_bar, r)
+  call MatVec(mesh, s_bar, p_bar, env)
+  gamma_bar = Dot(mesh, s_bar, s_bar)
+
+  do
+    ! ----------------------
+    ! α ← <r⋅s̅>/γ̅,
+    ! u ← u + αp̅,
+    ! r ← r - αs̅.
+    ! ----------------------
+    alpha = Dot(mesh, r, s_bar)/gamma_bar
+    call Add(mesh, u, u, p_bar, alpha)
+    call Sub(mesh, r, r, s_bar, alpha)
+
+    ! ----------------------
+    ! α ← <r⋅r>,
+    ! check convergence for √α and √α/√δ.
+    ! ----------------------
+    alpha = Dot(mesh, r, r)
+    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
+
+    ! ----------------------
+    ! p ← s̅,
+    ! s ← As̅.
+    ! ----------------------
+    call Set(mesh, p, s_bar)
+    call MatVec(mesh, s, s_bar, env)
+    
+    ! ----------------------
+    ! β ← <s⋅s̅>/γ̅,
+    ! p ← p - βp̅,
+    ! s ← s - βs̅.
+    ! ----------------------
+    beta = Dot(mesh, s, s_bar)/gamma_bar
+    call Sub(mesh, p, p, p_bar, beta)
+    call Sub(mesh, s, s, s_bar, beta)
+
+    if (.not.first) then
+
+      ! ----------------------
+      ! β ← <s⋅s̿>/γ̿,
+      ! p ← p - βp̿,
+      ! s ← s - βs̿.
+      ! ----------------------
+      beta = Dot(mesh, s, s_bar_bar)/gamma_bar_bar
+      call Sub(mesh, p, p, p_bar_bar, beta)
+      call Sub(mesh, s, s, s_bar_bar, beta)
+
+    end if
+    first = .false.
+
+    ! ----------------------
+    ! γ ← <s⋅s>.
+    ! ----------------------
+    gamma = Dot(mesh, s, s)
+
+    ! ----------------------
+    ! (γ, γ̅, γ̿) ← (γ̿, γ, γ̅),
+    ! (p, p̅, p̿) ← (p̿, p, p̅),
+    ! (s, s̅, s̿) ← (s̿, s, s̅).
+    ! ----------------------
+    gamma_bar_bar = gamma_bar; gamma_bar = gamma
+    t => p_bar_bar; p_bar_bar => p_bar; p_bar => p; p => t
+    t => s_bar_bar; s_bar_bar => s_bar; s_bar => s; s => t
+  end do
+end subroutine Solve_MINRES_DE$rank
 #$end do
 
 end module StormRuler_Solvers_LSQ

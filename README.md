@@ -64,27 +64,29 @@ _graph coloring based-algorithm_ in order to minimize an
 amount of the matrix-vector products required to construct it.-->
 
 **StormRuler** contains:
-- Matrix-free linear iterative solvers: 
+- Matrix-free linear iterative solvers:
   * Conjugate Gradients solver 
-    (`CG`, for the definite symmetric linear problems),
+    (`CG`, for the _definite symmetric_ linear problems),
   * MKL Conjugate Gradients solver 
     (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
-  * _(planned)_ MINRES solver
-    (for the indefinite symmetric linear problems),
   * Biconjugate Gradients (stabilized) solver
-    (`BiCGSTAB`, for the general linear problems),
-  * _(planned)_ Generalized minimal residual method solver
-    (`GMRES`, for the general SLAE),
-  * MKL Flexible generalized minimal residual method solver
+    (`BiCGSTAB`, for the general _non-singular_ linear problems),
+  * _(planned)_ Symmetric LQ solver,
+    (`SYMMLQ`, for indefinite _non-singular symmetric_ linear problems),
+  * _(planned)_ Minimal Resisual solver
+    (`MINRES`, for the indefinite _symmetric_ linear problems),
+  * _(planned)_ Generalized Minimal Residual method solver
+    (`GMRES`, for the general linear problems),
+  * MKL Flexible Generalized Minimal Residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
+  * Least squares solver:
+    (`LSQR`, for the general linear problems).
 
-- Matrix-free linear least squares solvers:
-  * LSQR solver:
-    (`LSQR`, for the general singular linear problems).
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner,
-  * Block LU-SGS preconditioner.
+  * Block LU-SGS preconditioner,
+  * _(planned)_ Block SPAI preconditioner.
 
 <!--
 - Linear direct solvers (embedded into the matrix-free environment):

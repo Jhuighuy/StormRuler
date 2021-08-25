@@ -476,8 +476,8 @@ auto operator/(std::pair<tField<rank>, tLeftExpr<rank>> leftExpr, tField<0> righ
 
 template<int rank, typename tMeshOperator>
 void SOLVE_BiCGSTAB(tMeshOperator&& meshOperator, 
-                    tField<rank> solution, tField<rank> rhs) {
-  Solve_BiCGStab(solution, rhs, std::forward<tMeshOperator>(meshOperator));
+                    tField<rank> solution, tField<rank> rhs, char c = 'C') {
+  Solve_BiCGStab(solution, rhs, std::forward<tMeshOperator>(meshOperator), c);
 }
 
 } // namespace StormRuler

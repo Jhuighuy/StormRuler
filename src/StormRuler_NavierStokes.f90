@@ -29,7 +29,9 @@ use StormRuler_BLAS
 use StormRuler_FDM_Operators
 use StormRuler_FDM_BCs
 use StormRuler_ConvParams
-use StormRuler_Solvers_Krylov
+use StormRuler_Solvers_CG
+use StormRuler_Solvers_MKL
+use StormRuler_Solvers_LSQR
 use StormRuler_Solvers_Precond
 
 implicit none
@@ -51,8 +53,10 @@ subroutine SolvePoisson(mesh,u,f)
   !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
   
-  !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_LU_SGS$0,Params,Params)
-  call Solve_CG(mesh,u,f,PoissonOperator,Params,Params,Precondition_LU_SGS$0)
+  call Solve_LSQR(mesh,u,f,PoissonOperator,Params,PoissonOperator,Params,Params,Precondition_LU_SGS$0,Precondition_LU_SGS$0)
+  error stop 228
+  
+  !call Solve_FGMRES_MKL(mesh,u,f,PoissonOperator,Params,Params,Precondition_LU_SGS$0)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)
 contains
   subroutine PoissonOperator(mesh,v,u,opParams)

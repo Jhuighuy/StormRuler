@@ -40,12 +40,15 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Krylov, only: &
+use StormRuler_Solvers_CG, only: &
   & Solve_CG, Solve_BiCGStab
+use StormRuler_Solvers_LSQR, only: &
+  & Solve_LSQR
 #$if HAS_MKL
-use StormRuler_Solvers_KrylovMKL, only: &
+use StormRuler_Solvers_MKL, only: &
   & Solve_CG_MKL, Solve_FGMRES_MKL
 #$end if
+use StormRuler_Solvers_Precond
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: &
@@ -161,6 +164,7 @@ subroutine Lib_InitializeMesh() &
   allocate(gMesh)
   gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
+  call gMesh%SetRange()
 #$else
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
@@ -708,12 +712,13 @@ ${writeIncLine(fr'''// &
 //''')}$
 
 #$do rank = 0, NUM_RANKS
-subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
+subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env, c) &
   & bind(c, name='_Lib_Solve_BiCGStab$rank')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pU, pB
   type(c_funptr), intent(in), value :: pA
   type(c_ptr), intent(in), value :: env
+  character(c_char), intent(in), value :: c
   ! >>>>>>>>>>>>>>>>>>>>>>
   class(tConvParams), allocatable :: Params
   real(dp), pointer :: u(@:,:), b(@:,:)
@@ -723,8 +728,12 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env) &
   ! ----------------------
   allocate(Params)
   call Params%Init(1.0D-8, &
-    &              1.0D-8, 100000)
-  call Solve_CG(gMesh, u, b, wA, Params, Params)
+    &              1.0D-8, 2000)
+  if (c == 'L') then
+    call Solve_LSQR(gMesh, u, b, wA, Params, wA, Params, Params, Precondition_LU_SGS$rank, Precondition_LU_SGS$rank)
+  else
+    call Solve_CG(gMesh, u, b, wA, Params, Params)
+  end if
 contains
   subroutine wA(mesh, v, w, wEnv)
     ! <<<<<<<<<<<<<<<<<<<<<<
@@ -742,16 +751,16 @@ contains
 end subroutine Lib_Solve_BiCGStab$rank
 ${writeIncLine( &
 fr'''EXTERN void _Lib_Solve_BiCGStab{rank}( &
-    tFieldBase*, tFieldBase*, tMeshOperatorPtr, void*); &
+    tFieldBase*, tFieldBase*, tMeshOperatorPtr, void*, char); &
 template<typename tMeshOperator> &
 void Solve_BiCGStab(tField<{rank}> u, &
-                    tField<{rank}> b, tMeshOperator&& meshOperator) {{ &
+                    tField<{rank}> b, tMeshOperator&& meshOperator, char c = 'C') {{ &
   _Lib_Solve_BiCGStab{rank}(u.Base(), b.Base(), &
     [](tFieldBase* out, tFieldBase* in, void* env) {{ &
       auto& meshOperator = *reinterpret_cast<tMeshOperator*>(env); &
       meshOperator(tField<{rank}>(in, nullptr), &
                    tField<{rank}>(out, nullptr)); & 
-    }}, &meshOperator); &
+    }}, &meshOperator, c); &
 }}''')}$
 #$end do
 

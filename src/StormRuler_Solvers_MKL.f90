@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Solvers_KrylovMKL
+module StormRuler_Solvers_MKL
 
 #$use 'StormRuler_Params.fi'
 #$if HAS_MKL
@@ -267,4 +267,4 @@ end subroutine Solve_FGMRES_MKL$rank
 #$end do
 
 #$end if
-end module StormRuler_Solvers_KrylovMKL
+end module StormRuler_Solvers_MKL

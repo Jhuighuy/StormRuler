@@ -82,7 +82,6 @@ amount of the matrix-vector products required to construct it.-->
   * Least squares solver:
     (`LSQR`, for the general linear problems).
 
-
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner,
   * Block LU-SGS preconditioner,

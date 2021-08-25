@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Solvers_LSQ
+module StormRuler_Solvers_LSQR
 
 #$use 'StormRuler_Params.fi'
 
@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
-  & Dot, Norm_2, Fill, Set, Scale, Add, Sub
+  & Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Base, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
@@ -175,119 +175,4 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 end subroutine Solve_LSQR$rank
 #$end do
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve a linear symmetric indefinite least squares problem:
-!! minimize ‖Ax - b‖₂ over σ(r₀,Ar₀,A²r₀,…), where r₀ = b - Ax₀, 
-!! using the Minimal Residual (MINRES) method.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_MINRES_DE$rank(mesh, u, b, MatVec, env, params)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(inout) :: env
-  class(tConvParams), intent(inout) :: params
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  logical :: first
-  real(dp) :: alpha, beta, delta, &
-    & gamma, gamma_bar, gamma_bar_bar
-  real(dp), pointer :: r(@:,:), t(@:,:), &
-    & p(@:,:), p_bar(@:,:), p_bar_bar(@:,:), &
-    & s(@:,:), s_bar(@:,:), s_bar_bar(@:,:)
-
-  first = .true.
-  allocate(r, &
-    & p, p_bar, p_bar_bar, &
-    & s, s_bar, s_bar_bar, mold=u)
-
-  ! ----------------------
-  ! s ← Au,
-  ! r ← b - s.
-  ! ----------------------
-  call MatVec(mesh, s, u, env)
-  call Sub(mesh, r, b, s)
-
-  ! ----------------------
-  ! δ ← <r⋅r>,
-  ! check convergence for √δ.
-  ! ----------------------
-  delta = Dot(mesh, r, r)
-  if (params%Check(sqrt(delta))) return
-  
-  ! ----------------------
-  ! p̅ ← r,
-  ! s̅ ← Ap̅,
-  ! γ̅ ← <s̅⋅s̅>.
-  ! ----------------------
-  call Set(mesh, p_bar, r)
-  call MatVec(mesh, s_bar, p_bar, env)
-  gamma_bar = Dot(mesh, s_bar, s_bar)
-
-  do
-    ! ----------------------
-    ! α ← <r⋅s̅>/γ̅,
-    ! u ← u + αp̅,
-    ! r ← r - αs̅.
-    ! ----------------------
-    alpha = Dot(mesh, r, s_bar)/gamma_bar
-    call Add(mesh, u, u, p_bar, alpha)
-    call Sub(mesh, r, r, s_bar, alpha)
-
-    ! ----------------------
-    ! α ← <r⋅r>,
-    ! check convergence for √α and √α/√δ.
-    ! ----------------------
-    alpha = Dot(mesh, r, r)
-    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
-
-    ! ----------------------
-    ! p ← s̅,
-    ! s ← As̅.
-    ! ----------------------
-    call Set(mesh, p, s_bar)
-    call MatVec(mesh, s, s_bar, env)
-    
-    ! ----------------------
-    ! β ← <s⋅s̅>/γ̅,
-    ! p ← p - βp̅,
-    ! s ← s - βs̅.
-    ! ----------------------
-    beta = Dot(mesh, s, s_bar)/gamma_bar
-    call Sub(mesh, p, p, p_bar, beta)
-    call Sub(mesh, s, s, s_bar, beta)
-
-    if (.not.first) then
-
-      ! ----------------------
-      ! β ← <s⋅s̿>/γ̿,
-      ! p ← p - βp̿,
-      ! s ← s - βs̿.
-      ! ----------------------
-      beta = Dot(mesh, s, s_bar_bar)/gamma_bar_bar
-      call Sub(mesh, p, p, p_bar_bar, beta)
-      call Sub(mesh, s, s, s_bar_bar, beta)
-
-    end if
-    first = .false.
-
-    ! ----------------------
-    ! γ ← <s⋅s>.
-    ! ----------------------
-    gamma = Dot(mesh, s, s)
-
-    ! ----------------------
-    ! (γ, γ̅, γ̿) ← (γ̿, γ, γ̅),
-    ! (p, p̅, p̿) ← (p̿, p, p̅),
-    ! (s, s̅, s̿) ← (s̿, s, s̅).
-    ! ----------------------
-    gamma_bar_bar = gamma_bar; gamma_bar = gamma
-    t => p_bar_bar; p_bar_bar => p_bar; p_bar => p; p => t
-    t => s_bar_bar; s_bar_bar => s_bar; s_bar => s; s => t
-  end do
-end subroutine Solve_MINRES_DE$rank
-#$end do
-
-end module StormRuler_Solvers_LSQ
+end module StormRuler_Solvers_LSQR

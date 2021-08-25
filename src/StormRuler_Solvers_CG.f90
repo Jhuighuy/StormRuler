@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Solvers_Krylov
+module StormRuler_Solvers_CG
 
 #$use 'StormRuler_Params.fi'
 
@@ -254,4 +254,4 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
 end subroutine Solve_BiCGStab$rank
 #$end do
 
-end module StormRuler_Solvers_Krylov
+end module StormRuler_Solvers_CG

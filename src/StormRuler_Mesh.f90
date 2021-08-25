@@ -404,6 +404,7 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   integer(ip) :: i
   integer(ip), allocatable :: ranges(:)
 
+#$if HAS_OpenMP
   ! ----------------------
   ! Launch the whole range as a block if sequential mode is requested.
   ! ----------------------
@@ -435,6 +436,9 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
     call BlockKernel(ranges(iThread), ranges(iThread + 1) - 1)
   end associate
   !$omp end parallel
+#$else
+  call BlockKernel(mesh%FirstCell(), mesh%LastCell())
+#$endif
 end subroutine tMesh_RunCellKernel_Block
 
 subroutine tMesh_RunCellKernel_Forward(mesh, Kernel)

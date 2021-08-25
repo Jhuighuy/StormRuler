@@ -55,40 +55,38 @@ contains
 !! minimize ‖A[P]y - b‖₂, where x = [P]y, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_LSQR$rank(mesh, x, b, &
+    & MatVec, env, MatVec_T, env_T, params, Precond, Precond_T)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(inout) :: env
+  procedure(tMatVecFunc$rank) :: MatVec, MatVec_T
+  class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFunc$rank), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cc, ss
-  real(dp), pointer :: s(@:,:), t(@:,:), &
-    & r(@:,:), u(@:,:), v(@:,:), w(@:,:)
-  class(*), allocatable :: precond_env
+  real(dp), pointer :: s(@:,:), t(@:,:), u(@:,:), v(@:,:), w(@:,:)
+  class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(s, t, r, u, v, w, mold=x)
+  allocate(s, t, u, v, w, mold=x)
 
   ! ----------------------
   ! β ← ‖b‖, u ← b/β,
-  ! +----------+----------+
-  ! | t ← Aᵀu, |          |
-  ! | s ← Pᵀt, | s ← Aᵀu, |
-  ! +----------+----------+
+  ! t ← Aᵀu, ||
+  ! s ← Pᵀt, || s ← Aᵀu,
   ! α ← ‖s‖, v ← s/α,
   ! w ← v.
   ! ----------------------
   beta = Norm_2(mesh, b); call Scale(mesh, u, b, 1.0_dp/beta)
   if (present(Precond)) then
-    call MatVec(mesh, t, u, env)
-    call Precond(mesh, s, t, MatVec, env, precond_env)
+    call MatVec_T(mesh, t, u, env_T)
+    call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
   else
-    call MatVec(mesh, s, u, env)
+    call MatVec_T(mesh, s, u, env_T)
   end if
   alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
   call Set(mesh, w, v)
@@ -109,16 +107,12 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
   
   do
     ! ----------------------
-    ! +----------+----------+
-    ! | s ← Pv,  |          |
-    ! | t ← As,  | t ← Pv   |
-    ! +----------+----------+
+    ! s ← Pv, ||
+    ! t ← As, || t ← Pv
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! +----------+----------+
-    ! | t ← Aᵀu, |          |
-    ! | s ← Pᵀt, | s ← Aᵀu, |
-    ! +----------+----------+
+    ! t ← Aᵀu, ||
+    ! s ← Pᵀt, || s ← Aᵀu,
     ! s ← s - βv,
     ! α ← ‖s‖, v ← s/α.
     ! ----------------------
@@ -131,19 +125,19 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(Precond)) then
-      call MatVec(mesh, t, u, env)
-      call Precond(mesh, s, t, MatVec, env, precond_env)
+      call MatVec_T(mesh, t, u, env_T)
+      call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
     else
-      call MatVec(mesh, s, u, env)
+      call MatVec_T(mesh, s, u, env_T)
     end if
     call Sub(mesh, s, s, v, beta)
     alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
     
     ! ----------------------
     ! ρ ← √(ρ̅² + β²),
-    ! c ← ρ̅/ρ, s ← β/ρ,
-    ! θ ← sα, ρ̅ ← -cα,
-    ! ϕ ← cϕ̅, ϕ̅ ← sϕ̅.
+    ! cc ← ρ̅/ρ, ss ← β/ρ,
+    ! θ ← ssα, ρ̅ ← -ccα,
+    ! ϕ ← ccϕ̅, ϕ̅ ← ssϕ̅.
     ! ----------------------
     rho = hypot(rho_bar, beta)
     cc = rho_bar/rho; ss = beta/rho
@@ -154,6 +148,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
     ! x ← x + (ϕ/ρ)w,
     ! w ← v - (θ/ρ)w.
     ! check convergence for ϕ̅ and ϕ̅/ϕ̃.
+    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms. )
     ! ----------------------
     call Add(mesh, x, x, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
@@ -161,8 +156,8 @@ subroutine Solve_LSQR$rank(mesh, x, b, MatVec, env, params, Precond)
   end do
 
   ! ----------------------
-  ! t ← x,
-  ! x ← Pt.
+  ! t ← x,  ||
+  ! x ← Pt. || do nothing.
   ! ----------------------
   if (present(Precond)) then
     call Set(mesh, t, x)

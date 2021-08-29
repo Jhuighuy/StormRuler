@@ -42,8 +42,9 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_CG, only: &
   & Solve_CG, Solve_BiCGStab
+use StormRuler_Solvers_MINRES, only: Solve_MINRES
 use StormRuler_Solvers_LSQR, only: &
-  & Solve_LSQR
+  & Solve_LSQR, Solve_LSMR
 #$if HAS_MKL
 use StormRuler_Solvers_MKL, only: &
   & Solve_CG_MKL, Solve_FGMRES_MKL

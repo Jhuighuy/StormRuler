@@ -81,6 +81,8 @@ amount of the matrix-vector products required to construct it.-->
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
   * Least squares solver:
     (`LSQR`, for the general linear problems).
+  * Least squares-MINRES solver:
+    (`LSMR`, for the general linear problems).
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner,

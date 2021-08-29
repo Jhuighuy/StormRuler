@@ -206,4 +206,4 @@ set_target_properties(
 
 # Main is located in C++, so let C++ linker work.
 set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
+  StormRuler PROPERTIES LINKER_LANGUAGE CXX)

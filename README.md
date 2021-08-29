@@ -4,6 +4,10 @@
 **StormRuler** is a very high order multidimensional CFD solver, 
 written in Fortran 2008 and C++17.
 
+<!----------------------------------------------------------------->
+## Compiling
+<!----------------------------------------------------------------->
+
 Supported compilers:
 * _GCC_ version _9.0_ and more recent 
   (tested on _10.3.0_).
@@ -14,12 +18,8 @@ Supported compilers:
 * _NAG Fortran Compiler_ version 7.0 and more recent
   (tested on _7.0 build 7048_).
 
-<!----------------------------------------------------------------->
-## Compiling
-<!----------------------------------------------------------------->
-
 macOS with Intel compilers:
-```bash
+```zsh
 export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
 ```
 
@@ -48,8 +48,7 @@ In order to implement the high performance implicit schemes,
 several auxiliary problems, like systems of linear and nonlinear
 equations, have to be solved.
 
-<!--
-For the sake of convenience, all auxiliary solvers are implemented 
+<!--For the sake of convenience, all auxiliary solvers are implemented 
 in the matrix-free manner: no assembled matrix is required to find 
 a solution of the algebraic problem, only the matrix-vector product 
 function is used.
@@ -63,7 +62,16 @@ product function automatically, using the
 _graph coloring based-algorithm_ in order to minimize an 
 amount of the matrix-vector products required to construct it.-->
 
+Several preconditioners are available in pure matrix-free context,
+although some of them are not parallelized.
+
 **StormRuler** contains:
+- Nonlinear solvers:
+  * _(planned)_ Newton-Raphson solver 
+    (for the general nonlinear problems),
+  * _(planned)_ Jacobian-Free Newton-Raphson solver 
+    (for the general nonlinear problems);
+
 - Matrix-free linear iterative solvers:
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
@@ -71,31 +79,28 @@ amount of the matrix-vector products required to construct it.-->
     (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
-  * _(planned)_ Symmetric LQ solver,
-    (`SYMMLQ`, for indefinite _non-singular symmetric_ linear problems),
-  * _(planned)_ Minimal Resisual solver
+  * _(planned)_ Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
+  * _(planned)_ Minimal Residual-QLP solver
+    (`MINRES_QLP`, for the indefinite _singular symmetric_ 
+     linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
   * MKL Flexible Generalized Minimal Residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
   * Least squares solver:
-    (`LSQR`, for the general linear problems).
+    (`LSQR`, for the general linear problems),
   * Least squares-MINRES solver:
-    (`LSMR`, for the general linear problems).
+    (`LSMR`, for the general linear problems);
 
 - Matrix-free preconditioners:
-  * Block Jacobi preconditioner,
-  * Block LU-SGS preconditioner,
+  * Block Jacobi preconditioner
+    (`Jacobi`),
+  * Block LU-SGS preconditioner
+    (`LU_SGS`),
   * _(planned)_ Block SPAI preconditioner.
 
 <!--
 - Linear direct solvers (embedded into the matrix-free environment):
   * MKL Direct Sparse Solver 
     (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
-
-- Nonlinear solvers:
-  * _(planned)_ Newton-Raphson solver 
-    (for the general nonlinear problems),
-  * _(planned)_ Jacobian-Free Newton-Raphson solver 
-    (for the general nonlinear problems),

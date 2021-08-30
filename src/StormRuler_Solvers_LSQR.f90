@@ -86,10 +86,14 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
-  real(dp), pointer :: s(@:,:), t(@:,:), r(@:,:), u(@:,:), v(@:,:), w(@:,:), z(@:,:)
+  real(dp), pointer :: s(@:,:), t(@:,:), r(@:,:), &
+    & u(@:,:), v(@:,:), w(@:,:), z(@:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(s, t, r, u, v, w, z, mold=x)
+  allocate(t, r, u, v, w, z, mold=x)
+  if (present(Precond)) then
+    allocate(s, mold=x)
+  end if
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -105,20 +109,20 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   ! r ← Ax,
   ! r ← b - r,
   ! β ← ‖r‖, u ← r/β,
-  ! t ← Aᵀu,
-  ! s ← Pᵀt, OR: s ← Aᵀu,
+  ! s ← Aᵀu,
+  ! t ← Pᵀs, OR: t ← Aᵀu,
   ! α ← ‖s‖, v ← s/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(Precond)) then
-    call MatVec_T(mesh, t, u, env_T)
-    call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
-  else
     call MatVec_T(mesh, s, u, env_T)
+    call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+  else
+    call MatVec_T(mesh, t, u, env_T)
   end if
-  alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
+  alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
   ! ----------------------
   ! ϕ̅ ← β, ρ̅ ← α.
@@ -143,10 +147,10 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! t ← As, OR: t ← Pv
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! t ← Aᵀu,
-    ! s ← Pᵀt, OR: s ← Aᵀu,
-    ! s ← s - βv,
-    ! α ← ‖s‖, v ← s/α.
+    ! s ← Aᵀu,
+    ! t ← Pᵀs, OR: t ← Aᵀu,
+    ! t ← t - βv,
+    ! α ← ‖t‖, v ← t/α.
     ! ----------------------
     if (present(Precond)) then
       call Precond(mesh, s, v, MatVec, env, precond_env)
@@ -157,13 +161,13 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(Precond)) then
-      call MatVec_T(mesh, t, u, env_T)
-      call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
-    else
       call MatVec_T(mesh, s, u, env_T)
+      call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+    else
+      call MatVec_T(mesh, t, u, env_T)
     end if
-    call Sub(mesh, s, s, v, beta)
-    alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
+    call Sub(mesh, t, t, v, beta)
+    alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
     
     ! ----------------------
     ! Construct and apply rotation:
@@ -182,7 +186,8 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! z ← z + (ϕ/ρ)w,
     ! w ← v - (θ/ρ)w.
     ! check convergence for ϕ̅ and ϕ̅/ϕ̃.
-    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms. )
+    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms; )
+    !   ϕ̅⋅|ρ̅| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
     ! ----------------------
     call Add(mesh, z, z, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
@@ -262,7 +267,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     & h(@:,:), h_bar(@:,:), u(@:,:), v(@:,:), z(@:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(s, t, r, u, v, h, h_bar, z, mold=x)
+  allocate(t, r, u, v, h, h_bar, z, mold=x)
+  if (present(Precond)) then
+    allocate(s, mold=x)
+  end if
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -278,25 +286,25 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   ! r ← Ax,
   ! r ← b - r,
   ! β ← ‖r‖, u ← r/β,
-  ! t ← Aᵀu,
-  ! s ← Pᵀt, OR: s ← Aᵀu,
+  ! s ← Aᵀu,
+  ! t ← Pᵀs, OR: t ← Aᵀu,
   ! α ← ‖s‖, v ← s/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(Precond)) then
-    call MatVec_T(mesh, t, u, env_T)
-    call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
-  else
     call MatVec_T(mesh, s, u, env_T)
+    call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+  else
+    call MatVec_T(mesh, t, u, env_T)
   end if
-  alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
+  alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
   ! ----------------------
   ! α̅ ← α, ψ̅ ← αβ,
   ! ρ ← 1, ρ̅ ← 1, ζ ← 1,
-  ! c̅s̅ ← 1, s̅n̅ ← 0.
+  ! c̅s̅ ← 1, s̅n̅ ← 0,
   ! z ← {0}ᵀ,
   ! h ← v, h̅ ← {0}ᵀ.
   ! ----------------------
@@ -320,10 +328,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     ! t ← As, OR: t ← Pv
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! t ← Aᵀu,
-    ! s ← Pᵀt, OR: s ← Aᵀu,
-    ! s ← s - βv,
-    ! α ← ‖s‖, v ← s/α.
+    ! s ← Aᵀu,
+    ! t ← Pᵀs, OR: t ← Aᵀu,
+    ! t ← t - βv,
+    ! α ← ‖t‖, v ← t/α.
     ! ----------------------
     if (present(Precond)) then
       call Precond(mesh, s, v, MatVec, env, precond_env)
@@ -334,13 +342,13 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(Precond)) then
-      call MatVec_T(mesh, t, u, env_T)
-      call Precond_T(mesh, s, t, MatVec_T, env_T, precond_env_T)
-    else
       call MatVec_T(mesh, s, u, env_T)
+      call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+    else
+      call MatVec_T(mesh, t, u, env_T)
     end if
-    call Sub(mesh, s, s, v, beta)
-    alpha = Norm_2(mesh, s); call Scale(mesh, v, s, 1.0_dp/alpha)
+    call Sub(mesh, t, t, v, beta)
+    alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
     
     ! ----------------------
     ! Construct and apply rotations:
@@ -365,7 +373,7 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     ! z ← z + (ψ/ζ)h̅,
     ! h ← v - (θ/ρ)h.
     ! check convergence for |ψ̅| and |ψ̅/ψ̃|.
-    ! ( |ψ̅| and |ψ̃| implicitly contain Aᵀ-residual norms, ‖Aᵀr‖. )
+    ! ( |ψ̅| and |ψ̃| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
     ! ----------------------
     call Sub(mesh, h_bar, h, h_bar, theta_bar*rho/zeta)
     zeta = rho*rho_bar

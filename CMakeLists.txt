@@ -49,7 +49,7 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
 endif()
 
 target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-O3 -march=native>)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.

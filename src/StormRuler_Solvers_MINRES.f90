@@ -109,8 +109,9 @@ end subroutine Solve_SYMMLQ$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear self-adjoint indefinite operator equation: 
+!! Solve a linear self-adjoint indefinite non-singular operator equation: 
 !! [P¹ᐟ²]A[P¹ᐟ²]y = [P¹ᐟ²]b, [P¹ᐟ²]y = x, using the MINRES method.
+!! ( P = Pᵀ > 0 is required.  )
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
@@ -125,7 +126,7 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp) :: alpha, beta, beta_bar, gamma, gamma_hat, &
-    & delta, delta_hat, epsilon, epsilon_bar, tau, phi, psi, cs, sn
+    & delta, delta_hat, epsilon, epsilon_bar, tau, phi, phi_tilde, cs, sn
   real(dp), pointer :: t(@:,:), p(@:,:), q(@:,:), q_bar(@:,:), &
     & z(@:,:), z_bar(@:,:), z_bar_bar(@:,:), d(@:,:), d_bar(@:,:), d_bar_bar(@:,:)
   class(*), allocatable :: precond_env
@@ -133,25 +134,33 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   allocate(p, q, q_bar, z, z_bar, z_bar_bar, d, d_bar, d_bar_bar, mold=x)
 
   ! ----------------------
+  ! Initialize:
+  ! d̿ ← {0}ᵀ,
+  ! d̅ ← {0}ᵀ,
   ! z̿ ← 0,
-  ! z̅ ← b,
+  ! z̅ ← Ax,
+  ! z̅ ← b - z̅,
   ! q ← Pz̅,
   ! β̅ ← 1, β ← √<q⋅z̅>,
-  ! ϕ ← β, δ ← 0, ϵ ← 0,
-  ! cs ← -1, sn ← 0,
-  ! d̅ ← {0}ᵀ,
-  ! d ← {0}ᵀ,
-  ! x ← {0}ᵀ.
+  ! ϕ ← β, ψ̃ ← 0, δ ← 0, ϵ ← 0,
+  ! cs ← -1, sn ← 0.
   ! ----------------------
+  call Fill(mesh, d_bar_bar, 0.0_dp)
+  call Fill(mesh, d_bar, 0.0_dp)
   call Fill(mesh, z_bar_bar, 0.0_dp)
-  call Set(mesh, z_bar, b)
+  call MatVec(mesh, z_bar, x, env)
+  call Sub(mesh, z_bar, b, z_bar)
   call Precond(mesh, q, z_bar, MatVec, env, precond_env)
   beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
-  call Fill(mesh, d_bar_bar, 0.0_dp)
-  call Fill(mesh, d_bar, 0.0_dp)
-  call Fill(mesh, x, 0.0_dp)
+
+  ! ----------------------
+  ! ϕ̃ ← ϕ,
+  ! check convergence for ϕ.
+  ! ----------------------
+  phi_tilde = phi
+  if (params%Check(phi_tilde)) return
 
   do
     ! ----------------------
@@ -180,15 +189,16 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     ! ϵ̅ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β
     ! γ̂ ← √(γ² + β²),
     ! cs ← γ/γ̂, sn ← β/γ̂
-    ! ψ ← ϕ⋅√(γ² + δ²), τ ← cs⋅ϕ, ϕ ← sn⋅ϕ
+    ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ
     ! ----------------------
     delta_hat = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
     gamma_hat = hypot(gamma, beta)
     cs = gamma/gamma_hat; sn = beta/gamma_hat
-    psi = phi*hypot(gamma, delta); tau = cs*phi; phi = sn*phi
+    tau = cs*phi; phi = sn*phi
     
     ! ----------------------
+    ! Update solution:
     ! d ← (1/γ̂)q̅ - (δ̂/γ̂)d̅,
     ! d ← d - (ϵ̅/γ̂)d̿,
     ! x ← x + τd,
@@ -199,9 +209,11 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     call Add(mesh, x, x, d, tau)
     t => d_bar_bar; d_bar_bar => d_bar; d_bar => d; d => t
 
-    if (params%Check(abs(phi), abs(1.0_dp))) exit
-    !print *, abs(phi), abs(psi)
-    !print *, '***', ResidualNorm(mesh, x, b, MatVec, env)
+    ! ----------------------
+    ! check convergence for ϕ and ϕ/ϕ̃.
+    ! ( ϕ and ϕ̃ implicitly contain residual norms. )
+    ! ----------------------
+    if (params%Check(phi, phi/phi_tilde)) exit
   end do
 end subroutine Solve_MINRES$rank
 #$end do

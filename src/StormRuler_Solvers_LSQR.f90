@@ -134,10 +134,10 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   call Set(mesh, w, v)
 
   ! ----------------------
-  ! ϕ̃ ← β,
+  ! ϕ̃ ← ϕ̅,
   ! check convergence for ϕ̃.
   ! ----------------------
-  phi_tilde = beta
+  phi_tilde = phi_bar
   if (params%Check(phi_tilde)) return
   
   do
@@ -186,7 +186,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! z ← z + (ϕ/ρ)w,
     ! w ← v - (θ/ρ)w.
     ! check convergence for ϕ̅ and ϕ̅/ϕ̃.
-    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms; )
+    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms;
     !   ϕ̅⋅|ρ̅| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
     ! ----------------------
     call Add(mesh, z, z, w, phi/rho)

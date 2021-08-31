@@ -58,7 +58,7 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite operator equation: 
-!! [P]Au = [P]b, using the Preconditioned Conjugate Gradients method.
+!! [P¹ᐟ²]A[P¹ᐟ²]y = [P¹ᐟ²]b, [P¹ᐟ²]y = u, using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)

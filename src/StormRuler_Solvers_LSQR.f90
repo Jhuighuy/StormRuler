@@ -60,7 +60,7 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! minimize{‖A[P]y - b‖₂}, where x = [P]y, using the LSQR method.
+!! minimize{‖A[P]y - b‖₂}, x = [P]y, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_LSQR$rank(mesh, x, b, &
@@ -233,10 +233,9 @@ subroutine Solve_LSQR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
 end subroutine Solve_LSQR_Symmetric$rank
 #$end do
 
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! minimize{‖A[P]y - b‖₂}, where x = [P]y, using the LSMR method.
+!! minimize{‖A[P]y - b‖₂}, x = [P]y, using the LSMR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_LSMR$rank(mesh, x, b, &

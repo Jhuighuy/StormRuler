@@ -135,7 +135,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   ! ----------------------
   ! ϕ̃ ← ϕ̅,
-  ! check convergence for ϕ̃.
+  ! Check convergence for ϕ̃.
   ! ----------------------
   phi_tilde = phi_bar
   if (params%Check(phi_tilde)) return
@@ -185,7 +185,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! Update z-solution:
     ! z ← z + (ϕ/ρ)w,
     ! w ← v - (θ/ρ)w.
-    ! check convergence for ϕ̅ and ϕ̅/ϕ̃.
+    ! Check convergence for ϕ̅ and ϕ̅/ϕ̃.
     ! ( ϕ̅ and ϕ̃ implicitly contain residual norms;
     !   ϕ̅⋅|ρ̅| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
     ! ----------------------
@@ -315,7 +315,7 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
 
   ! ----------------------
   ! ψ̃ ← ψ̅,
-  ! check convergence for ψ̃.
+  ! Check convergence for ψ̃.
   ! ----------------------
   psi_tilde = psi_bar
   if (params%Check(psi_tilde)) return
@@ -371,7 +371,7 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     ! ζ ← ρρ̅,
     ! z ← z + (ψ/ζ)h̅,
     ! h ← v - (θ/ρ)h.
-    ! check convergence for |ψ̅| and |ψ̅/ψ̃|.
+    ! Check convergence for |ψ̅| and |ψ̅/ψ̃|.
     ! ( |ψ̅| and |ψ̃| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
     ! ----------------------
     call Sub(mesh, h_bar, h, h_bar, theta_bar*rho/zeta)

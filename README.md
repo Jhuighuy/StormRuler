@@ -79,7 +79,7 @@ although some of them are not parallelized.
     (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
-  * _(planned)_ Minimal Residual solver
+  * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * _(planned)_ Minimal Residual-QLP solver
     (`MINRES_QLP`, for the indefinite _singular symmetric_ 

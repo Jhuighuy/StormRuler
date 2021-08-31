@@ -63,34 +63,6 @@ end interface Solve_GMRES
 
 contains
 
-!! ----------------------------------------------------------------- !!
-!! 
-!! ----------------------------------------------------------------- !!
-subroutine Symm_Ortho(a, b, cs, sn, rr)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in) :: a, b
-  real(dp), intent(out) :: cs, sn, rr
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  if (b == 0.0_dp) then
-    sn = 0.0_dp; rr = abs(a)
-    cs = merge(1.0_dp, sign(1.0_dp, a), a == 0.0_dp)
-  else if (a == 0.0_dp) then
-    cs = 0.0_dp; rr = abs(b)
-    sn = sign(1.0_dp, b)
-  else if (abs(b) > abs(a)) then
-    associate(t => a/b)
-      sn = sign(1.0_dp, b)/hypot(1.0_dp, t)
-      cs = sn*t; rr = b/sn
-    end associate
-  else if (abs(a) > abs(b)) then
-    associate(t => a/b)
-      cs = sign(1.0_dp, a)/hypot(1.0_dp, t)
-      sn = cs*t; rr = a/cs
-    end associate
-  end if
-end subroutine Symm_Ortho
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !!
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -109,7 +81,7 @@ end subroutine Solve_SYMMLQ$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear self-adjoint indefinite non-singular operator equation: 
+!! Solve a linear self-adjoint indefinite operator equation: 
 !! [P¹ᐟ²]A[P¹ᐟ²]y = [P¹ᐟ²]b, [P¹ᐟ²]y = x, using the MINRES method.
 !! ( P = Pᵀ > 0 is required.  )
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -125,13 +97,25 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   procedure(tPrecondFunc$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
+  ! ----------------------
+  ! [1] Paige, C. and M. Saunders. 
+  !     “Solution of Sparse Indefinite Systems of Linear Equations.” 
+  !     SIAM Journal on Numerical Analysis 12 (1975): 617-629.
+  ! [2] Choi, S.-C. T.
+  !     “Iterative Methods for Singular Linear Equations and Least-Squares Problems” 
+  !     PhD thesis, ICME, Stanford University.
+  ! ----------------------
+
   real(dp) :: alpha, beta, beta_bar, gamma, gamma_hat, &
     & delta, delta_hat, epsilon, epsilon_bar, tau, phi, phi_tilde, cs, sn
   real(dp), pointer :: t(@:,:), p(@:,:), q(@:,:), q_bar(@:,:), &
-    & z(@:,:), z_bar(@:,:), z_bar_bar(@:,:), d(@:,:), d_bar(@:,:), d_bar_bar(@:,:)
+    & d(@:,:), d_bar(@:,:), d_bar_bar(@:,:), z(@:,:), z_bar(@:,:), z_bar_bar(@:,:)
   class(*), allocatable :: precond_env
 
-  allocate(p, q, q_bar, z, z_bar, z_bar_bar, d, d_bar, d_bar_bar, mold=x)
+  allocate(p, d, d_bar, d_bar_bar, z, z_bar, z_bar_bar, mold=x)
+  if (present(Precond)) then
+    allocate(q, q_bar, mold=x)
+  end if
 
   ! ----------------------
   ! Initialize:
@@ -140,7 +124,7 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! z̿ ← 0,
   ! z̅ ← Ax,
   ! z̅ ← b - z̅,
-  ! q ← Pz̅,
+  ! q ← Pz̅, OR: q ← z̅,
   ! β̅ ← 1, β ← √<q⋅z̅>,
   ! ϕ ← β, ψ̃ ← 0, δ ← 0, ϵ ← 0,
   ! cs ← -1, sn ← 0.
@@ -150,46 +134,54 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   call Fill(mesh, z_bar_bar, 0.0_dp)
   call MatVec(mesh, z_bar, x, env)
   call Sub(mesh, z_bar, b, z_bar)
-  call Precond(mesh, q, z_bar, MatVec, env, precond_env)
+  if (present(Precond)) then
+    call Precond(mesh, q, z_bar, MatVec, env, precond_env)
+  else
+    q => z_bar
+  end if
   beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
   ! ----------------------
   ! ϕ̃ ← ϕ,
-  ! check convergence for ϕ.
+  ! Check convergence for ϕ.
   ! ----------------------
   phi_tilde = phi
   if (params%Check(phi_tilde)) return
 
   do
     ! ----------------------
-    ! q ← q/β.
+    ! Continue the Lanczos process:
     ! p ← Aq,
-    ! α ← <q⋅p>,
-    ! z ← p - (α/β)z̅,
+    ! α ← <q⋅p>/β²,
+    ! z ← (1/β)p - (α/β)z̅,
     ! z ← z - (β/β̅)z̿,
     ! q̅ ← q,
-    ! q ← Pz,
+    ! q ← Pz, OR: q ← z,
     ! β̅ ← β, β ← √<q⋅z>,
     ! z̿ ← z̅, z̅ ← z.
     ! ----------------------
-    call Scale(mesh, q, q, 1.0_dp/beta)
     call MatVec(mesh, p, q, env)
-    alpha = Dot(mesh, q, p)
-    call Sub(mesh, z, p, z_bar, alpha/beta)
+    alpha = Dot(mesh, q, p)/(beta**2)
+    call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, z_bar_bar, beta/beta_bar)
-    t => q_bar; q_bar => q; q => t
-    call Precond(mesh, q, z, MatVec, env, precond_env)
+    if (present(Precond)) then
+      t => q_bar; q_bar => q; q => t
+      call Precond(mesh, q, z, MatVec, env, precond_env)
+    else
+      q_bar => q; q => z
+    end if
     beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
     t => z_bar_bar; z_bar_bar => z_bar; z_bar => z; z => t
 
     ! ----------------------
-    ! δ̂ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α
-    ! ϵ̅ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β
+    ! Construct and apply rotations:
+    ! δ̂ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α,
+    ! ϵ̅ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β,
     ! γ̂ ← √(γ² + β²),
-    ! cs ← γ/γ̂, sn ← β/γ̂
-    ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ
+    ! cs ← γ/γ̂, sn ← β/γ̂,
+    ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ.
     ! ----------------------
     delta_hat = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
@@ -199,18 +191,18 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     
     ! ----------------------
     ! Update solution:
-    ! d ← (1/γ̂)q̅ - (δ̂/γ̂)d̅,
+    ! d ← (1/(β̅γ̂))q̅ - (δ̂/γ̂)d̅,
     ! d ← d - (ϵ̅/γ̂)d̿,
     ! x ← x + τd,
     ! d̿ ← d̅, d̅ ← d.
     ! ----------------------
-    call Sub(mesh, d, q_bar, d_bar, delta_hat/gamma_hat, 1.0_dp/gamma_hat)
+    call Sub(mesh, d, q_bar, d_bar, delta_hat/gamma_hat, 1.0_dp/(beta_bar*gamma_hat))
     call Sub(mesh, d, d, d_bar_bar, epsilon_bar/gamma_hat)
     call Add(mesh, x, x, d, tau)
     t => d_bar_bar; d_bar_bar => d_bar; d_bar => d; d => t
 
     ! ----------------------
-    ! check convergence for ϕ and ϕ/ϕ̃.
+    ! Check convergence for ϕ and ϕ/ϕ̃.
     ! ( ϕ and ϕ̃ implicitly contain residual norms. )
     ! ----------------------
     if (params%Check(phi, phi/phi_tilde)) exit

@@ -106,46 +106,46 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   !     PhD thesis, ICME, Stanford University.
   ! ----------------------
 
-  real(dp) :: alpha, beta, beta_bar, gamma, gamma_hat, &
-    & delta, delta_hat, epsilon, epsilon_bar, tau, phi, phi_tilde, cs, sn
-  real(dp), pointer :: t(@:,:), p(@:,:), q(@:,:), q_bar(@:,:), &
-    & d(@:,:), d_bar(@:,:), d_bar_bar(@:,:), z(@:,:), z_bar(@:,:), z_bar_bar(@:,:)
+  real(dp) :: alpha, beta, beta_dot, gamma, gamma_hat, &
+    & delta, delta_hat, epsilon, epsilon_dot, tau, phi, phi_tilde, cs, sn
+  real(dp), pointer :: tmp(@:,:), p(@:,:), q(@:,:), q_dot(@:,:), &
+    & w(@:,:), w_dot(@:,:), w_ddot(@:,:), z(@:,:), z_dot(@:,:), z_ddot(@:,:)
   class(*), allocatable :: precond_env
 
-  allocate(p, d, d_bar, d_bar_bar, z, z_bar, z_bar_bar, mold=x)
+  allocate(p, w, w_dot, w_ddot, z, z_dot, z_ddot, mold=x)
   if (present(Precond)) then
-    allocate(q, q_bar, mold=x)
+    allocate(q, q_dot, mold=x)
   end if
 
   ! ----------------------
   ! Initialize:
-  ! d̿ ← {0}ᵀ,
-  ! d̅ ← {0}ᵀ,
-  ! z̿ ← 0,
-  ! z̅ ← Ax,
-  ! z̅ ← b - z̅,
-  ! q ← Pz̅, OR: q ← z̅,
-  ! β̅ ← 1, β ← √<q⋅z̅>,
-  ! ϕ ← β, ψ̃ ← 0, δ ← 0, ϵ ← 0,
+  ! ẇ ← {0}ᵀ,
+  ! ẅ ← {0}ᵀ,
+  ! ż ← Ax,     // Modification to
+  ! ż ← b - ż,  // utilize the initial guess.
+  ! z̈ ← 0,
+  ! q ← Pż, OR: q ← ż,
+  ! β̇ ← 1, β ← √<q⋅ż>,
+  ! ϕ ← β, δ ← 0, ϵ ← 0,
   ! cs ← -1, sn ← 0.
   ! ----------------------
-  call Fill(mesh, d_bar_bar, 0.0_dp)
-  call Fill(mesh, d_bar, 0.0_dp)
-  call Fill(mesh, z_bar_bar, 0.0_dp)
-  call MatVec(mesh, z_bar, x, env)
-  call Sub(mesh, z_bar, b, z_bar)
+  call Fill(mesh, w_dot, 0.0_dp)
+  call Fill(mesh, w_ddot, 0.0_dp)
+  call MatVec(mesh, z_dot, x, env)
+  call Sub(mesh, z_dot, b, z_dot)
+  call Fill(mesh, z_ddot, 0.0_dp)
   if (present(Precond)) then
-    call Precond(mesh, q, z_bar, MatVec, env, precond_env)
+    call Precond(mesh, q, z_dot, MatVec, env, precond_env)
   else
-    q => z_bar
+    q => z_dot
   end if
-  beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
+  beta_dot = 1.0_dp; beta = sqrt(Dot(mesh, q, z_dot))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
   ! ----------------------
   ! ϕ̃ ← ϕ,
-  ! Check convergence for ϕ.
+  ! Check convergence for ϕ̃.
   ! ----------------------
   phi_tilde = phi
   if (params%Check(phi_tilde)) return
@@ -155,51 +155,51 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     ! Continue the Lanczos process:
     ! p ← Aq,
     ! α ← <q⋅p>/β²,
-    ! z ← (1/β)p - (α/β)z̅,
-    ! z ← z - (β/β̅)z̿,
-    ! q̅ ← q,
+    ! z ← (1/β)p - (α/β)ż,
+    ! z ← z - (β/β̇)z̈,
+    ! q̇ ← q,
     ! q ← Pz, OR: q ← z,
-    ! β̅ ← β, β ← √<q⋅z>,
-    ! z̿ ← z̅, z̅ ← z.
+    ! β̇ ← β, β ← √<q⋅z>,
+    ! z̈ ← ż, ż ← z.
     ! ----------------------
     call MatVec(mesh, p, q, env)
     alpha = Dot(mesh, q, p)/(beta**2)
-    call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
-    call Sub(mesh, z, z, z_bar_bar, beta/beta_bar)
+    call Sub(mesh, z, p, z_dot, alpha/beta, 1.0_dp/beta)
+    call Sub(mesh, z, z, z_ddot, beta/beta_dot)
     if (present(Precond)) then
-      t => q_bar; q_bar => q; q => t
+      tmp => q_dot; q_dot => q; q => tmp
       call Precond(mesh, q, z, MatVec, env, precond_env)
     else
-      q_bar => q; q => z
+      q_dot => q; q => z
     end if
-    beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
-    t => z_bar_bar; z_bar_bar => z_bar; z_bar => z; z => t
+    beta_dot = beta; beta = sqrt(Dot(mesh, q, z))
+    tmp => z_ddot; z_ddot => z_dot; z_dot => z; z => tmp
 
     ! ----------------------
     ! Construct and apply rotations:
     ! δ̂ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α,
-    ! ϵ̅ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β,
-    ! γ̂ ← √(γ² + β²),
+    ! ϵ̇ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β,
+    ! γ̂ ← (γ² + β²)¹ᐟ²,
     ! cs ← γ/γ̂, sn ← β/γ̂,
     ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ.
     ! ----------------------
     delta_hat = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
-    epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
+    epsilon_dot = epsilon; epsilon = sn*beta; delta = -cs*beta
     gamma_hat = hypot(gamma, beta)
     cs = gamma/gamma_hat; sn = beta/gamma_hat
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------
     ! Update solution:
-    ! d ← (1/(β̅γ̂))q̅ - (δ̂/γ̂)d̅,
-    ! d ← d - (ϵ̅/γ̂)d̿,
+    ! w ← (1/(β̇γ̂))q̇ - (δ̂/γ̂)ẇ,
+    ! w ← w - (ϵ̅/γ̂)ẅ,
     ! x ← x + τd,
-    ! d̿ ← d̅, d̅ ← d.
+    ! ẅ ← ẇ, ẇ ← w.
     ! ----------------------
-    call Sub(mesh, d, q_bar, d_bar, delta_hat/gamma_hat, 1.0_dp/(beta_bar*gamma_hat))
-    call Sub(mesh, d, d, d_bar_bar, epsilon_bar/gamma_hat)
-    call Add(mesh, x, x, d, tau)
-    t => d_bar_bar; d_bar_bar => d_bar; d_bar => d; d => t
+    call Sub(mesh, w, q_dot, w_dot, delta_hat/gamma_hat, 1.0_dp/(beta_dot*gamma_hat))
+    call Sub(mesh, w, w, w_ddot, epsilon_dot/gamma_hat)
+    call Add(mesh, x, x, w, tau)
+    tmp => w_ddot; w_ddot => w_dot; w_dot => w; w => tmp
 
     ! ----------------------
     ! Check convergence for ϕ and ϕ/ϕ̃.

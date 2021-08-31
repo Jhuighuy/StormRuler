@@ -171,7 +171,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     
     ! ----------------------
     ! Construct and apply rotation:
-    ! ρ ← √(ρ̅² + β²),
+    ! ρ ← (ρ̅² + β²)¹ᐟ²,
     ! cs ← ρ̅/ρ, sn ← β/ρ,
     ! θ ← sn⋅α, ρ̅ ← -cs⋅α,
     ! ϕ ← cs⋅ϕ̅, ϕ̅ ← sn⋅ϕ̅.
@@ -351,10 +351,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     
     ! ----------------------
     ! Construct and apply rotations:
-    ! ρ ← √(α̅² + β²),
+    ! ρ ← (α̅² + β²)¹ᐟ²,
     ! cs ← α̅/ρ, sn ← β/ρ,
     ! θ ← sn⋅α, α̅ ← cs⋅α,
-    ! θ̅ ← s̅n̅⋅ρ, ρ̅ ← √[(c̅s̅⋅ρ)² + θ²],
+    ! θ̅ ← s̅n̅⋅ρ, ρ̅ ← [(c̅s̅⋅ρ)² + θ²]¹ᐟ²,
     ! c̅s̅ ← c̅s̅⋅ρ/ρ̅, s̅n̅ ← θ/ρ̅,
     ! ψ ← c̅s̅⋅ψ̅, ψ̅ ← -s̅n̅⋅ψ̅.
     ! ----------------------

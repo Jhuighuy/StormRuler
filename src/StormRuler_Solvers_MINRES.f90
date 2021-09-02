@@ -40,12 +40,6 @@ use StormRuler_Solvers_Base, only: ResidualNorm
 
 implicit none
 
-interface Solve_SYMMLQ
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_SYMMLQ$rank
-#$end do
-end interface Solve_SYMMLQ
-
 interface Solve_MINRES
 #$do rank = 0, NUM_RANKS
   module procedure Solve_MINRES$rank
@@ -63,22 +57,19 @@ end interface Solve_GMRES
 
 contains
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!!
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_SYMMLQ$rank(mesh, u, b, MatVec, env, params, Precond)
+subroutine SymOrtho(a, b, cs, sn, rr)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
-  class(*), intent(inout) :: env
-  class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  real(dp), intent(in), value :: a, b
+  real(dp), intent(out) :: cs, sn, rr
   ! >>>>>>>>>>>>>>>>>>>>>>
-end subroutine Solve_SYMMLQ$rank
-#$end do
+
+  rr = hypot(a, b)
+  if (rr > 0.0_dp) then
+    cs = a/rr; sn = b/rr
+  else
+    cs = 1.0_dp; sn = 0.0_dp
+  end if
+end subroutine SymOrtho
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint indefinite operator equation: 
@@ -108,6 +99,7 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
 
   real(dp) :: alpha, beta, beta_dot, gamma, gamma_hat, &
     & delta, delta_hat, epsilon, epsilon_dot, tau, phi, phi_tilde, cs, sn
+    & delta, delta_dot, epsilon, epsilon_dot, tau, phi, phi_tilde, cs, sn
   real(dp), pointer :: tmp(@:,:), p(@:,:), q(@:,:), q_dot(@:,:), &
     & w(@:,:), w_dot(@:,:), w_ddot(@:,:), z(@:,:), z_dot(@:,:), z_ddot(@:,:)
   class(*), allocatable :: precond_env
@@ -178,26 +170,28 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     ! ----------------------
     ! Construct and apply rotations:
     ! δ̂ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α,
+    ! δ̇ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α,
     ! ϵ̇ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β,
     ! γ̂ ← (γ² + β²)¹ᐟ²,
     ! cs ← γ/γ̂, sn ← β/γ̂,
+    ! cs, sn, γ ← SymOrtho(γ, β),
     ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ.
     ! ----------------------
     delta_hat = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
+    delta_dot = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilon_dot = epsilon; epsilon = sn*beta; delta = -cs*beta
-    gamma_hat = hypot(gamma, beta)
-    cs = gamma/gamma_hat; sn = beta/gamma_hat
+    call SymOrtho(gamma*1.0_dp, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------
     ! Update solution:
-    ! w ← (1/(β̇γ̂))q̇ - (δ̂/γ̂)ẇ,
-    ! w ← w - (ϵ̅/γ̂)ẅ,
-    ! x ← x + τd,
+    ! w ← (1/(β̇γ))q̇ - (δ̇/γ)ẇ,
+    ! w ← w - (ϵ̇/γ)ẅ,
+    ! x ← x + τw,
     ! ẅ ← ẇ, ẇ ← w.
     ! ----------------------
-    call Sub(mesh, w, q_dot, w_dot, delta_hat/gamma_hat, 1.0_dp/(beta_dot*gamma_hat))
-    call Sub(mesh, w, w, w_ddot, epsilon_dot/gamma_hat)
+    call Sub(mesh, w, q_dot, w_dot, delta_dot/gamma, 1.0_dp/(beta_dot*gamma))
+    call Sub(mesh, w, w, w_ddot, epsilon_dot/gamma)
     call Add(mesh, x, x, w, tau)
     tmp => w_ddot; w_ddot => w_dot; w_dot => w; w => tmp
 

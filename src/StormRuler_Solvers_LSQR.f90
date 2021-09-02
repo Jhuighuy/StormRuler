@@ -27,7 +27,6 @@ module StormRuler_Solvers_LSQR
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
-use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
   & Norm_2, Fill, Set, Scale, Add, Sub

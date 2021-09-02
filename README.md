@@ -87,9 +87,6 @@ although some of them are not parallelized.
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
 
 - Matrix-free linear iterative least squares solvers:
-  * _(planned)_ Minimal Residual-QLP solver
-    (`MINRES_QLP`, for the indefinite _symmetric_ 
-     linear least squares problems),
   * Least squares-QR solver:
     (`LSQR`, for the general linear least squares problems),
   * Least squares-MINRES solver:

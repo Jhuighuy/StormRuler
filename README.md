@@ -81,17 +81,19 @@ although some of them are not parallelized.
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
-  * _(planned)_ Minimal Residual-QLP solver
-    (`MINRES_QLP`, for the indefinite _singular symmetric_ 
-     linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
   * MKL Flexible Generalized Minimal Residual method solver
     (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
-  * Least squares solver:
-    (`LSQR`, for the general linear problems),
+
+- Matrix-free linear iterative least squares solvers:
+  * _(planned)_ Minimal Residual-QLP solver
+    (`MINRES_QLP`, for the indefinite _symmetric_ 
+     linear least squares problems),
+  * Least squares-QR solver:
+    (`LSQR`, for the general linear least squares problems),
   * Least squares-MINRES solver:
-    (`LSMR`, for the general linear problems);
+    (`LSMR`, for the general linear least squares problems);
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner

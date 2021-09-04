@@ -42,7 +42,11 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_CG, only: &
   & Solve_CG, Solve_BiCGStab
-use StormRuler_Solvers_MINRES, only: Solve_MINRES
+use StormRuler_Solvers_Chebyshev, only: &
+  & Solve_Chebyshev
+use StormRuler_Solvers_MINRES, only: &
+  & Solve_MINRES
+
 use StormRuler_Solvers_LSQR, only: &
   & Solve_LSQR, Solve_LSMR
 #$if HAS_MKL
@@ -728,12 +732,15 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pA, env, c) &
   call c_f_procpointer(cptr=pA, fptr=A)
   ! ----------------------
   allocate(Params)
-  call Params%Init(1.0D-8, &
-    &              1.0D-8, 2000)
+  
   if (c == 'L') then
-    call Solve_LSQR(gMesh, u, b, wA, Params, wA, Params, Params, Precondition_LU_SGS$rank, Precondition_LU_SGS$rank)
+    call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
+    call Solve_MINRES(gMesh, u, b, wA, Params, Params)
+    !call Solve_CG(gMesh, u, b, wA, Params, Params, Precondition_LU_SGS$rank)
   else
-    call Solve_CG(gMesh, u, b, wA, Params, Params)
+    call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
+    call Solve_Chebyshev(gMesh, u, b, 1.0_dp, 164.0_dp, wA, Params, Params)
+    error stop 229
   end if
 contains
   subroutine wA(mesh, v, w, wEnv)

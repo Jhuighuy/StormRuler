@@ -4,18 +4,9 @@ implicit none
 real(dp), parameter :: pi = 4*atan(1.0D0)
 integer(ip), Parameter :: Nx = 100, Ny = 100  
 Real(dp), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
-contains
-
-Function to_str(k)
-  integer(ip), Intent(In) :: k
-  Character(Len=20) :: to_str
-  Write (to_str, *) k
-  to_str = adjustl(to_str)
-End Function to_str  
-
 end module helpers
   
-#$if True
+#$if False
 program nsch
   use helpers
   use StormRuler_Helpers

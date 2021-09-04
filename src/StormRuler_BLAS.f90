@@ -67,6 +67,12 @@ interface Fill
 #$end do
 end interface Fill
 
+interface Fill_Random
+#$do rank = 0, NUM_RANKS
+  module procedure Fill_Random$rank
+#$end do
+end interface Fill_Random
+
 interface Set
 #$do rank = 0, NUM_RANKS
   module procedure Set$rank
@@ -280,6 +286,41 @@ contains
     
   end subroutine Fill_Kernel
 end subroutine Fill$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Fill vector components randomly: y ← {αᵢ}ᵀ, αᵢ ~ U(a, b).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Fill_Random$rank(mesh, y, a, b)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(inout) :: mesh
+  real(dp), intent(inout) :: y(@:,:)
+  real(dp), intent(in), optional :: a, b
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  ! TODO: not very parallel..
+  call mesh%SetRange(parallel=.false.)
+  call mesh%RunCellKernel_Block(Fill_Random_Kernel)
+  call mesh%SetRange()
+
+contains
+  subroutine Fill_Random_Kernel(firstCell, lastCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    integer :: iCell
+
+    do iCell = firstCell, lastCell
+      call random_number(y(@:,iCell))
+      if (present(a).and.present(b)) then
+        y(@:,iCell) = min(a, b) + abs(b - a)*y(@:,iCell)
+      end if
+    end do
+    
+  end subroutine Fill_Random_Kernel
+end subroutine Fill_Random$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

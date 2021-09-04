@@ -150,6 +150,7 @@ void CahnHilliard_Step(tField<0> c, tField<1> v,
   rhs << MAP(&dWdC, c);
   rhs << c - dt*CONV(c, v) + dt*DIVGRAD(rhs);
 
+  c_hat << c;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
     out << 0.0;
     out += DIVGRAD(in);
@@ -181,7 +182,7 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << p_hat + beta*p;
 }
 
-double rho0 = 1.0, rho1 = 1.0;
+double rho0 = 1.0, rho1 = 2.0;
  
 #if 1
 void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
@@ -205,12 +206,12 @@ void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v,
   rhs << 0.0;
   rhs += (1.0/dt*DIV(v_hat));
 
-  p_hat << 0.0;
+  p_hat << p;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
     out << 0.0;
     FDM_DivWGrad(out, 1.0, rho_inv, in);
     //out += DIVGRAD(in);
-  }, p_hat, rhs);
+  }, p_hat, rhs, 'L');
 
   v_hat << v_hat - dt*(GRAD(p_hat)/rho);
   p_hat << p_hat + beta*p;
@@ -264,16 +265,8 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
 ///////////////////////////////////////////////
 
-int not_a_main() {
+int main() {
   std::cout << "Hello from C++ " << sizeof(int) << std::endl;
-
-  {
-    std::ofstream file("test_dWdC.txt");
-    for (int i = 0; i <= 2000; ++i) {
-      double c = i/1000.0 - 1.0;
-      file << c << ' ' << dWdC(c) << std::endl;
-    }
-  }
 
   Lib_InitializeMesh();
 
@@ -315,8 +308,8 @@ int not_a_main() {
     _Lib_IO_Add(rho_hat, "rho");
     _Lib_IO_End();
 
-    for (int L = 1; L <= 200; ++L) {
-      for (int M = 0; M < 10; ++M) {
+    for (int L = 1; L <= 2000; ++L) {
+      for (int M = 0; M < 1; ++M) {
         CahnHilliard_Step(c, v, c_hat, w_hat);
         NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
         //CustomNavierStokes_Step(p, v, c_hat, w_hat, nPart_hat, rho_hat, p_hat, v_hat);
@@ -334,84 +327,6 @@ int not_a_main() {
       _Lib_IO_End();
     }
   }
-/*
-  {
-    double dt, gamma;
-    tField<0> rhs = AllocField<0>(), c = AllocField<0>(), u = AllocField<0>(); 
-    
-    rhs << MAP(&dWdC, c);
-    rhs += dt*DIVGRAD(rhs);
-    
-    u << 0.0;
-    u += DIVGRAD(u);
-    u << c + gamma*dt*DIVGRAD(u);
-
-    BLAS_SFuncProd(rhs, rhs, [&](double* x, double* in, double* out) {
-      std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << std::endl;
-    });
-  }
-*/
-
-/*
-  {
-    tField<1> u = AllocField<1>();
-    tField<1> v = AllocField<1>();
-    tField<1> w = AllocField<1>();
-
-    w << 1.0*u + 2.0*v + 3.0*w;
-
-    tField<0> q = AllocField<0>();
-    w << 1.0*u + 2.0*v - 3.0*15.0*GRAD(q) - 3.0*w;
-    //w << v - GRAD(q);
-
-    BLAS_SFuncProd(w, w, [&](double* x, double* in, double* out) {
-      std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << ' ' << in[1] << std::endl;
-    });
-  }
-*/
-
-/*
-  {
-    auto u = AllocField<0>();
-    auto v = AllocField<0>();
-    auto w = AllocField<0>();
-    auto q = AllocField<1>();
-
-    w << 1.0*u + 2.0*v - 3.0*15.0*DIV(q) - 4.0*w;
-      BLAS_SFuncProd(w, w, [&](double* x, double* in, double* out) {
-      std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << std::endl;
-    });
-  }
-*/
-
-/*
-  {
-    auto u = AllocField<0>();
-    auto v = AllocField<0>();
-    auto w = AllocField<0>();
-    auto q = AllocField<0>();
-
-    w << 1.0*u + 2.0*v - 3.0*15.0*DIVGRAD(q) - 4.0*w;
-      BLAS_SFuncProd(w, w, [&](double* x, double* in, double* out) {
-      std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << std::endl;
-    });
-  }
-*/
-
-/*
-  BLAS_Add(u, u, v, 2.0, 1.0);
-
-  BLAS_SFuncProd(v, u, [&](double* x, double* in, double* out) {
-    std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << ' ' << in[1] << std::endl;
-    out[0] = 228.0;
-    out[1] = 282.0;
-  });
-
-  BLAS_SFuncProd(u, v, [&](double* x, double* in, double* out) {
-    std::cout << x[0] << ' ' << x[1] << ' ' << in[0] << ' ' << in[1] << std::endl;
-    out[0] = 228.0;
-  });
-*/
 
   std::cout << "Dosvidanya from C++" << std::endl;
 

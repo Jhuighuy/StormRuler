@@ -104,7 +104,7 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! Pu ← diag(A)⁻¹u.
   ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  Pu(@:,:) = u(@:,:)/diag_env%diag(@:,:)
+  Pu(@:,:) = -u(@:,:)/diag_env%diag(@:,:)
 
 end subroutine Precondition_Jacobi$rank
 #$end do

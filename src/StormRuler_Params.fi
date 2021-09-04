@@ -25,7 +25,7 @@
 
 #$let NUM_RANKS = 2
 
-#$let HAS_OpenMP = True
+#$let HAS_OpenMP = False
 
 #$let HAS_MKL = True
 

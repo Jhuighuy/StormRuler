@@ -219,7 +219,7 @@ subroutine Solve_LSQR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! Using LSMR in symmetric case is not recommended,
-  ! use SYMMQL/MINRES[-QLP] instead.
+  ! use MINRES instead.
   ! ----------------------
 
   if (present(Precond)) then
@@ -406,7 +406,7 @@ subroutine Solve_LSMR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! Using LSMR in symmetric case is not recommended,
-  ! use SYMMQL/MINRES[-QLP] instead.
+  ! use MINRES instead.
   ! ----------------------
 
   if (present(Precond)) then

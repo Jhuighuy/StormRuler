@@ -155,7 +155,7 @@ subroutine Precondition_LU_SGS$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! ----------------------
   call Solve_Triangular(mesh, v, u, diag_env%diag, 'U', MatVec, env)
   ! TODO: this is not a correct diagonal multiplication in block case!
-  v(@:,:) = -diag_env%diag(@:,:)*v(@:,:)
+  v(@:,:) = diag_env%diag(@:,:)*v(@:,:)
   call Solve_Triangular(mesh, Pu, v, diag_env%diag, 'L', MatVec, env)
 
 end subroutine Precondition_LU_SGS$rank

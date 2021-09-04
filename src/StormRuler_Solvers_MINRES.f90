@@ -26,7 +26,7 @@ module StormRuler_Solvers_MINRES
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
   & Dot, Norm_2, Fill, Set, Scale, Add, Sub
@@ -94,7 +94,7 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! Initialize:
   ! ẇ ← {0}ᵀ,
   ! ẅ ← {0}ᵀ,
-  ! ż ← Ax,     // Modification to
+  ! ż ← Ax,     // Modification in order to
   ! ż ← b - ż,  // utilize the initial guess.
   ! z̈ ← 0,
   ! q ← Pż, OR: q ← ż,
@@ -180,7 +180,6 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   end do
   
 contains
-
   subroutine SymOrtho(a, b, cs, sn, rr)
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in), value :: a, b

@@ -106,7 +106,7 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
     ! ----------------------
     ! z ← Pr,
     ! IF k == 1:
-    !   α ← 2/d,
+    !   α ← 1/d,
     !   p ← z,
     ! ELSE:
     !   IF k == 2: β ← (c⋅α)²/2,
@@ -119,7 +119,7 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
       & call Precond(mesh, z, r, MatVec, env, precond_env)
     if (first) then
       first = .false.
-      alpha = 2.0_dp/d
+      alpha = 1.0_dp/d
       call Set(mesh, p, z)
     else
       if (second) then

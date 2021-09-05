@@ -73,6 +73,8 @@ although some of them are not parallelized.
     (for the general nonlinear problems);
 
 - Matrix-free linear iterative solvers:
+  * Chebyshev Semi-Iterative solver
+    (`Chebyshev`, for the _definite symmetric_ linear problems),
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
   * MKL Conjugate Gradients solver 

@@ -143,7 +143,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! ----------------------
     ! Continue the bidiagonalization:
     ! s ← Pv,
-    ! t ← As, OR: t ← Pv
+    ! t ← As, OR: t ← Pv,
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
     ! s ← Aᵀu,

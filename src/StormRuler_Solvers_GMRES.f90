@@ -31,8 +31,7 @@ use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
   & Dot, Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Base, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
-use StormRuler_Solvers_Base, only: ResidualNorm
+use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

@@ -31,13 +31,30 @@ use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, &
   & @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
   & MatVecProd_Diagonal, Solve_Triangular
-use StormRuler_Solvers_Base, only: &
-  & @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Preconsitioner matrix-vector product function.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+abstract interface
+#$do rank = 0, NUM_RANKS
+  subroutine tPrecondFunc$rank(mesh, Pu, u, MatVec, env, precond_env)
+    import :: dp, tMesh, tMatVecFunc$rank
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    class(tMesh), intent(inout) :: mesh
+    real(dp), intent(in), target :: u(@:,:)
+    real(dp), intent(inout), target :: Pu(@:,:)
+    procedure(tMatVecFunc$rank) :: MatVec
+    class(*), intent(inout) :: env
+    class(*), intent(inout), allocatable, target :: precond_env
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end subroutine tPrecondFunc$rank
+#$end do
+end interface
 
 #$do rank = 0, NUM_RANKS
 type :: tPrecondEnv_Diag$rank

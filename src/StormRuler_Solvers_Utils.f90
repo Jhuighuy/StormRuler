@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Solvers_Base
+module StormRuler_Solvers_Utils
 
 #$use 'StormRuler_Params.fi'
 
@@ -30,30 +30,12 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
   & Set, Sub, Norm_2
+use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Preconsitioner matrix-vector product function.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-abstract interface
-#$do rank = 0, NUM_RANKS
-  subroutine tPrecondFunc$rank(mesh, Pu, u, MatVec, env, precond_env)
-    import :: dp, tMesh, tMatVecFunc$rank
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    class(tMesh), intent(inout) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Pu(@:,:)
-    procedure(tMatVecFunc$rank) :: MatVec
-    class(*), intent(inout) :: env
-    class(*), intent(inout), allocatable, target :: precond_env
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tPrecondFunc$rank
-#$end do
-end interface
 
 interface ResidualNorm
 #$do rank = 0, NUM_RANKS
@@ -155,4 +137,4 @@ real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
 end function ResidualNorm_Squared$rank
 #$end do
 
-end module StormRuler_Solvers_Base
+end module StormRuler_Solvers_Utils

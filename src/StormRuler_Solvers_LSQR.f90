@@ -85,8 +85,8 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
-  real(dp), pointer :: s(@:,:), t(@:,:), r(@:,:), &
-    & u(@:,:), v(@:,:), w(@:,:), z(@:,:)
+  real(dp), pointer :: s(@:,:), t(@:,:), &
+    & r(@:,:), u(@:,:), v(@:,:), w(@:,:), z(@:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
   allocate(t, r, u, v, w, z, mold=x)
@@ -108,8 +108,9 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   ! r ← Ax,
   ! r ← b - r,
   ! β ← ‖r‖, u ← r/β,
-  ! s ← Aᵀu,
-  ! t ← Pᵀs, OR: t ← Aᵀu,
+  ! IF (P ≠ NONE) THEN: 
+  !   s ← Aᵀu,
+  !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
   ! α ← ‖s‖, v ← s/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
@@ -142,12 +143,14 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! s ← Pv,
-    ! t ← As, OR: t ← Pv,
+    ! IF (P ≠ NONE) THEN: 
+    !   s ← Pv,
+    !   t ← As, ELSE: t ← Pv, END IF
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! s ← Aᵀu,
-    ! t ← Pᵀs, OR: t ← Aᵀu,
+    ! IF (P ≠ NONE) THEN: 
+    !   s ← Aᵀu,
+    !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
     ! t ← t - βv,
     ! α ← ‖t‖, v ← t/α.
     ! ----------------------
@@ -284,8 +287,9 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   ! r ← Ax,
   ! r ← b - r,
   ! β ← ‖r‖, u ← r/β,
-  ! s ← Aᵀu,
-  ! t ← Pᵀs, OR: t ← Aᵀu,
+  ! IF (P ≠ NONE) THEN: 
+  !   s ← Aᵀu,
+  !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
   ! α ← ‖s‖, v ← s/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
@@ -322,12 +326,14 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! s ← Pv,
-    ! t ← As, OR: t ← Pv
+    ! IF (P ≠ NONE) THEN: 
+    !   s ← Pv,
+    !   t ← As, ELSE: t ← Pv, END IF
     ! t ← t - αu,
     ! β ← ‖t‖, u ← t/β,
-    ! s ← Aᵀu,
-    ! t ← Pᵀs, OR: t ← Aᵀu,
+    ! IF (P ≠ NONE) THEN: 
+    !   s ← Aᵀu,
+    !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
     ! t ← t - βv,
     ! α ← ‖t‖, v ← t/α.
     ! ----------------------

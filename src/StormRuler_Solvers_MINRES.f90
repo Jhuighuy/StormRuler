@@ -97,7 +97,8 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! ż ← Ax,     // Modification in order to
   ! ż ← b - ż,  // utilize the initial guess.
   ! z̈ ← 0,
-  ! q ← Pż, OR: q ← ż,
+  ! IF P THEN:
+  !   q ← Pż, ELSE: q ← ż, END IF
   ! β̇ ← 1, β ← √<q⋅ż>,
   ! ϕ ← β, δ ← 0, ϵ ← 0,
   ! cs ← -1, sn ← 0.
@@ -131,7 +132,8 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
     ! z ← (1/β)p - (α/β)ż,
     ! z ← z - (β/β̇)z̈,
     ! q̇ ← q,
-    ! q ← Pz, OR: q ← z,
+    ! IF (P ≠ NONE) THEN: 
+    !   q ← Pz, ELSE: q ← z, END IF
     ! β̇ ← β, β ← √<q⋅z>,
     ! z̈ ← ż, ż ← z.
     ! ----------------------

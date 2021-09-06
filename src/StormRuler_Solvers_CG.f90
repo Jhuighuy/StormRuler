@@ -127,7 +127,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
     if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
 
     ! ----------------------
-    ! z ← Pr
+    ! z ← Pr,
     ! α ← <r⋅z>,
     ! ----------------------
     if (present(Precond)) &
@@ -136,7 +136,7 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
 
     ! ----------------------
     ! β ← α/γ,
-    ! p ← z + β⋅p.
+    ! p ← z + β⋅p,
     ! γ ← α.
     ! ----------------------
     beta = SafeDivide(alpha, gamma)
@@ -198,7 +198,7 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
 
   do
     ! ----------------------
-    ! μ ← <r̃⋅r>
+    ! μ ← <r̃⋅r>,
     ! β ← (μ/ρ)⋅(α/ω),
     ! ρ ← μ.
     ! ----------------------

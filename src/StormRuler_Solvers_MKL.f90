@@ -231,9 +231,8 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
       cycle
     end if
     if (rci_request == 2) then
-      associate( &
-        & initialResidualNorm => sqrt(dparams(3)), &
-        & currentResidualNorm => sqrt(dparams(5)) )
+      associate(initialResidualNorm => sqrt(dparams(3)), &
+              & currentResidualNorm => sqrt(dparams(5)))
         ! Initial residual norm is reset after the restart, so we
         ! should keep the true one for the correct relative error test.
         if (trueInitialResidualNorm == 0.0_dp) &

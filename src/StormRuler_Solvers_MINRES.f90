@@ -93,13 +93,13 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! Initialize:
   ! ẇ ← {0}ᵀ,
   ! ẅ ← {0}ᵀ,
-  ! ż ← Ax,     // Modification in order to
-  ! ż ← b - ż,  // utilize the initial guess.
-  ! z̈ ← 0,
-  ! q ← [P]ż,
-  ! β̇ ← 1, β ← √<q⋅ż>,
-  ! ϕ ← β, δ ← 0, ϵ ← 0,
-  ! cs ← -1, sn ← 0.
+  ! 𝒛̅ ← 𝓐𝒙,     // Modification in order to
+  ! 𝒛̅ ← 𝒃 - 𝒛̅,  // utilize the initial guess.
+  ! 𝒛̿ ← {0}ᵀ,
+  ! 𝒒 ← [𝓟]𝒛̅,
+  ! 𝛽̅ ← 1, 𝛽 ← √<𝒒⋅𝒛̅>,
+  ! 𝜑 ← 𝛽, 𝛿 ← 0, 𝜀 ← 0,
+  ! 𝑐𝑠 ← -1, 𝑠𝑛 ← 0.
   ! ----------------------
   call Fill(mesh, w_bar, 0.0_dp)
   call Fill(mesh, w_bbar, 0.0_dp)

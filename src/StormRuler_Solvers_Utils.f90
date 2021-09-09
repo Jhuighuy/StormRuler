@@ -55,7 +55,7 @@ end interface ResidualNorm_Squared
 contains
 
 !! ----------------------------------------------------------------- !!
-!! Compute squared residual norm: ‖b - A[P]y‖₂.
+!! Compute squared residual norm: ‖𝒃 - 𝓐[𝓟]𝒚‖₂.
 !! ----------------------------------------------------------------- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function ResidualNorm$rank(mesh, y, b, MatVec, env, Precond, precond_env)
@@ -72,10 +72,11 @@ real(dp) function ResidualNorm$rank(mesh, y, b, MatVec, env, Precond, precond_en
   allocate(r, x, mold=y)
 
   ! ----------------------
-  ! x ← Py,
-  ! r ← Ax, OR: r ← Ay. 
-  ! r ← b - r.
-  ! OUT ← ‖r‖₂
+  ! IF 𝓟 ≠ NONE:
+  !   𝒙 ← 𝓟𝒚, 𝒓 ← 𝓐𝒙, 
+  ! ELSE: 𝒓 ← 𝓐𝒚, END IF 
+  ! 𝒓 ← 𝒃 - 𝒓.
+  ! OUT ← ‖𝒓‖₂
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, x, y, MatVec, env, precond_env)
@@ -90,7 +91,7 @@ end function ResidualNorm$rank
 #$end do
 
 !! ----------------------------------------------------------------- !!
-!! Compute squared residual norm: ‖(A[P])ᵀ(b - A[P]y)‖₂.
+!! Compute squared residual norm: ‖(𝓐[𝓟])ᵀ(𝒃 - 𝓐[𝓟]𝒚)‖₂.
 !! ----------------------------------------------------------------- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
@@ -108,9 +109,10 @@ real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
   allocate(r, x, mold=y)
 
   ! ----------------------
-  ! x ← Py,
-  ! r ← Ax, OR: r ← Ay. 
-  ! r ← b - r.
+  ! IF 𝓟 ≠ NONE:
+  !   𝒙 ← 𝓟𝒚, 𝒓 ← 𝓐𝒙, 
+  ! ELSE: 𝒓 ← 𝓐𝒚, END IF 
+  ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, x, y, MatVec, env, precond_env)
@@ -121,9 +123,10 @@ real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
   call Sub(mesh, r, b, r)
 
   ! ----------------------
-  ! x ← Aᵀr, 
-  ! r ← Pᵀx, OR: x ← r, r ← Aᵀx.
-  ! OUT ← ‖r‖₂.
+  ! IF 𝓟 ≠ NONE:
+  !   𝒙 ← 𝓐ᵀ𝒓, 𝒓 ← 𝓟ᵀ𝒙, 
+  ! ELSE: 𝒙 ← 𝒓, 𝒓 ← 𝓐ᵀ𝒙, END IF
+  ! OUT ← ‖𝒓‖₂.
   ! ----------------------
   if (present(Precond)) then
     call MatVec_T(mesh, x, r, env_T)

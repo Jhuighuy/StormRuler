@@ -171,7 +171,7 @@ elemental function FD1_C8(u_llll, u_lll, u_ll, u_l, u_r, u_rr, u_rrr, u_rrrr)
 end function FD1_C8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate gradient: v ← v - λ∇u.
+!! The central FDM-approximate gradient: 𝒗 ← 𝒗 - 𝜆∇𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Central$rank(mesh, v, lambda, u)
@@ -182,7 +182,7 @@ subroutine FDM_Gradient_Central$rank(mesh, v, lambda, u)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
@@ -274,7 +274,7 @@ end subroutine FDM_Gradient_Central$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate divergence: v ← v - λ∇⋅u.
+!! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u)
@@ -286,7 +286,7 @@ subroutine FDM_Divergence_Central$rank(mesh, v, lambda, u)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
@@ -510,7 +510,7 @@ elemental function FD1_F8(u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr, u_rrrrr
 end function FD1_F8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The forward FDM-approximate gradient: v ← v - λ∇u.
+!! The forward FDM-approximate gradient: 𝒗 ← 𝒗 - 𝜆∇𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Forward$rank(mesh, v, lambda, u, &
@@ -523,7 +523,7 @@ subroutine FDM_Gradient_Forward$rank(mesh, v, lambda, u, &
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
@@ -666,7 +666,7 @@ end subroutine FDM_Gradient_Forward$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The backward FDM-approximate divergence: v ← v - λ∇⋅u.
+!! The backward FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u, &
@@ -679,7 +679,7 @@ subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u, &
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
@@ -825,7 +825,7 @@ end subroutine FDM_Divergence_Backward$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate convection: v ← v - λ∇⋅ua.
+!! The central FDM-approximate convection: 𝒗 ← 𝒗 - 𝜆∇⋅𝒂𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Convection_Central$rank(mesh, v, lambda, u, a)
@@ -839,15 +839,15 @@ subroutine FDM_Convection_Central$rank(mesh, v, lambda, u, a)
   allocate(q(size(a, dim=1), @{size(u, dim=$$)}@, size(u, dim=$rank+1)))
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
   end if
 
   ! ----------------------
-  ! q ← ua,
-  ! v ← v - λ∇⋅q.
+  ! 𝒒 ← 𝒂𝒖,
+  ! 𝒗 ← 𝒗 - 𝜆∇⋅𝒒.
   ! ----------------------
   call Mul_Outer(mesh, q, a, u)
   call FDM_Divergence_Central(mesh, v, lambda, q)
@@ -923,7 +923,7 @@ elemental function FD2_C8(u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr)
 end function FD2_C8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate Laplacian: v ← v + λΔu.
+!! The FDM-approximate Laplacian: 𝒗 ← 𝒗 + 𝜆Δ𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
@@ -934,7 +934,7 @@ subroutine FDM_Laplacian_Central$rank(mesh, v, lambda, u)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
@@ -1029,7 +1029,7 @@ end subroutine FDM_Laplacian_Central$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate nonlinear Laplacian: v ← v + λΔf(u).
+!! The FDM-approximate nonlinear Laplacian: 𝒗 ← 𝒗 + 𝜆Δ𝑓(𝒖).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
@@ -1044,15 +1044,15 @@ subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
   allocate(w, mold=u)
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
   end if
 
   ! ----------------------
-  ! w ← f(u),
-  ! v ← v + λΔw.
+  ! 𝒘 ← 𝑓(𝒖),
+  ! 𝒗 ← 𝒗 + 𝜆Δ𝒘.
   ! ----------------------
   call FuncProd(mesh, w, u, f)
   call FDM_Laplacian_Central(mesh, v, lambda, w)
@@ -1060,7 +1060,7 @@ end subroutine FDM_LaplacianF_Central$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate Bilaplacian: v ← v + λΔ²u.
+!! The FDM-approximate Bilaplacian: 𝒗 ← 𝒗 + 𝜆Δ²𝒖.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_Bilaplacian_Central$rank(mesh, v, lambda, u)
@@ -1074,16 +1074,16 @@ subroutine FDM_Bilaplacian_Central$rank(mesh, v, lambda, u)
   allocate(w, mold=u)
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return
   end if
   
   ! ----------------------
-  ! w ← 0,
-  ! w ← w + Δu.
-  ! v ← v + λΔw.
+  ! 𝒘 ← 0,
+  ! 𝒘 ← 𝒘 + Δ𝒖,
+  ! 𝒗 ← 𝒗 + 𝜆Δ𝒘.
   ! ----------------------
   call Fill(mesh, w, 0.0_dp)
   call FDM_Laplacian_Central(mesh, w, 1.0_dp, u)
@@ -1095,7 +1095,7 @@ end subroutine FDM_Bilaplacian_Central$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Second order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! Second order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -1107,7 +1107,7 @@ elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
 end function WFD2_C2
 
 !! ----------------------------------------------------------------- !!
-!! Fourth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! Fourth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
   &                        u, w_r, u_r, w_rr, u_rr)
@@ -1120,7 +1120,7 @@ elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C4
 
 !! ----------------------------------------------------------------- !!
-!! Sixth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! Sixth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
   &                        u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
@@ -1133,7 +1133,7 @@ elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C6
 
 !! ----------------------------------------------------------------- !!
-!! Eighth order accuracy central undivided d(w⋅du/dx)/dx approximation.
+!! Eighth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
   &                        u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
@@ -1146,7 +1146,7 @@ elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w
 end function WFD2_C8
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate variable coefficient Laplacian: v ← v + λ∇⋅(w∇u).
+!! The FDM-approximate variable coefficient Laplacian: 𝒗 ← 𝒗 + 𝜆∇⋅(𝒘∇𝒖).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
@@ -1157,7 +1157,7 @@ subroutine FDM_DivWGrad_Central$rank(mesh, v, lambda, w, u)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
-  ! Fast exit in case λ=0.
+  ! Fast exit in case 𝜆 ≡ 0.
   ! ----------------------
   if (lambda == 0.0_dp) then
     return

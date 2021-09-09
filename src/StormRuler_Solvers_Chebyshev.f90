@@ -51,8 +51,8 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite operator equation: 
-!! PAx = Pb, using the Chebyshev semi-iterative method.
-!! Some accurate estimates of spectrum of PA are required. 
+!! [𝓟]𝓐𝒙 = [𝓟]𝒃, using the Chebyshev semi-iterative method.
+!! Some accurate estimates of spectrum of [𝓟]𝓐 are required. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_Chebyshev$rank(mesh, x, b, &
@@ -80,38 +80,38 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
   end if
 
   ! ----------------------
-  ! c ← (λₘₐₓ - λₘᵢₙ)/2,
-  ! d ← (λₘₐₓ + λₘᵢₙ)/2.
+  ! 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
+  ! 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   ! ----------------------
   first = .true.; second = .true.
   c = 0.5_dp*(lambda_max - lambda_min)
   d = 0.5_dp*(lambda_max + lambda_min)
 
   ! ----------------------
-  ! r ← Ax,
-  ! r ← b - r.
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
   call MatVec(mesh, r, x, env)
   call Sub(mesh, r, b, r)
 
   ! ----------------------
-  ! δ ← ‖r‖₂,
-  ! Check convergence for δ.
+  ! 𝛿 ← ‖𝒓‖₂,
+  ! Check convergence for 𝛿.
   ! ----------------------
   delta = Norm_2(mesh, r)
   if (params%Check(delta)) return
 
   do
     ! ----------------------
-    ! z ← Pr,
-    ! IF k == 1:
-    !   α ← 1/d,
-    !   p ← z,
+    ! 𝒛 ← 𝓟𝒓,
+    ! IF 𝑘 == 1:
+    !   𝛼 ← 1/𝑑,
+    !   𝒑 ← 𝒛,
     ! ELSE:
-    !   IF k == 2: β ← (c⋅α)²/2,
-    !   ELSE: β ← (c⋅α/2)², END IF
-    !   α ← 1/(d - β/α),
-    !   p ← z + βp.
+    !   IF 𝑘 == 2: 𝛽 ← ½(𝑐⋅𝛼)²,
+    !   ELSE: 𝛽 ← (½⋅𝑐⋅𝛼)², END IF
+    !   𝛼 ← 1/(𝑑 - 𝛽/𝛼),
+    !   𝒑 ← 𝒛 + 𝛽𝒑.
     ! END IF
     ! ----------------------
     if (present(Precond)) &
@@ -132,17 +132,17 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
     end if
 
     ! ----------------------
-    ! x ← x + αp,
-    ! r ← Ax,
-    ! r ← b - r.
+    ! 𝒙 ← 𝒙 + 𝛼𝒑,
+    ! 𝒓 ← 𝓐𝒙,
+    ! 𝒓 ← 𝒃 - 𝒓.
     ! ----------------------
     call Add(mesh, x, x, p, alpha)
     call MatVec(mesh, r, x, env)
     call Sub(mesh, r, b, r)
 
     ! ----------------------
-    ! β ← ‖r‖₂,
-    ! Check convergence for β and β/δ.
+    ! 𝛽 ← ‖𝒓‖₂,
+    ! Check convergence for 𝛽 and 𝛽/𝛿.
     ! ----------------------
     beta = Norm_2(mesh, r)
     if (params%Check(beta, beta/delta)) exit

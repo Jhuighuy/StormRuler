@@ -28,9 +28,8 @@ module StormRuler_Solvers_Precond
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill, &
-  & @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
-  & MatVecProd_Diagonal, Solve_Triangular
+use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
+  & Fill, MatVecProd_Diagonal, Solve_Triangular
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -80,14 +79,14 @@ end interface Precondition_LU_SGS
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Jacobi preconditioner: P ← diag(A)⁻¹.
+!! Jacobi preconditioner: 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
+subroutine Precondition_Jacobi$rank(mesh, Px, x, MatVec, env, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: u(@:,:)
-  real(dp), intent(inout), target :: Pu(@:,:)
+  real(dp), intent(in), target :: x(@:,:)
+  real(dp), intent(inout), target :: Px(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
@@ -110,39 +109,39 @@ subroutine Precondition_Jacobi$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! Build the preconditioner.
   ! ----------------------
   if (.not.allocated(diag_env%diag)) then
-    allocate(diag_env%diag, mold=u)
+    allocate(diag_env%diag, mold=x)
 
     ! TODO: this is not a correct diagonal extraction in block case!
-    call Fill(mesh, Pu, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Pu, MatVec, env)
+    call Fill(mesh, Px, 1.0_dp)
+    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec, env)
   end if
 
   ! ----------------------
-  ! Pu ← diag(A)⁻¹u.
+  ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
   ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  Pu(@:,:) = -u(@:,:)/diag_env%diag(@:,:)
+  Px(@:,:) = -x(@:,:)/diag_env%diag(@:,:)
 
 end subroutine Precondition_Jacobi$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! LU-SGS preconditioner: P ← tril(A)⁻¹⋅diag(A)⋅triu(A)⁻¹.
+!! LU-SGS preconditioner: 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝘥𝘪𝘢𝘨(𝓐)𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Precondition_LU_SGS$rank(mesh, Pu, u, MatVec, env, precond_env)
+subroutine Precondition_LU_SGS$rank(mesh, Px, x, MatVec, env, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: u(@:,:)
-  real(dp), intent(inout), target :: Pu(@:,:)
+  real(dp), intent(in), target :: x(@:,:)
+  real(dp), intent(inout), target :: Px(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   class(tPrecondEnv_Diag$rank), pointer :: diag_env
-  real(dp), allocatable :: v(@:,:)
-  allocate(v, mold=u)
+  real(dp), allocatable :: y(@:,:)
+  allocate(y, mold=x)
 
   ! ----------------------
   ! Cast preconditioner environment.
@@ -159,21 +158,21 @@ subroutine Precondition_LU_SGS$rank(mesh, Pu, u, MatVec, env, precond_env)
   ! Build the preconditioner.
   ! ----------------------
   if (.not.allocated(diag_env%diag)) then
-    allocate(diag_env%diag, mold=u)
+    allocate(diag_env%diag, mold=x)
 
-    call Fill(mesh, Pu, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Pu, MatVec, env)
+    call Fill(mesh, Px, 1.0_dp)
+    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec, env)
   end if
 
   ! ----------------------
-  !  v ← triu(A)⁻¹u,
-  !  v ← diag(A)  v,
-  ! Pu ← tril(A)⁻¹v.
+  ! 𝒚 ← 𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙,
+  ! 𝒚 ← 𝘥𝘪𝘢𝘨(𝓐)𝒚,
+  ! 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝒚.
   ! ----------------------
-  call Solve_Triangular(mesh, v, u, diag_env%diag, 'U', MatVec, env)
+  call Solve_Triangular(mesh, y, x, diag_env%diag, 'U', MatVec, env)
   ! TODO: this is not a correct diagonal multiplication in block case!
-  v(@:,:) = diag_env%diag(@:,:)*v(@:,:)
-  call Solve_Triangular(mesh, Pu, v, diag_env%diag, 'L', MatVec, env)
+  y(@:,:) = diag_env%diag(@:,:)*y(@:,:)
+  call Solve_Triangular(mesh, Px, y, diag_env%diag, 'L', MatVec, env)
 
 end subroutine Precondition_LU_SGS$rank
 #$end do

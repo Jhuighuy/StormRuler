@@ -59,7 +59,7 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! minimize{‖A[P]y - b‖₂}, x = [P]y, using the LSQR method.
+!! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_LSQR$rank(mesh, x, b, &
@@ -97,21 +97,21 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   ! ----------------------
   ! Utilize the initial guess.
   ! Consider the decomposition:
-  ! x = x₀ + z. (*)
+  ! 𝒙 = 𝒙₀ + 𝒛. (*)
   ! Substituting (*) into the equation, we get:
-  ! A[P]y = r, where z = [P]y and r = b - Ax₀.
-  ! The last equations can be solved with y₀ = {0}ᵀ.
+  ! 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
+  ! The last equations can be solved with 𝒚₀ = {0}ᵀ.
   ! ----------------------
 
   ! ----------------------
   ! Initialize:
-  ! r ← Ax,
-  ! r ← b - r,
-  ! β ← ‖r‖, u ← r/β,
-  ! IF (P ≠ NONE) THEN: 
-  !   s ← Aᵀu,
-  !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
-  ! α ← ‖s‖, v ← s/α.
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒓,
+  ! 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
+  ! IF 𝓟 ≠ NONE: 
+  !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
+  ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+  ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
   call Sub(mesh, r, b, r)
@@ -125,17 +125,17 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
   ! ----------------------
-  ! ϕ̅ ← β, ρ̅ ← α.
-  ! z ← {0}ᵀ,
-  ! w ← v,
+  ! 𝜑̅ ← 𝛽, 𝜚̅ ← 𝛼.
+  ! 𝒛 ← {0}ᵀ,
+  ! 𝒘 ← 𝒗,
   ! ----------------------
   phi_bar = beta; rho_bar = alpha
   call Fill(mesh, z, 0.0_dp)
   call Set(mesh, w, v)
 
   ! ----------------------
-  ! ϕ̃ ← ϕ̅,
-  ! Check convergence for ϕ̃.
+  ! 𝜑̃ ← 𝜑̅,
+  ! Check convergence for 𝜑̃.
   ! ----------------------
   phi_tilde = phi_bar
   if (params%Check(phi_tilde)) return
@@ -143,16 +143,16 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! IF (P ≠ NONE) THEN: 
-    !   s ← Pv,
-    !   t ← As, ELSE: t ← Pv, END IF
-    ! t ← t - αu,
-    ! β ← ‖t‖, u ← t/β,
-    ! IF (P ≠ NONE) THEN: 
-    !   s ← Aᵀu,
-    !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
-    ! t ← t - βv,
-    ! α ← ‖t‖, v ← t/α.
+    ! IF 𝓟 ≠ NONE: 
+    !   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
+    ! ELSE: 𝒕 ← 𝓐𝒗, END IF
+    ! 𝒕 ← 𝒕 - 𝛼𝒖,
+    ! 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
+    ! IF 𝓟 ≠ NONE:
+    !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
+    ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+    ! 𝒕 ← 𝒕 - 𝛽𝒗,
+    ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(Precond)) then
       call Precond(mesh, s, v, MatVec, env, precond_env)
@@ -173,10 +173,10 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     
     ! ----------------------
     ! Construct and apply rotation:
-    ! ρ ← (ρ̅² + β²)¹ᐟ²,
-    ! cs ← ρ̅/ρ, sn ← β/ρ,
-    ! θ ← sn⋅α, ρ̅ ← -cs⋅α,
-    ! ϕ ← cs⋅ϕ̅, ϕ̅ ← sn⋅ϕ̅.
+    ! 𝜚 ← (𝜚̅² + 𝛽²)¹ᐟ²,
+    ! 𝑐𝑠 ← 𝜚̅/𝜚, 𝑠𝑛 ← 𝛽/𝜚,
+    ! 𝜃 ← 𝑠𝑛⋅𝛼, 𝜚̅ ← -𝑐𝑠⋅𝛼,
+    ! 𝜑 ← 𝑐𝑠⋅𝜑, 𝜑̅ ← 𝑠𝑛⋅𝜑̅.
     ! ----------------------
     rho = hypot(rho_bar, beta)
     cs = rho_bar/rho; sn = beta/rho
@@ -184,12 +184,12 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     phi = cs*phi_bar; phi_bar = sn*phi_bar
 
     ! ----------------------
-    ! Update z-solution:
-    ! z ← z + (ϕ/ρ)w,
-    ! w ← v - (θ/ρ)w.
-    ! Check convergence for ϕ̅ and ϕ̅/ϕ̃.
-    ! ( ϕ̅ and ϕ̃ implicitly contain residual norms;
-    !   ϕ̅⋅|ρ̅| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
+    ! Update 𝒛-solution:
+    ! 𝒛 ← 𝒛 + (𝜑/𝜚)𝒘,
+    ! 𝒘 ← 𝒗 - (𝜃/𝜚)𝒘.
+    ! Check convergence for 𝜑̅ and 𝜑̅/𝜑̃.
+    ! ( 𝜑̅ and 𝜑̃ implicitly contain residual norms;
+    !   𝜑̅|𝜚̅| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖𝓐([𝓟])ᵀ𝒓‖. )
     ! ----------------------
     call Add(mesh, z, z, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
@@ -197,9 +197,10 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   end do
 
   ! ----------------------
-  ! Compute x-solution:
-  ! t ← Pz,
-  ! x ← x + t, OR: x ← x + z.
+  ! Compute 𝒙-solution:
+  ! IF 𝓟 ≠ NONE:
+  !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
+  ! ELSE: 𝒙 ← 𝒙 + 𝒛. END IF
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, t, z, MatVec, env, precond_env)
@@ -237,7 +238,7 @@ end subroutine Solve_LSQR_Symmetric$rank
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! minimize{‖A[P]y - b‖₂}, x = [P]y, using the LSMR method.
+!! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSMR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_LSMR$rank(mesh, x, b, &
@@ -276,21 +277,21 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   ! ----------------------
   ! Utilize the initial guess.
   ! Consider the decomposition:
-  ! x = x₀ + z. (*)
+  ! 𝒙 = 𝒙₀ + 𝒛. (*)
   ! Substituting (*) into the equation, we get:
-  ! A[P]y = r, where z = [P]y and r = b - Ax₀.
-  ! The last equations can be solved with y₀ = {0}ᵀ.
+  ! 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
+  ! The last equations can be solved with 𝒚₀ = {0}ᵀ.
   ! ----------------------
 
   ! ----------------------
   ! Initialize:
-  ! r ← Ax,
-  ! r ← b - r,
-  ! β ← ‖r‖, u ← r/β,
-  ! IF (P ≠ NONE) THEN: 
-  !   s ← Aᵀu,
-  !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
-  ! α ← ‖s‖, v ← s/α.
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒓,
+  ! 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
+  ! IF 𝓟 ≠ NONE: 
+  !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
+  ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+  ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
   call Sub(mesh, r, b, r)
@@ -304,21 +305,19 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
   ! ----------------------
-  ! α̅ ← α, ψ̅ ← αβ,
-  ! ρ ← 1, ρ̅ ← 1, ζ ← 1,
-  ! c̅s̅ ← 1, s̅n̅ ← 0,
-  ! z ← {0}ᵀ,
-  ! h ← v, h̅ ← {0}ᵀ.
+  ! 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
+  ! 𝜁 ← 1, 𝑐̅𝑠̅ ← 1, 𝑠̅𝑛̅ ← 0,
+  ! 𝒛 ← {0}ᵀ,
+  ! 𝒉 ← 𝒗, 𝒉̅ ← {0}ᵀ.
   ! ----------------------
   alpha_bar = alpha; psi_bar = alpha*beta
-  rho = 1.0_dp; rho_bar = 1.0_dp; zeta = 1.0_dp
-  cs_bar = 1.0_dp; sn_bar = 0.0_dp
+  zeta = 1.0_dp; cs_bar = 1.0_dp; sn_bar = 0.0_dp
   call Fill(mesh, z, 0.0_dp)
   call Set(mesh, h, v); call Fill(mesh, h_bar, 0.0_dp)
 
   ! ----------------------
-  ! ψ̃ ← ψ̅,
-  ! Check convergence for ψ̃.
+  ! 𝜓̃ ← 𝜓̅,
+  ! Check convergence for 𝜓̃.
   ! ----------------------
   psi_tilde = psi_bar
   if (params%Check(psi_tilde)) return
@@ -326,16 +325,16 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! IF (P ≠ NONE) THEN: 
-    !   s ← Pv,
-    !   t ← As, ELSE: t ← Pv, END IF
-    ! t ← t - αu,
-    ! β ← ‖t‖, u ← t/β,
-    ! IF (P ≠ NONE) THEN: 
-    !   s ← Aᵀu,
-    !   t ← Pᵀs, ELSE: t ← Aᵀu, END IF
-    ! t ← t - βv,
-    ! α ← ‖t‖, v ← t/α.
+    ! IF 𝓟 ≠ NONE: 
+    !   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
+    ! ELSE: 𝒕 ← 𝓐𝒗, END IF
+    ! 𝒕 ← 𝒕 - 𝛼𝒖,
+    ! 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
+    ! IF 𝓟 ≠ NONE:
+    !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
+    ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+    ! 𝒕 ← 𝒕 - 𝛽𝒗,
+    ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(Precond)) then
       call Precond(mesh, s, v, MatVec, env, precond_env)
@@ -356,12 +355,12 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     
     ! ----------------------
     ! Construct and apply rotations:
-    ! ρ ← (α̅² + β²)¹ᐟ²,
-    ! cs ← α̅/ρ, sn ← β/ρ,
-    ! θ ← sn⋅α, α̅ ← cs⋅α,
-    ! θ̅ ← s̅n̅⋅ρ, ρ̅ ← [(c̅s̅⋅ρ)² + θ²]¹ᐟ²,
-    ! c̅s̅ ← c̅s̅⋅ρ/ρ̅, s̅n̅ ← θ/ρ̅,
-    ! ψ ← c̅s̅⋅ψ̅, ψ̅ ← -s̅n̅⋅ψ̅.
+    ! 𝜌 ← (𝛼̅² + 𝛽²)¹ᐟ²,
+    ! 𝑐𝑠 ← 𝛼̅/𝜌, 𝑠𝑛 ← 𝛽/𝜌,
+    ! 𝜃 ← 𝑠𝑛⋅𝛼, 𝛼̅ ← 𝑐𝑠⋅𝛼,
+    ! 𝜃̅ ← 𝑠̅𝑛̅⋅𝜌, 𝜚̅ ← [(𝑐̅𝑠̅⋅𝜌)² + 𝜃²]¹ᐟ²,
+    ! 𝑐̅𝑠̅ ← 𝑐̅𝑠̅⋅𝜌/𝜚̅, 𝑠̅𝑛̅ ← 𝜃/𝜚̅,
+    ! 𝜓 ← 𝑐̅𝑠̅⋅𝜓̅, 𝜓̅ ← -𝑠̅𝑛̅⋅𝜓̅.
     ! ----------------------
     rho = hypot(alpha_bar, beta)
     cs = alpha_bar/rho; sn = beta/rho
@@ -371,13 +370,13 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     psi = cs_bar*psi_bar; psi_bar = -sn_bar*psi_bar
 
     ! ----------------------
-    ! Update z-solution:
-    ! h̅ ← h - (θ̅ρ/ζ)h̅,
-    ! ζ ← ρρ̅,
-    ! z ← z + (ψ/ζ)h̅,
-    ! h ← v - (θ/ρ)h.
-    ! Check convergence for |ψ̅| and |ψ̅/ψ̃|.
-    ! ( |ψ̅| and |ψ̃| implicitly contain Aᵀ-residual norms, ‖(AP)ᵀr‖. )
+    ! Update 𝒛-solution:
+    ! 𝒉̅ ← 𝒉 - (𝜃𝜌/𝜁)𝒉̅,
+    ! 𝜁 ← 𝜌𝜌̅,
+    ! 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉̅,
+    ! 𝒉 ← 𝒗 - (𝜃/𝜌)𝒉.
+    ! Check convergence for |𝜓̅| and |𝜓̅/𝜓̃|.
+    ! ( |𝜓̅| and |𝜓̃| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖𝓐([𝓟])ᵀ𝒓‖. )
     ! ----------------------
     call Sub(mesh, h_bar, h, h_bar, theta_bar*rho/zeta)
     zeta = rho*rho_bar
@@ -387,9 +386,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   end do
 
   ! ----------------------
-  ! Compute x-solution:
-  ! t ← Pz,
-  ! x ← x + t, OR: x ← x + z.
+  ! Compute 𝒙-solution:
+  ! IF 𝓟 ≠ NONE:
+  !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
+  ! ELSE: 𝒙 ← 𝒙 + 𝒛. END IF
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, t, z, MatVec, env, precond_env)

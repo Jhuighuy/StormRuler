@@ -51,8 +51,8 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint indefinite operator equation: 
-!! [P¹ᐟ²]A[P¹ᐟ²]y = [P¹ᐟ²]b, [P¹ᐟ²]y = x, using the MINRES method.
-!! ( P = Pᵀ > 0 is required. )
+!! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the MINRES method.
+!! 𝓟 = 𝓟ᵀ > 0 is explicitly required.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
@@ -75,18 +75,18 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   !     PhD thesis, ICME, Stanford University.
   ! ----------------------
 
-  real(dp) :: alpha, beta, beta_dot, gamma, &
-    & delta, delta_dot, epsilon, epsilon_dot, &
+  real(dp) :: alpha, beta, beta_bar, gamma, &
+    & delta, delta_bar, epsilon, epsilon_bar, &
     & tau, phi, phi_tilde, cs, sn
   real(dp), pointer :: tmp(@:,:), &
-    & p(@:,:), q(@:,:), q_dot(@:,:), &
-    & w(@:,:), w_dot(@:,:), w_ddot(@:,:), &
-    & z(@:,:), z_dot(@:,:), z_ddot(@:,:)
+    & p(@:,:), q(@:,:), q_bar(@:,:), &
+    & w(@:,:), w_bar(@:,:), w_bbar(@:,:), &
+    & z(@:,:), z_bar(@:,:), z_bbar(@:,:)
   class(*), allocatable :: precond_env
 
-  allocate(p, w, w_dot, w_ddot, z, z_dot, z_ddot, mold=x)
+  allocate(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
   if (present(Precond)) then
-    allocate(q, q_dot, mold=x)
+    allocate(q, q_bar, mold=x)
   end if
 
   ! ----------------------
@@ -96,29 +96,28 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   ! ż ← Ax,     // Modification in order to
   ! ż ← b - ż,  // utilize the initial guess.
   ! z̈ ← 0,
-  ! IF P THEN:
-  !   q ← Pż, ELSE: q ← ż, END IF
+  ! q ← [P]ż,
   ! β̇ ← 1, β ← √<q⋅ż>,
   ! ϕ ← β, δ ← 0, ϵ ← 0,
   ! cs ← -1, sn ← 0.
   ! ----------------------
-  call Fill(mesh, w_dot, 0.0_dp)
-  call Fill(mesh, w_ddot, 0.0_dp)
-  call MatVec(mesh, z_dot, x, env)
-  call Sub(mesh, z_dot, b, z_dot)
-  call Fill(mesh, z_ddot, 0.0_dp)
+  call Fill(mesh, w_bar, 0.0_dp)
+  call Fill(mesh, w_bbar, 0.0_dp)
+  call MatVec(mesh, z_bar, x, env)
+  call Sub(mesh, z_bar, b, z_bar)
+  call Fill(mesh, z_bbar, 0.0_dp)
   if (present(Precond)) then
-    call Precond(mesh, q, z_dot, MatVec, env, precond_env)
+    call Precond(mesh, q, z_bar, MatVec, env, precond_env)
   else
-    q => z_dot
+    q => z_bar
   end if
-  beta_dot = 1.0_dp; beta = sqrt(Dot(mesh, q, z_dot))
+  beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
   ! ----------------------
-  ! ϕ̃ ← ϕ,
-  ! Check convergence for ϕ̃.
+  ! 𝜑̃ ← 𝜑,
+  ! Check convergence for 𝜑̃.
   ! ----------------------
   phi_tilde = phi
   if (params%Check(phi_tilde)) return
@@ -126,56 +125,54 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   do
     ! ----------------------
     ! Continue the Lanczos process:
-    ! p ← Aq,
-    ! α ← <q⋅p>/β²,
-    ! z ← (1/β)p - (α/β)ż,
-    ! z ← z - (β/β̇)z̈,
-    ! q̇ ← q,
-    ! IF (P ≠ NONE) THEN: 
-    !   q ← Pz, ELSE: q ← z, END IF
-    ! β̇ ← β, β ← √<q⋅z>,
-    ! z̈ ← ż, ż ← z.
+    ! 𝒑 ← 𝓐𝒒,
+    ! 𝛼 ← <𝒒⋅𝒑>/𝛽²,
+    ! 𝒛 ← (1/𝛽)𝒑 - (𝛼/𝛽)𝒛̅,
+    ! 𝒛 ← 𝒛 - (𝛽/𝛽̅)𝒛̿,
+    ! 𝒒̅ ← 𝒒, 𝒒 ← [𝓟]𝒛,
+    ! 𝛽̅ ← 𝛽, 𝛽 ← √<𝒒⋅𝒛>,
+    ! 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
     ! ----------------------
     call MatVec(mesh, p, q, env)
     alpha = Dot(mesh, q, p)/(beta**2)
-    call Sub(mesh, z, p, z_dot, alpha/beta, 1.0_dp/beta)
-    call Sub(mesh, z, z, z_ddot, beta/beta_dot)
+    call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
+    call Sub(mesh, z, z, z_bbar, beta/beta_bar)
     if (present(Precond)) then
-      tmp => q_dot; q_dot => q; q => tmp
+      tmp => q_bar; q_bar => q; q => tmp
       call Precond(mesh, q, z, MatVec, env, precond_env)
     else
-      q_dot => q; q => z
+      q_bar => q; q => z
     end if
-    beta_dot = beta; beta = sqrt(Dot(mesh, q, z))
-    tmp => z_ddot; z_ddot => z_dot; z_dot => z; z => tmp
+    beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
+    tmp => z_bbar; z_bbar => z_bar; z_bar => z; z => tmp
 
     ! ----------------------
     ! Construct and apply rotations:
-    ! δ̇ ← cs⋅δ + sn⋅α, γ ← sn⋅δ - cs⋅α,
-    ! ϵ̇ ← ϵ, ϵ ← sn⋅β, δ ← -cs⋅β,
-    ! cs, sn, γ ← SymOrtho(γ, β),
-    ! τ ← cs⋅ϕ, ϕ ← sn⋅ϕ.
+    ! 𝛿̅ ← 𝑐𝑠⋅𝛿 + 𝑠𝑛⋅𝛼, 𝛾 ← 𝑠𝑛⋅𝛿 - 𝑐𝑠⋅𝛼,
+    ! 𝜀̅ ← 𝜀, 𝜀 ← 𝑠𝑛⋅𝛽, 𝛿 ← -𝑐𝑠⋅𝛽,
+    ! 𝑐𝑠, 𝑠𝑛, 𝛾 ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝛾, 𝛽),
+    ! 𝜏 ← 𝑐𝑠⋅𝜑, 𝜑 ← 𝑠𝑛⋅𝜑.
     ! ----------------------
-    delta_dot = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
-    epsilon_dot = epsilon; epsilon = sn*beta; delta = -cs*beta
+    delta_bar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
+    epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
     call SymOrtho(gamma*1.0_dp, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------
     ! Update solution:
-    ! w ← (1/(β̇γ))q̇ - (δ̇/γ)ẇ,
-    ! w ← w - (ϵ̇/γ)ẅ,
-    ! x ← x + τw,
-    ! ẅ ← ẇ, ẇ ← w.
+    ! 𝒘 ← (1/(𝛽̅𝛾))𝒒̅ - (𝛿̅/𝛾)𝒘̅,
+    ! 𝒘 ← 𝒘 - (𝜀̅/𝛾)𝒘̿,
+    ! 𝒙 ← 𝒙 + 𝜏𝒘,
+    ! 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
     ! ----------------------
-    call Sub(mesh, w, q_dot, w_dot, delta_dot/gamma, 1.0_dp/(beta_dot*gamma))
-    call Sub(mesh, w, w, w_ddot, epsilon_dot/gamma)
+    call Sub(mesh, w, q_bar, w_bar, delta_bar/gamma, 1.0_dp/(beta_bar*gamma))
+    call Sub(mesh, w, w, w_bbar, epsilon_bar/gamma)
     call Add(mesh, x, x, w, tau)
-    tmp => w_ddot; w_ddot => w_dot; w_dot => w; w => tmp
+    tmp => w_bbar; w_bbar => w_bar; w_bar => w; w => tmp
 
     ! ----------------------
-    ! Check convergence for ϕ and ϕ/ϕ̃.
-    ! ( ϕ and ϕ̃ implicitly contain residual norms. )
+    ! Check convergence for 𝜑 and 𝜑/𝜑̃.
+    ! ( 𝜑 and 𝜑̃ implicitly contain residual norms. )
     ! ----------------------
     if (params%Check(phi, phi/phi_tilde)) exit
   end do

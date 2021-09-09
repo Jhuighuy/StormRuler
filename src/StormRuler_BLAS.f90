@@ -165,7 +165,7 @@ end interface Solve_Triangular
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute dot product: d ← <x⋅y>.
+!! Compute dot product: 𝑑 ← <𝒙⋅𝒚>.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function Dot$rank(mesh, x, y)
@@ -193,7 +193,7 @@ end function Dot$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute L₁-norm: d ← ‖x‖₁.
+!! Compute ℒ₁-norm: 𝑑 ← ‖𝒙‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function Norm_1$rank(mesh, x)
@@ -221,7 +221,7 @@ end function Norm_1$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute L₂-norm: d ← ‖x‖₂.
+!! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function Norm_2$rank(mesh, x)
@@ -236,7 +236,7 @@ end function Norm_2$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute L∞-norm: d ← ‖x‖∞.
+!! Compute ℒ∞-norm: 𝑑 ← ‖𝒙‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 real(dp) function Norm_C$rank(mesh, x)
@@ -264,7 +264,7 @@ end function Norm_C$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components: y ← α.
+!! Fill vector components: 𝒚 ← 𝛼.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Fill$rank(mesh, y, alpha)
@@ -289,7 +289,7 @@ end subroutine Fill$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components randomly: y ← {αᵢ}ᵀ, αᵢ ~ U(a, b).
+!! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, 𝛼ᵢ ~ 𝘜(𝑎,𝑏).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Fill_Random$rank(mesh, y, a, b)
@@ -324,7 +324,7 @@ end subroutine Fill_Random$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Set: y ← x.
+!! Set: 𝒚 ← 𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Set$rank(mesh, y, x)
@@ -349,7 +349,7 @@ end subroutine Set$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Scale: y ← αx.
+!! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Scale$rank(mesh, y, x, alpha)
@@ -375,7 +375,7 @@ end subroutine Scale$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute linear combination: z ← βy + αx.
+!! Compute linear combination: 𝒛 ← 𝛽𝒚 + 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Add$rank(mesh, z, y, x, alpha, beta)
@@ -405,7 +405,7 @@ end subroutine Add$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute linear combination: z ← βy - αx.
+!! Compute linear combination: 𝒛 ← 𝛽𝒚 - 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Sub$rank(mesh, z, y, x, alpha, beta)
@@ -464,7 +464,7 @@ end subroutine Mul$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an inner product: z ← y⋅x.
+!! Compute an inner product: 𝒛 ← 𝒚⋅𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine Mul_Inner$rank(mesh, z, y, x)
@@ -489,7 +489,7 @@ end subroutine Mul_Inner$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an outer product: z ← y⊗x.
+!! Compute an outer product: 𝒛 ← 𝒚⊗𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine Mul_Outer$rank(mesh, z, y, x)
@@ -517,14 +517,14 @@ end subroutine Mul_Outer$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute a function product: v ← f(u).
+!! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine FuncProd$rank(mesh, v, u, f)
+subroutine FuncProd$rank(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
   procedure(tMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -536,21 +536,21 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    v(@:,iCell) = f(u(@:,iCell))
+    y(@:,iCell) = f(x(@:,iCell))
 
   end subroutine FuncProd_Kernel
 end subroutine FuncProd$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute a function product: v ← f(r,u).
+!! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine SFuncProd$rank(mesh, v, u, f)
+subroutine SFuncProd$rank(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(inout) :: v(@:,:)
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
   procedure(tSMapFunc$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -562,21 +562,21 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    v(@:,iCell) = f(mesh%CellCenter(iCell), u(@:,iCell))
+    y(@:,iCell) = f(mesh%CellCenter(iCell), x(@:,iCell))
 
   end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Multiply a vector by diagonal of the matrix: Du ← diag(A)u.
+!! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine MatVecProd_Diagonal$rank(mesh, Du, u, MatVec, env)
+subroutine MatVecProd_Diagonal$rank(mesh, Dx, x, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(inout) :: Du(@:,:)
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: Dx(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -593,14 +593,14 @@ contains
     integer :: iCell
 
     real(dp), allocatable :: e(@:,:)
-    allocate(e, mold=u)
+    allocate(e, mold=x)
 
     e(@:,:) = 0.0_dp
 
     do iCell = firstCell, lastCell
-      e(@:,iCell) = u(@:,iCell)
+      e(@:,iCell) = x(@:,iCell)
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Du, e, env)
+      call MatVec(mesh, Dx, e, env)
       e(@:,iCell) = 0.0_dp
     end do
 
@@ -610,14 +610,14 @@ end subroutine MatVecProd_Diagonal$rank
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Multiply a vector by a lower/upper triangular 
-!! part of the matrix: : Tu ← triu(A)u or Tu ← tril(A)u.
+!! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine MatVecProd_Triangular$rank(mesh, Tu, u, UpLo, MatVec, env)
+subroutine MatVecProd_Triangular$rank(mesh, Tx, x, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: u(@:,:)
-  real(dp), intent(inout) :: Tu(@:,:)
+  real(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: Tx(@:,:)
   character :: UpLo
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
@@ -639,14 +639,14 @@ contains
     integer :: iCell
 
     real(dp), allocatable :: e(@:,:)
-    allocate(e, mold=u)
+    allocate(e, mold=x)
 
     e(@:,:firstCell-1) = 0.0_dp
-    e(@:,firstCell:) = u(@:,firstCell:)
+    e(@:,firstCell:) = x(@:,firstCell:)
 
     do iCell = firstCell, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tu, e, env)
+      call MatVec(mesh, Tx, e, env)
       e(@:,iCell) = 0.0_dp
     end do
 
@@ -659,14 +659,14 @@ contains
     integer :: iCell
 
     real(dp), allocatable :: e(@:,:)
-    allocate(e, mold=u)
+    allocate(e, mold=x)
 
-    e(@:,:lastCell) = u(@:,:lastCell)
+    e(@:,:lastCell) = x(@:,:lastCell)
     e(@:,lastCell+1:) = 0.0_dp
     
     do iCell = lastCell, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tu, e, env)
+      call MatVec(mesh, Tx, e, env)
       e(@:,iCell) = 0.0_dp
     end do
 
@@ -676,14 +676,14 @@ end subroutine MatVecProd_Triangular$rank
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear system with a lower/upper 
-!! triangular part of the matrix: triu(A)u = b or tril(A)u = b.
+!! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Solve_Triangular$rank(mesh, u, b, diag, UpLo, MatVec, env)
+subroutine Solve_Triangular$rank(mesh, x, b, diag, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:), diag(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(inout) :: x(@:,:)
   character :: UpLo
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
@@ -706,18 +706,18 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: Au(@:,:)
-    allocate(Au, mold=u)
+    real(dp), allocatable :: Ax(@:,:)
+    allocate(Ax, mold=x)
 
-    u(@:,:) = 0.0_dp
-    Au(@:,:) = 0.0_dp
+    x(@:,:) = 0.0_dp
+    Ax(@:,:) = 0.0_dp
 
-    u(@:,lastCell) = b(@:,lastCell)/diag(@:,lastCell)
+    x(@:,lastCell) = b(@:,lastCell)/diag(@:,lastCell)
     do iCell = lastCell - 1, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Au, u, env)
+      call MatVec(mesh, Ax, x, env)
       ! TODO: this is not a correct diagonal solution in block case!
-      u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
+      x(@:,iCell) = (b(@:,iCell) - Ax(@:,iCell))/diag(@:,iCell)
     end do
 
   end subroutine Solve_UpperTriangular_BlockKernel 
@@ -728,18 +728,18 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: Au(@:,:)
-    allocate(Au, mold=u)
+    real(dp), allocatable :: Ax(@:,:)
+    allocate(Ax, mold=x)
 
-    u(@:,:) = 0.0_dp
-    Au(@:,:) = 0.0_dp
+    x(@:,:) = 0.0_dp
+    Ax(@:,:) = 0.0_dp
 
-    u(@:,firstCell) = b(@:,firstCell)/diag(@:,firstCell)
+    x(@:,firstCell) = b(@:,firstCell)/diag(@:,firstCell)
     do iCell = firstCell + 1, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Au, u, env)
+      call MatVec(mesh, Ax, x, env)
       ! TODO: this is not a correct diagonal solution in block case!
-      u(@:,iCell) = (b(@:,iCell) - Au(@:,iCell))/diag(@:,iCell)
+      x(@:,iCell) = (b(@:,iCell) - Ax(@:,iCell))/diag(@:,iCell)
     end do
 
   end subroutine Solve_LowerTriangular_BlockKernel 

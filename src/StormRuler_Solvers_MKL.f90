@@ -68,7 +68,8 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint definite 
-!! operator equation: Au = b, using the MKL CG RCI solver.
+!! operator equation: [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
+!! using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
 subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
@@ -148,7 +149,7 @@ end subroutine Solve_CG_MKL$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: Au = b, 
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, 
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS

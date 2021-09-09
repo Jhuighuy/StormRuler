@@ -56,16 +56,17 @@ end interface Solve_BiCGStab
 
 contains
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear self-adjoint definite operator equation: 
-!! [P¹ᐟ²]A[P¹ᐟ²]y = [P¹ᐟ²]b, [P¹ᐟ²]y = u, using the Conjugate Gradients method.
+!! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
+!! using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
+subroutine Solve_CG$rank(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(inout) :: x(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
@@ -76,31 +77,31 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
   real(dp), pointer :: p(@:,:), r(@:,:), t(@:,:), z(@:,:)
   class(*), allocatable :: precond_env
   
-  allocate(p, r, t, mold=u)
+  allocate(p, r, t, mold=x)
   if (present(Precond)) then
-    allocate(z, mold=u)
+    allocate(z, mold=x)
   else
     z => r
   end if
 
   ! ----------------------
-  ! t ← Au,
-  ! r ← b - t.
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒕.
   ! ----------------------
-  call MatVec(mesh, t, u, env)
-  call Sub(mesh, r, b, t)
+  call MatVec(mesh, r, x, env)
+  call Sub(mesh, r, b, r)
 
   ! ----------------------
-  ! δ ← <r⋅r>,
-  ! Check convergence for √δ.
+  ! 𝛿 ← <𝒓⋅𝒓>,
+  ! Check convergence for √𝛿.
   ! ----------------------
   delta = Dot(mesh, r, r)
   if (params%Check(sqrt(delta))) return
   
   ! ----------------------
-  ! z ← Pr,
-  ! p ← z,
-  ! γ ← <r⋅z>,
+  ! 𝒛 ← 𝓟𝒓,
+  ! 𝒑 ← 𝒛,
+  ! 𝛾 ← <𝒓⋅𝒛>,
   ! ----------------------
   if (present(Precond)) &
     & call Precond(mesh, z, r, MatVec, env, precond_env)
@@ -109,35 +110,38 @@ subroutine Solve_CG$rank(mesh, u, b, MatVec, env, params, Precond)
 
   do
     ! ----------------------
-    ! t ← Ap,
-    ! α ← γ/<p⋅t>,
-    ! u ← u + α⋅p,
-    ! r ← r - α⋅t,
+    ! 𝒕 ← 𝓐𝒑,
+    ! 𝛼 ← 𝛾/<𝒑⋅𝒕>,
+    ! 𝒙 ← 𝒙 + 𝛼𝒑,
+    ! 𝒓 ← 𝒓 - 𝛼𝒕,
     ! ----------------------
     call MatVec(mesh, t, p, env)
     alpha = SafeDivide(gamma, Dot(mesh, p, t))
-    call Add(mesh, u, u, p, alpha)
+    call Add(mesh, x, x, p, alpha)
     call Sub(mesh, r, r, t, alpha)
 
     ! ----------------------
-    ! α ← <r⋅r>,
-    ! Check convergence for √α and √α/√δ.
+    ! 𝛼 ← <𝒓⋅𝒓>,
+    ! Check convergence for √𝛼 and √𝛼/√𝛿.
     ! ----------------------
     alpha = Dot(mesh, r, r)
     if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
 
     ! ----------------------
-    ! z ← Pr,
-    ! α ← <r⋅z>,
+    ! IF 𝓟 ≠ NONE:
+    !   𝒛 ← 𝓟𝒓,
+    !   𝛼 ← <𝒓⋅𝒛>,
+    ! END IF // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
-    if (present(Precond)) &
-      & call Precond(mesh, z, r, MatVec, env, precond_env)
-    alpha = Dot(mesh, r, z)
+    if (present(Precond)) then
+      call Precond(mesh, z, r, MatVec, env, precond_env)
+      alpha = Dot(mesh, r, z)
+    end if
 
     ! ----------------------
-    ! β ← α/γ,
-    ! p ← z + β⋅p,
-    ! γ ← α.
+    ! 𝛽 ← 𝛼/𝛾,
+    ! 𝒑 ← 𝒛 + 𝛽𝒑,
+    ! 𝛾 ← 𝛼.
     ! ----------------------
     beta = SafeDivide(alpha, gamma)
     call Add(mesh, p, z, p, beta)
@@ -147,15 +151,15 @@ end subroutine Solve_CG$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: [P]Au = [P]b, using 
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do rank = 0, NUM_RANKS
-subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
+subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
+  real(dp), intent(inout) :: x(@:,:)
   procedure(tMatVecFunc$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
@@ -167,29 +171,31 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     & s(@:,:), t(@:,:), v(@:,:), w(@:,:), y(@:,:), z(@:,:)
   class(*), allocatable :: precond_env
 
-  allocate(p, r, r_tilde, s, t, v, mold=u)
+  allocate(p, r, r_tilde, s, t, v, mold=x)
   if (present(Precond)) then
-    allocate(w, y, z, mold=u)
+    allocate(w, y, z, mold=x)
   else
     y => p; z => s; w => t
   end if
 
   ! ----------------------
-  ! t ← Au,
-  ! r ← b - t.
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
-  call MatVec(mesh, t, u, env)
-  call Sub(mesh, r, b, t)
+  call MatVec(mesh, r, x, env)
+  call Sub(mesh, r, b, r)
+
   ! ----------------------
-  ! δ ← <r⋅r>,
-  ! Check convergence for √δ.
+  ! 𝛿 ← <𝒓⋅𝒓>,
+  ! Check convergence for √𝛿.
   ! ----------------------
   delta = Dot(mesh, r, r)
   if (params%Check(sqrt(delta))) return
+  
   ! ----------------------
-  ! r̃ ← r,
-  ! p ← 0, v ← 0,
-  ! ρ ← 1, α ← 1, ω ← 1. 
+  ! 𝒓̃ ← 𝒓,
+  ! 𝒑 ← {0}ᵀ, 𝒗 ← {0}ᵀ,
+  ! 𝜚 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
   ! ----------------------
   call Set(mesh, r_tilde, r)
   call Fill(mesh, p, 0.0_dp)
@@ -198,19 +204,19 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
 
   do
     ! ----------------------
-    ! μ ← <r̃⋅r>,
-    ! β ← (μ/ρ)⋅(α/ω),
-    ! ρ ← μ.
+    ! 𝜇 ← <𝒓̃⋅𝒓>,
+    ! 𝛽 ← (𝜇/𝜚)⋅(𝛼/𝜔),
+    ! 𝜚 ← 𝜇.
     ! ----------------------
     mu = Dot(mesh, r_tilde, r)
     beta = SafeDivide(mu, rho)*SafeDivide(alpha, omega)
     rho = mu
     
     ! ----------------------
-    ! p ← p - ω⋅v,
-    ! p ← r + β⋅p,
-    ! y ← Pp,
-    ! v ← Ay.
+    ! 𝒑 ← 𝒑 - 𝜔𝒗,
+    ! 𝒑 ← 𝒓 + 𝛽𝒑,
+    ! 𝒚 ← 𝓟𝒑,
+    ! 𝒗 ← 𝓐𝒚.
     ! ----------------------
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
@@ -219,10 +225,10 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     call MatVec(mesh, v, y, env)
     
     ! ----------------------
-    ! α ← ρ/<r̃⋅v>,
-    ! s ← r - α⋅v,
-    ! z ← Ps,
-    ! t ← Az.
+    ! 𝛼 ← 𝜚/<𝒓̃⋅𝒗>,
+    ! 𝒔 ← 𝒓 - 𝛼𝒗,
+    ! 𝒛 ← 𝓟𝒔,
+    ! 𝒕 ← 𝓐𝒛.
     ! ----------------------
     alpha = SafeDivide(rho, Dot(mesh, r_tilde, v))
     call Sub(mesh, s, r, v, alpha)
@@ -231,22 +237,22 @@ subroutine Solve_BiCGStab$rank(mesh, u, b, MatVec, env, params, Precond)
     call MatVec(mesh, t, z, env)
     
     ! ----------------------
-    ! w ← Pt,
-    ! ω ← <w⋅z>/<w⋅w>,
-    ! r ← s - ω⋅t,
-    ! u ← u + ω⋅z,
-    ! u ← u + α⋅y,
+    ! 𝒘 ← 𝓟𝒕,
+    ! 𝜔 ← <𝒘⋅𝒛>/<𝒘⋅𝒘>,
+    ! 𝒓 ← 𝒔 - 𝜔𝒕,
+    ! 𝒙 ← 𝒙 + 𝜔𝒛,
+    ! 𝒙 ← 𝒙 + 𝛼𝒚,
     ! ----------------------
     if (present(Precond)) &
       & call Precond(mesh, w, t, MatVec, env, precond_env)
     omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
     call Sub(mesh, r, s, t, omega)
-    call Add(mesh, u, u, z, omega)
-    call Add(mesh, u, u, y, alpha)
+    call Add(mesh, x, x, z, omega)
+    call Add(mesh, x, x, y, alpha)
     
     ! ----------------------
-    ! γ ← <r⋅r>,
-    ! Check convergence for √γ and √γ/√δ.
+    ! 𝛾 ← <𝒓⋅𝒓>,
+    ! Check convergence for √𝛾 and √𝛾/√𝛿.
     ! ----------------------
     gamma = Dot(mesh, r, r)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit

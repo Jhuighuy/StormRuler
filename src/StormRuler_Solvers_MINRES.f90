@@ -91,8 +91,8 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! Initialize:
-  ! ẇ ← {0}ᵀ,
-  ! ẅ ← {0}ᵀ,
+  ! 𝒘̅ ← {0}ᵀ,
+  ! 𝒘̿ ← {0}ᵀ,
   ! 𝒛̅ ← 𝓐𝒙,     // Modification in order to
   ! 𝒛̅ ← 𝒃 - 𝒛̅,  // utilize the initial guess.
   ! 𝒛̿ ← {0}ᵀ,

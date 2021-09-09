@@ -195,7 +195,7 @@ subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
   ! ----------------------
   ! 𝒓̃ ← 𝒓,
   ! 𝒑 ← {0}ᵀ, 𝒗 ← {0}ᵀ,
-  ! 𝜚 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
+  ! 𝜌 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
   ! ----------------------
   call Set(mesh, r_tilde, r)
   call Fill(mesh, p, 0.0_dp)
@@ -205,8 +205,8 @@ subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
   do
     ! ----------------------
     ! 𝜇 ← <𝒓̃⋅𝒓>,
-    ! 𝛽 ← (𝜇/𝜚)⋅(𝛼/𝜔),
-    ! 𝜚 ← 𝜇.
+    ! 𝛽 ← (𝜇/𝜌)⋅(𝛼/𝜔),
+    ! 𝜌 ← 𝜇.
     ! ----------------------
     mu = Dot(mesh, r_tilde, r)
     beta = SafeDivide(mu, rho)*SafeDivide(alpha, omega)
@@ -225,7 +225,7 @@ subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
     call MatVec(mesh, v, y, env)
     
     ! ----------------------
-    ! 𝛼 ← 𝜚/<𝒓̃⋅𝒗>,
+    ! 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
     ! 𝒔 ← 𝒓 - 𝛼𝒗,
     ! 𝒛 ← 𝓟𝒔,
     ! 𝒕 ← 𝓐𝒛.

@@ -77,6 +77,10 @@ although some of them are not parallelized.
     (`Chebyshev`, for the _definite symmetric_ linear problems),
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
+  * _(planned)_ Hybrid Chebyshev-CG solver,
+    (`ConjugateChebyshev`, for the _definite symmetric_ linear problems,
+     _theoretically **the fastest** existing SPD-solver 
+      for the repeated-computation_),
   * MKL Conjugate Gradients solver 
     (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
   * Biconjugate Gradients (stabilized) solver
@@ -93,6 +97,22 @@ although some of them are not parallelized.
     (`LSQR`, for the general linear least squares problems),
   * Least squares-MINRES solver:
     (`LSMR`, for the general linear least squares problems);
+
+- Matrix-free eigensolvers:
+  * _(planned)_ Power iteration eigensolver
+    (`PowerIteration`, for the general problems),
+  * _(planned)_ Lanczos eigensolver
+    (`Lanczos`, for the _symmetric_ problems,
+     coupled with optional Lanczos-CG linear solver),
+  * _(planned)_ Arnoldi eigensolver
+    (`Arnoldi`, for the problems);
+
+- Special eigensolvers:
+  * _(planned)_ Symmetric tridiagonal eigensolvers
+    (`bisection`, `divide-and-conquer`, `QR`,
+     for the symmetric tridiagonal matrices, ),
+  * LAPACK Symmetric tridiagonal eigensolvers
+    (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
 
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner

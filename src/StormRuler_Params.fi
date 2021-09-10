@@ -25,8 +25,12 @@
 
 #$let NUM_RANKS = 2
 
+#$let DEBUG = True
+
 #$let HAS_OpenMP = False
 
-#$let HAS_MKL = True
+#$let HAS_MKL = False
+
+#$let HAS_LAPACK = True
 
 #$let NAG_COMPILER = True

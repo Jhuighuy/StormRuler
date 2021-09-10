@@ -112,11 +112,11 @@ else()
 endif()
 
 # Find MKL.
-# Configure OpenMP library to the Fortran compiler native one.
 if(StormRuler_NO_MKL)
   message(STATUS "StormRuler MKL was disabled by user.")
 else()
-  if(OpenMP_Fortran_FOUND)
+  # Configure OpenMP library to the Fortran compiler native one.
+  if(OpenMP_Fortran_ENABLED)
     if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
       set(MKL_THREADING "intel_thread")
     elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
@@ -132,13 +132,30 @@ else()
     set(MKL_ENABLED 1)
     message(STATUS "MKL enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
-    # Intel suggest the other, more explicit, way, see: https://intel.ly/3ABZNsK
+    # Intel suggest the other more explicit way, see: https://intel.ly/3ABZNsK
     #target_compile_options(
-    #  StormRuler_BASE INTERFACE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
+    #  StormRuler_BASE INTERFACE 
+    #    $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
     #target_include_directories(
-    #  StormRuler_BASE INTERFACE $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
+    #  StormRuler_BASE INTERFACE 
+    #    $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
     #target_link_libraries(
     #  StormRuler_BASE INTERFACE $<LINK_ONLY:MKL::MKL>)
+  endif()
+endif()
+
+# Find LAPACK.
+if(StormRuler_NO_LAPACK)
+  message(STATUS "StormRuler LAPACK was disabled by user.")
+elseif(MKL_ENABLED)
+  # Separate LAPACK is not needed in case MKL is used.
+  set(LAPACK_ENABLED 1)
+  message(STATUS "LAPACK enabled (MKL).")
+else()
+  find_package(LAPACK)
+  if(LAPACK_FOUND)
+    message(STATUS "LAPACK enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
   endif()
 endif()
 

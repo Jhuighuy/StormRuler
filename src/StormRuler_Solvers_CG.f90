@@ -128,10 +128,10 @@ subroutine Solve_CG$rank(mesh, x, b, MatVec, env, params, Precond)
     if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
 
     ! ----------------------
-    ! IF 𝓟 ≠ NONE:
+    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
     !   𝒛 ← 𝓟𝒓,
     !   𝛼 ← <𝒓⋅𝒛>,
-    ! END IF // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
+    ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
     if (present(Precond)) then
       call Precond(mesh, z, r, MatVec, env, precond_env)

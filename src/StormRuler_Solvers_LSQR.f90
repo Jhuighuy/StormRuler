@@ -108,9 +108,9 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒓,
   ! 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  ! IF 𝓟 ≠ NONE: 
+  ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
   !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
-  ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+  ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐ᵀ𝒖, 𝗲𝗻𝗱 𝗶𝗳
   ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
@@ -143,14 +143,14 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! IF 𝓟 ≠ NONE: 
+    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
     !   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
-    ! ELSE: 𝒕 ← 𝓐𝒗, END IF
+    ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
     ! 𝒕 ← 𝒕 - 𝛼𝒖,
     ! 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
-    ! IF 𝓟 ≠ NONE:
+    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
     !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
-    ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+    ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐ᵀ𝒖, 𝗲𝗻𝗱 𝗶𝗳
     ! 𝒕 ← 𝒕 - 𝛽𝒗,
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
@@ -189,7 +189,7 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     ! 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
     ! Check convergence for 𝜑̅ and 𝜑̅/𝜑̃.
     ! ( 𝜑̅ and 𝜑̃ implicitly contain residual norms;
-    !   𝜑̅|𝜌̅| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖𝓐([𝓟])ᵀ𝒓‖. )
+    !   𝜑̅|𝜌̅| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖(𝓐[𝓟])ᵀ𝒓‖. )
     ! ----------------------
     call Add(mesh, z, z, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
@@ -198,9 +198,9 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   ! ----------------------
   ! Compute 𝒙-solution:
-  ! IF 𝓟 ≠ NONE:
+  ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
-  ! ELSE: 𝒙 ← 𝒙 + 𝒛. END IF
+  ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, t, z, MatVec, env, precond_env)
@@ -266,10 +266,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
     & cs, sn, cs_bar, sn_bar
   real(dp), pointer :: r(@:,:), s(@:,:), t(@:,:), &
-    & h(@:,:), h_bar(@:,:), u(@:,:), v(@:,:), z(@:,:)
+    & w(@:,:), h(@:,:), u(@:,:), v(@:,:), z(@:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(t, r, u, v, h, h_bar, z, mold=x)
+  allocate(t, r, u, v, w, h, z, mold=x)
   if (present(Precond)) then
     allocate(s, mold=x)
   end if
@@ -288,9 +288,9 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒓,
   ! 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  ! IF 𝓟 ≠ NONE: 
+  ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
   !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
-  ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+  ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐ᵀ𝒖, 𝗲𝗻𝗱 𝗶𝗳
   ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/α.
   ! ----------------------
   call MatVec(mesh, r, x, env)
@@ -308,12 +308,12 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   ! 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
   ! 𝜁 ← 1, 𝑐̅𝑠̅ ← 1, 𝑠̅𝑛̅ ← 0,
   ! 𝒛 ← {0}ᵀ,
-  ! 𝒉 ← 𝒗, 𝒉̅ ← {0}ᵀ.
+  ! 𝒘 ← 𝒗, 𝒉 ← {0}ᵀ.
   ! ----------------------
   alpha_bar = alpha; psi_bar = alpha*beta
   zeta = 1.0_dp; cs_bar = 1.0_dp; sn_bar = 0.0_dp
   call Fill(mesh, z, 0.0_dp)
-  call Set(mesh, h, v); call Fill(mesh, h_bar, 0.0_dp)
+  call Set(mesh, w, v); call Fill(mesh, h, 0.0_dp)
 
   ! ----------------------
   ! 𝜓̃ ← 𝜓̅,
@@ -325,14 +325,14 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   do
     ! ----------------------
     ! Continue the bidiagonalization:
-    ! IF 𝓟 ≠ NONE: 
+    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
     !   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
-    ! ELSE: 𝒕 ← 𝓐𝒗, END IF
+    ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
     ! 𝒕 ← 𝒕 - 𝛼𝒖,
     ! 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
-    ! IF 𝓟 ≠ NONE:
+    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
     !   𝒔 ← 𝓐ᵀ𝒖, 𝒕 ← 𝓟ᵀ𝒔, 
-    ! ELSE: 𝒕 ← 𝓐ᵀ𝒖, END IF
+    ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐ᵀ𝒖, 𝗲𝗻𝗱 𝗶𝗳
     ! 𝒕 ← 𝒕 - 𝛽𝒗,
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
@@ -371,25 +371,25 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
 
     ! ----------------------
     ! Update 𝒛-solution:
-    ! 𝒉̅ ← 𝒉 - (𝜃𝜌/𝜁)𝒉̅,
+    ! 𝒉 ← 𝒘 - (𝜃𝜌/𝜁)𝒉,
     ! 𝜁 ← 𝜌𝜌̅,
-    ! 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉̅,
-    ! 𝒉 ← 𝒗 - (𝜃/𝜌)𝒉.
+    ! 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉,
+    ! 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
     ! Check convergence for |𝜓̅| and |𝜓̅/𝜓̃|.
-    ! ( |𝜓̅| and |𝜓̃| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖𝓐([𝓟])ᵀ𝒓‖. )
+    ! ( |𝜓̅| and |𝜓̃| implicitly contain (𝓐[𝓟])ᵀ-residual norms, ‖(𝓐[𝓟])ᵀ𝒓‖. )
     ! ----------------------
-    call Sub(mesh, h_bar, h, h_bar, theta_bar*rho/zeta)
+    call Sub(mesh, h, w, h, theta_bar*rho/zeta)
     zeta = rho*rho_bar
-    call Add(mesh, z, z, h_bar, psi/zeta)
-    call Sub(mesh, h, v, h, theta/rho)
+    call Add(mesh, z, z, h, psi/zeta)
+    call Sub(mesh, w, v, w, theta/rho)
     if (params%Check(abs(psi_bar), abs(psi_bar/psi_tilde))) exit
   end do
 
   ! ----------------------
   ! Compute 𝒙-solution:
-  ! IF 𝓟 ≠ NONE:
+  ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
-  ! ELSE: 𝒙 ← 𝒙 + 𝒛. END IF
+  ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(Precond)) then
     call Precond(mesh, t, z, MatVec, env, precond_env)

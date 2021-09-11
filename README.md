@@ -107,19 +107,19 @@ although some of them are not parallelized.
   * _(planned)_ Arnoldi eigensolver
     (`Arnoldi`, for the problems);
 
-- Special eigensolvers:
-  * _(planned)_ Symmetric tridiagonal eigensolvers
-    (`bisection`, `divide-and-conquer`, `QR`,
-     for the symmetric tridiagonal matrices, ),
-  * LAPACK Symmetric tridiagonal eigensolvers
-    (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
-
 - Matrix-free preconditioners:
   * Block Jacobi preconditioner
     (`Jacobi`),
   * Block LU-SGS preconditioner
     (`LU_SGS`),
   * _(planned)_ Block SPAI preconditioner.
+
+- Some very specific solvers:
+  * _(planned)_ Symmetric tridiagonal eigensolvers
+    (`bisection`, `divide-and-conquer`, `QR`,
+     for the symmetric tridiagonal matrices, ),
+  * LAPACK Symmetric tridiagonal eigensolvers
+    (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
 
 <!--
 - Linear direct solvers (embedded into the matrix-free environment):

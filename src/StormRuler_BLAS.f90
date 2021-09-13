@@ -26,10 +26,13 @@ module StormRuler_BLAS
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: &
-  & @{tMapFunc$$, tSMapFunc$$@|@0, NUM_RANKS}@, &
-  & operator(.inner.), operator(.outer.)
+use StormRuler_Parameters, only: dp, ip, not_implemented_code
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_Helpers, only: tMapFunc$type_$rank, tSMapFunc$type_$rank
+#$end for
+#$end do
+use StormRuler_Helpers, only: operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -39,61 +42,81 @@ implicit none
 
 interface Dot
 #$do rank = 0, NUM_RANKS
-  module procedure Dot$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Dot$type$rank
+#$end for
 #$end do
 end interface Dot
 
 interface Norm_1
 #$do rank = 0, NUM_RANKS
-  module procedure Norm_1$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Norm_1$type$rank
+#$end for
 #$end do
 end interface Norm_1
 
 interface Norm_2
 #$do rank = 0, NUM_RANKS
-  module procedure Norm_2$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Norm_2$type$rank
+#$end for
 #$end do
 end interface Norm_2
 
 interface Norm_C
 #$do rank = 0, NUM_RANKS
-  module procedure Norm_C$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Norm_C$type$rank
+#$end for
 #$end do
 end interface Norm_C
 
 interface Fill
 #$do rank = 0, NUM_RANKS
-  module procedure Fill$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Fill$type$rank
+#$end for
 #$end do
 end interface Fill
 
 interface Fill_Random
 #$do rank = 0, NUM_RANKS
-  module procedure Fill_Random$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Fill_Random$type$rank
+#$end for
 #$end do
 end interface Fill_Random
 
 interface Set
 #$do rank = 0, NUM_RANKS
-  module procedure Set$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Set$type$rank
+#$end for
 #$end do
 end interface Set
 
 interface Scale
 #$do rank = 0, NUM_RANKS
-  module procedure Scale$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Scale$type$rank
+#$end for
 #$end do
 end interface Scale
 
 interface Add
 #$do rank = 0, NUM_RANKS
-  module procedure Add$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Add$type$rank
+#$end for
 #$end do
 end interface Add
 
 interface Sub
 #$do rank = 0, NUM_RANKS
-  module procedure Sub$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Sub$type$rank
+#$end for
 #$end do
 end interface Sub
 
@@ -117,13 +140,17 @@ end interface Mul_Outer
 
 interface FuncProd
 #$do rank = 0, NUM_RANKS
-  module procedure FuncProd$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure FuncProd$type$rank
+#$end for
 #$end do 
 end interface FuncProd
 
 interface SFuncProd
 #$do rank = 0, NUM_RANKS
-  module procedure SFuncProd$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure SFuncProd$type$rank
+#$end for
 #$end do 
 end interface SFuncProd
 
@@ -168,41 +195,52 @@ contains
 !! Compute dot product: 𝑑 ← <𝒙⋅𝒚>.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Dot$rank(mesh, x, y)
+#$for type, typename in SCALAR_TYPES
+$typename function Dot$type$rank(mesh, x, y) result(Dot)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:), y(@:,:)
+  $typename, intent(in) :: x(@:,:), y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  Dot$rank = mesh%RunCellKernel_Sum(Dot_Kernel)
+  Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
 
 contains
-  real(dp) function Dot_Kernel(iCell)
+  $typename function Dot_Kernel(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if rank == 0
+  #$if type == 'c'
+    Dot_Kernel = x(iCell) * conjg(y(iCell))
+  #$else
     Dot_Kernel = x(iCell) * y(iCell)
+  #$end if
 #$else
+  #$if type == 'c'
+    Dot_Kernel = sum(x(@:,iCell) * conjg(y(@:,iCell)))
+  #$else
     Dot_Kernel = sum(x(@:,iCell) * y(@:,iCell))
+  #$end if
 #$end if
     
   end function Dot_Kernel
-end function Dot$rank
+end function Dot$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₁-norm: 𝑑 ← ‖𝒙‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Norm_1$rank(mesh, x)
+#$for type, typename in SCALAR_TYPES
+real(dp) function Norm_1$type$rank(mesh, x) result(Norm_1)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
+  $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  Norm_1$rank = mesh%RunCellKernel_Sum(Norm1_Kernel)
+  Norm_1 = mesh%RunCellKernel_Sum(Norm1_Kernel)
 
 contains
   real(dp) function Norm1_Kernel(iCell)
@@ -217,35 +255,44 @@ contains
 #$end if
     
   end function Norm1_Kernel
-end function Norm_1$rank
+end function Norm_1$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Norm_2$rank(mesh, x)
+#$for type, typename in SCALAR_TYPES
+real(dp) function Norm_2$type$rank(mesh, x) result(Norm_2)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
+  $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  Norm_2$rank = sqrt(Dot(mesh, x, x))
+  !! TODO: optimized approach for complex numbers.
+#$if type == 'c'
+  Norm_2 = sqrt(real(Dot(mesh, x, x)))
+#$else
+  Norm_2 = sqrt(Dot(mesh, x, x))
+#$end if
 
-end function Norm_2$rank
+end function Norm_2$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ∞-norm: 𝑑 ← ‖𝒙‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-real(dp) function Norm_C$rank(mesh, x)
+#$for type, typename in SCALAR_TYPES
+real(dp) function Norm_C$type$rank(mesh, x) result(Norm_C)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
+  $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  Norm_C$rank = mesh%RunCellKernel_Max(NormC_Kernel)
+  Norm_C = mesh%RunCellKernel_Max(NormC_Kernel)
 
 contains
   real(dp) function NormC_Kernel(iCell)
@@ -260,18 +307,20 @@ contains
 #$end if
     
   end function NormC_Kernel
-end function Norm_C$rank
+end function Norm_C$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: 𝒚 ← 𝛼.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Fill$rank(mesh, y, alpha)
+#$for type, typename in SCALAR_TYPES
+subroutine Fill$type$rank(mesh, y, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: alpha
-  real(dp), intent(inout) :: y(@:,:)
+  $typename, intent(in) :: alpha
+  $typename, intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(Fill_Kernel)
@@ -285,18 +334,22 @@ contains
     y(@:,iCell) = alpha
     
   end subroutine Fill_Kernel
-end subroutine Fill$rank
+end subroutine Fill$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, 𝛼ᵢ ~ 𝘜(𝑎,𝑏).
+!! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, where: 
+!! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
+!! • 𝕹𝖊(𝛼ᵢ) ~ ???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Fill_Random$rank(mesh, y, a, b)
+#$for type, typename in SCALAR_TYPES
+subroutine Fill_Random$type$rank(mesh, y, a, b)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(inout) :: y(@:,:)
-  real(dp), intent(in), optional :: a, b
+  $typename, intent(inout) :: y(@:,:)
+  $typename, intent(in), optional :: a, b
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! TODO: not very parallel..
@@ -312,26 +365,33 @@ contains
 
     integer :: iCell
 
+#$if type == 'r'
     do iCell = firstCell, lastCell
       call random_number(y(@:,iCell))
       if (present(a).and.present(b)) then
         y(@:,iCell) = min(a, b) + abs(b - a)*y(@:,iCell)
       end if
     end do
+#$else
+    print *, 'complex Fill_Random is not implemented yet!'
+    error stop not_implemented_code
+#$end if
     
   end subroutine Fill_Random_Kernel
-end subroutine Fill_Random$rank
+end subroutine Fill_Random$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set: 𝒚 ← 𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Set$rank(mesh, y, x)
+#$for type, typename in SCALAR_TYPES
+subroutine Set$type$rank(mesh, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: y(@:,:)
+  $typename, intent(in) :: x(@:,:)
+  $typename, intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Set_Kernel)
@@ -345,19 +405,20 @@ contains
     y(@:,iCell) = x(@:,iCell)
 
   end subroutine Set_Kernel
-end subroutine Set$rank
+end subroutine Set$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Scale$rank(mesh, y, x, alpha)
+#$for type, typename in SCALAR_TYPES
+subroutine Scale$type$rank(mesh, y, x, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: y(@:,:)
-  real(dp), intent(in) :: alpha
+  $typename, intent(in) :: x(@:,:), alpha
+  $typename, intent(inout) :: y(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(Scale_Kernel)
@@ -371,22 +432,24 @@ contains
     y(@:,iCell) = alpha*x(@:,iCell)
 
   end subroutine Scale_Kernel
-end subroutine Scale$rank
+end subroutine Scale$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← 𝛽𝒚 + 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Add$rank(mesh, z, y, x, alpha, beta)
+#$for type, typename in SCALAR_TYPES
+subroutine Add$type$rank(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:), y(@:,:)
-  real(dp), intent(inout) :: z(@:,:)
-  real(dp), intent(in), optional :: alpha, beta
+  $typename, intent(in) :: x(@:,:), y(@:,:)
+  $typename, intent(inout) :: z(@:,:)
+  $typename, intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp) :: a, b
+  $typename :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
 
@@ -401,22 +464,24 @@ contains
     z(@:,iCell) = b*y(@:,iCell) + a*x(@:,iCell)
 
   end subroutine Add_Kernel
-end subroutine Add$rank
+end subroutine Add$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← 𝛽𝒚 - 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Sub$rank(mesh, z, y, x, alpha, beta)
+#$for type, typename in SCALAR_TYPES
+subroutine Sub$type$rank(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:), y(@:,:)
-  real(dp), intent(inout) :: z(@:,:)
-  real(dp), intent(in), optional :: alpha, beta
+  $typename, intent(in) :: x(@:,:), y(@:,:)
+  $typename, intent(inout) :: z(@:,:)
+  $typename, intent(in), optional :: alpha, beta
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp) :: a, b
+  $typename :: a, b
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present(beta)) b = beta
 
@@ -431,7 +496,8 @@ contains
     z(@:,iCell) = b*y(@:,iCell) - a*x(@:,iCell)
     
   end subroutine Sub_Kernel
-end subroutine Sub$rank
+end subroutine Sub$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -520,12 +586,13 @@ end subroutine Mul_Outer$rank
 !! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine FuncProd$rank(mesh, y, x, f)
+#$for type, typename in SCALAR_TYPES
+subroutine FuncProd$type$rank(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: y(@:,:)
-  procedure(tMapFunc$rank) :: f
+  $typename, intent(in) :: x(@:,:)
+  $typename, intent(inout) :: y(@:,:)
+  procedure(tMapFunc$type$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(FuncProd_Kernel)
@@ -539,19 +606,21 @@ contains
     y(@:,iCell) = f(x(@:,iCell))
 
   end subroutine FuncProd_Kernel
-end subroutine FuncProd$rank
+end subroutine FuncProd$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine SFuncProd$rank(mesh, y, x, f)
+#$for type, typename in SCALAR_TYPES
+subroutine SFuncProd$type$rank(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: y(@:,:)
-  procedure(tSMapFunc$rank) :: f
+  $typename, intent(in) :: x(@:,:)
+  $typename, intent(inout) :: y(@:,:)
+  procedure(tSMapFunc$type$rank) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(SFuncProd_Kernel)
@@ -565,7 +634,8 @@ contains
     y(@:,iCell) = f(mesh%CellCenter(iCell), x(@:,iCell))
 
   end subroutine SFuncProd_Kernel
-end subroutine SFuncProd$rank
+end subroutine SFuncProd$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

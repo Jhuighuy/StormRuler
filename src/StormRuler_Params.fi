@@ -29,8 +29,10 @@
 
 #$let HAS_OpenMP = False
 
-#$let HAS_MKL = False
+#$let HAS_MKL = True
 
 #$let HAS_LAPACK = True
 
 #$let NAG_COMPILER = True
+
+#$let SCALAR_TYPES = {('r', 'real(dp)'), ('c', 'complex(dp)')}

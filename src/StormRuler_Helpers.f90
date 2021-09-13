@@ -37,32 +37,50 @@ use, intrinsic :: ieee_arithmetic
 implicit none  
 
 abstract interface
-  pure function tMapFunc$0(z) result(v)
+#$for type, typename in SCALAR_TYPES
+  pure function tMapFunc$type$0(z) result(v)
     import dp
-    real(dp), intent(in) :: z
-    real(dp) :: v
-  end function tMapFunc$0
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    $typename, intent(in) :: z
+    $typename :: v
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tMapFunc$type$0
+#$end for
 #$do rank = 1, NUM_RANKS
-  pure function tMapFunc$rank(z) result(v)
+#$for type, typename in SCALAR_TYPES
+  pure function tMapFunc$type$rank(z) result(v)
     import dp
-    real(dp), intent(in) :: z(@:)
-    real(dp) :: v(@{size(z, dim=$$)}@)
-  end function tMapFunc$rank
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    $typename, intent(in) :: z(@:)
+    $typename :: v(@{size(z, dim=$$)}@)
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tMapFunc$type$rank
+#$end for
 #$end do
 end interface
 
 abstract interface
-  pure function tSMapFunc$0(x, z) result(v)
+#$for type, typename in SCALAR_TYPES
+  pure function tSMapFunc$type$0(r, z) result(v)
     import dp
-    real(dp), intent(in) :: x(:), z
-    real(dp) :: v
-  end function tSMapFunc$0
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    real(dp), intent(in) :: r(:)
+    $typename, intent(in) :: z
+    $typename :: v
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tSMapFunc$type$0
+#$end for
 #$do rank = 1, NUM_RANKS
-  pure function tSMapFunc$rank(x, z) result(v)
+#$for type, typename in SCALAR_TYPES
+  pure function tSMapFunc$type$rank(r, z) result(v)
     import dp
-    real(dp), intent(in) :: x(:), z(@:)
-    real(dp) :: v(@{size(z, dim=$$)}@)
-  end function tSMapFunc$rank
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    real(dp), intent(in) :: r(:)
+    $typename, intent(in) :: z(@:)
+    $typename :: v(@{size(z, dim=$$)}@)
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tSMapFunc$type$rank
+#$end for
 #$end do
 end interface
 

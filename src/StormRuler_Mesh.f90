@@ -49,11 +49,13 @@ abstract interface
     import ip
     integer(ip), intent(in) :: firstCell, lastCell
   end subroutine tBlockKernelFunc
-  function tReduceKernelFunc(iCell) result(r)
+#$for type, typename in SCALAR_TYPES
+  function tReduceKernelFunc$type(iCell) result(r)
     import ip, dp
     integer(ip), intent(in) :: iCell
-    real(dp) :: r
-  end function tReduceKernelFunc
+    $typename :: r
+  end function tReduceKernelFunc$type
+#$end for
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -165,7 +167,10 @@ contains
   procedure :: FirstCell => tMesh_FirstCell
   procedure :: LastCell => tMesh_LastCell
   procedure :: RunCellKernel => tMesh_RunCellKernel
-  procedure :: RunCellKernel_Sum => tMesh_RunCellKernel_Sum
+#$for type, _ in SCALAR_TYPES
+  generic :: RunCellKernel_Sum => RunCellKernel_Sum$type
+  procedure :: RunCellKernel_Sum$type => tMesh_RunCellKernel_Sum$type
+#$end for
   procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
   procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
   procedure :: RunCellKernel_Block => tMesh_RunCellKernel_Block
@@ -314,14 +319,18 @@ subroutine tMesh_RunCellKernel(mesh, Kernel)
   end if
 end subroutine tMesh_RunCellKernel
 
+!! TODO:
+#$let r = 'r'
+
 !! ----------------------------------------------------------------- !!
 !! Launch a SUM-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
-function tMesh_RunCellKernel_Sum(mesh, Kernel) result(sum)
+#$for type, typename in SCALAR_TYPES
+function tMesh_RunCellKernel_Sum$type(mesh, Kernel) result(sum)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: sum
+  procedure(tReduceKernelFunc$type) :: Kernel
+  $typename :: sum
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
@@ -338,7 +347,8 @@ function tMesh_RunCellKernel_Sum(mesh, Kernel) result(sum)
       sum = sum + Kernel(iCell)
     end do
   end if
-end function tMesh_RunCellKernel_Sum
+end function tMesh_RunCellKernel_Sum$type
+#$end for
 
 !! ----------------------------------------------------------------- !!
 !! Launch a MIN-reduction cell kernel.
@@ -346,7 +356,7 @@ end function tMesh_RunCellKernel_Sum
 function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
+  procedure(tReduceKernelFunc$r) :: Kernel
   real(dp) :: mMin
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -372,7 +382,7 @@ end function tMesh_RunCellKernel_Min
 function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
+  procedure(tReduceKernelFunc$r) :: Kernel
   real(dp) :: mMax
   ! >>>>>>>>>>>>>>>>>>>>>>
 

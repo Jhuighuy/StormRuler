@@ -27,9 +27,13 @@ module StormRuler_FDM_Operators
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, i8
-use StormRuler_Helpers, only: Flip, SafeInverse, &
-  & @{tMapFunc$$@|@0, NUM_RANKS}@, &
-  & operator(.inner.), operator(.outer.)
+use StormRuler_Helpers, only: Flip, SafeInverse
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_Helpers, only: tMapFunc$type_$rank, tSMapFunc$type_$rank
+#$end for
+#$end do
+use StormRuler_Helpers, only: operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 
@@ -1037,7 +1041,7 @@ subroutine FDM_LaplacianF_Central$rank(mesh, v, lambda, f, u)
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda, u(@:,:)
   real(dp), intent(inout) :: v(@:,:)
-  procedure(tMapFunc$rank) :: f
+  procedure(tMapFuncr$rank) :: f !! TODO:
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), allocatable :: w(@:,:)

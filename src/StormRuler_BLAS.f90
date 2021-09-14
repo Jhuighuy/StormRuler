@@ -173,6 +173,9 @@ interface SFuncProd
 #$end do 
 end interface SFuncProd
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Matrix-vector product function.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
@@ -267,9 +270,9 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     ! ----------------------
-    ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙ᵢ𝒚̅ᵢ.
+    ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙̅ᵢ𝒚ᵢ.
     ! ----------------------
-    #$if rank == 0
+#$if rank == 0
     Dot_Kernel_Conjg = conjg(x(iCell)) * y(iCell)
 #$else
     Dot_Kernel_Conjg = sum(conjg(x(@:,iCell)) * y(@:,iCell))
@@ -322,11 +325,10 @@ real(dp) function Norm_2$type$rank(mesh, x) result(Norm_2)
   $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  !! TODO: optimized approach for complex numbers.
 #$if type == 'c'
-  Norm_2 = sqrt(real(Dot(mesh, x, x)))
+  Norm_2 = sqrt( Re(Dot(mesh, x, x)) )
 #$else
-  Norm_2 = sqrt(Dot(mesh, x, x))
+  Norm_2 = sqrt( Dot(mesh, x, x) )
 #$end if
 
 end function Norm_2$type$rank
@@ -399,7 +401,7 @@ end subroutine Fill$type$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, where: 
 !! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
-!! • 𝕹𝖊(𝛼ᵢ) ~ 𝘜(𝑎,𝑏)???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
+!! • 𝕹𝖊(𝛼ᵢ) ~ ???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES

@@ -125,3 +125,64 @@ although some of them are not parallelized.
 - Linear direct solvers (embedded into the matrix-free environment):
   * MKL Direct Sparse Solver 
     (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
+
+<!----------------------------------------------------------------->
+## Road map
+<!----------------------------------------------------------------->
+
+* C/C++ API:
+  - [ ] Pure C API,
+  - [ ] C++17 API with own BLAS implementation (with expression templates),
+  - [ ] Pure C++11/C++14 API.
+
+* General architecture:
+  - [ ] Move kernel evaluation from `tMesh` to the base class (`tEnv`?),
+  - [ ] Use the base class in the BLAS/Auxiliary solvers for `env`,
+  - [ ] Custom threading (without OpenMP on Fortran level),
+  - [ ] MPI support..
+
+* Lightweight tensor arithmetics:
+  - [ ] Fortran implementation,
+  - [ ] C/C++ API.
+
+* New differential operators and boundary conditions:
+  - [ ] Godunov/WENO linear convection operator,
+  - [ ] Godunov/WENO nonlinear convection operator,
+  - [ ] Riemann solvers, Euler equations...
+
+* Matrix reconstruction:
+  - [ ] Matrix portrait construction,
+  - [ ] Graph-coloring problem,
+  - [ ] Some matrix API...
+
+* New linear solvers:
+  - [ ] `GMRES` solver implementation.
+  - [ ] `PowerIterations` eigensolver,
+  - [ ] `Lanczos` hybrid eigensolver/solver,
+  - [ ] `Arnoldi` hybrid eigensolver/solver,
+  - [ ] `ConjugateChebyshev` solver,
+  - [ ] Custom eigensolvers for the tridiagonal Hermitian matrices,
+  - [ ] LAPACK eigensolvers for the Hessenberg matrices,
+  - [ ] Custom eigensolvers for the Hessenberg matrices,
+  - [ ] Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
+
+* Nonlinear solvers:
+  - [ ] Newton-Raphson solver,
+  - [ ] Jacobian-Free Newton-Raphson solver.
+
+* Preconditioning:
+  - [ ] Fix block case diagonal extraction,
+  - [ ] Block tridiagonal preconditioner,
+  - [ ] Matrix-free SPAI preconditioner,
+  - [ ] Matrix-based preconditioning..
+
+* Add support for complex numbers:
+  - [x] Support for complex numbers on BLAS level in Fortran,
+  - [ ] Support for complex linear solvers,
+  - [ ] Support for complex differential operators and boundary condition. 
+
+* Symbolic arithmetics:
+  - [ ] Recover existing symbolic interface.
+  - [ ] Implement symbolic drivers for the linear case.
+  - [ ] Direct/reverse auto-differentiation..
+

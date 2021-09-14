@@ -68,6 +68,17 @@ if(GIT_FOUND)
     message(FATAL_ERROR 
             "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
+  if(StormRuler_UPDATE_SUBMODULES)
+    message(WARNING "Pulling submodules!")
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} submodule update --remote --merge
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      RESULT_VARIABLE GIT_SUBMODULE_RESULT)
+    if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
+      message(FATAL_ERROR 
+              "`git submodule update --remote --merge` failed with ${GIT_SUBMODULE_RESULT}.")
+    endif()
+  endif()
 endif()
 
 # TODO: we should check for quality of the OpenMP implementation,
@@ -167,14 +178,19 @@ endif()
 file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
 file(GLOB_RECURSE CXX_SOURCES "src/*.cpp")
 
-# Find Python interpreter.
-find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
-
 # Find Fortiel preprocessor.
-set(Fortiel_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/fortiel/src")
+if(NOT "$ENV{StormRuler_Fortiel_PATH}" STREQUAL "")
+  set(Fortiel_PATH "$ENV{StormRuler_Fortiel_PATH}")
+  message(STATUS "Overriding submodule Fortiel path to ${Fortiel_PATH}")
+else()
+  set(Fortiel_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/fortiel/src")
+endif()
 if(NOT EXISTS "${Fortiel_PATH}/fortiel.py")
   message(FATAL_ERROR "Broken Fortiel submodule.")
 endif()
+
+# Find Python interpreter.
+find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
 # Preprocess Fortran sources.
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src_gen")

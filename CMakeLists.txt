@@ -68,17 +68,6 @@ if(GIT_FOUND)
     message(FATAL_ERROR 
             "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
-  if(StormRuler_UPDATE_SUBMODULES)
-    message(WARNING "Pulling submodules!")
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} submodule update --remote --merge
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      RESULT_VARIABLE GIT_SUBMODULE_RESULT)
-    if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
-      message(FATAL_ERROR 
-              "`git submodule update --remote --merge` failed with ${GIT_SUBMODULE_RESULT}.")
-    endif()
-  endif()
 endif()
 
 # TODO: we should check for quality of the OpenMP implementation,

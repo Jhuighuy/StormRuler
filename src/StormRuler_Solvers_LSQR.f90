@@ -28,10 +28,10 @@ module StormRuler_Solvers_LSQR
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
+use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
   & Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -68,10 +68,10 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec, MatVec_T
+  procedure(tMatVecFuncR$rank) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond, Precond_T
+  procedure(tPrecondFuncR$rank), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   ! ----------------------
@@ -215,10 +215,10 @@ subroutine Solve_LSQR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
@@ -247,10 +247,10 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec, MatVec_T
+  procedure(tMatVecFuncR$rank) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond, Precond_T
+  procedure(tPrecondFuncR$rank), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   ! ----------------------
@@ -404,10 +404,10 @@ subroutine Solve_LSMR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------

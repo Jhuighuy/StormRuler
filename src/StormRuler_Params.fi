@@ -27,7 +27,7 @@
 
 #$let DEBUG = True
 
-#$let HAS_OpenMP = False
+#$let HAS_OpenMP = True
 
 #$let HAS_MKL = True
 

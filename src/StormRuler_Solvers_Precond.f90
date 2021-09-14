@@ -28,8 +28,8 @@ module StormRuler_Solvers_Precond
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
-  & Fill, MatVecProd_Diagonal, Solve_Triangular
+use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
+  & @{tMatVecFuncC$$@|@0, NUM_RANKS}@, Fill, MatVecProd_Diagonal, Solve_Triangular
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -41,17 +41,19 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine tPrecondFunc$rank(mesh, Pu, u, MatVec, env, precond_env)
-    import :: dp, tMesh, tMatVecFunc$rank
+#$for type, typename in SCALAR_TYPES
+  subroutine tPrecondFunc$type$rank(mesh, Pu, u, MatVec, env, precond_env)
+    import :: dp, tMesh, tMatVecFunc$type$rank
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(inout) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Pu(@:,:)
-    procedure(tMatVecFunc$rank) :: MatVec
+    $typename, intent(in), target :: u(@:,:)
+    $typename, intent(inout), target :: Pu(@:,:)
+    procedure(tMatVecFunc$type$rank) :: MatVec
     class(*), intent(inout) :: env
     class(*), intent(inout), allocatable, target :: precond_env
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tPrecondFunc$rank
+  end subroutine tPrecondFunc$type$rank
+#$end for
 #$end do
 end interface
 
@@ -87,7 +89,7 @@ subroutine Precondition_Jacobi$rank(mesh, Px, x, MatVec, env, precond_env)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(@:,:)
   real(dp), intent(inout), target :: Px(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -134,7 +136,7 @@ subroutine Precondition_LU_SGS$rank(mesh, Px, x, MatVec, env, precond_env)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(@:,:)
   real(dp), intent(inout), target :: Px(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>

@@ -86,7 +86,7 @@ using tSMFuncPtr = void(*)(
   int dim, double* x, int* shape, double* in, double* out, void* env);
 
 // Basic mesh operator function pointer (for Lib API).
-using tMeshOperatorPtr = void(*)(tFieldBase* out, tFieldBase* in, void* env);
+using tMatVecFuncPtr = void(*)(tFieldBase* out, tFieldBase* in, void* env);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //

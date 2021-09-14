@@ -32,7 +32,8 @@ use StormRuler_Parameters, only: dp, ip, not_implemented_code
 use StormRuler_Helpers, only: tMapFunc$type_$rank, tSMapFunc$type_$rank
 #$end for
 #$end do
-use StormRuler_Helpers, only: operator(.inner.), operator(.outer.)
+use StormRuler_Helpers, only: Re, Im, R2C, &
+  & operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -96,6 +97,24 @@ interface Set
 #$end do
 end interface Set
 
+interface Set_Real
+#$do rank = 0, NUM_RANKS
+  module procedure Set_Real$rank
+#$end do
+end interface Set_Real
+
+interface Set_Imag
+#$do rank = 0, NUM_RANKS
+  module procedure Set_Imag$rank
+#$end do
+end interface Set_Imag
+
+interface Set_Complex
+#$do rank = 0, NUM_RANKS
+  module procedure Set_Complex$rank
+#$end do
+end interface Set_Complex
+
 interface Scale
 #$do rank = 0, NUM_RANKS
 #$for type, _ in SCALAR_TYPES
@@ -156,33 +175,41 @@ end interface SFuncProd
 
 abstract interface
 #$do rank = 0, NUM_RANKS
-  subroutine tMatVecFunc$rank(mesh, Au, u, env)
+#$for type, typename in SCALAR_TYPES
+  subroutine tMatVecFunc$type$rank(mesh, Au, u, env)
     import :: dp, tMesh
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Au(@:,:)
+    $typename, intent(in), target :: u(@:,:)
+    $typename, intent(inout), target :: Au(@:,:)
     class(*), intent(inout) :: env
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tMatVecFunc$rank
+  end subroutine tMatVecFunc$type$rank
+#$end for
 #$end do
 end interface
 
 interface MatVecProd_Diagonal
 #$do rank = 0, NUM_RANKS
-  module procedure MatVecProd_Diagonal$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure MatVecProd_Diagonal$type$rank
+#$end for
 #$end do
 end interface MatVecProd_Diagonal
 
 interface MatVecProd_Triangular
 #$do rank = 0, NUM_RANKS
-  module procedure MatVecProd_Triangular$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure MatVecProd_Triangular$type$rank
+#$end for
 #$end do
 end interface MatVecProd_Triangular
 
 interface Solve_Triangular
 #$do rank = 0, NUM_RANKS
-  module procedure Solve_Triangular$rank
+#$for type, _ in SCALAR_TYPES
+  module procedure Solve_Triangular$type$rank
+#$end for
 #$end do
 end interface Solve_Triangular
 
@@ -192,17 +219,30 @@ end interface Solve_Triangular
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute dot product: 𝑑 ← <𝒙⋅𝒚>.
+!! Compute dot product: 
+!! • 𝑑 ← <𝒙⋅𝒚> = 𝒙ᴴ𝒚 (default), or 
+!! • 𝑑 ← [𝒙⋅𝒚] = 𝒙ᵀ𝒚 (do_conjg = false).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
-$typename function Dot$type$rank(mesh, x, y) result(Dot)
+$typename function Dot$type$rank(mesh, x, y, do_conjg) result(Dot)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(@:,:), y(@:,:)
+  logical, intent(in), optional :: do_conjg
   ! >>>>>>>>>>>>>>>>>>>>>>
   
+#$if type == 'c'
+  if (present(do_conjg)) then
+    if (.not.do_conjg) then
+      Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
+      return
+    end if
+  end if
+  Dot = mesh%RunCellKernel_Sum(Dot_Kernel_Conjg)
+#$else
   Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
+#$end if
 
 contains
   $typename function Dot_Kernel(iCell)
@@ -210,21 +250,33 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    ! ----------------------
+    ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙ᵢ𝒚ᵢ. 
+    ! ----------------------
 #$if rank == 0
-  #$if type == 'c'
-    Dot_Kernel = x(iCell) * conjg(y(iCell))
-  #$else
     Dot_Kernel = x(iCell) * y(iCell)
-  #$end if
 #$else
-  #$if type == 'c'
-    Dot_Kernel = sum(x(@:,iCell) * conjg(y(@:,iCell)))
-  #$else
     Dot_Kernel = sum(x(@:,iCell) * y(@:,iCell))
-  #$end if
 #$end if
     
   end function Dot_Kernel
+#$if type == 'c'
+  $typename function Dot_Kernel_Conjg(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    ! ----------------------
+    ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙ᵢ𝒚̅ᵢ.
+    ! ----------------------
+    #$if rank == 0
+    Dot_Kernel_Conjg = conjg(x(iCell)) * y(iCell)
+#$else
+    Dot_Kernel_Conjg = sum(conjg(x(@:,iCell)) * y(@:,iCell))
+#$end if
+    
+  end function Dot_Kernel_Conjg
+#$end if
 end function Dot$type$rank
 #$end for
 #$end do
@@ -312,16 +364,22 @@ end function Norm_C$type$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components: 𝒚 ← 𝛼.
+!! Fill vector components: 𝒚 ← 𝛼 + [𝛽], 𝛼 ∊ ℝ, [𝛽 ∊ ℝ or ℂ].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
-subroutine Fill$type$rank(mesh, y, alpha)
+subroutine Fill$type$rank(mesh, y, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  $typename, intent(in) :: alpha
+  real(dp), intent(in) :: alpha
   $typename, intent(inout) :: y(@:,:)
+  $typename, intent(in), optional :: beta
   ! >>>>>>>>>>>>>>>>>>>>>>
+
+  $typename :: gamma
+
+  gamma = alpha
+  if (present(beta)) gamma = gamma + beta
 
   call mesh%RunCellKernel(Fill_Kernel)
 
@@ -331,7 +389,7 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    y(@:,iCell) = alpha
+    y(@:,iCell) = gamma
     
   end subroutine Fill_Kernel
 end subroutine Fill$type$rank
@@ -341,7 +399,7 @@ end subroutine Fill$type$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, where: 
 !! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
-!! • 𝕹𝖊(𝛼ᵢ) ~ ???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
+!! • 𝕹𝖊(𝛼ᵢ) ~ 𝘜(𝑎,𝑏)???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
@@ -410,6 +468,81 @@ end subroutine Set$type$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Set: 𝒚 ← 𝕹𝖊(𝒙).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Set_Real$rank(mesh, y, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  complex(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  call mesh%RunCellKernel(Set_Real_Kernel)
+
+contains
+  subroutine Set_Real_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    y(@:,iCell) = Re(x(@:,iCell))
+
+  end subroutine Set_Real_Kernel
+end subroutine Set_Real$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Set: 𝒚 ← 𝕹𝖊(𝒙).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Set_Imag$rank(mesh, y, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  complex(dp), intent(in) :: x(@:,:)
+  real(dp), intent(inout) :: y(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  call mesh%RunCellKernel(Set_Imag_Kernel)
+
+contains
+  subroutine Set_Imag_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    y(@:,iCell) = Im(x(@:,iCell))
+
+  end subroutine Set_Imag_Kernel
+end subroutine Set_Imag$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Set: 𝒛 ← 𝒚 + 𝑖𝒙.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$do rank = 0, NUM_RANKS
+subroutine Set_Complex$rank(mesh, z, y, x)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  real(dp), intent(in) :: x(@:,:), y(@:,:)
+  complex(dp), intent(inout) :: z(@:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+  
+  call mesh%RunCellKernel(Set_Complex_Kernel)
+
+contains
+  subroutine Set_Complex_Kernel(iCell)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    z(@:,iCell) = R2C(y(@:,iCell), x(@:,iCell))
+
+  end subroutine Set_Complex_Kernel
+end subroutine Set_Complex$rank
+#$end do
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
@@ -437,7 +570,7 @@ end subroutine Scale$type$rank
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute linear combination: 𝒛 ← 𝛽𝒚 + 𝛼𝒙.
+!! Compute linear combination: 𝒛 ← [[𝛽]]𝒚 + [𝛼]𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
@@ -642,12 +775,13 @@ end subroutine SFuncProd$type$rank
 !! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine MatVecProd_Diagonal$rank(mesh, Dx, x, MatVec, env)
+#$for type, typename in SCALAR_TYPES
+subroutine MatVecProd_Diagonal$type$rank(mesh, Dx, x, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: Dx(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  $typename, intent(in) :: x(@:,:)
+  $typename, intent(inout) :: Dx(@:,:)
+  procedure(tMatVecFunc$type$rank) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -662,7 +796,7 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: e(@:,:)
+    $typename, allocatable :: e(@:,:)
     allocate(e, mold=x)
 
     e(@:,:) = 0.0_dp
@@ -675,7 +809,8 @@ contains
     end do
 
   end subroutine MatVecProd_Diagonal_BlockKernel  
-end subroutine MatVecProd_Diagonal$rank
+end subroutine MatVecProd_Diagonal$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -683,13 +818,14 @@ end subroutine MatVecProd_Diagonal$rank
 !! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine MatVecProd_Triangular$rank(mesh, Tx, x, UpLo, MatVec, env)
+#$for type, typename in SCALAR_TYPES
+subroutine MatVecProd_Triangular$type$rank(mesh, Tx, x, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: x(@:,:)
-  real(dp), intent(inout) :: Tx(@:,:)
+  $typename, intent(in) :: x(@:,:)
+  $typename, intent(inout) :: Tx(@:,:)
   character :: UpLo
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFunc$type$rank) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -708,7 +844,7 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: e(@:,:)
+    $typename, allocatable :: e(@:,:)
     allocate(e, mold=x)
 
     e(@:,:firstCell-1) = 0.0_dp
@@ -728,7 +864,7 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: e(@:,:)
+    $typename, allocatable :: e(@:,:)
     allocate(e, mold=x)
 
     e(@:,:lastCell) = x(@:,:lastCell)
@@ -741,7 +877,8 @@ contains
     end do
 
   end subroutine MatVecProd_LowerTriangular_BlockKernel 
-end subroutine MatVecProd_Triangular$rank
+end subroutine MatVecProd_Triangular$type$rank
+#$end for
 #$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -749,13 +886,14 @@ end subroutine MatVecProd_Triangular$rank
 !! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
-subroutine Solve_Triangular$rank(mesh, x, b, diag, UpLo, MatVec, env)
+#$for type, typename in SCALAR_TYPES
+subroutine Solve_Triangular$type$rank(mesh, x, b, diag, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:), diag(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
+  $typename, intent(in) :: b(@:,:), diag(@:,:)
+  $typename, intent(inout) :: x(@:,:)
   character :: UpLo
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFunc$type$rank) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -776,7 +914,7 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: Ax(@:,:)
+    $typename, allocatable :: Ax(@:,:)
     allocate(Ax, mold=x)
 
     x(@:,:) = 0.0_dp
@@ -798,7 +936,7 @@ contains
 
     integer :: iCell
 
-    real(dp), allocatable :: Ax(@:,:)
+    $typename, allocatable :: Ax(@:,:)
     allocate(Ax, mold=x)
 
     x(@:,:) = 0.0_dp
@@ -813,7 +951,8 @@ contains
     end do
 
   end subroutine Solve_LowerTriangular_BlockKernel 
-end subroutine Solve_Triangular$rank
+end subroutine Solve_Triangular$type$rank
+#$end for
 #$end do
 
 end module StormRuler_BLAS

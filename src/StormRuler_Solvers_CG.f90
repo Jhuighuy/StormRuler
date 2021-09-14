@@ -29,10 +29,10 @@ module StormRuler_Solvers_CG
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
+use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
   & Fill, Set, Dot, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -67,10 +67,10 @@ subroutine Solve_CG$rank(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta
@@ -160,10 +160,10 @@ subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega

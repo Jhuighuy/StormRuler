@@ -28,10 +28,11 @@ module StormRuler_Solvers_Chebyshev
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, &
+use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
   & Norm_2, Set, Fill, Add, Sub
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
+use StormRuler_SolversEVP_Lanczos, only: EigenPairs_Lanczos
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -61,10 +62,10 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda_min, lambda_max, b(@:,:)
   real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   logical :: first, second
@@ -78,6 +79,8 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
   else
     z => r
   end if
+
+  call EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),

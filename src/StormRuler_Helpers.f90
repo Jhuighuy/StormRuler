@@ -156,6 +156,15 @@ end subroutine BubbleSort
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
+!! Ensure the value is real.
+!! ----------------------------------------------------------------- !!
+subroutine EnsureReal(value)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  complex(dp), intent(in) :: value
+  ! >>>>>>>>>>>>>>>>>>>>>>
+end subroutine EnsureReal
+
+!! ----------------------------------------------------------------- !!
 !! Ensure the value is positive.
 !! ----------------------------------------------------------------- !!
 subroutine EnsurePositive(value)
@@ -267,6 +276,44 @@ end function Outer$rank
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
+!! Get real part of a complex number.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function Re(z)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  complex(dp), intent(in) :: z
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  Re = real(z, kind=dp)
+end function Re
+
+!! ----------------------------------------------------------------- !!
+!! Get imaginary part of a complex number.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function Im(z)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  complex(dp), intent(in) :: z
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  Im = aimag(z) !! TODO: is this operation double-precision preserving?
+end function Im
+
+!! ----------------------------------------------------------------- !!
+!! Convert real number (or a pair of two) into the complex number.
+!! ----------------------------------------------------------------- !!
+real(dp) elemental function R2C(x,y)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in) :: x
+  real(dp), intent(in), optional :: y
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  if (present(y)) then
+    R2C = cmplx(x, y, kind=dp)
+  else
+    R2C = cmplx(x, 0.0_dp, kind=dp)
+  end if
+end function R2C
 
 !! ----------------------------------------------------------------- !!
 !! Convert an integer to string.

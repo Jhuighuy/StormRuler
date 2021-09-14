@@ -29,9 +29,9 @@ module StormRuler_Solvers_MKL
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFunc$$@|@0, NUM_RANKS}@, Set
+use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, Set
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFunc$$@|@0, NUM_RANKS}@
+use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
@@ -77,10 +77,10 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: rci_request
@@ -158,10 +158,10 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(@:,:)
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFunc$rank) :: MatVec
+  procedure(tMatVecFuncR$rank) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFunc$rank), optional :: Precond
+  procedure(tPrecondFuncR$rank), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: rci_request

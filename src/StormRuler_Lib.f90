@@ -815,7 +815,7 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pMatVec, env, c) &
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
     call Solve_MINRES(gMesh, u, b, MatVec_wrapper, Params, Params)
     !call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params, Precondition_LU_SGS$rank)
-    error stop 229
+    !error stop 229
   else
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
     call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params)

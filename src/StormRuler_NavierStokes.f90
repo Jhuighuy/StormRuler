@@ -50,11 +50,11 @@ subroutine SolvePoisson(mesh,u,f)
   ! ----------------------
 
   call Fill(mesh,u,0.0_dp)
-  !call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
+  call Solve_CG(mesh,u,f,PoissonOperator,Params,Params)
   !call Solve_CG(mesh,u,f,PoissonOperator,Precondition_Jacobi$0,Params,Params)
   
-  call Solve_LSQR(mesh,u,f,PoissonOperator,Params,PoissonOperator,Params,Params,Precondition_LU_SGS$0,Precondition_LU_SGS$0)
-  error stop 228
+  !call Solve_LSQR(mesh,u,f,PoissonOperator,Params,PoissonOperator,Params,Params,Precondition_LU_SGS$0,Precondition_LU_SGS$0)
+  !error stop 228
   
   !call Solve_FGMRES_MKL(mesh,u,f,PoissonOperator,Params,Params,Precondition_LU_SGS$0)
   !call Solve_DSS_MKL0(mesh,u,f,PoissonOperator,Params)

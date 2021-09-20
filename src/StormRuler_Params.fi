@@ -29,7 +29,7 @@
 
 #$let HAS_OpenMP = True
 
-#$let HAS_MKL = True
+#$let HAS_MKL = False
 
 #$let HAS_LAPACK = True
 

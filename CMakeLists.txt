@@ -30,9 +30,9 @@ cmake_minimum_required(VERSION 3.12)
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 project(StormRuler
-        VERSION 1.0
-        DESCRIPTION "A very high order CFD solver"
-        LANGUAGES Fortran CXX)
+  VERSION 1.0
+  DESCRIPTION "A very high order CFD solver and beyond"
+  LANGUAGES Fortran CXX)
 
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
@@ -41,15 +41,31 @@ add_library(StormRuler_BASE INTERFACE)
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-# NAG (unexpectedly) uses some wierd notation for kinds by default.
-# Switch to the normal system.
+if(APPLE)
+  # Detect Apple Silicon CPU.
+  # Fortran compilers on Apple Silicon are not production-ready yet,
+  # so we need to disable some features (for now).
+  include(CheckCxxCompilerFlag)
+  check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
+  message(STATUS "Apple Silicon detected.")
+endif()
+
+# NAG (unexpectedly) does not use byte-based kind system by default.
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
   target_compile_options(
     StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
 endif()
 
-target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-O3 -march=native>)
+# TODO: add compile options based on Debug/Release configurations.
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g>)
+  # Enabled optimization fail on GFORTRAN/M1.
+  if(NOT APPLE_SILICON)
+    target_compile_options(
+      StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
+  endif()
+endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
@@ -66,7 +82,7 @@ if(GIT_FOUND)
     RESULT_VARIABLE GIT_SUBMODULE_RESULT)
   if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
     message(FATAL_ERROR 
-            "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
+      "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
 endif()
 

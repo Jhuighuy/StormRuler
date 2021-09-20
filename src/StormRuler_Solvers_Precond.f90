@@ -28,8 +28,12 @@ module StormRuler_Solvers_Precond
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
-  & @{tMatVecFuncC$$@|@0, NUM_RANKS}@, Fill, MatVecProd_Diagonal, Solve_Triangular
+use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$type_$rank
+#$end for
+#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

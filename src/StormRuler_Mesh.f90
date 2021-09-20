@@ -43,17 +43,23 @@ implicit none
 abstract interface
   subroutine tKernelFunc(iCell)
     import ip
+    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
   end subroutine tKernelFunc
   subroutine tBlockKernelFunc(firstCell, lastCell)
     import ip
+    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: firstCell, lastCell
+    ! >>>>>>>>>>>>>>>>>>>>>>
   end subroutine tBlockKernelFunc
 #$for type, typename in SCALAR_TYPES
   function tReduceKernelFunc$type(iCell) result(r)
     import ip, dp
+    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     $typename :: r
+    ! >>>>>>>>>>>>>>>>>>>>>>
   end function tReduceKernelFunc$type
 #$end for
 end interface
@@ -319,9 +325,6 @@ subroutine tMesh_RunCellKernel(mesh, Kernel)
   end if
 end subroutine tMesh_RunCellKernel
 
-!! TODO:
-#$let r = 'r'
-
 !! ----------------------------------------------------------------- !!
 !! Launch a SUM-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
@@ -356,7 +359,7 @@ end function tMesh_RunCellKernel_Sum$type
 function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc$r) :: Kernel
+  procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMin
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -382,7 +385,7 @@ end function tMesh_RunCellKernel_Min
 function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc$r) :: Kernel
+  procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMax
   ! >>>>>>>>>>>>>>>>>>>>>>
 

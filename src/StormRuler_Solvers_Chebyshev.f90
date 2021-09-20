@@ -28,11 +28,15 @@ module StormRuler_Solvers_Chebyshev
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
-  & Norm_2, Set, Fill, Add, Sub
+use StormRuler_BLAS, only: Norm_2, Set, Fill, Add, Sub
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$type_$rank
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+#$end for
+#$end do
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
-use StormRuler_SolversEVP_Lanczos, only: EigenPairs_Lanczos
+!use StormRuler_SolversEVP_Lanczos, only: EigenPairs_Lanczos
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -80,7 +84,7 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
     z => r
   end if
 
-  call EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
+  !call EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
 
   ! ----------------------
   ! 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),

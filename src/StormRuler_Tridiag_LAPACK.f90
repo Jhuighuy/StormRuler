@@ -80,8 +80,7 @@ subroutine ComputeEigenpairs_Symm_LAPACK(T, m, which, theta, y)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   character :: range, order
-  integer(ip) :: pass, info, m_out
-  integer(ip) :: j_min, j_max, nsplit
+  integer(ip) :: pass, info, m_out, j_min, j_max, nsplit
   integer(ip), pointer :: iwork(:), iblock(:), isplit(:), ifailv(:)
   real(dp), pointer :: work(:), y_out(:,:), theta_out(:)
 
@@ -139,8 +138,8 @@ subroutine ComputeEigenpairs_Symm_LAPACK(T, m, which, theta, y)
       call dstein(T%Dim, T%Diag, T%Subdiag(2:), m_out, theta_out, &
         & iblock, isplit, y_out, T%Dim, work, iwork, ifailv, info)
       if (info /= 0) then
-        write(error_unit, *) 'LAPACK dstein failed, INFO=', info, &
-          &                  'IFAILV=', ifailv
+        write(error_unit, *) &
+          & 'LAPACK dstein failed, INFO=', info, ' IFAILV=', ifailv
         error stop error_code
       end if
     end if

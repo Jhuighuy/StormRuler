@@ -29,10 +29,14 @@ module StormRuler_Solvers_CG
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
-  & Fill, Set, Dot, Add, Sub
+use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$type_$rank
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+#$end for
+#$end do
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

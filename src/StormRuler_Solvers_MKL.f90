@@ -29,9 +29,14 @@ module StormRuler_Solvers_MKL
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, Set
+use StormRuler_BLAS, only: Set
+#$do rank = 0, NUM_RANKS
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$type_$rank
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+#$end for
+#$end do
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer

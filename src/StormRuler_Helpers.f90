@@ -38,21 +38,21 @@ implicit none
 
 abstract interface
 #$for type, typename in SCALAR_TYPES
-  pure function tMapFunc$type$0(z) result(v)
+  pure function tMapFunc$type$0(x) result(Mx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
-    $typename, intent(in) :: z
-    $typename :: v
+    $typename, intent(in) :: x
+    $typename :: Mx
     ! >>>>>>>>>>>>>>>>>>>>>>
   end function tMapFunc$type$0
 #$end for
 #$do rank = 1, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
-  pure function tMapFunc$type$rank(z) result(v)
+  pure function tMapFunc$type$rank(x) result(Mx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
-    $typename, intent(in) :: z(@:)
-    $typename :: v(@{size(z, dim=$$)}@)
+    $typename, intent(in) :: x(@:)
+    $typename :: Mx(@{size(x, dim=$$)}@)
     ! >>>>>>>>>>>>>>>>>>>>>>
   end function tMapFunc$type$rank
 #$end for
@@ -61,23 +61,23 @@ end interface
 
 abstract interface
 #$for type, typename in SCALAR_TYPES
-  pure function tSMapFunc$type$0(r, z) result(v)
+  pure function tSMapFunc$type$0(r, x) result(SMx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: r(:)
-    $typename, intent(in) :: z
-    $typename :: v
+    $typename, intent(in) :: x
+    $typename :: SMx
     ! >>>>>>>>>>>>>>>>>>>>>>
   end function tSMapFunc$type$0
 #$end for
 #$do rank = 1, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
-  pure function tSMapFunc$type$rank(r, z) result(v)
+  pure function tSMapFunc$type$rank(r, x) result(SMx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: r(:)
-    $typename, intent(in) :: z(@:)
-    $typename :: v(@{size(z, dim=$$)}@)
+    $typename, intent(in) :: x(@:)
+    $typename :: SMx(@{size(x, dim=$$)}@)
     ! >>>>>>>>>>>>>>>>>>>>>>
   end function tSMapFunc$type$rank
 #$end for

@@ -44,6 +44,8 @@ implicit none
 
 integer(ip), parameter :: FDM_AccuracyOrder = 2
 
+logical, parameter :: FDM_CylCoords = .true.
+
 private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
 
 interface FDM_Gradient_Central
@@ -342,6 +344,25 @@ contains
       ! ----------------------
       associate(dr_inv => &
         & lambda*SafeInverse(mesh%dr(:,iCellFace)))
+
+        ! ----------------------
+        ! Cylindrical case: 
+        ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force second order.
+        ! ----------------------
+        if (FDM_CylCoords.and.(iCellFace == 1)) then
+          associate( &
+            & rho_l => mesh%CellCenter(1,lCell), &
+            & rho_i => mesh%CellCenter(1,iCell), &
+            & rho_r => mesh%CellCenter(1,rCell))
+            v(@:,iCell) = v(@:,iCell) - &
+              & ( dr_inv.inner.FD1_C2(rho_l*u(:,@:,lCell), &
+              &                       rho_r*u(:,@:,rCell)) )/rho_i
+          end associate; cycle
+        end if
+
+        ! ----------------------
+        ! General case.
+        ! ----------------------
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) - &
@@ -464,6 +485,7 @@ elemental function FD1_F6(u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr
   real(dp) :: FD1_F6
+  ! >>>>>>>>>>>>>>>>>>>>>>
   FD1_F6 = &
     & ( (+01.0_dp/30.0_dp)*u_ll  + &
     &   (-02.0_dp/05.0_dp)*u_l   + &
@@ -518,7 +540,7 @@ end function FD1_F8
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Gradient_Forward$rank(mesh, v, lambda, u, &
-  &                                  dirAll, dirFace, dirCellFace)
+    &                                dirAll, dirFace, dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda, u(@:,:)
@@ -674,7 +696,7 @@ end subroutine FDM_Gradient_Forward$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine FDM_Divergence_Backward$rank(mesh, v, lambda, u, &
-  &                                     dirAll, dirFace, dirCellFace)
+    &                                   dirAll, dirFace, dirCellFace)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda, u(:,@:,:)
@@ -955,7 +977,7 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer(ip) :: iCellFace
+    integer(ip) :: iDim, iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell
     
@@ -988,7 +1010,28 @@ contains
       ! ----------------------
       ! Compute FDM-approximate Laplacian increment.
       ! ----------------------
-      associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
+      associate(dl_sqr_inv => &
+        & lambda/(mesh%dl(iCellFace)**2))
+
+        ! ----------------------
+        ! Cylindrical case: 
+        ! (1/𝜌)∂(𝜌∂𝒖/∂𝜌) component, force second order.
+        ! ----------------------
+        if (FDM_CylCoords.and.(iCellFace == 1)) then
+          associate( &
+            & rho_l => mesh%CellCenter(1,lCell), &
+            & rho_i => mesh%CellCenter(1,iCell), &
+            & rho_r => mesh%CellCenter(1,rCell))
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv * WFD2_C2(rho_l, u(@:,lCell), &
+              &                        rho_i, u(@:,iCell), &
+              &                        rho_r, u(@:,rCell)) )/rho_i
+          end associate; cycle
+        end if
+
+        ! ----------------------
+        ! General case.
+        ! ----------------------
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
@@ -1028,6 +1071,23 @@ contains
         end select
       end associate
     end do
+
+#$if rank == 1
+    if (FDM_CylCoords) then
+      ! ----------------------
+      ! Cylindrical coordinates, vector case.
+      ! We have already computed:
+      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
+      ! but we need:
+      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁ - 𝒖₁/𝑟², Δ𝒖₂}ᵀ.
+      ! The correction term is:
+      ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝑟².
+      ! ----------------------
+      associate(r => mesh%CellCenter(iCell))
+        v(1,iCell) = v(1,iCell) - lambda*u(1,iCell)/( r(1)**2 )
+      end associate
+    end if
+#$end if
   end subroutine FDM_Laplacian_Central_Kernel
 end subroutine FDM_Laplacian_Central$rank
 #$end do
@@ -1099,7 +1159,7 @@ end subroutine FDM_Bilaplacian_Central$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Second order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
+!! Second order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -1111,10 +1171,10 @@ elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
 end function WFD2_C2
 
 !! ----------------------------------------------------------------- !!
-!! Fourth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
+!! Fourth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
-  &                        u, w_r, u_r, w_rr, u_rr)
+    &                      u, w_r, u_r, w_rr, u_rr)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: w_ll, w_l, w, w_r, w_rr
   real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr
@@ -1124,10 +1184,10 @@ elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C4
 
 !! ----------------------------------------------------------------- !!
-!! Sixth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
+!! Sixth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
-  &                        u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
+    &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr
   real(dp), intent(in) :: u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr
@@ -1137,10 +1197,10 @@ elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C6
 
 !! ----------------------------------------------------------------- !!
-!! Eighth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝑥)/𝑑𝑥 approximation.
+!! Eighth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
-  &                        u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
+    &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: w_llll, w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr, w_rrrr
   real(dp), intent(in) :: u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr
@@ -1186,6 +1246,7 @@ contains
     ! For each positive cell face do:
     ! ----------------------
     do iCellFace = 1, mesh%NumCellFaces, 2
+
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
@@ -1210,46 +1271,91 @@ contains
       ! ----------------------
       ! Compute FDM-approximate variable coefficient Laplacian increment.
       ! ----------------------
-      associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
+      associate(dl_sqr_inv => &
+        & lambda/(mesh%dl(iCellFace)**2))
+
+        ! ----------------------
+        ! Cylindrical case,
+        ! (1/𝜌)∂(𝜌𝒘∂𝒖/∂𝜌) component, force second order.
+        ! ----------------------
+        if (FDM_CylCoords.and.(iCellFace == 1)) then
+          associate( &
+            & rho_l => mesh%CellCenter(1,lCell), &
+            & rho_i => mesh%CellCenter(1,iCell), &
+            & rho_r => mesh%CellCenter(1,rCell))
+            v(@:,iCell) = v(@:,iCell) + &
+              & ( dl_sqr_inv * &
+              &   WFD2_C2(rho_l*w(@:,lCell), u(@:,lCell), &
+              &           rho_i*w(@:,iCell), u(@:,iCell), &
+              &           rho_r*w(@:,rCell), u(@:,rCell)) )/rho_i
+          end associate; cycle
+        end if
+
+        ! ----------------------
+        ! General case.
+        ! ----------------------
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dl_sqr_inv * WFD2_C2(w(@:,lCell), u(@:,lCell), &
-              &                        w(@:,lCell), u(@:,iCell), &
-              &                        w(@:,lCell), u(@:,rCell)) )
+              & ( dl_sqr_inv * &
+              &   WFD2_C2(w(@:,lCell), u(@:,lCell), &
+              &           w(@:,iCell), u(@:,iCell), &
+              &           w(@:,rCell), u(@:,rCell)) )
           ! ----------------------
           case(3:4)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dl_sqr_inv * WFD2_C4(w(@:,llCell), u(@:,llCell), &
-              &                        w(@:, lCell), u(@:, lCell), &
-              &                        w(@:, iCell), u(@:, iCell), &
-              &                        w(@:, rCell), u(@:, rCell), &
-              &                        w(@:,rrCell), u(@:,rrCell)) )
+              & ( dl_sqr_inv * &
+              &   WFD2_C4(w(@:,llCell), u(@:,llCell), &
+              &           w(@:, lCell), u(@:, lCell), &
+              &           w(@:, iCell), u(@:, iCell), &
+              &           w(@:, rCell), u(@:, rCell), &
+              &           w(@:,rrCell), u(@:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dl_sqr_inv * WFD2_C6(w(@:,lllCell), u(@:,lllCell), &
-              &                        w(@:, llCell), u(@:, llCell), &
-              &                        w(@:,  lCell), u(@:,  lCell), &
-              &                        w(@:,  iCell), u(@:,  iCell), &
-              &                        w(@:,  rCell), u(@:,  rCell), &
-              &                        w(@:, rrCell), u(@:, rrCell), &
-              &                        w(@:,rrrCell), u(@:,rrrCell)) )
+              & ( dl_sqr_inv * &
+              &   WFD2_C6(w(@:,lllCell), u(@:,lllCell), &
+              &           w(@:, llCell), u(@:, llCell), &
+              &           w(@:,  lCell), u(@:,  lCell), &
+              &           w(@:,  iCell), u(@:,  iCell), &
+              &           w(@:,  rCell), u(@:,  rCell), &
+              &           w(@:, rrCell), u(@:, rrCell), &
+              &           w(@:,rrrCell), u(@:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(@:,iCell) = v(@:,iCell) + &
-              & ( dl_sqr_inv * WFD2_C8(w(@:,llllCell), u(@:,llllCell), &
-              &                        w(@:, lllCell), u(@:, lllCell), &
-              &                        w(@:,  llCell), u(@:,  llCell), &
-              &                        w(@:,   lCell), u(@:,   lCell), &
-              &                        w(@:,   iCell), u(@:,   iCell), &
-              &                        w(@:,   rCell), u(@:,   rCell), &
-              &                        w(@:,  rrCell), u(@:,  rrCell), &
-              &                        w(@:, rrrCell), u(@:, rrrCell), &
-              &                        w(@:,rrrrCell), u(@:,rrrrCell)) )
+              & ( dl_sqr_inv * &
+              &   WFD2_C8(w(@:,llllCell), u(@:,llllCell), &
+              &           w(@:, lllCell), u(@:, lllCell), &
+              &           w(@:,  llCell), u(@:,  llCell), &
+              &           w(@:,   lCell), u(@:,   lCell), &
+              &           w(@:,   iCell), u(@:,   iCell), &
+              &           w(@:,   rCell), u(@:,   rCell), &
+              &           w(@:,  rrCell), u(@:,  rrCell), &
+              &           w(@:, rrrCell), u(@:, rrrCell), &
+              &           w(@:,rrrrCell), u(@:,rrrrCell)) )
         end select
       end associate
     end do
+
+#$if rank == 1
+    if (FDM_CylCoords) then
+      ! ----------------------
+      ! Cylindrical coordinates, vector case.
+      ! We have already computed:
+      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
+      ! but we need:
+      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁ - 𝒖₁/𝑟², Δ𝒖₂}ᵀ.
+      ! The correction term is:
+      ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝑟².
+      ! ----------------------
+      !associate(r => mesh%CellCenter(iCell))
+      !  v(1,iCell) = v(1,iCell) - lambda*u(1,iCell)/( r(1)**2 )
+      !end associate
+      print *, 'Vector DivWGrad in cylindrical case is not implemented.'
+      error stop 1
+    end if
+#$end if
   end subroutine FDM_DivWGrad_Central_Kernel
 end subroutine FDM_DivWGrad_Central$rank
 #$end do

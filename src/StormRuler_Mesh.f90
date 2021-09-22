@@ -140,14 +140,17 @@ type :: tMesh
   real(dp) :: dt
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.
+  ! ( in the curvilinear coordinates, uniform. )
   ! Shape is [1, NumFaces].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
+  ! ( in the curvilinear coordinates, uniform. )
   ! Shape is [1, Dim]×[1, NumFaces].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
+
   ! ----------------------
   ! Cell center coordinates.
   ! Shape is [1, Dim]×[1, NumCells].
@@ -187,7 +190,9 @@ contains
   ! Field wrappers.
   ! ----------------------
   procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
-  procedure :: CellCenter => tMesh_CellCenter
+  generic :: CellCenter => CellCenterVec, CellCenterCoord
+  procedure :: CellCenterVec => tMesh_CellCenterVec
+  procedure :: CellCenterCoord => tMesh_CellCenterCoord
 
   ! ----------------------
   ! Initializers.
@@ -491,24 +496,37 @@ logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
   integer(ip), intent(in) :: iCell, iCellFace
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  tMesh_CellFacePeriodic = &
-    & allocated(mesh%mCellFacePeriodic).and. &
-    & mesh%mCellFacePeriodic(iCellFace, iCell)
+  tMesh_CellFacePeriodic = allocated(mesh%mCellFacePeriodic)
+  if (tMesh_CellFacePeriodic) then
+    tMesh_CellFacePeriodic = mesh%mCellFacePeriodic(iCellFace, iCell)
+  end if
+
 end function tMesh_CellFacePeriodic
 
 !! ----------------------------------------------------------------- !!
 !! Get cell center.
 !! ----------------------------------------------------------------- !!
-pure function tMesh_CellCenter(mesh, iCell)
+pure function tMesh_CellCenterVec(mesh, iCell)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iCell
-  real(dp) :: tMesh_CellCenter(mesh%Dim)
+  real(dp) :: tMesh_CellCenterVec(mesh%Dim)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  tMesh_CellCenter = &
-    & mesh%dl(::2)*mesh%CellMDIndex(:,iCell)
-end function tMesh_CellCenter
+  tMesh_CellCenterVec = &
+    & [0.1_dp,0.0_dp] + mesh%dl(::2)*mesh%CellMDIndex(:,iCell)
+end function tMesh_CellCenterVec
+pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: iDim, iCell
+  real(dp) :: tMesh_CellCenterCoord
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  associate(r => mesh%CellCenterVec(iCell))
+    tMesh_CellCenterCoord = r(iDim)
+  end associate
+end function tMesh_CellCenterCoord
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

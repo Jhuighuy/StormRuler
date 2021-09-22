@@ -409,7 +409,7 @@ subroutine Fill_Random$type$rank(mesh, y, a, b)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(inout) :: y(@:,:)
-  $typename, intent(in), optional :: a, b
+  real(dp), intent(in), optional :: a, b
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! TODO: not very parallel..

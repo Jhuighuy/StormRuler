@@ -29,11 +29,9 @@ module StormRuler_Solvers_Precond
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
-#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -46,12 +44,12 @@ implicit none
 abstract interface
 #$for type, typename in SCALAR_TYPES
   subroutine tPrecondFunc$type(mesh, Pu, u, MatVec, env, precond_env)
-    import :: dp, tMesh, tMatVecFunc$type$1
+    import :: dp, tMesh, tMatVecFunc$type
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(inout) :: mesh
     $typename, intent(in), target :: u(:,:)
     $typename, intent(inout), target :: Pu(:,:)
-    procedure(tMatVecFunc$type$1) :: MatVec
+    procedure(tMatVecFunc$type) :: MatVec
     class(*), intent(inout) :: env
     class(*), intent(inout), allocatable, target :: precond_env
     ! >>>>>>>>>>>>>>>>>>>>>>
@@ -76,7 +74,7 @@ subroutine Precondition_Jacobi(mesh, Px, x, MatVec, env, precond_env)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(:,:)
   real(dp), intent(inout), target :: Px(:,:)
-  procedure(tMatVecFuncR$1) :: MatVec
+  procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -109,7 +107,7 @@ subroutine Precondition_Jacobi(mesh, Px, x, MatVec, env, precond_env)
   ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
   ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  Px(:,:) = -x(:,:)/diag_env%diag(:,:)
+  Px(:,:) = x(:,:)/diag_env%diag(:,:)
 
 end subroutine Precondition_Jacobi
 
@@ -121,7 +119,7 @@ subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, env, precond_env)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(:,:)
   real(dp), intent(inout), target :: Px(:,:)
-  procedure(tMatVecFuncR$1) :: MatVec
+  procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>

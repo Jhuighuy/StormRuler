@@ -31,7 +31,7 @@ use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: &
   & Dot, Norm_2, Fill, Fill_Random, Set, Scale, Add, Sub
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_BLAS, only: tMatVecFunc$type_
 use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
 use StormRuler_ConvParams, only: tConvParams
@@ -71,7 +71,7 @@ subroutine EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
-  procedure(tMatVecFuncR$1) :: MatVec
+  procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond !! TODO:

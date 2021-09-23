@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Set, Sub, Norm_2
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_BLAS, only: tMatVecFunc$type_
 use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
 
@@ -51,7 +51,7 @@ real(dp) function ResidualNorm(mesh, y, b, MatVec, env, Precond, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:), y(:,:)
-  procedure(tMatVecFuncR$1) :: MatVec
+  procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout) :: env
   procedure(tPrecondFuncR), optional :: Precond
   class(*), allocatable, intent(inout), optional :: precond_env
@@ -86,7 +86,7 @@ real(dp) function ResidualNorm_Squared(mesh, y, b, &
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:), y(:,:)
-  procedure(tMatVecFuncR$1) :: MatVec, MatVec_T
+  procedure(tMatVecFuncR) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
   procedure(tPrecondFuncR), optional :: Precond, Precond_T
   class(*), allocatable, intent(inout), optional :: precond_env, precond_env_T

@@ -392,9 +392,11 @@ subroutine Lib_BLAS_Fill$rank(pU, alpha) &
   type(c_ptr), intent(in), value :: pU
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: u(@:,:)
+  real(dp), pointer :: uu(@:,:)
+  real(dp), pointer :: u(:,:)
   
-  u => DEREF$rank(pU)
+  uu => DEREF$rank(pU)
+  u => Reshape2D(uu)
   call Fill(gMesh, u, alpha)
   
 end subroutine Lib_BLAS_Fill$rank
@@ -413,9 +415,11 @@ subroutine Lib_BLAS_Set$rank(pU, pV) &
   type(c_ptr), intent(in), value :: pU, pV
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v(@:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:)
   
-  u => DEREF$rank(pU); v => DEREF$rank(pV)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV)
+  u => Reshape2D(uu); v => Reshape2D(vv)
   call Set(gMesh, u, v)
 
 end subroutine Lib_BLAS_Set$rank
@@ -435,9 +439,11 @@ subroutine Lib_BLAS_Add$rank(pU, pV, pW, alpha, beta) &
   type(c_ptr), intent(in), value :: pU, pV, pW
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:), ww(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:), w(:,:)
   
-  u => DEREF$rank(pU); v => DEREF$rank(pV); w => DEREF$rank(pW)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV); ww => DEREF$rank(pW)
+  u => Reshape2D(uu); v => Reshape2D(vv); w => Reshape2D(ww)
   call Add(gMesh, u, v, w, alpha, beta)
 
 end subroutine Lib_BLAS_Add$rank
@@ -459,9 +465,11 @@ subroutine Lib_BLAS_Sub$rank(pU, pV, pW, alpha, beta) &
   type(c_ptr), intent(in), value :: pU, pV, pW
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:), ww(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:), w(:,:)
   
-  u => DEREF$rank(pU); v => DEREF$rank(pV); w => DEREF$rank(pW)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV); ww => DEREF$rank(pW)
+  u => Reshape2D(uu); v => Reshape2D(vv); w => Reshape2D(ww)
   call Sub(gMesh, u, v, w, alpha, beta)
 
 end subroutine Lib_BLAS_Sub$rank
@@ -554,23 +562,20 @@ subroutine Lib_BLAS_FuncProd$rank(pV, pU, pF, env) &
   type(c_ptr), intent(in), value :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v(@:,:)
-  procedure(tLibMapFunc$rank), pointer :: f
+  procedure(tLibMapFunc$1), pointer :: f
+  real(dp), pointer :: uu(@:,:), vv(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:)
   
-  u => DEREF$rank(pU); v => DEREF$rank(pV)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV)
+  u => Reshape2D(uu); v => Reshape2D(vv)
   call c_f_procpointer(cptr=pF, fptr=f)
   call FuncProd(gMesh, v, u, f_wrapper)
 
 contains
   pure function f_wrapper(u) result(v)
     ! <<<<<<<<<<<<<<<<<<<<<<
-#$if rank == 0
-    real(dp), intent(in) :: u
-    real(dp) :: v
-#$else
-    real(dp), intent(in) :: u(@:)
-    real(dp) :: v(@{size(u, dim=$$)}@)
-#$endif
+    real(dp), intent(in) :: u(:)
+    real(dp) :: v(size(u))
     ! >>>>>>>>>>>>>>>>>>>>>>
     
     call f(int(shape(u), kind=c_int), u, v, env)
@@ -606,23 +611,20 @@ subroutine Lib_BLAS_SFuncProd$rank(pV, pU, pF, env) &
   type(c_ptr), intent(in), value :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v(@:,:)
-  procedure(tLibSMapFunc$rank), pointer :: f
+  procedure(tLibSMapFunc$1), pointer :: f
+  real(dp), pointer :: uu(@:,:), vv(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:)
   
-  u => DEREF$rank(pU); v => DEREF$rank(pV)
-  call c_f_procpointer(cptr=pF, fptr=f)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV)
+  u => Reshape2D(uu); v => Reshape2D(vv)
+    call c_f_procpointer(cptr=pF, fptr=f)
   call SFuncProd(gMesh, v, u, f_wrapper)
 
 contains
   pure function f_wrapper(x, u) result(v)
     ! <<<<<<<<<<<<<<<<<<<<<<
-#$if rank == 0
-    real(dp), intent(in) :: x(:), u
-    real(dp) :: v
-#$else
-    real(dp), intent(in) :: x(:), u(@:)
-    real(dp) :: v(@{size(u, dim=$$)}@)
-#$endif
+    real(dp), intent(in) :: x(:), u(:)
+    real(dp) :: v(size(u))
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     call f(int(size(x), kind=c_int), x, &
@@ -910,10 +912,11 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pMatVec, env, c) &
   if (c == 'L') then
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
     call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params)
-    !call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params, Precondition_LU_SGS$rank)
+    !call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params, Precondition_LU_SGS)
   else
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
     call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params)
+    !call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params, Precondition_LU_SGS)
   end if
 
 contains

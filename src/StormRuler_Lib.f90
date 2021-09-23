@@ -35,7 +35,6 @@ use StormRuler_BLAS, only: &
   & Mul_Inner, Mul_Outer, FuncProd, SFuncProd
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient_Central, FDM_Divergence_Central, &
-  & FDM_Gradient_Forward, FDM_Divergence_Backward, &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
@@ -657,6 +656,47 @@ ${writeIncLine(fr''' &
 // ----------------------------------------------------------------- // &
 ''')}$
 
+
+function Reshape2D(u) result(v)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in), target :: u(..)
+  real(dp), pointer :: v(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  select rank(u)
+    rank(1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ 1, size(u) ])
+#$do rank = 1, NUM_RANKS
+    rank($rank + 1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ size(u(@:,1)), size(u(@1,:)) ])
+#$end do
+    rank default
+      error stop 'Invalid rank'
+  end select
+
+end function Reshape2D
+
+function Reshape3D(dim, u) result(v)
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer(ip), intent(in) :: dim
+  real(dp), intent(in), target :: u(..)
+  real(dp), pointer :: v(:,:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  select rank(u)
+#$do rank = 1, NUM_RANKS
+    rank($rank + 1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ dim, size(u(@:,1))/dim, size(u(@1,:)) ])
+#$end do
+    rank default
+      error stop 'Invalid rank'
+  end select
+
+end function Reshape3D
+
 #$do rank = 0, NUM_RANKS-1
 subroutine Lib_FDM_Gradient$rank(pV_bar, lambda, pU, dir) &
     & bind(C, name='_Lib_FDM_Gradient$rank')
@@ -666,16 +706,20 @@ subroutine Lib_FDM_Gradient$rank(pV_bar, lambda, pU, dir) &
   character(c_char), intent(in), value :: dir
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v_bar(:,@:,:)
+  real(dp), pointer :: uu(@:,:), vv_bar(:,@:,:)
+  real(dp), pointer :: u(:,:), v_bar(:,:,:)
   
-  u => DEREF$rank(pU); v_bar => DEREF${rank+1}$(pV_bar)
+  uu => DEREF$rank(pU); vv_bar => DEREF${rank+1}$(pV_bar)
+  u => Reshape2D(uu)
+  v_bar => Reshape3D(gMesh%Dim, vv_bar)
+
   select case(dir)
     case('c')
       call FDM_Gradient_Central(gMesh, v_bar, lambda, u)
     case('f')
-      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=1_1)
+      call FDM_Gradient_Central(gMesh, v_bar, lambda, u, dirAll=1_1)
     case('b')
-      call FDM_Gradient_Forward(gMesh, v_bar, lambda, u, dirAll=-1_1)
+      call FDM_Gradient_Central(gMesh, v_bar, lambda, u, dirAll=-1_1)
   end select
 
 end subroutine Lib_FDM_Gradient$rank
@@ -698,16 +742,20 @@ subroutine Lib_FDM_Divergence$rank(pV, lambda, pU_bar, dir) &
   character(c_char), intent(in), value :: dir
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u_bar(:,@:,:), v(@:,:)
+  real(dp), pointer :: uu_bar(:,@:,:), vv(@:,:)
+  real(dp), pointer :: u_bar(:,:,:), v(:,:)
   
-  u_bar => DEREF${rank+1}$(pU_bar); v => DEREF$rank(pV)
+  uu_bar => DEREF${rank+1}$(pU_bar); vv => DEREF$rank(pV)
+  v => Reshape2D(vv)
+  u_bar => Reshape3D(gMesh%Dim, uu_bar)
+
   select case(dir)
     case('c')
       call FDM_Divergence_Central(gMesh, v, lambda, u_bar)
     case('f')
-      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=1_1)
+      call FDM_Divergence_Central(gMesh, v, lambda, u_bar, dirAll=1_1)
     case('b')
-      call FDM_Divergence_Backward(gMesh, v, lambda, u_bar, dirAll=-1_1)
+      call FDM_Divergence_Central(gMesh, v, lambda, u_bar, dirAll=-1_1)
   end select
 end subroutine Lib_FDM_Divergence$rank
 ${writeIncLine( &
@@ -728,9 +776,13 @@ subroutine Lib_FDM_Laplacian$rank(pV, lambda, pU) &
   type(c_ptr), intent(in), value :: pU, pV
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: u(@:,:), v(@:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:)
 
-  u => DEREF$rank(pU); v => DEREF$rank(pV)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV)
+  u => Reshape2D(uu)
+  v => Reshape2D(vv)
+
   call FDM_Laplacian_Central(gMesh, v, lambda, u)
 
 end subroutine Lib_FDM_Laplacian$rank
@@ -752,9 +804,13 @@ subroutine Lib_FDM_DivWGrad$rank(pV, lambda, pW, pU) &
   type(c_ptr), intent(in), value :: pU, pV, pW
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: u(@:,:), v(@:,:), w(@:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:), ww(@:,:)
+  real(dp), pointer :: u(:,:), v(:,:), w(:,:)
 
-  u => DEREF$rank(pU); v => DEREF$rank(pV); w => DEREF$rank(pW)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV); ww => DEREF$rank(pW)
+  u => Reshape2D(uu)
+  v => Reshape2D(vv)
+  w => Reshape2D(ww)
   call FDM_DivWGrad_Central(gMesh, v, lambda, w, u)
 
 end subroutine Lib_FDM_DivWGrad$rank
@@ -776,9 +832,12 @@ subroutine Lib_FDM_Convection$rank(pV, lambda, pU, pW_bar) &
   type(c_ptr), intent(in), value :: pU, pV, pW_bar
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  real(dp), pointer :: u(@:,:), v(@:,:), w_bar(:,:)
+  real(dp), pointer :: uu(@:,:), vv(@:,:), w_bar(:,:)
+  real(dp), pointer :: u(:,:), v(:,:), w(:,:)
 
-  u => DEREF$rank(pU); v => DEREF$rank(pV); w_bar => DEREF$1(pW_bar)
+  uu => DEREF$rank(pU); vv => DEREF$rank(pV); w_bar => DEREF$1(pW_bar)
+  u => Reshape2D(uu)
+  v => Reshape2D(vv)
   call FDM_Convection_Central(gMesh, v, lambda, u, w_bar)
 
 end subroutine Lib_FDM_Convection$rank

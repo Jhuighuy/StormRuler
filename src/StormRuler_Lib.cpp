@@ -148,15 +148,27 @@ void CahnHilliard_Step(tField<0> c, tField<1> v,
                        tField<0> c_hat, tField<0> w_hat) {
   tField<0> rhs = AllocField<0>();
   rhs << MAP(&dWdC, c);
+  FDM_ApplyBCs(1, rhs, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, rhs, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(1, c, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, c, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(1, v, 1.0, 0.0, 0.0);
+  FDM_ApplyBCs(2, v, 1.0, 0.0, 0.0);
   rhs << c - dt*CONV(c, v) + dt*DIVGRAD(rhs);
 
   c_hat << c;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
+    FDM_ApplyBCs(1, in, 0.0, 1.0, 0.0);
+    FDM_ApplyBCs(2, in, 0.0, 1.0, 0.0);
     out << 0.0;
     out += DIVGRAD(in);
+    FDM_ApplyBCs(1, out, 0.0, 1.0, 0.0);
+    FDM_ApplyBCs(2, out, 0.0, 1.0, 0.0);
     out << in + Gamma*dt*DIVGRAD(out);
   }, c_hat, rhs);
 
+  FDM_ApplyBCs(1, w_hat, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, w_hat, 0.0, 1.0, 0.0);
   w_hat << MAP(&dWdC, c_hat);
   w_hat -= Gamma*DIVGRAD(c_hat);
 }
@@ -166,7 +178,16 @@ double rho = 1.0, nu = 0.1, beta = 0.0;
 void NavierStokes_Step(tField<0> p, tField<1> v, 
                        tField<0> c, tField<0> w,
                        tField<0> p_hat, tField<1> v_hat) {
+  FDM_ApplyBCs(1, v, 1.0, 0.0, 0.0);
+  FDM_ApplyBCs(2, v, 1.0, 0.0, 0.0);
+  FDM_ApplyBCs(1, p, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, p, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(1, w, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, w, 0.0, 1.0, 0.0);
+
   v_hat << v - dt*CONV(v, v) - dt*beta/rho*GRAD(p) - dt/rho*(c*GRAD(w)) + dt/rho*nu*DIVGRAD(v);
+  FDM_ApplyBCs(1, v_hat, 1.0, 0.0, 0.0);
+  FDM_ApplyBCs(2, v_hat, 1.0, 0.0, 0.0);
 
   tField<0> rhs = AllocField<0>();
   rhs << 0.0;
@@ -175,16 +196,20 @@ void NavierStokes_Step(tField<0> p, tField<1> v,
   p_hat << 0.0;
   SOLVE_BiCGSTAB([&](tField<0> in, tField<0> out) {
     out << 0.0;
+    FDM_ApplyBCs(1, in, 0.0, 1.0, 0.0);
+    FDM_ApplyBCs(2, in, 0.0, 1.0, 0.0);
     out += DIVGRAD(in);
-  }, p_hat, rhs);
+  }, p_hat, rhs, 'L');
 
+  FDM_ApplyBCs(1, p_hat, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, p_hat, 0.0, 1.0, 0.0);
   v_hat -= dt/rho*GRAD(p_hat);
   p_hat << p_hat + beta*p;
 }
 
 double rho0 = 1.0, rho1 = 2.0;
  
-#if 1
+#if 0
 void NavierStokes_VaDensity_Step(tField<0> p, tField<1> v, 
                                  tField<0> c, tField<0> w,
                                  tField<0> p_hat, tField<1> v_hat) {
@@ -274,15 +299,18 @@ int main() {
     auto c = AllocField<0>(), 
       c_hat = AllocField<0>(), w_hat = AllocField<0>();
 
+    
     BLAS_SFuncProd(c, c, [&](double* coords, double* in, double* out) {
-      double x = coords[0] - M_PI, y = coords[1] - M_PI;
+      double x = coords[0] - M_PI - 1.1, y = coords[1] - M_PI;
       out[0] = 1.0;
+      out[0] = 2.0*double(rand())/RAND_MAX - 1.0;
+
       //if (hypot(x, y) < 1.0) out[0] = -1.0;
       // Square.
       //if ((fabs(x) < 1.0) && (fabs(y) < 1.0)) out[0] = -1.0;
       // Cross
-      if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
-      if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
+      //if ((fabs(x) < 0.2) && (fabs(y) < 2.0)) out[0] = -1.0;
+      //if ((fabs(y) < 0.2) && (fabs(x) < 2.0)) out[0] = -1.0;
       // Uncomment the following lines to get some very interesting shape:
       //if ((fabs(x - 1.8) < 0.2) && (fabs(y + 1.0) < 1.0)) out[0] = -1.0;
       //if ((fabs(x + 1.8) < 0.2) && (fabs(y - 1.0) < 1.0)) out[0] = -1.0;
@@ -308,8 +336,8 @@ int main() {
     _Lib_IO_Add(rho_hat, "rho");
     _Lib_IO_End();
 
-    for (int L = 1; L <= 2000; ++L) {
-      for (int M = 0; M < 1; ++M) {
+    for (int L = 1; L <= 200; ++L) {
+      for (int M = 0; M < 10; ++M) {
         CahnHilliard_Step(c, v, c_hat, w_hat);
         NavierStokes_VaDensity_Step(p, v, c_hat, w_hat, p_hat, v_hat);
         //CustomNavierStokes_Step(p, v, c_hat, w_hat, nPart_hat, rho_hat, p_hat, v_hat);

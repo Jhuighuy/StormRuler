@@ -52,7 +52,7 @@ end interface FDM_ApplyBCs
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply the third-order boundary conditions: αu + β∂u/∂n̅ = γ + f(̅x).
+!! Apply the third-order boundary conditions: 𝛼𝒖 + 𝛽∂𝒖/∂𝑛 = 𝛾 + 𝑓(𝑟).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
@@ -61,7 +61,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma, f)
   integer(ip), intent(in) :: iBCM
   real(dp), intent(in) :: alpha, beta, gamma
   real(dp), intent(inout) :: u(@:,:)
-  procedure(tSMapFuncr$rank), optional :: f !! TODO:
+  procedure(tSMapFuncR$rank), optional :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
   integer(ip) :: iBCMPtr
   ! ----------------------

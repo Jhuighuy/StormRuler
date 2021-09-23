@@ -225,16 +225,17 @@ add_executable(StormRuler
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
 
-# Specify compilation output directories.
+# Specify compilation output directories:
+# binary output directory,
 set_target_properties(
   StormRuler PROPERTIES 
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-# Bug in CMake or NAG?
-if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+# module output directiry,
 set_target_properties(
   StormRuler PROPERTIES 
-    Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-else()
+  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+  # Bug in CMake or NAG?
   set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 endif()
 

@@ -44,7 +44,7 @@ implicit none
 
 integer(ip), parameter :: FDM_AccuracyOrder = 2
 
-logical, parameter :: FDM_CylCoords = .true.
+logical, parameter :: FDM_CylCoords = .false.
 
 private :: FD1_C2, FD1_C4, FD1_C6, FD1_C8
 
@@ -356,7 +356,8 @@ contains
             & rho_r => mesh%CellCenter(1,rCell))
             v(@:,iCell) = v(@:,iCell) - &
               & ( dr_inv.inner.FD1_C2(rho_l*u(:,@:,lCell), &
-              &                       rho_r*u(:,@:,rCell)) )/rho_i
+              &                       rho_r*u(:,@:,rCell)) &
+              & )/rho_i
           end associate; cycle
         end if
 
@@ -772,11 +773,30 @@ contains
       ! ----------------------
       associate(dr_inv => &
         & lambda*SafeInverse(mesh%dr(:,iCellFace)))
+
+        ! ----------------------
+        ! Cylindrical case: 
+        ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force first order.
+        ! ----------------------
+        if (FDM_CylCoords.and.(iCellFace == 1)) then
+          associate( &
+            & rho_i => mesh%CellCenter(1, iCell), &
+            & rho_r => mesh%CellCenter(1, rCell) )
+            v(@:,iCell) = v(@:,iCell) - &
+              & dir*( dr_inv.inner.FD1_F1(rho_i*u(:,@:,iCell), &
+              &                           rho_r*u(:,@:,rCell)) &
+              &     )/rho_i
+          end associate; cycle
+        end if
+
+        ! ----------------------
+        ! General case.
+        ! ----------------------
         select case(FDM_AccuracyOrder)
           case(1)
             v(@:,iCell) = v(@:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F1(u(:,@:,rCell), &
-              &                           u(:,@:,iCell)) )
+              & dir*( dr_inv.inner.FD1_F1(u(:,@:,iCell), &
+              &                           u(:,@:,rCell)) )
           ! ----------------------
           case(2)
             v(@:,iCell) = v(@:,iCell) - &
@@ -1025,7 +1045,8 @@ contains
             v(@:,iCell) = v(@:,iCell) + &
               & ( dl_sqr_inv * WFD2_C2(rho_l, u(@:,lCell), &
               &                        rho_i, u(@:,iCell), &
-              &                        rho_r, u(@:,rCell)) )/rho_i
+              &                        rho_r, u(@:,rCell)) &
+              & )/rho_i
           end associate; cycle
         end if
 
@@ -1287,7 +1308,8 @@ contains
               & ( dl_sqr_inv * &
               &   WFD2_C2(rho_l*w(@:,lCell), u(@:,lCell), &
               &           rho_i*w(@:,iCell), u(@:,iCell), &
-              &           rho_r*w(@:,rCell), u(@:,rCell)) )/rho_i
+              &           rho_r*w(@:,rCell), u(@:,rCell)) &
+              & )/rho_i
           end associate; cycle
         end if
 

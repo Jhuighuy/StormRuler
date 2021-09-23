@@ -295,21 +295,21 @@ real(dp) function Norm_1$type$rank(mesh, x) result(Norm_1)
   $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-  Norm_1 = mesh%RunCellKernel_Sum(Norm1_Kernel)
+  Norm_1 = mesh%RunCellKernel_Sum(Norm_1_Kernel)
 
 contains
-  real(dp) function Norm1_Kernel(iCell)
+  real(dp) function Norm_1_Kernel(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if rank == 0
-    Norm1_Kernel = abs(x(iCell))
+    Norm_1_Kernel = abs(x(iCell))
 #$else
-    Norm1_Kernel = sum(abs(x(@:,iCell)))
+    Norm_1_Kernel = sum(abs(x(@:,iCell)))
 #$end if
     
-  end function Norm1_Kernel
+  end function Norm_1_Kernel
 end function Norm_1$type$rank
 #$end for
 #$end do
@@ -346,21 +346,21 @@ real(dp) function Norm_C$type$rank(mesh, x) result(Norm_C)
   $typename, intent(in) :: x(@:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  Norm_C = mesh%RunCellKernel_Max(NormC_Kernel)
+  Norm_C = mesh%RunCellKernel_Max(Norm_C_Kernel)
 
 contains
-  real(dp) function NormC_Kernel(iCell)
+  real(dp) function Norm_C_Kernel(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if rank == 0
-    NormC_Kernel = abs(x(iCell))
+    Norm_C_Kernel = abs(x(iCell))
 #$else
-    NormC_Kernel = maxval(abs(x(@:,iCell)))
+    Norm_C_Kernel = maxval(abs(x(@:,iCell)))
 #$end if
     
-  end function NormC_Kernel
+  end function Norm_C_Kernel
 end function Norm_C$type$rank
 #$end for
 #$end do

@@ -146,6 +146,7 @@ although some of them are not parallelized.
   - [ ] C/C++ API.
 
 * New differential operators and boundary conditions:
+  - [x] Cylindrical symmetry for 2D domains.
   - [ ] Godunov/WENO linear convection operator,
   - [ ] Godunov/WENO nonlinear convection operator,
   - [ ] Riemann solvers, Euler equations...

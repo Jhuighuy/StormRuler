@@ -39,6 +39,9 @@ use StormRuler_FDM_Operators, only: &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
 use StormRuler_FDM_Operators, only: &
   & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
+use StormRuler_FDM_BCs, only: &
+  & FDM_ApplyBCs
+
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_CG, only: &
   & Solve_CG, Solve_BiCGStab
@@ -192,24 +195,30 @@ subroutine Lib_InitializeMesh() &
   & bind(C, name='Lib_InitializeMesh')
   ! <<<<<<<<<<<<<<<<<<<<<<
   ! >>>>>>>>>>>>>>>>>>>>>>
-#$if True
   real(8), parameter :: pi = 4*atan(1.0D0)
   integer(ip), Parameter :: Nx = 100, Ny = 100
   Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
+#$if False
   allocate(gMesh)
   gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
-  call gMesh%SetRange()
 #$else
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)
-  call Load_PPM('test/Domain-10.ppm', pixels)
+  call Load_PPM('test/Domain-100.ppm', pixels)
   colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
   call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 3)
+  allocate(gMesh%dr(1:2, 1:4))
+  gMesh%dl = [Dx,Dx,Dy,Dy]
+  gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
+  gMesh%dr(:,2) = [gMesh%dl(1), 0.0_dp]
+  gMesh%dr(:,3) = [0.0_dp, gMesh%dl(3)]
+  gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
   call gMesh%PrintTo_Neato('test/c2c.dot')
   call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
 #$endif
+  call gMesh%SetRange()
   L = 0
 end subroutine Lib_InitializeMesh
 ${writeIncLine('EXTERN void Lib_InitializeMesh();')}$
@@ -783,6 +792,31 @@ void FDM_Convection(tField<{rank}> v, &
 #$end do
 ${writeIncLine('')}$
 
+#$do rank = 0, NUM_RANKS
+subroutine FDM_ApplyBCs$rank(iBCM, pU, alpha, beta, gamma) &
+  & bind(C, name='_FDM_ApplyBCs$rank')
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer(c_int), intent(in), value :: iBCM
+  real(dp), intent(in), value :: alpha, beta, gamma
+  type(c_ptr), intent(in), value :: pU
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  real(dp), pointer :: u(@:,:)
+
+  u => DEREF$rank(pU)
+  call FDM_ApplyBCs(gMesh, iBCM, u, alpha, beta, gamma)
+
+end subroutine FDM_ApplyBCs$rank
+${writeIncLine( &
+fr'''EXTERN void _FDM_ApplyBCs{rank}( &
+    int, tFieldBase*, double, double, double); &
+void FDM_ApplyBCs(int bcm, tField<{rank}> u, &
+                  double alpha, double beta, double gamma) {{ &
+  _FDM_ApplyBCs{rank}(bcm, u.Base(), alpha, beta, gamma); &
+}}''')}$
+#$end do
+${writeIncLine('')}$
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -813,9 +847,8 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pMatVec, env, c) &
   allocate(Params)
   if (c == 'L') then
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
-    call Solve_MINRES(gMesh, u, b, MatVec_wrapper, Params, Params)
+    call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params)
     !call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params, Precondition_LU_SGS$rank)
-    !error stop 229
   else
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
     call Solve_CG(gMesh, u, b, MatVec_wrapper, Params, Params)

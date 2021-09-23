@@ -898,10 +898,13 @@ subroutine Lib_Solve_BiCGStab$rank(pU, pB, pMatVec, env, c) &
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   class(tConvParams), allocatable :: Params
-  real(dp), pointer :: u(@:,:), b(@:,:)
+  real(dp), pointer :: uu(@:,:), bb(@:,:)
+  real(dp), pointer :: u(:,:), b(:,:)
   procedure(tLibMatVecFunc$rank), pointer :: MatVec
 
-  u => DEREF$rank(pU); b => DEREF$rank(pB)
+  uu => DEREF$rank(pU); bb => DEREF$rank(pB)
+  u => Reshape2D(uu)
+  b => Reshape2D(bb)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
   allocate(Params)
   if (c == 'L') then
@@ -917,15 +920,19 @@ contains
   subroutine MatVec_wrapper(mesh, Au, u, env_wrapper)
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(in) :: mesh
-    real(dp), intent(in), target :: u(@:,:)
-    real(dp), intent(inout), target :: Au(@:,:)
+    real(dp), intent(in), target :: u(:,:)
+    real(dp), intent(inout), target :: Au(:,:)
     class(*), intent(inout) :: env_wrapper
     ! >>>>>>>>>>>>>>>>>>>>>>
     
     type(tLibFieldBase$rank), target :: fU, fAu
     type(c_ptr) :: pU, pAu
+    real(dp), pointer :: uu(@:,:), Auu(@:,:)
+
+    call c_f_pointer(cptr=c_loc(u), fptr=uu, shape=shape(bb))
+    call c_f_pointer(cptr=c_loc(Au), fptr=Auu, shape=shape(bb))
     
-    fU%Values => u; fAu%Values => Au
+    fU%Values => uu; fAu%Values => Auu
     pU = c_loc(fU); pAu = c_loc(fAu)
     call MatVec(pAu, pU, env)
 

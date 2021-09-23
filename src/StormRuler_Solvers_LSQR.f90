@@ -29,12 +29,10 @@ module StormRuler_Solvers_LSQR
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Scale, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -43,17 +41,13 @@ use StormRuler_ConvParams, only: tConvParams
 implicit none
 
 interface Solve_LSQR
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_LSQR$rank
-  module procedure Solve_LSQR_Symmetric$rank
-#$end do
+  module procedure Solve_LSQR
+  module procedure Solve_LSQR_Symmetric
 end interface Solve_LSQR
 
 interface Solve_LSMR
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_LSMR$rank
-  module procedure Solve_LSMR_Symmetric$rank
-#$end do
+  module procedure Solve_LSMR
+  module procedure Solve_LSMR_Symmetric
 end interface Solve_LSMR
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -65,17 +59,16 @@ contains
 !! Solve a right preconditioned linear least squares problem:
 !! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_LSQR$rank(mesh, x, b, &
+subroutine Solve_LSQR(mesh, x, b, &
     & MatVec, env, MatVec_T, env_T, params, Precond, Precond_T)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec, MatVec_T
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond, Precond_T
+  procedure(tPrecondFuncR), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   ! ----------------------
@@ -89,8 +82,8 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
 
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
-  real(dp), pointer :: s(@:,:), t(@:,:), &
-    & r(@:,:), u(@:,:), v(@:,:), w(@:,:), z(@:,:)
+  real(dp), pointer :: s(:,:), t(:,:), &
+    & r(:,:), u(:,:), v(:,:), w(:,:), z(:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
   allocate(t, r, u, v, w, z, mold=x)
@@ -213,16 +206,16 @@ subroutine Solve_LSQR$rank(mesh, x, b, &
     call Add(mesh, x, x, z)
   end if
 
-end subroutine Solve_LSQR$rank
-subroutine Solve_LSQR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
+end subroutine Solve_LSQR
+subroutine Solve_LSQR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
@@ -237,24 +230,22 @@ subroutine Solve_LSQR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
     call Solve_LSQR(mesh, x, b, MatVec, env, MatVec, env, params)
   end if
   
-end subroutine Solve_LSQR_Symmetric$rank
-#$end do
+end subroutine Solve_LSQR_Symmetric
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
 !! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSMR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_LSMR$rank(mesh, x, b, &
+subroutine Solve_LSMR(mesh, x, b, &
     & MatVec, env, MatVec_T, env_T, params, Precond, Precond_T)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec, MatVec_T
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond, Precond_T
+  procedure(tPrecondFuncR), optional :: Precond, Precond_T
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   ! ----------------------
@@ -269,8 +260,8 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
   real(dp) :: alpha, alpha_bar, beta, rho, rho_bar, &
     & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
     & cs, sn, cs_bar, sn_bar
-  real(dp), pointer :: r(@:,:), s(@:,:), t(@:,:), &
-    & w(@:,:), h(@:,:), u(@:,:), v(@:,:), z(@:,:)
+  real(dp), pointer :: r(:,:), s(:,:), t(:,:), &
+    & w(:,:), h(:,:), u(:,:), v(:,:), z(:,:)
   class(*), allocatable :: precond_env, precond_env_T
   
   allocate(t, r, u, v, w, h, z, mold=x)
@@ -402,16 +393,16 @@ subroutine Solve_LSMR$rank(mesh, x, b, &
     call Add(mesh, x, x, z)
   end if
 
-end subroutine Solve_LSMR$rank
-subroutine Solve_LSMR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
+end subroutine Solve_LSMR
+subroutine Solve_LSMR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
@@ -426,7 +417,6 @@ subroutine Solve_LSMR_Symmetric$rank(mesh, x, b, MatVec, env, params, Precond)
     call Solve_LSMR(mesh, x, b, MatVec, env, MatVec, env, params)
   end if
   
-end subroutine Solve_LSMR_Symmetric$rank
-#$end do
+end subroutine Solve_LSMR_Symmetric
 
 end module StormRuler_Solvers_LSQR

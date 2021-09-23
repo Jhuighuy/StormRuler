@@ -28,26 +28,16 @@ module StormRuler_Solvers_Utils
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: @{tMatVecFuncR$$@|@0, NUM_RANKS}@, &
-  & Set, Sub, Norm_2
-use StormRuler_Solvers_Precond, only: @{tPrecondFuncR$$@|@0, NUM_RANKS}@
+use StormRuler_BLAS, only: Set, Sub, Norm_2
+#$for type_, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
+#$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface ResidualNorm
-#$do rank = 0, NUM_RANKS
-  module procedure ResidualNorm$rank
-#$end do
-end interface ResidualNorm
-
-interface ResidualNorm_Squared
-#$do rank = 0, NUM_RANKS
-  module procedure ResidualNorm_Squared$rank
-#$end do
-end interface ResidualNorm_Squared
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -57,18 +47,17 @@ contains
 !! ----------------------------------------------------------------- !!
 !! Compute squared residual norm: ‖𝒃 - 𝓐[𝓟]𝒚‖₂.
 !! ----------------------------------------------------------------- !!
-#$do rank = 0, NUM_RANKS
-real(dp) function ResidualNorm$rank(mesh, y, b, MatVec, env, Precond, precond_env)
+real(dp) function ResidualNorm(mesh, y, b, MatVec, env, Precond, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:), y(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:), y(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   class(*), allocatable, intent(inout), optional :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: r(@:,:), x(@:,:)
+  real(dp), pointer :: r(:,:), x(:,:)
   allocate(r, x, mold=y)
 
   ! ----------------------
@@ -85,27 +74,25 @@ real(dp) function ResidualNorm$rank(mesh, y, b, MatVec, env, Precond, precond_en
     call MatVec(mesh, r, y, env)
   end if
   call Sub(mesh, r, b, r)
-  ResidualNorm$rank = Norm_2(mesh, r)
+  ResidualNorm = Norm_2(mesh, r)
 
-end function ResidualNorm$rank
-#$end do
+end function ResidualNorm
 
 !! ----------------------------------------------------------------- !!
 !! Compute squared residual norm: ‖(𝓐[𝓟])ᵀ(𝒃 - 𝓐[𝓟]𝒚)‖₂.
 !! ----------------------------------------------------------------- !!
-#$do rank = 0, NUM_RANKS
-real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
+real(dp) function ResidualNorm_Squared(mesh, y, b, &
     & MatVec, env, MatVec_T, env_T, Precond, precond_env, Precond_T, precond_env_T)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:), y(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec, MatVec_T
+  real(dp), intent(in) :: b(:,:), y(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec, MatVec_T
   class(*), intent(inout) :: env, env_T
-  procedure(tPrecondFuncR$rank), optional :: Precond, Precond_T
+  procedure(tPrecondFuncR), optional :: Precond, Precond_T
   class(*), allocatable, intent(inout), optional :: precond_env, precond_env_T
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  real(dp), pointer :: r(@:,:), x(@:,:)
+  real(dp), pointer :: r(:,:), x(:,:)
   allocate(r, x, mold=y)
 
   ! ----------------------
@@ -135,9 +122,8 @@ real(dp) function ResidualNorm_Squared$rank(mesh, y, b, &
     call Set(mesh, x, r)
     call MatVec_T(mesh, r, x, env_T)
   end if
-  ResidualNorm_Squared$rank = Norm_2(mesh, r)
+  ResidualNorm_Squared = Norm_2(mesh, r)
 
-end function ResidualNorm_Squared$rank
-#$end do
+end function ResidualNorm_Squared
 
 end module StormRuler_Solvers_Utils

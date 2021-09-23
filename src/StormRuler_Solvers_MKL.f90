@@ -54,18 +54,6 @@ integer(ip), parameter :: &
 integer(ip), parameter :: &
   & gFGMRES_MKL_MaxNumNonRestartedIterations = 150_ip
 
-interface Solve_CG_MKL
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_CG_MKL$rank
-#$end do
-end interface Solve_CG_MKL
-
-interface Solve_FGMRES_MKL
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_FGMRES_MKL$rank
-#$end do
-end interface Solve_FGMRES_MKL
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -76,22 +64,21 @@ contains
 !! operator equation: [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
 !! using the MKL CG RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
+subroutine Solve_CG_MKL(mesh, u, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: u(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR$1), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: rci_request
   integer(ip) :: n, iparams(128)
   real(dp) :: dparams(128)
-  real(dp), allocatable :: tmp(@:,:,:)
+  real(dp), allocatable :: tmp(:,:,:)
   class(*), allocatable :: precond_env
 
   ! ----------------------
@@ -131,7 +118,7 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
   do
     call dcg(n, u, b, rci_request, iparams, dparams, tmp)
     if (rci_request == 1) then
-      call MatVec(mesh, tmp(@:,:,2), tmp(@:,:,1), env)
+      call MatVec(mesh, tmp(:,:,2), tmp(:,:,1), env)
       cycle
     end if
     if (rci_request == 2) then
@@ -144,35 +131,33 @@ subroutine Solve_CG_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
       cycle
     end if
     if (rci_request == 3) then
-      call Precond(mesh, tmp(@:,:,4), tmp(@:,:,3), MatVec, env, precond_env)
+      call Precond(mesh, tmp(:,:,4), tmp(:,:,3), MatVec, env, precond_env)
       cycle
     end if
     write(error_unit, *) 'MKL dcg failed, RCI_REQUEST=', rci_request
     error stop 1
   end do
-end subroutine Solve_CG_MKL$rank
-#$end do
+end subroutine Solve_CG_MKL
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, 
 !! using the MKL FGMRES RCI solver.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
+subroutine Solve_FGMRES_MKL(mesh, u, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: u(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR$1), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: rci_request
   integer(ip) :: n, iparams(128), itercount
   real(dp) :: dparams(128)
-  real(dp), pointer :: tmp(:), in(@:,:), out(@:,:)
+  real(dp), pointer :: tmp(:), in(:,:), out(:,:)
   real(dp) :: trueInitialResidualNorm
   class(*), allocatable :: precond_env
 
@@ -268,8 +253,7 @@ subroutine Solve_FGMRES_MKL$rank(mesh, u, b, MatVec, env, params, Precond)
     write(error_unit, *) 'MKL dfgmres_get failed, RCI_REQUEST=', rci_request
     error stop 1
   end if
-end subroutine Solve_FGMRES_MKL$rank
-#$end do
+end subroutine Solve_FGMRES_MKL
 
 #$end if
 end module StormRuler_Solvers_MKL

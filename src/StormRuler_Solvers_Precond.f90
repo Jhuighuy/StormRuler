@@ -44,40 +44,24 @@ implicit none
 !! Preconditioner matrix-vector product function.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$do rank = 0, NUM_RANKS
 #$for type, typename in SCALAR_TYPES
-  subroutine tPrecondFunc$type$rank(mesh, Pu, u, MatVec, env, precond_env)
-    import :: dp, tMesh, tMatVecFunc$type$rank
+  subroutine tPrecondFunc$type(mesh, Pu, u, MatVec, env, precond_env)
+    import :: dp, tMesh, tMatVecFunc$type$1
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(inout) :: mesh
-    $typename, intent(in), target :: u(@:,:)
-    $typename, intent(inout), target :: Pu(@:,:)
-    procedure(tMatVecFunc$type$rank) :: MatVec
+    $typename, intent(in), target :: u(:,:)
+    $typename, intent(inout), target :: Pu(:,:)
+    procedure(tMatVecFunc$type$1) :: MatVec
     class(*), intent(inout) :: env
     class(*), intent(inout), allocatable, target :: precond_env
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tPrecondFunc$type$rank
+  end subroutine tPrecondFunc$type
 #$end for
-#$end do
 end interface
 
-#$do rank = 0, NUM_RANKS
-type :: tPrecondEnv_Diag$rank
-  real(dp), allocatable :: diag(@:,:)
-end type !tPrecondEnv_Diag$rank
-#$end do
-
-interface Precondition_Jacobi
-#$do rank = 0, NUM_RANKS
-  module procedure Precondition_Jacobi$rank
-#$end do
-end interface Precondition_Jacobi
-
-interface Precondition_LU_SGS
-#$do rank = 0, NUM_RANKS
-  module procedure Precondition_LU_SGS$rank
-#$end do
-end interface Precondition_LU_SGS
+type :: tPrecondEnv_Diag
+  real(dp), allocatable :: diag(:,:)
+end type tPrecondEnv_Diag
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -87,27 +71,26 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Jacobi preconditioner: 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Precondition_Jacobi$rank(mesh, Px, x, MatVec, env, precond_env)
+subroutine Precondition_Jacobi(mesh, Px, x, MatVec, env, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: x(@:,:)
-  real(dp), intent(inout), target :: Px(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in), target :: x(:,:)
+  real(dp), intent(inout), target :: Px(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  class(tPrecondEnv_Diag$rank), pointer :: diag_env
+  class(tPrecondEnv_Diag), pointer :: diag_env
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
   if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_Diag$rank :: precond_env)
+    allocate(tPrecondEnv_Diag :: precond_env)
   end if
   select type(precond_env)
-    class is(tPrecondEnv_Diag$rank)
+    class is(tPrecondEnv_Diag)
       diag_env => precond_env
   end select
 
@@ -126,37 +109,35 @@ subroutine Precondition_Jacobi$rank(mesh, Px, x, MatVec, env, precond_env)
   ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
   ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  Px(@:,:) = -x(@:,:)/diag_env%diag(@:,:)
+  Px(:,:) = -x(:,:)/diag_env%diag(:,:)
 
-end subroutine Precondition_Jacobi$rank
-#$end do
+end subroutine Precondition_Jacobi
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! LU-SGS preconditioner: 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝘥𝘪𝘢𝘨(𝓐)𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Precondition_LU_SGS$rank(mesh, Px, x, MatVec, env, precond_env)
+subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, env, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: x(@:,:)
-  real(dp), intent(inout), target :: Px(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in), target :: x(:,:)
+  real(dp), intent(inout), target :: Px(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  class(tPrecondEnv_Diag$rank), pointer :: diag_env
-  real(dp), allocatable :: y(@:,:)
+  class(tPrecondEnv_Diag), pointer :: diag_env
+  real(dp), allocatable :: y(:,:)
   allocate(y, mold=x)
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
   if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_Diag$rank :: precond_env)
+    allocate(tPrecondEnv_Diag :: precond_env)
   end if
   select type(precond_env)
-    class is(tPrecondEnv_Diag$rank)
+    class is(tPrecondEnv_Diag)
       diag_env => precond_env
   end select
 
@@ -177,10 +158,9 @@ subroutine Precondition_LU_SGS$rank(mesh, Px, x, MatVec, env, precond_env)
   ! ----------------------
   call Solve_Triangular(mesh, y, x, diag_env%diag, 'U', MatVec, env)
   ! TODO: this is not a correct diagonal multiplication in block case!
-  y(@:,:) = diag_env%diag(@:,:)*y(@:,:)
+  y(:,:) = diag_env%diag(:,:)*y(:,:)
   call Solve_Triangular(mesh, Px, y, diag_env%diag, 'L', MatVec, env)
 
-end subroutine Precondition_LU_SGS$rank
-#$end do
+end subroutine Precondition_LU_SGS
 
 end module StormRuler_Solvers_Precond

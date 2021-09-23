@@ -30,30 +30,16 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface Solve_CG
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_CG$rank
-#$end do
-end interface Solve_CG
-
-interface Solve_BiCGStab
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_BiCGStab$rank
-#$end do
-end interface Solve_BiCGStab
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -65,20 +51,19 @@ contains
 !! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
 !! using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_CG$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta
-  real(dp), pointer :: p(@:,:), r(@:,:), t(@:,:), z(@:,:)
+  real(dp), pointer :: p(:,:), r(:,:), t(:,:), z(:,:)
   class(*), allocatable :: precond_env
   
   allocate(p, r, t, mold=x)
@@ -151,28 +136,26 @@ subroutine Solve_CG$rank(mesh, x, b, MatVec, env, params, Precond)
     call Add(mesh, p, z, p, beta)
     gamma = alpha
   end do
-end subroutine Solve_CG$rank
-#$end do
+end subroutine Solve_CG
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  real(dp), pointer :: p(@:,:), r(@:,:), r_tilde(@:,:), &
-    & s(@:,:), t(@:,:), v(@:,:), w(@:,:), y(@:,:), z(@:,:)
+  real(dp), pointer :: p(:,:), r(:,:), r_tilde(:,:), &
+    & s(:,:), t(:,:), v(:,:), w(:,:), y(:,:), z(:,:)
   class(*), allocatable :: precond_env
 
   allocate(p, r, r_tilde, s, t, v, mold=x)
@@ -261,7 +244,6 @@ subroutine Solve_BiCGStab$rank(mesh, x, b, MatVec, env, params, Precond)
     gamma = Dot(mesh, r, r)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
   end do
-end subroutine Solve_BiCGStab$rank
-#$end do
+end subroutine Solve_BiCGStab
 
 end module StormRuler_Solvers_CG

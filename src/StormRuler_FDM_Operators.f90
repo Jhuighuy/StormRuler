@@ -49,8 +49,8 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate gradient: 𝒗 ← 𝒗 - 𝜆∇𝒖.
-!! Shape 𝒖 is [1, NumVars]×[1, NumAllCells],
-!! shape 𝒗 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
+!! Shape of 𝒖 is [1, NumVars]×[1, NumAllCells],
+!! shape of 𝒗 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient_Central(mesh, v, lambda, u, &
     &                           dirAll, dirFace, dirCellFace)
@@ -285,8 +285,8 @@ end subroutine FDM_Gradient_Central
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
-!! Shape 𝒖 is [1,Dim]×[1,NumVars]×[1, NumAllCells],
-!! shape 𝒗 is [1,NumVars]×[1, NumAllCells].
+!! Shape of 𝒖 is [1,Dim]×[1,NumVars]×[1, NumAllCells],
+!! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence_Central(mesh, v, lambda, u, &
     &                             dirAll, dirFace, dirCellFace)
@@ -559,34 +559,13 @@ contains
   end subroutine FDM_Divergence_Backward_Kernel
 end subroutine FDM_Divergence_Central
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The backward FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Divergence_Backward(mesh, v, lambda, u, &
-    &                              dirAll, dirFace, dirCellFace)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda, u(:,:,:)
-  real(dp), intent(inout) :: v(:,:)
-  integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  ! ----------------------
-  ! Fast exit in case 𝜆 ≡ 0.
-  ! ----------------------
-  if (lambda == 0.0_dp) then
-    return
-  end if
-
-contains
-
-end subroutine FDM_Divergence_Backward
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate convection: 𝒗 ← 𝒗 - 𝜆∇⋅𝒂𝒖.
+!! Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells],
+!! shape of 𝒂 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Convection_Central(mesh, v, lambda, u, a)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -761,13 +740,13 @@ contains
 end subroutine FDM_Laplacian_Central
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate variable coefficient Laplacian: 𝒗 ← 𝒗 + 𝜆∇⋅(𝒘∇𝒖).
-!! Shape 𝒖, 𝒗, 𝒘 is [1, NumVars]×[1, NumAllCells].
+!! The FDM-approximate variable coefficient Laplacian: 𝒗 ← 𝒗 + 𝜆∇⋅(𝒌∇𝒖).
+!! Shape of 𝒖, 𝒗 and 𝒌 is [1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_DivWGrad_Central(mesh, v, lambda, w, u)
+subroutine FDM_DivWGrad_Central(mesh, v, lambda, k, u)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  real(dp), intent(in) :: lambda, u(:,:), w(:,:) 
+  real(dp), intent(in) :: lambda, u(:,:), k(:,:) 
   real(dp), intent(inout) :: v(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -836,9 +815,9 @@ contains
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) + &
               & ( dl_sqr_inv * &
-              &   WFD2_C2(rho_l*w(:,lCell), u(:,lCell), &
-              &           rho_i*w(:,iCell), u(:,iCell), &
-              &           rho_r*w(:,rCell), u(:,rCell)) &
+              &   WFD2_C2(rho_l*k(:,lCell), u(:,lCell), &
+              &           rho_i*k(:,iCell), u(:,iCell), &
+              &           rho_r*k(:,rCell), u(:,rCell)) &
               & )/rho_i
           end associate; cycle
         end if
@@ -850,42 +829,42 @@ contains
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
               & ( dl_sqr_inv * &
-              &   WFD2_C2(w(:,lCell), u(:,lCell), &
-              &           w(:,iCell), u(:,iCell), &
-              &           w(:,rCell), u(:,rCell)) )
+              &   WFD2_C2(k(:,lCell), u(:,lCell), &
+              &           k(:,iCell), u(:,iCell), &
+              &           k(:,rCell), u(:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
               & ( dl_sqr_inv * &
-              &   WFD2_C4(w(:,llCell), u(:,llCell), &
-              &           w(:, lCell), u(:, lCell), &
-              &           w(:, iCell), u(:, iCell), &
-              &           w(:, rCell), u(:, rCell), &
-              &           w(:,rrCell), u(:,rrCell)) )
+              &   WFD2_C4(k(:,llCell), u(:,llCell), &
+              &           k(:, lCell), u(:, lCell), &
+              &           k(:, iCell), u(:, iCell), &
+              &           k(:, rCell), u(:, rCell), &
+              &           k(:,rrCell), u(:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
               & ( dl_sqr_inv * &
-              &   WFD2_C6(w(:,lllCell), u(:,lllCell), &
-              &           w(:, llCell), u(:, llCell), &
-              &           w(:,  lCell), u(:,  lCell), &
-              &           w(:,  iCell), u(:,  iCell), &
-              &           w(:,  rCell), u(:,  rCell), &
-              &           w(:, rrCell), u(:, rrCell), &
-              &           w(:,rrrCell), u(:,rrrCell)) )
+              &   WFD2_C6(k(:,lllCell), u(:,lllCell), &
+              &           k(:, llCell), u(:, llCell), &
+              &           k(:,  lCell), u(:,  lCell), &
+              &           k(:,  iCell), u(:,  iCell), &
+              &           k(:,  rCell), u(:,  rCell), &
+              &           k(:, rrCell), u(:, rrCell), &
+              &           k(:,rrrCell), u(:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
               & ( dl_sqr_inv * &
-              &   WFD2_C8(w(:,llllCell), u(:,llllCell), &
-              &           w(:, lllCell), u(:, lllCell), &
-              &           w(:,  llCell), u(:,  llCell), &
-              &           w(:,   lCell), u(:,   lCell), &
-              &           w(:,   iCell), u(:,   iCell), &
-              &           w(:,   rCell), u(:,   rCell), &
-              &           w(:,  rrCell), u(:,  rrCell), &
-              &           w(:, rrrCell), u(:, rrrCell), &
-              &           w(:,rrrrCell), u(:,rrrrCell)) )
+              &   WFD2_C8(k(:,llllCell), u(:,llllCell), &
+              &           k(:, lllCell), u(:, lllCell), &
+              &           k(:,  llCell), u(:,  llCell), &
+              &           k(:,   lCell), u(:,   lCell), &
+              &           k(:,   iCell), u(:,   iCell), &
+              &           k(:,   rCell), u(:,   rCell), &
+              &           k(:,  rrCell), u(:,  rrCell), &
+              &           k(:, rrrCell), u(:, rrrCell), &
+              &           k(:,rrrrCell), u(:,rrrrCell)) )
         end select
       end associate
     end do

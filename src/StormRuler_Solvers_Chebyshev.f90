@@ -29,12 +29,10 @@ module StormRuler_Solvers_Chebyshev
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Norm_2, Set, Fill, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 !use StormRuler_SolversEVP_Lanczos, only: EigenPairs_Lanczos
 
@@ -42,12 +40,6 @@ use StormRuler_ConvParams, only: tConvParams
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface Solve_Chebyshev
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_Chebyshev$rank
-#$end do
-end interface Solve_Chebyshev
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -59,22 +51,21 @@ contains
 !! [𝓟]𝓐𝒙 = [𝓟]𝒃, using the Chebyshev semi-iterative method.
 !! Some accurate estimates of spectrum of [𝓟]𝓐 are required. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_Chebyshev$rank(mesh, x, b, &
+subroutine Solve_Chebyshev(mesh, x, b, &
     & lambda_min, lambda_max, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: lambda_min, lambda_max, b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: lambda_min, lambda_max, b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   logical :: first, second
   real(dp) :: c, d, alpha, beta, delta
-  real(dp), pointer :: p(@:,:), r(@:,:), z(@:,:)
+  real(dp), pointer :: p(:,:), r(:,:), z(:,:)
   class(*), allocatable :: precond_env
   
   allocate(p, r, mold=x)
@@ -154,7 +145,6 @@ subroutine Solve_Chebyshev$rank(mesh, x, b, &
     beta = Norm_2(mesh, r)
     if (params%Check(beta, beta/delta)) exit
   end do
-end subroutine Solve_Chebyshev$rank
-#$end do
+end subroutine Solve_Chebyshev
 
 end module StormRuler_Solvers_Chebyshev

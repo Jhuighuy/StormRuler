@@ -30,12 +30,10 @@ use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: &
   & Dot, Norm_2, Fill, Fill_Random, Set, Scale, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Tridiag, only: tTridiagMatrix
 use StormRuler_Tridiag_LAPACK, only: ComputeEigenpairs_Symm_LAPACK
@@ -44,12 +42,6 @@ use StormRuler_Tridiag_LAPACK, only: ComputeEigenpairs_Symm_LAPACK
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface EigenPairs_Lanczos
-#$do rank = 0, NUM_RANKS
-  module procedure EigenPairs_Lanczos$rank
-#$end do
-end interface EigenPairs_Lanczos
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -74,21 +66,20 @@ contains
 !! x would be used for as a mold for allocations.  
 !! Beware that the error for the refinement process is not monitored.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS
-subroutine EigenPairs_Lanczos$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncr$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncr$rank), optional :: Precond !! TODO:
+  procedure(tPrecondFuncR), optional :: Precond !! TODO:
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: k
   real(dp) :: alpha, beta, lambda(2)
-  real(dp), pointer :: tmp(@:,:), v(@:,:), v_dot(@:,:), w(@:,:)
+  real(dp), pointer :: tmp(:,:), v(:,:), v_dot(:,:), w(:,:)
   real(dp), allocatable :: diag_T(:), subdiag_T(:)
 
   allocate(v, v_dot, w, mold=x)
@@ -149,8 +140,7 @@ subroutine EigenPairs_Lanczos$rank(mesh, x, b, MatVec, env, params, Precond)
     end if
   end do
 
-end subroutine EigenPairs_Lanczos$rank
-#$end do
+end subroutine EigenPairs_Lanczos
 
 !! ----------------------------------------------------------------- !!
 !! Compute the m eigenvalues of the symmetric tridiagonal matrix: 

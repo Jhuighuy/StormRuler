@@ -29,24 +29,16 @@ module StormRuler_Solvers_GMRES
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface Solve_GMRES
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_GMRES$rank
-#$end do
-end interface Solve_GMRES
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -56,18 +48,16 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !!
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_GMRES$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_GMRES(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
-end subroutine Solve_GMRES$rank
-#$end do
+end subroutine Solve_GMRES
 
 end module StormRuler_Solvers_GMRES

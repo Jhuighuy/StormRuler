@@ -29,24 +29,16 @@ module StormRuler_Solvers_MINRES
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_$rank
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_$rank
+use StormRuler_BLAS, only: tMatVecFunc$type_$1
+use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
-#$end do
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-interface Solve_MINRES
-#$do rank = 0, NUM_RANKS
-  module procedure Solve_MINRES$rank
-#$end do
-end interface Solve_MINRES
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -58,16 +50,15 @@ contains
 !! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the MINRES method.
 !! 𝓟 = 𝓟ᵀ > 0 is explicitly required.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do rank = 0, NUM_RANKS
-subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(@:,:)
-  real(dp), intent(inout) :: x(@:,:)
-  procedure(tMatVecFuncR$rank) :: MatVec
+  real(dp), intent(in) :: b(:,:)
+  real(dp), intent(inout) :: x(:,:)
+  procedure(tMatVecFuncR$1) :: MatVec
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR$rank), optional :: Precond
+  procedure(tPrecondFuncR), optional :: Precond
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
@@ -82,10 +73,10 @@ subroutine Solve_MINRES$rank(mesh, x, b, MatVec, env, params, Precond)
   real(dp) :: alpha, beta, beta_bar, gamma, &
     & delta, delta_bar, epsilon, epsilon_bar, &
     & tau, phi, phi_tilde, cs, sn
-  real(dp), pointer :: tmp(@:,:), &
-    & p(@:,:), q(@:,:), q_bar(@:,:), &
-    & w(@:,:), w_bar(@:,:), w_bbar(@:,:), &
-    & z(@:,:), z_bar(@:,:), z_bbar(@:,:)
+  real(dp), pointer :: tmp(:,:), &
+    & p(:,:), q(:,:), q_bar(:,:), &
+    & w(:,:), w_bar(:,:), w_bbar(:,:), &
+    & z(:,:), z_bar(:,:), z_bbar(:,:)
   class(*), allocatable :: precond_env
 
   allocate(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
@@ -195,7 +186,6 @@ contains
       cs = 1.0_dp; sn = 0.0_dp
     end if
   end subroutine SymOrtho
-end subroutine Solve_MINRES$rank
-#$end do
+end subroutine Solve_MINRES
 
 end module StormRuler_Solvers_MINRES

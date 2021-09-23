@@ -101,7 +101,7 @@ else()
     endif()
     if(OpenMP_Fortran_ENABLED)
       message(STATUS "Fortran OpenMP enabled.")
-      set(Fortiel_DEFINES "${Fortiel_DEFINES} -DHAS_OPENMP=True")
+      list(APPEND Fortiel_DEFINES "-DHAS_OpenMP=True")
       target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
     endif()
   endif()
@@ -147,6 +147,7 @@ else()
   if(MKL_FOUND)
     set(MKL_ENABLED 1)
     message(STATUS "MKL enabled.")
+    list(APPEND Fortiel_DEFINES "-DHAS_MKL=True")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
     # Intel suggest the other more explicit way, see: https://intel.ly/3ABZNsK
     #target_compile_options(
@@ -171,6 +172,7 @@ else()
   find_package(LAPACK)
   if(LAPACK_FOUND)
     message(STATUS "LAPACK enabled.")
+    list(APPEND Fortiel_DEFINES "-DHAS_LAPACK=True")
     target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
   endif()
 endif()
@@ -208,8 +210,8 @@ foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
       "${CMAKE_CURRENT_SOURCE_DIR}/src_gen/${Fortran_SOURCE_PREPROCESSED}.out.f90")
   add_custom_command(
     OUTPUT "${Fortran_SOURCE_PREPROCESSED}"
-    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py" 
-            "${Fortran_SOURCE}" -o "${Fortran_SOURCE_PREPROCESSED}"
+    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py" ${Fortiel_DEFINES}
+            -o "${Fortran_SOURCE_PREPROCESSED}" "${Fortran_SOURCE}"
     MAIN_DEPENDENCY "${Fortran_SOURCE}"
     VERBATIM)
   list(APPEND Fortran_SOURCES_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}")

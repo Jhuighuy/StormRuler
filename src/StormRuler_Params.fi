@@ -27,12 +27,16 @@
 
 #$let DEBUG = True
 
-#$let HAS_OpenMP = True
+#$if not defined('HAS_OpenMP')
+#$let HAS_OpenMP = False
+#$end if
 
+#$if not defined('HAS_MKL')
 #$let HAS_MKL = False
+#$end if
 
-#$let HAS_LAPACK = True
+#$if not defined('HAS_LAPACK')
+#$let HAS_LAPACK = False
+#$end if
 
-#$let NAG_COMPILER = True
-
-#$let SCALAR_TYPES = {('r', 'real(dp)'), ('c', 'complex(dp)')}
+#$let SCALAR_TYPES = {('R', 'real(dp)'), ('C', 'complex(dp)')}

@@ -23,6 +23,7 @@
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_SolversEVP_Lanczos
+#$if False
 
 #$use 'StormRuler_Params.fi'
 
@@ -382,4 +383,5 @@ contains
   end function T_CharPoly
 end subroutine TridiagEigenvalues_ContinuantRecursion
 
+#$end if
 end module StormRuler_SolversEVP_Lanczos

@@ -206,6 +206,6 @@ subroutine ComputeEigenpairs_All_Symm_LAPACK(T, theta, y)
 
 end subroutine ComputeEigenpairs_All_Symm_LAPACK
 
-end module StormRuler_Tridiag_LAPACK
-
 #$end if
+
+end module StormRuler_Tridiag_LAPACK

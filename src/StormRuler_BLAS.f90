@@ -27,9 +27,6 @@ module StormRuler_BLAS
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, not_implemented_code
-#$for type_, _ in SCALAR_TYPES
-use StormRuler_Helpers, only: tMapFunc$type_$1, tSMapFunc$type_$1
-#$end for
 use StormRuler_Helpers, only: Re, Im, R2C, &
   & operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
@@ -129,11 +126,42 @@ interface Mul_Outer
 #$end do
 end interface Mul_Outer
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+abstract interface
+#$for type, typename in SCALAR_TYPES
+  pure function tMapFunc$type(x) result(Mx)
+    import dp
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    $typename, intent(in) :: x(:)
+    $typename :: Mx(size(x))
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tMapFunc$type
+#$end for
+end interface
+
 interface FuncProd
 #$for type, _ in SCALAR_TYPES
   module procedure FuncProd$type
 #$end for
 end interface FuncProd
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Mathematical function: ℳ𝒙 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+abstract interface
+#$for type, typename in SCALAR_TYPES
+  pure function tSMapFunc$type(r, x) result(SMx)
+    import dp
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    real(dp), intent(in) :: r(:)
+    $typename, intent(in) :: x(:)
+    $typename :: SMx(size(x))
+    ! >>>>>>>>>>>>>>>>>>>>>>
+  end function tSMapFunc$type
+#$end for
+end interface
 
 interface SFuncProd
 #$for type, _ in SCALAR_TYPES
@@ -644,7 +672,7 @@ subroutine FuncProd$type(mesh, y, x, f)
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
-  procedure(tMapFunc$type$1) :: f
+  procedure(tMapFunc$type) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(FuncProd_Kernel)
@@ -670,7 +698,7 @@ subroutine SFuncProd$type(mesh, y, x, f)
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
-  procedure(tSMapFunc$type$1) :: f
+  procedure(tSMapFunc$type) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(SFuncProd_Kernel)

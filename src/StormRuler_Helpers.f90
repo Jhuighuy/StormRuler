@@ -28,61 +28,13 @@ module StormRuler_Helpers
 
 use StormRuler_Parameters, only: dp, ip
 
+use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
 use, intrinsic :: iso_fortran_env, only: error_unit
-use, intrinsic :: ieee_arithmetic
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none  
-
-abstract interface
-#$for type, typename in SCALAR_TYPES
-  pure function tMapFunc$type$0(x) result(Mx)
-    import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    $typename, intent(in) :: x
-    $typename :: Mx
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tMapFunc$type$0
-#$end for
-#$do rank = 1, NUM_RANKS
-#$for type, typename in SCALAR_TYPES
-  pure function tMapFunc$type$rank(x) result(Mx)
-    import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    $typename, intent(in) :: x(@:)
-    $typename :: Mx(@{size(x, dim=$$)}@)
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tMapFunc$type$rank
-#$end for
-#$end do
-end interface
-
-abstract interface
-#$for type, typename in SCALAR_TYPES
-  pure function tSMapFunc$type$0(r, x) result(SMx)
-    import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    real(dp), intent(in) :: r(:)
-    $typename, intent(in) :: x
-    $typename :: SMx
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tSMapFunc$type$0
-#$end for
-#$do rank = 1, NUM_RANKS
-#$for type, typename in SCALAR_TYPES
-  pure function tSMapFunc$type$rank(r, x) result(SMx)
-    import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    real(dp), intent(in) :: r(:)
-    $typename, intent(in) :: x(@:)
-    $typename :: SMx(@{size(x, dim=$$)}@)
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tSMapFunc$type$rank
-#$end for
-#$end do
-end interface
 
 interface operator(.inner.)
 #$do rank = 0, NUM_RANKS-1
@@ -156,15 +108,6 @@ end subroutine BubbleSort
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Ensure the value is real.
-!! ----------------------------------------------------------------- !!
-subroutine EnsureReal(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  complex(dp), intent(in) :: value
-  ! >>>>>>>>>>>>>>>>>>>>>>
-end subroutine EnsureReal
-
-!! ----------------------------------------------------------------- !!
 !! Ensure the value is positive.
 !! ----------------------------------------------------------------- !!
 subroutine EnsurePositive(value)
@@ -217,6 +160,84 @@ end function SafeInverse
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
+impure elemental subroutine Assert(b)
+
+  logical, intent(in) :: b
+
+  if (.not.b) then
+    error stop 'assertion failed'
+  end if
+
+end subroutine Assert
+
+function Reshape2D(u) result(v)
+  use, intrinsic :: iso_c_binding
+
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  real(dp), intent(in), target :: u(..)
+  real(dp), pointer :: v(:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  select rank(u)
+    rank(1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ 1, size(u) ])
+#$do rank = 1, NUM_RANKS
+    rank($rank + 1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ size(u(@:,1)), size(u(@1,:)) ])
+#$end do
+    rank default
+      error stop 'Invalid rank'
+  end select
+
+end function Reshape2D
+
+function Reshape3D(dim, u) result(v)
+  use, intrinsic :: iso_c_binding
+
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer(ip), intent(in) :: dim
+  real(dp), intent(in), target :: u(..)
+  real(dp), pointer :: v(:,:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  select rank(u)
+#$do rank = 1, NUM_RANKS
+    rank($rank + 1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ dim, size(u(@:,1))/dim, size(u(@1,:)) ])
+#$end do
+    rank default
+      error stop 'Invalid rank'
+  end select
+
+end function Reshape3D
+
+function Reshape4D(dim, u) result(v)
+  use, intrinsic :: iso_c_binding
+
+  ! <<<<<<<<<<<<<<<<<<<<<<
+  integer(ip), intent(in) :: dim
+  real(dp), intent(in), target :: u(..)
+  real(dp), pointer :: v(:,:,:,:)
+  ! >>>>>>>>>>>>>>>>>>>>>>
+
+  select rank(u)
+#$do rank = 1, NUM_RANKS
+    rank($rank + 1)
+      call c_f_pointer(cptr=c_loc(u), fptr=v, &
+        & shape=[ dim, dim, size(u(@:,1))/dim**2, size(u(@1,:)) ])
+#$end do
+    rank default
+      error stop 'Invalid rank'
+  end select
+
+end function Reshape4D
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
 !! ----------------------------------------------------------------- !!
 !! Inner vector-vector product: z ← y⋅x.
 !! ----------------------------------------------------------------- !!
@@ -233,7 +254,7 @@ end function Inner$0
 pure function Inner$rank(y, x) result(z)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: y(:), x(:,@:)
-  real(dp) :: z(@{size(x, dim=$$)}@)
+  real(dp) :: z(@{size(x, dim=$$+1)}@)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
@@ -302,7 +323,7 @@ end function Im
 !! ----------------------------------------------------------------- !!
 !! Convert real number (or a pair of two) into the complex number.
 !! ----------------------------------------------------------------- !!
-real(dp) elemental function R2C(x,y)
+complex(dp) elemental function R2C(x,y)
   ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: x
   real(dp), intent(in), optional :: y

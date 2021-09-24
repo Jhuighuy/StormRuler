@@ -207,7 +207,7 @@ subroutine Lib_InitializeMesh() &
   allocate(gMesh)
   call Load_PPM('test/Domain-100.ppm', pixels)
   colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
-  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 3)
+  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 10)
   allocate(gMesh%dr(1:2, 1:4))
   gMesh%dl = [Dx,Dx,Dy,Dy]
   gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
@@ -657,47 +657,6 @@ ${writeIncLine(fr''' &
 // ----------------------------------------------------------------- // &
 // ----------------------------------------------------------------- // &
 ''')}$
-
-
-function Reshape2D(u) result(v)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in), target :: u(..)
-  real(dp), pointer :: v(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  select rank(u)
-    rank(1)
-      call c_f_pointer(cptr=c_loc(u), fptr=v, &
-        & shape=[ 1, size(u) ])
-#$do rank = 1, NUM_RANKS
-    rank($rank + 1)
-      call c_f_pointer(cptr=c_loc(u), fptr=v, &
-        & shape=[ size(u(@:,1)), size(u(@1,:)) ])
-#$end do
-    rank default
-      error stop 'Invalid rank'
-  end select
-
-end function Reshape2D
-
-function Reshape3D(dim, u) result(v)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  integer(ip), intent(in) :: dim
-  real(dp), intent(in), target :: u(..)
-  real(dp), pointer :: v(:,:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
-
-  select rank(u)
-#$do rank = 1, NUM_RANKS
-    rank($rank + 1)
-      call c_f_pointer(cptr=c_loc(u), fptr=v, &
-        & shape=[ dim, size(u(@:,1))/dim, size(u(@1,:)) ])
-#$end do
-    rank default
-      error stop 'Invalid rank'
-  end select
-
-end function Reshape3D
 
 #$do rank = 0, NUM_RANKS-1
 subroutine Lib_FDM_Gradient$rank(pV_bar, lambda, pU, dir) &

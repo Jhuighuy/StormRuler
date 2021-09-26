@@ -39,6 +39,6 @@
 #$let HAS_LAPACK = False
 #$end if
 
-#$let SCALAR_TYPES = {('R', 'real(dp)'), ('C', 'complex(dp)')}
+#$let SCALAR_TYPES = [('R', 'real(dp)'), ('C', 'complex(dp)')]
 
 #$let check = 'call Assert'

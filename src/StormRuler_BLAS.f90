@@ -222,7 +222,7 @@ $typename function Dot$type(mesh, x, y, do_conjg) result(Dot)
   logical, intent(in), optional :: do_conjg
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-#$if type == 'c'
+#$if type == 'C'
   if (present(do_conjg)) then
     if (.not.do_conjg) then
       Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
@@ -246,7 +246,7 @@ contains
     Dot_Kernel = sum(x(:,iCell) * y(:,iCell))
     
   end function Dot_Kernel
-#$if type == 'c'
+#$if type == 'C'
   $typename function Dot_Kernel_Conjg(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
@@ -296,7 +296,7 @@ real(dp) function Norm_2$type(mesh, x) result(Norm_2)
   $typename, intent(in) :: x(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-#$if type == 'c'
+#$if type == 'C'
   Norm_2 = sqrt( Re(Dot(mesh, x, x)) )
 #$else
   Norm_2 = sqrt( Dot(mesh, x, x) )
@@ -386,9 +386,9 @@ contains
 
     integer :: iCell
 
-#$if type == 'r'
+#$if type == 'R'
     do iCell = firstCell, lastCell
-      call random_number(y(@:,iCell))
+      call random_number(y(:,iCell))
       if (present(a).and.present(b)) then
         y(:,iCell) = min(a, b) + abs(b - a)*y(:,iCell)
       end if

@@ -289,8 +289,6 @@ subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
   real(dp), intent(in) :: lambda
   real(dp), intent(in), target :: uAny(:,:,:)
   real(dp), intent(inout), target :: vAny(:,:) 
-  !real(dp), intent(in) :: uVec(:,:,:)
-  !real(dp), intent(inout) :: v(:,:)
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 

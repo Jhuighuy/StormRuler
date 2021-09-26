@@ -167,6 +167,8 @@ void CahnHilliard_Step(tField<0> c, tField<1> v,
     out << in + Gamma*dt*DIVGRAD(out);
   }, c_hat, rhs);
 
+  FDM_ApplyBCs(1, c_hat, 0.0, 1.0, 0.0);
+  FDM_ApplyBCs(2, c_hat, 0.0, 1.0, 0.0);
   FDM_ApplyBCs(1, w_hat, 0.0, 1.0, 0.0);
   FDM_ApplyBCs(2, w_hat, 0.0, 1.0, 0.0);
   w_hat << MAP(&dWdC, c_hat);
@@ -290,8 +292,12 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
 ///////////////////////////////////////////////
 
+extern "C" void pure_c_main();
+
 int main() {
   std::cout << "Hello from C++ " << sizeof(int) << std::endl;
+
+  pure_c_main();
 
   Lib_InitializeMesh();
 

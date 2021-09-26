@@ -32,14 +32,19 @@ cmake_minimum_required(VERSION 3.12)
 project(StormRuler
   VERSION 1.0
   DESCRIPTION "A very high order CFD solver and beyond"
-  LANGUAGES Fortran CXX)
+  LANGUAGES Fortran C CXX)
 
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
 
+# A list of Fortiel options.
+set(Fortiel_DEFINES "")
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
 
 if(APPLE)
   # Detect Apple Silicon CPU.
@@ -47,19 +52,25 @@ if(APPLE)
   # so we need to disable some features (for now).
   include(CheckCxxCompilerFlag)
   check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
-  message(STATUS "Apple Silicon detected.")
+  message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 
 # NAG (unexpectedly) does not use byte-based kind system by default.
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
   target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
+    StormRuler_BASE INTERFACE 
+    $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
 endif()
+
+#target_compile_options(your_target
+#  PRIVATE
+#  $<$<COMPILE_LANGUAGE:CXX>:$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_RELEASE}>>
+#  $<$<COMPILE_LANGUAGE:C>:$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_RELEASE}>>
 
 # TODO: add compile options based on Debug/Release configurations.
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g>)
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -fcheck=all>)
   # Enabled optimization fail on GFORTRAN/M1.
   if(NOT APPLE_SILICON)
     target_compile_options(
@@ -70,8 +81,6 @@ endif()
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-set(Fortiel_DEFINES "")
 
 # Find Git and update submodules.
 find_package(Git)
@@ -183,7 +192,7 @@ endif()
 
 # Locate the Fortran and C++ sources.
 file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
-file(GLOB_RECURSE CXX_SOURCES "src/*.cpp")
+file(GLOB_RECURSE CXX_SOURCES "src/*.c*")
 
 # Find Fortiel preprocessor.
 if(NOT "$ENV{StormRuler_Fortiel_PATH}" STREQUAL "")

@@ -95,16 +95,13 @@ SR_API void SR_FreeS(SR_tFieldS x);
 
 /// @{
 SR_INL void SR_SwapR(SR_tFieldR* pX, SR_tFieldR* pY) {
-  SR_tFieldR* pZ = pX;
-  pX = pY, pY = pZ;
+  SR_tFieldR z = *pX; *pX = *pY, *pY = z;
 }
 SR_INL void SR_SwapC(SR_tFieldC* pX, SR_tFieldC* pY) {
-  SR_tFieldC* pZ = pX;
-  pX = pY, pY = pZ;
+  SR_tFieldC z = *pX; *pX = *pY, *pY = z;
 }
 SR_INL void SR_SwapS(SR_tFieldS* pX, SR_tFieldS* pY) {
-  SR_tFieldS* pZ = pX;
-  pX = pY, pY = pZ;
+  SR_tFieldS z = *pX; *pX = *pY, *pY = z;
 }
 #if SR_C11
 #define SR_Swap(pX, pY) \
@@ -212,6 +209,10 @@ SR_INL void SR_SubS(SR_tMesh mesh, SR_tFieldS z,
 #endif
 /// @}
 
+SR_API void SR_MulR(SR_tMesh mesh, SR_tFieldR z,
+    SR_tFieldR y, SR_tFieldR x);
+#define SR_Mul SR_MulR
+
 /// @{
 typedef void(*SR_tMapFuncR)(int size, 
     SR_REAL* Fx, const SR_REAL* x, void* env);
@@ -310,13 +311,90 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-void SR_ApplyBCsR(SR_tMesh mesh,
-    SR_tFieldR u, int bc, double alpha, double beta, double gamma);
-void SR_ConvR(SR_tMesh mesh, 
-    SR_tFieldR v, double lambda, SR_tFieldR u, SR_tFieldR a);
-void SR_DivGradR(SR_tMesh mesh,
-    SR_tFieldR v, double lambda, SR_tFieldR u);
+/// @{
+SR_API void SR_ApplyBCsR(SR_tMesh mesh, SR_tFieldR u,
+    int iBC, SR_REAL alpha, SR_REAL beta, SR_REAL gamma);
+SR_API void SR_ApplyBCsC(SR_tMesh mesh, SR_tFieldR u,
+    int iBC, SR_COMPLEX alpha, SR_COMPLEX beta, SR_COMPLEX gamma);
+SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
+    int iBC, SR_tSymbol alpha, SR_tSymbol beta, SR_tSymbol gamma);
+#if SR_C11
+#define SR_ApplyBCs(mesh, u, iBC, ...) \
+  SR_FIELD_GENERIC_EX(u, SR_ApplyBCsR, SR_ApplyBCsC, \
+    SR_ApplyBCsS)(mesh, u, iBC, ##__VA_ARGS__)
+#endif
+/// @}
 
 #define SR_ALL 0
 #define SR_PURE_DIRICHLET 1.0, 0.0, 0.0
 #define SR_PURE_NEUMANN 0.0, 1.0, 0.0
+
+/// @{
+SR_API void SR_GradR(SR_tMesh mesh, 
+    SR_tFieldR vVec, SR_REAL lambda, SR_tFieldR u);
+SR_API void SR_GradC(SR_tMesh mesh,
+    SR_tFieldC vVec, SR_REAL lambda, SR_tFieldC u);
+SR_API void SR_GradS(SR_tMesh mesh,
+    SR_tFieldS vVec, SR_REAL lambda, SR_tFieldS u);
+#if SR_C11
+#define SR_Grad(mesh, vVec, lambda, u) \
+  SR_FIELD_GENERIC_EX(vVec, SR_GradR, SR_GradC, SR_GradS)( \
+    mesh, vVec, lambda, u)
+#endif
+/// @}
+
+/// @{
+SR_API void SR_DivR(SR_tMesh mesh, 
+    SR_tFieldR v, SR_REAL lambda, SR_tFieldR uVec);
+SR_API void SR_DivC(SR_tMesh mesh,
+    SR_tFieldC v, SR_REAL lambda, SR_tFieldC uVec);
+SR_API void SR_DivS(SR_tMesh mesh,
+    SR_tFieldS v, SR_REAL lambda, SR_tFieldS uVec);
+#if SR_C11
+#define SR_Div(mesh, v, lambda, uVec) \
+  SR_FIELD_GENERIC_EX(v, SR_DivR, SR_DivC, SR_DivS)( \
+    mesh, v, lambda, uVec)
+#endif
+/// @}
+
+/// @{
+SR_API void SR_ConvR(SR_tMesh mesh, 
+    SR_tFieldR v, SR_REAL lambda, SR_tFieldR u, SR_tFieldR a);
+SR_API void SR_ConvC(SR_tMesh mesh,
+    SR_tFieldC v, SR_REAL lambda, SR_tFieldC u, SR_tFieldR a);
+SR_API void SR_ConvS(SR_tMesh mesh,
+    SR_tFieldS v, SR_REAL lambda, SR_tFieldS u, SR_tFieldR a);
+#if SR_C11
+#define SR_Conv(mesh, v, lambda, u, a) \
+  SR_FIELD_GENERIC_EX(v, SR_ConvR, SR_ConvC, SR_ConvS)( \
+    mesh, v, lambda, u, a)
+#endif
+/// @}
+
+/// @{
+SR_API void SR_DivGradR(SR_tMesh mesh,
+    SR_tFieldR v, SR_REAL lambda, SR_tFieldR u);
+SR_API void SR_DivGradC(SR_tMesh mesh,
+    SR_tFieldC v, SR_REAL lambda, SR_tFieldC u);
+SR_API void SR_DivGradS(SR_tMesh mesh,
+    SR_tFieldS v, SR_REAL lambda, SR_tFieldS u);
+#if SR_C11
+#define SR_DivGrad(mesh, v, lambda, u) \
+  SR_FIELD_GENERIC_EX(v, SR_DivGradR, \
+    SR_DivGradC, SR_DivGradS)(mesh, v, lambda, u)
+#endif
+/// @}
+
+/// @{
+SR_API void SR_DivKGradR(SR_tMesh mesh,
+    SR_tFieldR v, SR_REAL lambda, SR_tFieldR k, SR_tFieldR u);
+SR_API void SR_DivKGradC(SR_tMesh mesh,
+    SR_tFieldC v, SR_REAL lambda, SR_tFieldR k, SR_tFieldC u);
+SR_API void SR_DivKGradS(SR_tMesh mesh,
+    SR_tFieldS v, SR_REAL lambda, SR_tFieldR k, SR_tFieldS u);
+#if SR_C11
+#define SR_DivKGrad(mesh, v, lambda, k, u) \
+  SR_FIELD_GENERIC_EX(v, SR_DivGradR, \
+    SR_DivGradC, SR_DivGradS)(mesh, v, lambda, k, u)
+#endif
+/// @}

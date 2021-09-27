@@ -25,7 +25,7 @@
 module StormRuler_Solvers_MKL
 
 #$use 'StormRuler_Params.fi'
-#$if HAS_MKL
+#$if HAS_MKL or True
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh
@@ -83,8 +83,7 @@ subroutine Solve_CG_MKL(mesh, u, b, MatVec, env, params, Precond)
   ! Preallocate storage.
   ! ----------------------
   n = size(u)
-  allocate(tmp(@{size(u, dim=$$)}@, &
-    & size(u, dim=$rank+1), merge(4, 3, present(Precond))))
+  allocate( tmp(size(u, dim=1), size(u, dim=2), merge(4, 3, present(Precond))) )
 
   ! ----------------------
   ! Initialize and configure MKL CG.

@@ -37,9 +37,6 @@ project(StormRuler
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
 
-# A list of Fortiel options.
-set(Fortiel_DEFINES "")
-
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
@@ -110,7 +107,6 @@ else()
     endif()
     if(OpenMP_Fortran_ENABLED)
       message(STATUS "Fortran OpenMP enabled.")
-      list(APPEND Fortiel_DEFINES "-DHAS_OpenMP=True")
       target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
     endif()
   endif()
@@ -156,7 +152,6 @@ else()
   if(MKL_FOUND)
     set(MKL_ENABLED 1)
     message(STATUS "MKL enabled.")
-    list(APPEND Fortiel_DEFINES "-DHAS_MKL=True")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
     # Intel suggest the other more explicit way, see: https://intel.ly/3ABZNsK
     #target_compile_options(
@@ -180,8 +175,8 @@ elseif(MKL_ENABLED)
 else()
   find_package(LAPACK)
   if(LAPACK_FOUND)
+    set(LAPACK_ENABLED 1)
     message(STATUS "LAPACK enabled.")
-    list(APPEND Fortiel_DEFINES "-DHAS_LAPACK=True")
     target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
   endif()
 endif()
@@ -193,85 +188,30 @@ else()
   find_package(Lua)
   if(LUA_FOUND)
     message(STATUS "Lua enabled.")
+    set(Lua_ENABLED 1)
     # Lua target is missing.
     #target_link_libraries(StormRuler_BASE INTERFACE Lua::Lua)
     target_link_libraries(
       StormRuler_BASE INTERFACE "${LUA_LIBRARIES}")
     target_include_directories(
       StormRuler_BASE INTERFACE "${LUA_INCLUDE_DIR}")
-    target_compile_definitions(
-      StormRuler_BASE INTERFACE "WITH_LUA=1")
   endif()
 endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Sources and preprocessing.
+## Main shared library and the executable.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-# Locate the Fortran and C++ sources.
-file(GLOB_RECURSE Fortran_SOURCES "src/*.f90") 
-file(GLOB_RECURSE CXX_SOURCES "src/*.c*")
+message(STATUS "Adding StormRuler shared library.")
+add_subdirectory(
+  "${CMAKE_SOURCE_DIR}/src")
 
-# Find Fortiel preprocessor.
-if(NOT "$ENV{StormRuler_Fortiel_PATH}" STREQUAL "")
-  set(Fortiel_PATH "$ENV{StormRuler_Fortiel_PATH}")
-  message(STATUS "Overriding submodule Fortiel path to ${Fortiel_PATH}")
-else()
-  set(Fortiel_PATH "${CMAKE_CURRENT_SOURCE_DIR}/ext/fortiel/src")
+message(STATUS "Adding StormRuler main executable.")
+add_subdirectory(
+  "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
+
+if(Lua_ENABLED)
+  message(STATUS "Adding StormRuler Lua executable.")
+  add_subdirectory(
+    "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main_Lua")
 endif()
-if(NOT EXISTS "${Fortiel_PATH}/fortiel.py")
-  message(FATAL_ERROR "Broken Fortiel submodule.")
-endif()
-
-# Find Python interpreter.
-find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
-
-# Preprocess Fortran sources.
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src_gen")
-foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
-  file(RELATIVE_PATH Fortran_SOURCE_PREPROCESSED
-       "${CMAKE_CURRENT_SOURCE_DIR}/src" "${Fortran_SOURCE}")
-  get_filename_component(
-    Fortran_SOURCE_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}" NAME_WE)
-  set(Fortran_SOURCE_PREPROCESSED 
-      "${CMAKE_CURRENT_SOURCE_DIR}/src_gen/${Fortran_SOURCE_PREPROCESSED}.out.f90")
-  add_custom_command(
-    OUTPUT "${Fortran_SOURCE_PREPROCESSED}"
-    COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py" ${Fortiel_DEFINES}
-            -o "${Fortran_SOURCE_PREPROCESSED}" "${Fortran_SOURCE}"
-    MAIN_DEPENDENCY "${Fortran_SOURCE}"
-    VERBATIM)
-  list(APPEND Fortran_SOURCES_PREPROCESSED "${Fortran_SOURCE_PREPROCESSED}")
-endforeach()
-
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Main shared library.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-add_library(StormRuler SHARED ${Fortran_SOURCES}  
-  ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
-
-# Link with the base target.
-target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
-
-# Specify compilation output directories:
-# binary output directory,
-set_target_properties(
-  StormRuler PROPERTIES 
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-# module output directiry,
-set_target_properties(
-  StormRuler PROPERTIES 
-  Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-  # Bug in CMake or NAG?
-  set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-endif()
-
-# Require C++17.
-set_target_properties(
-  StormRuler PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
-
-# Main is located in C++, so let C++ linker work.
-set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE CXX)

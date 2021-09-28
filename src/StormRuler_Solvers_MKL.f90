@@ -25,7 +25,7 @@
 module StormRuler_Solvers_MKL
 
 #$use 'StormRuler_Params.fi'
-#$if HAS_MKL
+#$if HAS_MKL or True
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Mesh, only: tMesh

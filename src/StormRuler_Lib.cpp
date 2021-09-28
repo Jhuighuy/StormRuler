@@ -294,7 +294,7 @@ void CustomNavierStokes_Step(tField<0> p, tField<1> v,
 
 extern "C" void pure_c_main();
 
-int main() {
+int a_main() {
   std::cout << "Hello from C++ " << sizeof(int) << std::endl;
 
   pure_c_main();

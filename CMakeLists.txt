@@ -16,7 +16,7 @@
 ## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
 ## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
 ## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-## NONINFRINGEMENT. IN NO EVENmT SHALL THE AUTHORS OR COPYRIGHT 
+## NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
 ## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
 ## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
@@ -186,6 +186,24 @@ else()
   endif()
 endif()
 
+# Find Lua.
+if(StormRuler_NO_Lua)
+  message(STATUS "StormRuler Lua was disabled by user.")
+else()
+  find_package(Lua)
+  if(LUA_FOUND)
+    message(STATUS "Lua enabled.")
+    # Lua target is missing.
+    #target_link_libraries(StormRuler_BASE INTERFACE Lua::Lua)
+    target_link_libraries(
+      StormRuler_BASE INTERFACE "${LUA_LIBRARIES}")
+    target_include_directories(
+      StormRuler_BASE INTERFACE "${LUA_INCLUDE_DIR}")
+    target_compile_definitions(
+      StormRuler_BASE INTERFACE "WITH_LUA=1")
+  endif()
+endif()
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Sources and preprocessing.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
@@ -227,11 +245,11 @@ foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
 endforeach()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Main executable.
+## Main shared library.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-add_executable(StormRuler 
-  ${Fortran_SOURCES} ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
+add_library(StormRuler SHARED ${Fortran_SOURCES}  
+  ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
@@ -240,7 +258,7 @@ target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
 # binary output directory,
 set_target_properties(
   StormRuler PROPERTIES 
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 # module output directiry,
 set_target_properties(
   StormRuler PROPERTIES 

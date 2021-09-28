@@ -27,12 +27,19 @@
 
 #include "StormRuler_API.h"
 
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 static double tau = (M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
-static double rho = 1.0, nu = 0.1, beta = 0.0;
 
 static void Advection_MatVec(SR_tMesh mesh,
     SR_tFieldR Ac, SR_tFieldR c, void* env) {
@@ -125,6 +132,8 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, w_hat, -Gamma, c_hat);
 } // CahnHilliard_Step
 
+static double rho = 1.0, mu = 0.1;
+
 static void Poisson_MatVec(SR_tMesh mesh,
     SR_tFieldR Lp, SR_tFieldR p, void* env) {
   
@@ -140,14 +149,34 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_tFieldR c, SR_tFieldR w,
   SR_tFieldR p_hat, SR_tFieldR v_hat) {
 
+  // 
+  // Compute a single time step of the incompressible
+  // Navier-Stokes equation with convection term:
+  //
+  // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
+  // ∇⋅𝒗 = 0, 𝙛 = 𝑐∇𝑤,
+  //
+  // with the semi-implicit scheme:
+  // 
+  // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇/𝜌)Δ𝒗 + (𝜏/𝜌)𝙛,
+  // Δ𝑝̂ = 𝜌/𝜏∇⋅𝒗,
+  // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
+  // 
+
+  //
+  // Compute 𝒗̂ prediction.
+  //
   SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
 
   SR_Set(mesh, v_hat, v);
   SR_Conv(mesh, v_hat, tau, v, v);
-  SR_DivGrad(mesh, v_hat, tau*nu/rho, v);
+  SR_DivGrad(mesh, v_hat, tau*mu/rho, v);
 
+  //
+  // Compute 𝙛 = -𝑐∇𝑤, 𝒗̂ ← 𝒗̂ + 𝙛.
+  //
   SR_tFieldR f = SR_Alloc_Mold(v);
 
   SR_Fill(mesh, f, 0.0, 0.0);
@@ -160,6 +189,9 @@ static void NavierStokes_Step(SR_tMesh mesh,
 
   SR_ApplyBCs(mesh, v_hat, SR_ALL, SR_PURE_DIRICHLET);
 
+  //
+  // Solve pressure equation and correct 𝒗̂.
+  // 
   SR_tFieldR RHS = SR_Alloc_Mold(p);
   SR_Fill(mesh, RHS, 0.0, 0.0);
   SR_Div(mesh, RHS, -rho/tau, v_hat);
@@ -175,7 +207,68 @@ static void NavierStokes_Step(SR_tMesh mesh,
 
 } // NavierStokes_Step
 
+static double rho_1 = 1.0, rho_2 = 2.0, mu_1 = 0.1, mu_2 = 0.2;
+
+static void NavierStokes_VaryingDensity_Step(SR_tMesh mesh,
+  SR_tFieldR p, SR_tFieldR v,
+  SR_tFieldR c, SR_tFieldR w,
+  SR_tFieldR rho_hat, SR_tFieldR mu_hat, 
+  SR_tFieldR p_hat, SR_tFieldR v_hat) {
+
+  // 
+  // Compute a single time step of the incompressible
+  // Navier-Stokes equation with convection term:
+  //
+  // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
+  // ∇⋅𝒗 = 0, 𝙛 = 𝑐∇𝑤,
+  // 𝜌 = ½𝜌₁(1 - 𝑐) + ½𝜌₂(1 + 𝑐),
+  // 𝜇 = ½𝜇₁(1 - 𝑐) + ½𝜇₂(1 + 𝑐),
+  //
+  // with the semi-implicit scheme:
+  // 
+  // 𝜌̂ ← ½(𝜌₁ + 𝜌₂) - ½(𝜌₁ - 𝜌₂)𝑐,
+  // 𝜇̂ ← ½(𝜇₁ + 𝜇₂) - ½(𝜇₁ - 𝜇₂)𝑐,
+  // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇̂Δ𝒗 + 𝜏𝙛)/𝜌̂,
+  // ∇⋅(1/𝜌̂∇𝑝̂) = 1/𝜏∇⋅𝒗,
+  // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
+  // 
+
+  //
+  // Compute 𝜌̂, 𝜇̂.
+  //
+  SR_Fill(mesh, rho_hat, 0.5*(rho_1 + rho_2), 0.0);
+  SR_Sub(mesh, rho_hat, rho_hat, c, 0.5*(rho_1 - rho_2), 1.0);
+  SR_Fill(mesh, mu_hat, 0.5*(mu_1 + mu_2), 0.0);
+  SR_Sub(mesh, mu_hat, mu_hat, c, 0.5*(rho_1 - rho_2), 1.0);
+
+  //
+  // Compute 𝒗̂ prediction.
+  //
+  SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
+  SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
+  SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
+
+  SR_Set(mesh, v_hat, v);
+  SR_Conv(mesh, v_hat, tau, v, v);
+
+  SR_tFieldR TMP = SR_Alloc_Mold(v);
+
+  SR_Fill(mesh, TMP, 0.0, 0.0);
+  SR_DivGrad(mesh, TMP, 1.0, v);
+  SR_Mul(mesh, TMP, mu_hat, TMP);
+  //SR_Mul(mesh, TMP, rho_hat, TMP, -1);
+  SR_Add(mesh, v_hat, v_hat, TMP, tau, 1.0);
+
+  SR_Free(TMP);
+
+} // NavierStokes_VaryingDensity_Step
+
 void pure_c_main() {
+
+  lua_State *L = luaL_newstate();
+  luaL_openlibs(L);
+  lua_close(L);
+
   SR_tMesh mesh = SR_InitMesh();
 
   SR_tFieldR c, p, v, c_hat, w_hat, p_hat, v_hat;

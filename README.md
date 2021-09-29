@@ -131,7 +131,9 @@ although some of them are not parallelized.
 <!----------------------------------------------------------------->
 
 * C/C++ API:
-  - [ ] Pure C API,
+  - [*] Pure C API,
+  - [ ] Untyped C API,
+  - [ ] Lua API,
   - [ ] C++17 API with own BLAS implementation (with expression templates),
   - [ ] Pure C++11/C++14 API.
 
@@ -186,4 +188,3 @@ although some of them are not parallelized.
   - [ ] Recover existing symbolic interface.
   - [ ] Implement symbolic drivers for the linear case.
   - [ ] Direct/reverse auto-differentiation..
-

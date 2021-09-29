@@ -29,7 +29,7 @@
 
 project(StormRuler_Main
   VERSION 1.0
-  DESCRIPTION "StormRuler C library"
+  DESCRIPTION "StormRuler main executable"
   LANGUAGES C)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##

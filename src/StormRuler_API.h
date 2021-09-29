@@ -25,21 +25,45 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <complex.h>
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 #define SR_C11 (__STDC_VERSION__ >= 201112L)
+#define SR_CPP ( defined(__cplusplus) )
 
-#ifdef __cplusplus
-#define SR_API extern "C"
-#define SR_INL inline
+#if SR_C11 && SR_CPP
+#error StormRuler API: both C11 or C++ targets found.
+#endif
 
-#else
+#if !SR_C11 && !SR_CPP
+#error StormRuler API: neither C11 or C++ targets found.
+#endif
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+#define SR_INTEGER int
+
+#if SR_C11
 #define SR_API extern
 #define SR_INL static
+#elif SR_CPP
+#define SR_API extern "C"
+#define SR_INL inline
 #endif
 
 #define SR_REAL double
+#if SR_C11
+#include <complex.h>
 #define SR_COMPLEX complex double
+#elif SR_CPP
+#include <complex>
+#define SR_COMPLEX std::complex<double>
+#endif
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 #define SR_OPAQUE_STRUCT struct { int _; }
 
@@ -53,6 +77,8 @@ typedef SR_OPAQUE_STRUCT* SR_tFieldR;
 typedef SR_OPAQUE_STRUCT* SR_tFieldC;
 typedef SR_OPAQUE_STRUCT* SR_tFieldS;
 
+#undef SR_OPAQUE_STRUCT
+
 #define SR_FIELD_GENERIC(x, R, C) \
   _Generic((x), SR_tFieldR: R, SR_tFieldC: C)
 #define SR_FIELD_GENERIC_EX(x, R, C, S) \
@@ -61,7 +87,7 @@ typedef SR_OPAQUE_STRUCT* SR_tFieldS;
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-SR_API SR_tMesh SR_InitMesh();
+SR_API SR_tMesh SR_InitMesh(void);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -313,11 +339,11 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_ApplyBCsR(SR_tMesh mesh, SR_tFieldR u,
-    int iBC, SR_REAL alpha, SR_REAL beta, SR_REAL gamma);
+    SR_INTEGER iBC, SR_REAL alpha, SR_REAL beta, SR_REAL gamma);
 SR_API void SR_ApplyBCsC(SR_tMesh mesh, SR_tFieldR u,
-    int iBC, SR_COMPLEX alpha, SR_COMPLEX beta, SR_COMPLEX gamma);
+    SR_INTEGER iBC, SR_COMPLEX alpha, SR_COMPLEX beta, SR_COMPLEX gamma);
 SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
-    int iBC, SR_tSymbol alpha, SR_tSymbol beta, SR_tSymbol gamma);
+    SR_INTEGER iBC, SR_tSymbol alpha, SR_tSymbol beta, SR_tSymbol gamma);
 #if SR_C11
 #define SR_ApplyBCs(mesh, u, iBC, ...) \
   SR_FIELD_GENERIC_EX(u, SR_ApplyBCsR, SR_ApplyBCsC, \

@@ -22,3 +22,42 @@
 ## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 ## OTHER DEALINGS IN THE SOFTWARE.
 ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ##
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## StormRuler C executable.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+project(StormRuler_Main_Lua
+  VERSION 1.0
+  DESCRIPTION "StormRuler main executable for Lua scripts"
+  LANGUAGES CXX)
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Sources.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+# Locate the C++ sources.
+file(GLOB_RECURSE CXX_SOURCES "./*.cpp")
+
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+## Main/Lua executable library.
+## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+# Add executable.
+add_executable(StormRuler_Main_Lua ${CXX_SOURCES})
+
+# Require C++17.
+set_target_properties(
+  StormRuler_Main_Lua PROPERTIES 
+  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
+
+# Link with the base target.
+target_link_libraries(StormRuler_Main_Lua PUBLIC StormRuler_BASE)
+
+# Link with the main library.
+target_link_libraries(StormRuler_Main_Lua PUBLIC StormRuler)
+
+# Specify binary output directory.
+set_target_properties(
+  StormRuler_Main_Lua PROPERTIES 
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

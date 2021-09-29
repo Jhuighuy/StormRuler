@@ -30,7 +30,7 @@
 project(StormRuler_Lib
   VERSION 1.0
   DESCRIPTION "StormRuler shared library"
-  LANGUAGES Fortran C CXX)
+  LANGUAGES Fortran C)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Sources and preprocessing.
@@ -38,7 +38,7 @@ project(StormRuler_Lib
 
 # Locate the Fortran and C++ sources.
 file(GLOB Fortran_SOURCES "./*.f90") 
-file(GLOB CXX_SOURCES "./*.c*")
+file(GLOB C_SOURCES "./*.c*")
 
 # Build a list of Fortiel options.
 set(Fortiel_DEFINES "")
@@ -67,12 +67,12 @@ endif()
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
 # Preprocess Fortran sources.
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/out")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/gen")
 foreach(Fortran_SOURCE IN LISTS Fortran_SOURCES)
   get_filename_component(
     Fortran_SOURCE_PREPROCESSED "${Fortran_SOURCE}" NAME_WE)
   set(Fortran_SOURCE_PREPROCESSED 
-      "${CMAKE_CURRENT_SOURCE_DIR}/out/${Fortran_SOURCE_PREPROCESSED}.out.f90")
+      "${CMAKE_CURRENT_SOURCE_DIR}/gen/${Fortran_SOURCE_PREPROCESSED}.out.f90")
   add_custom_command(
     OUTPUT "${Fortran_SOURCE_PREPROCESSED}"
     COMMAND "${Python3_EXECUTABLE}" "${Fortiel_PATH}/fortiel.py"
@@ -87,7 +87,7 @@ endforeach()
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 add_library(StormRuler SHARED ${Fortran_SOURCES}
-  ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
+  ${Fortran_SOURCES_PREPROCESSED} ${C_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
@@ -96,11 +96,6 @@ target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
 set_target_properties(
   StormRuler PROPERTIES 
   C_STANDARD 11 C_STANDARD_REQUIRED YES)
-
-# Require C++17.
-set_target_properties(
-  StormRuler PROPERTIES 
-  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
 # Main is located in C++, so let C++ linker work.
 set_target_properties(
@@ -111,6 +106,9 @@ set_target_properties(
 set_target_properties(
   StormRuler PROPERTIES 
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set_target_properties(
+  StormRuler PROPERTIES 
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 # module output directiry,
 set_target_properties(
   StormRuler PROPERTIES 

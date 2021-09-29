@@ -26,13 +26,13 @@
 cmake_minimum_required(VERSION 3.12)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Setup StormRuler project, using Fortran and C++.
+## Setup StormRuler project, using Fortran and C.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 project(StormRuler
   VERSION 1.0
   DESCRIPTION "A very high order CFD solver and beyond"
-  LANGUAGES Fortran C CXX)
+  LANGUAGES Fortran C)
 
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
@@ -40,8 +40,6 @@ add_library(StormRuler_BASE INTERFACE)
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
 
 if(APPLE)
   # Detect Apple Silicon CPU.
@@ -65,19 +63,25 @@ endif()
 #  $<$<COMPILE_LANGUAGE:C>:$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_RELEASE}>>
 
 # TODO: add compile options based on Debug/Release configurations.
+target_compile_options(
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g>)
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -fcheck=all>)
-  # Enabled optimization fail on GFORTRAN/M1.
-  if(NOT APPLE_SILICON)
-    target_compile_options(
-      StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
-  endif()
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-fcheck=all>)
+endif()
+# Enabled optimization fail on GFORTRAN/M1.
+if(NOT APPLE_SILICON)
+  target_compile_options(
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
 endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
+
+# Library include directories.
+target_include_directories(
+  StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/src")
 
 # Find Git and update submodules.
 find_package(Git)
@@ -87,8 +91,8 @@ if(GIT_FOUND)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE GIT_SUBMODULE_RESULT)
   if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
-    message(FATAL_ERROR 
-      "`git submodule update --init --recursive` failed with ${GIT_SUBMODULE_RESULT}.")
+    message(FATAL_ERROR "`git submodule update --init --recursive`"
+                        " failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
 endif()
 
@@ -110,24 +114,24 @@ else()
       target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
     endif()
   endif()
-  if(OpenMP_CXX_FOUND)
+  if(OpenMP_C_FOUND)
     if(OpenMP_Fortran_ENABLED)
-      # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
+      # Enable C OpenMP only in case Fortran and C compiler vendors match.
       # Mixing different OpenMP runtimes is generally not a good idea.
-      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
-        set(OpenMP_CXX_ENABLED 1)
+      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_C_COMPILER_ID}")
+        set(OpenMP_C_ENABLED 1)
       endif()
       # NAG uses system C compiler as a backend,
-      # which can should theoretically match used C++ compiler.
+      # which can should theoretically match used C compiler.
       if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-        set(OpenMP_CXX_ENABLED 1)
+        set(OpenMP_C_ENABLED 1)
       endif()
     endif()
-    if(OpenMP_CXX_ENABLED)
-      message(STATUS "C++ OpenMP enabled.")
-      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
+    if(OpenMP_C_ENABLED)
+      message(STATUS "C OpenMP enabled.")
+      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_C)
     else()
-      message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
+      message(STATUS "C OpenMP disabled, different Fortran and C compiler vendors.")
     endif()
   endif()
 endif()

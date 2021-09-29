@@ -27,10 +27,6 @@
 
 #include "StormRuler_API.h"
 
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -264,10 +260,6 @@ static void NavierStokes_VaryingDensity_Step(SR_tMesh mesh,
 } // NavierStokes_VaryingDensity_Step
 
 void pure_c_main() {
-
-  lua_State *L = luaL_newstate();
-  luaL_openlibs(L);
-  lua_close(L);
 
   SR_tMesh mesh = SR_InitMesh();
 

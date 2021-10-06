@@ -29,9 +29,9 @@ module StormRuler_Solvers_Utils
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Set, Sub, Norm_2
-#$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
+#$for T, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$T
+use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

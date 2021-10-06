@@ -131,8 +131,9 @@ although some of them are not parallelized.
 <!----------------------------------------------------------------->
 
 * C/C++ API:
-  - [*] Pure C API,
+  - [x] Pure C API,
   - [ ] Untyped C API,
+  - [ ] MATLAB API,
   - [ ] Lua API,
   - [ ] C++17 API with own BLAS implementation (with expression templates),
   - [ ] Pure C++11/C++14 API.

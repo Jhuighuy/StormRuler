@@ -37,44 +37,44 @@ use StormRuler_Mesh, only: tMesh
 implicit none
 
 interface Dot
-#$for type, _ in SCALAR_TYPES
-  module procedure Dot$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Dot$T
 #$end for
 end interface Dot
 
 interface Norm_1
-#$for type, _ in SCALAR_TYPES
-  module procedure Norm_1$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Norm_1$T
 #$end for
 end interface Norm_1
 
 interface Norm_2
-#$for type, _ in SCALAR_TYPES
-  module procedure Norm_2$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Norm_2$T
 #$end for
 end interface Norm_2
 
 interface Norm_C
-#$for type, _ in SCALAR_TYPES
-  module procedure Norm_C$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Norm_C$T
 #$end for
 end interface Norm_C
 
 interface Fill
-#$for type, _ in SCALAR_TYPES
-  module procedure Fill$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Fill$T
 #$end for
 end interface Fill
 
 interface Fill_Random
-#$for type, _ in SCALAR_TYPES
-  module procedure Fill_Random$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Fill_Random$T
 #$end for
 end interface Fill_Random
 
 interface Set
-#$for type, _ in SCALAR_TYPES
-  module procedure Set$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Set$T
 #$end for
 end interface Set
 
@@ -91,20 +91,20 @@ interface Set_Complex
 end interface Set_Complex
 
 interface Scale
-#$for type, _ in SCALAR_TYPES
-  module procedure Scale$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Scale$T
 #$end for
 end interface Scale
 
 interface Add
-#$for type, _ in SCALAR_TYPES
-  module procedure Add$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Add$T
 #$end for
 end interface Add
 
 interface Sub
-#$for type, _ in SCALAR_TYPES
-  module procedure Sub$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Sub$T
 #$end for
 end interface Sub
 
@@ -130,20 +130,20 @@ end interface Mul_Outer
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for type, typename in SCALAR_TYPES
-  pure function tMapFunc$type(x) result(Mx)
+#$for T, typename in SCALAR_TYPES
+  pure function tMapFunc$T(x) result(Mx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
     $typename, intent(in) :: x(:)
     $typename :: Mx(size(x))
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tMapFunc$type
+  end function tMapFunc$T
 #$end for
 end interface
 
 interface FuncProd
-#$for type, _ in SCALAR_TYPES
-  module procedure FuncProd$type
+#$for T, _ in SCALAR_TYPES
+  module procedure FuncProd$T
 #$end for
 end interface FuncProd
 
@@ -151,21 +151,21 @@ end interface FuncProd
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for type, typename in SCALAR_TYPES
-  pure function tSMapFunc$type(r, x) result(SMx)
+#$for T, typename in SCALAR_TYPES
+  pure function tSMapFunc$T(r, x) result(SMx)
     import dp
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: r(:)
     $typename, intent(in) :: x(:)
     $typename :: SMx(size(x))
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tSMapFunc$type
+  end function tSMapFunc$T
 #$end for
 end interface
 
 interface SFuncProd
-#$for type, _ in SCALAR_TYPES
-  module procedure SFuncProd$type
+#$for T, _ in SCALAR_TYPES
+  module procedure SFuncProd$T
 #$end for
 end interface SFuncProd
 
@@ -173,8 +173,8 @@ end interface SFuncProd
 !! Matrix-vector product function.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for type, typename in SCALAR_TYPES
-  subroutine tMatVecFunc$type(mesh, Au, u, env)
+#$for T, typename in SCALAR_TYPES
+  subroutine tMatVecFunc$T(mesh, Au, u, env)
     import :: dp, tMesh
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(in) :: mesh
@@ -182,25 +182,25 @@ abstract interface
     $typename, intent(inout), target :: Au(:,:)
     class(*), intent(inout) :: env
     ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tMatVecFunc$type
+  end subroutine tMatVecFunc$T
 #$end for
 end interface
 
 interface MatVecProd_Diagonal
-#$for type, _ in SCALAR_TYPES
-  module procedure MatVecProd_Diagonal$type
+#$for T, _ in SCALAR_TYPES
+  module procedure MatVecProd_Diagonal$T
 #$end for
 end interface MatVecProd_Diagonal
 
 interface MatVecProd_Triangular
-#$for type, _ in SCALAR_TYPES
-  module procedure MatVecProd_Triangular$type
+#$for T, _ in SCALAR_TYPES
+  module procedure MatVecProd_Triangular$T
 #$end for
 end interface MatVecProd_Triangular
 
 interface Solve_Triangular
-#$for type, _ in SCALAR_TYPES
-  module procedure Solve_Triangular$type
+#$for T, _ in SCALAR_TYPES
+  module procedure Solve_Triangular$T
 #$end for
 end interface Solve_Triangular
 
@@ -214,8 +214,8 @@ contains
 !! • 𝑑 ← <𝒙⋅𝒚> = 𝒙ᴴ𝒚 (default), or 
 !! • 𝑑 ← [𝒙⋅𝒚] = 𝒙ᵀ𝒚 (do_conjg = false).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-$typename function Dot$type(mesh, x, y, do_conjg) result(Dot)
+#$for T, typename in SCALAR_TYPES
+$typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
@@ -259,14 +259,14 @@ contains
     
   end function Dot_Kernel_Conjg
 #$end if
-end function Dot$type
+end function Dot$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₁-norm: 𝑑 ← ‖𝒙‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-real(dp) function Norm_1$type(mesh, x) result(Norm_1)
+#$for T, typename in SCALAR_TYPES
+real(dp) function Norm_1$T(mesh, x) result(Norm_1)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
@@ -283,14 +283,14 @@ contains
     Norm_1_Kernel = sum(abs(x(:,iCell)))
     
   end function Norm_1_Kernel
-end function Norm_1$type
+end function Norm_1$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-real(dp) function Norm_2$type(mesh, x) result(Norm_2)
+#$for T, typename in SCALAR_TYPES
+real(dp) function Norm_2$T(mesh, x) result(Norm_2)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
@@ -302,14 +302,14 @@ real(dp) function Norm_2$type(mesh, x) result(Norm_2)
   Norm_2 = sqrt( Dot(mesh, x, x) )
 #$end if
 
-end function Norm_2$type
+end function Norm_2$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ∞-norm: 𝑑 ← ‖𝒙‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-real(dp) function Norm_C$type(mesh, x) result(Norm_C)
+#$for T, typename in SCALAR_TYPES
+real(dp) function Norm_C$T(mesh, x) result(Norm_C)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
@@ -326,14 +326,14 @@ contains
     Norm_C_Kernel = maxval(abs(x(:,iCell)))
     
   end function Norm_C_Kernel
-end function Norm_C$type
+end function Norm_C$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: 𝒚 ← 𝛼 + [𝛽], 𝛼 ∊ ℝ, [𝛽 ∊ ℝ or ℂ].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Fill$type(mesh, y, alpha, beta)
+#$for T, typename in SCALAR_TYPES
+subroutine Fill$T(mesh, y, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: alpha
@@ -357,7 +357,7 @@ contains
     y(:,iCell) = gamma
     
   end subroutine Fill_Kernel
-end subroutine Fill$type
+end subroutine Fill$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -365,8 +365,8 @@ end subroutine Fill$type
 !! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
 !! • 𝕹𝖊(𝛼ᵢ) ~ ???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Fill_Random$type(mesh, y, a, b)
+#$for T, typename in SCALAR_TYPES
+subroutine Fill_Random$T(mesh, y, a, b)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(inout) :: y(:,:)
@@ -399,14 +399,14 @@ contains
 #$end if
     
   end subroutine Fill_Random_Kernel
-end subroutine Fill_Random$type
+end subroutine Fill_Random$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set: 𝒚 ← 𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Set$type(mesh, y, x)
+#$for T, typename in SCALAR_TYPES
+subroutine Set$T(mesh, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
@@ -424,7 +424,7 @@ contains
     y(:,iCell) = x(:,iCell)
 
   end subroutine Set_Kernel
-end subroutine Set$type
+end subroutine Set$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -499,8 +499,8 @@ end subroutine Set_Complex
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Scale$type(mesh, y, x, alpha)
+#$for T, typename in SCALAR_TYPES
+subroutine Scale$T(mesh, y, x, alpha)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:), alpha
@@ -518,14 +518,14 @@ contains
     y(:,iCell) = alpha*x(:,iCell)
 
   end subroutine Scale_Kernel
-end subroutine Scale$type
+end subroutine Scale$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← [[𝛽]]𝒚 + [𝛼]𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Add$type(mesh, z, y, x, alpha, beta)
+#$for T, typename in SCALAR_TYPES
+subroutine Add$T(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
@@ -548,14 +548,14 @@ contains
     z(:,iCell) = b*y(:,iCell) + a*x(:,iCell)
 
   end subroutine Add_Kernel
-end subroutine Add$type
+end subroutine Add$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← 𝛽𝒚 - 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Sub$type(mesh, z, y, x, alpha, beta)
+#$for T, typename in SCALAR_TYPES
+subroutine Sub$T(mesh, z, y, x, alpha, beta)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
@@ -578,7 +578,7 @@ contains
     z(:,iCell) = b*y(:,iCell) - a*x(:,iCell)
     
   end subroutine Sub_Kernel
-end subroutine Sub$type
+end subroutine Sub$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -666,13 +666,13 @@ end subroutine Mul_Outer$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine FuncProd$type(mesh, y, x, f)
+#$for T, typename in SCALAR_TYPES
+subroutine FuncProd$T(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
-  procedure(tMapFunc$type) :: f
+  procedure(tMapFunc$T) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(FuncProd_Kernel)
@@ -686,19 +686,19 @@ contains
     y(:,iCell) = f(x(:,iCell))
 
   end subroutine FuncProd_Kernel
-end subroutine FuncProd$type
+end subroutine FuncProd$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine SFuncProd$type(mesh, y, x, f)
+#$for T, typename in SCALAR_TYPES
+subroutine SFuncProd$T(mesh, y, x, f)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
-  procedure(tSMapFunc$type) :: f
+  procedure(tSMapFunc$T) :: f
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(SFuncProd_Kernel)
@@ -712,19 +712,19 @@ contains
     y(:,iCell) = f(mesh%CellCenter(iCell), x(:,iCell))
 
   end subroutine SFuncProd_Kernel
-end subroutine SFuncProd$type
+end subroutine SFuncProd$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine MatVecProd_Diagonal$type(mesh, Dx, x, MatVec, env)
+#$for T, typename in SCALAR_TYPES
+subroutine MatVecProd_Diagonal$T(mesh, Dx, x, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: Dx(:,:)
-  procedure(tMatVecFunc$type) :: MatVec
+  procedure(tMatVecFunc$T) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -752,21 +752,21 @@ contains
     end do
 
   end subroutine MatVecProd_Diagonal_BlockKernel  
-end subroutine MatVecProd_Diagonal$type
+end subroutine MatVecProd_Diagonal$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Multiply a vector by a lower/upper triangular 
 !! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine MatVecProd_Triangular$type(mesh, Tx, x, UpLo, MatVec, env)
+#$for T, typename in SCALAR_TYPES
+subroutine MatVecProd_Triangular$T(mesh, Tx, x, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: Tx(:,:)
   character :: UpLo
-  procedure(tMatVecFunc$type) :: MatVec
+  procedure(tMatVecFunc$T) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -818,21 +818,21 @@ contains
     end do
 
   end subroutine MatVecProd_LowerTriangular_BlockKernel 
-end subroutine MatVecProd_Triangular$type
+end subroutine MatVecProd_Triangular$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear system with a lower/upper 
 !! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Solve_Triangular$type(mesh, x, b, diag, UpLo, MatVec, env)
+#$for T, typename in SCALAR_TYPES
+subroutine Solve_Triangular$T(mesh, x, b, diag, UpLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: b(:,:), diag(:,:)
   $typename, intent(inout) :: x(:,:)
   character :: UpLo
-  procedure(tMatVecFunc$type) :: MatVec
+  procedure(tMatVecFunc$T) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -890,7 +890,7 @@ contains
     end do
 
   end subroutine Solve_LowerTriangular_BlockKernel 
-end subroutine Solve_Triangular$type
+end subroutine Solve_Triangular$T
 #$end for
 
 end module StormRuler_BLAS

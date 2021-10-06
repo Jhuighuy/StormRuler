@@ -186,21 +186,21 @@ else()
 endif()
 
 # Find Lua.
-if(StormRuler_NO_Lua)
-  message(STATUS "StormRuler Lua was disabled by user.")
-else()
-  find_package(Lua)
-  if(LUA_FOUND)
-    message(STATUS "Lua enabled.")
-    set(Lua_ENABLED 1)
-    # Lua target is missing.
-    #target_link_libraries(StormRuler_BASE INTERFACE Lua::Lua)
-    target_link_libraries(
-      StormRuler_BASE INTERFACE "${LUA_LIBRARIES}")
-    target_include_directories(
-      StormRuler_BASE INTERFACE "${LUA_INCLUDE_DIR}")
-  endif()
-endif()
+#if(StormRuler_NO_Lua)
+#  message(STATUS "StormRuler Lua was disabled by user.")
+#else()
+#  find_package(Lua)
+#  if(LUA_FOUND)
+#    message(STATUS "Lua enabled.")
+#    set(Lua_ENABLED 1)
+#    # Lua target is missing.
+#    #target_link_libraries(StormRuler_BASE INTERFACE Lua::Lua)
+#    target_link_libraries(
+#      StormRuler_BASE INTERFACE "${LUA_LIBRARIES}")
+#    target_include_directories(
+#      StormRuler_BASE INTERFACE "${LUA_INCLUDE_DIR}")
+#  endif()
+#endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main shared library and the executable.
@@ -214,8 +214,8 @@ message(STATUS "Adding StormRuler main executable.")
 add_subdirectory(
   "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
 
-if(Lua_ENABLED)
-  message(STATUS "Adding StormRuler Lua executable.")
-  add_subdirectory(
-    "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main_Lua")
-endif()
+#if(Lua_ENABLED)
+#  message(STATUS "Adding StormRuler Lua executable.")
+#  add_subdirectory(
+#    "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main_Lua")
+#endif()

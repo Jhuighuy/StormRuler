@@ -35,36 +35,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static double tau = (M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
-
-static void Advection_MatVec(SR_tMesh mesh,
-    SR_tFieldR Ac, SR_tFieldR c, void* env) {
-  SR_tFieldR v = (SR_tFieldR)env;
-
-  SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
-  SR_Set(mesh, Ac, c);
-  SR_Conv(mesh, Ac, tau, c, v);
-} // Advection_MatVec
-
-static void Advection_Step(SR_tMesh mesh,
-    SR_tFieldR c, SR_tFieldR v,
-    SR_tFieldR c_hat) {
-
-  // 
-  // Compute a single time step of the
-  // advection equation.
-  //
-  // ∂𝑐/∂𝑡 + ∇⋅𝑐𝒗 = 0.
-  //
-  // with the implicit scheme:
-  // 
-  // 𝑐̂ + 𝜏∇⋅𝑐̂𝒗 = 𝑐,
-  //
-
-  SR_LinSolve(mesh, c_hat, c, Advection_MatVec, v, 
-    SR_BiCGStab, SR_Precond_None, NULL, NULL);
-} // Advection_Step
+static double tau = 2.0*(M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   //*Wc = 0.5*(1.0 - (*c)*(*c));
@@ -107,6 +78,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
 
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
+  SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
 
   SR_FuncProdR(mesh, w_hat, c, dWdC, NULL);
   SR_ApplyBCs(mesh, w_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -165,6 +137,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
+  SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
 
   SR_Set(mesh, v_hat, v);
   SR_Conv(mesh, v_hat, tau, v, v);
@@ -184,6 +157,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_Free(f);
 
   SR_ApplyBCs(mesh, v_hat, SR_ALL, SR_PURE_DIRICHLET);
+  SR_ApplyBCs(mesh, v_hat, 3, SR_PURE_NEUMANN);
 
   //
   // Solve pressure equation and correct 𝒗̂.
@@ -259,6 +233,27 @@ static void NavierStokes_VaryingDensity_Step(SR_tMesh mesh,
 
 } // NavierStokes_VaryingDensity_Step
 
+void Initial_Data(int dim, const SR_REAL* r,
+    int size, SR_REAL* c, const SR_REAL* _, void* env) {
+
+  static const SR_REAL L = 2.0*M_PI;
+  int in = 0;
+  if (fabs(r[0]-0*L) <= L*0.101 && (2*L-r[1]) <= L*0.665) {
+    in = 1.0;
+  }
+
+  if (env == NULL) {
+    *c = -1.0;
+    if (in) {
+      *c = 1.0;
+    }
+  } else {
+    c[0] = 0.0;
+    c[1] = -1.0;//*in;
+  }
+
+} // Initial_Data
+
 void pure_c_main() {
 
   SR_tMesh mesh = SR_InitMesh();
@@ -272,21 +267,15 @@ void pure_c_main() {
   p_hat = SR_Alloc_Mold(p);
   v_hat = SR_Alloc_Mold(v);
 
-  SR_Fill_Random(mesh, c, -1.0, +1.0);
-  SR_Fill(mesh, v, 0.0, 0.0);
-
-  SR_tIOList io = SR_IO_Begin();
-  SR_IO_Add(io, v, "velocity");
-  SR_IO_Add(io, c, "phase");
-  SR_IO_Add(io, p, "pressure");
-  SR_IO_Add(io, c, "density");
-  SR_IO_Flush(io, mesh, "out/fld-0.vtk");
+  SR_SFuncProd(mesh, c, c, Initial_Data, NULL);
+  SR_SFuncProd(mesh, v, v, Initial_Data, v);
+  //SR_Fill_Random(mesh, c, -1.0, +1.0);
+  //SR_Fill(mesh, v, 0.0, 0.0);
+  SR_Fill(mesh, p, 0.0, 0.0);
 
   for (int time = 0; time <= 200; ++time) {
 
-    if (time == 0) continue;
-
-    for (int frac = 0; frac < 10; ++ frac) {
+    for (int frac = 0; time != 0 && frac < 10; ++ frac) {
 
       CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
       NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat);
@@ -298,7 +287,7 @@ void pure_c_main() {
 
     char filename[256];
     sprintf(filename, "out/fld-%d.vtk", time);
-    io = SR_IO_Begin();
+    SR_tIOList io = SR_IO_Begin();
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, c, "phase");
     SR_IO_Add(io, p, "pressure");

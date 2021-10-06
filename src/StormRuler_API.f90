@@ -43,6 +43,7 @@ use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_Chebyshev, only: Solve_Chebyshev
 use StormRuler_Solvers_MINRES, only: Solve_MINRES
+use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 #$for type_, _ in SCALAR_TYPES
 use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
@@ -81,12 +82,12 @@ end type !${klass}$_C
 !! ----------------------------------------------------------------- !!
 !! Field wrapper class.
 !! ----------------------------------------------------------------- !!
-#$for type, typename in SCALAR_TYPES
-type :: tField_C$type
-  character :: mType = '$type'
+#$for T, typename in SCALAR_TYPES
+type :: tField_C$T
+  character :: mType = '$T'
   integer(ip) :: mRank = -1
   $typename, pointer :: mData(:,:) => null()
-end type !tField_C$type
+end type !tField_C$T
 #$end for
 
 interface Wrap
@@ -100,9 +101,9 @@ interface Unwrap
 #$for klass in CLASSES
   module procedure Unwrap$klass
 #$end for
-#$for type, typename in SCALAR_TYPES
-  module procedure Unwrap2D$type
-  module procedure Unwrap3D$type
+#$for T, typename in SCALAR_TYPES
+  module procedure Unwrap2D$T
+  module procedure Unwrap3D$T
 #$end for
 end interface Unwrap
 
@@ -186,16 +187,16 @@ end subroutine Unwrap$klass
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Unwrap2D$type(x, pX, free, pX_C_out)
+#$for T, typename in SCALAR_TYPES
+subroutine Unwrap2D$T(x, pX, free, pX_C_out)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   $typename, intent(out), pointer :: x(:,:)
   logical, intent(in), optional :: free
-  type(tField_C$type), intent(out), pointer, optional :: pX_C_out
+  type(tField_C$T), intent(out), pointer, optional :: pX_C_out
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  type(tField_C$type), pointer :: pX_C
+  type(tField_C$T), pointer :: pX_C
 
   call c_f_pointer(cptr=pX, fptr=pX_C)
   if (present(pX_C_out)) pX_C_out => pX_C
@@ -206,22 +207,22 @@ subroutine Unwrap2D$type(x, pX, free, pX_C_out)
     if (free) deallocate(pX_C)
   end if
 
-end subroutine Unwrap2D$type
+end subroutine Unwrap2D$T
 #$end for
 
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
-#$for type, typename in SCALAR_TYPES
-subroutine Unwrap3D$type(x, pX, dim, free, pX_C_out)
+#$for T, typename in SCALAR_TYPES
+subroutine Unwrap3D$T(x, pX, dim, free, pX_C_out)
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   $typename, intent(out), pointer :: x(:,:,:)
   integer(ip), intent(in) :: dim
   logical, intent(in), optional :: free
-  type(tField_C$type), intent(out), pointer, optional :: pX_C_out
+  type(tField_C$T), intent(out), pointer, optional :: pX_C_out
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  type(tField_C$type), pointer :: pX_C
+  type(tField_C$T), pointer :: pX_C
 
   call c_f_pointer(cptr=pX, fptr=pX_C)
   if (present(pX_C_out)) pX_C_out => pX_C
@@ -234,7 +235,7 @@ subroutine Unwrap3D$type(x, pX, dim, free, pX_C_out)
     if (free) deallocate(pX_C)
   end if
 
-end subroutine Unwrap3D$type
+end subroutine Unwrap3D$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -258,8 +259,8 @@ function InitMesh() result(pMesh) &
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)
-  call Load_PPM('test/Domain-100.ppm', pixels)
-  colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
+  call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+  colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), PixelToInt([0, 255, 0])]
   call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 10)
   allocate(gMesh%dr(1:2, 1:4))
   gMesh%dl = [Dx,Dx,Dy,Dy]
@@ -282,9 +283,9 @@ end function InitMesh
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-function Alloc$type(pMesh, numVars, rank) result(pY) &
-    & bind(C, name='SR_Alloc$type')
+#$for T, typename in SCALAR_TYPES
+function Alloc$T(pMesh, numVars, rank) result(pY) &
+    & bind(C, name='SR_Alloc$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   integer(c_int), intent(in), value :: numVars, rank
@@ -292,7 +293,7 @@ function Alloc$type(pMesh, numVars, rank) result(pY) &
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   class(tMesh), pointer :: mesh
-  type(tField_C$type), pointer :: pY_C
+  type(tField_C$T), pointer :: pY_C
 
   call Unwrap(mesh, pMesh)
   allocate(pY_C)
@@ -300,20 +301,20 @@ function Alloc$type(pMesh, numVars, rank) result(pY) &
   pY_C%mRank = rank
   pY = c_loc(pY_C)
 
-end function Alloc$type
+end function Alloc$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-function Alloc_Mold$type(pX) result(pY) &
-    & bind(C, name='SR_Alloc_Mold$type')
+#$for T, typename in SCALAR_TYPES
+function Alloc_Mold$T(pX) result(pY) &
+    & bind(C, name='SR_Alloc_Mold$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   type(c_ptr) :: pY
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  type(tField_C$type), pointer :: pX_C, pY_C
+  type(tField_C$T), pointer :: pX_C, pY_C
   $typename, pointer :: x(:,:)
 
   call Unwrap(x, pX, pX_C_out=pX_C)
@@ -322,14 +323,14 @@ function Alloc_Mold$type(pX) result(pY) &
   pY_C%mRank = pX_C%mRank
   pY = c_loc(pY_C)
 
-end function Alloc_Mold$type
+end function Alloc_Mold$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Free$type(pX) &
-    & bind(C, name='SR_Free$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Free$T(pX) &
+    & bind(C, name='SR_Free$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -339,7 +340,7 @@ subroutine Free$type(pX) &
   call Unwrap(x, pX, free=.true.)
   deallocate(x)
 
-end subroutine Free$type
+end subroutine Free$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -415,9 +416,9 @@ end subroutine IO_Flush
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Fill$type(pMesh, pX, alpha, beta) &
-    & bind(C, name='SR_Fill$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Fill$T(pMesh, pX, alpha, beta) &
+    & bind(C, name='SR_Fill$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
@@ -433,14 +434,14 @@ subroutine Fill$type(pMesh, pX, alpha, beta) &
 
   call Fill(mesh, x, alpha, beta)
 
-end subroutine Fill$type
+end subroutine Fill$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Fill_Random$type(pMesh, pX, alpha, beta) &
-    & bind(C, name='SR_Fill_Random$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Fill_Random$T(pMesh, pX, alpha, beta) &
+    & bind(C, name='SR_Fill_Random$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
@@ -455,14 +456,14 @@ subroutine Fill_Random$type(pMesh, pX, alpha, beta) &
 
   call Fill_Random(mesh, x, alpha, beta)
 
-end subroutine Fill_Random$type
+end subroutine Fill_Random$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Set$type(pMesh, pY, pX) &
-    & bind(C, name='SR_Set$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Set$T(pMesh, pY, pX) &
+    & bind(C, name='SR_Set$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -476,14 +477,14 @@ subroutine Set$type(pMesh, pY, pX) &
 
   call Set(mesh, y, x)
 
-end subroutine Set$type
+end subroutine Set$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Scale$type(pMesh, pY, pX, alpha) &
-    & bind(C, name='SR_Scale$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Scale$T(pMesh, pY, pX, alpha) &
+    & bind(C, name='SR_Scale$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha
@@ -498,14 +499,14 @@ subroutine Scale$type(pMesh, pY, pX, alpha) &
 
   call Scale(mesh, y, x, alpha)
 
-end subroutine Scale$type
+end subroutine Scale$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine Add$type(pMesh, pZ, pY, pX, alpha, beta) &
-    & bind(C, name='SR_Add$type')
+#$for T, typename in SCALAR_TYPES
+subroutine Add$T(pMesh, pZ, pY, pX, alpha, beta) &
+    & bind(C, name='SR_Add$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha, beta
@@ -520,14 +521,14 @@ subroutine Add$type(pMesh, pZ, pY, pX, alpha, beta) &
 
   call Add(mesh, z, y, x, alpha, beta)
 
-end subroutine Add$type
+end subroutine Add$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in {SCALAR_TYPES[0]}
-subroutine Mul$type(pMesh, pZ, pY, pX) &
-    & bind(C, name='SR_Mul$type')
+#$for T, typename in {SCALAR_TYPES[0]}
+subroutine Mul$T(pMesh, pZ, pY, pX) &
+    & bind(C, name='SR_Mul$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY, pZ
@@ -541,14 +542,14 @@ subroutine Mul$type(pMesh, pZ, pY, pX) &
 
   call Mul(mesh, z, y(1,:), x)
 
-end subroutine Mul$type
+end subroutine Mul$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine FuncProd$type(pMesh, pY, pX, pF, env) &
-    & bind(C, name='SR_FuncProd$type')
+#$for T, typename in SCALAR_TYPES
+subroutine FuncProd$T(pMesh, pY, pX, pF, env) &
+    & bind(C, name='SR_FuncProd$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -588,14 +589,14 @@ contains
     call f(int(size(x), kind=c_int), Fx, x, env)
 
   end function f_wrapper
-end subroutine FuncProd$type
+end subroutine FuncProd$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in SCALAR_TYPES
-subroutine SFuncProd$type(pMesh, pY, pX, pF, env) &
-    & bind(C, name='SR_SFuncProd$type')
+#$for T, typename in SCALAR_TYPES
+subroutine SFuncProd$T(pMesh, pY, pX, pF, env) &
+    & bind(C, name='SR_SFuncProd$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -638,7 +639,7 @@ contains
       & int(size(x), kind=c_int), Fx, x, env)
 
   end function f_wrapper
-end subroutine SFuncProd$type
+end subroutine SFuncProd$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -646,9 +647,9 @@ end subroutine SFuncProd$type
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine LinSolve$type(pMesh, pX, pB, pMatVec, env, &
-    & eSolver, ePrecond, pMatVec_H, env_H) bind(C, name='SR_LinSolve$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
+    & eSolver, ePrecond, pMatVec_H, env_H) bind(C, name='SR_LinSolve$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pB
@@ -658,27 +659,27 @@ subroutine LinSolve$type(pMesh, pX, pB, pMatVec, env, &
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   enum, bind(C)
-    enumerator :: SR_Mat_SymmDefinite = 100
-    enumerator :: SR_Mat_SymmSemiDefinite
-    enumerator :: SR_Mat_Symm
-    enumerator :: SR_Mat_General 
-    enumerator :: SR_Mat_General_Singular
+    enumerator :: Mat_SymmDefinite = 100
+    enumerator :: Mat_SymmSemiDefinite
+    enumerator :: Mat_Symm
+    enumerator :: Mat_General 
+    enumerator :: Mat_General_Singular
   end enum
 
   enum, bind(C)
-    enumerator :: SR_Auto = 200
-    enumerator :: SR_CG 
-    enumerator :: SR_BiCGStab
-    enumerator :: SR_Cheby 
-    enumerator :: SR_ChebyCG
-    enumerator :: SR_MINRES 
-    enumerator :: SR_GMRES
+    enumerator :: Auto = 200
+    enumerator :: CG 
+    enumerator :: BiCGStab
+    enumerator :: Cheby 
+    enumerator :: ChebyCG
+    enumerator :: MINRES 
+    enumerator :: GMRES
   end enum
 
   enum, bind(C)
-    enumerator :: SR_Precond_None = 300
-    enumerator :: SR_Precond_Jacobi
-    enumerator :: SR_Precond_LU_SGS
+    enumerator :: Precond_None = 300
+    enumerator :: Precond_Jacobi
+    enumerator :: Precond_LU_SGS
   end enum
 
   abstract interface
@@ -696,7 +697,7 @@ subroutine LinSolve$type(pMesh, pX, pB, pMatVec, env, &
   $typename, pointer :: x(:,:), b(:,:)
   procedure(tMatVec_C), pointer :: MatVec
   type(tConvParams) :: Params
-  procedure(tPrecondFunc$type), pointer :: Precond, Precond_T
+  procedure(tPrecondFunc$T), pointer :: Precond, Precond_T
 
   ! ----------------------
   ! Select the preconditioner.
@@ -704,10 +705,10 @@ subroutine LinSolve$type(pMesh, pX, pB, pMatVec, env, &
   Precond => null()
   Precond_T => null()
   select case(ePrecond)
-    case(SR_Precond_None)
-    case(SR_Precond_Jacobi)
+    case(Precond_None)
+    case(Precond_Jacobi)
       Precond => Precondition_Jacobi
-    case(SR_Precond_LU_SGS)
+    case(Precond_LU_SGS)
       Precond => Precondition_LU_SGS
   end select
 
@@ -715,8 +716,12 @@ subroutine LinSolve$type(pMesh, pX, pB, pMatVec, env, &
   call Unwrap(x, pX); call Unwrap(b, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
 
-  call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
-  call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
+  call Params%Init(1.0D-5, 1.0D-5, 2000, 'CG')
+  !if (eSolver == CG) then
+    call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
+  !else
+  !  call Solve_LSMR(mesh, x, b, MatVec_wrapper, Params, Params)
+  !end if
 
 contains
   subroutine MatVec_wrapper(mesh_, Ax, x, env_)
@@ -729,7 +734,7 @@ contains
 
     !type(tMesh_C), target :: pMesh_C
     !type(c_ptr) :: pMesh,
-    type(tField_C$type), target :: pX_C, pAx_C
+    type(tField_C$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
 
     !pMesh_C%mMesh => mesh
@@ -740,7 +745,7 @@ contains
     call MatVec(pMesh, pAx, pX, env)
 
   end subroutine MatVec_wrapper
-end subroutine LinSolve$type
+end subroutine LinSolve$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -748,9 +753,9 @@ end subroutine LinSolve$type
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine ApplyBCs$type(pMesh, pU, BCmask, alpha, beta, gamma) &
-    & bind(C, name='SR_ApplyBCs$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine ApplyBCs$T(pMesh, pU, BCmask, alpha, beta, gamma) &
+    & bind(C, name='SR_ApplyBCs$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   integer(c_int), intent(in), value :: BCmask
@@ -774,14 +779,14 @@ subroutine ApplyBCs$type(pMesh, pU, BCmask, alpha, beta, gamma) &
     call FDM_ApplyBCs(mesh, iBC, u, alpha, beta, gamma)
   end do
 
-end subroutine ApplyBCs$type
+end subroutine ApplyBCs$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine Grad$type(pMesh, pVVec, lambda, pU) &
-  & bind(C, name='SR_Grad$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Grad$T(pMesh, pVVec, lambda, pU) &
+  & bind(C, name='SR_Grad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -796,14 +801,14 @@ subroutine Grad$type(pMesh, pVVec, lambda, pU) &
 
   call FDM_Gradient_Central(mesh, vVec, lambda, u)
 
-end subroutine Grad$type
+end subroutine Grad$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine Div$type(pMesh, pV, lambda, pUVec) &
-  & bind(C, name='SR_Div$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Div$T(pMesh, pV, lambda, pUVec) &
+  & bind(C, name='SR_Div$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -818,14 +823,14 @@ subroutine Div$type(pMesh, pV, lambda, pUVec) &
 
   call FDM_Divergence_Central(mesh, v, lambda, uVec)
 
-end subroutine Div$type
+end subroutine Div$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine Conv$type(pMesh, pV, lambda, pU, pA) &
-    & bind(C, name='SR_Conv$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Conv$T(pMesh, pV, lambda, pU, pA) &
+    & bind(C, name='SR_Conv$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -840,14 +845,14 @@ subroutine Conv$type(pMesh, pV, lambda, pU, pA) &
 
   call FDM_Convection_Central(mesh, v, lambda, u, a)
 
-end subroutine Conv$type
+end subroutine Conv$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine DivGrad$type(pMesh, pV, lambda, pU) &
-    & bind(C, name='SR_DivGrad$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine DivGrad$T(pMesh, pV, lambda, pU) &
+    & bind(C, name='SR_DivGrad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -862,14 +867,14 @@ subroutine DivGrad$type(pMesh, pV, lambda, pU) &
 
   call FDM_Laplacian_Central(mesh, v, lambda, u)
 
-end subroutine DivGrad$type
+end subroutine DivGrad$T
 #$end for
 
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
 !! +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ !!
-#$for type, typename in [SCALAR_TYPES[0]]
-subroutine DivKGrad$type(pMesh, pV, lambda, pK, pU) &
-    & bind(C, name='SR_DivKGrad$type')
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine DivKGrad$T(pMesh, pV, lambda, pK, pU) &
+    & bind(C, name='SR_DivKGrad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -884,7 +889,7 @@ subroutine DivKGrad$type(pMesh, pV, lambda, pK, pU) &
 
   call FDM_DivWGrad_Central(mesh, v, lambda, k, u)
 
-end subroutine DivKGrad$type
+end subroutine DivKGrad$T
 #$end for
 
 end module StormRuler_API

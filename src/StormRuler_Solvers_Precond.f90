@@ -29,8 +29,8 @@ module StormRuler_Solvers_Precond
 use StormRuler_Parameters, only: dp
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
-#$for type_, _ in SCALAR_TYPES
-use StormRuler_BLAS, only: tMatVecFunc$type_
+#$for T, _ in SCALAR_TYPES
+use StormRuler_BLAS, only: tMatVecFunc$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

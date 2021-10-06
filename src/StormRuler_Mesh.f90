@@ -581,7 +581,8 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
       if (image($iiCellMD) /= fluidColor) then
         iBCM = IndexOf(image($iiCellMD), colorToBCM)
         if (iBCM == 0) then
-          write(error_unit, *) 'INVALID IMAGE COLOR', IntToPixel(image($iiCellMD))
+          write(error_unit, *) 'INVALID IMAGE COLOR', &
+            & IntToPixel(image($iiCellMD)), 'AT', $iiCellMD
           error stop
         end if
         mesh%BCMs(iBCM+1) = mesh%BCMs(iBCM+1) + 1

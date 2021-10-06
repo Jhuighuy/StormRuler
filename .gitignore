@@ -49,8 +49,9 @@
 !*.hpp
 !*.hxx
 
-# Lua.
+# Lua and MATLAB.
 !*.lua
+!*.m
 
 # Scripts.
 !*.sh

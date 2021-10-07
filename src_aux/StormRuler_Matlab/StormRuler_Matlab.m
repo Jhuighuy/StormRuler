@@ -25,11 +25,15 @@
 
 function SR = StormRuler_Matlab()
 
-  if libisloaded('libStormRuler')
+  if ~libisloaded('libStormRuler')
     loadlibrary('libStormRuler', 'src/StormRuler_API.h');
   end
 
   SR.InitMesh = @SR_InitMesh;
+
+  SR.AllocR = @SR_AllocR;
+  SR.AllocC = @SR_AllocC;
+  SR.AllocS = @SR_AllocS;
 
 end
 
@@ -44,13 +48,13 @@ end
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
 
 function [field] = SR_AllocR(mesh, numVars, rank)
-  field = calllib('libStormRuler', 'SR_AllocR', mesh, numVars, rank)
+  field = calllib('libStormRuler', 'SR_AllocR', mesh, numVars, rank);
 end
 
 function [field] = SR_AllocC(mesh, numVars, rank)
-  field = calllib('libStormRuler', 'SR_AllocC', mesh, numVars, rank)
+  field = calllib('libStormRuler', 'SR_AllocC', mesh, numVars, rank);
 end
 
 function [field] = SR_AllocS(mesh, numVars, rank)
-  field = calllib('libStormRuler', 'SR_AllocS', mesh, numVars, rank)
+  field = calllib('libStormRuler', 'SR_AllocS', mesh, numVars, rank);
 end

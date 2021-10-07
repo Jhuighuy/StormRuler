@@ -38,7 +38,7 @@ project(StormRuler_Lib
 
 # Locate the Fortran and C++ sources.
 file(GLOB Fortran_SOURCES "./*.f90") 
-file(GLOB C_SOURCES "./*.c*")
+file(GLOB C_SOURCES "./*.c")
 
 # Build a list of Fortiel options.
 set(Fortiel_DEFINES "")
@@ -97,7 +97,7 @@ set_target_properties(
   StormRuler PROPERTIES 
   C_STANDARD 11 C_STANDARD_REQUIRED YES)
 
-# Main is located in C++, so let C++ linker work.
+# Let Fortran linker work.
 set_target_properties(
   StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
 

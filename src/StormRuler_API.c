@@ -167,8 +167,15 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_Div(mesh, RHS, -rho/tau, v_hat);
 
   SR_Set(mesh, p_hat, p);
-  SR_LinSolve(mesh, p_hat, RHS, Poisson_MatVec, NULL,
-    SR_MINRES, SR_Precond_None, NULL, NULL);
+  //SR_LinSolve(mesh, p_hat, RHS, Poisson_MatVec, NULL,
+  //  SR_MINRES, SR_Precond_None, NULL, NULL);
+  for (SR_tFieldR Lp, p; SR_RCI_LinSolve(
+      mesh, p_hat, RHS, SR_MINRES, SR_Precond_None, &Lp, &p) != SR_Done;) {
+    
+    SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
+    SR_Fill(mesh, Lp, 0.0, 0.0);
+    SR_DivGrad(mesh, Lp, 1.0, p);
+  }
 
   SR_ApplyBCs(mesh, p_hat, SR_ALL, SR_PURE_NEUMANN);
   SR_Grad(mesh, v_hat, tau/rho, p_hat);
@@ -178,60 +185,6 @@ static void NavierStokes_Step(SR_tMesh mesh,
 } // NavierStokes_Step
 
 static double rho_1 = 1.0, rho_2 = 2.0, mu_1 = 0.1, mu_2 = 0.2;
-
-static void NavierStokes_VaryingDensity_Step(SR_tMesh mesh,
-  SR_tFieldR p, SR_tFieldR v,
-  SR_tFieldR c, SR_tFieldR w,
-  SR_tFieldR rho_hat, SR_tFieldR mu_hat, 
-  SR_tFieldR p_hat, SR_tFieldR v_hat) {
-
-  // 
-  // Compute a single time step of the incompressible
-  // Navier-Stokes equation with convection term:
-  //
-  // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
-  // ∇⋅𝒗 = 0, 𝙛 = 𝑐∇𝑤,
-  // 𝜌 = ½𝜌₁(1 - 𝑐) + ½𝜌₂(1 + 𝑐),
-  // 𝜇 = ½𝜇₁(1 - 𝑐) + ½𝜇₂(1 + 𝑐),
-  //
-  // with the semi-implicit scheme:
-  // 
-  // 𝜌̂ ← ½(𝜌₁ + 𝜌₂) - ½(𝜌₁ - 𝜌₂)𝑐,
-  // 𝜇̂ ← ½(𝜇₁ + 𝜇₂) - ½(𝜇₁ - 𝜇₂)𝑐,
-  // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇̂Δ𝒗 + 𝜏𝙛)/𝜌̂,
-  // ∇⋅(1/𝜌̂∇𝑝̂) = 1/𝜏∇⋅𝒗,
-  // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
-  // 
-
-  //
-  // Compute 𝜌̂, 𝜇̂.
-  //
-  SR_Fill(mesh, rho_hat, 0.5*(rho_1 + rho_2), 0.0);
-  SR_Sub(mesh, rho_hat, rho_hat, c, 0.5*(rho_1 - rho_2), 1.0);
-  SR_Fill(mesh, mu_hat, 0.5*(mu_1 + mu_2), 0.0);
-  SR_Sub(mesh, mu_hat, mu_hat, c, 0.5*(rho_1 - rho_2), 1.0);
-
-  //
-  // Compute 𝒗̂ prediction.
-  //
-  SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-
-  SR_Set(mesh, v_hat, v);
-  SR_Conv(mesh, v_hat, tau, v, v);
-
-  SR_tFieldR TMP = SR_Alloc_Mold(v);
-
-  SR_Fill(mesh, TMP, 0.0, 0.0);
-  SR_DivGrad(mesh, TMP, 1.0, v);
-  SR_Mul(mesh, TMP, mu_hat, TMP);
-  //SR_Mul(mesh, TMP, rho_hat, TMP, -1);
-  SR_Add(mesh, v_hat, v_hat, TMP, tau, 1.0);
-
-  SR_Free(TMP);
-
-} // NavierStokes_VaryingDensity_Step
 
 void Initial_Data(int dim, const SR_REAL* r,
     int size, SR_REAL* c, const SR_REAL* _, void* env) {

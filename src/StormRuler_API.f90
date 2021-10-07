@@ -718,6 +718,7 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
 
   call Params%Init(1.0D-5, 1.0D-5, 2000, 'CG')
   !if (eSolver == CG) then
+    call Set(mesh, x, x)
     call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
   !else
   !  call Solve_LSMR(mesh, x, b, MatVec_wrapper, Params, Params)
@@ -736,6 +737,8 @@ contains
     !type(c_ptr) :: pMesh,
     type(tField_C$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
+
+    print *, 'peace death!!!'
 
     !pMesh_C%mMesh => mesh
     !pMesh = c_loc(pMesh_C)

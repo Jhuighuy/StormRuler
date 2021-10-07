@@ -64,16 +64,18 @@ endif()
 
 # TODO: add compile options based on Debug/Release configurations.
 target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g>)
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -O0 -fPIC>)
+target_compile_options(
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:c>:-g -O0>)
+  if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(
     StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-fcheck=all>)
 endif()
 # Enabled optimization fail on GFORTRAN/M1.
-if(NOT APPLE_SILICON)
-  target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
-endif()
+#if(NOT APPLE_SILICON)
+#  target_compile_options(
+#    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
+#endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
@@ -82,7 +84,9 @@ endif()
 # Library include directories.
 target_include_directories(
   StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/src")
-
+target_include_directories(
+  StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/ext")
+  
 # Find Git and update submodules.
 find_package(Git)
 if(GIT_FOUND)

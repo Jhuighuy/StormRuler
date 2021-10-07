@@ -23,50 +23,15 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+#pragma once
+
+#include "StormRuler_Params.h"
+
 #include <assert.h>
 #include <stdlib.h>
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
-#define SR_C11 0 //(__STDC_VERSION__ >= 201112L)
-#define SR_CPP 1 //( defined(__cplusplus) )
-
-#if SR_C11 && SR_CPP
-#error StormRuler API: both C11 or C++ targets found.
-#endif
-
-#if !SR_C11 && !SR_CPP
-#error StormRuler API: neither C11 or C++ targets found.
-#endif
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
-#define SR_INTEGER int
-
-#if SR_C11
-#define SR_API extern
-#define SR_INL static
-#elif SR_CPP
-#define SR_API extern // "C"
-#define SR_INL inline
-#endif
-
-#define SR_REAL double
-#if SR_C11
-#include <complex.h>
-#define SR_COMPLEX double // complex double
-#elif SR_CPP
-//#include <complex>
-#define SR_COMPLEX double // std::complex<double>
-#endif
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
-#define SR_OPAQUE_STRUCT(type) \
-  typedef struct type##_struct { int _; }* type
 
 SR_OPAQUE_STRUCT(SR_SYMBOL);
 
@@ -78,7 +43,21 @@ SR_OPAQUE_STRUCT(SR_tFieldR);
 SR_OPAQUE_STRUCT(SR_tFieldC);
 SR_OPAQUE_STRUCT(SR_tFieldS);
 
-#undef SR_OPAQUE_STRUCT
+typedef union {
+  SR_tFieldR R;
+  SR_tFieldC C;
+  SR_tFieldS S;
+} SR_tFieldA;
+
+#define SR_NULL_A ((SR_tFieldA){NULL})
+
+typedef enum {
+  SR_Done,
+  SR_Request_MatVec,
+  SR_Request_MatVec_H,
+} SR_eRequest;
+
+SR_OPAQUE_STRUCT(SR_tRequestEnv);
 
 #define SR_FIELD_GENERIC(x, func) \
   _Generic((x), SR_tFieldR: func##R, SR_tFieldC: func##C)
@@ -293,7 +272,7 @@ typedef enum {
   SR_Mat_Symm,
   SR_Mat_General,
   SR_Mat_General_Singular
-} SR_tMatClass;
+} SR_eMatClass;
 
 typedef enum {
   SR_Auto = 200,
@@ -307,30 +286,38 @@ typedef enum {
   SR_FGMRES_MKL, 
   SR_LSQR, 
   SR_LSMR,
-} SR_tSolver;
+} SR_eSolver;
 
 typedef enum {
   SR_Precond_None = 300,
   SR_Precond_Jacobi,
   SR_Precond_LU_SGS,
-} SR_tPrecond;
+} SR_ePrecond;
 
 /// @{
 SR_API void SR_LinSolveR(SR_tMesh mesh,
     SR_tFieldR x, SR_tFieldR b, 
     SR_tMatVecFuncR MatVec, void* env,
-    SR_tSolver Solver, SR_tPrecond Precond, 
+    SR_eSolver solver, SR_ePrecond precond, 
     SR_tMatVecFuncR MatVec_H, void* env_H);
 SR_API void SR_LinSolveC(SR_tMesh mesh,
     SR_tFieldC x, SR_tFieldC b, 
     SR_tMatVecFuncR MatVec, void* env,
-    SR_tSolver Solver, SR_tPrecond Precond, 
+    SR_eSolver solver, SR_ePrecond precond, 
     SR_tMatVecFuncR MatVec_H, void* env_H);
 #if SR_C11
 #define SR_LinSolve(mesh, x, b, MatVec, env, Solver, Precond, ...) \
   SR_FIELD_GENERIC(x, SR_LinSolve)( \
     mesh, x, b, MatVec, env, Solver, Precond, ##__VA_ARGS__)
 #endif
+/// @}
+
+/// @{
+SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,
+    SR_tFieldR x, SR_tFieldR b, 
+    SR_eSolver Solver, SR_ePrecond Precond,
+    SR_tFieldR* pAy, SR_tFieldR* pY);
+#define SR_RCI_LinSolve SR_RCI_LinSolveR 
 /// @}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

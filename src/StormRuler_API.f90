@@ -227,7 +227,7 @@ subroutine Unwrap3D$T(x, pX, dim, free, pX_C_out)
   call c_f_pointer(cptr=pX, fptr=pX_C)
   if (present(pX_C_out)) pX_C_out => pX_C
   !x => pX_C%mData
-#$if type == 'R'
+#$if T == 'R'
   x => Reshape3D(dim, pX_C%mData)
 #$end if
 

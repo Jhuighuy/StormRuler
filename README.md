@@ -133,6 +133,8 @@ although some of them are not parallelized.
 * C/C++ API:
   - [x] Pure C API,
   - [ ] Untyped C API,
+  - [ ] Coroutine C API,
+  - [ ] RCI C solver API,
   - [ ] MATLAB API,
   - [ ] Lua API,
   - [ ] C++17 API with own BLAS implementation (with expression templates),

@@ -222,7 +222,7 @@ $typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
   logical, intent(in), optional :: do_conjg
   ! >>>>>>>>>>>>>>>>>>>>>>
   
-#$if type == 'C'
+#$if T == 'C'
   if (present(do_conjg)) then
     if (.not.do_conjg) then
       Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
@@ -246,7 +246,7 @@ contains
     Dot_Kernel = sum(x(:,iCell) * y(:,iCell))
     
   end function Dot_Kernel
-#$if type == 'C'
+#$if T == 'C'
   $typename function Dot_Kernel_Conjg(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
@@ -296,7 +296,7 @@ real(dp) function Norm_2$T(mesh, x) result(Norm_2)
   $typename, intent(in) :: x(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-#$if type == 'C'
+#$if T == 'C'
   Norm_2 = sqrt( Re(Dot(mesh, x, x)) )
 #$else
   Norm_2 = sqrt( Dot(mesh, x, x) )
@@ -386,7 +386,7 @@ contains
 
     integer :: iCell
 
-#$if type == 'R'
+#$if T == 'R'
     do iCell = firstCell, lastCell
       call random_number(y(:,iCell))
       if (present(a).and.present(b)) then
@@ -394,7 +394,7 @@ contains
       end if
     end do
 #$else
-    print *, 'complex Fill_Random is not implemented yet!'
+    print *, 'complex Fill_Random is not implemented yet!', "$type"
     error stop not_implemented_code
 #$end if
     

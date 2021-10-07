@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -44,6 +45,7 @@ SR_OPAQUE_STRUCT(SR_tFieldC);
 SR_OPAQUE_STRUCT(SR_tFieldS);
 
 typedef union {
+  void* P;
   SR_tFieldR R;
   SR_tFieldC C;
   SR_tFieldS S;

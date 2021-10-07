@@ -28,6 +28,71 @@
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <fcntl.h>
+
+struct SR_tCoroutine_t {
+  SR_tCoFunc co_func;
+  void* co_env;
+  sem_t co_sem_yield;
+  sem_t co_sem_await;
+  pthread_t co_thread;
+}; // struct SR_tCoroutine_t
+
+static void* SR_Co_Main(void* co_) {
+  SR_tCoroutine co = (SR_tCoroutine)co_;
+  sem_wait(&co->co_sem_yield);
+  co->co_func(co->co_env);
+  sem_post(&co->co_sem_await);
+  return NULL;
+} // SR_Co_Main
+
+SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env) {
+  SR_tCoroutine co = (SR_tCoroutine)calloc(1, sizeof(*co));
+  co->co_func = co_func;
+  co->co_env = co_env;
+  int error;
+  error = sem_init(&co->co_sem_yield, 0, 0);
+  error = sem_init(&co->co_sem_await, 0, 0);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to create the semaphore, %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  pthread_attr_t co_thread_attr;
+  error = pthread_attr_init(&co_thread_attr);
+  error = pthread_create(&co->co_thread, &co_thread_attr, SR_Co_Main, co);
+  return co;
+} // SR_Co_Create
+
+void SR_Co_Free(SR_tCoroutine co) {
+  pthread_join(co->co_thread, NULL);
+  sem_close(&co->co_sem_yield);
+  sem_close(&co->co_sem_await);
+  free(co);
+} // SR_Co_Free
+
+void SR_Co_Await(SR_tCoroutine co) {
+  sem_post(&co->co_sem_yield);
+  sem_wait(&co->co_sem_await);
+} // SR_Co_Await
+
+void SR_Co_Yield(SR_tCoroutine co, SR_INTEGER value) {
+  sem_post(&co->co_sem_await);
+  sem_wait(&co->co_sem_yield);
+} // SR_Co_Yield
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+#if 0
+
+#define MCO_ZERO_MEMORY
 #define MINICORO_IMPL
 #include "minicoro.h"
 
@@ -43,7 +108,8 @@ SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env) {
   void** userData = (void**)calloc(2, sizeof(*userData));
   userData[0] = co_func, userData[1] = co_env;
 
-  mco_desc desc = mco_desc_init(SR_Co_EntryPoint, 0);
+  static mco_desc desc;
+  desc = mco_desc_init(SR_Co_EntryPoint, 100*1024*1024);
   desc.user_data = userData;
 
   mco_coro* co;
@@ -55,6 +121,7 @@ SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env) {
 
 void SR_Co_Free(SR_tCoroutine co_) {
   mco_coro* co = (mco_coro*)co_;
+  free(co->user_data);
   mco_result res = mco_destroy(co);  
   assert(res == MCO_SUCCESS);
 }
@@ -71,6 +138,8 @@ void SR_Co_Yield(SR_tCoroutine co_, SR_INTEGER value) {
   mco_result res = mco_yield(co);
   assert(res == MCO_SUCCESS);
 }
+
+#endif
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -140,10 +209,13 @@ SR_tCoroutine SR_Co_Create(SR_tCoFunc function, void* env) {
   SR_tCoroutine coroutine = calloc(1, sizeof(*coroutine));
 
   coroutine->state = SR_Co_New;
-  coroutine->stack = calloc(1, SR_Co_StackSize);
+  coroutine->stack = valloc(SR_Co_StackSize);
   coroutine->thread = thread;
   coroutine->function = function;
   coroutine->env = env;
+
+  memset(coroutine->stack, 0, SR_Co_StackSize);
+  printf("stack=%p\n", coroutine->stack);
 
   getcontext(&coroutine->context);
   coroutine->context.uc_stack.ss_sp = coroutine->stack;

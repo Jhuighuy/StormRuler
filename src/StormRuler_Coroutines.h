@@ -38,7 +38,7 @@ SR_API SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env);
 
 SR_API void SR_Co_Free(SR_tCoroutine co);
 
-SR_API SR_INTEGER SR_Co_Await(SR_tCoroutine co);
+SR_API void SR_Co_Await(SR_tCoroutine co);
 
 SR_API void SR_Co_Yield(SR_tCoroutine co, SR_INTEGER value);
 

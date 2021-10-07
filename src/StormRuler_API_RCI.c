@@ -43,8 +43,6 @@ static void SR_RCI_MatVecA_Co(SR_tMesh mesh,
     SR_tFieldA Ay, SR_tFieldA y, void* co_env_) {
   SR_RCI_tLinSolveA_Env* co_env = (SR_RCI_tLinSolveA_Env*)co_env_;
 
-  puts("hui!!!"); 
-
   // Pass field through the environment
   // and yield to the main coroutine to compute the matrix-vector product.
   co_env->Ay = Ay, co_env->y = y;
@@ -54,13 +52,14 @@ static void SR_RCI_MatVecA_Co(SR_tMesh mesh,
 static void SR_RCI_LinSolveA_Co(void* co_env_) {
   SR_RCI_tLinSolveA_Env* co_env = (SR_RCI_tLinSolveA_Env*)co_env_;
 
+  SR_tFieldR f = SR_Alloc_MoldR(co_env->x.R);
+
   SR_LinSolveR(co_env->mesh, 
     co_env->x.R, co_env->b.R, 
     (SR_tMatVecFuncR)SR_RCI_MatVecA_Co, co_env, 
     co_env->Solver, co_env->Precond, NULL, NULL);
 
   co_env->Ay = SR_NULL_A, co_env->y = SR_NULL_A;
-  SR_Co_Return(co_env->coroutine, SR_Done);
 } // SR_RCI_LinSolveR_Co
 
 SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,

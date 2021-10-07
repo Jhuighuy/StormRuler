@@ -738,8 +738,6 @@ contains
     type(tField_C$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
 
-    print *, 'peace death!!!'
-
     !pMesh_C%mMesh => mesh
     !pMesh = c_loc(pMesh_C)
     pX_C%mData => x; pAx_C%mData => Ax

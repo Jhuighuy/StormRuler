@@ -342,6 +342,9 @@ SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
 #define SR_PURE_DIRICHLET 1.0, 0.0, 0.0
 #define SR_PURE_NEUMANN 0.0, 1.0, 0.0
 
+#define SR_DIRICHLET(gamma) 1.0, 0.0, (gamma)
+#define SR_NEUMANN(gamma) 0.0, 1.0, (gamma)
+
 /// @{
 SR_API void SR_GradR(SR_tMesh mesh, 
     SR_tFieldR vVec, SR_REAL lambda, SR_tFieldR u);

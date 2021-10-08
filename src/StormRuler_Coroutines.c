@@ -34,21 +34,21 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <fcntl.h>
 
 struct SR_tCoroutine_t {
   SR_tCoFunc co_func;
   void* co_env;
-  sem_t co_sem_yield;
-  sem_t co_sem_await;
+  SR_INTEGER co_yieldValue;
+  sem_t co_semYield;
+  sem_t co_semAwait;
   pthread_t co_thread;
 }; // struct SR_tCoroutine_t
 
 static void* SR_Co_Main(void* co_) {
   SR_tCoroutine co = (SR_tCoroutine)co_;
-  sem_wait(&co->co_sem_yield);
-  co->co_func(co->co_env);
-  sem_post(&co->co_sem_await);
+  sem_wait(&co->co_semYield);
+  co->co_yieldValue = co->co_func(co, co->co_env);
+  sem_post(&co->co_semAwait);
   return NULL;
 } // SR_Co_Main
 
@@ -56,35 +56,76 @@ SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env) {
   SR_tCoroutine co = (SR_tCoroutine)calloc(1, sizeof(*co));
   co->co_func = co_func;
   co->co_env = co_env;
+  printf("9, %p %d\n", co, co->co_yieldValue = 0);
   int error;
-  error = sem_init(&co->co_sem_yield, 0, 0);
-  error = sem_init(&co->co_sem_await, 0, 0);
+  error = sem_init(&co->co_semYield, 0, 0);
+  error |= sem_init(&co->co_semAwait, 0, 0);
   if (error != 0) {
     fprintf(stderr,
-      "failed to create the semaphore, %s\n", strerror(errno));
+      "failed to create the semaphores, %d, %s\n", error, strerror(errno));
     exit(EXIT_FAILURE);
   }
   pthread_attr_t co_thread_attr;
   error = pthread_attr_init(&co_thread_attr);
-  error = pthread_create(&co->co_thread, &co_thread_attr, SR_Co_Main, co);
+  error |= pthread_create(&co->co_thread, &co_thread_attr, SR_Co_Main, co);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to create the thread, %d, %s\n", error, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
   return co;
 } // SR_Co_Create
 
 void SR_Co_Free(SR_tCoroutine co) {
-  pthread_join(co->co_thread, NULL);
-  sem_close(&co->co_sem_yield);
-  sem_close(&co->co_sem_await);
+  printf("SR_Co_Free\n");
+  int error;
+  error = pthread_join(co->co_thread, NULL);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to join the thread, %d, %s\n", error, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  error = sem_destroy(&co->co_semYield);
+  error |= sem_destroy(&co->co_semAwait);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to close the semaphores, %d, %s\n", error, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
   free(co);
 } // SR_Co_Free
 
-void SR_Co_Await(SR_tCoroutine co) {
-  sem_post(&co->co_sem_yield);
-  sem_wait(&co->co_sem_await);
+SR_INTEGER SR_Co_Await(SR_tCoroutine co) {
+  int error;
+  puts("1");
+  error = sem_post(&co->co_semYield);
+  puts("2");
+  error |= sem_wait(&co->co_semAwait);
+  puts("3");
+  fprintf(stderr, "await error=%d\n", error);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to post yeild and await, %d, %s\n", error, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  return co->co_yieldValue;
 } // SR_Co_Await
 
 void SR_Co_Yield(SR_tCoroutine co, SR_INTEGER value) {
-  sem_post(&co->co_sem_await);
-  sem_wait(&co->co_sem_yield);
+  printf("0, %p %d\n", co, co->co_yieldValue = 0);
+  co->co_yieldValue = value;
+  int error;
+  puts("4");
+  error = sem_post(&co->co_semAwait);
+  puts("5");
+  error |= sem_wait(&co->co_semYield);
+  puts("6");
+  fprintf(stderr, "yield error=%d\n", error);
+  if (error != 0) {
+    fprintf(stderr,
+      "failed to post await and yield, %d, %s\n", error, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
 } // SR_Co_Yield
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

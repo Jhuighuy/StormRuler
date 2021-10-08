@@ -260,8 +260,9 @@ function InitMesh() result(pMesh) &
   integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)
   call Load_PPM('test/Domain-100-Tube.ppm', pixels)
-  colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), PixelToInt([0, 255, 0])]
-  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 10)
+  colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
+    & PixelToInt([0, 255, 0]), PixelToInt([0, 0, 255])]
+  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
   allocate(gMesh%dr(1:2, 1:4))
   gMesh%dl = [Dx,Dx,Dy,Dy]
   gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
@@ -693,11 +694,20 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
     end subroutine tMatVec_C
   end interface
 
+  interface
+    subroutine print_pointer(p) bind(C, name='print_pointer')
+      import :: c_ptr
+      type(c_ptr), intent(in), value :: p
+    end subroutine print_pointer
+  end interface
+
   class(tMesh), pointer :: mesh
   $typename, pointer :: x(:,:), b(:,:)
   procedure(tMatVec_C), pointer :: MatVec
   type(tConvParams) :: Params
   procedure(tPrecondFunc$T), pointer :: Precond, Precond_T
+
+  call print_pointer(env)
 
   ! ----------------------
   ! Select the preconditioner.
@@ -716,13 +726,15 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
   call Unwrap(x, pX); call Unwrap(b, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
 
-  call Params%Init(1.0D-5, 1.0D-5, 2000, 'CG')
-  !if (eSolver == CG) then
-    call Set(mesh, x, x)
-    call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
-  !else
-  !  call Solve_LSMR(mesh, x, b, MatVec_wrapper, Params, Params)
-  !end if
+  call Params%Init(1.0D-5, 1.0D-5, 20000, 'CG')
+  if (eSolver == CG) then
+    call Params%Init(1.0D-5, 1.0D-5, 20000, 'CG')
+  else
+    call Params%Init(1.0D-5, 1.0D-5, 20000, 'LSQR')
+    !call Solve_LSMR(mesh, x, b, MatVec_wrapper, Params, Params)
+  end if
+  call print_pointer(env)
+  call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
 
 contains
   subroutine MatVec_wrapper(mesh_, Ax, x, env_)
@@ -743,6 +755,7 @@ contains
     pX_C%mData => x; pAx_C%mData => Ax
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
+    call print_pointer(env)
     call MatVec(pMesh, pAx, pX, env)
 
   end subroutine MatVec_wrapper

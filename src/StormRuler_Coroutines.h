@@ -30,17 +30,54 @@
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+/**
+ * Couroutine opaque handle.
+ */
 SR_OPAQUE_STRUCT(SR_tCoroutine);
 
-typedef int(*SR_tCoFunc)(void* env);
+/**
+ * Coroutine function pointer.
+ * 
+ * @param[in] co Couroutine handle.
+ * @param[inout] co_env Couroutine environment.
+ * 
+ * @returns Coroutine return value.
+ */
+typedef SR_INTEGER(*SR_tCoFunc)(SR_tCoroutine co, void* co_env);
 
+/**
+ * Create a new coroutine with the specified
+ * entry point and environment.
+ * 
+ * Couroutine is created in the suspended state.
+ * 
+ * @param[in] co_func Couroutine function.
+ * @param[inout] co_env Couroutine environment.
+ * 
+ * @returns Couroutine handle.
+ */
 SR_API SR_tCoroutine SR_Co_Create(SR_tCoFunc co_func, void* co_env);
 
+/**
+ * Delete the couroutine.
+ * 
+ * @param[in] co Couroutine handle.
+ */
 SR_API void SR_Co_Free(SR_tCoroutine co);
 
-SR_API void SR_Co_Await(SR_tCoroutine co);
+/**
+ * Switch context to the couroutine and wait for it to yield.
+ * 
+ * @param[in] co Couroutine handle.
+ * 
+ * @returns Couroutine yeild value.
+ */
+SR_API SR_INTEGER SR_Co_Await(SR_tCoroutine co);
 
+/**
+ * Yeild with a value to the caller context.
+ *  
+ * @param[in] co Couroutine handle.
+ * @param[in] value Value passed to the caller context.
+ */
 SR_API void SR_Co_Yield(SR_tCoroutine co, SR_INTEGER value);
-
-//SR_API void SR_Co_Return(SR_tCoroutine coroutine, SR_INTEGER value);
-#define SR_Co_Return SR_Co_Yield

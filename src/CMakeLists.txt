@@ -99,7 +99,7 @@ set_target_properties(
 
 # Let Fortran linker work.
 set_target_properties(
-  StormRuler PROPERTIES LINKER_LANGUAGE C)
+  StormRuler PROPERTIES LINKER_LANGUAGE Fortran)
 
 # Specify compilation output directories:
 # binary output directory,

@@ -592,14 +592,18 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
 #$do rank = dim, 1, -1
   end do
 #$end do
-  
+  do iBCM = 2, mesh%NumBCMs
+    mesh%BCMs(iBCM+1) = mesh%BCMs(iBCM+1) + mesh%BCMs(iBCM)
+  end do
+
   ! ----------------------
-  ! 3. TODO: apply plain indices sorting.
+  ! TODO: apply plain indices sorting.
   ! ----------------------
   mesh%NumCells = iCell
-  mesh%NumBCCells = sum(mesh%BCMs)
+  mesh%NumBCCells = mesh%BCMs(mesh%NumBCMs+1)
   mesh%NumAllCells = mesh%NumCells+mesh%NumBCCells*numBCLayers
   print *, 'NC:', mesh%NumCells, 'NBC:', mesh%NumBCCells, 'NAC:', mesh%NumAllCells
+  print *, 'BCMs:', mesh%BCMs
 
   ! ----------------------
   ! 4. Allocate the connectivity tables and fill them with data,
@@ -699,6 +703,7 @@ subroutine tMesh_GenerateBCCells(mesh, numBCLayers)
   ! ----------------------
   mesh%BCMs = eoshift(mesh%BCMs, shift=-1) + 1
   print *, 'ERROR PRONE CHECK:', iBCCell-1
+  print *, 'AGAIN BCMs:', mesh%BCMs
 end subroutine tMesh_GenerateBCCells
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -765,7 +770,6 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
   ! Write cell to cell connectivity as graph edges.
   ! BC/ghost cells are colored by the BC mark.
   ! ----------------------
-#$if False
   do iCell = 1, mesh%NumCells
     do iCellFace = 1, mesh%NumCellFaces
       if (mesh%CellFacePeriodic(iCellFace, iCell)) cycle
@@ -790,7 +794,6 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
       end do
     end do
   end do
-#$end if
   
   ! ----------------------
   ! Close file and exit.

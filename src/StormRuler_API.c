@@ -35,7 +35,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static double tau = 0.01*(M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
+static double tau = (M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   //*Wc = 0.5*(1.0 - (*c)*(*c));
@@ -78,7 +78,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
 
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
+  //SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
 
   SR_FuncProdR(mesh, w_hat, c, dWdC, NULL);
   SR_ApplyBCs(mesh, w_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -106,8 +106,8 @@ static void Poisson_MatVec(SR_tMesh mesh,
     SR_tFieldR Lp, SR_tFieldR p, void* env) {
   
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
+  //SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
+  //SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
 
   SR_Fill(mesh, Lp, 0.0, 0.0);
   SR_DivGrad(mesh, Lp, 1.0, p);
@@ -138,10 +138,10 @@ static void NavierStokes_Step(SR_tMesh mesh,
   //
   SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
+  //SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
+  //SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
+  //SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
 
   SR_Set(mesh, v_hat, v);
   SR_Conv(mesh, v_hat, tau, v, v);
@@ -161,7 +161,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_Free(f);
 
   SR_ApplyBCs(mesh, v_hat, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs(mesh, v_hat, 3, SR_PURE_NEUMANN);
+  //SR_ApplyBCs(mesh, v_hat, 3, SR_PURE_NEUMANN);
 
   //
   // Solve pressure equation and correct 𝒗̂.
@@ -171,7 +171,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_Div(mesh, RHS, -rho/tau, v_hat);
 
   SR_Set(mesh, p_hat, p);
-#if 0
+#if 1
   SR_LinSolve(mesh, p_hat, RHS, Poisson_MatVec, NULL,
     SR_MINRES, SR_Precond_None, NULL, NULL);
 #else
@@ -185,8 +185,8 @@ static void NavierStokes_Step(SR_tMesh mesh,
 #endif
 
   SR_ApplyBCs(mesh, p_hat, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, p_hat, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p_hat, 4, SR_DIRICHLET(3.0));
+  //SR_ApplyBCs(mesh, p_hat, 2, SR_DIRICHLET(1.0));
+  //SR_ApplyBCs(mesh, p_hat, 4, SR_DIRICHLET(3.0));
 
   SR_Grad(mesh, v_hat, tau/rho, p_hat);
 
@@ -230,16 +230,16 @@ void pure_c_main() {
   p_hat = SR_Alloc_Mold(p);
   v_hat = SR_Alloc_Mold(v);
 
-  SR_Fill(mesh, c, 1.0, 0.0);
+  //SR_Fill(mesh, c, 1.0, 0.0);
   //SR_SFuncProd(mesh, c, c, Initial_Data, NULL);
   //SR_SFuncProd(mesh, v, v, Initial_Data, v);
-  //SR_Fill_Random(mesh, c, -1.0, +1.0);
+  SR_Fill_Random(mesh, c, -1.0, +1.0);
   SR_Fill(mesh, v, 0.0, 0.0);
-  SR_Fill(mesh, p, 3.0, 0.0);
+  SR_Fill(mesh, p, 0.0, 0.0);
 
   for (int time = 0; time <= 200; ++time) {
 
-    for (int frac = 0; time != 0 && frac < 1; ++ frac) {
+    for (int frac = 0; time != 0 && frac < 10; ++ frac) {
 
       CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
       NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat);

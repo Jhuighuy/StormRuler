@@ -32,7 +32,8 @@ use StormRuler_IO, only: tIOList => IOList ! TODO:
 use StormRuler_IO
 use StormRuler_Mesh, only: tMesh
 
-use StormRuler_BLAS, only: Fill, Fill_Random, Set, &
+use StormRuler_BLAS, only: Norm_2, &
+  & Fill, Fill_Random, Set, &
   & Scale, Add, Sub, Mul, FuncProd, SFuncProd
 
 #$for type_, _ in SCALAR_TYPES
@@ -696,7 +697,7 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
   end interface
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), b(:,:)
+  $typename, pointer :: x(:,:), b(:,:), z(:,:), Az(:,:), f(:,:)
   procedure(tMatVec_C), pointer :: MatVec
   type(tConvParams) :: Params
   procedure(tPrecondFunc$T), pointer :: Precond, Precond_T
@@ -718,14 +719,20 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
   call Unwrap(x, pX); call Unwrap(b, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
 
-  call Params%Init(1.0D-5, 1.0D-5, 2000, 'CG')
+  allocate(z, Az, f, mold=x)
+  call Fill(mesh, z, 0.0_dp)
+  call Fill(mesh, Az, 0.0_dp)
+  call MatVec_wrapper(mesh, f, z, Params)
+  call Set(mesh, Az, f)
+  call Sub(mesh, f, b, Az)
+
   if (eSolver == CG) then
-    call Params%Init(1.0D-5, 1.0D-5, 2000, 'CG')
-    call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
+    call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
+    call Solve_CG(mesh, x, f, MatVec_wrapper, Params, Params)
   else
-    call Params%Init(1.0D-5, 1.0D-5, 2000, 'LSMR')
-    call Solve_CG(mesh, x, b, MatVec_wrapper, Params, Params)
-    !call Solve_LSMR(mesh, x, b, MatVec_wrapper, Params, Params)
+    call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
+    call Solve_CG(mesh, x, f, MatVec_wrapper, Params, Params)
+    !call Solve_LSMR(mesh, x, f, MatVec_wrapper, Params, Params)
   end if
 
 contains
@@ -748,6 +755,7 @@ contains
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
     call MatVec(pMesh, pAx, pX, env)
+    call Sub(mesh, Ax, Ax, Az)
 
   end subroutine MatVec_wrapper
 end subroutine LinSolve$T

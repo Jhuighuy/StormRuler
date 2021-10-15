@@ -514,7 +514,7 @@ pure function tMesh_CellCenterVec(mesh, iCell)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   tMesh_CellCenterVec = &
-    & [0.0_dp,0.0_dp] + mesh%dl(::2)*mesh%CellMDIndex(:,iCell)
+    & [0.0_dp,0.0_dp] + mesh%dl(::2)*(mesh%CellMDIndex(:,iCell) - 0.5_dp)
 end function tMesh_CellCenterVec
 pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
   ! <<<<<<<<<<<<<<<<<<<<<<

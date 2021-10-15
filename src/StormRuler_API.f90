@@ -300,7 +300,7 @@ function Alloc$T(pMesh, numVars, rank) result(pY) &
 
   call Unwrap(mesh, pMesh)
   allocate(pY_C)
-  allocate(pY_C%mData( (mesh%Dim**rank)*numVars, mesh%NumAllCells ))
+  allocate(pY_C%mData( (mesh%NumDim**rank)*numVars, mesh%NumAllCells ))
   pY_C%mRank = rank
   pY = c_loc(pY_C)
 
@@ -810,7 +810,7 @@ subroutine Grad$T(pMesh, pVVec, lambda, pU) &
   $typename, pointer :: u(:,:), vVec(:,:,:)
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(u, pU); call Unwrap(vVec, pVVec, mesh%Dim)
+  call Unwrap(u, pU); call Unwrap(vVec, pVVec, mesh%NumDim)
 
   call FDM_Gradient_Central(mesh, vVec, lambda, u)
 
@@ -832,7 +832,7 @@ subroutine Div$T(pMesh, pV, lambda, pUVec) &
   $typename, pointer :: uVec(:,:,:), v(:,:)
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(uVec, pUVec, mesh%Dim); call Unwrap(v, pV)
+  call Unwrap(uVec, pUVec, mesh%NumDim); call Unwrap(v, pV)
 
   call FDM_Divergence_Central(mesh, v, lambda, uVec)
 

@@ -71,7 +71,7 @@ type :: tMesh
   ! ----------------------
   ! Mesh dimension.
   ! ----------------------
-  integer(ip) :: Dim
+  integer(ip) :: NumDim
 
   ! ----------------------
   ! Number of faces (edges in 2D) per each cell.
@@ -107,12 +107,12 @@ type :: tMesh
 
   ! ----------------------
   ! Multidimensional index bounds table.
-  ! Shape is [1, Dim].
+  ! Shape is [1, NumDim].
   ! ----------------------
   integer(ip), allocatable :: MDIndexBounds(:)
   ! ----------------------
   ! Cell multidimensional index table.
-  ! Shape is [1, Dim]×[1, NumCells].
+  ! Shape is [1, NumDim]×[1, NumCells].
   ! ----------------------
   integer(ip), allocatable :: CellMDIndex(:,:)
 
@@ -147,13 +147,13 @@ type :: tMesh
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
   ! ( in the curvilinear coordinates, uniform. )
-  ! Shape is [1, Dim]×[1, NumFaces].
+  ! Shape is [1, NumDim]×[1, NumFaces].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
 
   ! ----------------------
   ! Cell center coordinates.
-  ! Shape is [1, Dim]×[1, NumCells].
+  ! Shape is [1, NumDim]×[1, NumCells].
   ! ----------------------
   real(dp), allocatable :: mCellCenter(:,:)
 
@@ -510,7 +510,7 @@ pure function tMesh_CellCenterVec(mesh, iCell)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iCell
-  real(dp) :: tMesh_CellCenterVec(mesh%Dim)
+  real(dp) :: tMesh_CellCenterVec(mesh%NumDim)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   tMesh_CellCenterVec = &
@@ -563,7 +563,7 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   !    for interior cells and compute number of interior and boundary cells.
   ! 2. Generate and pre-fill "BCM" ⟺ "Num BC Cells per BCM" CSR-style table.
   ! ----------------------
-  mesh%Dim = $dim
+  mesh%NumDim = $dim
   mesh%NumCellFaces = ${2*dim}$
   mesh%MDIndexBounds = shape(image)-2
   mesh%NumBCMs = size(colorToBCM, dim=1)
@@ -610,7 +610,7 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   !    inverting the "Cell MD Index" ⟺ "Cell (Plain Index)" table.
   ! ----------------------
   associate(nac => mesh%NumAllCells, ncf => mesh%NumCellFaces)
-    allocate(mesh%CellMDIndex(mesh%Dim, nac))
+    allocate(mesh%CellMDIndex(mesh%NumDim, nac))
     allocate(mesh%CellToCell(ncf, nac)); mesh%CellToCell(:,:) = 0
   end associate
   ! ----------------------
@@ -729,7 +729,7 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
   character(len=10), parameter :: PALETTE(*) = &
     & [character(len=10) :: 'red', 'green', 'blue', 'fuchsia', 'yellow', 'wheat']
   
-  if (mesh%Dim /= 2) then
+  if (mesh%NumDim /= 2) then
     error stop 'Only 2D meshes can be printed to Neato'
   end if
   print *, 'Print to Neato: ', file
@@ -819,7 +819,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   class(IOListItem), pointer :: item
   
   ! ----------------------
-  if ((mesh%Dim /= 2).and.(mesh%Dim /= 3)) then
+  if ((mesh%NumDim /= 2).and.(mesh%NumDim /= 3)) then
     error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
   end if
   print *, 'Print to Legacy VTK: ', file
@@ -838,7 +838,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   write(unit, "('POINTS ', A, ' double')") I2S(mesh%NumCells)
   do iCell = 1, mesh%NumCells
     associate(r => mesh%CellCenter(iCell))
-      if (mesh%Dim == 2) then
+      if (mesh%NumDim == 2) then
         write(unit, "(A, ' ', A, ' ', A)") &
           & R2S(r(1)), R2S(r(2)), '0.0'
       else
@@ -911,7 +911,7 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   end do
 #$if writePass == 1
   !$omp end parallel do
-  associate(numVTKCellNodes => numVTKCells*(mesh%Dim+2))
+  associate(numVTKCellNodes => numVTKCells*(mesh%NumDim+2))
     write(unit, "('CELLS ', A, ' ', A)") I2S(numVTKCells), I2S(numVTKCellNodes)
   end associate
 #$end if
@@ -974,7 +974,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
   integer(ip), allocatable :: cellToIndex(:,:)
   ! ----------------------
   ! Set up amount of layers.
-  mesh%Dim = 2
+  mesh%NumDim = 2
   block
     if (present(numLayers)) then
       xNumLayers = numLayers

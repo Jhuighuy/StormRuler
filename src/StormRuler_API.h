@@ -265,6 +265,15 @@ typedef void(*SR_tMatVecFuncS)(SR_tMesh mesh,
     SR_tFieldS Ax, SR_tFieldS x, void* env);
 /// @}
 
+/// @{
+typedef void(*SR_tPrecondFuncR)(SR_tMesh mesh,
+    SR_tFieldR Ax, SR_tFieldR x, void* env, void** precondEnv);
+typedef void(*SR_tPrecondFuncC)(SR_tMesh mesh,
+    SR_tFieldC Ax, SR_tFieldC x, void* env, void** precondEnv);
+typedef void(*SR_tPrecondFuncS)(SR_tMesh mesh,
+    SR_tFieldS Ax, SR_tFieldS x, void* env, void** precondEnv);
+/// @}
+
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 

@@ -79,18 +79,20 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
     
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell
 
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -112,23 +114,23 @@ contains
       ! ----------------------
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dlInv => lambda/mesh%dl(iCellFace))
         select case(FDM_AccuracyOrder)
           case(1:2)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              &  ( dr_inv.outer.FD1_C2(u(:,lCell), &
-              &                        u(:,rCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &          ( dlInv*FD1_C2(u(:,lCell), &
+              &                         u(:,rCell)) )
           ! ----------------------
           case(3:4)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & ( dr_inv.outer.FD1_C4(u(:,llCell), &
-              &                       u(:, lCell), &
-              &                       u(:, rCell), &
-              &                       u(:,rrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &         ( dlInv*FD1_C4(u(:,llCell), &
+              &                        u(:, lCell), &
+              &                        u(:, rCell), &
+              &                        u(:,rrCell)) )
           ! ----------------------
           case(5:6)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & ( dr_inv.outer.FD1_C6(u(:,lllCell), &
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &        ( dlInv*FD1_C6(u(:,lllCell), &
               &                       u(:, llCell), &
               &                       u(:,  lCell), &
               &                       u(:,  rCell), &
@@ -136,15 +138,15 @@ contains
               &                       u(:,rrrCell)) )
           ! ----------------------
           case(7:8)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & ( dr_inv.outer.FD1_C8(u(:,llllCell), &
-              &                       u(:, lllCell), &
-              &                       u(:,  llCell), &
-              &                       u(:,   lCell), &
-              &                       u(:,   rCell), &
-              &                       u(:,  rrCell), &
-              &                       u(:, rrrCell), &
-              &                       u(:,rrrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &       ( dlInv*FD1_C8(u(:,llllCell), &
+              &                      u(:, lllCell), &
+              &                      u(:,  llCell), &
+              &                      u(:,   lCell), &
+              &                      u(:,   rCell), &
+              &                      u(:,  rrCell), &
+              &                      u(:, rrrCell), &
+              &                      u(:,rrrrCell)) )
         end select
       end associate
     end do
@@ -154,15 +156,16 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
     integer(i8) :: dir
     
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Determine FD direction (default is forward).
@@ -175,6 +178,7 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(inc => (1_i8-dir)/2_i8)
         associate(rCellFace => iCellFace+inc, &
           &       lCellFace => Flip(iCellFace+inc))
@@ -202,75 +206,75 @@ contains
       ! ----------------------
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dlInv => lambda/mesh%dl(iCellFace))
         select case(FDM_AccuracyOrder)
           case(1)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F1(u(:,iCell), &
-              &                           u(:,rCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &      dir*( dlInv*FD1_F1(u(:,iCell), &
+              &                         u(:,rCell)) )
           ! ----------------------
           case(2)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F2(u(:, iCell), &
-              &                           u(:, rCell), &
-              &                           u(:,rrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &     dir*( dlInv*FD1_F2(u(:, iCell), &
+              &                        u(:, rCell), &
+              &                        u(:,rrCell)) )
           ! ----------------------
           case(3)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F3(u(:, lCell), &
-              &                           u(:, iCell), &
-              &                           u(:, rCell), &
-              &                           u(:,rrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &     dir*( dlInv*FD1_F3(u(:, lCell), &
+              &                        u(:, iCell), &
+              &                        u(:, rCell), &
+              &                        u(:,rrCell)) )
           ! ----------------------
           case(4)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F4(u(:,  lCell), &
-              &                           u(:,  iCell), &
-              &                           u(:,  rCell), &
-              &                           u(:, rrCell), &
-              &                           u(:,rrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &    dir*( dlInv*FD1_F4(u(:,  lCell), &
+              &                       u(:,  iCell), &
+              &                       u(:,  rCell), &
+              &                       u(:, rrCell), &
+              &                       u(:,rrrCell)) )
           ! ----------------------
           case(5)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F5(u(:, llCell), &
-              &                           u(:,  lCell), &
-              &                           u(:,  iCell), &
-              &                           u(:,  rCell), &
-              &                           u(:, rrCell), &
-              &                           u(:,rrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &    dir*( dlInv*FD1_F5(u(:, llCell), &
+              &                       u(:,  lCell), &
+              &                       u(:,  iCell), &
+              &                       u(:,  rCell), &
+              &                       u(:, rrCell), &
+              &                       u(:,rrrCell)) )
           ! ----------------------
           case(6)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F6(u(:,  llCell), &
-              &                           u(:,   lCell), &
-              &                           u(:,   iCell), &
-              &                           u(:,   rCell), &
-              &                           u(:,  rrCell), &
-              &                           u(:, rrrCell), &
-              &                           u(:,rrrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &   dir*( dlInv*FD1_F6(u(:,  llCell), &
+              &                      u(:,   lCell), &
+              &                      u(:,   iCell), &
+              &                      u(:,   rCell), &
+              &                      u(:,  rrCell), &
+              &                      u(:, rrrCell), &
+              &                      u(:,rrrrCell)) )
           ! ----------------------
           case(7)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F7(u(:, lllCell), &
-              &                           u(:,  llCell), &
-              &                           u(:,   lCell), &
-              &                           u(:,   iCell), &
-              &                           u(:,   rCell), &
-              &                           u(:,  rrCell), &
-              &                           u(:, rrrCell), &
-              &                           u(:,rrrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &   dir*( dlInv*FD1_F7(u(:, lllCell), &
+              &                      u(:,  llCell), &
+              &                      u(:,   lCell), &
+              &                      u(:,   iCell), &
+              &                      u(:,   rCell), &
+              &                      u(:,  rrCell), &
+              &                      u(:, rrrCell), &
+              &                      u(:,rrrrCell)) )
           ! ----------------------
           case(8)
-            vVec(:,:,iCell) = vVec(:,:,iCell) - &
-              & dir*( dr_inv.outer.FD1_F8(u(:,  lllCell), &
-              &                           u(:,   llCell), &
-              &                           u(:,    lCell), &
-              &                           u(:,    iCell), &
-              &                           u(:,    rCell), &
-              &                           u(:,   rrCell), &
-              &                           u(:,  rrrCell), &
-              &                           u(:, rrrrCell), &
-              &                           u(:,rrrrrCell)) )
+            vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
+              &  dir*( dlInv*FD1_F8(u(:,  lllCell), &
+              &                     u(:,   llCell), &
+              &                     u(:,    lCell), &
+              &                     u(:,    iCell), &
+              &                     u(:,    rCell), &
+              &                     u(:,   rrCell), &
+              &                     u(:,  rrrCell), &
+              &                     u(:, rrrrCell), &
+              &                     u(:,rrrrrCell)) )
         end select
       end associate
     end do
@@ -341,7 +345,7 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(drInv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
 
         ! ----------------------
         ! Cylindrical case: 
@@ -353,8 +357,8 @@ contains
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) - &
-              & ( dr_inv.inner.FD1_C2(rho_l*uVec(:,:,lCell), &
-              &                       rho_r*uVec(:,:,rCell)) &
+              & ( drInv.inner.FD1_C2(rho_l*uVec(:,:,lCell), &
+              &                      rho_r*uVec(:,:,rCell)) &
               & )/rho_i
           end associate; cycle
         end if
@@ -365,35 +369,35 @@ contains
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) - &
-              & ( dr_inv.inner.FD1_C2(uVec(:,:,lCell), &
-              &                       uVec(:,:,rCell)) )
+              & ( drInv.inner.FD1_C2(uVec(:,:,lCell), &
+              &                      uVec(:,:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) - &
-              & ( dr_inv.inner.FD1_C4(uVec(:,:,llCell), &
-              &                       uVec(:,:, lCell), &
-              &                       uVec(:,:, rCell), &
-              &                       uVec(:,:,rrCell)) )
+              & ( drInv.inner.FD1_C4(uVec(:,:,llCell), &
+              &                      uVec(:,:, lCell), &
+              &                      uVec(:,:, rCell), &
+              &                      uVec(:,:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) - &
-              & ( dr_inv.inner.FD1_C6(uVec(:,:,lllCell), &
-              &                       uVec(:,:, llCell), &
-              &                       uVec(:,:,  lCell), &
-              &                       uVec(:,:,  rCell), &
-              &                       uVec(:,:, rrCell), &
-              &                       uVec(:,:,rrrCell)) )
+              & ( drInv.inner.FD1_C6(uVec(:,:,lllCell), &
+              &                      uVec(:,:, llCell), &
+              &                      uVec(:,:,  lCell), &
+              &                      uVec(:,:,  rCell), &
+              &                      uVec(:,:, rrCell), &
+              &                      uVec(:,:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) - &
-              & ( dr_inv.inner.FD1_C8(uVec(:,:,llllCell), &
-              &                       uVec(:,:, lllCell), &
-              &                       uVec(:,:,  llCell), &
-              &                       uVec(:,:,   lCell), &
-              &                       uVec(:,:,   rCell), &
-              &                       uVec(:,:,  rrCell), &
-              &                       uVec(:,:, rrrCell), &
-              &                       uVec(:,:,rrrrCell)) )
+              & ( drInv.inner.FD1_C8(uVec(:,:,llllCell), &
+              &                      uVec(:,:, lllCell), &
+              &                      uVec(:,:,  llCell), &
+              &                      uVec(:,:,   lCell), &
+              &                      uVec(:,:,   rCell), &
+              &                      uVec(:,:,  rrCell), &
+              &                      uVec(:,:, rrrCell), &
+              &                      uVec(:,:,rrrrCell)) )
         end select
       end associate
     end do
@@ -451,7 +455,7 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(dr_inv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(drInv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
 
         ! ----------------------
         ! Cylindrical case: 
@@ -462,8 +466,8 @@ contains
             & rho_i => mesh%CellCenter(1, iCell), &
             & rho_r => mesh%CellCenter(1, rCell) )
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F1(rho_i*uVec(:,:,iCell), &
-              &                           rho_r*uVec(:,:,rCell)) &
+              & dir*( drInv.inner.FD1_F1(rho_i*uVec(:,:,iCell), &
+              &                          rho_r*uVec(:,:,rCell)) &
               &     )/rho_i
           end associate; cycle
         end if
@@ -474,71 +478,71 @@ contains
         select case(FDM_AccuracyOrder)
           case(1)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F1(uVec(:,:,iCell), &
-              &                           uVec(:,:,rCell)) )
+              & dir*( drInv.inner.FD1_F1(uVec(:,:,iCell), &
+              &                          uVec(:,:,rCell)) )
           ! ----------------------
           case(2)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F2(uVec(:,:, iCell), &
-              &                           uVec(:,:, rCell), &
-              &                           uVec(:,:,rrCell)) )
+              & dir*( drInv.inner.FD1_F2(uVec(:,:, iCell), &
+              &                          uVec(:,:, rCell), &
+              &                          uVec(:,:,rrCell)) )
           ! ----------------------
           case(3)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F3(uVec(:,:, lCell), &
-              &                           uVec(:,:, iCell), &
-              &                           uVec(:,:, rCell), &
-              &                           uVec(:,:,rrCell)) )
+              & dir*( drInv.inner.FD1_F3(uVec(:,:, lCell), &
+              &                          uVec(:,:, iCell), &
+              &                          uVec(:,:, rCell), &
+              &                          uVec(:,:,rrCell)) )
           ! ----------------------
           case(4)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F4(uVec(:,:,  lCell), &
-              &                           uVec(:,:,  iCell), &
-              &                           uVec(:,:,  rCell), &
-              &                           uVec(:,:, rrCell), &
-              &                           uVec(:,:,rrrCell)) )
+              & dir*( drInv.inner.FD1_F4(uVec(:,:,  lCell), &
+              &                          uVec(:,:,  iCell), &
+              &                          uVec(:,:,  rCell), &
+              &                          uVec(:,:, rrCell), &
+              &                          uVec(:,:,rrrCell)) )
           ! ----------------------
           case(5)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F5(uVec(:,:, llCell), &
-              &                           uVec(:,:,  lCell), &
-              &                           uVec(:,:,  iCell), &
-              &                           uVec(:,:,  rCell), &
-              &                           uVec(:,:, rrCell), &
-              &                           uVec(:,:,rrrCell)) )
+              & dir*( drInv.inner.FD1_F5(uVec(:,:, llCell), &
+              &                          uVec(:,:,  lCell), &
+              &                          uVec(:,:,  iCell), &
+              &                          uVec(:,:,  rCell), &
+              &                          uVec(:,:, rrCell), &
+              &                          uVec(:,:,rrrCell)) )
           ! ----------------------
           case(6)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F6(uVec(:,:,  llCell), &
-              &                           uVec(:,:,   lCell), &
-              &                           uVec(:,:,   iCell), &
-              &                           uVec(:,:,   rCell), &
-              &                           uVec(:,:,  rrCell), &
-              &                           uVec(:,:, rrrCell), &
-              &                           uVec(:,:,rrrrCell)) )
+              & dir*( drInv.inner.FD1_F6(uVec(:,:,  llCell), &
+              &                          uVec(:,:,   lCell), &
+              &                          uVec(:,:,   iCell), &
+              &                          uVec(:,:,   rCell), &
+              &                          uVec(:,:,  rrCell), &
+              &                          uVec(:,:, rrrCell), &
+              &                          uVec(:,:,rrrrCell)) )
           ! ----------------------
           case(7)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F7(uVec(:,:, lllCell), &
-              &                           uVec(:,:,  llCell), &
-              &                           uVec(:,:,   lCell), &
-              &                           uVec(:,:,   iCell), &
-              &                           uVec(:,:,   rCell), &
-              &                           uVec(:,:,  rrCell), &
-              &                           uVec(:,:, rrrCell), &
-              &                           uVec(:,:,rrrrCell)) )
+              & dir*( drInv.inner.FD1_F7(uVec(:,:, lllCell), &
+              &                          uVec(:,:,  llCell), &
+              &                          uVec(:,:,   lCell), &
+              &                          uVec(:,:,   iCell), &
+              &                          uVec(:,:,   rCell), &
+              &                          uVec(:,:,  rrCell), &
+              &                          uVec(:,:, rrrCell), &
+              &                          uVec(:,:,rrrrCell)) )
           ! ----------------------
           case(8)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( dr_inv.inner.FD1_F8(uVec(:,:,  lllCell), &
-              &                           uVec(:,:,   llCell), &
-              &                           uVec(:,:,    lCell), &
-              &                           uVec(:,:,    iCell), &
-              &                           uVec(:,:,    rCell), &
-              &                           uVec(:,:,   rrCell), &
-              &                           uVec(:,:,  rrrCell), &
-              &                           uVec(:,:, rrrrCell), &
-              &                           uVec(:,:,rrrrrCell)) )
+              & dir*( drInv.inner.FD1_F8(uVec(:,:,  lllCell), &
+              &                          uVec(:,:,   llCell), &
+              &                          uVec(:,:,    lCell), &
+              &                          uVec(:,:,    iCell), &
+              &                          uVec(:,:,    rCell), &
+              &                          uVec(:,:,   rrCell), &
+              &                          uVec(:,:,  rrrCell), &
+              &                          uVec(:,:, rrrrCell), &
+              &                          uVec(:,:,rrrrrCell)) )
         end select
       end associate
     end do

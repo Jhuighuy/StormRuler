@@ -29,7 +29,6 @@ module StormRuler_FDM_Operators
 use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: Assert, Flip, SafeInverse, &
   & Reshape2D, Reshape3D, Reshape4D
-use StormRuler_Helpers, only: operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 use StormRuler_FDM_Base
@@ -156,11 +155,11 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    integer(i8) :: dir
     integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
-    integer(i8) :: dir
     
     ! ----------------------
     ! For each direction do:
@@ -312,18 +311,20 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
     
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell
 
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
           &     lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -345,20 +346,20 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(drInv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dlInv => lambda/mesh%dl(iCellFace))
 
         ! ----------------------
         ! Cylindrical case: 
         ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force second order.
         ! ----------------------
-        if (FDM_CylCoords.and.(iCellFace == 1)) then
+        if (FDM_CylCoords.and.(dim == 1)) then
           associate( &
             & rho_l => mesh%CellCenter(1,lCell), &
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) - &
-              & ( drInv.inner.FD1_C2(rho_l*uVec(:,:,lCell), &
-              &                      rho_r*uVec(:,:,rCell)) &
+              & ( dlInv*FD1_C2(rho_l*uVec(dim,:,lCell), &
+              &                rho_r*uVec(dim,:,rCell)) &
               & )/rho_i
           end associate; cycle
         end if
@@ -369,35 +370,35 @@ contains
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) - &
-              & ( drInv.inner.FD1_C2(uVec(:,:,lCell), &
-              &                      uVec(:,:,rCell)) )
+              & ( dlInv*FD1_C2(uVec(dim,:,lCell), &
+              &                uVec(dim,:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) - &
-              & ( drInv.inner.FD1_C4(uVec(:,:,llCell), &
-              &                      uVec(:,:, lCell), &
-              &                      uVec(:,:, rCell), &
-              &                      uVec(:,:,rrCell)) )
+              & ( dlInv*FD1_C4(uVec(dim,:,llCell), &
+              &                uVec(dim,:, lCell), &
+              &                uVec(dim,:, rCell), &
+              &                uVec(dim,:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) - &
-              & ( drInv.inner.FD1_C6(uVec(:,:,lllCell), &
-              &                      uVec(:,:, llCell), &
-              &                      uVec(:,:,  lCell), &
-              &                      uVec(:,:,  rCell), &
-              &                      uVec(:,:, rrCell), &
-              &                      uVec(:,:,rrrCell)) )
+              & ( dlInv*FD1_C6(uVec(dim,:,lllCell), &
+              &                uVec(dim,:, llCell), &
+              &                uVec(dim,:,  lCell), &
+              &                uVec(dim,:,  rCell), &
+              &                uVec(dim,:, rrCell), &
+              &                uVec(dim,:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) - &
-              & ( drInv.inner.FD1_C8(uVec(:,:,llllCell), &
-              &                      uVec(:,:, lllCell), &
-              &                      uVec(:,:,  llCell), &
-              &                      uVec(:,:,   lCell), &
-              &                      uVec(:,:,   rCell), &
-              &                      uVec(:,:,  rrCell), &
-              &                      uVec(:,:, rrrCell), &
-              &                      uVec(:,:,rrrrCell)) )
+              & ( dlInv*FD1_C8(uVec(dim,:,llllCell), &
+              &                uVec(dim,:, lllCell), &
+              &                uVec(dim,:,  llCell), &
+              &                uVec(dim,:,   lCell), &
+              &                uVec(dim,:,   rCell), &
+              &                uVec(dim,:,  rrCell), &
+              &                uVec(dim,:, rrrCell), &
+              &                uVec(dim,:,rrrrCell)) )
         end select
       end associate
     end do
@@ -407,15 +408,16 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    integer(i8) :: dir
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
-    integer(i8) :: dir
     
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Determine FD direction (default is backward).
@@ -428,6 +430,7 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(inc => (1_i8-dir)/2_i8)
         associate(rCellFace => iCellFace+inc, &
           &       lCellFace => Flip(iCellFace+inc))
@@ -455,19 +458,19 @@ contains
       ! ----------------------
       ! Compute FDM-approximate divergence increment.
       ! ----------------------
-      associate(drInv => lambda*SafeInverse(mesh%dr(:,iCellFace)))
+      associate(dlInv => lambda/mesh%dl(iCellFace))
 
         ! ----------------------
         ! Cylindrical case: 
         ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force first order.
         ! ----------------------
-        if (FDM_CylCoords.and.(iCellFace == 1)) then
+        if (FDM_CylCoords.and.(dim == 1)) then
           associate( &
             & rho_i => mesh%CellCenter(1, iCell), &
             & rho_r => mesh%CellCenter(1, rCell) )
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F1(rho_i*uVec(:,:,iCell), &
-              &                          rho_r*uVec(:,:,rCell)) &
+              & dir*( dlInv*FD1_F1(rho_i*uVec(dim,:,iCell), &
+              &                    rho_r*uVec(dim,:,rCell)) &
               &     )/rho_i
           end associate; cycle
         end if
@@ -478,71 +481,71 @@ contains
         select case(FDM_AccuracyOrder)
           case(1)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F1(uVec(:,:,iCell), &
-              &                          uVec(:,:,rCell)) )
+              & dir*( dlInv*FD1_F1(uVec(dim,:,iCell), &
+              &                    uVec(dim,:,rCell)) )
           ! ----------------------
           case(2)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F2(uVec(:,:, iCell), &
-              &                          uVec(:,:, rCell), &
-              &                          uVec(:,:,rrCell)) )
+              & dir*( dlInv*FD1_F2(uVec(dim,:, iCell), &
+              &                    uVec(dim,:, rCell), &
+              &                    uVec(dim,:,rrCell)) )
           ! ----------------------
           case(3)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F3(uVec(:,:, lCell), &
-              &                          uVec(:,:, iCell), &
-              &                          uVec(:,:, rCell), &
-              &                          uVec(:,:,rrCell)) )
+              & dir*( dlInv*FD1_F3(uVec(dim,:, lCell), &
+              &                    uVec(dim,:, iCell), &
+              &                    uVec(dim,:, rCell), &
+              &                    uVec(dim,:,rrCell)) )
           ! ----------------------
           case(4)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F4(uVec(:,:,  lCell), &
-              &                          uVec(:,:,  iCell), &
-              &                          uVec(:,:,  rCell), &
-              &                          uVec(:,:, rrCell), &
-              &                          uVec(:,:,rrrCell)) )
+              & dir*( dlInv*FD1_F4(uVec(dim,:,  lCell), &
+              &                    uVec(dim,:,  iCell), &
+              &                    uVec(dim,:,  rCell), &
+              &                    uVec(dim,:, rrCell), &
+              &                    uVec(dim,:,rrrCell)) )
           ! ----------------------
           case(5)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F5(uVec(:,:, llCell), &
-              &                          uVec(:,:,  lCell), &
-              &                          uVec(:,:,  iCell), &
-              &                          uVec(:,:,  rCell), &
-              &                          uVec(:,:, rrCell), &
-              &                          uVec(:,:,rrrCell)) )
+              & dir*( dlInv*FD1_F5(uVec(dim,:, llCell), &
+              &                    uVec(dim,:,  lCell), &
+              &                    uVec(dim,:,  iCell), &
+              &                    uVec(dim,:,  rCell), &
+              &                    uVec(dim,:, rrCell), &
+              &                    uVec(dim,:,rrrCell)) )
           ! ----------------------
           case(6)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F6(uVec(:,:,  llCell), &
-              &                          uVec(:,:,   lCell), &
-              &                          uVec(:,:,   iCell), &
-              &                          uVec(:,:,   rCell), &
-              &                          uVec(:,:,  rrCell), &
-              &                          uVec(:,:, rrrCell), &
-              &                          uVec(:,:,rrrrCell)) )
+              & dir*( dlInv*FD1_F6(uVec(dim,:,  llCell), &
+              &                    uVec(dim,:,   lCell), &
+              &                    uVec(dim,:,   iCell), &
+              &                    uVec(dim,:,   rCell), &
+              &                    uVec(dim,:,  rrCell), &
+              &                    uVec(dim,:, rrrCell), &
+              &                    uVec(dim,:,rrrrCell)) )
           ! ----------------------
           case(7)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F7(uVec(:,:, lllCell), &
-              &                          uVec(:,:,  llCell), &
-              &                          uVec(:,:,   lCell), &
-              &                          uVec(:,:,   iCell), &
-              &                          uVec(:,:,   rCell), &
-              &                          uVec(:,:,  rrCell), &
-              &                          uVec(:,:, rrrCell), &
-              &                          uVec(:,:,rrrrCell)) )
+              & dir*( dlInv*FD1_F7(uVec(dim,:, lllCell), &
+              &                    uVec(dim,:,  llCell), &
+              &                    uVec(dim,:,   lCell), &
+              &                    uVec(dim,:,   iCell), &
+              &                    uVec(dim,:,   rCell), &
+              &                    uVec(dim,:,  rrCell), &
+              &                    uVec(dim,:, rrrCell), &
+              &                    uVec(dim,:,rrrrCell)) )
           ! ----------------------
           case(8)
             v(:,iCell) = v(:,iCell) - &
-              & dir*( drInv.inner.FD1_F8(uVec(:,:,  lllCell), &
-              &                          uVec(:,:,   llCell), &
-              &                          uVec(:,:,    lCell), &
-              &                          uVec(:,:,    iCell), &
-              &                          uVec(:,:,    rCell), &
-              &                          uVec(:,:,   rrCell), &
-              &                          uVec(:,:,  rrrCell), &
-              &                          uVec(:,:, rrrrCell), &
-              &                          uVec(:,:,rrrrrCell)) )
+              & dir*( dlInv*FD1_F8(uVec(dim,:,  lllCell), &
+              &                    uVec(dim,:,   llCell), &
+              &                    uVec(dim,:,    lCell), &
+              &                    uVec(dim,:,    iCell), &
+              &                    uVec(dim,:,    rCell), &
+              &                    uVec(dim,:,   rrCell), &
+              &                    uVec(dim,:,  rrrCell), &
+              &                    uVec(dim,:, rrrrCell), &
+              &                    uVec(dim,:,rrrrrCell)) )
         end select
       end associate
     end do
@@ -613,18 +616,20 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell
     
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -646,7 +651,7 @@ contains
       ! ----------------------
       ! Compute FDM-approximate Laplacian increment.
       ! ----------------------
-      associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
+      associate(dlSqrInv => lambda/(mesh%dl(iCellFace)**2))
 
         ! ----------------------
         ! Cylindrical case: 
@@ -658,9 +663,9 @@ contains
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * WFD2_C2(rho_l, u(:,lCell), &
-              &                        rho_i, u(:,iCell), &
-              &                        rho_r, u(:,rCell)) &
+              & ( dlSqrInv*WFD2_C2(rho_l, u(:,lCell), &
+              &                    rho_i, u(:,iCell), &
+              &                    rho_r, u(:,rCell)) &
               & )/rho_i
           end associate; cycle
         end if
@@ -671,39 +676,39 @@ contains
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * FD2_C2(u(:,lCell), &
-              &                       u(:,iCell), &
-              &                       u(:,rCell)) )
+              & ( dlSqrInv*FD2_C2(u(:,lCell), &
+              &                   u(:,iCell), &
+              &                   u(:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * FD2_C4(u(:,llCell), &
-              &                       u(:, lCell), &
-              &                       u(:, iCell), &
-              &                       u(:, rCell), &
-              &                       u(:,rrCell)) )
+              & ( dlSqrInv*FD2_C4(u(:,llCell), &
+              &                   u(:, lCell), &
+              &                   u(:, iCell), &
+              &                   u(:, rCell), &
+              &                   u(:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * FD2_C6(u(:,lllCell), &
-              &                       u(:, llCell), &
-              &                       u(:,  lCell), &
-              &                       u(:,  iCell), &
-              &                       u(:,  rCell), &
-              &                       u(:, rrCell), &
-              &                       u(:,rrrCell)) )
+              & ( dlSqrInv*FD2_C6(u(:,lllCell), &
+              &                   u(:, llCell), &
+              &                   u(:,  lCell), &
+              &                   u(:,  iCell), &
+              &                   u(:,  rCell), &
+              &                   u(:, rrCell), &
+              &                   u(:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * FD2_C8(u(:,llllCell), &
-              &                       u(:, lllCell), &
-              &                       u(:,  llCell), &
-              &                       u(:,   lCell), &
-              &                       u(:,   iCell), &
-              &                       u(:,   rCell), &
-              &                       u(:,  rrCell), &
-              &                       u(:, rrrCell), &
-              &                       u(:,rrrrCell)) )
+              & ( dlSqrInv*FD2_C8(u(:,llllCell), &
+              &                   u(:, lllCell), &
+              &                   u(:,  llCell), &
+              &                   u(:,   lCell), &
+              &                   u(:,   iCell), &
+              &                   u(:,   rCell), &
+              &                   u(:,  rrCell), &
+              &                   u(:, rrrCell), &
+              &                   u(:,rrrrCell)) )
         end select
       end associate
     end do
@@ -756,18 +761,20 @@ contains
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
+    integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
     integer(ip) :: lCell, llCell, lllCell, llllCell
   
     ! ----------------------
-    ! For each positive cell face do:
+    ! For each direction do:
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces, 2
+    do dim = 1, mesh%NumDim
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
+      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -789,7 +796,7 @@ contains
       ! ----------------------
       ! Compute FDM-approximate variable coefficient Laplacian increment.
       ! ----------------------
-      associate(dl_sqr_inv => lambda/(mesh%dl(iCellFace)**2))
+      associate(dlSqrInv => lambda/(mesh%dl(iCellFace)**2))
 
         ! ----------------------
         ! Cylindrical case,
@@ -801,10 +808,9 @@ contains
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * &
-              &   WFD2_C2(rho_l*k(:,lCell), u(:,lCell), &
-              &           rho_i*k(:,iCell), u(:,iCell), &
-              &           rho_r*k(:,rCell), u(:,rCell)) &
+              & ( dlSqrInv*WFD2_C2(rho_l*k(:,lCell), u(:,lCell), &
+              &                    rho_i*k(:,iCell), u(:,iCell), &
+              &                    rho_r*k(:,rCell), u(:,rCell)) &
               & )/rho_i
           end associate; cycle
         end if
@@ -815,43 +821,39 @@ contains
         select case(FDM_AccuracyOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * &
-              &   WFD2_C2(k(:,lCell), u(:,lCell), &
-              &           k(:,iCell), u(:,iCell), &
-              &           k(:,rCell), u(:,rCell)) )
+              & ( dlSqrInv*WFD2_C2(k(:,lCell), u(:,lCell), &
+              &                    k(:,iCell), u(:,iCell), &
+              &                    k(:,rCell), u(:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * &
-              &   WFD2_C4(k(:,llCell), u(:,llCell), &
-              &           k(:, lCell), u(:, lCell), &
-              &           k(:, iCell), u(:, iCell), &
-              &           k(:, rCell), u(:, rCell), &
-              &           k(:,rrCell), u(:,rrCell)) )
+              & ( dlSqrInv*WFD2_C4(k(:,llCell), u(:,llCell), &
+              &                    k(:, lCell), u(:, lCell), &
+              &                    k(:, iCell), u(:, iCell), &
+              &                    k(:, rCell), u(:, rCell), &
+              &                    k(:,rrCell), u(:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * &
-              &   WFD2_C6(k(:,lllCell), u(:,lllCell), &
-              &           k(:, llCell), u(:, llCell), &
-              &           k(:,  lCell), u(:,  lCell), &
-              &           k(:,  iCell), u(:,  iCell), &
-              &           k(:,  rCell), u(:,  rCell), &
-              &           k(:, rrCell), u(:, rrCell), &
-              &           k(:,rrrCell), u(:,rrrCell)) )
+              & ( dlSqrInv*WFD2_C6(k(:,lllCell), u(:,lllCell), &
+              &                    k(:, llCell), u(:, llCell), &
+              &                    k(:,  lCell), u(:,  lCell), &
+              &                    k(:,  iCell), u(:,  iCell), &
+              &                    k(:,  rCell), u(:,  rCell), &
+              &                    k(:, rrCell), u(:, rrCell), &
+              &                    k(:,rrrCell), u(:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
-              & ( dl_sqr_inv * &
-              &   WFD2_C8(k(:,llllCell), u(:,llllCell), &
-              &           k(:, lllCell), u(:, lllCell), &
-              &           k(:,  llCell), u(:,  llCell), &
-              &           k(:,   lCell), u(:,   lCell), &
-              &           k(:,   iCell), u(:,   iCell), &
-              &           k(:,   rCell), u(:,   rCell), &
-              &           k(:,  rrCell), u(:,  rrCell), &
-              &           k(:, rrrCell), u(:, rrrCell), &
-              &           k(:,rrrrCell), u(:,rrrrCell)) )
+              & ( dlSqrInv*WFD2_C8(k(:,llllCell), u(:,llllCell), &
+              &                    k(:, lllCell), u(:, lllCell), &
+              &                    k(:,  llCell), u(:,  llCell), &
+              &                    k(:,   lCell), u(:,   lCell), &
+              &                    k(:,   iCell), u(:,   iCell), &
+              &                    k(:,   rCell), u(:,   rCell), &
+              &                    k(:,  rrCell), u(:,  rrCell), &
+              &                    k(:, rrrCell), u(:, rrrCell), &
+              &                    k(:,rrrrCell), u(:,rrrrCell)) )
         end select
       end associate
     end do

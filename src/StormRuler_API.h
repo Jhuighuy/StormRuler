@@ -44,23 +44,6 @@ SR_OPAQUE_STRUCT(SR_tFieldR);
 SR_OPAQUE_STRUCT(SR_tFieldC);
 SR_OPAQUE_STRUCT(SR_tFieldS);
 
-typedef union {
-  void* P;
-  SR_tFieldR R;
-  SR_tFieldC C;
-  SR_tFieldS S;
-} SR_tFieldA;
-
-#define SR_NULL_A ((SR_tFieldA){NULL})
-
-typedef enum {
-  SR_Done,
-  SR_Request_MatVec,
-  SR_Request_MatVec_H,
-} SR_eRequest;
-
-SR_OPAQUE_STRUCT(SR_tRequestEnv);
-
 #define SR_FIELD_GENERIC(x, func) \
   _Generic((x), SR_tFieldR: func##R, SR_tFieldC: func##C)
 #define SR_FIELD_GENERIC_EXT(x, func) \
@@ -321,14 +304,6 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
   SR_FIELD_GENERIC(x, SR_LinSolve)( \
     mesh, x, b, MatVec, env, Solver, Precond, ##__VA_ARGS__)
 #endif
-/// @}
-
-/// @{
-SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,
-    SR_tFieldR x, SR_tFieldR b, 
-    SR_eSolver Solver, SR_ePrecond Precond,
-    SR_tFieldR* pAy, SR_tFieldR* pY);
-#define SR_RCI_LinSolve SR_RCI_LinSolveR 
 /// @}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

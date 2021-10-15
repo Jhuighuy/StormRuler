@@ -31,10 +31,6 @@
 #$let HAS_OpenMP = False
 #$end if
 
-#$if not defined('HAS_MKL')
-#$let HAS_MKL = False
-#$end if
-
 #$if not defined('HAS_LAPACK')
 #$let HAS_LAPACK = False
 #$end if

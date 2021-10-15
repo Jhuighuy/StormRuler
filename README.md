@@ -81,16 +81,12 @@ although some of them are not parallelized.
     (`ConjugateChebyshev`, for the _definite symmetric_ linear problems,
      _theoretically **the fastest** existing SPD-solver 
       for the repeated-computation_),
-  * MKL Conjugate Gradients solver 
-    (`CG_MKL`, from [MKL RCI ISS](https://intel.ly/3D9r3k6)),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
-  * MKL Flexible Generalized Minimal Residual method solver
-    (`FGMRES_MKL`, from [MKL RCI ISS](https://intel.ly/2W9HRqR)).
 
 - Matrix-free linear iterative least squares solvers:
   * Least squares-QR solver:

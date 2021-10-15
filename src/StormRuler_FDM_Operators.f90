@@ -40,7 +40,7 @@ implicit none
 
 integer(ip), parameter :: FDM_AccuracyOrder = 2
 
-logical, parameter :: FDM_CylCoords = .false.
+logical, parameter :: FDM_CylCoords = .true.
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -50,7 +50,7 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate gradient: 𝒗 ← 𝒗 - 𝜆∇𝒖.
 !! Shape of 𝒖 is [1, NumVars]×[1, NumAllCells],
-!! shape of 𝒗 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
+!! shape of 𝒗 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
     &                           dirAll, dirFace, dirCellFace)
@@ -86,7 +86,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -164,7 +164,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Determine FD direction (default is forward).
@@ -282,7 +282,7 @@ end subroutine FDM_Gradient_Central
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
-!! Shape of 𝒖 is [1,Dim]×[1,NumVars]×[1, NumAllCells],
+!! Shape of 𝒖 is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
 !! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
@@ -319,7 +319,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -358,9 +358,8 @@ contains
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) - &
-              & ( dlInv*FD1_C2(rho_l*uVec(dim,:,lCell), &
-              &                rho_r*uVec(dim,:,rCell)) &
-              & )/rho_i
+              & ( dlInv*FD1_C2(rho_l*uVec(1,:,lCell), &
+              &                rho_r*uVec(1,:,rCell)) )/rho_i
           end associate; cycle
         end if
 
@@ -417,7 +416,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Determine FD direction (default is backward).
@@ -470,8 +469,7 @@ contains
             & rho_r => mesh%CellCenter(1, rCell) )
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F1(rho_i*uVec(dim,:,iCell), &
-              &                    rho_r*uVec(dim,:,rCell)) &
-              &     )/rho_i
+              &                    rho_r*uVec(dim,:,rCell)) )/rho_i
           end associate; cycle
         end if
 
@@ -558,7 +556,7 @@ end subroutine FDM_Divergence_Central
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate convection: 𝒗 ← 𝒗 - 𝜆∇⋅𝒂𝒖.
 !! Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells],
-!! shape of 𝒂 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
+!! shape of 𝒂 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Convection_Central(mesh, v, lambda, u, a)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -594,7 +592,7 @@ end subroutine FDM_Convection_Central
 !! • Scalar case:
 !!   Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells].
 !! • Vector case:
-!!   Shape of 𝒖, 𝒗 is [1, Dim]×[1, NumVars]×[1, NumAllCells].
+!!   Shape of 𝒖, 𝒗 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -624,7 +622,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -662,11 +660,13 @@ contains
             & rho_l => mesh%CellCenter(1,lCell), &
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
+            if (any([rho_l, rho_i, rho_r] < 0.0_dp)) then
+              error stop 1144888
+            end if
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C2(rho_l, u(:,lCell), &
               &                    rho_i, u(:,iCell), &
-              &                    rho_r, u(:,rCell)) &
-              & )/rho_i
+              &                    rho_r, u(:,rCell)) )/rho_i
           end associate; cycle
         end if
 
@@ -739,7 +739,7 @@ end subroutine FDM_Laplacian_Central
 !! • Scalar coefficient case:
 !!   Shape of 𝒌 is [1, NumVars]×[1, NumAllCells].
 !! • Tensor coefficient case (not implemented):
-!!   Shape of 𝒌 is [1, Dim]×[1, Dim]×[1, NumVars]×[1, NumAllCells].
+!!   Shape of 𝒌 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_DivWGrad_Central(mesh, vAny, lambda, kAny, uAny)
   ! <<<<<<<<<<<<<<<<<<<<<<
@@ -769,7 +769,7 @@ contains
     ! ----------------------
     ! For each direction do:
     ! ----------------------
-    do dim = 1, mesh%NumDim
+    do dim = 1, mesh%NumDims
 
       ! ----------------------
       ! Find indices of the adjacent cells.
@@ -810,8 +810,7 @@ contains
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C2(rho_l*k(:,lCell), u(:,lCell), &
               &                    rho_i*k(:,iCell), u(:,iCell), &
-              &                    rho_r*k(:,rCell), u(:,rCell)) &
-              & )/rho_i
+              &                    rho_r*k(:,rCell), u(:,rCell)) )/rho_i
           end associate; cycle
         end if
 

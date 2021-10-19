@@ -160,9 +160,12 @@ end function SafeInverse
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
 impure elemental subroutine Assert(b)
-
+  ! <<<<<<<<<<<<<<<<<<<<<<
   logical, intent(in) :: b
+  ! >>>>>>>>>>>>>>>>>>>>>>
 
   if (.not.b) then
     error stop 'assertion failed'
@@ -170,32 +173,46 @@ impure elemental subroutine Assert(b)
 
 end subroutine Assert
 
-function Reshape2D(u) result(v)
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+function AsField(uAny) result(u)
   use, intrinsic :: iso_c_binding
-
   ! <<<<<<<<<<<<<<<<<<<<<<
-  real(dp), intent(in), target :: u(..)
-  real(dp), pointer :: v(:,:)
+  real(dp), intent(in), target :: uAny(..)
+  real(dp), pointer :: u(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  select rank(u)
+  select rank(uAny)
     rank(1)
-      call c_f_pointer(cptr=c_loc(u), fptr=v, &
-        & shape=[ 1, size(u) ])
-#$do rank = 1, NUM_RANKS
+      call c_f_pointer( &
+        & cptr=c_loc(uAny), fptr=u, shape=[1, size(uAny)])
+    rank(2)
+      u => uAny
+#$do rank = 2, 14
     rank($rank + 1)
-      call c_f_pointer(cptr=c_loc(u), fptr=v, &
-        & shape=[ size(u(@:,1)), size(u(@1,:)) ])
+      call c_f_pointer( &
+        & cptr=c_loc(uAny), fptr=u, shape=[size(uAny(@:,1)), size(uAny(@1,:))])
 #$end do
     rank default
       error stop 'Invalid rank'
   end select
 
-end function Reshape2D
+end function AsField
 
-function Reshape3D(dim, u) result(v)
+logical function IsVecField(uAny)
+  class(*), intent(in), target :: uAny(..)
+  IsVecField = rank(uAny) == 3
+end function IsVecField
+
+logical function IsMatField(uAny)
+  class(*), intent(in), target :: uAny(..)
+  IsMatField = rank(uAny) == 4
+end function IsMatField
+
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+function AsVecField(dim, u) result(v)
   use, intrinsic :: iso_c_binding
-
   ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: dim
   real(dp), intent(in), target :: u(..)
@@ -212,11 +229,12 @@ function Reshape3D(dim, u) result(v)
       error stop 'Invalid rank'
   end select
 
-end function Reshape3D
+end function AsVecField
 
-function Reshape4D(dim, u) result(v)
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+function AsMatField(dim, u) result(v)
   use, intrinsic :: iso_c_binding
-
   ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: dim
   real(dp), intent(in), target :: u(..)
@@ -233,7 +251,7 @@ function Reshape4D(dim, u) result(v)
       error stop 'Invalid rank'
   end select
 
-end function Reshape4D
+end function AsMatField
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

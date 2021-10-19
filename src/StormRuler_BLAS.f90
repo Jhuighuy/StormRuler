@@ -26,7 +26,7 @@ module StormRuler_BLAS
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, not_implemented_code
+use StormRuler_Parameters, only: dp, ip, not_implemented_code, gCylCoords
 use StormRuler_Helpers, only: Re, Im, R2C, &
   & operator(.inner.), operator(.outer.)
 use StormRuler_Mesh, only: tMesh
@@ -229,7 +229,7 @@ $typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
       return
     end if
   end if
-  Dot = mesh%RunCellKernel_Sum(Dot_Kernel_Conjg)
+  Dot = mesh%RunCellKernel_Sum(Dot_Conjg_Kernel)
 #$else
   Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
 #$end if
@@ -243,11 +243,12 @@ contains
     ! ----------------------
     ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙ᵢ𝒚ᵢ. 
     ! ----------------------
-    Dot_Kernel = sum(x(:,iCell) * y(:,iCell))
+    Dot_Kernel = sum(x(:,iCell)*y(:,iCell))
+    if (gCylCoords) Dot_Kernel = Dot_Kernel*mesh%CellCenter(1,iCell)
     
   end function Dot_Kernel
 #$if T == 'C'
-  $typename function Dot_Kernel_Conjg(iCell)
+  $typename function Dot_Conjg_Kernel(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
@@ -255,9 +256,10 @@ contains
     ! ----------------------
     ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙̅ᵢ𝒚ᵢ.
     ! ----------------------
-    Dot_Kernel_Conjg = sum(conjg(x(:,iCell)) * y(:,iCell))
+    Dot_Conjg_Kernel = sum(conjg(x(:,iCell))*y(:,iCell))
+    if (gCylCoords) Dot_Conjg_Kernel = Dot_Conjg_Kernel*mesh%CellCenter(1,iCell)
     
-  end function Dot_Kernel_Conjg
+  end function Dot_Conjg_Kernel
 #$end if
 end function Dot$T
 #$end for
@@ -281,7 +283,8 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     Norm_1_Kernel = sum(abs(x(:,iCell)))
-    
+    if (gCylCoords) Norm_1_Kernel = Norm_1_Kernel*mesh%CellCenter(1,iCell)
+
   end function Norm_1_Kernel
 end function Norm_1$T
 #$end for

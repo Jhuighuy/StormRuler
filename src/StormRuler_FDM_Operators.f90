@@ -26,9 +26,9 @@ module StormRuler_FDM_Operators
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, i8
-use StormRuler_Helpers, only: Assert, Flip, SafeInverse, &
-  & Reshape2D, Reshape3D, Reshape4D
+use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
+use StormRuler_Helpers, only: Assert, Flip, &
+  & AsField, IsVecField, AsVecField, IsMatField, AsMatField
 use StormRuler_Mesh, only: tMesh
 use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
 use StormRuler_FDM_Base
@@ -38,9 +38,7 @@ use StormRuler_FDM_Base
 
 implicit none
 
-integer(ip), parameter :: FDM_AccuracyOrder = 2
-
-logical, parameter :: FDM_CylCoords = .true.
+integer(ip), parameter :: gTruncErrorOrder = 2
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -57,16 +55,17 @@ subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(:,:)
-  real(dp), intent(inout), target :: vAny(:,:,:)
+  real(dp), intent(in), target :: uAny(..)
+  real(dp), intent(inout), target :: vAny(..)
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: u(:,:), vVec(:,:,:)
 
-  u => uAny; vVec => vAny
+  u => AsField(uAny)
+  vVec => AsVecField(mesh%NumDims, vAny)
 
-  if (any([ present(dirAll), present(dirFace), present(dirCellFace) ])) then
+  if (present(dirAll).or.present(dirFace).or.present(dirCellFace)) then
     call mesh%RunCellKernel(FDM_Gradient_Forward_Kernel)
   else
     call mesh%RunCellKernel(FDM_Gradient_Central_Kernel)
@@ -96,13 +95,13 @@ contains
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (FDM_AccuracyOrder >= 3) then
+        if (gTruncErrorOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (FDM_AccuracyOrder >= 5) then
+          if (gTruncErrorOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (FDM_AccuracyOrder >= 7) then
+            if (gTruncErrorOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -114,7 +113,7 @@ contains
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
       associate(dlInv => lambda/mesh%dl(iCellFace))
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1:2)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &          ( dlInv*FD1_C2(u(:,lCell), &
@@ -183,16 +182,16 @@ contains
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (FDM_AccuracyOrder >= 2) then
+          if (gTruncErrorOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (FDM_AccuracyOrder >= 4) then
+            if (gTruncErrorOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (FDM_AccuracyOrder >= 6) then
+              if (gTruncErrorOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (FDM_AccuracyOrder >= 8) then
+                if (gTruncErrorOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -206,7 +205,7 @@ contains
       ! Compute FDM-approximate gradient increment.
       ! ----------------------
       associate(dlInv => lambda/mesh%dl(iCellFace))
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &      dir*( dlInv*FD1_F1(u(:,iCell), &
@@ -290,16 +289,17 @@ subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(:,:,:)
-  real(dp), intent(inout), target :: vAny(:,:) 
+  real(dp), intent(in), target :: uAny(..)
+  real(dp), intent(inout), target :: vAny(..) 
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: uVec(:,:,:), v(:,:)
 
-  uVec => uAny; v => vAny
+  uVec => AsVecField(mesh%NumDims, uAny)
+  v => AsField(vAny)
 
-  if (any([ present(dirAll), present(dirFace), present(dirCellFace) ])) then
+  if (present(dirAll).or.present(dirFace).or.present(dirCellFace)) then
     call mesh%RunCellKernel(FDM_Divergence_Backward_Kernel)
   else
     call mesh%RunCellKernel(FDM_Divergence_Central_Kernel)
@@ -329,13 +329,13 @@ contains
           &     lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (FDM_AccuracyOrder >= 3) then
+        if (gTruncErrorOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (FDM_AccuracyOrder >= 5) then
+          if (gTruncErrorOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (FDM_AccuracyOrder >= 7) then
+            if (gTruncErrorOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -352,7 +352,7 @@ contains
         ! Cylindrical case: 
         ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force second order.
         ! ----------------------
-        if (FDM_CylCoords.and.(dim == 1)) then
+        if (gCylCoords.and.(dim == 1)) then
           associate( &
             & rho_l => mesh%CellCenter(1,lCell), &
             & rho_i => mesh%CellCenter(1,iCell), &
@@ -366,7 +366,7 @@ contains
         ! ----------------------
         ! General case.
         ! ----------------------
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) - &
               & ( dlInv*FD1_C2(uVec(dim,:,lCell), &
@@ -435,16 +435,16 @@ contains
           &       lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
           lCell = mesh%CellToCell(lCellFace, iCell)
-          if (FDM_AccuracyOrder >= 2) then
+          if (gTruncErrorOrder >= 2) then
             rrCell = mesh%CellToCell(rCellFace, rCell)
             llCell = mesh%CellToCell(lCellFace, lCell)
-            if (FDM_AccuracyOrder >= 4) then
+            if (gTruncErrorOrder >= 4) then
               rrrCell = mesh%CellToCell(rCellFace, rrCell)
               lllCell = mesh%CellToCell(lCellFace, llCell)
-              if (FDM_AccuracyOrder >= 6) then
+              if (gTruncErrorOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
                 llllCell = mesh%CellToCell(lCellFace, lllCell)
-                if (FDM_AccuracyOrder >= 8) then
+                if (gTruncErrorOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
                   lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
@@ -463,7 +463,7 @@ contains
         ! Cylindrical case: 
         ! (1/𝜌)∂(𝜌𝒖₁)/∂𝜌 component, force first order.
         ! ----------------------
-        if (FDM_CylCoords.and.(dim == 1)) then
+        if (gCylCoords.and.(dim == 1)) then
           associate( &
             & rho_i => mesh%CellCenter(1, iCell), &
             & rho_r => mesh%CellCenter(1, rCell) )
@@ -476,7 +476,7 @@ contains
         ! ----------------------
         ! General case.
         ! ----------------------
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F1(uVec(dim,:,iCell), &
@@ -598,13 +598,18 @@ subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(:,:)
-  real(dp), intent(inout), target :: vAny(:,:)
+  real(dp), intent(in), target :: uAny(..)
+  real(dp), intent(inout), target :: vAny(..)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: u(:,:), v(:,:)
+  real(dp), pointer :: uVec(:,:,:), vVec(:,:,:)
 
-  u => uAny; v => vAny
+  u => AsField(uAny); v => AsField(vAny)
+  if (gCylCoords.and.IsVecField(uAny)) then
+    uVec => AsVecField(mesh%NumDims, uAny) 
+    vVec => AsVecField(mesh%NumDims, vAny)
+  end if
 
   call mesh%RunCellKernel(FDM_Laplacian_Central_Kernel)
 
@@ -632,13 +637,13 @@ contains
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (FDM_AccuracyOrder >= 3) then
+        if (gTruncErrorOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (FDM_AccuracyOrder >= 5) then
+          if (gTruncErrorOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (FDM_AccuracyOrder >= 7) then
+            if (gTruncErrorOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -655,14 +660,11 @@ contains
         ! Cylindrical case: 
         ! (1/𝜌)∂(𝜌∂𝒖/∂𝜌) component, force second order.
         ! ----------------------
-        if (FDM_CylCoords.and.(iCellFace == 1)) then
+        if (gCylCoords.and.(iCellFace == 1)) then
           associate( &
             & rho_l => mesh%CellCenter(1,lCell), &
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
-            if (any([rho_l, rho_i, rho_r] < 0.0_dp)) then
-              error stop 1144888
-            end if
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C2(rho_l, u(:,lCell), &
               &                    rho_i, u(:,iCell), &
@@ -673,7 +675,7 @@ contains
         ! ----------------------
         ! General case.
         ! ----------------------
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*FD2_C2(u(:,lCell), &
@@ -713,23 +715,21 @@ contains
       end associate
     end do
 
-#$if False
-    if (FDM_CylCoords) then
+    if (gCylCoords.and.IsVecField(uAny)) then
       ! ----------------------
       ! Cylindrical coordinates, vector case.
       ! We have already computed:
       ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
       ! but we need:
-      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁ - 𝒖₁/𝑟², Δ𝒖₂}ᵀ.
+      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁ - 𝒖₁/𝜌², Δ𝒖₂}ᵀ.
       ! The correction term is:
-      ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝑟².
+      ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝜌².
       ! ----------------------
-      associate(r => mesh%CellCenter(iCell))
+      associate(rho => mesh%CellCenter(1,iCell))
         vVec(1,:,iCell) = vVec(1,:,iCell) - &
-          & lambda*uVec(1,:,iCell)/( r(1)**2 )
+          & lambda*uVec(1,:,iCell)/( rho**2 )
       end associate
     end if
-#$end if
   end subroutine FDM_Laplacian_Central_Kernel
 end subroutine FDM_Laplacian_Central
 
@@ -779,13 +779,13 @@ contains
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
-        if (FDM_AccuracyOrder >= 3) then
+        if (gTruncErrorOrder >= 3) then
           rrCell = mesh%CellToCell(rCellFace, rCell)
           llCell = mesh%CellToCell(lCellFace, lCell)
-          if (FDM_AccuracyOrder >= 5) then
+          if (gTruncErrorOrder >= 5) then
             rrrCell = mesh%CellToCell(rCellFace, rrCell)
             lllCell = mesh%CellToCell(lCellFace, llCell)
-            if (FDM_AccuracyOrder >= 7) then
+            if (gTruncErrorOrder >= 7) then
               rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
               llllCell = mesh%CellToCell(lCellFace, lllCell)
             end if
@@ -802,7 +802,7 @@ contains
         ! Cylindrical case,
         ! (1/𝜌)∂(𝜌𝒘∂𝒖/∂𝜌) component, force second order.
         ! ----------------------
-        if (FDM_CylCoords.and.(iCellFace == 1)) then
+        if (gCylCoords.and.(iCellFace == 1)) then
           associate( &
             & rho_l => mesh%CellCenter(1,lCell), &
             & rho_i => mesh%CellCenter(1,iCell), &
@@ -817,7 +817,7 @@ contains
         ! ----------------------
         ! General case.
         ! ----------------------
-        select case(FDM_AccuracyOrder)
+        select case(gTruncErrorOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C2(k(:,lCell), u(:,lCell), &

@@ -89,6 +89,26 @@ SR_API void SR_FreeS(SR_tFieldS x);
 /// @}
 
 /// @{
+SR_API SR_INTEGER SR_IsVecFieldR(SR_tFieldR x);
+SR_API SR_INTEGER SR_IsVecFieldC(SR_tFieldC x);
+SR_API SR_INTEGER SR_IsVecFieldS(SR_tFieldS x);
+#if SR_C11
+#define SR_IsVecField(x) \
+  SR_FIELD_GENERIC_EXT(x, SR_IsVecField)(x)
+#endif
+/// @}
+
+/// @{
+SR_API SR_INTEGER SR_IsMatFieldR(SR_tFieldR x);
+SR_API SR_INTEGER SR_IsMatFieldC(SR_tFieldC x);
+SR_API SR_INTEGER SR_IsMatFieldS(SR_tFieldS x);
+#if SR_C11
+#define SR_IsMatField(x) \
+  SR_FIELD_GENERIC_EXT(x, SR_IsMatField)(x)
+#endif
+/// @}
+
+/// @{
 SR_INL void SR_SwapP(void** pX, void** pY) {
   void* z = *pX; *pX = *pY, *pY = z;
 }

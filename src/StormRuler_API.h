@@ -281,31 +281,17 @@ typedef void(*SR_tPrecondFuncS)(SR_tMesh mesh,
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 typedef enum {
-  SR_Mat_SymmDefinite = 100,
-  SR_Mat_SymmSemiDefinite,
-  SR_Mat_Symm,
-  SR_Mat_General,
-  SR_Mat_General_Singular
-} SR_eMatClass;
-
-typedef enum {
-  SR_Auto = 200,
-  SR_CG, 
-  SR_BiCGStab, 
-  SR_Cheby, 
-  SR_ChebyCG, 
-  SR_MINRES, 
-  SR_GMRES,
-  SR_CG_MKL, 
-  SR_FGMRES_MKL, 
-  SR_LSQR, 
-  SR_LSMR,
+  SR_eAuto = 200,
+  SR_eCG, SR_eBiCGStab, 
+  SR_eCheby, SR_eChebyCG, 
+  SR_eMINRES, SR_eGMRES,
+  SR_eLSQR, SR_eLSMR,
 } SR_eSolver;
 
 typedef enum {
-  SR_Precond_None = 300,
-  SR_Precond_Jacobi,
-  SR_Precond_LU_SGS,
+  SR_ePrecond_None = 300,
+  SR_ePrecond_Jacobi,
+  SR_ePrecond_LU_SGS,
 } SR_ePrecond;
 
 /// @{
@@ -316,14 +302,28 @@ SR_API void SR_LinSolveR(SR_tMesh mesh,
     SR_tMatVecFuncR MatVec_H, void* env_H);
 SR_API void SR_LinSolveC(SR_tMesh mesh,
     SR_tFieldC x, SR_tFieldC b, 
-    SR_tMatVecFuncR MatVec, void* env,
+    SR_tMatVecFuncC MatVec, void* env,
     SR_eSolver solver, SR_ePrecond precond, 
-    SR_tMatVecFuncR MatVec_H, void* env_H);
+    SR_tMatVecFuncC MatVec_H, void* env_H);
 #if SR_C11
 #define SR_LinSolve(mesh, x, b, MatVec, env, Solver, Precond, ...) \
   SR_FIELD_GENERIC(x, SR_LinSolve)( \
     mesh, x, b, MatVec, env, Solver, Precond, ##__VA_ARGS__)
 #endif
+/// @}
+
+typedef enum {
+  SR_eDone = 1000,
+  SR_eMatVec,
+  SR_eMatVec_H,
+} SR_eRequest;
+
+/// @{
+SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,
+    SR_tFieldR x, SR_tFieldR b, 
+    SR_eSolver solver, SR_ePrecond precond, 
+    SR_tFieldR* Ay, SR_tFieldR* y);
+#define SR_RCI_LinSolve SR_RCI_LinSolveR
 /// @}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

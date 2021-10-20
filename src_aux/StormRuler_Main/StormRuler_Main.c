@@ -96,7 +96,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
 
   SR_Set(mesh, c_hat, c);
   SR_LinSolve(mesh, c_hat, RHS, CahnHilliard_MatVec, NULL,
-    SR_CG, SR_Precond_None, NULL, NULL);
+    SR_eCG, SR_ePrecond_None, NULL, NULL);
 
   SR_Free(RHS);
 
@@ -179,14 +179,17 @@ static void NavierStokes_Step(SR_tMesh mesh,
   SR_Div(mesh, RHS, -rho/tau, v_hat);
 
   SR_Set(mesh, p_hat, p);
-#if 1
+#if 0
   SR_LinSolve(mesh, p_hat, RHS, Poisson_MatVec, NULL,
-    SR_MINRES, SR_Precond_None, NULL, NULL);
+    SR_eMINRES, SR_ePrecond_None, NULL, NULL);
 #else
   for (SR_tFieldR Lp, p; SR_RCI_LinSolve(
-      mesh, p_hat, RHS, SR_MINRES, SR_Precond_None, &Lp, &p) != SR_Done;) {
+      mesh, p_hat, RHS, SR_eMINRES, SR_ePrecond_None, &Lp, &p) != SR_eDone;) {
     
     SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
+    SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
+    SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
+
     SR_Fill(mesh, Lp, 0.0, 0.0);
     SR_DivGrad(mesh, Lp, 1.0, p);
   }

@@ -13,6 +13,8 @@ Supported compilers:
   (tested on _10.3.0_).
 * _Intel Classic compilers_ version _19.0_ and more recent
   (tested on _2021.3.0_).
+* _AMD AOCC_ version _3.1.0_ and more recent
+  (tested on _3.1.0_).
 * _PGI Compilers_ (from _NVIDIA HPC SDK_) version 21 and more recent 
   (tested on _21.07_).
 * _NAG Fortran Compiler_ version 7.0 and more recent

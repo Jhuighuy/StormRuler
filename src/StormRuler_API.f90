@@ -140,18 +140,18 @@ subroutine UnwrapString(string, pString)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   interface
-    pure function strlen(pString) bind(C, name='strlen')
+    pure function cStrlen(pString) bind(C, name='strlen')
       import :: c_ptr, c_size_t
       ! <<<<<<<<<<<<<<<<<<<<<<
       type(c_ptr), intent(in), value :: pString
-      integer(c_size_t) :: strlen
+      integer(c_size_t) :: cStrlen
       ! >>>>>>>>>>>>>>>>>>>>>>
-    end function strlen
+    end function cStrlen
   end interface
 
   integer(c_size_t) :: length
   
-  length = strlen(pString)
+  length = cStrlen(pString)
   allocate( character(len=length) :: string )
 
   block
@@ -247,7 +247,7 @@ end subroutine UnwrapVecField$T
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
-function InitMesh() result(pMesh) bind(C, name='SR_InitMesh')
+function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr) :: pMesh
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -283,7 +283,7 @@ function InitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   pMesh_C%mObj => gMesh
   pMesh = c_loc(pMesh_C)
   !L = 0
-end function InitMesh
+end function cInitMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -291,7 +291,7 @@ end function InitMesh
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-function Alloc$T(pMesh, numVars, rank) result(pY)  bind(C, name='SR_Alloc$T')
+function cAlloc$T(pMesh, numVars, rank) result(pY)  bind(C, name='SR_Alloc$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   integer(c_int), intent(in), value :: numVars, rank
@@ -307,13 +307,13 @@ function Alloc$T(pMesh, numVars, rank) result(pY)  bind(C, name='SR_Alloc$T')
   pY_C%mRank = rank
   pY = c_loc(pY_C)
 
-end function Alloc$T
+end function cAlloc$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-function Alloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
+function cAlloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   type(c_ptr) :: pY
@@ -328,13 +328,13 @@ function Alloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
   pY_C%mRank = pX_C%mRank
   pY = c_loc(pY_C)
 
-end function Alloc_Mold$T
+end function cAlloc_Mold$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Free$T(pX) bind(C, name='SR_Free$T')
+subroutine cFree$T(pX) bind(C, name='SR_Free$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pX
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -344,7 +344,7 @@ subroutine Free$T(pX) bind(C, name='SR_Free$T')
   call Unwrap(x, pX, free=.true.)
   deallocate(x)
 
-end subroutine Free$T
+end subroutine cFree$T
 #$end for
 
 
@@ -387,7 +387,7 @@ end function cIsMatField$T
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
-function IO_Begin() result(pIOList) bind(C, name='SR_IO_Begin') 
+function cIO_Begin() result(pIOList) bind(C, name='SR_IO_Begin') 
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr) :: pIOList
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -398,11 +398,11 @@ function IO_Begin() result(pIOList) bind(C, name='SR_IO_Begin')
   allocate(pIOList_C%mObj)
   pIOList = c_loc(pIOList_C)
 
-end function IO_Begin
+end function cIO_Begin
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
-subroutine IO_Add(pIOList, pX, pName) bind(C, name='SR_IO_Add') 
+subroutine cIO_Add(pIOList, pX, pName) bind(C, name='SR_IO_Add') 
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pIOList
   type(c_ptr), intent(in), value :: pX, pName
@@ -423,11 +423,11 @@ subroutine IO_Add(pIOList, pX, pName) bind(C, name='SR_IO_Add')
     call ioList%Add(name, x)
   end if
 
-end subroutine IO_Add
+end subroutine cIO_Add
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
-subroutine IO_Flush(pIOList, pMesh, pFileName) bind(C, name='SR_IO_Flush') 
+subroutine cIO_Flush(pIOList, pMesh, pFileName) bind(C, name='SR_IO_Flush') 
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pIOList
   type(c_ptr), intent(in), value :: pMesh
@@ -445,7 +445,7 @@ subroutine IO_Flush(pIOList, pMesh, pFileName) bind(C, name='SR_IO_Flush')
   call mesh%PrintTo_LegacyVTK(filename, ioList)
   deallocate(ioList)
 
-end subroutine IO_Flush
+end subroutine cIO_Flush
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -453,7 +453,7 @@ end subroutine IO_Flush
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Fill$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill$T')
+subroutine cFill$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
@@ -469,13 +469,13 @@ subroutine Fill$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill$T')
 
   call Fill(mesh, x, alpha, beta)
 
-end subroutine Fill$T
+end subroutine cFill$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Fill_Random$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill_Random$T')
+subroutine cFill_Random$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill_Random$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
@@ -490,13 +490,13 @@ subroutine Fill_Random$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill_Random$T'
 
   call Fill_Random(mesh, x, alpha, beta)
 
-end subroutine Fill_Random$T
+end subroutine cFill_Random$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Set$T(pMesh, pY, pX) bind(C, name='SR_Set$T')
+subroutine cSet$T(pMesh, pY, pX) bind(C, name='SR_Set$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -510,13 +510,13 @@ subroutine Set$T(pMesh, pY, pX) bind(C, name='SR_Set$T')
 
   call Set(mesh, y, x)
 
-end subroutine Set$T
+end subroutine cSet$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Scale$T(pMesh, pY, pX, alpha) bind(C, name='SR_Scale$T')
+subroutine cScale$T(pMesh, pY, pX, alpha) bind(C, name='SR_Scale$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha
@@ -531,13 +531,13 @@ subroutine Scale$T(pMesh, pY, pX, alpha) bind(C, name='SR_Scale$T')
 
   call Scale(mesh, y, x, alpha)
 
-end subroutine Scale$T
+end subroutine cScale$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine Add$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='SR_Add$T')
+subroutine cAdd$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='SR_Add$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha, beta
@@ -552,13 +552,13 @@ subroutine Add$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='SR_Add$T')
 
   call Add(mesh, z, y, x, alpha, beta)
 
-end subroutine Add$T
+end subroutine cAdd$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in {SCALAR_TYPES[0]}
-subroutine Mul$T(pMesh, pZ, pY, pX) bind(C, name='SR_Mul$T')
+subroutine cMul$T(pMesh, pZ, pY, pX) bind(C, name='SR_Mul$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY, pZ
@@ -572,13 +572,13 @@ subroutine Mul$T(pMesh, pZ, pY, pX) bind(C, name='SR_Mul$T')
 
   call Mul(mesh, z, y(1,:), x)
 
-end subroutine Mul$T
+end subroutine cMul$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine FuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_FuncProd$T')
+subroutine cFuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_FuncProd$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -606,10 +606,10 @@ subroutine FuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_FuncProd$T')
   call Unwrap(x, pX); call Unwrap(y, pY)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  call FuncProd(mesh, y, x, f_wrapper)
+  call FuncProd(mesh, y, x, cF_wrapper)
 
 contains
-  pure function f_wrapper(x) result(Fx)
+  pure function cF_wrapper(x) result(Fx)
     ! <<<<<<<<<<<<<<<<<<<<<<
     $typename, intent(in) :: x(:)
     $typename :: Fx(size(x))
@@ -617,14 +617,14 @@ contains
     
     call f(int(size(x), kind=c_int), Fx, x, env)
 
-  end function f_wrapper
-end subroutine FuncProd$T
+  end function cF_wrapper
+end subroutine cFuncProd$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in SCALAR_TYPES
-subroutine SFuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_SFuncProd$T')
+subroutine cSFuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_SFuncProd$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -653,10 +653,10 @@ subroutine SFuncProd$T(pMesh, pY, pX, pF, env) bind(C, name='SR_SFuncProd$T')
   call Unwrap(x, pX); call Unwrap(y, pY)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  call SFuncProd(mesh, y, x, f_wrapper)
+  call SFuncProd(mesh, y, x, cF_wrapper)
 
 contains
-  pure function f_wrapper(r, x) result(Fx)
+  pure function cF_wrapper(r, x) result(Fx)
     ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: r(:)
     $typename, intent(in) :: x(:)
@@ -666,8 +666,8 @@ contains
     call f(int(size(r), kind=c_int), r, &
       & int(size(x), kind=c_int), Fx, x, env)
 
-  end function f_wrapper
-end subroutine SFuncProd$T
+  end function cF_wrapper
+end subroutine cSFuncProd$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -676,7 +676,7 @@ end subroutine SFuncProd$T
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
+subroutine cLinSolve$T(pMesh, pX, pB, pMatVec, env, &
     & eSolver, ePrecond, pMatVec_H, env_H) bind(C, name='SR_LinSolve$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
@@ -747,21 +747,21 @@ subroutine LinSolve$T(pMesh, pX, pB, pMatVec, env, &
   allocate(z, Az, f, mold=x)
   call Fill(mesh, z, 0.0_dp)
   call Fill(mesh, Az, 0.0_dp)
-  call MatVec_wrapper(mesh, f, z, Params)
+  call cMatVec_wrapper(mesh, f, z, Params)
   call Set(mesh, Az, f)
   call Sub(mesh, f, b, Az)
 
   if (eSolver == CG) then
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'CG')
-    call Solve_CG(mesh, x, f, MatVec_wrapper, Params, Params)
+    call Solve_CG(mesh, x, f, cMatVec_wrapper, Params, Params)
   else
     call Params%Init(1.0D-8, 1.0D-8, 2000, 'LSMR')
-    call Solve_CG(mesh, x, f, MatVec_wrapper, Params, Params)
-    !call Solve_LSMR(mesh, x, f, MatVec_wrapper, Params, Params)
+    call Solve_CG(mesh, x, f, cMatVec_wrapper, Params, Params)
+    !call Solve_LSMR(mesh, x, f, cMatVec_wrapper, Params, Params)
   end if
 
 contains
-  subroutine MatVec_wrapper(mesh_, Ax, x, env_)
+  subroutine cMatVec_wrapper(mesh_, Ax, x, env_)
     ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(in) :: mesh_
     $typename, intent(in), target :: x(:,:)
@@ -782,8 +782,8 @@ contains
     call MatVec(pMesh, pAx, pX, env)
     call Sub(mesh, Ax, Ax, Az)
 
-  end subroutine MatVec_wrapper
-end subroutine LinSolve$T
+  end subroutine cMatVec_wrapper
+end subroutine cLinSolve$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -792,7 +792,8 @@ end subroutine LinSolve$T
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine ApplyBCs$T(pMesh, pU, BCmask, alpha, beta, gamma) bind(C, name='SR_ApplyBCs$T')
+subroutine cApplyBCs$T(pMesh, pU, BCmask, &
+      & alpha, beta, gamma) bind(C, name='SR_ApplyBCs$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   integer(c_int), intent(in), value :: BCmask
@@ -816,13 +817,13 @@ subroutine ApplyBCs$T(pMesh, pU, BCmask, alpha, beta, gamma) bind(C, name='SR_Ap
     call FDM_ApplyBCs(mesh, iBC, u, alpha, beta, gamma)
   end do
 
-end subroutine ApplyBCs$T
+end subroutine cApplyBCs$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine Grad$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
+subroutine cGrad$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -837,13 +838,13 @@ subroutine Grad$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
 
   call FDM_Gradient_Central(mesh, vVec, lambda, u)
 
-end subroutine Grad$T
+end subroutine cGrad$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine Div$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
+subroutine cDiv$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -858,13 +859,13 @@ subroutine Div$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
 
   call FDM_Divergence_Central(mesh, v, lambda, uVec)
 
-end subroutine Div$T
+end subroutine cDiv$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine Conv$T(pMesh, pV, lambda, pU, pA) bind(C, name='SR_Conv$T')
+subroutine cConv$T(pMesh, pV, lambda, pU, pA) bind(C, name='SR_Conv$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -879,13 +880,13 @@ subroutine Conv$T(pMesh, pV, lambda, pU, pA) bind(C, name='SR_Conv$T')
 
   call FDM_Convection_Central(mesh, v, lambda, u, a)
 
-end subroutine Conv$T
+end subroutine cConv$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine DivGrad$T(pMesh, pV, lambda, pU) bind(C, name='SR_DivGrad$T')
+subroutine cDivGrad$T(pMesh, pV, lambda, pU) bind(C, name='SR_DivGrad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -904,17 +905,17 @@ subroutine DivGrad$T(pMesh, pV, lambda, pU) bind(C, name='SR_DivGrad$T')
     call FDM_Laplacian_Central(mesh, vVec, lambda, uVec)
   else
     call Unwrap(u, pU); call Unwrap(v, pV)
-    
+
     call FDM_Laplacian_Central(mesh, v, lambda, u)
   end if
 
-end subroutine DivGrad$T
+end subroutine cDivGrad$T
 #$end for
 
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine DivKGrad$T(pMesh, pV, lambda, pK, pU) bind(C, name='SR_DivKGrad$T')
+subroutine cDivKGrad$T(pMesh, pV, lambda, pK, pU) bind(C, name='SR_DivKGrad$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
@@ -929,7 +930,7 @@ subroutine DivKGrad$T(pMesh, pV, lambda, pK, pU) bind(C, name='SR_DivKGrad$T')
 
   call FDM_DivWGrad_Central(mesh, v, lambda, k, u)
 
-end subroutine DivKGrad$T
+end subroutine cDivKGrad$T
 #$end for
 
 end module StormRuler_API

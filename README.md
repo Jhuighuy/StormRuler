@@ -2,7 +2,7 @@
 # ♂StormRuler♂ — A very high order CFD solver
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 **StormRuler** is a very high order multidimensional CFD solver, 
-written in Fortran 2008 and C++17.
+written in Fortran 2018 and C11.
 
 <!----------------------------------------------------------------->
 ## Compiling

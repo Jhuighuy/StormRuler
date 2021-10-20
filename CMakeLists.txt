@@ -64,9 +64,9 @@ endif()
 
 # TODO: add compile options based on Debug/Release configurations.
 target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -O0>)
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -Ofast>)
 target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -O0>)
+  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -Ofast>)
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(
     StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-fcheck=all>)

@@ -798,27 +798,17 @@ function cRCI_LinSolve$T(pMesh, pX, pB, eSolver, ePrecond, &
   integer(c_int) :: request
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  enum, bind(C)
-    enumerator :: eDone = 1000, eMatVec, eMatVec_H
-  end enum
-
-  type :: ctThreadEnv
-    type(c_ptr) :: pMesh
-    type(c_ptr) :: pX, pB
-    integer(c_int) :: eSolver, ePrecond
-    type(c_ptr), pointer :: ppAy, ppY
-    integer(c_int) :: request
-  end type ctThreadEnv
-
+  !! --------------------------------------------------------------- !!
   !! Pthread API.
+  !! --------------------------------------------------------------- !!
   type, bind(C) :: ctPthread
     integer(c_int) :: hidden(2)
   end type ctPthread
   interface
     subroutine cPthreadCreate(pThread, pAttr, pFunc, env) bind(C, name='pthread_create')
-      import :: c_ptr, c_funptr
+      import :: c_ptr, c_funptr, ctPthread
       ! <<<<<<<<<<<<<<<<<<<<<<
-      type(c_ptr), intent(in), value :: pThread
+      type(ctPthread), intent(in) :: pThread
       type(c_ptr), intent(in), value :: pAttr
       type(c_funptr), intent(in), value :: pFunc
       type(c_ptr), intent(in), value :: env
@@ -833,40 +823,56 @@ function cRCI_LinSolve$T(pMesh, pX, pB, eSolver, ePrecond, &
     end subroutine cPthreadJoin
   end interface
 
+  !! --------------------------------------------------------------- !!
   !! Unix semaphores API.
+  !! --------------------------------------------------------------- !!
+  type, bind(C) :: ctSem
+    integer(c_int) :: hidden(100)
+  end type ctSem
   interface
     subroutine cSemInit(pSem, shared, value) bind(C, name='sem_init')
-      import :: c_int, c_ptr
+      import :: c_int, ctSem
       ! <<<<<<<<<<<<<<<<<<<<<<
-      type(c_ptr), intent(in), value :: pSem
+      type(ctSem), intent(in) :: pSem
       integer(c_int), intent(in), value :: shared, value
       ! >>>>>>>>>>>>>>>>>>>>>>
     end subroutine cSemInit
     subroutine cSemClose(pSem) bind(C, name='sem_close')
-      import :: c_ptr
+      import :: ctSem
       ! <<<<<<<<<<<<<<<<<<<<<<
-      type(c_ptr), intent(in), value :: pSem
+      type(ctSem), intent(in) :: pSem
       ! >>>>>>>>>>>>>>>>>>>>>>
     end subroutine cSemClose
     subroutine cSemPost(pSem) bind(C, name='sem_post')
-      import :: c_ptr
+      import :: ctSem
       ! <<<<<<<<<<<<<<<<<<<<<<
-      type(c_ptr), intent(in), value :: pSem
+      type(ctSem), intent(in) :: pSem
       ! >>>>>>>>>>>>>>>>>>>>>>
     end subroutine cSemPost
     subroutine cSemWait(pSem) bind(C, name='sem_wait')
-      import :: c_ptr
+      import :: ctSem
       ! <<<<<<<<<<<<<<<<<<<<<<
-      type(c_ptr), intent(in), value :: pSem
+      type(ctSem), intent(in) :: pSem
       ! >>>>>>>>>>>>>>>>>>>>>>
     end subroutine cSemWait
   end interface
+  
+  enum, bind(C)
+    enumerator :: eDone = 1000, eMatVec, eMatVec_H
+  end enum
+
+  type :: ctThreadEnv
+    type(c_ptr) :: pMesh
+    type(c_ptr) :: pX, pB
+    integer(c_int) :: eSolver, ePrecond
+    type(c_ptr), pointer :: ppAy, ppY
+    integer(c_int) :: request
+  end type ctThreadEnv
 
   logical, save :: initCall = .true.
   type(ctThreadEnv), save :: threadEnv
-  type(ctPthread), target, save :: thread
-  integer(c_size_t), target, save :: semYield(100), semAwait(100)
-  type(c_ptr), target :: threadRetVal
+  type(ctPthread), save :: thread
+  type(ctSem), save :: semYield, semAwait
 
   if (initCall) then
     initCall = .false.
@@ -878,23 +884,23 @@ function cRCI_LinSolve$T(pMesh, pX, pB, eSolver, ePrecond, &
     threadEnv%ppAy => ppAy; threadEnv%ppY => ppY 
 
     ! Create the semaphores and launch the thread.
-    call cSemInit(c_loc(semYield), 0, 0)
-    call cSemInit(c_loc(semAwait), 0, 0)
-    call cPthreadCreate(c_loc(thread), c_null_ptr, c_funloc(cThreadFunc), c_null_ptr)
+    call cSemInit(semYield, 0, 0)
+    call cSemInit(semAwait, 0, 0)
+    call cPthreadCreate(thread, c_null_ptr, c_funloc(cThreadFunc), c_null_ptr)
   end if
 
   ! Await for the thread to yield.
-  call cSemPost(c_loc(semYield))
-  call cSemWait(c_loc(semAwait))
+  call cSemPost(semYield)
+  call cSemWait(semAwait)
 
   ! Read the request.
   request = threadEnv%request
 
   if (request == eDone) then
     ! Join the thread and close the semaphores.
-    call cPthreadJoin(thread, c_loc(threadRetVal))
-    call cSemClose(c_loc(semYield))
-    call cSemClose(c_loc(semAwait))
+    call cPthreadJoin(thread, c_null_ptr)
+    call cSemClose(semYield)
+    call cSemClose(semAwait)
 
     ! Reset the state.
     initCall = .true.
@@ -907,15 +913,15 @@ contains
     ! >>>>>>>>>>>>>>>>>>>>>>
 
     print *, 'Hello thread!'
-    call cSemWait(c_loc(semYield))
+    call cSemWait(semYield)
 
     call cLinSolve$T(threadEnv%pMesh, threadEnv%pX, threadEnv%pB, &
       & c_funloc(cMatVecFromThread), c_null_ptr, &
       & threadEnv%eSolver, threadEnv%ePrecond, &
-      & c_funloc(cMatVecFromThread), c_null_ptr)
+      & c_funloc(cMatVec_H_FromThread), c_null_ptr)
 
     threadEnv%request = eDone
-    call cSemPost(c_loc(semAwait))
+    call cSemPost(semAwait)
 
     print *, 'Bye thread!'
 
@@ -930,10 +936,24 @@ contains
     threadEnv%request = eMatVec
     threadEnv%ppAy = pAx; threadEnv%ppY = pX
 
-    call cSemPost(c_loc(semAwait))
-    call cSemWait(c_loc(semYield))
+    call cSemPost(semAwait)
+    call cSemWait(semYield)
 
   end subroutine cMatVecFromThread
+  subroutine cMatVec_H_FromThread(pMesh, pAx, pX, env) bind(C)
+    ! <<<<<<<<<<<<<<<<<<<<<<
+    type(c_ptr), intent(in), value :: pMesh
+    type(c_ptr), intent(in), value :: pAx, pX
+    type(c_ptr), intent(in), value :: env
+    ! >>>>>>>>>>>>>>>>>>>>>>
+
+    threadEnv%request = eMatVec_H
+    threadEnv%ppAy = pAx; threadEnv%ppY = pX
+
+    call cSemPost(semAwait)
+    call cSemWait(semYield)
+
+  end subroutine cMatVec_H_FromThread
 end function cRCI_LinSolve$T
 #$end for
 

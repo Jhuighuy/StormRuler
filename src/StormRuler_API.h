@@ -306,9 +306,9 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
     SR_eSolver solver, SR_ePrecond precond, 
     SR_tMatVecFuncC MatVec_H, void* env_H);
 #if SR_C11
-#define SR_LinSolve(mesh, x, b, MatVec, env, Solver, Precond, ...) \
+#define SR_LinSolve(mesh, x, b, MatVec, env, solver, precond, ...) \
   SR_FIELD_GENERIC(x, SR_LinSolve)( \
-    mesh, x, b, MatVec, env, Solver, Precond, ##__VA_ARGS__)
+    mesh, x, b, MatVec, env, solver, precond, ##__VA_ARGS__)
 #endif
 /// @}
 
@@ -322,8 +322,16 @@ typedef enum {
 SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,
     SR_tFieldR x, SR_tFieldR b, 
     SR_eSolver solver, SR_ePrecond precond, 
-    SR_tFieldR* Ay, SR_tFieldR* y);
-#define SR_RCI_LinSolve SR_RCI_LinSolveR
+    SR_tFieldR* pAy, SR_tFieldR* pY);
+SR_API SR_eRequest SR_RCI_LinSolveC(SR_tMesh mesh,
+    SR_tFieldC x, SR_tFieldC b, 
+    SR_eSolver solver, SR_ePrecond precond, 
+    SR_tFieldC* pAy, SR_tFieldC* pY);
+#if SR_C11
+#define SR_RCI_LinSolve(mesh, x, b, solver, precond, pAy, pY) \
+  SR_FIELD_GENERIC(x, SR_RCI_LinSolve)( \
+    mesh, x, b, solver, precond, pAy, pY)
+#endif
 /// @}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //

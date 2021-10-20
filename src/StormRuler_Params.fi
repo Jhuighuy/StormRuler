@@ -27,6 +27,14 @@
 
 #$let DEBUG = True
 
+#$if not defined('UNIX')
+#$let UNIX = False
+#$end if
+
+#$if not defined('WIN32')
+#$let WIN32 = False
+#$end if
+
 #$if not defined('HAS_OpenMP')
 #$let HAS_OpenMP = False
 #$end if

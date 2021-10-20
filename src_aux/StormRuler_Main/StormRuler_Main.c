@@ -30,6 +30,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -38,6 +40,7 @@
 static double tau = 2*(M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
+  sem_t s;
   //*Wc = 0.5*(1.0 - (*c)*(*c));
   //*Wc = (*Wc)*(*Wc);
   *Wc = -(*c)*(1.0 - (*c)*(*c));

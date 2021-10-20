@@ -42,6 +42,12 @@ file(GLOB C_SOURCES "./*.c")
 
 # Build a list of Fortiel options.
 set(Fortiel_DEFINES "")
+if(UNIX)
+  list(APPEND Fortiel_DEFINES "-DUNIX=True")
+endif()
+if(WIN32)
+  list(APPEND Fortiel_DEFINES "-DWIN32=True")
+endif()
 if(OpenMP_Fortran_ENABLED)
   list(APPEND Fortiel_DEFINES "-DHAS_OpenMP=True")
 endif()

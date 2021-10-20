@@ -63,10 +63,12 @@ endif()
 #  $<$<COMPILE_LANGUAGE:C>:$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_RELEASE}>>
 
 # TODO: add compile options based on Debug/Release configurations.
-target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -Ofast>)
-target_compile_options(
-  StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -Ofast>)
+if(NOT WIN32)
+  target_compile_options(
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -Ofast>)
+  target_compile_options(
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -Ofast>)
+endif()
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(
     StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-fcheck=all>)

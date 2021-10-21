@@ -63,6 +63,7 @@
 
 #define SR_INTEGER int
 #define SR_REAL double
+#define SR_STRING const char*
 
 #if SR_C11
 #include <complex.h>

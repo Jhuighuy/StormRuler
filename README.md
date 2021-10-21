@@ -131,25 +131,21 @@ although some of them are not parallelized.
 * C/C++ API:
   - [x] Pure C API,
   - [ ] Untyped C API,
-  - [ ] Coroutine C API,
-  - [ ] RCI C solver API,
+  - [x] Unified Fortran solver API,
+  - [x] Unified Fortran solver RCI API,
+  - [ ] PThread and semaphores for Windows,
+  - [x] Unified RCI C solver API,
+  - [ ] C string evaluation API,
   - [ ] MATLAB API,
-  - [ ] Lua API,
-  - [ ] C++17 API with own BLAS implementation (with expression templates),
-  - [ ] Pure C++11/C++14 API.
+  - [ ] Lua API.
 
 * General architecture:
-  - [ ] Move kernel evaluation from `tMesh` to the base class (`tEnv`?),
-  - [ ] Use the base class in the BLAS/Auxiliary solvers for `env`,
   - [ ] Custom threading (without OpenMP on Fortran level),
   - [ ] MPI support..
 
-* Lightweight tensor arithmetics:
-  - [ ] Fortran implementation,
-  - [ ] C/C++ API.
-
 * New differential operators and boundary conditions:
-  - [x] Cylindrical symmetry for 2D domains.
+  - [x] Cylindrical symmetry for 2D domains,
+  - [ ] More special boundary conditions,
   - [ ] Godunov/WENO linear convection operator,
   - [ ] Godunov/WENO nonlinear convection operator,
   - [ ] Riemann solvers, Euler equations...

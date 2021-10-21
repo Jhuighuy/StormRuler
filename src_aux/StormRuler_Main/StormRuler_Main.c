@@ -35,7 +35,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static double tau = 2*(M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
+static double tau = (M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   //*Wc = 0.5*(1.0 - (*c)*(*c));
@@ -95,26 +95,13 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, RHS, tau, w_hat);
 
   SR_Set(mesh, c_hat, c);
-#if 0
-  SR_LinSolve(mesh, c_hat, RHS, CahnHilliard_MatVec, NULL,
-    SR_eCG, SR_ePrecond_None, NULL, NULL);
+#if 1
+  SR_LinSolve(mesh, "CG", "", c_hat, RHS, CahnHilliard_MatVec, NULL, NULL, NULL);
 #else
   for (SR_tFieldR Qc, c; SR_RCI_LinSolve(
-      mesh, c_hat, RHS, SR_eCG, SR_ePrecond_None, &Qc, &c) != SR_eDone;) {
+      mesh, c_hat, RHS, "CG", "", &Qc, &c) != SR_eDone;) {
     
-    SR_tFieldR tmp = SR_Alloc_Mold(c);
-
-    SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
-    SR_ApplyBCs(mesh, c, 3, SR_DIRICHLET(1.0));
-    
-    SR_Fill(mesh, tmp, 0.0, 0.0);
-    SR_DivGrad(mesh, tmp, 1.0, c);
-    
-    SR_Scale(mesh, Qc, c, 1.0 - 2.0*tau*sigma);
-    SR_ApplyBCs(mesh, tmp, SR_ALL, SR_PURE_NEUMANN);
-    SR_DivGrad(mesh, Qc, tau*Gamma, tmp);
-
-    SR_Free(tmp);
+    CahnHilliard_MatVec(Qc, c, NULL);
   }
 #endif
 
@@ -134,7 +121,7 @@ static void Poisson_MatVec(SR_tMesh mesh,
   
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
+  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(10.0));
 
   SR_Fill(mesh, Lp, 0.0, 0.0);
   SR_DivGrad(mesh, Lp, 1.0, p);
@@ -200,24 +187,17 @@ static void NavierStokes_Step(SR_tMesh mesh,
 
   SR_Set(mesh, p_hat, p);
 #if 0
-  SR_LinSolve(mesh, p_hat, RHS, Poisson_MatVec, NULL,
-    SR_eMINRES, SR_ePrecond_None, NULL, NULL);
+  SR_LinSolve(mesh, "CG", "", p_hat, RHS, Poisson_MatVec, NULL, NULL, NULL);
 #else
-  for (SR_tFieldR Lp, p; SR_RCI_LinSolve(
-      mesh, p_hat, RHS, SR_eCG, SR_ePrecond_None, &Lp, &p) != SR_eDone;) {
-    
-    SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-    SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-    SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
-
-    SR_Fill(mesh, Lp, 0.0, 0.0);
-    SR_DivGrad(mesh, Lp, 1.0, p);
+  for (SR_tFieldR Lp, p; SR_RCI_LinSolve(mesh, 
+      "CG", "", p_hat, RHS, &Lp, &p) != NULL;) {
+    Poisson_MatVec(mesh, Lp, p, NULL);
   }
 #endif
 
   SR_ApplyBCs(mesh, p_hat, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p_hat, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p_hat, 4, SR_DIRICHLET(3.0));
+  SR_ApplyBCs(mesh, p_hat, 4, SR_DIRICHLET(10.0));
 
   SR_Grad(mesh, v_hat, tau/rho, p_hat);
 

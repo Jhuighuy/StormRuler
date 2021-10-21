@@ -27,9 +27,8 @@
 
 #include "StormRuler_Params.h"
 
-#include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <assert.h>
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -280,57 +279,37 @@ typedef void(*SR_tPrecondFuncS)(SR_tMesh mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-typedef enum {
-  SR_eAuto = 200,
-  SR_eCG, SR_eBiCGStab, 
-  SR_eCheby, SR_eChebyCG, 
-  SR_eMINRES, SR_eGMRES,
-  SR_eLSQR, SR_eLSMR,
-} SR_eSolver;
-
-typedef enum {
-  SR_ePrecond_None = 300,
-  SR_ePrecond_Jacobi,
-  SR_ePrecond_LU_SGS,
-} SR_ePrecond;
-
 /// @{
 SR_API void SR_LinSolveR(SR_tMesh mesh,
+    SR_STRING method, SR_STRING precondMethod,
     SR_tFieldR x, SR_tFieldR b, 
     SR_tMatVecFuncR MatVec, void* env,
-    SR_eSolver solver, SR_ePrecond precond, 
     SR_tMatVecFuncR MatVec_H, void* env_H);
 SR_API void SR_LinSolveC(SR_tMesh mesh,
+    SR_STRING method, SR_STRING precondMethod,
     SR_tFieldC x, SR_tFieldC b, 
     SR_tMatVecFuncC MatVec, void* env,
-    SR_eSolver solver, SR_ePrecond precond, 
     SR_tMatVecFuncC MatVec_H, void* env_H);
 #if SR_C11
-#define SR_LinSolve(mesh, x, b, MatVec, env, solver, precond, ...) \
+#define SR_LinSolve(mesh, method, precondMethod, x, b, MatVec, env, ...) \
   SR_FIELD_GENERIC(x, SR_LinSolve)( \
-    mesh, x, b, MatVec, env, solver, precond, ##__VA_ARGS__)
+    mesh, method, precondMethod, x, b, MatVec, env, ##__VA_ARGS__)
 #endif
 /// @}
 
-typedef enum {
-  SR_eDone = 1000,
-  SR_eMatVec,
-  SR_eMatVec_H,
-} SR_eRequest;
-
 /// @{
-SR_API SR_eRequest SR_RCI_LinSolveR(SR_tMesh mesh,
+SR_API SR_STRING SR_RCI_LinSolveR(SR_tMesh mesh,
+    SR_STRING method, SR_STRING precondMethod,
     SR_tFieldR x, SR_tFieldR b, 
-    SR_eSolver solver, SR_ePrecond precond, 
     SR_tFieldR* pAy, SR_tFieldR* pY);
-SR_API SR_eRequest SR_RCI_LinSolveC(SR_tMesh mesh,
+SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
+    SR_STRING method, SR_STRING precondMethod,
     SR_tFieldC x, SR_tFieldC b, 
-    SR_eSolver solver, SR_ePrecond precond, 
     SR_tFieldC* pAy, SR_tFieldC* pY);
 #if SR_C11
-#define SR_RCI_LinSolve(mesh, x, b, solver, precond, pAy, pY) \
+#define SR_RCI_LinSolve(mesh, method, precondMethod, x, b, pAy, pY) \
   SR_FIELD_GENERIC(x, SR_RCI_LinSolve)( \
-    mesh, x, b, solver, precond, pAy, pY)
+    mesh, method, precondMethod, x, b, pAy, pY)
 #endif
 /// @}
 

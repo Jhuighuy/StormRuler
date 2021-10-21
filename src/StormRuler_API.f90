@@ -40,16 +40,7 @@ use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
-use StormRuler_Solvers_Chebyshev, only: Solve_Chebyshev
-use StormRuler_Solvers_MINRES, only: Solve_MINRES
-use StormRuler_Solvers_GMRES, only: Solve_GMRES
-use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
-#$for type_, _ in SCALAR_TYPES
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
-#$end for
-use StormRuler_Solvers_Precond, only: &
-  & Precondition_Jacobi, Precondition_LU_SGS
+use StormRuler_Solvers_Unified, only: LinSolve, LinSolve_RCI
 
 use StormRuler_FDM_BCs, only: FDM_ApplyBCs
 use StormRuler_FDM_Operators, only: &
@@ -60,7 +51,7 @@ use StormRuler_FDM_Operators, only: &
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_long, &
-  & c_size_t, c_ptr, c_funptr, c_null_ptr, c_null_funptr, &
+  & c_size_t, c_ptr, c_funptr, c_null_ptr, c_null_funptr, c_null_char, &
   & c_loc, c_funloc, c_f_pointer, c_f_procpointer, c_associated
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -688,18 +679,18 @@ end subroutine cSFuncProd$T
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cLinSolve$T(pMesh, pX, pB, pMatVec, pEnv, &
-    & solverType, precondType, pMatVec_H, pEnv_H) !bind(C, name='SR_LinSolve$T')
+subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
+    & pX, pB, pMatVec, pEnv, pMatVec_H, pEnv_H) bind(C, name='SR_LinSolve$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
+  type(c_ptr), intent(in), value :: pMethod, pPrecondMethod
   type(c_ptr), intent(in), value :: pX, pB
   type(c_funptr), intent(in), value :: pMatVec, pMatVec_H
   type(c_ptr), intent(in), value :: pEnv, pEnv_H
-  integer(c_int), intent(in), value :: solverType, precondType
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   abstract interface
-    subroutine ctMatVec(pMesh, pAx, pX, pEnv) !bind(C)
+    subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
       import :: c_ptr, dp
       ! <<<<<<<<<<<<<<<<<<<<<<
       type(c_ptr), intent(in), value :: pMesh
@@ -709,76 +700,23 @@ subroutine cLinSolve$T(pMesh, pX, pB, pMatVec, pEnv, &
     end subroutine ctMatVec
   end interface
 
-  enum, bind(C)
-    enumerator :: eAuto = 200, eCG, eBiCGStab, &
-      & eCheby, eChebyCG, eMINRES, eGMRES, eLSQR, eLSMR
-  end enum
-
-  enum, bind(C)
-    enumerator :: ePrecond_None = 300, &
-      & ePrecond_Jacobi, ePrecond_LU_SGS
-  end enum
-
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), b(:,:), z(:,:), Az(:,:), f(:,:)
+  character(len=:), pointer :: method, precondMethod
+  $typename, pointer :: x(:,:), b(:,:)
   procedure(ctMatVec), pointer :: MatVec, MatVec_H
   type(tConvParams) :: params
-  procedure(tPrecondFunc$T), pointer :: Precond, Precond_T
-
-  ! Select the preconditioner.
-  Precond => null()
-  Precond_T => null()
-  select case(precondType)
-    case(ePrecond_None)
-    case(ePrecond_Jacobi)
-      Precond => Precondition_Jacobi
-      Precond_T => Precondition_Jacobi
-    case(ePrecond_LU_SGS)
-      Precond => Precondition_LU_SGS
-      Precond_T => Precondition_LU_SGS
-    case default
-      error stop error_code
-  end select
 
   call Unwrap(mesh, pMesh)
+  call Unwrap(method, pMethod)
+  call Unwrap(precondMethod, pPrecondMethod)
   call Unwrap(x, pX); call Unwrap(b, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
-  if (.not.c_associated(pMatVec_H, c_null_funptr)) then
+  if (c_associated(pMatVec_H)) then
     call c_f_procpointer(cptr=pMatVec_H, fptr=MatVec_H)
   end if
 
-  ! Fix the possible non-uniform operator.
-  allocate(z, Az, f, mold=x)
-  call Fill(mesh, z, 0.0_dp)
-  call Fill(mesh, Az, 0.0_dp)
-  call cMatVec(mesh, f, z, Params)
-  call Set(mesh, Az, f)
-  call Sub(mesh, f, b, Az)
-
-  ! Launch the solver.
   call params%Init(1.0D-8, 1.0D-8, 2000)
-  select case(solverType)
-    case(eCG)
-      params%Name = 'CG'
-      call Solve_CG(mesh, x, f, cMatVec, params, params)
-    case(eBiCGStab)
-      params%Name = 'BiCGStab'
-      call Solve_BiCGStab(mesh, x, f, cMatVec, params, params)
-    case(eMINRES)
-      params%Name = 'MINRES'
-      call Solve_MINRES(mesh, x, f, cMatVec, params, params)
-    case(eGMRES)
-      params%Name = 'GMRES'
-      call Solve_GMRES(mesh, x, f, cMatVec, params, params)
-    case(eLSQR)
-      params%Name = 'LSQR'
-      call Solve_LSQR(mesh, x, f, cMatVec, params, params)
-    case(eLSMR)
-      params%Name = 'LSMR'
-      call Solve_LSMR(mesh, x, f, cMatVec, params, params)
-    case default
-      error stop error_code
-  end select
+  call LinSolve(mesh, method, precondMethod, x, b, cMatVec, params, params)
 
 contains
   subroutine cMatVec(mesh_, Ax, x, env_)
@@ -795,8 +733,8 @@ contains
     pX_C%mData => x; pAx_C%mData => Ax
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
+    ! TODO: pass real mesh and env.
     call MatVec(pMesh, pAx, pX, pEnv)
-    call Sub(mesh, Ax, Ax, Az)
 
   end subroutine cMatVec
 end subroutine cLinSolve$T
@@ -805,176 +743,58 @@ end subroutine cLinSolve$T
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 !! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% !!
 #$for T, typename in [SCALAR_TYPES[0]]
-function cRCI_LinSolve$T(pMesh, pX, pB, solverType, precondType, &
-    & pAy, pY) result(request) bind(C, name='SR_RCI_LinSolve$T')
+function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
+    & pX, pB, pAy, pY) result(pRequest) bind(C, name='SR_RCI_LinSolve$T')
   ! <<<<<<<<<<<<<<<<<<<<<<
   type(c_ptr), intent(in), value :: pMesh
+  type(c_ptr), intent(in), value :: pMethod, pPrecondMethod
   type(c_ptr), intent(in), value :: pX, pB
-  integer(c_int), intent(in), value :: solverType, precondType
-  type(c_ptr), intent(inout), target :: pAy, pY
-  integer(c_int) :: request
+  type(c_ptr), intent(inout) :: pAy, pY
+  type(c_ptr) :: pRequest
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  enum, bind(C)
-    enumerator :: eDone = 1000, eMatVec, eMatVec_H
-  end enum
+  class(tMesh), pointer :: mesh
+  character(len=:), pointer :: method, precondMethod
+  $typename, pointer :: x(:,:), b(:,:), Ay(:,:), y(:,:)
 
-  !! --------------------------------------------------------------- !!
-  !! PThread API.
-  !! --------------------------------------------------------------- !!
-  type, bind(C) :: ctPThread
-    integer(c_long_long) :: hidden
-  end type ctPThread
-  interface
-    subroutine cPThreadCreate(pThread, pAttr, pFunc, env) bind(C, name='pthread_create')
-      import :: c_ptr, c_funptr, ctPThread
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctPThread), intent(in) :: pThread
-      type(c_ptr), intent(in), value :: pAttr
-      type(c_funptr), intent(in), value :: pFunc
-      type(c_ptr), intent(in), value :: env
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cPThreadCreate
-    subroutine cPThreadJoin(pThread, pRetval) bind(C, name='pthread_join')
-      import :: c_ptr, ctPThread
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctPThread), intent(in), value :: pThread
-      type(c_ptr), intent(in), value :: pRetval
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cPThreadJoin
-  end interface
+  type(tConvParams), save :: params
+  character(len=:), allocatable, target, save :: sRequest
 
-  !! --------------------------------------------------------------- !!
-  !! Unix semaphores API.
-  !! --------------------------------------------------------------- !!
-  type, bind(C) :: ctSem
-    integer(c_size_t) :: hidden(2)
-  end type ctSem
-  interface
-    subroutine cSemInit(pSem, shared, value) bind(C, name='sem_init')
-      import :: c_int, ctSem
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctSem), intent(in) :: pSem
-      integer(c_int), intent(in), value :: shared, value
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cSemInit
-    subroutine cSemClose(pSem) bind(C, name='sem_close')
-      import :: ctSem
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctSem), intent(in) :: pSem
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cSemClose
-    subroutine cSemPost(pSem) bind(C, name='sem_post')
-      import :: ctSem
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctSem), intent(in) :: pSem
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cSemPost
-    subroutine cSemWait(pSem) bind(C, name='sem_wait')
-      import :: ctSem
-      ! <<<<<<<<<<<<<<<<<<<<<<
-      type(ctSem), intent(in) :: pSem
-      ! >>>>>>>>>>>>>>>>>>>>>>
-    end subroutine cSemWait
-  end interface
+  ! Unwrap arguments and 
+  ! initialize parameters on the first call only.
+  if (.not.allocated(sRequest)) then
+    call Unwrap(mesh, pMesh)
+    call Unwrap(method, pMethod)
+    call Unwrap(precondMethod, pPrecondMethod)
+    call Unwrap(x, pX); call Unwrap(b, pB)
+    call params%Init(1.0D-8, 1.0D-8, 2000)
+  end if
+
+  ! Get the request.
+  sRequest = LinSolve_RCI( &
+    & mesh, method, precondMethod, x, b, params, Ay, y)
+
+  if (sRequest == 'Done') then
+    
+    ! We are done!
+    deallocate(sRequest)
+    pRequest = c_null_ptr
   
-  type(c_ptr), save :: spMesh
-  type(c_ptr), save :: spX, spB
-  integer(c_int), save :: sSolverType, sPrecondType
-  type(c_ptr), save :: spAy, spY
-  integer(c_int), save :: sRequest
+  else
 
-  logical, save :: sFirstCall = .true.
-  type(ctPThread), save :: sThread
-  type(ctSem), save :: sSemYield, sSemAwait
+    ! Pass the request.
+    sRequest = sRequest//c_null_char
+    pRequest = c_loc(sRequest)
 
-  if (sFirstCall) then
-    ! Save the arguments.
-    spMesh = pMesh
-    spX = pX; spB = pB
-    sSolverType = solverType; sPrecondType = precondType
-
-    ! Create the semaphores and launch the compute thread.
-    sFirstCall = .false.
-    call cSemInit(sSemYield, 0, 0)
-    call cSemInit(sSemAwait, 0, 0)
-    call cPThreadCreate(sThread, c_null_ptr, c_funloc(cThreadFunc), c_null_ptr)
+    ! Pass the request arguments.
+    block
+      type(tField_C$T), target, save :: csY, csAy
+  
+      csAy%mData => Ay; csY%mData => y
+      pAy = c_loc(csAy); pY = c_loc(csY)
+    end block
   end if
 
-  ! ----------------------
-  ! Await for the compute thread to yield.
-  ! ----------------------
-  call cSemPost(sSemYield)
-  call cSemWait(sSemAwait)
-
-  ! ----------------------
-  ! Read the request.
-  ! ----------------------
-  request = sRequest
-  pAy = spAy; pY = spY
-
-  ! ----------------------
-  ! Clean-up on the exit request.
-  ! ----------------------
-  if (request == eDone) then
-    sFirstCall = .true.
-    call cPThreadJoin(sThread, c_null_ptr)
-    call cSemClose(sSemYield)
-    call cSemClose(sSemAwait)
-  end if
-
-contains
-  subroutine cThreadFunc(env) bind(C)
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    type(c_ptr), intent(in), value :: env
-    ! >>>>>>>>>>>>>>>>>>>>>>
-
-    print *, 'Entering the RCI thread function..'
-
-    ! ----------------------
-    ! Wait for the main thread to resume.
-    ! ----------------------
-    call cSemWait(sSemYield)
-
-    ! ----------------------
-    ! Enter the computational routine.
-    ! ----------------------
-    call cLinSolve$T(spMesh, spX, spB, &
-      & c_funloc(cMatVecFromThread), ceMatVec, &
-      & sSolverType, sPrecondType, &
-      & c_funloc(cMatVecFromThread), ceMatVec_H)
-
-    ! ----------------------
-    ! Pass the exit request to the main thread and leave.
-    ! ----------------------
-    sRequest = eDone
-    call cSemPost(sSemAwait)
-
-    print *, 'Leaving the RCI thread function..'
-
-  end subroutine cThreadFunc
-  subroutine cMatVecFromThread(pMesh, pAy, pY, pType) !bind(C)
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    type(c_ptr), intent(in), value :: pMesh
-    type(c_ptr), intent(in), value :: pAy, pY
-    type(c_ptr), intent(in), value :: pType
-    ! >>>>>>>>>>>>>>>>>>>>>>
-
-    ! ----------------------
-    ! Pass the 'MatVec' or 'MatVec_H' request 
-    ! and field pointers to the main thread and yield.
-    ! ----------------------
-    if (c_associated(pType, ceMatVec)) then
-      sRequest = eMatVec
-    else if (c_associated(pType, ceMatVec_H)) then
-      sRequest = eMatVec_H
-    end if
-    spAy = pAy; spY = pY
-
-    call cSemPost(sSemAwait)
-    call cSemWait(sSemYield)
-
-  end subroutine cMatVecFromThread
 end function cRCI_LinSolve$T
 #$end for
 

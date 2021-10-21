@@ -39,6 +39,10 @@ function SR = StormRuler_Matlab()
   SR.Alloc_Mold = @SR_Alloc_Mold;
   SR.Free = @SR_Free;
 
+  SR.IO_Begin = @SR_IO_Begin;
+  SR.IO_Add = @SR_IO_Add;
+  SR.IO_Flush = @SR_IO_Flush;
+
   SR.Fill = @SR_Fill;
   SR.Fill_Random = @SR_Fill_Random;
   SR.Set = @SR_Set;
@@ -76,7 +80,7 @@ function [mesh] = SR_InitMesh()
   mesh = calllib('libStormRuler', 'SR_InitMesh');
 end
 
-%@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
+%@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
 
 function [field] = SR_AllocR(mesh, numVars, rank)
@@ -91,7 +95,22 @@ function SR_Free(field)
   calllib('libStormRuler', 'SR_FreeR', field);
 end
 
+%@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
+
+function [ioList] = SR_IO_Begin()
+  ioList = calllib('libStormRuler', 'SR_IO_Begin');
+end
+
+function SR_IO_Add(ioList, x, name)
+  calllib('libStormRuler', 'SR_IO_Add', ioList, x, name);
+end
+
+function SR_IO_Flush(ioList, mesh, filename)
+  calllib('libStormRuler', 'SR_IO_Flush', ioList, mesh, filename);
+end
+
+%@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
 
 function SR_Fill(mesh, x, alpha, beta)
@@ -122,7 +141,7 @@ function SR_Mul(mesh, z, y, x)
   calllib('libStormRuler', 'SR_MulR', mesh, z, y, x);
 end
 
-%@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
+%@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
 
 function [request, Ay, y] = SR_RCI_LinSolve(mesh, method, precondMethod, x, b)
@@ -134,11 +153,12 @@ function [request, Ay, y] = SR_RCI_LinSolve(mesh, method, precondMethod, x, b)
   calllib('libStormRuler', 'SR_MRCI_Free', pRequest);
 end
 
-%@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
+%@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
 %@ >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> @%
 
 function SR_ApplyBCs(mesh, u, iBC, alpha, beta, gamma)
-  calllib('libStormRuler', 'SR_ApplyBCsR', mesh, u, iBC, alpha, beta, gamma);
+  calllib('libStormRuler', 'SR_ApplyBCsR', ...
+    mesh, u, iBC, alpha, beta, gamma);
 end
 
 function SR_ApplyBCs_Dirichlet(mesh, u, iBC, gamma)

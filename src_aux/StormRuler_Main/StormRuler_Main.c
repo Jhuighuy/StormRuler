@@ -87,7 +87,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
 
-  SR_FuncProdR(mesh, w_hat, c, dWdC, NULL);
+  SR_FuncProd(mesh, w_hat, c, dWdC, NULL);
   SR_ApplyBCs(mesh, w_hat, SR_ALL, SR_PURE_NEUMANN);
 
   SR_tFieldR RHS = SR_Alloc_Mold(c);
@@ -111,7 +111,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_ApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, c_hat, 3, SR_DIRICHLET(1.0));
 
-  SR_FuncProdR(mesh, w_hat, c_hat, dWdC, NULL);
+  SR_FuncProd(mesh, w_hat, c_hat, dWdC, NULL);
   SR_DivGrad(mesh, w_hat, -Gamma, c_hat);
 } // CahnHilliard_Step
 

@@ -760,6 +760,12 @@ function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
   type(tConvParams), save :: params
   character(len=:), allocatable, target, save :: sRequest
 
+  ! Reset the RCI interface call.
+  if (.not.c_associated(pMesh)) then
+    if (allocated(sRequest)) deallocate(sRequest)
+    return
+  end if
+
   ! Unwrap arguments and 
   ! initialize parameters on the first call only.
   if (.not.allocated(sRequest)) then

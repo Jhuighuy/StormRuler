@@ -22,33 +22,82 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+#ifndef STORM_RULER_API_H
+#define STORM_RULER_API_H
 
-#pragma once
-
-#include "StormRuler_Params.h"
-
-#include <stdlib.h>
+#include <stdint.h>
 #include <assert.h>
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-SR_OPAQUE_STRUCT(SR_SYMBOL);
+#ifndef SR_MATLAB
+#define SR_MATLAB 0
+#endif
 
-SR_OPAQUE_STRUCT(SR_tMesh);
+#if (__STDC_VERSION__ >= 201112L)
+#define SR_C11 1
+#else
+#define SR_C11 0
+#endif
+#if defined(__cplusplus)
+#define SR_CPP 1
+#else
+#define SR_CPP 0
+#endif
 
-SR_OPAQUE_STRUCT(SR_tIOList);
+#if SR_C11 && SR_CPP
+#error StormRuler API: both C11 or C++ targets found.
+#endif
 
-SR_OPAQUE_STRUCT(SR_tFieldR);
-SR_OPAQUE_STRUCT(SR_tFieldC);
-SR_OPAQUE_STRUCT(SR_tFieldS);
+#if !SR_C11 && !SR_CPP
+#error StormRuler API: neither C11 nor C++ targets found.
+#endif
+
+#define SR_OPAQUE_(type) typedef struct type##_t* type
+
+//#if SR_C11
+//#define SR_API extern
+//#define SR_INL static
+//#elif SR_CPP
+#define SR_API extern //"C"
+#define SR_INL inline
+//#endif
+
+#define SR_INTEGER int
+#define SR_REAL double
+#define SR_STRING const char*
+
+#if SR_MATLAB
+typedef struct {
+  SR_REAL Re, Im;
+} SR_tComplex;
+#define SR_COMPLEX SR_tComplex
+#elif SR_C11
+#include <complex.h>
+#define SR_COMPLEX double complex
+#elif SR_CPP
+#include <complex>
+#define SR_COMPLEX std::complex<double>
+#endif
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+SR_OPAQUE_(SR_SYMBOL);
+
+SR_OPAQUE_(SR_tMesh);
+
+SR_OPAQUE_(SR_tIOList);
+
+SR_OPAQUE_(SR_tFieldR);
+SR_OPAQUE_(SR_tFieldC);
+SR_OPAQUE_(SR_tFieldS);
 
 #define SR_FIELD_GENERIC(x, func) \
   _Generic((x), SR_tFieldR: func##R, SR_tFieldC: func##C)
 #define SR_FIELD_GENERIC_EXT(x, func) \
   _Generic((x), SR_tFieldR: func##R, SR_tFieldC: func##C, SR_tFieldS: func##S)
-
-typedef struct SR_ANY {} SR_ANY;
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -190,6 +239,7 @@ SR_API void SR_AddS(SR_tMesh mesh, SR_tFieldS z,
 #endif
 /// @}
 
+#if !SR_MATLAB
 /// @{
 // No need to import from Fortran.
 SR_INL void SR_SubR(SR_tMesh mesh, SR_tFieldR z,
@@ -209,6 +259,7 @@ SR_INL void SR_SubS(SR_tMesh mesh, SR_tFieldS z,
   SR_FIELD_GENERIC_EXT(y, SR_Sub)(mesh, z, y, x, alpha, beta)
 #endif
 /// @}
+#endif 
 
 SR_API void SR_MulR(SR_tMesh mesh, SR_tFieldR z,
     SR_tFieldR y, SR_tFieldR x);
@@ -258,6 +309,9 @@ SR_API void SR_SFuncProdS(SR_tMesh mesh,
 #endif
 /// @}
 
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
 /// @{
 typedef void(*SR_tMatVecFuncR)(SR_tMesh mesh,
     SR_tFieldR Ax, SR_tFieldR x, void* env);
@@ -266,18 +320,6 @@ typedef void(*SR_tMatVecFuncC)(SR_tMesh mesh,
 typedef void(*SR_tMatVecFuncS)(SR_tMesh mesh,
     SR_tFieldS Ax, SR_tFieldS x, void* env);
 /// @}
-
-/// @{
-typedef void(*SR_tPrecondFuncR)(SR_tMesh mesh,
-    SR_tFieldR Ax, SR_tFieldR x, void* env, void** precondEnv);
-typedef void(*SR_tPrecondFuncC)(SR_tMesh mesh,
-    SR_tFieldC Ax, SR_tFieldC x, void* env, void** precondEnv);
-typedef void(*SR_tPrecondFuncS)(SR_tMesh mesh,
-    SR_tFieldS Ax, SR_tFieldS x, void* env, void** precondEnv);
-/// @}
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 /// @{
 SR_API void SR_LinSolveR(SR_tMesh mesh,
@@ -312,6 +354,21 @@ SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
     mesh, method, precondMethod, x, b, pAy, pY)
 #endif
 /// @}
+
+typedef struct {
+    SR_STRING request;
+    SR_tFieldR Ay, y;
+} SR_sMRCI_RequestR;
+#define SR_MRCI_REQUEST_R SR_sMRCI_RequestR*
+
+SR_API SR_MRCI_REQUEST_R SR_MRCI_LinSolveR(SR_tMesh mesh,
+    SR_STRING method, SR_STRING precondMethod,
+    SR_tFieldR x, SR_tFieldR b);
+
+SR_API SR_STRING SR_MRCI_ReadRequest(SR_MRCI_REQUEST_R pRequest);
+SR_API SR_tFieldR SR_MRCI_ReadFields(
+    SR_MRCI_REQUEST_R pRequest, SR_INTEGER index);
+SR_API void SR_MRCI_Free(SR_MRCI_REQUEST_R pRequest);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -400,3 +457,5 @@ SR_API void SR_DivKGradS(SR_tMesh mesh,
   SR_FIELD_GENERIC_EXT(v, SR_DivGrad)(mesh, v, lambda, k, u)
 #endif
 /// @}
+
+#endif // ifndef STORM_RULER_API_H

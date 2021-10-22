@@ -23,37 +23,43 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+#define SR_MATLAB 0
 #include "StormRuler_API.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 void SR_PrintPointer(const void* p) {
   fprintf(stdout, "PRINT_PTR=%p\n", p);
   fflush(stdout);
 } // SR_PrintPointer
 
-SR_MRCI_REQUEST_R SR_MRCI_LinSolveR(SR_tMesh mesh,
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+struct SR_tRequestMRCIStruct {
+  SR_STRING String;
+  SR_tFieldR Ay, y;
+}; // struct SR_tRequestMRCIStruct
+
+SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
     SR_STRING method, SR_STRING precondMethod,
     SR_tFieldR x, SR_tFieldR b) {
-
-  SR_sMRCI_RequestR* pRequest = 
-    (SR_sMRCI_RequestR*)malloc(sizeof(*pRequest)); 
-
-  pRequest->request = SR_RCI_LinSolveR(mesh, 
-    method, precondMethod, x, b, &pRequest->Ay, &pRequest->y);
-
-  return pRequest;
+  static SR_tRequestMRCIStruct request;
+  request.String = SR_RCI_LinSolveR(mesh, 
+    method, precondMethod, x, b, &request.Ay, &request.y);
+  return &request;
 } // SR_MRCI_LinSolveR
 
-SR_STRING SR_MRCI_ReadRequest(SR_MRCI_REQUEST_R pRequest) {
-  return pRequest->request != NULL ? pRequest->request : "Done";
+SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request) {
+  return request->String != NULL ? request->String : "Done";
 } // SR_MRCI_ReadRequest
 
-SR_tFieldR SR_MRCI_ReadFields(SR_MRCI_REQUEST_R pRequest, SR_INTEGER index) {
-  return (index == 1) ? pRequest->Ay : pRequest->y;
-} // SR_MRCI_ReadRequest
-
-void SR_MRCI_Free(SR_MRCI_REQUEST_R pRequest) {
-  free(pRequest);
-} // SR_MRCI_Free
+SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index) {
+  if (index == 1) return request->Ay;
+  if (index == 2) return request->y;
+  return NULL;
+} // SR_MRCI_ReadFields

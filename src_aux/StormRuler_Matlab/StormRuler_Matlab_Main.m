@@ -33,6 +33,8 @@ mu = 0.1;
 
 SR = StormRuler_Matlab();
 
+system('rm out/*');
+
 mesh = SR.InitMesh();
 
 c = SR.AllocR(mesh, 1, 0);
@@ -84,7 +86,7 @@ end
 function SetBCs_p(SR, mesh, p)
   SR.ApplyBCs_PureNeumann(mesh, p, 0);
   SR.ApplyBCs_Dirichlet(mesh, p, 2, 1.0);
-  SR.ApplyBCs_Dirichlet(mesh, p, 4, 10.0);
+  SR.ApplyBCs_Dirichlet(mesh, p, 4, 3.0);
 end
 
 function SetBCs_v(SR, mesh, v)
@@ -162,9 +164,7 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
   %
   % Compute 𝒗̂ prediction.
   %
-  SetBCs_w(SR, mesh, w);
   SetBCs_v(SR, mesh, v);
-
   SR.Set(mesh, v_hat, v);
   SR.Conv(mesh, v_hat, tau, v, v);
   SR.DivGrad(mesh, v_hat, tau*mu/rho, v);
@@ -174,6 +174,7 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
   %
   f = SR.Alloc_Mold(v);
 
+  SetBCs_w(SR, mesh, w);
   SR.Fill(mesh, f, 0.0, 0.0);
   SR.Grad(mesh, f, 1.0, w);
   SR.Mul(mesh, f, c, f);
@@ -182,11 +183,10 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
 
   SR.Free(f);
 
-  SetBCs_v(SR, mesh, v_hat);
-
   %
   % Solve pressure equation and correct 𝒗̂.
   % 
+  SetBCs_v(SR, mesh, v_hat);
   rhs = SR.Alloc_Mold(p);
   SR.Fill(mesh, rhs, 0.0, 0.0);
   SR.Div(mesh, rhs, -rho/tau, v_hat);
@@ -197,13 +197,13 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
     if strcmp(request, 'Done') ~= 0, break, end
     
     SetBCs_p(SR, mesh, p);
-
     SR.Fill(mesh, Lp, 0.0, 0.0);
     SR.DivGrad(mesh, Lp, 1.0, p);
   end
 
+  SR.Free(rhs);
+
   SetBCs_p(SR, mesh, p_hat);
   SR.Grad(mesh, v_hat, tau/rho, p_hat);
 
-  SR.Free(rhs);
 end

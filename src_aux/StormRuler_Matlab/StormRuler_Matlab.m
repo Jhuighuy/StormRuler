@@ -150,7 +150,6 @@ function [request, Ay, y] = SR_RCI_LinSolve(mesh, method, precondMethod, x, b)
   request = calllib('libStormRuler', 'SR_MRCI_ReadRequest', pRequest);
   Ay = calllib('libStormRuler', 'SR_MRCI_ReadFields', pRequest, 1);
   y = calllib('libStormRuler', 'SR_MRCI_ReadFields', pRequest, 2);
-  calllib('libStormRuler', 'SR_MRCI_Free', pRequest);
 end
 
 %@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%

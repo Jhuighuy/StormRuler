@@ -45,21 +45,20 @@ w_hat = SR.Alloc_Mold(c);
 p_hat = SR.Alloc_Mold(p);
 v_hat = SR.Alloc_Mold(v);
 
-%SR.Fill_Random(mesh, c, -1.0, +1.0);
-SR.Fill(mesh, c, 0.0, 0.0);
-SR.Fill(mesh, w_hat, 0.0, 0.0);
+SR.Fill_Random(mesh, c, -1.0, +1.0);
+%SR.Fill(mesh, c, 0.0, 0.0);
 SR.Fill(mesh, v, 0.0, 0.0);
 SR.Fill(mesh, p, 0.0, 0.0);
 
 for time = 0:200
   if time ~= 0
     for frac = 1:10
-      %CahnHilliard_Step(SR, mesh, ...
-      %  c, c, c_hat, w_hat, tau, gamma, sigma)
+      CahnHilliard_Step(SR, mesh, ...
+        c, c, c_hat, w_hat, tau, gamma, sigma)
       NavierStokes_Step(SR, mesh, ...
         p, v, c, w_hat, p_hat, v_hat, tau, rho, mu);
 
-      %[c, c_hat] = deal(c_hat, c);
+      [c, c_hat] = deal(c_hat, c);
       [p, p_hat] = deal(p_hat, p);
       [v, v_hat] = deal(v_hat, v);
     end
@@ -86,7 +85,7 @@ end
 function SetBCs_p(SR, mesh, p)
   SR.ApplyBCs_PureNeumann(mesh, p, 0);
   SR.ApplyBCs_Dirichlet(mesh, p, 2, 1.0);
-  SR.ApplyBCs_Dirichlet(mesh, p, 4, 3.0);
+  SR.ApplyBCs_Dirichlet(mesh, p, 4, 1.0);
 end
 
 function SetBCs_v(SR, mesh, v)
@@ -115,7 +114,11 @@ function CahnHilliard_Step(SR, mesh, c, v, c_hat, w_hat, tau, gamma, sigma)
   SetBCs_c(SR, mesh, c);
   SetBCs_v(SR, mesh, v);
 
-  SR.FuncProd(mesh, w_hat, c, dWdC, NULL);
+  %SR.FuncProd(mesh, w_hat, c, dWdC, NULL);
+  for iCell = 1:SR.Mesh_NumCells(mesh)
+    ic = SR.At(c, iCell);
+    SR.SetAt(w_hat, iCell, -ic*(1.0 - ic*ic))
+  end
   SetBCs_w(SR, mesh, w_hat);
 
   rhs = SR.Alloc_Mold(c);
@@ -142,6 +145,16 @@ function CahnHilliard_Step(SR, mesh, c, v, c_hat, w_hat, tau, gamma, sigma)
 
     SR.Free(tmp);
   end
+
+  SR.Free(rhs);
+
+  SetBCs_c(SR, mesh, c_hat);
+  %SR.FuncProd(mesh, w_hat, c_hat, dWdC, NULL);
+  for iCell = 1:SR.Mesh_NumCells(mesh)
+    ic = SR.At(c_hat, iCell);
+    SR.SetAt(w_hat, iCell, -ic*(1.0 - ic*ic))
+  end
+  SR.DivGrad(mesh, w_hat, -gamma, c_hat);
 
 end
 

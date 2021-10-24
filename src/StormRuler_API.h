@@ -89,7 +89,8 @@ typedef struct {
 #define SR_COMPLEX std::complex<double>
 #endif
 
-SR_DEFINE_OPAQUE_(SR_SYMBOL);
+SR_DEFINE_OPAQUE_(SR_tSymbol);
+#define SR_SYMBOL SR_tSymbol
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -112,6 +113,8 @@ SR_DEFINE_OPAQUE_(SR_tMesh);
 
 SR_API SR_tMesh SR_InitMesh(void);
 
+SR_API SR_INTEGER SR_Mesh_NumCells(SR_tMesh mesh);
+
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
@@ -126,11 +129,11 @@ SR_DEFINE_OPAQUE_(SR_tFieldS);
 
 /// @{
 SR_API SR_tFieldR SR_AllocR(
-    SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
+  SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
 SR_API SR_tFieldC SR_AllocC(
-    SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
+  SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
 SR_API SR_tFieldS SR_AllocS(
-    SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
+  SR_tMesh mesh, SR_INTEGER numVars, SR_INTEGER rank);
 /// @}
 
 /// @{
@@ -150,6 +153,16 @@ SR_API void SR_FreeS(SR_tFieldS x);
 #if SR_C11
 #define SR_Free(x) \
   SR_FIELD_GENERIC_EXT_(x, SR_Free)(x)
+#endif
+/// @}
+
+/// @{
+SR_API SR_REAL* SR_AtR(SR_tFieldR x, SR_INTEGER iCell);
+SR_API SR_COMPLEX* SR_AtC(SR_tFieldC x, SR_INTEGER iCell);
+SR_API SR_SYMBOL* SR_AtS(SR_tFieldS x, SR_INTEGER iCell);
+#if SR_C11
+#define SR_At(x) \
+  SR_FIELD_GENERIC_EXT_(x, SR_At)(x)
 #endif
 /// @}
 
@@ -178,7 +191,8 @@ SR_INL void SR_SwapP(void** pX, void** pY) {
   void* z = *pX; *pX = *pY, *pY = z;
 }
 #if SR_C11
-#define SR_Swap(pX, pY) SR_SwapP((void**)pX, (void**)pY)
+#define SR_Swap(pX, pY) \
+  SR_SwapP((void**)pX, (void**)pY)
 #endif
 /// @}
 
@@ -190,21 +204,21 @@ SR_DEFINE_OPAQUE_(SR_tIOList);
 SR_API SR_tIOList SR_IO_Begin();
 
 SR_API void SR_IO_Add(SR_tIOList IO, 
-    SR_tFieldR x, const char* name);
+  SR_tFieldR x, const char* name);
 
 SR_API void SR_IO_Flush(SR_tIOList IO, 
-    SR_tMesh mesh, const char* filename);
+  SR_tMesh mesh, const char* filename);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 /// @{
 SR_API void SR_FillR(SR_tMesh mesh, 
-    SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
+  SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
 SR_API void SR_FillC(SR_tMesh mesh, 
-    SR_tFieldC x, SR_REAL alpha, SR_COMPLEX beta);
+  SR_tFieldC x, SR_REAL alpha, SR_COMPLEX beta);
 SR_API void SR_FillS(SR_tMesh mesh, 
-    SR_tFieldS x, SR_REAL alpha, SR_SYMBOL beta);
+  SR_tFieldS x, SR_REAL alpha, SR_SYMBOL beta);
 #if SR_C11
 #define SR_Fill(mesh, x, alpha, beta) \
   SR_FIELD_GENERIC_EXT_(x, SR_Fill)(mesh, x, alpha, beta)
@@ -213,9 +227,9 @@ SR_API void SR_FillS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_Fill_RandomR(SR_tMesh mesh, 
-    SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
+  SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
 SR_API void SR_Fill_RandomC(SR_tMesh mesh, 
-    SR_tFieldC x, SR_REAL alpha, SR_COMPLEX beta);
+  SR_tFieldC x, SR_REAL alpha, SR_COMPLEX beta);
 #if SR_C11
 #define SR_Fill_Random(mesh, x, alpha, beta) \
   SR_FIELD_GENERIC_(x, SR_Fill_Random)(mesh, x, alpha, beta)
@@ -234,11 +248,11 @@ SR_API void SR_SetS(SR_tMesh mesh, SR_tFieldS y, SR_tFieldS x);
 
 /// @{
 SR_API void SR_ScaleR(SR_tMesh mesh, 
-    SR_tFieldR y, SR_tFieldR x, SR_REAL alpha);
+  SR_tFieldR y, SR_tFieldR x, SR_REAL alpha);
 SR_API void SR_ScaleC(SR_tMesh mesh, 
-    SR_tFieldC y, SR_tFieldC x, SR_COMPLEX alpha);
+  SR_tFieldC y, SR_tFieldC x, SR_COMPLEX alpha);
 SR_API void SR_ScaleS(SR_tMesh mesh, 
-    SR_tFieldS y, SR_tFieldS x, SR_SYMBOL alpha);
+  SR_tFieldS y, SR_tFieldS x, SR_SYMBOL alpha);
 #if SR_C11
 #define SR_Scale(mesh, y, x, alpha) \
   SR_FIELD_GENERIC_EXT_(y, SR_Scale)(mesh, y, x, alpha)
@@ -247,11 +261,11 @@ SR_API void SR_ScaleS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_AddR(SR_tMesh mesh, SR_tFieldR z,
-    SR_tFieldR y, SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
+  SR_tFieldR y, SR_tFieldR x, SR_REAL alpha, SR_REAL beta);
 SR_API void SR_AddC(SR_tMesh mesh, SR_tFieldC z,
-    SR_tFieldC y, SR_tFieldC x, SR_COMPLEX alpha, SR_COMPLEX beta);
+  SR_tFieldC y, SR_tFieldC x, SR_COMPLEX alpha, SR_COMPLEX beta);
 SR_API void SR_AddS(SR_tMesh mesh, SR_tFieldS z,
-    SR_tFieldS y, SR_tFieldS x, SR_SYMBOL alpha, SR_SYMBOL beta);
+  SR_tFieldS y, SR_tFieldS x, SR_SYMBOL alpha, SR_SYMBOL beta);
 #if SR_C11
 #define SR_Add(mesh, z, y, x, alpha, beta) \
   SR_FIELD_GENERIC_EXT_(y, SR_Add)(mesh, z, y, x, alpha, beta)
@@ -278,28 +292,37 @@ SR_INL void SR_SubS(SR_tMesh mesh, SR_tFieldS z,
   SR_FIELD_GENERIC_EXT_(y, SR_Sub)(mesh, z, y, x, alpha, beta)
 #endif
 /// @}
-#endif 
+#endif
 
-SR_API void SR_MulR(SR_tMesh mesh, SR_tFieldR z,
-    SR_tFieldR y, SR_tFieldR x);
-#define SR_Mul SR_MulR
+/// @{
+SR_API void SR_MulR(SR_tMesh mesh,
+  SR_tFieldR z, SR_tFieldR y, SR_tFieldR x);
+SR_API void SR_MulC(SR_tMesh mesh, 
+  SR_tFieldC z, SR_tFieldC y, SR_tFieldC x);
+SR_API void SR_MulS(SR_tMesh mesh, 
+  SR_tFieldS z, SR_tFieldS y, SR_tFieldS x);
+#if SR_C11
+#define SR_Mul(mesh, z, y, x) \
+  SR_FIELD_GENERIC_EXT_(y, SR_Mul)(mesh, z, y, x)
+#endif
+/// @}
 
 /// @{
 SR_DEFINE_FUNCPTR_(void, SR_tMapFuncR, SR_INTEGER size, 
-    SR_REAL* Fx, const SR_REAL* x, void* env);
+  SR_REAL* Fx, const SR_REAL* x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tMapFuncC, SR_INTEGER size, 
-    SR_COMPLEX* Fx, const SR_COMPLEX* x, void* env);
+  SR_COMPLEX* Fx, const SR_COMPLEX* x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tMapFuncS, SR_INTEGER size, 
-    SR_SYMBOL* Fx, const SR_SYMBOL* x, void* env);
+  SR_SYMBOL* Fx, const SR_SYMBOL* x, void* env);
 /// @}
 
 /// @{
 SR_API void SR_FuncProdR(SR_tMesh mesh,
-    SR_tFieldR y, SR_tFieldR x, SR_tMapFuncR f, void* env);
+  SR_tFieldR y, SR_tFieldR x, SR_tMapFuncR f, void* env);
 SR_API void SR_FuncProdC(SR_tMesh mesh,
-    SR_tFieldC y, SR_tFieldC x, SR_tMapFuncC f, void* env);
+  SR_tFieldC y, SR_tFieldC x, SR_tMapFuncC f, void* env);
 SR_API void SR_FuncProdS(SR_tMesh mesh,
-    SR_tFieldS y, SR_tFieldS x, SR_tMapFuncS f, void* env);
+  SR_tFieldS y, SR_tFieldS x, SR_tMapFuncS f, void* env);
 #if SR_C11
 #define SR_FuncProd(mesh, y, x, f, env) \
   SR_FIELD_GENERIC_EXT_(y, SR_FuncProd)(mesh, y, x, f, env)
@@ -308,23 +331,23 @@ SR_API void SR_FuncProdS(SR_tMesh mesh,
 
 /// @{
 SR_DEFINE_FUNCPTR_(void, SR_tSMapFuncR, 
-    SR_INTEGER dim, const SR_REAL* r,
-    SR_INTEGER size, SR_REAL* Fx, const SR_REAL* x, void* env);
+  SR_INTEGER dim, const SR_REAL* r,
+  SR_INTEGER size, SR_REAL* Fx, const SR_REAL* x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tSMapFuncC, 
-    SR_INTEGER dim, const SR_REAL* r,
-    SR_INTEGER size, SR_COMPLEX* Fx, const SR_COMPLEX* x, void* env);
+  SR_INTEGER dim, const SR_REAL* r,
+  SR_INTEGER size, SR_COMPLEX* Fx, const SR_COMPLEX* x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tSMapFuncS, 
-    SR_INTEGER dim, const SR_REAL* r,
-    SR_INTEGER size, SR_SYMBOL* Fx, const SR_SYMBOL* x, void* env);
+  SR_INTEGER dim, const SR_REAL* r,
+  SR_INTEGER size, SR_SYMBOL* Fx, const SR_SYMBOL* x, void* env);
 /// @}
 
 /// @{
 SR_API void SR_SFuncProdR(SR_tMesh mesh,
-    SR_tFieldR y, SR_tFieldR x, SR_tSMapFuncR f, void* env);
+  SR_tFieldR y, SR_tFieldR x, SR_tSMapFuncR f, void* env);
 SR_API void SR_SFuncProdC(SR_tMesh mesh,
-    SR_tFieldC y, SR_tFieldC x, SR_tSMapFuncC f, void* env);
+  SR_tFieldC y, SR_tFieldC x, SR_tSMapFuncC f, void* env);
 SR_API void SR_SFuncProdS(SR_tMesh mesh,
-    SR_tFieldS y, SR_tFieldS x, SR_tSMapFuncS f, void* env);
+  SR_tFieldS y, SR_tFieldS x, SR_tSMapFuncS f, void* env);
 #if SR_C11
 #define SR_SFuncProd(mesh, y, x, f, env) \
   SR_FIELD_GENERIC_EXT_(y, SR_SFuncProd)(mesh, y, x, f, env)
@@ -336,24 +359,24 @@ SR_API void SR_SFuncProdS(SR_tMesh mesh,
 
 /// @{
 SR_DEFINE_FUNCPTR_(void, SR_tMatVecFuncR, 
-    SR_tMesh mesh, SR_tFieldR Ax, SR_tFieldR x, void* env);
+  SR_tMesh mesh, SR_tFieldR Ax, SR_tFieldR x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tMatVecFuncC, 
-    SR_tMesh mesh, SR_tFieldC Ax, SR_tFieldC x, void* env);
+  SR_tMesh mesh, SR_tFieldC Ax, SR_tFieldC x, void* env);
 SR_DEFINE_FUNCPTR_(void, SR_tMatVecFuncS, 
-    SR_tMesh mesh, SR_tFieldS Ax, SR_tFieldS x, void* env);
+  SR_tMesh mesh, SR_tFieldS Ax, SR_tFieldS x, void* env);
 /// @}
 
 /// @{
 SR_API void SR_LinSolveR(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldR x, SR_tFieldR b, 
-    SR_tMatVecFuncR MatVec, void* env,
-    SR_tMatVecFuncR MatVec_H, void* env_H);
+  SR_STRING method, SR_STRING precondMethod,
+  SR_tFieldR x, SR_tFieldR b, 
+  SR_tMatVecFuncR MatVec, void* env,
+  SR_tMatVecFuncR MatVec_H, void* env_H);
 SR_API void SR_LinSolveC(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldC x, SR_tFieldC b, 
-    SR_tMatVecFuncC MatVec, void* env,
-    SR_tMatVecFuncC MatVec_H, void* env_H);
+  SR_STRING method, SR_STRING precondMethod,
+  SR_tFieldC x, SR_tFieldC b, 
+  SR_tMatVecFuncC MatVec, void* env,
+  SR_tMatVecFuncC MatVec_H, void* env_H);
 #if SR_C11
 #define SR_LinSolve(mesh, method, precondMethod, x, b, MatVec, env, ...) \
   SR_FIELD_GENERIC_(x, SR_LinSolve)( \
@@ -363,13 +386,11 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
 
 /// @{
 SR_API SR_STRING SR_RCI_LinSolveR(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldR x, SR_tFieldR b, 
-    SR_tFieldR* pAy, SR_tFieldR* pY);
+  SR_STRING method, SR_STRING precondMethod,
+  SR_tFieldR x, SR_tFieldR b, SR_tFieldR* pAy, SR_tFieldR* pY);
 SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldC x, SR_tFieldC b, 
-    SR_tFieldC* pAy, SR_tFieldC* pY);
+  SR_STRING method, SR_STRING precondMethod,
+  SR_tFieldC x, SR_tFieldC b, SR_tFieldC* pAy, SR_tFieldC* pY);
 #if SR_C11
 #define SR_RCI_LinSolve(mesh, method, precondMethod, x, b, pAy, pY) \
   SR_FIELD_GENERIC_(x, SR_RCI_LinSolve)( \
@@ -380,8 +401,7 @@ SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
 SR_DEFINE_OPAQUE_(SR_tRequestMRCI);
 
 SR_API SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldR x, SR_tFieldR b);
+  SR_STRING method, SR_STRING precondMethod, SR_tFieldR x, SR_tFieldR b);
 SR_API SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request);
 SR_API SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index);
 
@@ -390,11 +410,11 @@ SR_API SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index);
 
 /// @{
 SR_API void SR_ApplyBCsR(SR_tMesh mesh, SR_tFieldR u,
-    SR_INTEGER iBC, SR_REAL alpha, SR_REAL beta, SR_REAL gamma);
+  SR_INTEGER iBC, SR_REAL alpha, SR_REAL beta, SR_REAL gamma);
 SR_API void SR_ApplyBCsC(SR_tMesh mesh, SR_tFieldR u,
-    SR_INTEGER iBC, SR_COMPLEX alpha, SR_COMPLEX beta, SR_COMPLEX gamma);
+  SR_INTEGER iBC, SR_COMPLEX alpha, SR_COMPLEX beta, SR_COMPLEX gamma);
 SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
-    SR_INTEGER iBC, SR_SYMBOL alpha, SR_SYMBOL beta, SR_SYMBOL gamma);
+  SR_INTEGER iBC, SR_SYMBOL alpha, SR_SYMBOL beta, SR_SYMBOL gamma);
 #if SR_C11
 #define SR_ApplyBCs(mesh, u, iBC, ...) \
   SR_FIELD_GENERIC_EXT_(u, SR_ApplyBCs)(mesh, u, iBC, ##__VA_ARGS__)
@@ -410,11 +430,11 @@ SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
 
 /// @{
 SR_API void SR_GradR(SR_tMesh mesh, 
-    SR_tFieldR vVec, SR_REAL lambda, SR_tFieldR u);
+  SR_tFieldR vVec, SR_REAL lambda, SR_tFieldR u);
 SR_API void SR_GradC(SR_tMesh mesh,
-    SR_tFieldC vVec, SR_COMPLEX lambda, SR_tFieldC u);
+  SR_tFieldC vVec, SR_COMPLEX lambda, SR_tFieldC u);
 SR_API void SR_GradS(SR_tMesh mesh,
-    SR_tFieldS vVec, SR_SYMBOL lambda, SR_tFieldS u);
+  SR_tFieldS vVec, SR_SYMBOL lambda, SR_tFieldS u);
 #if SR_C11
 #define SR_Grad(mesh, vVec, lambda, u) \
   SR_FIELD_GENERIC_EXT_(vVec, SR_Grad)(mesh, vVec, lambda, u)
@@ -423,11 +443,11 @@ SR_API void SR_GradS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_DivR(SR_tMesh mesh, 
-    SR_tFieldR v, SR_REAL lambda, SR_tFieldR uVec);
+  SR_tFieldR v, SR_REAL lambda, SR_tFieldR uVec);
 SR_API void SR_DivC(SR_tMesh mesh,
-    SR_tFieldC v, SR_COMPLEX lambda, SR_tFieldC uVec);
+  SR_tFieldC v, SR_COMPLEX lambda, SR_tFieldC uVec);
 SR_API void SR_DivS(SR_tMesh mesh,
-    SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldS uVec);
+  SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldS uVec);
 #if SR_C11
 #define SR_Div(mesh, v, lambda, uVec) \
   SR_FIELD_GENERIC_EXT_(v, SR_Div)(mesh, v, lambda, uVec)
@@ -436,11 +456,11 @@ SR_API void SR_DivS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_ConvR(SR_tMesh mesh, 
-    SR_tFieldR v, SR_REAL lambda, SR_tFieldR u, SR_tFieldR a);
+  SR_tFieldR v, SR_REAL lambda, SR_tFieldR u, SR_tFieldR a);
 SR_API void SR_ConvC(SR_tMesh mesh,
-    SR_tFieldC v, SR_REAL lambda, SR_tFieldC u, SR_tFieldR a);
+  SR_tFieldC v, SR_COMPLEX lambda, SR_tFieldC u, SR_tFieldR a);
 SR_API void SR_ConvS(SR_tMesh mesh,
-    SR_tFieldS v, SR_REAL lambda, SR_tFieldS u, SR_tFieldR a);
+  SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldS u, SR_tFieldR a);
 #if SR_C11
 #define SR_Conv(mesh, v, lambda, u, a) \
   SR_FIELD_GENERIC_EXT_(v, SR_Conv)(mesh, v, lambda, u, a)
@@ -449,11 +469,11 @@ SR_API void SR_ConvS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_DivGradR(SR_tMesh mesh,
-    SR_tFieldR v, SR_REAL lambda, SR_tFieldR u);
+  SR_tFieldR v, SR_REAL lambda, SR_tFieldR u);
 SR_API void SR_DivGradC(SR_tMesh mesh,
-    SR_tFieldC v, SR_REAL lambda, SR_tFieldC u);
+  SR_tFieldC v, SR_COMPLEX lambda, SR_tFieldC u);
 SR_API void SR_DivGradS(SR_tMesh mesh,
-    SR_tFieldS v, SR_REAL lambda, SR_tFieldS u);
+  SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldS u);
 #if SR_C11
 #define SR_DivGrad(mesh, v, lambda, u) \
   SR_FIELD_GENERIC_EXT_(v, SR_DivGrad)(mesh, v, lambda, u)
@@ -462,11 +482,11 @@ SR_API void SR_DivGradS(SR_tMesh mesh,
 
 /// @{
 SR_API void SR_DivKGradR(SR_tMesh mesh,
-    SR_tFieldR v, SR_REAL lambda, SR_tFieldR k, SR_tFieldR u);
+  SR_tFieldR v, SR_REAL lambda, SR_tFieldR k, SR_tFieldR u);
 SR_API void SR_DivKGradC(SR_tMesh mesh,
-    SR_tFieldC v, SR_REAL lambda, SR_tFieldR k, SR_tFieldC u);
+  SR_tFieldC v, SR_COMPLEX lambda, SR_tFieldC k, SR_tFieldC u);
 SR_API void SR_DivKGradS(SR_tMesh mesh,
-    SR_tFieldS v, SR_REAL lambda, SR_tFieldR k, SR_tFieldS u);
+  SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldR k, SR_tFieldS u);
 #if SR_C11
 #define SR_DivKGrad(mesh, v, lambda, k, u) \
   SR_FIELD_GENERIC_EXT_(v, SR_DivGrad)(mesh, v, lambda, k, u)

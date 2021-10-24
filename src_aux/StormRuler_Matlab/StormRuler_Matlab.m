@@ -34,10 +34,13 @@ function SR = StormRuler_Matlab()
   clear SR;
 
   SR.InitMesh = @SR_InitMesh;
+  SR.Mesh_NumCells = @SR_Mesh_NumCells;
 
   SR.AllocR = @SR_AllocR;
   SR.Alloc_Mold = @SR_Alloc_Mold;
   SR.Free = @SR_Free;
+  SR.At = @SR_At;
+  SR.SetAt = @SR_SetAt;
 
   SR.IO_Begin = @SR_IO_Begin;
   SR.IO_Add = @SR_IO_Add;
@@ -65,11 +68,10 @@ function SR = StormRuler_Matlab()
   SR.DivKGrad = @SR_DivKGrad;
 
   % Reset the RCI state.
-  nullMesh = libpointer('SR_tMesh_tPtr');
-  nullField = libpointer('SR_tFieldR_tPtr');
+  nullMesh = libpointer('SR_tMeshStructPtr');
+  nullField = libpointer('SR_tFieldRStructPtr');
   pRequest = calllib('libStormRuler', 'SR_MRCI_LinSolveR', ...
     nullMesh, '', '', nullField, nullField);
-  calllib('libStormRuler', 'SR_MRCI_Free', pRequest);
 
 end
 
@@ -78,6 +80,10 @@ end
 
 function [mesh] = SR_InitMesh()
   mesh = calllib('libStormRuler', 'SR_InitMesh');
+end
+
+function [numCells] = SR_Mesh_NumCells(mesh)
+  numCells = calllib('libStormRuler', 'SR_Mesh_NumCells', mesh);
 end
 
 %@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
@@ -93,6 +99,18 @@ end
 
 function SR_Free(field)
   calllib('libStormRuler', 'SR_FreeR', field);
+end
+
+function value = SR_At(field, index)
+  pointer = calllib('libStormRuler', 'SR_AtR', field, index);
+  setdatatype(pointer,'doublePtr',1);
+  value = pointer.Value;
+end
+
+function SR_SetAt(field, index, value)
+  pointer = calllib('libStormRuler', 'SR_AtR', field, index);
+  setdatatype(pointer,'doublePtr',1);
+  pointer.Value = value;
 end
 
 %@ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @%
@@ -147,7 +165,9 @@ end
 function [request, Ay, y] = SR_RCI_LinSolve(mesh, method, precondMethod, x, b)
   pRequest = calllib( ...
     'libStormRuler', 'SR_MRCI_LinSolveR', mesh, method, precondMethod, x, b);
-  request = calllib('libStormRuler', 'SR_MRCI_ReadRequest', pRequest);
+  
+  request = calllib( ...
+    'libStormRuler', 'SR_MRCI_ReadRequest', pRequest);
   Ay = calllib('libStormRuler', 'SR_MRCI_ReadFields', pRequest, 1);
   y = calllib('libStormRuler', 'SR_MRCI_ReadFields', pRequest, 2);
 end

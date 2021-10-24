@@ -537,9 +537,9 @@ subroutine Add$T(mesh, z, y, x, alpha, beta)
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   $typename :: a, b
-  a = 1.0_dp; if (present(alpha)) a = alpha
-  b = 1.0_dp; if (present(beta)) b = beta
 
+  a = 1.0_dp; if (present(alpha)) a = alpha
+  b = 1.0_dp; if (present( beta)) b =  beta
   call mesh%RunCellKernel(Add_Kernel)
 
 contains
@@ -567,9 +567,9 @@ subroutine Sub$T(mesh, z, y, x, alpha, beta)
   ! >>>>>>>>>>>>>>>>>>>>>>
   
   $typename :: a, b
-  a = 1.0_dp; if (present(alpha)) a = alpha
-  b = 1.0_dp; if (present(beta)) b = beta
 
+  a = 1.0_dp; if (present(alpha)) a = alpha
+  b = 1.0_dp; if (present( beta)) b =  beta
   call mesh%RunCellKernel(Sub_Kernel)
 
 contains
@@ -740,11 +740,10 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer :: iCell
-
+    integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
-    allocate(e, mold=x)
 
+    allocate(e, mold=x)
     e(:,:) = 0.0_dp
 
     do iCell = firstCell, lastCell
@@ -763,20 +762,22 @@ end subroutine MatVecProd_Diagonal$T
 !! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
-subroutine MatVecProd_Triangular$T(mesh, Tx, x, UpLo, MatVec, env)
+subroutine MatVecProd_Triangular$T(mesh, Tx, x, upLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: Tx(:,:)
-  character :: UpLo
+  character :: upLo
   procedure(tMatVecFunc$T) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  if (UpLo == 'U') then
-    call mesh%RunCellKernel_Block(MatVecProd_UpperTriangular_BlockKernel)
-  else if (UpLo == 'L') then
-    call mesh%RunCellKernel_Block(MatVecProd_LowerTriangular_BlockKernel)
+  if (upLo == 'U') then
+    call mesh%RunCellKernel_Block( &
+      & MatVecProd_UpperTriangular_BlockKernel)
+  else if (upLo == 'L') then
+    call mesh%RunCellKernel_Block( &
+      & MatVecProd_LowerTriangular_BlockKernel)
   end if
   call mesh%SetRange()
 
@@ -786,11 +787,10 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer :: iCell
-
+    integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
-    allocate(e, mold=x)
 
+    allocate(e, mold=x)
     e(:,:firstCell-1) = 0.0_dp
     e(:,firstCell:) = x(:,firstCell:)
 
@@ -806,11 +806,10 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer :: iCell
-
+    integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
-    allocate(e, mold=x)
 
+    allocate(e, mold=x)
     e(:,:lastCell) = x(:,:lastCell)
     e(:,lastCell+1:) = 0.0_dp
     
@@ -829,22 +828,24 @@ end subroutine MatVecProd_Triangular$T
 !! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
-subroutine Solve_Triangular$T(mesh, x, b, diag, UpLo, MatVec, env)
+subroutine Solve_Triangular$T(mesh, x, b, diag, upLo, MatVec, env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: b(:,:), diag(:,:)
   $typename, intent(inout) :: x(:,:)
-  character :: UpLo
+  character :: upLo
   procedure(tMatVecFunc$T) :: MatVec
   class(*), intent(inout) :: env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)
-  if (UpLo == 'U') then
-    call mesh%RunCellKernel_Block(Solve_UpperTriangular_BlockKernel)
-  else if (UpLo == 'L') then
-    call mesh%RunCellKernel_Block(Solve_LowerTriangular_BlockKernel)
+  if (upLo == 'U') then
+    call mesh%RunCellKernel_Block( &
+      & Solve_UpperTriangular_BlockKernel)
+  else if (upLo == 'L') then
+    call mesh%RunCellKernel_Block( &
+      & Solve_LowerTriangular_BlockKernel)
   end if
   call mesh%SetRange()
 
@@ -854,14 +855,13 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer :: iCell
-
+    integer(ip) :: iCell
     $typename, allocatable :: Ax(:,:)
-    allocate(Ax, mold=x)
 
-    x(:,:) = 0.0_dp
+    allocate(Ax, mold=x)
     Ax(:,:) = 0.0_dp
 
+    x(:,:) = 0.0_dp
     x(:,lastCell) = b(:,lastCell)/diag(:,lastCell)
     do iCell = lastCell - 1, firstCell, -1
       call mesh%SetRange(iCell)
@@ -876,14 +876,13 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
     ! >>>>>>>>>>>>>>>>>>>>>>
 
-    integer :: iCell
-
+    integer(ip) :: iCell
     $typename, allocatable :: Ax(:,:)
-    allocate(Ax, mold=x)
 
-    x(:,:) = 0.0_dp
+    allocate(Ax, mold=x)
     Ax(:,:) = 0.0_dp
 
+    x(:,:) = 0.0_dp
     x(:,firstCell) = b(:,firstCell)/diag(:,firstCell)
     do iCell = firstCell + 1, lastCell
       call mesh%SetRange(iCell)

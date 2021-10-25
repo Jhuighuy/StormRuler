@@ -50,12 +50,11 @@ contains
 !! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the MINRES method.
 !! 𝓟 = 𝓟ᵀ > 0 is explicitly required.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 
@@ -96,11 +95,11 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
   ! ----------------------
   call Fill(mesh, w_bar, 0.0_dp)
   call Fill(mesh, w_bbar, 0.0_dp)
-  call MatVec(mesh, z_bar, x, env)
+  call MatVec(mesh, z_bar, x)
   call Sub(mesh, z_bar, b, z_bar)
   call Fill(mesh, z_bbar, 0.0_dp)
   if (present(Precond)) then
-    call Precond(mesh, q, z_bar, MatVec, env, precond_env)
+    call Precond(mesh, q, z_bar, MatVec, precond_env)
   else
     q => z_bar
   end if
@@ -126,13 +125,13 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
     ! 𝛽̅ ← 𝛽, 𝛽 ← √<𝒒⋅𝒛>,
     ! 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
     ! ----------------------
-    call MatVec(mesh, p, q, env)
+    call MatVec(mesh, p, q)
     alpha = Dot(mesh, q, p)/(beta**2)
     call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, z_bbar, beta/beta_bar)
     if (present(Precond)) then
       tmp => q_bar; q_bar => q; q => tmp
-      call Precond(mesh, q, z, MatVec, env, precond_env)
+      call Precond(mesh, q, z, MatVec, precond_env)
     else
       q_bar => q; q => z
     end if

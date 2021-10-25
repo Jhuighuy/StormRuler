@@ -47,17 +47,15 @@ contains
 !! ----------------------------------------------------------------- !!
 !! Compute squared residual norm: ‖𝒃 - 𝓐[𝓟]𝒚‖₂.
 !! ----------------------------------------------------------------- !!
-real(dp) function ResidualNorm(mesh, y, b, MatVec, env, Precond, precond_env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+real(dp) function ResidualNorm(mesh, y, b, MatVec, Precond, precond_env)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:), y(:,:)
+  real(dp), intent(inout) :: b(:,:), y(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   procedure(tPrecondFuncR), optional :: Precond
   class(*), allocatable, intent(inout), optional :: precond_env
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: r(:,:), x(:,:)
+  
   allocate(r, x, mold=y)
 
   ! ----------------------
@@ -68,10 +66,10 @@ real(dp) function ResidualNorm(mesh, y, b, MatVec, env, Precond, precond_env)
   ! 𝗼𝘂𝘁 ← ‖𝒓‖₂.
   ! ----------------------
   if (present(Precond)) then
-    call Precond(mesh, x, y, MatVec, env, precond_env)
-    call MatVec(mesh, r, x, env)
+    call Precond(mesh, x, y, MatVec, precond_env)
+    call MatVec(mesh, r, x)
   else
-    call MatVec(mesh, r, y, env)
+    call MatVec(mesh, r, y)
   end if
   call Sub(mesh, r, b, r)
   ResidualNorm = Norm_2(mesh, r)
@@ -81,18 +79,16 @@ end function ResidualNorm
 !! ----------------------------------------------------------------- !!
 !! Compute squared residual norm: ‖(𝓐[𝓟])ᵀ(𝒃 - 𝓐[𝓟]𝒚)‖₂.
 !! ----------------------------------------------------------------- !!
-real(dp) function ResidualNorm_Squared(mesh, y, b, MatVec, env, &
-    & MatVec_T, env_T, Precond, precond_env, Precond_T, precond_env_T)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+real(dp) function ResidualNorm_Squared(mesh, y, b, MatVec, &
+    & ConjMatVec, Precond, precond_env, ConjPrecond, precond_env_T)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:), y(:,:)
-  procedure(tMatVecFuncR) :: MatVec, MatVec_T
-  class(*), intent(inout) :: env, env_T
-  procedure(tPrecondFuncR), optional :: Precond, Precond_T
+  real(dp), intent(inout) :: b(:,:), y(:,:)
+  procedure(tMatVecFuncR) :: MatVec, ConjMatVec
+  procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
   class(*), allocatable, intent(inout), optional :: precond_env, precond_env_T
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: r(:,:), x(:,:)
+
   allocate(r, x, mold=y)
 
   ! ----------------------
@@ -102,10 +98,10 @@ real(dp) function ResidualNorm_Squared(mesh, y, b, MatVec, env, &
   ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
   if (present(Precond)) then
-    call Precond(mesh, x, y, MatVec, env, precond_env)
-    call MatVec(mesh, r, x, env)
+    call Precond(mesh, x, y, MatVec, precond_env)
+    call MatVec(mesh, r, x)
   else
-    call MatVec(mesh, r, y, env)
+    call MatVec(mesh, r, y)
   end if
   call Sub(mesh, r, b, r)
 
@@ -116,11 +112,11 @@ real(dp) function ResidualNorm_Squared(mesh, y, b, MatVec, env, &
   ! 𝗼𝘂𝘁 ← ‖𝒓‖₂.
   ! ----------------------
   if (present(Precond)) then
-    call MatVec_T(mesh, x, r, env_T)
-    call Precond_T(mesh, r, x, MatVec_T, env_T, precond_env_T)
+    call ConjMatVec(mesh, x, r)
+    call ConjPrecond(mesh, r, x, ConjMatVec, precond_env_T)
   else
     call Set(mesh, x, r)
-    call MatVec_T(mesh, r, x, env_T)
+    call ConjMatVec(mesh, r, x)
   end if
   ResidualNorm_Squared = Norm_2(mesh, r)
 

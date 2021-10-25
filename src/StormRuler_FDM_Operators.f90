@@ -52,13 +52,11 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
     &                           dirAll, dirFace, dirCellFace)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(in), target :: uAny(..)
   real(dp), intent(inout), target :: vAny(..)
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: u(:,:), vVec(:,:,:)
 
@@ -73,9 +71,7 @@ subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
 
 contains
   subroutine FDM_Gradient_Central_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
     
     integer(ip) :: dim
     integer(ip) :: iCellFace
@@ -150,9 +146,7 @@ contains
     end do
   end subroutine FDM_Gradient_Central_Kernel
   subroutine FDM_Gradient_Forward_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(i8) :: dir
     integer(ip) :: dim
@@ -286,13 +280,11 @@ end subroutine FDM_Gradient_Central
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
     &                             dirAll, dirFace, dirCellFace)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(in), target :: uAny(..)
   real(dp), intent(inout), target :: vAny(..) 
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: uVec(:,:,:), v(:,:)
 
@@ -307,9 +299,7 @@ subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
 
 contains
   subroutine FDM_Divergence_Central_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
     
     integer(ip) :: dim
     integer(ip) :: iCellFace
@@ -403,9 +393,7 @@ contains
     end do
   end subroutine FDM_Divergence_Central_Kernel
   subroutine FDM_Divergence_Backward_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(i8) :: dir
     integer(ip) :: dim
@@ -559,12 +547,10 @@ end subroutine FDM_Divergence_Central
 !! shape of 𝒂 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Convection_Central(mesh, v, lambda, u, a)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(in), target :: u(:,:), a(:,:)
   real(dp), intent(inout) :: v(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), allocatable, target :: q(:,:,:)
   allocate(q(size(a, dim=1), size(u, dim=1), size(u, dim=2)))
@@ -595,12 +581,10 @@ end subroutine FDM_Convection_Central
 !!   Shape of 𝒖, 𝒗 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda
   real(dp), intent(in), target :: uAny(..)
   real(dp), intent(inout), target :: vAny(..)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: u(:,:), v(:,:)
   real(dp), pointer :: uVec(:,:,:), vVec(:,:,:)
@@ -615,9 +599,7 @@ subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
 
 contains
   subroutine FDM_Laplacian_Central_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: dim
     integer(ip) :: iCellFace
@@ -742,12 +724,10 @@ end subroutine FDM_Laplacian_Central
 !!   Shape of 𝒌 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_DivWGrad_Central(mesh, vAny, lambda, kAny, uAny)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda 
   real(dp), intent(in), target :: uAny(:,:), kAny(:,:)
   real(dp), intent(inout), target :: vAny(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp), pointer :: u(:,:), v(:,:), k(:,:)
 

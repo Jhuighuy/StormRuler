@@ -43,16 +43,13 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for type, typename in SCALAR_TYPES
-  subroutine tPrecondFunc$type(mesh, Pu, u, MatVec, env, precond_env)
+  subroutine tPrecondFunc$type(mesh, Pu, u, MatVec, precond_env)
     import :: dp, tMesh, tMatVecFunc$type
-    ! <<<<<<<<<<<<<<<<<<<<<<
     class(tMesh), intent(inout) :: mesh
     $typename, intent(in), target :: u(:,:)
     $typename, intent(inout), target :: Pu(:,:)
     procedure(tMatVecFunc$type) :: MatVec
-    class(*), intent(inout) :: env
     class(*), intent(inout), allocatable, target :: precond_env
-    ! >>>>>>>>>>>>>>>>>>>>>>
   end subroutine tPrecondFunc$type
 #$end for
 end interface
@@ -69,13 +66,12 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Jacobi preconditioner: 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Precondition_Jacobi(mesh, Px, x, MatVec, env, precond_env)
+subroutine Precondition_Jacobi(mesh, Px, x, MatVec, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(:,:)
   real(dp), intent(inout), target :: Px(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -100,7 +96,7 @@ subroutine Precondition_Jacobi(mesh, Px, x, MatVec, env, precond_env)
 
     ! TODO: this is not a correct diagonal extraction in block case!
     call Fill(mesh, Px, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec, env)
+    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec)
   end if
 
   ! ----------------------
@@ -114,13 +110,12 @@ end subroutine Precondition_Jacobi
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! LU-SGS preconditioner: 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝘥𝘪𝘢𝘨(𝓐)𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, env, precond_env)
+subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in), target :: x(:,:)
   real(dp), intent(inout), target :: Px(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
@@ -146,7 +141,7 @@ subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, env, precond_env)
     allocate(diag_env%diag, mold=x)
 
     call Fill(mesh, Px, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec, env)
+    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec)
   end if
 
   ! ----------------------
@@ -154,10 +149,10 @@ subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, env, precond_env)
   ! 𝒚 ← 𝘥𝘪𝘢𝘨(𝓐)𝒚,
   ! 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝒚.
   ! ----------------------
-  call Solve_Triangular(mesh, y, x, diag_env%diag, 'U', MatVec, env)
+  call Solve_Triangular(mesh, 'U', y, x, diag_env%diag, MatVec)
   ! TODO: this is not a correct diagonal multiplication in block case!
   y(:,:) = diag_env%diag(:,:)*y(:,:)
-  call Solve_Triangular(mesh, Px, y, diag_env%diag, 'L', MatVec, env)
+  call Solve_Triangular(mesh, 'L', Px, y, diag_env%diag, MatVec)
 
 end subroutine Precondition_LU_SGS
 

@@ -37,7 +37,7 @@ use StormRuler_Mesh, only: tMesh
 implicit none
 
 interface Dot
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Dot$T
 #$end for
 end interface Dot
@@ -49,7 +49,7 @@ interface Norm_1
 end interface Norm_1
 
 interface Norm_2
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Norm_2$T
 #$end for
 end interface Norm_2
@@ -133,10 +133,8 @@ abstract interface
 #$for T, typename in SCALAR_TYPES
   pure function tMapFunc$T(x) result(Mx)
     import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
     $typename, intent(in) :: x(:)
     $typename :: Mx(size(x))
-    ! >>>>>>>>>>>>>>>>>>>>>>
   end function tMapFunc$T
 #$end for
 end interface
@@ -154,11 +152,9 @@ abstract interface
 #$for T, typename in SCALAR_TYPES
   pure function tSMapFunc$T(r, x) result(SMx)
     import dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in) :: r(:)
     $typename, intent(in) :: x(:)
     $typename :: SMx(size(x))
-    ! >>>>>>>>>>>>>>>>>>>>>>
   end function tSMapFunc$T
 #$end for
 end interface
@@ -174,14 +170,10 @@ end interface SFuncProd
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for T, typename in SCALAR_TYPES
-  subroutine tMatVecFunc$T(mesh, Au, u, env)
+  subroutine tMatVecFunc$T(mesh, Ax, x)
     import :: dp, tMesh
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    class(tMesh), intent(in) :: mesh
-    $typename, intent(in), target :: u(:,:)
-    $typename, intent(inout), target :: Au(:,:)
-    class(*), intent(inout) :: env
-    ! >>>>>>>>>>>>>>>>>>>>>>
+    class(tMesh), intent(inout), target :: mesh
+    $typename, intent(inout), target :: x(:,:), Ax(:,:)
   end subroutine tMatVecFunc$T
 #$end for
 end interface
@@ -214,13 +206,11 @@ contains
 !! • 𝑑 ← <𝒙⋅𝒚> = 𝒙ᴴ𝒚 (default), or 
 !! • 𝑑 ← [𝒙⋅𝒚] = 𝒙ᵀ𝒚 (do_conjg = false).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 $typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
   logical, intent(in), optional :: do_conjg
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
 #$if T == 'C'
   if (present(do_conjg)) then
@@ -236,9 +226,7 @@ $typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
 
 contains
   $typename function Dot_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     ! ----------------------
     ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙ᵢ𝒚ᵢ. 
@@ -249,9 +237,7 @@ contains
   end function Dot_Kernel
 #$if T == 'C'
   $typename function Dot_Conjg_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     ! ----------------------
     ! 𝗼𝘂𝘁 ← 𝗼𝘂𝘁 + 𝒙̅ᵢ𝒚ᵢ.
@@ -269,18 +255,14 @@ end function Dot$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 real(dp) function Norm_1$T(mesh, x) result(Norm_1)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   Norm_1 = mesh%RunCellKernel_Sum(Norm_1_Kernel)
 
 contains
   real(dp) function Norm_1_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     Norm_1_Kernel = sum(abs(x(:,iCell)))
     if (gCylCoords) Norm_1_Kernel = Norm_1_Kernel*mesh%CellCenter(1,iCell)
@@ -292,12 +274,10 @@ end function Norm_1$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 real(dp) function Norm_2$T(mesh, x) result(Norm_2)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if T == 'C'
   Norm_2 = sqrt( Re(Dot(mesh, x, x)) )
@@ -313,18 +293,14 @@ end function Norm_2$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 real(dp) function Norm_C$T(mesh, x) result(Norm_C)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   Norm_C = mesh%RunCellKernel_Max(Norm_C_Kernel)
 
 contains
   real(dp) function Norm_C_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     Norm_C_Kernel = maxval(abs(x(:,iCell)))
     
@@ -337,12 +313,10 @@ end function Norm_C$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine Fill$T(mesh, y, alpha, beta)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: alpha
   $typename, intent(inout) :: y(:,:)
   $typename, intent(in), optional :: beta
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   $typename :: gamma
 
@@ -353,9 +327,7 @@ subroutine Fill$T(mesh, y, alpha, beta)
 
 contains
   subroutine Fill_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = gamma
     
@@ -366,15 +338,13 @@ end subroutine Fill$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components randomly: 𝒚 ← {𝛼ᵢ}ᵀ, where: 
 !! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
-!! • 𝕹𝖊(𝛼ᵢ) ~ ???, 𝕴𝖒(𝛼ᵢ) ~ ???, 𝒚 ∊ ℂⁿ.
+!! • 𝛼ᵢ = 𝜙ᵢ + 𝑐⋅𝘦𝘹𝘱(𝑖𝜓ᵢ), 𝜙ᵢ ~ 𝘜(𝑎,𝑏), 𝜓ᵢ ~ 𝘜(0,2𝜋), 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine Fill_Random$T(mesh, y, a, b)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   $typename, intent(inout) :: y(:,:)
   real(dp), intent(in), optional :: a, b
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)
@@ -382,10 +352,9 @@ subroutine Fill_Random$T(mesh, y, a, b)
   call mesh%SetRange()
 
 contains
-  subroutine Fill_Random_Kernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine Fill_Random_Kernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer :: iCell
 
@@ -411,7 +380,7 @@ end subroutine Fill_Random$T
 #$for T, typename in SCALAR_TYPES
 subroutine Set$T(mesh, y, x)
   ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -434,19 +403,15 @@ end subroutine Set$T
 !! Set: 𝒚 ← 𝕹𝖊(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Set_Real(mesh, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   complex(dp), intent(in) :: x(:,:)
   real(dp), intent(inout) :: y(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Set_Real_Kernel)
 
 contains
   subroutine Set_Real_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = Re(x(:,iCell))
 
@@ -457,19 +422,15 @@ end subroutine Set_Real
 !! Set: 𝒚 ← 𝕹𝖊(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Set_Imag(mesh, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   complex(dp), intent(in) :: x(:,:)
   real(dp), intent(inout) :: y(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Set_Imag_Kernel)
 
 contains
   subroutine Set_Imag_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = Im(x(:,iCell))
 
@@ -480,19 +441,15 @@ end subroutine Set_Imag
 !! Set: 𝒛 ← 𝒚 + 𝑖𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Set_Complex(mesh, z, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: x(:,:), y(:,:)
   complex(dp), intent(inout) :: z(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Set_Complex_Kernel)
 
 contains
   subroutine Set_Complex_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(:,iCell) = R2C(y(:,iCell), x(:,iCell))
 
@@ -504,19 +461,15 @@ end subroutine Set_Complex
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine Scale$T(mesh, y, x, alpha)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:), alpha
   $typename, intent(inout) :: y(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(Scale_Kernel)
 
 contains
   subroutine Scale_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = alpha*x(:,iCell)
 
@@ -529,12 +482,10 @@ end subroutine Scale$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine Add$T(mesh, z, y, x, alpha, beta)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
   $typename, intent(inout) :: z(:,:)
   $typename, intent(in), optional :: alpha, beta
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   $typename :: a, b
 
@@ -544,9 +495,7 @@ subroutine Add$T(mesh, z, y, x, alpha, beta)
 
 contains
   subroutine Add_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(:,iCell) = b*y(:,iCell) + a*x(:,iCell)
 
@@ -559,12 +508,10 @@ end subroutine Add$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine Sub$T(mesh, z, y, x, alpha, beta)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:), y(:,:)
   $typename, intent(inout) :: z(:,:)
   $typename, intent(in), optional :: alpha, beta
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   $typename :: a, b
 
@@ -574,9 +521,7 @@ subroutine Sub$T(mesh, z, y, x, alpha, beta)
 
 contains
   subroutine Sub_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(:,iCell) = b*y(:,iCell) - a*x(:,iCell)
     
@@ -589,12 +534,10 @@ end subroutine Sub$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine Mul$rank(mesh, u, v, w, power)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: v(:), w(@:,:)
   real(dp), intent(inout) :: u(@:,:)
   integer(ip), intent(in), optional :: power
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: p
   p = 1; if (present(power)) p = power
@@ -603,9 +546,7 @@ subroutine Mul$rank(mesh, u, v, w, power)
 
 contains
   subroutine Mul_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
 
@@ -618,19 +559,15 @@ end subroutine Mul$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine Mul_Inner$rank(mesh, z, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: y(:,:), x(:,@:,:)
   real(dp), intent(inout) :: z(@:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Mul_Inner_Kernel)
 
 contains
   subroutine Mul_Inner_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(@:,iCell) = y(:,iCell).inner.x(:,@:,iCell)
 
@@ -643,19 +580,15 @@ end subroutine Mul_Inner$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-1
 subroutine Mul_Outer$rank(mesh, z, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: y(:,:), x(@:,:)
   real(dp), intent(inout) :: z(:,@:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call mesh%RunCellKernel(Mul_Outer_Kernel)
 
 contains
   subroutine Mul_Outer_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     z(:,@:,iCell) = y(:,iCell).outer.x(@:,iCell)
 
@@ -671,20 +604,16 @@ end subroutine Mul_Outer$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine FuncProd$T(mesh, y, x, f)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
   procedure(tMapFunc$T) :: f
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(FuncProd_Kernel)
   
 contains
   subroutine FuncProd_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = f(x(:,iCell))
 
@@ -697,20 +626,16 @@ end subroutine FuncProd$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
 subroutine SFuncProd$T(mesh, y, x, f)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: y(:,:)
   procedure(tSMapFunc$T) :: f
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel(SFuncProd_Kernel)
   
 contains
   subroutine SFuncProd_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = f(mesh%CellCenter(iCell), x(:,iCell))
 
@@ -722,23 +647,19 @@ end subroutine SFuncProd$T
 !! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
-subroutine MatVecProd_Diagonal$T(mesh, Dx, x, MatVec, env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine MatVecProd_Diagonal$T(mesh, Dx, x, MatVec)
   class(tMesh), intent(inout) :: mesh
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: Dx(:,:)
   procedure(tMatVecFunc$T) :: MatVec
-  class(*), intent(inout) :: env
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   call mesh%RunCellKernel_Block(MatVecProd_Diagonal_BlockKernel)
   call mesh%SetRange()
 
 contains
-  subroutine MatVecProd_Diagonal_BlockKernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine MatVecProd_Diagonal_BlockKernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
@@ -749,7 +670,7 @@ contains
     do iCell = firstCell, lastCell
       e(:,iCell) = x(:,iCell)
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Dx, e, env)
+      call MatVec(mesh, Dx, e)
       e(:,iCell) = 0.0_dp
     end do
 
@@ -762,15 +683,12 @@ end subroutine MatVecProd_Diagonal$T
 !! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
-subroutine MatVecProd_Triangular$T(mesh, Tx, x, upLo, MatVec, env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine MatVecProd_Triangular$T(mesh, upLo, Tx, x, MatVec)
   class(tMesh), intent(inout) :: mesh
+  character, intent(in) :: upLo
   $typename, intent(in) :: x(:,:)
   $typename, intent(inout) :: Tx(:,:)
-  character :: upLo
   procedure(tMatVecFunc$T) :: MatVec
-  class(*), intent(inout) :: env
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   if (upLo == 'U') then
     call mesh%RunCellKernel_Block( &
@@ -782,10 +700,9 @@ subroutine MatVecProd_Triangular$T(mesh, Tx, x, upLo, MatVec, env)
   call mesh%SetRange()
 
 contains
-  subroutine MatVecProd_UpperTriangular_BlockKernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine MatVecProd_UpperTriangular_BlockKernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
@@ -796,15 +713,14 @@ contains
 
     do iCell = firstCell, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tx, e, env)
+      call MatVec(mesh, Tx, e)
       e(:,iCell) = 0.0_dp
     end do
 
   end subroutine MatVecProd_UpperTriangular_BlockKernel 
-  subroutine MatVecProd_LowerTriangular_BlockKernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine MatVecProd_LowerTriangular_BlockKernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: iCell
     $typename, allocatable :: e(:,:)
@@ -815,7 +731,7 @@ contains
     
     do iCell = lastCell, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tx, e, env)
+      call MatVec(mesh, Tx, e)
       e(:,iCell) = 0.0_dp
     end do
 
@@ -828,15 +744,12 @@ end subroutine MatVecProd_Triangular$T
 !! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
-subroutine Solve_Triangular$T(mesh, x, b, diag, upLo, MatVec, env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine Solve_Triangular$T(mesh, upLo, x, b, diag, MatVec)
   class(tMesh), intent(inout) :: mesh
+  character, intent(in) :: upLo
   $typename, intent(in) :: b(:,:), diag(:,:)
   $typename, intent(inout) :: x(:,:)
-  character :: upLo
   procedure(tMatVecFunc$T) :: MatVec
-  class(*), intent(inout) :: env
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)
@@ -850,10 +763,9 @@ subroutine Solve_Triangular$T(mesh, x, b, diag, upLo, MatVec, env)
   call mesh%SetRange()
 
 contains
-  subroutine Solve_UpperTriangular_BlockKernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine Solve_UpperTriangular_BlockKernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: iCell
     $typename, allocatable :: Ax(:,:)
@@ -865,16 +777,15 @@ contains
     x(:,lastCell) = b(:,lastCell)/diag(:,lastCell)
     do iCell = lastCell - 1, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Ax, x, env)
+      call MatVec(mesh, Ax, x)
       ! TODO: this is not a correct diagonal solution in block case!
       x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
     end do
 
   end subroutine Solve_UpperTriangular_BlockKernel 
-  subroutine Solve_LowerTriangular_BlockKernel(firstCell, lastCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
+  subroutine Solve_LowerTriangular_BlockKernel(mesh, firstCell, lastCell)
+    class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     integer(ip) :: iCell
     $typename, allocatable :: Ax(:,:)
@@ -886,7 +797,7 @@ contains
     x(:,firstCell) = b(:,firstCell)/diag(:,firstCell)
     do iCell = firstCell + 1, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Ax, x, env)
+      call MatVec(mesh, Ax, x)
       ! TODO: this is not a correct diagonal solution in block case!
       x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
     end do

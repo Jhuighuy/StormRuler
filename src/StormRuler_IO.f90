@@ -61,11 +61,9 @@ contains
 
 #$do rank = 0, NUM_RANKS
 subroutine IOList_Add$rank(list, name, values)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(IOList), intent(inout) :: list
   character(len=*), intent(in) :: name
   real(dp), target, intent(in) :: values(@:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   class(IOListItem$rank), pointer :: item
 
@@ -86,13 +84,12 @@ end subroutine IOList_Add$rank
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! -----------------------------------------------------------------
+!! ----------------------------------------------------------------- !!
 !! Load PPM image.
+!! ----------------------------------------------------------------- !!
 subroutine Load_PPM(file, image)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
   integer(ip), allocatable, intent(out) :: image(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: unit, offset
   integer(ip) :: numRows, numColumns
@@ -115,6 +112,7 @@ subroutine Load_PPM(file, image)
     inquire(unit, pos=offset)
     close(unit)
   end block
+  
   ! ----------------------
   ! Allocate and read image image.
   ! ----------------------
@@ -136,16 +134,13 @@ subroutine Load_PPM(file, image)
     close(unit)
   end block
 end subroutine Load_PPM
-!! -----------------------------------------------------------------  
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! ----------------------------------------------------------------- !!
 !! Save PPM image.  
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! ----------------------------------------------------------------- !!
 subroutine Save_PPM(file, image)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: file
   integer(ip), intent(in) :: image(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: unit
   character :: bytes(3)

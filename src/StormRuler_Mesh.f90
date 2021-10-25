@@ -40,30 +40,6 @@ use :: omp_lib
 
 implicit none
 
-abstract interface
-  subroutine tKernelFunc(iCell)
-    import ip
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tKernelFunc
-  subroutine tBlockKernelFunc(firstCell, lastCell)
-    import ip
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    integer(ip), intent(in) :: firstCell, lastCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end subroutine tBlockKernelFunc
-#$for type, typename in SCALAR_TYPES
-  function tReduceKernelFunc$type(iCell) result(r)
-    import ip, dp
-    ! <<<<<<<<<<<<<<<<<<<<<<
-    integer(ip), intent(in) :: iCell
-    $typename :: r
-    ! >>>>>>>>>>>>>>>>>>>>>>
-  end function tReduceKernelFunc$type
-#$end for
-end interface
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Semi-structured multidimensional mesh.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -176,9 +152,9 @@ contains
   procedure :: FirstCell => tMesh_FirstCell
   procedure :: LastCell => tMesh_LastCell
   procedure :: RunCellKernel => tMesh_RunCellKernel
-#$for type, _ in SCALAR_TYPES
-  generic :: RunCellKernel_Sum => RunCellKernel_Sum$type
-  procedure :: RunCellKernel_Sum$type => tMesh_RunCellKernel_Sum$type
+#$for T, _ in [SCALAR_TYPES[0]]
+  generic :: RunCellKernel_Sum => RunCellKernel_Sum$T
+  procedure :: RunCellKernel_Sum$T => tMesh_RunCellKernel_Sum$T
 #$end for
   procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
   procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
@@ -209,6 +185,31 @@ contains
   procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
 end type tMesh
 
+abstract interface
+  subroutine tKernelFunc(iCell)
+    import ip
+    integer(ip), intent(in) :: iCell
+  end subroutine tKernelFunc
+end interface
+
+abstract interface
+#$for type, typename in SCALAR_TYPES
+  function tReduceKernelFunc$type(iCell) result(r)
+    import ip, dp
+    integer(ip), intent(in) :: iCell
+    $typename :: r
+  end function tReduceKernelFunc$type
+#$end for
+end interface
+
+abstract interface
+  subroutine tBlockKernelFunc(mesh, firstCell, lastCell)
+    import ip, tMesh
+    class(tMesh), intent(inout), target :: mesh
+    integer(ip), intent(in) :: firstCell, lastCell
+  end subroutine tBlockKernelFunc
+end interface
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -217,11 +218,9 @@ contains
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_SetRange(mesh, firstCell, lastCell, parallel)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   integer(ip), intent(in), optional :: firstCell, lastCell
   logical, optional :: parallel
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if HAS_OpenMP
   ! Preallocate and reset the ranges.
@@ -269,51 +268,46 @@ end subroutine tMesh_SetRange
 !! Indicate if the computation should be performed in parallel.
 !! ----------------------------------------------------------------- !!
 pure logical function tMesh_Parallel(mesh)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   tMesh_Parallel = mesh%mParallel
+
 end function tMesh_Parallel
 
 !! ----------------------------------------------------------------- !!
 !! Get the lower cell bound for the current computation.
 !! ----------------------------------------------------------------- !!
 integer(ip) function tMesh_FirstCell(mesh)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if HAS_OpenMP
   tMesh_FirstCell = mesh%mCellRange(1, omp_get_thread_num()+1)
 #$else
   tMesh_FirstCell = mesh%mCellRange(1)
 #$end if
+
 end function tMesh_FirstCell
 
 !! ----------------------------------------------------------------- !!
 !! Get the upper cell bound for the current computation.
 !! ----------------------------------------------------------------- !!
 integer(ip) function tMesh_LastCell(mesh)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
 #$if HAS_OpenMP
   tMesh_LastCell = mesh%mCellRange(2, omp_get_thread_num()+1)
 #$else
   tMesh_LastCell = mesh%mCellRange(2)
 #$end if
+
 end function tMesh_LastCell
 
 !! ----------------------------------------------------------------- !!
 !! Launch a cell kernel.
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_RunCellKernel(mesh, Kernel)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tKernelFunc) :: Kernel
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
@@ -328,18 +322,17 @@ subroutine tMesh_RunCellKernel(mesh, Kernel)
       call Kernel(iCell)
     end do
   end if
+
 end subroutine tMesh_RunCellKernel
 
 !! ----------------------------------------------------------------- !!
 !! Launch a SUM-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
-#$for type, typename in SCALAR_TYPES
-function tMesh_RunCellKernel_Sum$type(mesh, Kernel) result(sum)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc$type) :: Kernel
+#$for T, typename in SCALAR_TYPES
+function tMesh_RunCellKernel_Sum$T(mesh, Kernel) result(sum)
+  class(tMesh), intent(inout) :: mesh
+  procedure(tReduceKernelFunc$T) :: Kernel
   $typename :: sum
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
@@ -355,18 +348,17 @@ function tMesh_RunCellKernel_Sum$type(mesh, Kernel) result(sum)
       sum = sum + Kernel(iCell)
     end do
   end if
-end function tMesh_RunCellKernel_Sum$type
+
+end function tMesh_RunCellKernel_Sum$T
 #$end for
 
 !! ----------------------------------------------------------------- !!
 !! Launch a MIN-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMin
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
@@ -382,17 +374,16 @@ function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
       mMin = min(mMin, Kernel(iCell))
     end do
   end if
+
 end function tMesh_RunCellKernel_Min
 
 !! ----------------------------------------------------------------- !!
 !! Launch a MAX-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMax
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
@@ -408,16 +399,15 @@ function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
       mMax = max(mMax, Kernel(iCell))
     end do
   end if
+
 end function tMesh_RunCellKernel_Max
 
 !! ----------------------------------------------------------------- !!
 !! Launch a block-kernel.
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer(ip) :: i
   integer(ip), allocatable :: ranges(:)
@@ -427,7 +417,7 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! Launch the whole range as a block if sequential mode is requested.
   ! ----------------------
   if (.not.mesh%mParallel) then
-    call BlockKernel(mesh%FirstCell(), mesh%LastCell())
+    call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())
     return
   end if
 
@@ -449,40 +439,38 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! ----------------------
   ! Lauch threads.
   ! ----------------------
-  !$omp parallel default(none) shared(ranges)
+  !$omp parallel default(none) shared(mesh, ranges)
   associate(iThread => omp_get_thread_num() + 1)
-    call BlockKernel(ranges(iThread), ranges(iThread + 1) - 1)
+    call BlockKernel(mesh, ranges(iThread), ranges(iThread + 1) - 1)
   end associate
   !$omp end parallel
 #$else
-  call BlockKernel(mesh%FirstCell(), mesh%LastCell())
+  call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())
 #$endif
 end subroutine tMesh_RunCellKernel_Block
 
 subroutine tMesh_RunCellKernel_Forward(mesh, Kernel)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tKernelFunc) :: Kernel
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
   do iCell = mesh%FirstCell(), mesh%LastCell()
     call Kernel(iCell)
   end do
+
 end subroutine tMesh_RunCellKernel_Forward
 
 subroutine tMesh_RunCellKernel_Backward(mesh, Kernel)
-  ! <<<<<<<<<<<<<<<<<<<<<<
-  class(tMesh), intent(in) :: mesh
+  class(tMesh), intent(inout) :: mesh
   procedure(tKernelFunc) :: Kernel
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   integer :: iCell
 
   do iCell = mesh%LastCell(), mesh%FirstCell(), -1
     call Kernel(iCell)
   end do
+  
 end subroutine tMesh_RunCellKernel_Backward
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -491,10 +479,8 @@ end subroutine tMesh_RunCellKernel_Backward
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
 logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iCell, iCellFace
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   tMesh_CellFacePeriodic = allocated(mesh%mCellFacePeriodic)
   if (tMesh_CellFacePeriodic) then
@@ -507,21 +493,17 @@ end function tMesh_CellFacePeriodic
 !! Get cell center.
 !! ----------------------------------------------------------------- !!
 pure function tMesh_CellCenterVec(mesh, iCell)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iCell
   real(dp) :: tMesh_CellCenterVec(mesh%NumDims)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   tMesh_CellCenterVec = &
     & [0.0_dp,0.0_dp] + mesh%dl(::2)*(mesh%CellMDIndex(:,iCell) - 0.5_dp)
 end function tMesh_CellCenterVec
 pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iDim, iCell
   real(dp) :: tMesh_CellCenterCoord
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   associate(r => mesh%CellCenterVec(iCell))
     tMesh_CellCenterCoord = r(iDim)
@@ -652,10 +634,8 @@ end subroutine tMesh_InitFromImage${dim}$D
 !! Generate BC/ghost cells.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine tMesh_GenerateBCCells(mesh, numBCLayers)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   integer(ip), intent(in) :: numBCLayers
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: iCell, iCellFace, iBCM, iBCCell, iGCell
   
@@ -714,10 +694,8 @@ end subroutine tMesh_GenerateBCCells
 !! Output may be visualized with: 'neato -n -Tpng c2c.dot > c2c.png' 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine tMesh_PrintTo_Neato(mesh, file)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: unit
   integer(ip) :: iCell, iiCell, iCellFace
@@ -806,11 +784,9 @@ end subroutine tMesh_PrintTo_Neato
 !! Print mesh in Legacy VTK '.vtk' format.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
   type(IOList), intent(in), optional :: fields
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: unit
   integer(ip) :: numVTKCells, iVTKCell
@@ -970,6 +946,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
   integer(ip), intent(in) :: xNumCells, yNumCells
   logical, intent(in) :: xPeriodic, yPeriodic
   integer(ip), intent(in), optional :: numLayers
+  
   integer(ip) :: xNumLayers, yNumLayers
   integer(ip), allocatable :: cellToIndex(:,:)
   ! ----------------------

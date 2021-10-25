@@ -28,11 +28,9 @@ module StormRuler_FDM_BCs
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip
-#$do rank = 0, NUM_RANKS
 #$for type_, _ in SCALAR_TYPES
-!use StormRuler_Helpers, only: tSMapFunc$type_$rank
+!use StormRuler_Helpers, only: tSMapFunc$type_
 #$end for
-#$end do
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -56,14 +54,14 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iBCM
   real(dp), intent(in) :: alpha, beta, gamma
   real(dp), intent(inout) :: u(@:,:)
   !procedure(tSMapFuncR$rank), optional :: f
-  ! >>>>>>>>>>>>>>>>>>>>>>
+  
   integer(ip) :: iBCMPtr
+
   ! ----------------------
   associate(bcmFirst => mesh%BCMs(iBCM), &
     &        bcmLast => mesh%BCMs(iBCM+1)-1, &

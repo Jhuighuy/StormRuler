@@ -52,12 +52,11 @@ contains
 !! Some accurate estimates of spectrum of [𝓟]𝓐 are required. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_Chebyshev(mesh, x, b, &
-    & lambda_min, lambda_max, MatVec, env, params, Precond)
+    & lambda_min, lambda_max, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda_min, lambda_max, b(:,:)
   real(dp), intent(inout) :: x(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 
@@ -73,7 +72,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     z => r
   end if
 
-  !call EigenPairs_Lanczos(mesh, x, b, MatVec, env, params, Precond)
+  !call EigenPairs_Lanczos(mesh, x, b, MatVec, params, Precond)
 
   ! ----------------------
   ! 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
@@ -87,7 +86,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
-  call MatVec(mesh, r, x, env)
+  call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)
 
   ! ----------------------
@@ -111,7 +110,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     ! 𝗲𝗻𝗱 𝗶𝗳
     ! ----------------------
     if (present(Precond)) &
-      & call Precond(mesh, z, r, MatVec, env, precond_env)
+      & call Precond(mesh, z, r, MatVec, precond_env)
     if (first) then
       first = .false.
       alpha = 1.0_dp/d
@@ -133,7 +132,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     ! 𝒓 ← 𝒃 - 𝒓.
     ! ----------------------
     call Add(mesh, x, x, p, alpha)
-    call MatVec(mesh, r, x, env)
+    call MatVec(mesh, r, x)
     call Sub(mesh, r, b, r)
 
     ! ----------------------

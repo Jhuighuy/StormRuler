@@ -57,9 +57,7 @@ contains
 !! Flip integer oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
 !! ----------------------------------------------------------------- !!
 integer(ip) pure function Flip(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: value
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   Flip = merge(value+1, value-1, mod(value, 2) == 1)
 end function Flip
@@ -68,9 +66,7 @@ end function Flip
 !! Find value index in the array.
 !! ----------------------------------------------------------------- !!
 integer(ip) pure function IndexOf(value, array)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: value, array(:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   do IndexOf = 1, size(array)
     if (array(IndexOf) == value) return
@@ -82,9 +78,7 @@ end function IndexOf
 !! Bubble-sort the integer array.
 !! ----------------------------------------------------------------- !!
 subroutine BubbleSort(array)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(inout) :: array(:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: temp
   integer(ip) :: i, j
@@ -111,9 +105,7 @@ end subroutine BubbleSort
 !! Ensure the value is positive.
 !! ----------------------------------------------------------------- !!
 subroutine EnsurePositive(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   if (ieee_is_nan(value).or.(value <= 0)) then
     write(error_unit, *) 'NEGATIVE, ZERO OR NaN VALUE', value
@@ -125,9 +117,7 @@ end subroutine EnsurePositive
 !! Ensure the value is positive or zero.
 !! ----------------------------------------------------------------- !!
 subroutine EnsureNonNegative(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   if (ieee_is_nan(value).or.(value < 0)) then
     write(error_unit, *) 'NEGATIVE OR NaN VALUE', value
@@ -138,9 +128,7 @@ end subroutine EnsureNonNegative
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
 real(dp) function SafeDivide(a, b)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a, b
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   call EnsurePositive(abs(b))
   SafeDivide = a/b
@@ -150,9 +138,7 @@ end function SafeDivide
 !! Compute pseudo inverse: i ← 1/a if a ≠ 0 else 0.
 !! ----------------------------------------------------------------- !!
 real(dp) elemental function SafeInverse(a)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: a
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   SafeInverse = merge(0.0_dp, 1.0_dp/a, a==0.0_dp)
 end function SafeInverse
@@ -163,9 +149,7 @@ end function SafeInverse
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
 impure elemental subroutine Assert(b)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   logical, intent(in) :: b
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   if (.not.b) then
     error stop 'assertion failed'
@@ -177,10 +161,8 @@ end subroutine Assert
 !! ----------------------------------------------------------------- !!
 function AsField(uAny) result(u)
   use, intrinsic :: iso_c_binding
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in), target :: uAny(..)
   real(dp), pointer :: u(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   select rank(uAny)
     rank(1)
@@ -213,11 +195,9 @@ end function IsMatField
 !! ----------------------------------------------------------------- !!
 function AsVecField(dim, u) result(v)
   use, intrinsic :: iso_c_binding
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: dim
   real(dp), intent(in), target :: u(..)
   real(dp), pointer :: v(:,:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   select rank(u)
 #$do rank = 1, NUM_RANKS
@@ -235,11 +215,9 @@ end function AsVecField
 !! ----------------------------------------------------------------- !!
 function AsMatField(dim, u) result(v)
   use, intrinsic :: iso_c_binding
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: dim
   real(dp), intent(in), target :: u(..)
   real(dp), pointer :: v(:,:,:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   select rank(u)
 #$do rank = 1, NUM_RANKS
@@ -260,20 +238,16 @@ end function AsMatField
 !! Inner vector-vector product: z ← y⋅x.
 !! ----------------------------------------------------------------- !!
 pure function Inner$0(y, x) result(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: y(:), x(:)
   real(dp) :: z
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   z = dot_product(y, x)
 
 end function Inner$0
 #$do rank = 1, NUM_RANKS-1
 pure function Inner$rank(y, x) result(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: y(:), x(:,@:)
   real(dp) :: z(@{size(x, dim=$$+1)}@)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
 
@@ -289,20 +263,16 @@ end function Inner$rank
 !! Outer vector-tensor product: z ← y⊗x.
 !! ----------------------------------------------------------------- !!
 pure function Outer$0(y, x) result(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: y(:), x
   real(dp) :: z(size(y))
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   z(:) = y(:)*x
 
 end function Outer$0
 #$do rank = 1, NUM_RANKS-1
 pure function Outer$rank(y, x) result(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: y(:), x(@:)
   real(dp) :: z(size(y, dim=1), @{size(x, dim=$$)}@)
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   integer(ip) :: i
   
@@ -320,9 +290,7 @@ end function Outer$rank
 !! Get real part of a complex number.
 !! ----------------------------------------------------------------- !!
 real(dp) elemental function Re(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   complex(dp), intent(in) :: z
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   Re = real(z, kind=dp)
 end function Re
@@ -331,9 +299,7 @@ end function Re
 !! Get imaginary part of a complex number.
 !! ----------------------------------------------------------------- !!
 real(dp) elemental function Im(z)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   complex(dp), intent(in) :: z
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   Im = aimag(z) !! TODO: is this operation double-precision preserving?
 end function Im
@@ -341,11 +307,9 @@ end function Im
 !! ----------------------------------------------------------------- !!
 !! Convert real number (or a pair of two) into the complex number.
 !! ----------------------------------------------------------------- !!
-complex(dp) elemental function R2C(x,y)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+complex(dp) elemental function R2C(x, y)
   real(dp), intent(in) :: x
   real(dp), intent(in), optional :: y
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   if (present(y)) then
     R2C = cmplx(x, y, kind=dp)
@@ -358,10 +322,8 @@ end function R2C
 !! Convert an integer to string.
 !! ----------------------------------------------------------------- !!
 function I2S(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: value
   character(len=:), allocatable :: I2S
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   character(len=256) :: buffer
   write(buffer, *) value
@@ -372,10 +334,8 @@ end function I2S
 !! Convert a real number to string.
 !! ----------------------------------------------------------------- !!
 function R2S(value)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   real(dp), intent(in) :: value
   character(len=:), allocatable :: R2S
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   character(len=256) :: buffer
   write(buffer, *) value
@@ -386,11 +346,9 @@ end function R2S
 !! Ternary operator for strings.
 !! ----------------------------------------------------------------- !!
 function MergeString(trueString, falseString, condition)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   character(len=*), intent(in) :: trueString, falseString
   logical, intent(in) :: condition
   character(len=:), allocatable :: MergeString
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   if (condition) then
     MergeString = trueString
@@ -406,10 +364,8 @@ end function MergeString
 !! Convert RGB pixel to integer.
 !! ----------------------------------------------------------------- !!
 pure function PixelToInt(colorChannels) result(int)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: colorChannels(3)
   integer(ip) :: int
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   int = ior(iand(255, colorChannels(1)), &
     &       ior(ishft(iand(255, colorChannels(2)), 8), &
@@ -420,10 +376,8 @@ end function PixelToInt
 !! Convert integer(ip) to RGB pixel.
 !! ----------------------------------------------------------------- !!
 pure function IntToPixel(int) result(colorChannels)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   integer(ip), intent(in) :: int
   integer(ip) :: colorChannels(3)
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   colorChannels(1) = iand(255, int)
   colorChannels(2) = iand(255, ishft(int, -8))

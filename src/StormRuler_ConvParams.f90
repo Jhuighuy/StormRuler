@@ -69,13 +69,11 @@ contains
 !! ----------------------------------------------------------------- !!
 subroutine tConvParams_Init(params, &
     & absoluteTolerance, relativeTolerance, maxNumIterations, name)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(out) :: params
   real(dp), intent(in) :: absoluteTolerance
   real(dp), intent(in), optional :: relativeTolerance
   integer(ip), intent(in), optional :: maxNumIterations
   character(len=*), intent(in), optional :: name
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   params%Name = ''
   if (present(name)) params%Name = name
@@ -107,11 +105,9 @@ end subroutine tConvParams_Init
 !! Check convergence of the iterations process.  
 !! ----------------------------------------------------------------- !!
 logical function tConvParams_Check(params, absoluteError, relativeError)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(inout) :: params
   real(dp), intent(in) :: absoluteError
   real(dp), intent(in), optional :: relativeError
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   tConvParams_Check = .false.
 
@@ -147,11 +143,9 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
   end associate
 end function tConvParams_Check
 logical function tConvParams_CheckC(params, absoluteError, relativeError)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tConvParams), intent(inout) :: params
   complex(dp), intent(in) :: absoluteError
   complex(dp), intent(in), optional :: relativeError
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   if (present(relativeError)) then
     tConvParams_CheckC = params%CheckR(abs(absoluteError), abs(relativeError))

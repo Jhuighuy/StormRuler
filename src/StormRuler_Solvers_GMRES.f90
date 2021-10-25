@@ -48,12 +48,11 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !!
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_GMRES(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_GMRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 

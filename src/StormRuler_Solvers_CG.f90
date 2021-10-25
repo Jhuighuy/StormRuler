@@ -51,12 +51,11 @@ contains
 !! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
 !! using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_CG(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
   
@@ -75,7 +74,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒕.
   ! ----------------------
-  call MatVec(mesh, r, x, env)
+  call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)
 
   ! ----------------------
@@ -91,7 +90,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
   ! 𝛾 ← <𝒓⋅𝒛>,
   ! ----------------------
   if (present(Precond)) &
-    & call Precond(mesh, z, r, MatVec, env, precond_env)
+    & call Precond(mesh, z, r, MatVec, precond_env)
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -102,7 +101,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
     ! 𝒙 ← 𝒙 + 𝛼𝒑,
     ! 𝒓 ← 𝒓 - 𝛼𝒕,
     ! ----------------------
-    call MatVec(mesh, t, p, env)
+    call MatVec(mesh, t, p)
     alpha = SafeDivide(gamma, Dot(mesh, p, t))
     call Add(mesh, x, x, p, alpha)
     call Sub(mesh, r, r, t, alpha)
@@ -121,7 +120,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
     ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
     if (present(Precond)) then
-      call Precond(mesh, z, r, MatVec, env, precond_env)
+      call Precond(mesh, z, r, MatVec, precond_env)
       alpha = Dot(mesh, r, z)
     end if
 
@@ -141,12 +140,11 @@ end subroutine Solve_CG
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
+subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 
@@ -166,7 +164,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
-  call MatVec(mesh, r, x, env)
+  call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)
 
   ! ----------------------
@@ -205,8 +203,8 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
     if (present(Precond)) &
-      & call Precond(mesh, y, p, MatVec, env, precond_env)
-    call MatVec(mesh, v, y, env)
+      & call Precond(mesh, y, p, MatVec, precond_env)
+    call MatVec(mesh, v, y)
     
     ! ----------------------
     ! 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
@@ -217,8 +215,8 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
     alpha = SafeDivide(rho, Dot(mesh, r_tilde, v))
     call Sub(mesh, s, r, v, alpha)
     if (present(Precond)) &
-      & call Precond(mesh, z, s, MatVec, env, precond_env)
-    call MatVec(mesh, t, z, env)
+      & call Precond(mesh, z, s, MatVec, precond_env)
+    call MatVec(mesh, t, z)
     
     ! ----------------------
     ! 𝒘 ← 𝓟𝒕,
@@ -228,7 +226,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
     ! 𝒙 ← 𝒙 + 𝛼𝒚,
     ! ----------------------
     if (present(Precond)) &
-      & call Precond(mesh, w, t, MatVec, env, precond_env)
+      & call Precond(mesh, w, t, MatVec, precond_env)
     omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
     call Sub(mesh, r, s, t, omega)
     call Add(mesh, x, x, z, omega)

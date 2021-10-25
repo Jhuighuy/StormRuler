@@ -51,7 +51,6 @@ contains
 !! 𝓟 = 𝓟ᵀ > 0 is explicitly required.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -59,7 +58,6 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
   ! [1] Paige, C. and M. Saunders. 
@@ -174,10 +172,8 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, env, params, Precond)
   
 contains
   subroutine SymOrtho(a, b, cs, sn, rr)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     real(dp), intent(in), value :: a, b
     real(dp), intent(out) :: cs, sn, rr
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     rr = hypot(a, b)
     if (rr > 0.0_dp) then

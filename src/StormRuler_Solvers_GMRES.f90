@@ -49,7 +49,6 @@ contains
 !!
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_GMRES(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -57,7 +56,6 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   error stop 'not implemented'
 end subroutine Solve_GMRES

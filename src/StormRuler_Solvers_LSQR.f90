@@ -42,7 +42,7 @@ implicit none
 
 interface Solve_LSQR
   module procedure Solve_LSQR
-  module procedure Solve_LSQR_Symmetric
+  module procedure Solve_LSQR_Symm
 end interface Solve_LSQR
 
 interface Solve_LSMR
@@ -59,17 +59,15 @@ contains
 !! Solve a right preconditioned linear least squares problem:
 !! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSQR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSQR(mesh, x, b, &
-    & MatVec, env, MatVec_T, env_T, params, Precond, Precond_T)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine Solve_LSQR(mesh, x, b, MatVec, env, &
+    & ConjMatVec, env_T, params, Precond, ConjPrecond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
-  procedure(tMatVecFuncR) :: MatVec, MatVec_T
+  procedure(tMatVecFuncR) :: MatVec, ConjMatVec
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond, Precond_T
-  ! >>>>>>>>>>>>>>>>>>>>>>
+  procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
   
   ! ----------------------
   ! [1] Paige, C. and M. Saunders. 
@@ -114,10 +112,10 @@ subroutine Solve_LSQR(mesh, x, b, &
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(Precond)) then
-    call MatVec_T(mesh, s, u, env_T)
-    call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+    call ConjMatVec(mesh, s, u, env_T)
+    call ConjPrecond(mesh, t, s, ConjMatVec, env_T, precond_env_T)
   else
-    call MatVec_T(mesh, t, u, env_T)
+    call ConjMatVec(mesh, t, u, env_T)
   end if
   alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
@@ -160,10 +158,10 @@ subroutine Solve_LSQR(mesh, x, b, &
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(Precond)) then
-      call MatVec_T(mesh, s, u, env_T)
-      call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+      call ConjMatVec(mesh, s, u, env_T)
+      call ConjPrecond(mesh, t, s, ConjMatVec, env_T, precond_env_T)
     else
-      call MatVec_T(mesh, t, u, env_T)
+      call ConjMatVec(mesh, t, u, env_T)
     end if
     call Sub(mesh, t, t, v, beta)
     alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
@@ -207,8 +205,8 @@ subroutine Solve_LSQR(mesh, x, b, &
   end if
 
 end subroutine Solve_LSQR
-subroutine Solve_LSQR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+
+subroutine Solve_LSQR_Symm(mesh, x, b, MatVec, env, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -216,7 +214,6 @@ subroutine Solve_LSQR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
   ! Using LSMR in symmetric case is not recommended,
@@ -230,23 +227,21 @@ subroutine Solve_LSQR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
     call Solve_LSQR(mesh, x, b, MatVec, env, MatVec, env, params)
   end if
   
-end subroutine Solve_LSQR_Symmetric
+end subroutine Solve_LSQR_Symm
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
 !! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSMR method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSMR(mesh, x, b, &
-    & MatVec, env, MatVec_T, env_T, params, Precond, Precond_T)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine Solve_LSMR(mesh, x, b, MatVec, env, &
+    & ConjMatVec, env_T, params, Precond, ConjPrecond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
-  procedure(tMatVecFuncR) :: MatVec, MatVec_T
+  procedure(tMatVecFuncR) :: MatVec, ConjMatVec
   class(*), intent(inout) :: env, env_T
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond, Precond_T
-  ! >>>>>>>>>>>>>>>>>>>>>>
+  procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
   
   ! ----------------------
   ! [1] Fong, D. C. and M. Saunders. 
@@ -292,10 +287,10 @@ subroutine Solve_LSMR(mesh, x, b, &
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(Precond)) then
-    call MatVec_T(mesh, s, u, env_T)
-    call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+    call ConjMatVec(mesh, s, u, env_T)
+    call ConjPrecond(mesh, t, s, ConjMatVec, env_T, precond_env_T)
   else
-    call MatVec_T(mesh, t, u, env_T)
+    call ConjMatVec(mesh, t, u, env_T)
   end if
   alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
 
@@ -340,10 +335,10 @@ subroutine Solve_LSMR(mesh, x, b, &
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(Precond)) then
-      call MatVec_T(mesh, s, u, env_T)
-      call Precond_T(mesh, t, s, MatVec_T, env_T, precond_env_T)
+      call ConjMatVec(mesh, s, u, env_T)
+      call ConjPrecond(mesh, t, s, ConjMatVec, env_T, precond_env_T)
     else
-      call MatVec_T(mesh, t, u, env_T)
+      call ConjMatVec(mesh, t, u, env_T)
     end if
     call Sub(mesh, t, t, v, beta)
     alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
@@ -395,7 +390,6 @@ subroutine Solve_LSMR(mesh, x, b, &
 
 end subroutine Solve_LSMR
 subroutine Solve_LSMR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -403,7 +397,6 @@ subroutine Solve_LSMR_Symmetric(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   ! ----------------------
   ! Using LSMR in symmetric case is not recommended,

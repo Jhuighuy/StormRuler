@@ -53,7 +53,6 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_Chebyshev(mesh, x, b, &
     & lambda_min, lambda_max, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda_min, lambda_max, b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -61,7 +60,6 @@ subroutine Solve_Chebyshev(mesh, x, b, &
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   logical :: first, second
   real(dp) :: c, d, alpha, beta, delta
@@ -145,6 +143,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     beta = Norm_2(mesh, r)
     if (params%Check(beta, beta/delta)) exit
   end do
+  
 end subroutine Solve_Chebyshev
 
 end module StormRuler_Solvers_Chebyshev

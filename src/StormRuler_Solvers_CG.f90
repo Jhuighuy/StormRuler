@@ -52,7 +52,6 @@ contains
 !! using the Conjugate Gradients method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -60,7 +59,6 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
   
   real(dp) :: alpha, beta, gamma, delta
   real(dp), pointer :: p(:,:), r(:,:), t(:,:), z(:,:)
@@ -136,6 +134,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, env, params, Precond)
     call Add(mesh, p, z, p, beta)
     gamma = alpha
   end do
+
 end subroutine Solve_CG
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
@@ -143,7 +142,6 @@ end subroutine Solve_CG
 !! the good old Biconjugate Gradients (stabilized) method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
-  ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
   real(dp), intent(inout) :: x(:,:)
@@ -151,7 +149,6 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
   class(*), intent(inout) :: env
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-  ! >>>>>>>>>>>>>>>>>>>>>>
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
   real(dp), pointer :: p(:,:), r(:,:), r_tilde(:,:), &
@@ -244,6 +241,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, env, params, Precond)
     gamma = Dot(mesh, r, r)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
   end do
+
 end subroutine Solve_BiCGStab
 
 end module StormRuler_Solvers_CG

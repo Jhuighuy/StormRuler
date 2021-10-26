@@ -102,6 +102,14 @@ if(GIT_FOUND)
   endif()
 endif()
 
+# Find threads.
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads)
+if (Threads_FOUND)
+    message(STATUS "Threads enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE Threads::Threads)
+endif()
+
 # TODO: we should check for quality of the OpenMP implementation,
 # e.g. support of block constructs inside of the parallel loops.
 
@@ -148,7 +156,7 @@ if(StormRuler_NO_MKL)
 else()
   # Configure OpenMP library to the Fortran compiler native one.
   if(OpenMP_Fortran_ENABLED)
-    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
+    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
       set(MKL_THREADING "intel_thread")
     elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
       set(MKL_THREADING "gnu_thread")
@@ -176,6 +184,9 @@ else()
 endif()
 
 # Find LAPACK.
+# Possible bug with ifort: accidental crashes when
+# compiled with 'NO_OpenMP=1' and 'NO_MKL=1' flags, and
+# CMake detects MKL as LAPACK.
 if(StormRuler_NO_LAPACK)
   message(STATUS "StormRuler LAPACK was disabled by user.")
 elseif(MKL_ENABLED)

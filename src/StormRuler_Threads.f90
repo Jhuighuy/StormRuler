@@ -42,11 +42,12 @@ type, bind(C) :: pthread_t
 end type pthread_t
 
 interface
-  function pthread_create(thread, pAttr, pFunc, pArg) bind(C, name='pthread_create')
+  function pthread_create(thread, pAttr, pStartRoutine, pArg) &
+      & bind(C, name='pthread_create')
     import :: c_int, c_ptr, c_funptr, pthread_t
-    type(pthread_t), intent(in) :: thread
+    type(pthread_t), intent(inout) :: thread
     type(c_ptr), intent(in), value :: pAttr
-    type(c_funptr), intent(in), value :: pFunc
+    type(c_funptr), intent(in), value :: pStartRoutine
     type(c_ptr), intent(in), value :: pArg
     integer(c_int) :: pthread_create
   end function pthread_create
@@ -61,6 +62,24 @@ interface
   end function pthread_join
 end interface
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Posix-like thread.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type :: tThread
+  type(pthread_t), private :: mObj
+contains
+  procedure, non_overridable :: Join => tThread_Join
+end type tThread
+
+interface tThread
+  module procedure :: tThread_New
+end interface tThread
+
+abstract interface
+  subroutine tStartRoutine()
+  end subroutine tStartRoutine
+end interface
+
 type, bind(C) :: sem_t
   integer(c_size_t) :: private(4) = 0_c_size_t
 end type sem_t
@@ -68,7 +87,7 @@ end type sem_t
 interface
   function sem_init(sem, shared, value) bind(C, name='sem_init')
     import :: c_int, sem_t
-    type(sem_t), intent(in) :: sem
+    type(sem_t), intent(inout) :: sem
     integer(c_int), intent(in), value :: shared, value
     integer(c_int) :: sem_init
   end function sem_init
@@ -77,7 +96,7 @@ end interface
 interface
   function sem_destroy(sem) bind(C, name='sem_destroy')
     import :: c_int, sem_t
-    type(sem_t), intent(in) :: sem
+    type(sem_t), intent(inout) :: sem
     integer(c_int) :: sem_destroy
   end function sem_destroy
 end interface
@@ -85,7 +104,7 @@ end interface
 interface
   function sem_post(sem) bind(C, name='sem_post')
     import :: c_int, sem_t
-    type(sem_t), intent(in) :: sem
+    type(sem_t), intent(inout) :: sem
     integer(c_int) :: sem_post
   end function sem_post
 end interface
@@ -93,7 +112,7 @@ end interface
 interface
   function sem_wait(sem) bind(C, name='sem_wait')
     import :: c_int, sem_t
-    type(sem_t), intent(in) :: sem
+    type(sem_t), intent(inout) :: sem
     integer(c_int) :: sem_wait
   end function sem_wait
 end interface
@@ -119,7 +138,60 @@ end interface tSem
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Create the semaphore.
+!! Create a thread.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+function tThread_New(StartRoutine) result(thread)
+  procedure(tStartRoutine) :: StartRoutine
+  type(tThread) :: thread
+
+  procedure(tStartRoutine), pointer, save :: sStartRoutine
+  integer(c_int) :: cError
+
+  sStartRoutine => StartRoutine
+
+  cError = pthread_create(thread%mObj, &
+    & c_null_ptr, c_funloc(cStartRoutine), c_null_ptr)
+  if (cError /= 0_c_int) then
+    write(error_unit, *) '`pthread_create` failed, error=', cError
+    error stop
+  end if
+  
+contains
+  recursive function cStartRoutine(arg) result(exitCode) bind(C)
+    type(c_ptr), intent(in), value :: arg
+    type(c_ptr) :: exitCode
+
+    print *, 'Entering PThread..'
+
+    call sStartRoutine()
+    exitCode = c_null_ptr
+
+    print *, 'Leaving PThread..'
+
+  end function cStartRoutine
+end function tThread_New
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Join the thread.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine tThread_Join(thread)
+  class(tThread), intent(inout) :: thread
+
+  integer(c_int) :: cError
+
+  cError = pthread_join(thread%mObj, c_null_ptr)
+  if (cError /= 0_c_int) then
+    write(error_unit, *) '`pthread_join` failed, error=', cError
+    error stop
+  end if
+
+end subroutine tThread_Join
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Create a semaphore.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 function tSem_New(value, shared) result(sem)
   integer(ip), intent(in) :: value
@@ -136,11 +208,9 @@ function tSem_New(value, shared) result(sem)
 
   cError = sem_init(sem%mObj, cShared, int(value, kind=c_int))
   if (cError /= 0_c_int) then
-    write(error_unit, *) '`sem_init` failed, cError=', cError
+    write(error_unit, *) '`sem_init` failed, error=', cError
     error stop
   end if
-
-  print *, 'END INIT!!!!'
 
 end function tSem_New
 
@@ -154,7 +224,7 @@ subroutine tSem_Destroy(sem)
 
   cError = sem_destroy(sem%mObj)
   if (cError /= 0_c_int) then
-    write(error_unit, *) '`sem_destroy` failed, cError=', cError
+    write(error_unit, *) '`sem_destroy` failed, error=', cError
     error stop
   end if
 
@@ -170,7 +240,7 @@ subroutine tSem_Post(sem)
 
   cError = sem_post(sem%mObj)
   if (cError /= 0_c_int) then
-    write(error_unit, *) '`sem_post` failed, cError=', cError
+    write(error_unit, *) '`sem_post` failed, error=', cError
     error stop
   end if
 
@@ -186,7 +256,7 @@ subroutine tSem_Wait(sem)
 
   cError = sem_wait(sem%mObj)
   if (cError /= 0_c_int) then
-    write(error_unit, *) '`sem_wait` failed, cError=', cError
+    write(error_unit, *) '`sem_wait` failed, error=', cError
     error stop
   end if
 

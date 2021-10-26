@@ -48,7 +48,7 @@ use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 use StormRuler_Solvers_Precond, only: &
   & Precondition_Jacobi, Precondition_LU_SGS
 
-use StormRuler_Threads!, only: tSem
+use StormRuler_Threads, only: tSem
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_long, &

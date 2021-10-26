@@ -48,8 +48,10 @@ use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 use StormRuler_Solvers_Precond, only: &
   & Precondition_Jacobi, Precondition_LU_SGS
 
+use StormRuler_Threads!, only: tSem
+
 use, intrinsic :: iso_fortran_env, only: error_unit
-use, intrinsic :: iso_c_binding, only: c_int, c_long, &
+use, intrinsic :: iso_c_binding, only: c_long, &
   & c_size_t, c_ptr, c_funptr, c_null_ptr, c_funloc
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -199,32 +201,6 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
     end subroutine cPThreadJoin
   end interface
 
-  !! --------------------------------------------------------------- !!
-  !! Unix semaphores API.
-  !! --------------------------------------------------------------- !!
-  type, bind(C) :: ctSem
-    integer(c_size_t) :: mPrivate(4)
-  end type ctSem
-  interface
-    subroutine cSemInit(pSem, shared, value) bind(C, name='sem_init')
-      import :: c_int, ctSem
-      type(ctSem), intent(in) :: pSem
-      integer(c_int), intent(in), value :: shared, value
-    end subroutine cSemInit
-    subroutine cSemClose(pSem) bind(C, name='sem_close')
-      import :: ctSem
-      type(ctSem), intent(in) :: pSem
-    end subroutine cSemClose
-    subroutine cSemPost(pSem) bind(C, name='sem_post')
-      import :: ctSem
-      type(ctSem), intent(in) :: pSem
-    end subroutine cSemPost
-    subroutine cSemWait(pSem) bind(C, name='sem_wait')
-      import :: ctSem
-      type(ctSem), intent(in) :: pSem
-    end subroutine cSemWait
-  end interface
-
   class(tMesh), pointer, save :: sMesh
   character(len=:), allocatable, save :: sMethod, sPrecondMethod
   real(dp), pointer, save :: sX(:,:), sB(:,:)
@@ -232,11 +208,10 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
   type(tConvParams), save :: sParams
   character(len=:), allocatable, save :: sRequest
 
-  logical, save :: sFirstCall = .true.
   type(ctPThread), save :: sThread
-  type(ctSem), save :: sSemYield, sSemAwait
+  type(tSem), allocatable, save :: sSemYield, sSemAwait
 
-  if (sFirstCall) then
+  if (.not.allocated(sRequest)) then
     ! ----------------------
     ! Save the arguments.
     ! ----------------------
@@ -248,17 +223,16 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
     ! ----------------------
     ! Create the semaphores and launch the compute thread.
     ! ----------------------
-    sFirstCall = .false.
-    call cSemInit(sSemYield, 0, 0)
-    call cSemInit(sSemAwait, 0, 0)
+    sSemYield = tSem(value=0)
+    sSemAwait = tSem(value=0)
     call cPThreadCreate(sThread, c_null_ptr, c_funloc(cThreadFunc), c_null_ptr)
   end if
 
   ! ----------------------
   ! Await for the compute thread to yield.
   ! ----------------------
-  call cSemPost(sSemYield)
-  call cSemWait(sSemAwait)
+  call sSemYield%Post()
+  call sSemAwait%Wait()
 
   ! ----------------------
   ! Read the request.
@@ -270,10 +244,8 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
   ! Clean-up on the exit request.
   ! ----------------------
   if (request == 'Done') then
-    sFirstCall = .true.
     call cPThreadJoin(sThread, c_null_ptr)
-    call cSemClose(sSemYield)
-    call cSemClose(sSemAwait)
+    deallocate(sSemYield, sSemAwait)
     deallocate(sMethod, sPrecondMethod, sRequest)
   end if
 
@@ -286,7 +258,7 @@ contains
     ! ----------------------
     ! Wait for the main thread to resume.
     ! ----------------------
-    call cSemWait(sSemYield)
+    call sSemYield%Wait()
 
     ! ----------------------
     ! Enter the computational routine.
@@ -297,7 +269,7 @@ contains
     ! Pass the exit request to the main thread and leave.
     ! ----------------------
     sRequest = 'Done'
-    call cSemPost(sSemAwait)
+    call sSemAwait%Post()
 
     print *, 'Leaving the RCI thread function..'
 
@@ -307,14 +279,14 @@ contains
     real(dp), intent(inout), target :: y(:,:), Ay(:,:)
 
     ! ----------------------
-    ! Pass the 'MatVec' or 'MatVec_H' request 
+    ! Pass the 'MatVec' or 'ConjMatVec' request 
     ! and field pointers to the main thread and yield.
     ! ----------------------
     sRequest = 'MatVec'
     sAy => Ay; sY => y 
 
-    call cSemPost(sSemAwait)
-    call cSemWait(sSemYield)
+    call sSemAwait%Post()
+    call sSemYield%Wait()
 
   end subroutine MatVec_RCI
 end function LinSolve_RCI

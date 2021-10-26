@@ -37,6 +37,10 @@ use, intrinsic :: iso_c_binding, only: c_int, c_long, &
 
 implicit none
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Posix-like threads.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+
 type, bind(C) :: pthread_t
   integer(c_long) :: private = 0_c_long
 end type pthread_t
@@ -62,11 +66,8 @@ interface
   end function pthread_join
 end interface
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Posix-like thread.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type :: tThread
-  type(pthread_t), private :: mObj
+  type(pthread_t) :: mHandle
 contains
   procedure, non_overridable :: Join => tThread_Join
 end type tThread
@@ -79,6 +80,13 @@ abstract interface
   subroutine tStartRoutine()
   end subroutine tStartRoutine
 end interface
+
+!! This should not be here.
+procedure(tStartRoutine), pointer, save :: sStartRoutine
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Posix-like semaphores.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 
 type, bind(C) :: sem_t
   integer(c_size_t) :: private(4) = 0_c_size_t
@@ -117,11 +125,8 @@ interface
   end function sem_wait
 end interface
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Posix-like semaphore.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type :: tSem
-  type(sem_t), private :: mObj
+  type(sem_t), private :: mHandle
 contains
   final :: tSem_Destroy 
   procedure, non_overridable :: Post => tSem_Post
@@ -144,32 +149,48 @@ function tThread_New(StartRoutine) result(thread)
   procedure(tStartRoutine) :: StartRoutine
   type(tThread) :: thread
 
-  procedure(tStartRoutine), pointer, save :: sStartRoutine
+  !! This is moved to the module variables.
+  !procedure(tStartRoutine), pointer, save :: sStartRoutine
   integer(c_int) :: cError
 
   sStartRoutine => StartRoutine
 
-  cError = pthread_create(thread%mObj, &
+  cError = pthread_create(thread%mHandle, &
     & c_null_ptr, c_funloc(cStartRoutine), c_null_ptr)
   if (cError /= 0_c_int) then
     write(error_unit, *) '`pthread_create` failed, error=', cError
     error stop
   end if
   
-contains
-  recursive function cStartRoutine(arg) result(exitCode) bind(C)
-    type(c_ptr), intent(in), value :: arg
-    type(c_ptr) :: exitCode
-
-    print *, 'Entering PThread..'
-
-    call sStartRoutine()
-    exitCode = c_null_ptr
-
-    print *, 'Leaving PThread..'
-
-  end function cStartRoutine
+  !! Program crashes when cStartRoutine 
+  !! is a contained procedure when compiled with ifort.
+!contains
+!  recursive function cStartRoutine(arg) result(exitCode) bind(C)
+!    type(c_ptr), intent(in), value :: arg
+!    type(c_ptr) :: exitCode
+!
+!    print *, 'Entering PThread..'
+!
+!    call sStartRoutine()
+!    exitCode = c_null_ptr
+!
+!    print *, 'Leaving PThread..'
+!
+!  end function cStartRoutine
 end function tThread_New
+
+function cStartRoutine(arg) result(exitCode) bind(C)
+  type(c_ptr), intent(in), value :: arg
+  type(c_ptr) :: exitCode
+
+  print *, 'Entering PThread..'
+
+  call sStartRoutine()
+  exitCode = c_null_ptr
+
+  print *, 'Leaving PThread..'
+
+end function cStartRoutine
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Join the thread.
@@ -179,7 +200,7 @@ subroutine tThread_Join(thread)
 
   integer(c_int) :: cError
 
-  cError = pthread_join(thread%mObj, c_null_ptr)
+  cError = pthread_join(thread%mHandle, c_null_ptr)
   if (cError /= 0_c_int) then
     write(error_unit, *) '`pthread_join` failed, error=', cError
     error stop
@@ -206,7 +227,7 @@ function tSem_New(value, shared) result(sem)
     cShared = merge(1_c_int, 0_c_int, shared)
   end if
 
-  cError = sem_init(sem%mObj, cShared, int(value, kind=c_int))
+  cError = sem_init(sem%mHandle, cShared, int(value, kind=c_int))
   if (cError /= 0_c_int) then
     write(error_unit, *) '`sem_init` failed, error=', cError
     error stop
@@ -222,7 +243,7 @@ subroutine tSem_Destroy(sem)
 
   integer(c_int) :: cError
 
-  cError = sem_destroy(sem%mObj)
+  cError = sem_destroy(sem%mHandle)
   if (cError /= 0_c_int) then
     write(error_unit, *) '`sem_destroy` failed, error=', cError
     error stop
@@ -233,12 +254,12 @@ end subroutine tSem_Destroy
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Post the semaphore.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine tSem_Post(sem)
+recursive subroutine tSem_Post(sem)
   class(tSem), intent(inout) :: sem
 
   integer(c_int) :: cError
 
-  cError = sem_post(sem%mObj)
+  cError = sem_post(sem%mHandle)
   if (cError /= 0_c_int) then
     write(error_unit, *) '`sem_post` failed, error=', cError
     error stop
@@ -249,12 +270,12 @@ end subroutine tSem_Post
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Wait for the semaphore.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine tSem_Wait(sem)
+recursive subroutine tSem_Wait(sem)
   class(tSem), intent(inout) :: sem
 
   integer(c_int) :: cError
 
-  cError = sem_wait(sem%mObj)
+  cError = sem_wait(sem%mHandle)
   if (cError /= 0_c_int) then
     write(error_unit, *) '`sem_wait` failed, error=', cError
     error stop

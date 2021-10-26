@@ -48,11 +48,9 @@ use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 use StormRuler_Solvers_Precond, only: &
   & Precondition_Jacobi, Precondition_LU_SGS
 
-use StormRuler_Threads, only: tSem
+use StormRuler_Threads, only: tThread, tSem
 
 use, intrinsic :: iso_fortran_env, only: error_unit
-use, intrinsic :: iso_c_binding, only: c_long, &
-  & c_size_t, c_ptr, c_funptr, c_null_ptr, c_funloc
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -180,27 +178,6 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
   real(dp), intent(out), pointer :: Ay(:,:), y(:,:)
   character(len=:), allocatable :: request
 
-  !! --------------------------------------------------------------- !!
-  !! PThread API.
-  !! --------------------------------------------------------------- !!
-  type, bind(C) :: ctPThread
-    integer(c_long) :: mPrivate
-  end type ctPThread
-  interface
-    subroutine cPThreadCreate(pThread, pAttr, pFunc, env) bind(C, name='pthread_create')
-      import :: c_ptr, c_funptr, ctPThread
-      type(ctPThread), intent(in) :: pThread
-      type(c_ptr), intent(in), value :: pAttr
-      type(c_funptr), intent(in), value :: pFunc
-      type(c_ptr), intent(in), value :: env
-    end subroutine cPThreadCreate
-    subroutine cPThreadJoin(pThread, pRetval) bind(C, name='pthread_join')
-      import :: c_ptr, ctPThread
-      type(ctPThread), intent(in), value :: pThread
-      type(c_ptr), intent(in), value :: pRetval
-    end subroutine cPThreadJoin
-  end interface
-
   class(tMesh), pointer, save :: sMesh
   character(len=:), allocatable, save :: sMethod, sPrecondMethod
   real(dp), pointer, save :: sX(:,:), sB(:,:)
@@ -208,7 +185,7 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
   type(tConvParams), save :: sParams
   character(len=:), allocatable, save :: sRequest
 
-  type(ctPThread), save :: sThread
+  type(tThread), allocatable, save :: sThread
   type(tSem), allocatable, save :: sSemYield, sSemAwait
 
   if (.not.allocated(sRequest)) then
@@ -225,7 +202,7 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
     ! ----------------------
     sSemYield = tSem(value=0)
     sSemAwait = tSem(value=0)
-    call cPThreadCreate(sThread, c_null_ptr, c_funloc(cThreadFunc), c_null_ptr)
+    sThread = tThread(StartRoutine)
   end if
 
   ! ----------------------
@@ -244,14 +221,14 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
   ! Clean-up on the exit request.
   ! ----------------------
   if (request == 'Done') then
-    call cPThreadJoin(sThread, c_null_ptr)
+    call sThread%Join()
+    deallocate(sThread)
     deallocate(sSemYield, sSemAwait)
     deallocate(sMethod, sPrecondMethod, sRequest)
   end if
 
 contains
-  subroutine cThreadFunc(env) bind(C)
-    type(c_ptr), intent(in), value :: env
+  subroutine StartRoutine()
 
     print *, 'Entering the RCI thread function..'
 
@@ -273,7 +250,7 @@ contains
 
     print *, 'Leaving the RCI thread function..'
 
-  end subroutine cThreadFunc
+  end subroutine StartRoutine
   subroutine MatVec_RCI(mesh, Ay, y)
     class(tMesh), intent(inout), target :: mesh
     real(dp), intent(inout), target :: y(:,:), Ay(:,:)
@@ -283,7 +260,7 @@ contains
     ! and field pointers to the main thread and yield.
     ! ----------------------
     sRequest = 'MatVec'
-    sAy => Ay; sY => y 
+    sAy => Ay; sY => y
 
     call sSemAwait%Post()
     call sSemYield%Wait()

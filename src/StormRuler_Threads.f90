@@ -183,12 +183,8 @@ function cStartRoutine(arg) result(exitCode) bind(C)
   type(c_ptr), intent(in), value :: arg
   type(c_ptr) :: exitCode
 
-  print *, 'Entering PThread..'
-
   call sStartRoutine()
   exitCode = c_null_ptr
-
-  print *, 'Leaving PThread..'
 
 end function cStartRoutine
 

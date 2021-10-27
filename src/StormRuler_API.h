@@ -489,7 +489,7 @@ SR_API void SR_DivKGradS(SR_tMesh mesh,
   SR_tFieldS v, SR_SYMBOL lambda, SR_tFieldR k, SR_tFieldS u);
 #if SR_C11
 #define SR_DivKGrad(mesh, v, lambda, k, u) \
-  SR_FIELD_GENERIC_EXT_(v, SR_DivGrad)(mesh, v, lambda, k, u)
+  SR_FIELD_GENERIC_EXT_(v, SR_DivKGrad)(mesh, v, lambda, k, u)
 #endif
 /// @}
 

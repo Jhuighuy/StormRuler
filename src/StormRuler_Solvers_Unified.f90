@@ -169,13 +169,15 @@ end subroutine LinSolve
 !! • general nonsingular operator case:
 !!   [𝓟]𝓐𝒙 = [𝓟]𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(request)
-  class(tMesh), intent(inout), target :: mesh
-  character(len=*), intent(in), target :: method, precondMethod
-  real(dp), intent(in), target :: b(:,:)
-  real(dp), intent(inout), target :: x(:,:)
-  class(tConvParams), intent(inout), target :: params
-  real(dp), intent(out), pointer :: Ay(:,:), y(:,:)
+function LinSolve_RCI(mesh, method, precondMethod, &
+    & x, b, params, Ay, y, resetState) result(request)
+  class(tMesh), intent(inout), target, optional :: mesh
+  character(len=*), intent(in), target, optional :: method, precondMethod
+  real(dp), intent(in), target, optional :: b(:,:)
+  real(dp), intent(inout), target, optional :: x(:,:)
+  class(tConvParams), intent(inout), target, optional :: params
+  real(dp), intent(out), pointer, optional :: Ay(:,:), y(:,:)
+  logical, intent(in), optional :: resetState
   character(len=:), allocatable :: request
 
   class(tMesh), pointer, save :: sMesh
@@ -187,6 +189,23 @@ function LinSolve_RCI(mesh, method, precondMethod, x, b, params, Ay, y) result(r
 
   type(tThread), allocatable, save :: sThread
   type(tSem), allocatable, save :: sSemYield, sSemAwait
+
+  ! ----------------------
+  ! This is the reset request.
+  ! ----------------------
+  if (present(resetState)) then
+    if (resetState) then
+      if (allocated(sThread)) deallocate(sThread)
+      if (allocated(sSemYield)) deallocate(sSemYield)
+      if (allocated(sSemAwait)) deallocate(sSemAwait)
+      if (allocated(sMethod)) deallocate(sMethod)
+      if (allocated(sPrecondMethod)) deallocate(sPrecondMethod)
+      if (allocated(sRequest)) deallocate(sRequest)
+      request = 'Reset'
+      write(error_unit, *) '`LinSolve_RCI` reset requested.'
+      return
+    end if
+  end if
 
   if (.not.allocated(sRequest)) then
     ! ----------------------

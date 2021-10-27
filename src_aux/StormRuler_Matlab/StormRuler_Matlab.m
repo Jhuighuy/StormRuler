@@ -26,6 +26,7 @@
 function SR = StormRuler_Matlab()
 
   if ~libisloaded('libStormRuler')
+    addpath('bin', 'src');
     loadlibrary('libStormRuler.so', 'StormRuler_API.h');
   end
 
@@ -70,7 +71,7 @@ function SR = StormRuler_Matlab()
   % Reset the RCI state.
   nullMesh = libpointer('SR_tMeshStructPtr');
   nullField = libpointer('SR_tFieldRStructPtr');
-  pRequest = calllib('libStormRuler', 'SR_MRCI_LinSolveR', ...
+  calllib('libStormRuler', 'SR_MRCI_LinSolveR', ...
     nullMesh, '', '', nullField, nullField);
 
 end

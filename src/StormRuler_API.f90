@@ -726,6 +726,13 @@ function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
   character(len=:), allocatable, target, save :: sRequest
   type(tFieldStruct$T), target, save :: csY, csAy
 
+  if (.not.c_associated(pMesh)) then
+    sRequest = LinSolve_RCI(resetState=.true.)
+    if (allocated(sRequest)) deallocate(sRequest)
+    pRequest = c_null_ptr
+    return
+  end if
+
   call Unwrap(mesh, pMesh)
   call Unwrap(method, pMethod)
   call Unwrap(precondMethod, pPrecondMethod)

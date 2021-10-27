@@ -45,8 +45,8 @@ w_hat = SR.Alloc_Mold(c);
 p_hat = SR.Alloc_Mold(p);
 v_hat = SR.Alloc_Mold(v);
 
-SR.Fill_Random(mesh, c, -1.0, +1.0);
-%SR.Fill(mesh, c, 0.0, 0.0);
+%SR.Fill_Random(mesh, c, -1.0, +1.0);
+SR.Fill(mesh, c, 1.0, 0.0);
 SR.Fill(mesh, v, 0.0, 0.0);
 SR.Fill(mesh, p, 0.0, 0.0);
 
@@ -55,8 +55,10 @@ for time = 0:200
     for frac = 1:10
       CahnHilliard_Step(SR, mesh, ...
         c, c, c_hat, w_hat, tau, gamma, sigma)
-      NavierStokes_Step(SR, mesh, ...
-        p, v, c, w_hat, p_hat, v_hat, tau, rho, mu);
+      %NavierStokes_Step(SR, mesh, ...
+      % p, v, c, w_hat, p_hat, v_hat, tau, rho, mu);
+      NavierStokes_VaRho_Step(SR, mesh, ...
+        p, v, c, w_hat, p_hat, v_hat, tau, rho, 2.0*rho, mu, 2.0*mu);
 
       [c, c_hat] = deal(c_hat, c);
       [p, p_hat] = deal(p_hat, p);
@@ -140,7 +142,7 @@ function CahnHilliard_Step(SR, mesh, c, v, c_hat, w_hat, tau, gamma, sigma)
     SR.DivGrad(mesh, tmp, 1.0, c);
     
     SR.Scale(mesh, Qc, c, 1.0 - 2.0*tau*sigma);
-    SetBCs_w(SR, mesh, w_hat);
+    SetBCs_w(SR, mesh, tmp);
     SR.DivGrad(mesh, Qc, tau*gamma, tmp);
 
     SR.Free(tmp);
@@ -165,7 +167,7 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
   % Navier-Stokes equation with convection term:
   %
   % 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
-  % ∇⋅𝒗 = 0, 𝙛 = 𝑐∇𝑤,
+  % ∇⋅𝒗 = 0, 𝙛 = -𝑐∇𝑤,
   %
   % with the semi-implicit scheme:
   % 
@@ -183,7 +185,7 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
   SR.DivGrad(mesh, v_hat, tau*mu/rho, v);
 
   %
-  % Compute 𝙛 = -𝑐∇𝑤, 𝒗̂ ← 𝒗̂ + 𝙛.
+  % Compute (𝜏/𝜌)𝙛 = -(𝜏/𝜌)𝑐∇𝑤, 𝒗̂ ← 𝒗̂ + (𝜏/𝜌)𝙛.
   %
   f = SR.Alloc_Mold(v);
 
@@ -218,5 +220,108 @@ function NavierStokes_Step(SR, mesh, p, v, c, w, p_hat, v_hat, tau, rho, mu)
 
   SetBCs_p(SR, mesh, p_hat);
   SR.Grad(mesh, v_hat, tau/rho, p_hat);
+
+end
+
+function NavierStokes_VaRho_Step(SR, mesh, p, v, c, w, ...
+  p_hat, v_hat, tau, rho_1, rho_2, mu_1, mu_2)
+
+  % 
+  % Compute a single time step of the incompressible
+  % Navier-Stokes equation with convection term:
+  %
+  % 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝙛,
+  % ∇⋅𝒗 = 0, 𝙛 = 𝜇Δ𝒗 - 𝑐∇𝑤,
+  % 𝜌 = ½𝜌₁(1 - 𝑐) + ½𝜌₂(1 + 𝑐),
+  % 𝜇 = ½𝜇₁(1 - 𝑐) + ½𝜇₂(1 + 𝑐).
+  %
+  % with the semi-implicit scheme:
+  % 
+  % 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + 𝜏𝙛/𝜌,
+  % ∇⋅(∇𝑝̂/𝜌) = ∇⋅𝒗/𝜏,
+  % 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
+  % 
+
+  %
+  % Compute 𝜌, 𝜇:
+  % 𝜌 = ½(𝜌₁ + 𝜌₂) + ½(𝜌₂ - 𝜌₁)𝑐.
+  % 𝜇 = ½(𝜇₁ + 𝜇₂) + ½(𝜇₂ - 𝜇₁)𝑐.
+  %
+  rho = SR.Alloc_Mold(c);
+  SR.Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
+  SR.Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+
+  rho_inv = SR.Alloc_Mold(rho);
+  %SR.Inv(mesh, rho_inv, rho);
+  for iCell = 1:SR.Mesh_NumCells(mesh)
+    ir = SR.At(rho, iCell);
+    SR.SetAt(rho_inv, iCell, 1.0/ir)
+  end
+
+  mu = SR.Alloc_Mold(c);
+  SR.Fill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
+  SR.Add(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
+
+  %
+  % Compute 𝒗̂ prediction.
+  %
+  SetBCs_v(SR, mesh, v);
+  SR.Set(mesh, v_hat, v);
+  SR.Conv(mesh, v_hat, tau, v, v);
+
+  %
+  % Compute 𝙛 = 𝜇Δ𝒗 - 𝑐∇𝑤, 𝒗̂ ← 𝒗̂ + (𝜏/𝜌)𝙛.
+  %
+  f = SR.Alloc_Mold(v);
+
+  SetBCs_w(SR, mesh, w);
+  SR.Fill(mesh, f, 0.0, 0.0);
+  SR.Grad(mesh, f, 1.0, w);
+  SR.Mul(mesh, f, c, f);
+
+  g = SR.Alloc_Mold(v);
+  SR.Fill(mesh, g, 0.0, 0.0);
+  SR.DivGrad(mesh, g, 1.0, v);
+  SR.Mul(mesh, g, mu, g);
+  SR.Add(mesh, f, f, g, 1.0, 1.0);
+  SR.Free(g);
+
+  SR.Mul(mesh, f, rho_inv, f);
+
+  SR.Add(mesh, v_hat, v_hat, f, tau, 1.0);
+
+  SR.Free(f);
+  
+  %
+  % Solve pressure equation and correct 𝒗̂.
+  % 
+  SetBCs_v(SR, mesh, v_hat);
+  rhs = SR.Alloc_Mold(p);
+  SR.Fill(mesh, rhs, 0.0, 0.0);
+  SR.Div(mesh, rhs, -1.0/tau, v_hat);
+
+  SR.Set(mesh, p_hat, p);
+  while true
+    [request, Lp, p] = SR.RCI_LinSolve(mesh, 'CG', '', p_hat, rhs);
+    if strcmp(request, 'Done') ~= 0, break, end
+    
+    SetBCs_p(SR, mesh, p);
+    SR.Fill(mesh, Lp, 0.0, 0.0);
+    SR.DivKGrad(mesh, Lp, 1.0, rho_inv, p);
+  end
+
+  SR.Free(rhs);
+
+  SetBCs_p(SR, mesh, p_hat);
+  g = SR.Alloc_Mold(v);
+  SR.Fill(mesh, g, 0.0, 0.0);
+  SR.Grad(mesh, g, 1.0, p_hat);
+  SR.Mul(mesh, g, rho_inv, g);
+  SR.Add(mesh, v_hat, v_hat, g, tau, 1.0);
+  SR.Free(g);
+
+  SR.Free(rho);
+  SR.Free(rho_inv);
+  SR.Free(mu);
 
 end

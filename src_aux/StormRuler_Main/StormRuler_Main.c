@@ -40,7 +40,7 @@ static double tau = (M_PI/50)*(M_PI/50), Gamma = 0.01, sigma = 1.0;
 
 static void SetBCs_c(SR_tMesh mesh, SR_tFieldR c) {
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, c, 3, SR_DIRICHLET(1.0));
+  SR_ApplyBCs(mesh, c, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
 static void SetBCs_w(SR_tMesh mesh, SR_tFieldR w) {
@@ -50,14 +50,14 @@ static void SetBCs_w(SR_tMesh mesh, SR_tFieldR w) {
 static void SetBCs_p(SR_tMesh mesh, SR_tFieldR p) {
   SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(10.0));
+  SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(3.0));
 } // SetBCs_p
 
 static void SetBCs_v(SR_tMesh mesh, SR_tFieldR v) {
   SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, v, 3, SR_PURE_NEUMANN);
-  SR_ApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
+  SR_ApplyBCs_InOutLet(mesh, v, 2);
+  SR_ApplyBCs_InOutLet(mesh, v, 4);
+  SR_ApplyBCs_SlipWall(mesh, v, 3);
 } // SetBCs_v
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
@@ -121,7 +121,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, w_hat, -Gamma, c_hat);
 } // CahnHilliard_Step
 
-static double rho = 1.0, mu = 0.1;
+static double rho = 1.0, mu = 0.01;
 
 static void Poisson_MatVec(SR_tMesh mesh,
     SR_tFieldR Lp, SR_tFieldR p, void* env) {
@@ -129,7 +129,7 @@ static void Poisson_MatVec(SR_tMesh mesh,
   SetBCs_p(mesh, p);
 
   SR_Fill(mesh, Lp, 0.0, 0.0);
-  SR_DivGrad(mesh, Lp, 1.0, p);
+  SR_DivGrad(mesh, Lp, tau, p);
   
 } // Poisson_MatVec
 
@@ -148,7 +148,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   // with the semi-implicit scheme:
   // 
   // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇/𝜌)Δ𝒗 + (𝜏/𝜌)𝙛,
-  // Δ𝑝̂ = -𝜌/𝜏∇⋅𝒗,
+  // 𝜏Δ𝑝̂ = 𝜌∇⋅𝒗,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
   // 
 
@@ -182,7 +182,7 @@ static void NavierStokes_Step(SR_tMesh mesh,
   // 
   SR_tFieldR rhs = SR_Alloc_Mold(p);
   SR_Fill(mesh, rhs, 0.0, 0.0);
-  SR_Div(mesh, rhs, -rho/tau, v_hat);
+  SR_Div(mesh, rhs, -rho, v_hat);
 
   SR_Set(mesh, p_hat, p);
   SR_LinSolve(mesh, "CG", "", p_hat, rhs, Poisson_MatVec, NULL, NULL, NULL);
@@ -194,11 +194,22 @@ static void NavierStokes_Step(SR_tMesh mesh,
 
 } // NavierStokes_Step
 
-static double rho_1 = 1.0, rho_2 = 10.0, mu_1 = 0.1, mu_2 = 0.1;
+static double rho_1 = 1.0, rho_2 = 1.0, mu_1 = 0.01, mu_2 = 0.01;
 
 void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
+
+void Fix_Mu(int dim, const SR_REAL* r,
+    int size, SR_REAL* fix_mu, const SR_REAL* mu, void* env) {
+  *fix_mu = *mu;
+
+  static const SR_REAL L = 2.0*M_PI;
+  if (fabs(2*L-r[1]) <= L*0.300 || fabs(r[1] < L*0.5)) {
+    *fix_mu = 0.1;
+  }
+
+} // Fix_Mu
 
 static SR_tFieldR g; 
 
@@ -210,7 +221,7 @@ static void Poisson_VaD_MatVec(SR_tMesh mesh,
   SetBCs_p(mesh, p);
 
   SR_Fill(mesh, Lp, 0.0, 0.0);
-  SR_DivKGrad(mesh, Lp, 1.0, rho_inv, p);
+  SR_DivKGrad(mesh, Lp, tau, rho_inv, p);
   
 } // Poisson_MatVec
 
@@ -233,7 +244,7 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   // 𝜌 ← ½(𝜌₁ + 𝜌₂) + (½𝜌₂ - ½𝜌₁)𝑐,
   // 𝜇 ← ½(𝜇₁ + 𝜇₂) + (½𝜇₂ - ½𝜇₁)𝑐,
   // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇/𝜌)Δ𝒗 + (𝜏/𝜌)𝙛,
-  // Δ𝑝̂ = -𝜌/𝜏∇⋅𝒗,
+  // 𝜏∇⋅(∇𝑝̂/𝜌) = ∇⋅𝒗,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
   // 
 
@@ -251,6 +262,8 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_Fill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
   SR_Add(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
 
+  //SR_SFuncProd(mesh, mu, mu, Fix_Mu, NULL);
+
   //
   // Compute 𝒗̂ prediction.
   //
@@ -261,18 +274,18 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_Conv(mesh, v_hat, tau, v, v);
 
   SR_tFieldR tmp = SR_Alloc_Mold(v);
-  
-  SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_DivGrad(mesh, tmp, 1.0, v);
-  SR_Mul(mesh, tmp, mu, tmp);
-  SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, tau, 1.0);
 
   SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_Grad(mesh, tmp, 1.0, w);
+  SR_DivGrad(mesh, tmp, tau, v);
+  SR_Mul(mesh, tmp, mu, tmp);
+  SR_Mul(mesh, tmp, rho_inv, tmp);
+  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
+
+  SR_Fill(mesh, tmp, 0.0, 0.0);
+  SR_Grad(mesh, tmp, tau, w);
   SR_Mul(mesh, tmp, c, tmp);
   SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, tau, 1.0);
+  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
 
   SetBCs_v(mesh, v_hat);
 
@@ -281,7 +294,7 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   // 
   SR_tFieldR rhs = SR_Alloc_Mold(p);
   SR_Fill(mesh, rhs, 0.0, 0.0);
-  SR_Div(mesh, rhs, -1.0/tau, v_hat);
+  SR_Div(mesh, rhs, -1.0, v_hat);
 
   SR_Set(mesh, p_hat, p);
   SR_LinSolve(mesh, "CG", "", p_hat, rhs, Poisson_VaD_MatVec, g=rho_inv, NULL, NULL);
@@ -290,9 +303,9 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SetBCs_p(mesh, p_hat);
 
   SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_Grad(mesh, tmp, 1.0, p_hat);
+  SR_Grad(mesh, tmp, tau, p_hat);
   SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, tau, 1.0);
+  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
 
   SR_Free(tmp);
 
@@ -307,7 +320,8 @@ void Initial_Data(int dim, const SR_REAL* r,
 
   static const SR_REAL L = 2.0*M_PI;
   int in = 0;
-  if (fabs(r[0]-0*L) <= L*0.101 && (2*L-r[1]) <= L*0.665) {
+  if (fabs(r[0]-0*L) <= L*0.101 && 
+      fabs(2*L-r[1]) <= L*0.665) {
     in = 1.0;
   }
 

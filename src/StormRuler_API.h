@@ -429,6 +429,18 @@ SR_API void SR_ApplyBCsS(SR_tMesh mesh, SR_tFieldR u,
 #define SR_NEUMANN(gamma) 0.0, 1.0, (gamma)
 
 /// @{
+SR_API void SR_ApplyBCs_SlipWallR(SR_tMesh mesh, SR_tFieldR u,
+  SR_INTEGER iBC);
+#define SR_ApplyBCs_SlipWall SR_ApplyBCs_SlipWallR
+/// @}
+
+/// @{
+SR_API void SR_ApplyBCs_InOutLetR(SR_tMesh mesh, SR_tFieldR u,
+  SR_INTEGER iBC);
+#define SR_ApplyBCs_InOutLet SR_ApplyBCs_InOutLetR
+/// @}
+
+/// @{
 SR_API void SR_GradR(SR_tMesh mesh, 
   SR_tFieldR vVec, SR_REAL lambda, SR_tFieldR u);
 SR_API void SR_GradC(SR_tMesh mesh,

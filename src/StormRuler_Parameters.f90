@@ -37,12 +37,12 @@ integer, parameter :: dp = c_double
 
 integer, parameter :: ip = int32
 
-logical, parameter :: gCylCoords = .true.
+integer, parameter :: i8 = int8
+
+logical, parameter :: gCylCoords = .false.
 
 integer(ip), parameter :: error_code = 1
 
 integer(ip), parameter :: not_implemented_code = 1000
-
-integer, parameter :: i8 = int8
 
 end module StormRuler_Parameters

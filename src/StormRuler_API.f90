@@ -42,7 +42,8 @@ use StormRuler_BLAS, only: tMatVecFunc$type_
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Unified, only: LinSolve, LinSolve_RCI
 
-use StormRuler_FDM_BCs, only: FDM_ApplyBCs
+use StormRuler_FDM_BCs, only: &
+  & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient_Central, FDM_Divergence_Central, &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
@@ -791,6 +792,64 @@ subroutine cApplyBCs$T(pMesh, pU, BCmask, &
   end do
 
 end subroutine cApplyBCs$T
+#$end for
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine cApplyBCs_SlipWall$T(pMesh, pU, BCmask) &
+    & bind(C, name='SR_ApplyBCs_SlipWall$T')
+  type(c_ptr), intent(in), value :: pMesh
+  integer(c_int), intent(in), value :: BCmask
+  type(c_ptr), intent(in), value :: pU
+
+  class(tMesh), pointer :: mesh
+  $typename, pointer :: u(:,:)
+  integer(ip) :: iBC, firstBC, lastBC
+
+  call Unwrap(mesh, pMesh)
+  call Unwrap(u, pU)
+
+  if (BCmask /= 0) then
+    firstBC = BCmask; lastBC = BCmask
+  else
+    firstBC = 1; lastBC = mesh%NumBCMs
+  end if
+
+  do iBC = firstBC, lastBC
+    call FDM_ApplyBCs_SlipWall(mesh, iBC, u)
+  end do
+
+end subroutine cApplyBCs_SlipWall$T
+#$end for
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine cApplyBCs_InOutLet$T(pMesh, pU, BCmask) &
+    & bind(C, name='SR_ApplyBCs_InOutLet$T')
+  type(c_ptr), intent(in), value :: pMesh
+  integer(c_int), intent(in), value :: BCmask
+  type(c_ptr), intent(in), value :: pU
+
+  class(tMesh), pointer :: mesh
+  $typename, pointer :: u(:,:)
+  integer(ip) :: iBC, firstBC, lastBC
+
+  call Unwrap(mesh, pMesh)
+  call Unwrap(u, pU)
+
+  if (BCmask /= 0) then
+    firstBC = BCmask; lastBC = BCmask
+  else
+    firstBC = 1; lastBC = mesh%NumBCMs
+  end if
+
+  do iBC = firstBC, lastBC
+    call FDM_ApplyBCs_InOutLet(mesh, iBC, u)
+  end do
+
+end subroutine cApplyBCs_InOutLet$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

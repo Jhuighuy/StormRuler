@@ -50,7 +50,8 @@ end interface FDM_ApplyBCs
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply the third-order boundary conditions: 𝛼𝒖 + 𝛽∂𝒖/∂𝑛 = 𝛾 + 𝑓(𝑟).
+!! Apply the generalized third-order 
+!! boundary conditions: 𝛼𝒖 + 𝛽∂𝒖/∂𝑛 = 𝛾 + 𝑓(𝑟).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS
 subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
@@ -62,7 +63,6 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
   
   integer(ip) :: iBCMPtr
 
-  ! ----------------------
   associate(bcmFirst => mesh%BCMs(iBCM), &
     &        bcmLast => mesh%BCMs(iBCM+1)-1, &
     &      bcmToCell => mesh%BCMToCell, &
@@ -71,16 +71,16 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
     &    cellMDIndex => mesh%CellMDIndex, &
     &        mLambda => (0.5_dp*alpha - beta/mesh%dl), &
     &     pLambdaInv => 1.0_dp/(0.5_dp*alpha + beta/mesh%dl))
+
     ! ----------------------
     ! For each BC cell with the specific mark do:
     ! ----------------------
-    !#omp parallel do schedule(static) &
-    !#omp & default(none) private(iBCMPtr) shared(u, alpha, beta, gamma)
     do iBCMPtr = bcmFirst, bcmLast; block
       integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
       iBCCell = bcmToCell(iBCMPtr)
       iBCCellFace = bcmToCellFace(iBCMPtr)
       iCell = cellToCell(Flip(iBCCellFace), iBCCell)
+
       ! ----------------------
       ! Compute the FDM-approximate (second order) boundary conditions.
       ! ----------------------
@@ -94,6 +94,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
         u(@:,iBCCell) = pLambdaInv(iBCCellFace) * &
           & (gamma - mLambda(iBCCellFace)*u(@:,iCell))
       !end if
+
       ! ----------------------
       ! Propagate the boundary condition towards the ghost cells.
       ! ----------------------
@@ -103,9 +104,57 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
         iGCell = cellToCell(iBCCellFace, iGCell)
       end do
     end block; end do
-    !#omp end parallel do    
+
   end associate
 end subroutine FDM_ApplyBCs$rank
 #$end do
+
+subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: iBCM
+  real(dp), intent(inout) :: v(:,:)
+
+  integer(ip) :: dim
+  integer(ip) :: iBCMPtr
+  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
+
+  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+
+    iBCCell = mesh%BCMToCell(iBCMPtr)
+    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
+    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+
+    dim = (iBCCellFace - 1)/2 + 1
+
+    v(:,iBCCell) = v(:,iCell)  
+    v(dim,iBCCell) = -v(dim,iCell)  
+
+  end do
+
+end subroutine FDM_ApplyBCs_SlipWall
+
+subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: iBCM
+  real(dp), intent(inout) :: v(:,:)
+
+  integer(ip) :: dim
+  integer(ip) :: iBCMPtr
+  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
+
+  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+
+    iBCCell = mesh%BCMToCell(iBCMPtr)
+    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
+    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+
+    dim = (iBCCellFace - 1)/2 + 1
+
+    v(:,iBCCell) = -v(:,iCell)  
+    v(dim,iBCCell) = v(dim,iCell)  
+
+  end do
+
+end subroutine FDM_ApplyBCs_InOutLet
 
 end module StormRuler_FDM_BCs

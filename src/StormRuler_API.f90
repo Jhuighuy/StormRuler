@@ -243,21 +243,25 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 
   class(tMesh), pointer :: gMesh
   type(tMeshStruct), pointer :: pMesh_C
-  real(8), parameter :: pi = 4*atan(1.0D0)
-  integer(ip), Parameter :: Nx = 100, Ny = 100
-  Real(8), Parameter :: Dx = 2*pi/Nx, Dy = 2*pi/Ny, Dt = Dx*Dx
+
 #$if False
+
+  integer(ip), Parameter :: Nx = 100, Ny = 100
+  Real(8), Parameter :: Dx = 1.0_dp/Nx, Dy = 1.0_dp/Ny, Dt = Dx*Dx
   allocate(gMesh)
   gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
+
 #$else
+
+  real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp, Dt = Dx*Dx
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)
   call Load_PPM('test/Domain-100-Tube.ppm', pixels)
   !colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
   colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
-    & PixelToInt([0, 255, 0]), PixelToInt([0, 0, 255])]
+    & PixelToInt([0, 255, 0]), PixelToInt([0, 0, 255]), PixelToInt([255, 0, 255])]
   call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 1)
   allocate(gMesh%dr(1:2, 1:4))
   gMesh%dl = [Dx,Dx,Dy,Dy]
@@ -267,12 +271,14 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
   call gMesh%PrintTo_Neato('test/c2c.dot')
   call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
+
 #$endif
+
   call gMesh%SetRange()
   allocate(pMesh_C)
   pMesh_C%mObj => gMesh
   pMesh = c_loc(pMesh_C)
-  !L = 0
+
 end function cInitMesh
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

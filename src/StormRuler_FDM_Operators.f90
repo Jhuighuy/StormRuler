@@ -40,7 +40,7 @@ use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
 
 implicit none
 
-integer(ip), parameter :: gTruncErrorOrder = 2
+integer(ip), parameter :: gTruncErrorOrder = 1
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -48,9 +48,9 @@ integer(ip), parameter :: gTruncErrorOrder = 2
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate gradient: 𝒗 ← 𝒗 - 𝜆∇𝒖.
+!! The central FDM-approximate gradient: 𝒗⃗ ← 𝒗⃗ - 𝜆∇𝒖.
 !! Shape of 𝒖 is [1, NumVars]×[1, NumAllCells],
-!! shape of 𝒗 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
+!! shape of 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
     &                           dirAll, dirFace, dirCellFace)
@@ -84,11 +84,11 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -160,6 +160,7 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Determine FD direction (default is forward).
@@ -172,7 +173,6 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(inc => (1_i8-dir)/2_i8)
         associate(rCellFace => iCellFace+inc, &
           &       lCellFace => Flip(iCellFace+inc))
@@ -276,8 +276,8 @@ contains
 end subroutine FDM_Gradient_Central
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖.
-!! Shape of 𝒖 is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
+!! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖⃗.
+!! Shape of 𝒖⃗ is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
 !! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
@@ -312,11 +312,11 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
           &     lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -407,6 +407,7 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Determine FD direction (default is backward).
@@ -419,7 +420,6 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(inc => (1_i8-dir)/2_i8)
         associate(rCellFace => iCellFace+inc, &
           &       lCellFace => Flip(iCellFace+inc))
@@ -544,43 +544,11 @@ end subroutine FDM_Divergence_Central
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate convection: 𝒗 ← 𝒗 - 𝜆∇⋅𝒂𝒖.
-!! Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells],
-!! shape of 𝒂 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Convection_Central(mesh, v, lambda, u, a)
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: u(:,:), a(:,:)
-  real(dp), intent(inout) :: v(:,:)
-
-  real(dp), allocatable, target :: q(:,:,:)
-  allocate(q(size(a, dim=1), size(u, dim=1), size(u, dim=2)))
-
-  ! ----------------------
-  ! Fast exit in case 𝜆 ≡ 0.
-  ! ----------------------
-  if (lambda == 0.0_dp) then
-    return
-  end if
-
-  ! ----------------------
-  ! 𝒒 ← 𝒂𝒖,
-  ! 𝒗 ← 𝒗 - 𝜆∇⋅𝒒.
-  ! ----------------------
-  call Mul_Outer(mesh, q, a, u)
-  call FDM_Divergence_Central(mesh, v, lambda, q)
-end subroutine FDM_Convection_Central
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate Laplacian: 𝒗 ← 𝒗 + 𝜆Δ𝒖.
+!! The FDM-approximate Laplacian: 𝒗 ← 𝒗 + 𝜆Δ𝒖 or 𝒗⃗ ← 𝒗⃗ + 𝜆Δ𝒖⃗.
 !! • Scalar case:
 !!   Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells].
 !! • Vector case:
-!!   Shape of 𝒖, 𝒗 is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
+!!   Shape of 𝒖⃗, 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
   class(tMesh), intent(inout) :: mesh
@@ -612,11 +580,11 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -703,9 +671,9 @@ contains
       ! ----------------------
       ! Cylindrical coordinates, vector case.
       ! We have already computed:
-      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
+      ! 𝒗⃗ ← 𝒗⃗ + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
       ! but we need:
-      ! 𝒗 ← 𝒗 + 𝜆{Δ𝒖₁ - 𝒖₁/𝜌², Δ𝒖₂}ᵀ.
+      ! 𝒗⃗ ← 𝒗⃗ + 𝜆{Δ𝒖₁ - 𝒖₁/𝜌², Δ𝒖₂}ᵀ.
       ! The correction term is:
       ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝜌².
       ! ----------------------
@@ -718,22 +686,23 @@ contains
 end subroutine FDM_Laplacian_Central
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The FDM-approximate variable coefficient Laplacian: 𝒗 ← 𝒗 + 𝜆∇⋅(𝒌∇𝒖).
+!! The FDM-approximate variable coefficient 
+!! Laplacian: 𝒗 ← 𝒗 + 𝜆∇⋅(𝒘∇𝒖) or 𝒗 ← 𝒗 + 𝜆∇⋅(̂𝒘∇𝒖).
 !! Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells].
 !! • Scalar coefficient case:
-!!   Shape of 𝒌 is [1, NumVars]×[1, NumAllCells].
+!!   Shape of 𝒘 is [1, NumVars]×[1, NumAllCells].
 !! • Tensor coefficient case (not implemented):
-!!   Shape of 𝒌 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
+!!   Shape of ̂𝒘 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_DivWGrad_Central(mesh, vAny, lambda, kAny, uAny)
+subroutine FDM_DivWGrad_Central(mesh, vAny, lambda, wAny, uAny)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: lambda 
-  real(dp), intent(in), target :: uAny(:,:), kAny(:,:)
+  real(dp), intent(in), target :: uAny(:,:), wAny(:,:)
   real(dp), intent(inout), target :: vAny(:,:)
 
-  real(dp), pointer :: u(:,:), v(:,:), k(:,:)
+  real(dp), pointer :: u(:,:), v(:,:), w(:,:)
 
-  u => uAny; v => vAny; k => kAny
+  u => uAny; v => vAny; w => wAny
 
   call mesh%RunCellKernel(FDM_DivWGrad_Central_Kernel)
 
@@ -752,11 +721,11 @@ contains
     ! For each direction do:
     ! ----------------------
     do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
 
       ! ----------------------
       ! Find indices of the adjacent cells.
       ! ----------------------
-      iCellFace = 2*(dim - 1) + 1
       associate(rCellFace => iCellFace, &
         &       lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
@@ -790,9 +759,9 @@ contains
             & rho_i => mesh%CellCenter(1,iCell), &
             & rho_r => mesh%CellCenter(1,rCell))
             v(:,iCell) = v(:,iCell) + &
-              & ( dlSqrInv*WFD2_C2(rho_l*k(:,lCell), u(:,lCell), &
-              &                    rho_i*k(:,iCell), u(:,iCell), &
-              &                    rho_r*k(:,rCell), u(:,rCell)) )/rho_i
+              & ( dlSqrInv*WFD2_C2(rho_l*w(:,lCell), u(:,lCell), &
+              &                    rho_i*w(:,iCell), u(:,iCell), &
+              &                    rho_r*w(:,rCell), u(:,rCell)) )/rho_i
           end associate; cycle
         end if
 
@@ -802,42 +771,43 @@ contains
         select case(gTruncErrorOrder)
           case(1:2)
             v(:,iCell) = v(:,iCell) + &
-              & ( dlSqrInv*WFD2_C2(k(:,lCell), u(:,lCell), &
-              &                    k(:,iCell), u(:,iCell), &
-              &                    k(:,rCell), u(:,rCell)) )
+              & ( dlSqrInv*WFD2_C2(w(:,lCell), u(:,lCell), &
+              &                    w(:,iCell), u(:,iCell), &
+              &                    w(:,rCell), u(:,rCell)) )
           ! ----------------------
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
-              & ( dlSqrInv*WFD2_C4(k(:,llCell), u(:,llCell), &
-              &                    k(:, lCell), u(:, lCell), &
-              &                    k(:, iCell), u(:, iCell), &
-              &                    k(:, rCell), u(:, rCell), &
-              &                    k(:,rrCell), u(:,rrCell)) )
+              & ( dlSqrInv*WFD2_C4(w(:,llCell), u(:,llCell), &
+              &                    w(:, lCell), u(:, lCell), &
+              &                    w(:, iCell), u(:, iCell), &
+              &                    w(:, rCell), u(:, rCell), &
+              &                    w(:,rrCell), u(:,rrCell)) )
           ! ----------------------
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
-              & ( dlSqrInv*WFD2_C6(k(:,lllCell), u(:,lllCell), &
-              &                    k(:, llCell), u(:, llCell), &
-              &                    k(:,  lCell), u(:,  lCell), &
-              &                    k(:,  iCell), u(:,  iCell), &
-              &                    k(:,  rCell), u(:,  rCell), &
-              &                    k(:, rrCell), u(:, rrCell), &
-              &                    k(:,rrrCell), u(:,rrrCell)) )
+              & ( dlSqrInv*WFD2_C6(w(:,lllCell), u(:,lllCell), &
+              &                    w(:, llCell), u(:, llCell), &
+              &                    w(:,  lCell), u(:,  lCell), &
+              &                    w(:,  iCell), u(:,  iCell), &
+              &                    w(:,  rCell), u(:,  rCell), &
+              &                    w(:, rrCell), u(:, rrCell), &
+              &                    w(:,rrrCell), u(:,rrrCell)) )
           ! ----------------------
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
-              & ( dlSqrInv*WFD2_C8(k(:,llllCell), u(:,llllCell), &
-              &                    k(:, lllCell), u(:, lllCell), &
-              &                    k(:,  llCell), u(:,  llCell), &
-              &                    k(:,   lCell), u(:,   lCell), &
-              &                    k(:,   iCell), u(:,   iCell), &
-              &                    k(:,   rCell), u(:,   rCell), &
-              &                    k(:,  rrCell), u(:,  rrCell), &
-              &                    k(:, rrrCell), u(:, rrrCell), &
-              &                    k(:,rrrrCell), u(:,rrrrCell)) )
+              & ( dlSqrInv*WFD2_C8(w(:,llllCell), u(:,llllCell), &
+              &                    w(:, lllCell), u(:, lllCell), &
+              &                    w(:,  llCell), u(:,  llCell), &
+              &                    w(:,   lCell), u(:,   lCell), &
+              &                    w(:,   iCell), u(:,   iCell), &
+              &                    w(:,   rCell), u(:,   rCell), &
+              &                    w(:,  rrCell), u(:,  rrCell), &
+              &                    w(:, rrrCell), u(:, rrrCell), &
+              &                    w(:,rrrrCell), u(:,rrrrCell)) )
         end select
       end associate
     end do
+
   end subroutine FDM_DivWGrad_Central_Kernel
 end subroutine FDM_DivWGrad_Central
 

@@ -142,6 +142,10 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
   integer(ip) :: iBCMPtr
   integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
 
+  real(dp) :: R, RR, RRR
+
+  R = 0.0_dp
+
   do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
 
     iBCCell = mesh%BCMToCell(iBCMPtr)
@@ -150,8 +154,24 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
 
     dim = (iBCCellFace - 1)/2 + 1
 
-    v(:,iBCCell) = -v(:,iCell)  
-    v(dim,iBCCell) = v(dim,iCell)  
+    R = max(R, mesh%CellCenter(1, iCell))
+
+  end do
+
+  R = R + 0.5_dp*mesh%dl(1)
+
+  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+
+    iBCCell = mesh%BCMToCell(iBCMPtr)
+    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
+    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+
+    RR = mesh%CellCenter(1, iCell)
+
+    RRR = merge(0.01_dp, 100.0_dp, iBCM == 2)
+
+    v(:,iBCCell) = 0.0_dp
+    v(2,iBCCell) = -RRR*( R**2 - RR**2 )
 
   end do
 

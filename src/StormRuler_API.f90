@@ -47,8 +47,8 @@ use StormRuler_FDM_BCs, only: &
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient_Central, FDM_Divergence_Central, &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
-  use StormRuler_FDM_Operators, only: &
-  & FDM_Convection_Central ! TODO: should be StormRuler_FDM_Convection
+  use StormRuler_FDM_Convection, only: &
+  & FDM_Convection_Central
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_long, &

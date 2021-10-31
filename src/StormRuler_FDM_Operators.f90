@@ -29,9 +29,11 @@ module StormRuler_FDM_Operators
 use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Assert, Flip, &
   & AsField, IsVecField, AsVecField, IsMatField, AsMatField
+
 use StormRuler_Mesh, only: tMesh
-use StormRuler_BLAS, only: Fill, Mul_Outer, FuncProd
-use StormRuler_FDM_Base
+use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
+  & FD1_F1, FD1_F2, FD1_F3, FD1_F4, FD1_F5, FD1_F6, FD1_F7, FD1_F8, &
+  & FD2_C2, FD2_C4, FD2_C6, FD2_C8, WFD2_C2, WFD2_C4, WFD2_C6, WFD2_C8
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

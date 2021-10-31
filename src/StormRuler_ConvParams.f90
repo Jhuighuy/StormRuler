@@ -139,6 +139,8 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
         print *, '----------------', params%Name, params%NumIterations
         tConvParams_Check = .true.; return
       end if
+    else
+      print *, params%NumIterations, 'unset', absoluteError
     end if
   end associate
 end function tConvParams_Check

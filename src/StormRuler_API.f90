@@ -41,6 +41,7 @@ use StormRuler_BLAS, only: tMatVecFunc$type_
 
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers_Unified, only: LinSolve, LinSolve_RCI
+use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
@@ -712,6 +713,53 @@ contains
 
   end subroutine cMatVec
 end subroutine cLinSolve$T
+#$end for
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine cSolve_JFNK$T(pMesh, pX, pB, pMatVec, pEnv) bind(C, name='SR_Solve_JFNK$T')
+  type(c_ptr), intent(in), value :: pMesh
+  type(c_ptr), intent(in), value :: pX, pB
+  type(c_funptr), intent(in), value :: pMatVec
+  type(c_ptr), intent(in), value :: pEnv
+
+  abstract interface
+    subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
+      import :: c_ptr, dp
+      type(c_ptr), intent(in), value :: pMesh
+      type(c_ptr), intent(in), value :: pAx, pX
+      type(c_ptr), intent(in), value :: pEnv
+    end subroutine ctMatVec
+  end interface
+
+  class(tMesh), pointer :: mesh
+  $typename, pointer :: x(:,:), b(:,:)
+  procedure(ctMatVec), pointer :: MatVec, MatVec_H
+  type(tConvParams) :: params
+
+  call Unwrap(mesh, pMesh)
+  call Unwrap(x, pX); call Unwrap(b, pB)
+  call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
+
+  call params%Init(1.0D-4, 1.0D-4, 100, 'JFNK')
+  call Solve_JFNK(mesh, cMatVec, x, b, params)
+
+contains
+  subroutine cMatVec(mesh_, Ax, x)
+    class(tMesh), intent(inout), target :: mesh_
+    $typename, intent(inout), target :: x(:,:), Ax(:,:)
+
+    type(tFieldStruct$T), target :: pX_C, pAx_C
+    type(c_ptr) :: pX, pAx
+
+    pX_C%mData => x; pAx_C%mData => Ax
+    pX = c_loc(pX_C); pAx = c_loc(pAx_C)
+
+    call MatVec(pMesh, pAx, pX, pEnv)
+
+  end subroutine cMatVec
+end subroutine cSolve_JFNK$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

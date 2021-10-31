@@ -166,7 +166,7 @@ interface SFuncProd
 end interface SFuncProd
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Matrix-vector product function.
+!! Matrix-vector product function: 𝓐𝒙 ← 𝓐(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for T, typename in SCALAR_TYPES
@@ -175,6 +175,19 @@ abstract interface
     class(tMesh), intent(inout), target :: mesh
     $typename, intent(inout), target :: x(:,:), Ax(:,:)
   end subroutine tMatVecFunc$T
+#$end for
+end interface
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Matrix-vector product function with a parameter: 𝓐𝒙 ← 𝓐(𝒙,𝒙₀).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+abstract interface
+#$for T, typename in SCALAR_TYPES
+  subroutine tBiMatVecFunc$T(mesh, Ax, x, x0)
+    import :: dp, tMesh
+    class(tMesh), intent(inout), target :: mesh
+    $typename, intent(inout), target :: x(:,:), x0(:,:), Ax(:,:)
+  end subroutine tBiMatVecFunc$T
 #$end for
 end interface
 

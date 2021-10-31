@@ -37,7 +37,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-static double tau = 1.0e-4, Gamma = 1.0e-4, sigma = 1.0;
+static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
 static void SetBCs_c(SR_tMesh mesh, SR_tFieldR c) {
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
@@ -102,7 +102,7 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   //
   // with the linear-implicit scheme:
   // 
-  // 𝓠𝑐̂ = 𝑐̂ - 𝜏Δ(2𝜎𝑐̂ - 𝛾Δ𝑐̂) = 𝑐 - 𝜏∇⋅𝑐𝒗 + 𝜏Δ[𝑊'(𝑐) - 2𝜎𝑐],
+  // 𝓠𝑐̂ = 𝑐̂ + 𝜏∇⋅̂𝑐𝒗 - 𝜏Δ(2𝜎𝑐̂ - 𝛾Δ𝑐̂) = 𝑐 + 𝜏Δ[𝑊'(𝑐) - 2𝜎𝑐],
   // 𝑤̂ = 𝑊'(𝑐̂) - 𝛾Δ𝑐̂.
   //
 
@@ -126,79 +126,6 @@ static void CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, w_hat, -Gamma, c_hat);
 } // CahnHilliard_Step
 
-static double rho = 1.0, mu = 0.01;
-
-static void Poisson_MatVec(SR_tMesh mesh,
-    SR_tFieldR Lp, SR_tFieldR p, void* env) {
-  
-  SetBCs_p(mesh, p);
-
-  SR_Fill(mesh, Lp, 0.0, 0.0);
-  SR_DivGrad(mesh, Lp, tau, p);
-  
-} // Poisson_MatVec
-
-static void NavierStokes_Step(SR_tMesh mesh,
-  SR_tFieldR p, SR_tFieldR v,
-  SR_tFieldR c, SR_tFieldR w,
-  SR_tFieldR p_hat, SR_tFieldR v_hat) {
-
-  // 
-  // Compute a single time step of the incompressible
-  // Navier-Stokes equation with convection term:
-  //
-  // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
-  // ∇⋅𝒗 = 0, 𝙛 = -𝑐∇𝑤,
-  //
-  // with the semi-implicit scheme:
-  // 
-  // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇/𝜌)Δ𝒗 + (𝜏/𝜌)𝙛,
-  // 𝜏Δ𝑝̂ = 𝜌∇⋅𝒗,
-  // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
-  // 
-
-  //
-  // Compute 𝒗̂ prediction.
-  //
-  SetBCs_w(mesh, w);
-  SetBCs_v(mesh, v);
-
-  SR_Set(mesh, v_hat, v);
-  SR_Conv(mesh, v_hat, tau, v, v);
-  SR_DivGrad(mesh, v_hat, tau*mu/rho, v);
-
-  //
-  // Compute 𝙛 = -𝑐∇𝑤, 𝒗̂ ← 𝒗̂ + 𝙛.
-  //
-  SR_tFieldR f = SR_Alloc_Mold(v);
-
-  SR_Fill(mesh, f, 0.0, 0.0);
-  SR_Grad(mesh, f, 1.0, w);
-  SR_Mul(mesh, f, c, f);
-
-  SR_Add(mesh, v_hat, v_hat, f, tau/rho, 1.0);
-
-  SR_Free(f);
-
-  SetBCs_v(mesh, v_hat);
-
-  //
-  // Solve pressure equation and correct 𝒗̂.
-  // 
-  SR_tFieldR rhs = SR_Alloc_Mold(p);
-  SR_Fill(mesh, rhs, 0.0, 0.0);
-  SR_Div(mesh, rhs, -rho, v_hat);
-
-  SR_Set(mesh, p_hat, p);
-  SR_LinSolve(mesh, "CG", "", p_hat, rhs, Poisson_MatVec, NULL, NULL, NULL);
-  SR_Free(rhs);
-
-  SetBCs_p(mesh, p_hat);
-
-  SR_Grad(mesh, v_hat, tau/rho, p_hat);
-
-} // NavierStokes_Step
-
 static double beta = 0.1;
 static double rho_1 = 1.0, rho_2 = 1.0, mu_1 = 0.1, mu_2 = 0.1;
 
@@ -217,12 +144,12 @@ void Fix_Mu(int dim, const SR_REAL* r,
 
 } // Fix_Mu
 
-static SR_tFieldR g; 
+static SR_tFieldR rho_inv_;
 
 static void Poisson_VaD_MatVec(SR_tMesh mesh,
     SR_tFieldR Lp, SR_tFieldR p, void* env) {
   
-  SR_tFieldR rho_inv = g;
+  SR_tFieldR rho_inv = rho_inv_;
 
   SetBCs_p(mesh, p);
 
@@ -231,14 +158,14 @@ static void Poisson_VaD_MatVec(SR_tMesh mesh,
   
 } // Poisson_MatVec
 
-static SR_tFieldR vv; 
-
 static void NavierStokes_VaD_MatVec(SR_tMesh mesh,
-    SR_tFieldR Av_hat, SR_tFieldR v_hat, void* env) {
+    SR_tFieldR Av, SR_tFieldR v, void* env) {
 
-  //
-  // 
-  //
+  SetBCs_v(mesh, v);
+
+  SR_Set(mesh, Av, v);
+  SR_Conv(mesh, Av, -tau, v, v);
+  SR_DivGrad(mesh, Av, -tau*mu_1/rho_1, v);
 
 } // NavierStokes_VaD_MatVec
 
@@ -249,7 +176,7 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
 
   // 
   // Compute a single time step of the incompressible
-  // Navier-Stokes equation with convection term:
+  // Navier-Stokes equation:
   //
   // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
   // 𝜌 = ½𝜌₁(1 - 𝑐) + ½𝜌₂(1 + 𝑐),
@@ -260,10 +187,10 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   // 
   // 𝜌 ← ½(𝜌₁ + 𝜌₂) + (½𝜌₂ - ½𝜌₁)𝑐,
   // 𝜇 ← ½(𝜇₁ + 𝜇₂) + (½𝜇₂ - ½𝜇₁)𝑐,
-  // 𝒗̂ ← 𝒗 - 𝜏𝒗(∇⋅𝒗) + (𝜏𝜇/𝜌)Δ𝒗 + (𝜏/𝜌)𝙛,
-  // 𝜏∇⋅(∇𝑝̂/𝜌) = ∇⋅𝒗,
+  // 𝒗̂ + 𝜏𝒗̂(∇⋅𝒗̂) - (𝜏𝜇/𝜌)Δ𝒗̂ = 𝒗 + (𝜏/𝜌)𝙛,
+  // 𝑝̂ - 𝜏∇⋅(∇𝑝̂/𝜌) = 𝑝 - ∇⋅𝒗,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
-  // 
+  //
 
   //
   // Compute 𝜌, 𝜇, 1/𝜌.
@@ -287,33 +214,32 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SetBCs_w(mesh, w);
   SetBCs_v(mesh, v);
 
+  SR_tFieldR rhs = SR_Alloc_Mold(p);
+  SR_Fill(mesh, rhs, 0.0, 0.0);
+  SR_Grad(mesh, rhs, tau, w);
+  SR_Mul(mesh, rhs, c, rhs);
+  SR_Mul(mesh, rhs, rho_inv, rhs);
+
+  SR_Add(mesh, rhs, rhs, v, 1.0, 1.0);
+  
   SR_Set(mesh, v_hat, v);
-  SR_Conv(mesh, v_hat, tau, v, v);
+  SR_Solve_JFNK(mesh, v_hat, v, NavierStokes_VaD_MatVec, NULL);
 
-  SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_DivGrad(mesh, tmp, tau, v);
-  SR_Mul(mesh, tmp, mu, tmp);
-  SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
-
-  SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_Grad(mesh, tmp, tau, w);
-  SR_Mul(mesh, tmp, c, tmp);
-  SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
-
-  SetBCs_v(mesh, v_hat);
+  //SR_Fill(mesh, tmp, 0.0, 0.0);
+  //SR_DivGrad(mesh, tmp, tau, v);
+  //SR_Mul(mesh, tmp, mu, tmp);
+  //SR_Mul(mesh, tmp, rho_inv, tmp);
+  //SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
 
   //
   // Solve pressure equation and correct 𝒗̂.
   // 
-  SR_tFieldR rhs = SR_Alloc_Mold(p);
   SR_Set(mesh, rhs, p);
   SR_Div(mesh, rhs, 1.0, v_hat);
 
   SR_Set(mesh, p_hat, p);
   SR_LinSolve(mesh, "CG", "", p_hat, rhs, 
-    Poisson_VaD_MatVec, g=rho_inv, NULL, NULL);
+    Poisson_VaD_MatVec, rho_inv_=rho_inv, NULL, NULL);
   SR_Free(rhs);
 
   SetBCs_p(mesh, p_hat);
@@ -351,10 +277,6 @@ void Initial_Data(int dim, const SR_REAL* r,
   if (in) {
     *c = 1.0;
   }
-  //if (in) {
-  //c[1] = -0.01;
-  //c[0] = 0.0;
-  //}
 } // Initial_Data
 
 void main() {
@@ -380,7 +302,7 @@ void main() {
 
   for (int time = 0; time <= 200000; ++time) {
 
-    for (int frac = 0; time != 0 && frac < 100; ++ frac) {
+    for (int frac = 0; time != 0 && frac < 1; ++ frac) {
 
       CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
       NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d);

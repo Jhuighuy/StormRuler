@@ -385,6 +385,15 @@ SR_API void SR_LinSolveC(SR_tMesh mesh,
 /// @}
 
 /// @{
+SR_API void SR_Solve_JFNKR(SR_tMesh mesh,
+  SR_tFieldR x, SR_tFieldR b, 
+  SR_tMatVecFuncR MatVec, void* env);
+#if SR_C11
+#define SR_Solve_JFNK SR_Solve_JFNKR
+#endif
+/// @}
+
+/// @{
 SR_API SR_STRING SR_RCI_LinSolveR(SR_tMesh mesh,
   SR_STRING method, SR_STRING precondMethod,
   SR_tFieldR x, SR_tFieldR b, SR_tFieldR* pAy, SR_tFieldR* pY);

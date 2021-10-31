@@ -69,9 +69,9 @@ although some of them are not parallelized.
 
 **StormRuler** contains:
 - Nonlinear solvers:
-  * _(planned)_ Newton-Raphson solver 
+  * Newton-Raphson solver 
     (for the general nonlinear problems),
-  * _(planned)_ Jacobian-Free Newton-Raphson solver 
+  * Jacobian-Free Newton-Krylov solver 
     (for the general nonlinear problems);
 
 - Matrix-free linear iterative solvers:
@@ -167,8 +167,9 @@ although some of them are not parallelized.
   - [ ] Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
 
 * Nonlinear solvers:
-  - [ ] Newton-Raphson solver,
-  - [ ] Jacobian-Free Newton-Raphson solver.
+  - [x] Newton-Raphson solver,
+  - [x] Jacobian-Free Newton-Raphson solver,
+  - [ ] Refactor JFNK.
 
 * Preconditioning:
   - [ ] Fix block case diagonal extraction,

@@ -55,6 +55,14 @@ contains
 !! MINRES may be applied to the singular problems, and the self-adjoint
 !! least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
 !! although convergeance to minimum norm solution is not guaranteed.
+!! 
+!! References:
+!! [1] Paige, C. and M. Saunders. 
+!!     “Solution of Sparse Indefinite Systems of Linear Equations.” 
+!!     SIAM Journal on Numerical Analysis 12 (1975): 617-629.
+!! [2] Choi, S.-C. T.
+!!     “Iterative Methods for Singular Linear Equations and 
+!!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
@@ -63,15 +71,6 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
-
-  ! ----------------------
-  ! [1] Paige, C. and M. Saunders. 
-  !     “Solution of Sparse Indefinite Systems of Linear Equations.” 
-  !     SIAM Journal on Numerical Analysis 12 (1975): 617-629.
-  ! [2] Choi, S.-C. T.
-  !     “Iterative Methods for Singular Linear Equations and Least-Squares Problems” 
-  !     PhD thesis, ICME, Stanford University.
-  ! ----------------------
 
   real(dp) :: alpha, beta, beta_bar, gamma, &
     & delta, delta_bar, epsilon, epsilon_bar, &
@@ -83,9 +82,7 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   class(*), allocatable :: precond_env
 
   allocate(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
-  if (present(Precond)) then
-    allocate(q, q_bar, mold=x)
-  end if
+  if (present(Precond)) allocate(q, q_bar, mold=x)
 
   ! ----------------------
   ! Initialize:
@@ -153,7 +150,7 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
     ! ----------------------
     delta_bar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
-    call SymOrtho(gamma*1.0_dp, beta, cs, sn, gamma)
+    call SymOrtho(gamma, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------
@@ -177,7 +174,7 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   
 contains
   subroutine SymOrtho(a, b, cs, sn, rr)
-    real(dp), intent(in), value :: a, b
+    real(dp), intent(in) :: a, b
     real(dp), intent(out) :: cs, sn, rr
 
     rr = hypot(a, b)

@@ -1,5 +1,5 @@
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
-# ♂StormRuler♂ — A very high order CFD solver
+# StormRuler🦜 — A very high order CFD solver
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 **StormRuler** is a very high order multidimensional CFD solver, 
 written in Fortran 2018 and C11.
@@ -128,62 +128,92 @@ although some of them are not parallelized.
 ## Road map
 <!----------------------------------------------------------------->
 
+Legend:
+- 🧸 — _easy problem_,
+- 🪓 — _medium complexity problem_,
+- 🚬 — _hardcore feature/problem_,
+- 🦜 — _unidentified complexity_,
+- 💄 — _requires creativity_,
+- 🧻 — _refactoring required_,
+- 🐏 — _system programming skills required_,
+- 🐞 — _our bug, fix required_,
+- 🪦 — _compiler bug, workaround required_.
+
 * C/C++ API:
-  - [x] Pure C API,
-  - [ ] Untyped C API,
-  - [x] Unified Fortran solver API,
-  - [x] Unified Fortran solver RCI API,
-  - [ ] PThread and semaphores for Windows,
-  - [x] Unified RCI C solver API,
-  - [ ] C string evaluation API,
-  - [ ] MATLAB API,
-  - [ ] Lua API.
+  - [x] 🐏 Pure C API,
+  - [ ] 💄 Untyped C API,
+  - [ ] 💄 Redesign the C API,
+  - [x] 💄 Unified Fortran solver API,
+  - [x] 💄 Unified Fortran solver RCI API,
+  - [ ] 🐏 PThread and semaphores for Windows,
+  - [x] 🚬🪦 Unified RCI C solver API,
+  - [ ] 🚬 MATLAB API,
+  - [ ] 🚬 Lua API.
+
+* Mesh:
+  - [ ] 🪓 Nodes,
+  - [ ] 🪓 Faces,
+  - [ ] 🧸 Redesigned VTK output,
+  - [ ] 🪓 Cache-friendly cell sorting,
+  - [ ] 🚬 GMG,
+  - [ ] 🚬 Non-conforming multilevel mesh,
+  - [ ] 🚬🚬 Cut cell methods.
 
 * General architecture:
-  - [ ] Custom threading (without OpenMP on Fortran level),
-  - [ ] MPI support..
+  - [ ] 🦜🐞 Segfaults,
+  - [ ] 🚬🪦 Custom threading (without OpenMP on Fortran level),
+  - [ ] 🚬 GPU support,
+  - [ ] 🚬🚬 MPI support.
 
 * New differential operators and boundary conditions:
-  - [x] Cylindrical symmetry for 2D domains,
-  - [ ] More special boundary conditions,
-  - [ ] Godunov/WENO linear convection operator,
-  - [ ] Godunov/WENO nonlinear convection operator,
-  - [ ] Riemann solvers, Euler equations...
+  - [ ] 🧸 Variable weight Laplace operator with 4+ order approx.,
+  - [ ] 🦜 Tensor weight Laplace operator with 4+ order approx.,
+  - [ ] 🦜 High order convection approx.,
+  - [x] 🪓 Cylindrical symmetry for 2D domains,
+  - [ ] 💄 More special boundary conditions,
+  - [ ] 🪓 Godunov/WENO linear convection operator,
+  - [ ] 🪓 Godunov/WENO nonlinear convection operator,
+  - [ ] 🪓 Riemann solvers, Euler equations...
 
 * Matrix reconstruction:
-  - [ ] Matrix portrait construction,
-  - [ ] Graph-coloring problem,
-  - [ ] Some matrix API...
+  - [ ] 🚬 Matrix portrait construction,
+  - [ ] 🚬🚬🚬 Graph-coloring problem,
+  - [ ] 🚬 Some matrix API...
 
-* New linear solvers:
-  - [ ] `GMRES` solver implementation.
-  - [ ] `PowerIterations` eigensolver,
-  - [ ] `Lanczos` hybrid eigensolver/solver,
-  - [ ] `Arnoldi` hybrid eigensolver/solver,
-  - [ ] `ConjugateChebyshev` solver,
-  - [ ] Custom eigensolvers for the tridiagonal Hermitian matrices,
-  - [ ] LAPACK eigensolvers for the Hessenberg matrices,
-  - [ ] Custom eigensolvers for the Hessenberg matrices,
-  - [ ] Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
+* New linear solvers/eigensolvers:
+  - [ ] 🚬 `GMRES` solver implementation.
+  - [ ] 🧸 Recover existing eigensolvers.
+  - [ ] 🧸 `PowerIterations` eigensolver,
+  - [ ] 🪓 `Lanczos` hybrid eigensolver/solver,
+  - [ ] 🪓 `Arnoldi` hybrid eigensolver/solver,
+  - [ ] 🪓 `ConjugateChebyshev` solver,
+  - [ ] 🦜 Custom eigensolvers for the tridiagonal Hermitian matrices,
+  - [ ] 🧸 LAPACK eigensolvers for the Hessenberg matrices,
+  - [ ] 🦜 Custom eigensolvers for the Hessenberg matrices,
+  - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
 
 * Nonlinear solvers:
-  - [x] Newton-Raphson solver,
-  - [x] Jacobian-Free Newton-Raphson solver,
-  - [ ] Refactor JFNK without using the general Newton solver,
-  - [ ] Second order JFNK solver.
+  - [x] 🧸 Newton-Raphson solver,
+  - [ ] 🦜 Relaxed Newton solver,
+  - [x] 🧸 Jacobian-Free Newton-Raphson solver,
+  - [ ] 🧸 Select an epsilon in JFNK,
+  - [ ] 🧻 Refactor JFNK without using the general Newton solver,
+  - [ ] 🧸 Second order JFNK solver.
 
 * Preconditioning:
-  - [ ] Fix block case diagonal extraction,
-  - [ ] Block tridiagonal preconditioner,
-  - [ ] Matrix-free SPAI preconditioner,
-  - [ ] Matrix-based preconditioning..
+  - [ ] 🦜 Fix block case diagonal extraction,
+  - [ ] 🦜 Block tridiagonal preconditioner,
+  - [ ] 🚬 Matrix-free SPAI preconditioner,
+  - [ ] 🚬 Matrix-based preconditioning,
+  - [ ] 🦜 Nnlinear preconditioner.
 
 * Add support for complex numbers:
-  - [x] Support for complex numbers on BLAS level in Fortran,
-  - [ ] Support for complex linear solvers,
-  - [ ] Support for complex differential operators and boundary condition. 
+  - [x] 🪓 Support for complex numbers on BLAS level in Fortran,
+  - [ ] 🪓 Support for complex linear solvers,
+  - [ ] 🪓 Support for complex differential operators and boundary condition. 
 
 * Symbolic arithmetics:
-  - [ ] Recover existing symbolic interface.
-  - [ ] Implement symbolic drivers for the linear case.
-  - [ ] Direct/reverse auto-differentiation..
+  - [ ] 🧸 Recover existing symbolic interface.
+  - [ ] 🪓 Implement symbolic drivers for the linear case.
+  - [ ] 🪓 Implement symbolic drivers for the nonlinear case.
+  - [ ] 🦜 Direct/reverse auto-differentiation..

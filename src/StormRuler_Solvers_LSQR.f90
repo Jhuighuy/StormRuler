@@ -60,13 +60,21 @@ contains
 !! ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the LSQR method.
 !!
 !! LSQR is algebraically equivalent to applying CG
-!! to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚, (*)
+!! to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 !! (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 !! but but has better numerical properties.
 !!
 !! The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, 
 !! while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
 !! is not guaranteed to decrease.
+!!
+!! References:
+!! [1] Paige, C. and M. Saunders. 
+!!     “LSQR: An Algorithm for Sparse Linear Equations and 
+!!     Sparse Least Squares.” ACM Trans. Math. Softw. 8 (1982): 43-71.
+!! [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
+!!     “A preconditioner for the LSQR algorithm.” 
+!!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_LSQR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
@@ -77,15 +85,6 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
   
-  ! ----------------------
-  ! [1] Paige, C. and M. Saunders. 
-  !     “LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares.” 
-  !     ACM Trans. Math. Softw. 8 (1982): 43-71.
-  ! [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
-  !     “A preconditioner for the LSQR algorithm.” 
-  !     Journal of applied mathematics & informatics 26 (2008): 213-222.
-  ! ----------------------
-
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
   real(dp), pointer :: s(:,:), t(:,:), &
@@ -93,9 +92,7 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   class(*), allocatable :: precond_env, precond_env_T
   
   allocate(t, r, u, v, w, z, mold=x)
-  if (present(Precond)) then
-    allocate(s, mold=x)
-  end if
+  if (present(Precond)) allocate(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -249,6 +246,14 @@ end subroutine Solve_SymmLSQR
 !! The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
 !! decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂   
 !! is not guaranteed to decrease (but decreases on practice).
+!!
+!! References:
+!! [1] Fong, D. C. and M. Saunders. 
+!!     “LSMR: An Iterative Algorithm for Sparse Least-Squares Problems.” 
+!!     SIAM J. Sci. Comput. 33 (2011): 2950-2971.
+!! [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
+!!     “A preconditioner for the LSQR algorithm.” 
+!!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_LSMR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
@@ -258,15 +263,6 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   procedure(tMatVecFuncR) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
-  
-  ! ----------------------
-  ! [1] Fong, D. C. and M. Saunders. 
-  !     “LSMR: An Iterative Algorithm for Sparse Least-Squares Problems.” 
-  !     SIAM J. Sci. Comput. 33 (2011): 2950-2971.
-  ! [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
-  !     “A preconditioner for the LSQR algorithm.” 
-  !     Journal of applied mathematics & informatics 26 (2008): 213-222.
-  ! ----------------------
 
   real(dp) :: alpha, alpha_bar, beta, rho, rho_bar, &
     & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
@@ -276,9 +272,7 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   class(*), allocatable :: precond_env, precond_env_T
   
   allocate(t, r, u, v, w, h, z, mold=x)
-  if (present(Precond)) then
-    allocate(s, mold=x)
-  end if
+  if (present(Precond)) allocate(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.

@@ -163,7 +163,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, Precond)
   if (present(Precond)) then
     allocate(w, y, z, mold=x)
   else
-    y => p; z => s; w => t
+    w => t; y => p; z => s
   end if
 
   ! ----------------------

@@ -168,7 +168,7 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
 
     RR = mesh%CellCenter(1, iCell)
 
-    RRR = merge(0.01_dp, 100.0_dp, iBCM == 2)
+    RRR = merge(0.1_dp, 10.0_dp, iBCM == 2)
 
     v(:,iBCCell) = 0.0_dp
     v(2,iBCCell) = -RRR*( R**2 - RR**2 )

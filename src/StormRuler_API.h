@@ -317,6 +317,17 @@ SR_DEFINE_FUNCPTR_(void, SR_tMapFuncS, SR_INTEGER size,
 /// @}
 
 /// @{
+SR_API SR_REAL SR_IntegrateR(SR_tMesh mesh,
+  SR_tFieldR x, SR_tMapFuncR f, void* env);
+SR_API SR_COMPLEX SR_IntegrateC(SR_tMesh mesh,
+  SR_tFieldC x, SR_tMapFuncC f, void* env);
+#if SR_C11
+#define SR_Integrate(mesh, x, f, env) \
+  SR_FIELD_GENERIC_(x, SR_Integrate)(mesh, x, f, env)
+#endif
+/// @}
+
+/// @{
 SR_API void SR_FuncProdR(SR_tMesh mesh,
   SR_tFieldR y, SR_tFieldR x, SR_tMapFuncR f, void* env);
 SR_API void SR_FuncProdC(SR_tMesh mesh,

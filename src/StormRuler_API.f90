@@ -33,8 +33,8 @@ use StormRuler_IO
 use StormRuler_Mesh, only: tMesh
 
 use StormRuler_BLAS, only: Norm_2, &
-  & Fill, Fill_Random, Set, &
-  & Scale, Add, Sub, Mul, FuncProd, SFuncProd
+  & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
+  & Integrate, FuncProd, SFuncProd
 #$for type_, _ in SCALAR_TYPES
 use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
@@ -572,6 +572,48 @@ subroutine cMul$T(pMesh, pZ, pY, pX) bind(C, name='SR_Mul$T')
   call Mul(mesh, z, y(1,:), x)
 
 end subroutine cMul$T
+#$end for
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+#$for T, typename in SCALAR_TYPES
+function cIntegrate$T(pMesh, pX, pF, pEnv) &
+    & result(integral) bind(C, name='SR_Integrate$T')
+  type(c_ptr), intent(in), value :: pMesh
+  type(c_ptr), intent(in), value :: pX
+  type(c_funptr), intent(in), value :: pF
+  type(c_ptr), intent(in), value :: pEnv
+  $typename :: integral
+
+  abstract interface
+    pure subroutine ctMapFunc(size, Fx, x, pEnv) bind(C)
+      import :: c_int, c_ptr, dp
+      integer(c_int), intent(in), value :: size
+      $typename, intent(in) :: x(*)
+      $typename, intent(inout) :: Fx(*)
+      type(c_ptr), intent(in), value :: pEnv
+    end subroutine ctMapFunc
+  end interface
+
+  class(tMesh), pointer :: mesh
+  $typename, pointer :: x(:,:)
+  procedure(ctMapFunc), pointer :: f
+
+  call Unwrap(mesh, pMesh)
+  call Unwrap(x, pX)
+  call c_f_procpointer(cptr=pF, fptr=f)
+
+  integral = Integrate(mesh, x, cF)
+
+contains
+  pure function cF(x) result(Fx)
+    $typename, intent(in) :: x(:)
+    $typename :: Fx(size(x))
+    
+    call f(int(size(x), kind=c_int), Fx, x, pEnv)
+
+  end function cF
+end function cIntegrate$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

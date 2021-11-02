@@ -126,6 +126,18 @@ interface Mul_Outer
 #$end do
 end interface Mul_Outer
 
+interface SFuncProd
+#$for T, _ in SCALAR_TYPES
+  module procedure SFuncProd$T
+#$end for
+end interface SFuncProd
+
+interface Integrate
+#$for T, _ in SCALAR_TYPES
+  module procedure Integrate$T
+#$end for
+end interface Integrate
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -145,6 +157,24 @@ interface FuncProd
 #$end for
 end interface FuncProd
 
+interface MatVecProd_Diagonal
+#$for T, _ in SCALAR_TYPES
+  module procedure MatVecProd_Diagonal$T
+#$end for
+end interface MatVecProd_Diagonal
+
+interface MatVecProd_Triangular
+#$for T, _ in SCALAR_TYPES
+  module procedure MatVecProd_Triangular$T
+#$end for
+end interface MatVecProd_Triangular
+
+interface Solve_Triangular
+#$for T, _ in SCALAR_TYPES
+  module procedure Solve_Triangular$T
+#$end for
+end interface Solve_Triangular
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -158,12 +188,6 @@ abstract interface
   end function tSMapFunc$T
 #$end for
 end interface
-
-interface SFuncProd
-#$for T, _ in SCALAR_TYPES
-  module procedure SFuncProd$T
-#$end for
-end interface SFuncProd
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Matrix-vector product function: 𝓐𝒙 ← 𝓐(𝒙).
@@ -190,24 +214,6 @@ abstract interface
   end subroutine tBiMatVecFunc$T
 #$end for
 end interface
-
-interface MatVecProd_Diagonal
-#$for T, _ in SCALAR_TYPES
-  module procedure MatVecProd_Diagonal$T
-#$end for
-end interface MatVecProd_Diagonal
-
-interface MatVecProd_Triangular
-#$for T, _ in SCALAR_TYPES
-  module procedure MatVecProd_Triangular$T
-#$end for
-end interface MatVecProd_Triangular
-
-interface Solve_Triangular
-#$for T, _ in SCALAR_TYPES
-  module procedure Solve_Triangular$T
-#$end for
-end interface Solve_Triangular
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -613,6 +619,30 @@ end subroutine Mul_Outer$rank
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute integral average: 𝑖 ← ∫𝑓(𝒙(𝒓))𝑑𝛺/∫1𝑑𝛺.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+#$for T, typename in SCALAR_TYPES
+real(dp) function Integrate$T(mesh, x, f) result(integral)
+  class(tMesh), intent(inout) :: mesh
+  $typename, intent(in) :: x(:,:)
+  procedure(tMapFunc$T) :: f
+  
+  integral = mesh%RunCellKernel_Sum(Integrate_Kernel)/mesh%NumCells
+
+contains
+  real(dp) function Integrate_Kernel(iCell)
+    integer(ip), intent(in) :: iCell
+
+    associate(y => f(x(:,iCell)))
+      Integrate_Kernel = y(1)
+    end associate
+    if (gCylCoords) Integrate_Kernel = Integrate_Kernel*mesh%CellCenter(1,iCell)
+
+  end function Integrate_Kernel
+end function Integrate$T
+#$end for
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in SCALAR_TYPES
@@ -655,6 +685,9 @@ contains
   end subroutine SFuncProd_Kernel
 end subroutine SFuncProd$T
 #$end for
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.

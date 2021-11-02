@@ -68,11 +68,11 @@ Several preconditioners are available in pure matrix-free context,
 although some of them are not parallelized.
 
 **StormRuler** contains:
-- Nonlinear solvers:
+- Matrix-free nonlinear solvers:
   * Newton-Raphson solver 
-    (for the general nonlinear problems),
+    (`Newton`, for the general nonlinear problems),
   * Jacobian-Free Newton-Krylov solver 
-    (for the general nonlinear problems);
+    (`JFNK`, for the general nonlinear problems);
 
 - Matrix-free linear iterative solvers:
   * Chebyshev Semi-Iterative solver
@@ -88,7 +88,7 @@ although some of them are not parallelized.
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
-    (`GMRES`, for the general linear problems),
+    (`GMRES`, for the general linear problems);
 
 - Matrix-free linear iterative least squares solvers:
   * Least squares-QR solver:
@@ -169,7 +169,8 @@ although some of them are not parallelized.
 * Nonlinear solvers:
   - [x] Newton-Raphson solver,
   - [x] Jacobian-Free Newton-Raphson solver,
-  - [ ] Refactor JFNK.
+  - [ ] Refactor JFNK without using the general Newton solver,
+  - [ ] Second order JFNK solver.
 
 * Preconditioning:
   - [ ] Fix block case diagonal extraction,

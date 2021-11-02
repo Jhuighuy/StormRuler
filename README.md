@@ -5,7 +5,7 @@
 written in Fortran 2018 and C11.
 
 <!----------------------------------------------------------------->
-## Compiling🏗
+## 🏗Compiling
 <!----------------------------------------------------------------->
 
 Supported compilers:
@@ -26,7 +26,7 @@ export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacO
 ```
 
 <!----------------------------------------------------------------->
-## Equations solved🌀
+## 🌀Equations solved
 <!----------------------------------------------------------------->
 **StormRuler** features support of the various set of the
 partial differential equations, including:
@@ -36,12 +36,12 @@ partial differential equations, including:
 * ...
 
 <!----------------------------------------------------------------->
-## Numerical methods🌐
+## 🌐Numerical methods
 <!----------------------------------------------------------------->
 The heart of the **StormRuler** is the ✨Finite Difference Method✨.
 
 <!----------------------------------------------------------------->
-## Algebraic solvers🌈
+## 🌈Algebraic solvers
 <!----------------------------------------------------------------->
 In order to implement the high performance implicit schemes,
 several algebraic problems, like systems of linear and nonlinear
@@ -86,6 +86,7 @@ although some of them are not parallelized.
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems);
+
 <!--
 - 🚂 Linear direct solvers (embedded into the matrix-free environment):
   * MKL Direct Sparse Solver 
@@ -97,7 +98,7 @@ although some of them are not parallelized.
   * Least squares-MINRES solver
     (`LSMR`, for the general linear least squares problems);
 
-- 🚨 Matrix-free eigensolvers:
+- 🚢 Matrix-free eigensolvers:
   * _(planned)_ Power iteration eigensolver
     (`PowerIteration`, for the general problems),
   * _(planned)_ Lanczos eigensolver
@@ -106,14 +107,14 @@ although some of them are not parallelized.
   * _(planned)_ Arnoldi eigensolver
     (`Arnoldi`, for the problems);
 
-- 🚢 Matrix-free preconditioners:
+- 🚨 Matrix-free preconditioners:
   * Block Jacobi preconditioner
     (`Jacobi`),
   * Block LU-SGS preconditioner
     (`LU_SGS`),
   * _(planned)_ Block SPAI preconditioner.
 
-- 🛰Some very specific solvers:
+- 🛰 Some very specific solvers:
   * _(planned)_ Symmetric tridiagonal eigensolvers
     (`bisection`, `divide-and-conquer`, `QR`,
      for the symmetric tridiagonal matrices, ),

@@ -5,7 +5,7 @@
 written in Fortran 2018 and C11.
 
 <!----------------------------------------------------------------->
-## Compiling
+## Compiling🏗
 <!----------------------------------------------------------------->
 
 Supported compilers:
@@ -26,28 +26,25 @@ export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacO
 ```
 
 <!----------------------------------------------------------------->
-## Equations solved
+## Equations solved🌀
 <!----------------------------------------------------------------->
 **StormRuler** features support of the various set of the
 partial differential equations, including:
-* Incompressible Navier-Stokes equations,
-* Cahn-Hilliard equation,
-* _(planned)_ Streamfunction-Vorticity formulation for the
-  Incompressible Navier-Stokes equations in 2D,
-* Incompressible Navier-Stokes-Cahn-Hilliard equations,
-* _(planned)_ Streamfunction-Vorticity formulation for the
-  Incompressible Navier-Stokes-Cahn-Hilliard equations in 2D.
+* 💧 Cahn-Hilliard equation,
+* 🌊 Incompressible Navier-Stokes equations,
+* 🌪 _(planned)_ Сompressible Navier-Stokes/Euler equations,
+* ...
 
 <!----------------------------------------------------------------->
-## Numerical methods
+## Numerical methods🌐
 <!----------------------------------------------------------------->
-The heart of the **StormRuler** is the Finite Difference Method.
+The heart of the **StormRuler** is the ✨Finite Difference Method✨.
 
 <!----------------------------------------------------------------->
-## Auxiliary solvers
+## Algebraic solvers🌈
 <!----------------------------------------------------------------->
 In order to implement the high performance implicit schemes,
-several auxiliary problems, like systems of linear and nonlinear
+several algebraic problems, like systems of linear and nonlinear
 equations, have to be solved.
 
 <!--For the sake of convenience, all auxiliary solvers are implemented 
@@ -68,13 +65,13 @@ Several preconditioners are available in pure matrix-free context,
 although some of them are not parallelized.
 
 **StormRuler** contains:
-- Matrix-free nonlinear solvers:
+- 🛸 Matrix-free nonlinear solvers:
   * Newton-Raphson solver 
     (`Newton`, for the general nonlinear problems),
   * Jacobian-Free Newton-Krylov solver 
     (`JFNK`, for the general nonlinear problems);
 
-- Matrix-free linear iterative solvers:
+- 🏎 Matrix-free linear iterative solvers:
   * Chebyshev Semi-Iterative solver
     (`Chebyshev`, for the _definite symmetric_ linear problems),
   * Conjugate Gradients solver 
@@ -89,14 +86,18 @@ although some of them are not parallelized.
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * _(planned)_ Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems);
+<!--
+- 🚂 Linear direct solvers (embedded into the matrix-free environment):
+  * MKL Direct Sparse Solver 
+    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
 
-- Matrix-free linear iterative least squares solvers:
-  * Least squares-QR solver:
+- 🚜 Matrix-free linear iterative least squares solvers:
+  * Least squares-QR solver
     (`LSQR`, for the general linear least squares problems),
-  * Least squares-MINRES solver:
+  * Least squares-MINRES solver
     (`LSMR`, for the general linear least squares problems);
 
-- Matrix-free eigensolvers:
+- 🚨 Matrix-free eigensolvers:
   * _(planned)_ Power iteration eigensolver
     (`PowerIteration`, for the general problems),
   * _(planned)_ Lanczos eigensolver
@@ -105,27 +106,22 @@ although some of them are not parallelized.
   * _(planned)_ Arnoldi eigensolver
     (`Arnoldi`, for the problems);
 
-- Matrix-free preconditioners:
+- 🚢 Matrix-free preconditioners:
   * Block Jacobi preconditioner
     (`Jacobi`),
   * Block LU-SGS preconditioner
     (`LU_SGS`),
   * _(planned)_ Block SPAI preconditioner.
 
-- Some very specific solvers:
+- 🛰Some very specific solvers:
   * _(planned)_ Symmetric tridiagonal eigensolvers
     (`bisection`, `divide-and-conquer`, `QR`,
      for the symmetric tridiagonal matrices, ),
   * LAPACK Symmetric tridiagonal eigensolvers
     (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
 
-<!--
-- Linear direct solvers (embedded into the matrix-free environment):
-  * MKL Direct Sparse Solver 
-    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
-
 <!----------------------------------------------------------------->
-## Road map
+## Road map🛤
 <!----------------------------------------------------------------->
 
 Legend:

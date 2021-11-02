@@ -57,7 +57,16 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSQR method.
+!! ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the LSQR method.
+!!
+!! LSQR is algebraically equivalent to applying CG
+!! to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚, (*)
+!! (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
+!! but but has better numerical properties.
+!!
+!! The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, 
+!! while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+!! is not guaranteed to decrease.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_LSQR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
@@ -205,6 +214,13 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
 
 end subroutine Solve_LSQR
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a right preconditioned linear self-adjoint: least squares
+!! problem: ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the LSQR method.
+!!
+!! LSQR is not recommended in the self-adjoint case,
+!! please consider MINRES instead.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_SymmLSQR(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
@@ -213,14 +229,8 @@ subroutine Solve_SymmLSQR(mesh, x, b, MatVec, params, Precond)
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 
-  ! ----------------------
-  ! Using LSMR in symmetric case is not recommended,
-  ! use MINRES instead.
-  ! ----------------------
-
   if (present(Precond)) then
-    call Solve_LSQR(mesh, x, b, MatVec, &
-      & MatVec, params, Precond, Precond)
+    call Solve_LSQR(mesh, x, b, MatVec, MatVec, params, Precond, Precond)
   else
     call Solve_LSQR(mesh, x, b, MatVec, MatVec, params)
   end if
@@ -229,7 +239,16 @@ end subroutine Solve_SymmLSQR
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
-!! 𝘮𝘪𝘯𝘪𝘮𝘪𝘻𝘦{‖𝓐[𝓟]𝒚 - 𝒃‖₂}, 𝒙 = [𝓟]𝒚, using the LSMR method.
+!! ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the LSMR method.
+!!
+!! LSMR is algebraically equivalent to applying MINRES 
+!! to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚, 
+!! (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
+!! but but has better numerical properties.
+!! 
+!! The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+!! decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂   
+!! is not guaranteed to decrease (but decreases on practice).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_LSMR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
@@ -387,6 +406,13 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
 
 end subroutine Solve_LSMR
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a right preconditioned linear self-adjoint: least squares
+!! problem: ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the LSMR method.
+!!
+!! Using LSMR is not recommended in the self-adjoint case,
+!! please consider MINRES instead.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_SymmLSMR(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: b(:,:)
@@ -401,8 +427,7 @@ subroutine Solve_SymmLSMR(mesh, x, b, MatVec, params, Precond)
   ! ----------------------
 
   if (present(Precond)) then
-    call Solve_LSMR(mesh, x, b, MatVec, &
-      & MatVec, params, Precond, Precond)
+    call Solve_LSMR(mesh, x, b, MatVec, MatVec, params, Precond, Precond)
   else
     call Solve_LSMR(mesh, x, b, MatVec, MatVec, params)
   end if

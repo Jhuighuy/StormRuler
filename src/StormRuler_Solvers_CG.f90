@@ -48,8 +48,11 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear self-adjoint definite operator equation: 
-!! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], 
-!! using the Conjugate Gradients method.
+!! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the 
+!! Conjugate Gradients (CG) method.
+!!
+!! CG may be applied to the consistent singular problems, 
+!! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_CG(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
@@ -138,7 +141,10 @@ end subroutine Solve_CG
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
-!! the good old Biconjugate Gradients (stabilized) method.
+!! the good old Biconjugate Gradients (stabilized) method (BiCGStab).
+!!
+!! BiCGStab may be applied to the consistent singular problems,
+!! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh

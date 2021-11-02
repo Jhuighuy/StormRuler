@@ -48,7 +48,13 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint indefinite operator equation: 
 !! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the MINRES method.
-!! 𝓟 = 𝓟ᵀ > 0 is explicitly required.
+!!
+!! Despite 𝓐 may be indefinite, a positive-definite preconditioner 𝓟 
+!! is explicitly required.
+!!
+!! MINRES may be applied to the singular problems, and the self-adjoint
+!! least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
+!! although convergeance to minimum norm solution is not guaranteed.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh

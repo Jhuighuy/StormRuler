@@ -122,7 +122,7 @@ although some of them are not parallelized.
     (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
 
 <!----------------------------------------------------------------->
-## Road map🛤
+## 🛤Road map
 <!----------------------------------------------------------------->
 
 Legend:

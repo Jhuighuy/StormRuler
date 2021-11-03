@@ -30,6 +30,8 @@ use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Assert, Flip, &
   & AsField, IsVecField, AsVecField, IsMatField, AsMatField
 
+use StormRuler_Array, only: tArrayR
+
 use StormRuler_Mesh, only: tMesh
 use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
   & FD1_F1, FD1_F2, FD1_F3, FD1_F4, FD1_F5, FD1_F6, FD1_F7, FD1_F8, &
@@ -550,19 +552,18 @@ end subroutine FDM_Divergence_Central
 !! • Vector case:
 !!   Shape of 𝒖⃗, 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Laplacian_Central(mesh, vAny, lambda, uAny)
+subroutine FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
   class(tMesh), intent(inout) :: mesh
+  class(tArrayR), intent(in) :: uArr
+  class(tArrayR), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(..)
-  real(dp), intent(inout), target :: vAny(..)
 
   real(dp), pointer :: u(:,:), v(:,:)
   real(dp), pointer :: uVec(:,:,:), vVec(:,:,:)
 
-  u => AsField(uAny); v => AsField(vAny)
-  if (gCylCoords.and.IsVecField(uAny)) then
-    uVec => AsVecField(mesh%NumDims, uAny) 
-    vVec => AsVecField(mesh%NumDims, vAny)
+  call uArr%Get(u); call vArr%Get(v)
+  if (gCylCoords.and.(uArr%Rank() == 3)) then
+    call uArr%Get(uVec); call vArr%Get(vVec)
   end if
 
   call mesh%RunCellKernel(FDM_Laplacian_Central_Kernel)
@@ -667,19 +668,16 @@ contains
       end associate
     end do
 
-    if (gCylCoords.and.IsVecField(uAny)) then
+    if (gCylCoords.and.(uArr%Rank() == 3)) then
       ! ----------------------
       ! Cylindrical coordinates, vector case.
       ! We have already computed:
       ! 𝒗⃗ ← 𝒗⃗ + 𝜆{Δ𝒖₁, Δ𝒖₂}ᵀ, 
       ! but we need:
       ! 𝒗⃗ ← 𝒗⃗ + 𝜆{Δ𝒖₁ - 𝒖₁/𝜌², Δ𝒖₂}ᵀ.
-      ! The correction term is:
-      ! 𝒗₁ ← 𝒗₁ - 𝜆𝒖₁/𝜌².
       ! ----------------------
       associate(rho => mesh%CellCenter(1,iCell))
-        vVec(1,:,iCell) = vVec(1,:,iCell) - &
-          & lambda*uVec(1,:,iCell)/( rho**2 )
+        vVec(1,:,iCell) = vVec(1,:,iCell) - lambda*uVec(1,:,iCell)/( rho**2 )
       end associate
     end if
   end subroutine FDM_Laplacian_Central_Kernel

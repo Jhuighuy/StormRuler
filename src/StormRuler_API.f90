@@ -28,9 +28,11 @@ module StormRuler_API
 
 use StormRuler_Parameters, only: dp, ip, i8, error_code
 use StormRuler_Helpers
+use StormRuler_Array, only: tArrayR
+
+use StormRuler_Mesh, only: tMesh
 use StormRuler_IO, only: tIOList => IOList ! TODO:
 use StormRuler_IO
-use StormRuler_Mesh, only: tMesh
 
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
@@ -87,6 +89,7 @@ type :: tFieldStruct$T
   character :: mType = '$T'
   integer(ip) :: mRank = -1
   $typename, pointer :: mData(:,:) => null()
+  type(tArrayR), pointer :: mArray => null()
 end type !tFieldStruct$T
 #$end for
 
@@ -101,6 +104,7 @@ interface Unwrap
 #$for klass in KLASSES
   module procedure Unwrap$klass
 #$end for
+  module procedure UnwrapArrayR
 #$for T, typename in SCALAR_TYPES
   module procedure UnwrapField$T
   module procedure UnwrapVecField$T
@@ -183,10 +187,24 @@ end subroutine Unwrap$klass
 !! ----------------------------------------------------------------- !!
 !! ----------------------------------------------------------------- !!
 #$for T, typename in SCALAR_TYPES
-subroutine UnwrapField$T(x, pX, free, pX_C_out, rank)
+subroutine UnwrapArray$T(x, pX)
+  type(c_ptr), intent(in), value :: pX
+  class(tArrayR), intent(out), pointer :: x
+
+  type(tFieldStruct$T), pointer :: pX_C
+
+  call c_f_pointer(cptr=pX, fptr=pX_C)
+  x => pX_C%mArray
+
+end subroutine UnwrapArray$T
+#$end for
+
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+#$for T, typename in SCALAR_TYPES
+subroutine UnwrapField$T(x, pX, pX_C_out, rank)
   type(c_ptr), intent(in), value :: pX
   $typename, intent(out), pointer :: x(:,:)
-  logical, intent(in), optional :: free
   type(tFieldStruct$T), intent(out), pointer, optional :: pX_C_out
   integer(ip), intent(out), optional :: rank
 
@@ -196,10 +214,6 @@ subroutine UnwrapField$T(x, pX, free, pX_C_out, rank)
   if (present(pX_C_out)) pX_C_out => pX_C
   x => pX_C%mData
   !x => Reshape2D(pX_C%mData)
-
-  if (present(free)) then
-    if (free) deallocate(pX_C)
-  end if
 
   if (present(rank)) then
     rank = pX_C%mRank
@@ -307,12 +321,23 @@ function cAlloc$T(pMesh, numVars, rank) result(pY) bind(C, name='SR_Alloc$T')
   integer(c_int), intent(in), value :: numVars, rank
   type(c_ptr) :: pY
 
+  integer(ip) :: shape(rank + 2)
+
   class(tMesh), pointer :: mesh
   type(tFieldStruct$T), pointer :: pY_C
 
   call Unwrap(mesh, pMesh)
+
+  shape(:rank) = mesh%NumDims
+  shape(rank + 1) = numVars
+  shape(rank + 2) = mesh%NumAllCells
+
   allocate(pY_C)
-  allocate(pY_C%mData( (mesh%NumDims**rank)*numVars, mesh%NumAllCells ))
+#$if T == 'R'
+  allocate(pY_C%mArray)
+  call pY_C%mArray%Alloc(shape)
+  call pY_C%mArray%Get(pY_C%mData)
+#$end if
   pY_C%mRank = rank
   pY = c_loc(pY_C)
 
@@ -331,7 +356,11 @@ function cAlloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
 
   call Unwrap(x, pX, pX_C_out=pX_C)
   allocate(pY_C)
-  allocate(pY_C%mData, mold=x)
+#$if T == 'R'
+  allocate(pY_C%mArray)
+  call pY_C%mArray%Alloc(pX_C%mArray%mShape)
+  call pY_C%mArray%Get(pY_C%mData)
+#$end if
   pY_C%mRank = pX_C%mRank
   pY = c_loc(pY_C)
 
@@ -344,10 +373,12 @@ end function cAlloc_Mold$T
 subroutine cFree$T(pX) bind(C, name='SR_Free$T')
   type(c_ptr), intent(in), value :: pX
 
+  type(tFieldStruct$T), pointer :: pX_C
   $typename, pointer :: x(:,:)
 
-  call Unwrap(x, pX, free=.true.)
-  deallocate(x)
+  call Unwrap(x, pX, pX_C_out=pX_C)
+  call pX_C%mArray%Free()
+  deallocate(pX_C%mArray)
 
 end subroutine cFree$T
 #$end for
@@ -748,6 +779,14 @@ contains
     type(tFieldStruct$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
 
+    allocate(pX_C%mArray)
+    allocate(pAx_C%mArray)
+
+    allocate(pX_C%mArray%mShape, mold=shape(x)); pX_C%mArray%mShape = shape(x)
+    allocate(pAx_C%mArray%mShape, mold=shape(Ax)); pAx_C%mArray%mShape = shape(Ax)
+    call c_f_pointer(cptr=c_loc(x), fPtr=pX_C%mArray%mData, shape=[size(x)])
+    call c_f_pointer(cptr=c_loc(Ax), fPtr=pAx_C%mArray%mData, shape=[size(Ax)])
+
     pX_C%mData => x; pAx_C%mData => Ax
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
@@ -794,6 +833,14 @@ contains
 
     type(tFieldStruct$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
+
+    allocate(pX_C%mArray)
+    allocate(pAx_C%mArray)
+
+    allocate(pX_C%mArray%mShape, mold=shape(x)); pX_C%mArray%mShape = shape(x)
+    allocate(pAx_C%mArray%mShape, mold=shape(Ax)); pAx_C%mArray%mShape = shape(Ax)
+    call c_f_pointer(cptr=c_loc(x), fPtr=pX_C%mArray%mData, shape=[size(x)])
+    call c_f_pointer(cptr=c_loc(Ax), fPtr=pAx_C%mArray%mData, shape=[size(Ax)])
 
     pX_C%mData => x; pAx_C%mData => Ax
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
@@ -842,10 +889,12 @@ function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
     & mesh, method, precondMethod, x, b, params, Ay, y)
 
   if (sRequest == 'Done') then
+
     deallocate(sRequest)
     pRequest = c_null_ptr
 
   else
+
     sRequest = sRequest//c_null_char
     pRequest = c_loc(sRequest)
 
@@ -1010,24 +1059,16 @@ end subroutine cConv$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cDivGrad$T(pMesh, pV, lambda, pU) bind(C, name='SR_DivGrad$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU, pV
+  $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: u(:,:), v(:,:)
-  $typename, pointer :: uVec(:,:,:), vVec(:,:,:)
+  class(tArray$T), pointer :: uArr, vArr
 
   call Unwrap(mesh, pMesh)
-  if (cIsVecField$T(pU) == 1) then
-    call Unwrap(uVec, pU, mesh%NumDims)
-    call Unwrap(vVec, pV, mesh%NumDims)
+  call Unwrap(uArr, pU); call Unwrap(vArr, pV)
 
-    call FDM_Laplacian_Central(mesh, vVec, lambda, uVec)
-  else
-    call Unwrap(u, pU); call Unwrap(v, pV)
-
-    call FDM_Laplacian_Central(mesh, v, lambda, u)
-  end if
+  call FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
 
 end subroutine cDivGrad$T
 #$end for
@@ -1037,8 +1078,8 @@ end subroutine cDivGrad$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cDivKGrad$T(pMesh, pV, lambda, pK, pU) bind(C, name='SR_DivKGrad$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU, pV, pK
+  $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   $typename, pointer :: u(:,:), v(:,:), k(:,:)

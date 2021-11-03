@@ -139,7 +139,6 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   return SR_Integrate(mesh, c_hat, Vol, NULL);
 } // CahnHilliard_Step
 
-static double beta = 0.1;
 static double rho_1 = 1.0, rho_2 = 300.0, mu_1 = 0.1, mu_2 = 0.1;
 
 void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
@@ -294,7 +293,7 @@ void Initial_Data(int dim, const SR_REAL* r,
   }
 } // Initial_Data
 
-void main() {
+int main() {
 
   FILE* volFile = fopen("vol.txt", "w");
 
@@ -342,5 +341,5 @@ void main() {
   }
 
   fclose(volFile);
-  exit(0);
+  return 0;
 }

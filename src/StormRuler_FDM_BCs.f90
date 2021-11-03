@@ -39,7 +39,7 @@ use StormRuler_Mesh, only: tMesh
 implicit none
 
 interface FDM_ApplyBCs
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS-3
   module procedure FDM_ApplyBCs$rank
 #$end do
 end interface FDM_ApplyBCs
@@ -53,7 +53,7 @@ contains
 !! Apply the generalized third-order 
 !! boundary conditions: 𝛼𝒖 + 𝛽∂𝒖/∂𝑛 = 𝛾 + 𝑓(𝑟).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS-3
 subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: iBCM

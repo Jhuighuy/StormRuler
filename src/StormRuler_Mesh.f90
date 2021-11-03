@@ -28,7 +28,7 @@ module StormRuler_Mesh
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip, IndexOf, I2S, R2S, IntToPixel
-use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, NUM_RANKS}@
+use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 #$if HAS_OpenMP
@@ -436,7 +436,7 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   class(tMesh), intent(inout) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
 
-  integer(ip) :: i
+  integer(ip) :: i, thread
   integer(ip), allocatable :: ranges(:)
 
 #$if HAS_OpenMP
@@ -466,10 +466,9 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! ----------------------
   ! Lauch threads.
   ! ----------------------
-  !$omp parallel default(none) shared(mesh, ranges)
-  associate(iThread => omp_get_thread_num() + 1)
-    call BlockKernel(mesh, ranges(iThread), ranges(iThread + 1) - 1)
-  end associate
+  !$omp parallel default(none) shared(mesh, ranges) private(thread)
+  thread = omp_get_thread_num() + 1
+  call BlockKernel(mesh, ranges(thread), ranges(thread + 1) - 1)
   !$omp end parallel
 #$else
   call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())

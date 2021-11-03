@@ -27,8 +27,7 @@ module StormRuler_FDM_Convection
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
-use StormRuler_Helpers, only: Assert, Flip, &
-  & AsField, IsVecField, AsVecField, IsMatField, AsMatField
+use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR

@@ -110,19 +110,19 @@ interface Sub
 end interface Sub
 
 interface Mul
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS-3
   module procedure Mul$rank
 #$end do
 end interface Mul
 
 interface Mul_Inner
-#$do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-3
   module procedure Mul_Inner$rank
 #$end do
 end interface Mul_Inner
 
 interface Mul_Outer
-#$do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-3
   module procedure Mul_Outer$rank
 #$end do
 end interface Mul_Outer
@@ -581,7 +581,7 @@ end subroutine Sub$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute product: u̅ ← vw̅.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, NUM_RANKS-3
 subroutine Mul$rank(mesh, u, v, w, power)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: v(:), w(@:,:)
@@ -606,7 +606,7 @@ end subroutine Mul$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute an inner product: 𝒛 ← 𝒚⋅𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-3
 subroutine Mul_Inner$rank(mesh, z, y, x)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: y(:,:), x(:,@:,:)
@@ -627,7 +627,7 @@ end subroutine Mul_Inner$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute an outer product: 𝒛 ← 𝒚⊗𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS-1
+#$do rank = 0, NUM_RANKS-3
 subroutine Mul_Outer$rank(mesh, z, y, x)
   class(tMesh), intent(inout) :: mesh
   real(dp), intent(in) :: y(:,:), x(@:,:)

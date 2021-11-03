@@ -57,7 +57,7 @@ contains
 
   procedure :: Rank => ArrayRank
 
-#$do N = 1, 10
+#$do N = 1, NUM_RANKS
   generic :: Get => Get$N 
   procedure :: Get$N => GetArrayData$N
 #$end do
@@ -65,13 +65,13 @@ end type tArrayR
 
 interface AllocArray
   module procedure AllocArray
-#$do N = 1, 10
+#$do N = 1, NUM_RANKS
   module procedure AllocArrayMold$N
 #$end do
 end interface AllocArray
 
 interface FreeArray
-#$do N = 1, 10
+#$do N = 1, NUM_RANKS
   module procedure FreeArray$N
 #$end do
 end interface FreeArray
@@ -96,7 +96,7 @@ end subroutine AllocArray
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Allocate a contiguous array a mold.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do N = 1, 10
+#$do N = 1, NUM_RANKS
 subroutine AllocArrayMold$N(@{array$$}@, mold)
   class(tArrayR), intent(inout) :: @{array$$}@
   class(tArrayR), intent(in) :: mold
@@ -112,7 +112,7 @@ end subroutine AllocArrayMold$N
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Free an array. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do N = 1, 10
+#$do N = 1, NUM_RANKS
 subroutine FreeArray$N(@{array$$}@)
   class(tArrayR), intent(inout) :: @{array$$}@
 
@@ -156,7 +156,7 @@ end function Rerank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Get array data as a Fortran array pointer.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do fRank = 1, 10
+#$do fRank = 1, NUM_RANKS
 subroutine GetArrayData$fRank(array, fData)
   class(tArrayR), intent(in) :: array
   real(dp), intent(out), pointer :: fData(@:)

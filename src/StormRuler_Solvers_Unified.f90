@@ -72,11 +72,11 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   class(tMesh), intent(inout) :: mesh
-  character(len=*), intent(in) :: method, precondMethod
-  class(tArrayR), intent(in), target :: b
+  class(tArrayR), intent(in) :: b
   class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
+  character(len=*), intent(in) :: method, precondMethod
 
   procedure(tMatVecFuncR), pointer :: uMatVec
   type(tArrayR) :: t, f
@@ -90,7 +90,7 @@ subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   !   𝒇 ← 𝒃 - 𝒕,
   !   𝓐(𝒙) ← 𝓐(𝒙) - 𝒕,
   ! 𝗲𝗻𝗱 𝗶𝗳,
-  ! 𝘀𝗼𝗹v𝗲: 𝓐(𝒙) = 𝒇.
+  ! 𝘀𝗼𝗹𝘃𝗲: 𝓐(𝒙) = 𝒇.
   ! ----------------------
   call AllocArray(t, f, mold=x)
   call Fill(mesh, f, 0.0_dp)

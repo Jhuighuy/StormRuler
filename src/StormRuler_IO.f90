@@ -39,7 +39,7 @@ type, abstract :: IOListItem
   class(IOListItem), pointer :: next => null()
 end type IOListItem
 
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, 2
 type, extends(IOListItem) :: IOListItem$rank
   real(dp), pointer :: values(@:,:) => null()
 end type !IOListItem$rank
@@ -48,8 +48,8 @@ end type !IOListItem$rank
 type :: IOList
   class(IOListItem), pointer :: first => null()
 contains
-  generic :: Add => @{Add$$@|@0, NUM_RANKS}@
-#$do rank = 0, NUM_RANKS
+  generic :: Add => @{Add$$@|@0, 2}@
+#$do rank = 0, 2
   procedure :: Add$rank => IOList_Add$rank
 #$end do
 end type IOList
@@ -59,7 +59,7 @@ end type IOList
 
 contains
 
-#$do rank = 0, NUM_RANKS
+#$do rank = 0, 2
 subroutine IOList_Add$rank(list, name, values)
   class(IOList), intent(inout) :: list
   character(len=*), intent(in) :: name

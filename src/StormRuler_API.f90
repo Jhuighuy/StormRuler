@@ -107,12 +107,8 @@ interface Unwrap
   module procedure UnwrapArrayR
 #$for T, typename in SCALAR_TYPES
   module procedure UnwrapField$T
-  module procedure UnwrapVecField$T
 #$end for
 end interface Unwrap
-
-type(c_ptr), parameter :: ceMatVec = transfer(10000, c_null_ptr)
-type(c_ptr), parameter :: ceMatVec_H = transfer(20000, c_null_ptr)
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -220,32 +216,6 @@ subroutine UnwrapField$T(x, pX, pX_C_out, rank)
   end if
 
 end subroutine UnwrapField$T
-#$end for
-
-!! ----------------------------------------------------------------- !!
-!! ----------------------------------------------------------------- !!
-#$for T, typename in SCALAR_TYPES
-subroutine UnwrapVecField$T(x, pX, dim, free, pX_C_out)
-  type(c_ptr), intent(in), value :: pX
-  $typename, intent(out), pointer :: x(:,:,:)
-  integer(ip), intent(in) :: dim
-  logical, intent(in), optional :: free
-  type(tFieldStruct$T), intent(out), pointer, optional :: pX_C_out
-
-  type(tFieldStruct$T), pointer :: pX_C
-
-  call c_f_pointer(cptr=pX, fptr=pX_C)
-  if (present(pX_C_out)) pX_C_out => pX_C
-  !x => pX_C%mData
-#$if T == 'R'
-  x => AsVecField(dim, pX_C%mData)
-#$end if
-
-  if (present(free)) then
-    if (free) deallocate(pX_C)
-  end if
-
-end subroutine UnwrapVecField$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -723,8 +693,7 @@ contains
     $typename, intent(in) :: x(:)
     $typename :: Fx(size(x))
     
-    call f(int(size(r), kind=c_int), r, &
-      & int(size(x), kind=c_int), Fx, x, pEnv)
+    call f(int(size(r), kind=c_int), r, int(size(x), kind=c_int), Fx, x, pEnv)
 
   end function cF
 end subroutine cSFuncProd$T
@@ -754,19 +723,19 @@ subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
   end interface
 
   class(tMesh), pointer :: mesh
-  character(len=:), pointer :: method, precondMethod
   class(tArray$T), pointer :: xArr, bArr
   procedure(ctMatVec), pointer :: MatVec, MatVec_H
+  character(len=:), pointer :: method, precondMethod
   type(tConvParams) :: params
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(method, pMethod)
-  call Unwrap(precondMethod, pPrecondMethod)
   call Unwrap(xArr, pX); call Unwrap(bArr, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
   if (c_associated(pMatVec_H)) then
     call c_f_procpointer(cptr=pMatVec_H, fptr=MatVec_H)
   end if
+  call Unwrap(method, pMethod)
+  call Unwrap(precondMethod, pPrecondMethod)
 
   call params%Init(1.0D-8, 1.0D-8, 2000)
   call LinSolve(mesh, method, precondMethod, xArr, bArr, cMatVec, params)

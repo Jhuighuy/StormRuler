@@ -30,9 +30,9 @@ use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Assert, Flip, &
   & AsField, IsVecField, AsVecField, IsMatField, AsMatField
 
+use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR
 
-use StormRuler_Mesh, only: tMesh
 use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
   & FD1_F1, FD1_F2, FD1_F3, FD1_F4, FD1_F5, FD1_F6, FD1_F7, FD1_F8, &
   & FD2_C2, FD2_C4, FD2_C6, FD2_C8, WFD2_C2, WFD2_C4, WFD2_C6, WFD2_C8
@@ -692,15 +692,15 @@ end subroutine FDM_Laplacian_Central
 !! • Tensor coefficient case (not implemented):
 !!   Shape of ̂𝒘 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_DivWGrad_Central(mesh, vAny, lambda, wAny, uAny)
+subroutine FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: lambda 
-  real(dp), intent(in), target :: uAny(:,:), wAny(:,:)
-  real(dp), intent(inout), target :: vAny(:,:)
+  class(tArrayR), intent(in) :: uArr, wArr
+  class(tArrayR), intent(inout) :: vArr
+  real(dp), intent(in) :: lambda
 
   real(dp), pointer :: u(:,:), v(:,:), w(:,:)
 
-  u => uAny; v => vAny; w => wAny
+  call uArr%Get(u); call vArr%Get(v); call wArr%Get(w)
 
   call mesh%RunCellKernel(FDM_DivWGrad_Central_Kernel)
 

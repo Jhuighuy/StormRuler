@@ -1038,20 +1038,20 @@ end subroutine cDiv$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cConv$T(pMesh, pV, lambda, pU, pA) bind(C, name='SR_Conv$T')
+subroutine cConvection$T(pMesh, pV, lambda, pU, pA) bind(C, name='SR_Conv$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU, pV, pA
+  $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: u(:,:), v(:,:), a(:,:)
+  class(tArray$T), pointer :: uArr, vArr, aArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(u, pU); call Unwrap(v, pV); call Unwrap(a, pA)
+  call Unwrap(uArr, pU); call Unwrap(vArr, pV); call Unwrap(aArr, pA)
 
-  call FDM_Convection_Central(mesh, v, lambda, u, a)
+  call FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
 
-end subroutine cConv$T
+end subroutine cConvection$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
@@ -1076,20 +1076,20 @@ end subroutine cDivGrad$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cDivKGrad$T(pMesh, pV, lambda, pK, pU) bind(C, name='SR_DivKGrad$T')
+subroutine cDivWGrad$T(pMesh, pV, lambda, pW, pU) bind(C, name='SR_DivKGrad$T')
   type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pU, pV, pK
+  type(c_ptr), intent(in), value :: pU, pV, pW
   $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: u(:,:), v(:,:), k(:,:)
+  class(tArray$T), pointer :: uArr, vArr, wArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(u, pU); call Unwrap(v, pV); call Unwrap(k, pK)
+  call Unwrap(uArr, pU); call Unwrap(vArr, pV); call Unwrap(wArr, pW)
 
-  call FDM_DivWGrad_Central(mesh, v, lambda, k, u)
+  call FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
 
-end subroutine cDivKGrad$T
+end subroutine cDivWGrad$T
 #$end for
 
 end module StormRuler_API

@@ -31,6 +31,8 @@ use StormRuler_Helpers, only: Assert, Flip, &
   & AsField, IsVecField, AsVecField, IsMatField, AsMatField
 
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR
+
 use StormRuler_BLAS, only: Fill, Mul_Outer
 
 use StormRuler_FDM_Operators, only: gTruncErrorOrder
@@ -51,11 +53,15 @@ contains
 !! Shape of 𝒖, 𝒗 is [1, NumVars]×[1, NumAllCells],
 !! shape of 𝒂 is [1, NumDims]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Convection_Central(mesh, v, lambda, u, aVec)
+subroutine FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
   class(tMesh), intent(inout) :: mesh
+  class(tArrayR), intent(in) :: uArr, aArr
+  class(tArrayR), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
-  real(dp), intent(in) :: u(:,:), aVec(:,:)
-  real(dp), intent(inout) :: v(:,:)
+
+  real(dp), pointer :: u(:,:), v(:,:), aVec(:,:)
+
+  call uArr%Get(u); call vArr%Get(v); call aArr%Get(aVec)
 
   call mesh%RunCellKernel(FDM_Convection_Central_Kernel)
 

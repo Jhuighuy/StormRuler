@@ -226,14 +226,13 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_Fill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
   SR_Add(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
 
-
   //
   // Compute 𝒗̂ prediction.
   //
   SetBCs_w(mesh, w);
   SetBCs_v(mesh, v);
 
-  SR_tFieldR rhs = SR_Alloc_Mold(p);
+  SR_tFieldR rhs = SR_Alloc_Mold(v);
   SR_Fill(mesh, rhs, 0.0, 0.0);
   SR_Grad(mesh, rhs, tau, w);
   SR_Mul(mesh, rhs, c, rhs);
@@ -244,10 +243,12 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_Set(mesh, v_hat, v);
   rho_inv_ = rho_inv, mu_ = mu;
   SR_Solve_JFNK(mesh, v_hat, v, NavierStokes_VaD_MatVec, NULL);
+  SR_Free(rhs);
 
   //
   // Solve pressure equation and correct 𝒗̂.
   // 
+  rhs = SR_Alloc_Mold(p);
   SR_Set(mesh, rhs, p);
   SR_Div(mesh, rhs, 1.0, v_hat);
 

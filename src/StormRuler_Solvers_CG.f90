@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArrayMold
+use StormRuler_Array, only: tArrayR, AllocArray
 
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -70,9 +70,9 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, Precond)
   type(tArrayR) :: p, r, t, z
   class(*), allocatable :: precond_env
   
-  call AllocArrayMold(p, r, t, mold=x)
+  call AllocArray(p, r, t, mold=x)
   if (present(Precond)) then
-    call AllocArrayMold(z, mold=x)
+    call AllocArray(z, mold=x)
   else
     z = r
   end if
@@ -162,9 +162,9 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, Precond)
   type(tArrayR) :: p, r, r_tilde, s, t, v, w, y, z
   class(*), allocatable :: precond_env
 
-  call AllocArrayMold(p, r, r_tilde, s, t, v, mold=x)
+  call AllocArray(p, r, r_tilde, s, t, v, mold=x)
   if (present(Precond)) then
-    call AllocArrayMold(w, y, z, mold=x)
+    call AllocArray(w, y, z, mold=x)
   else
     w = t; y = p; z = s
   end if

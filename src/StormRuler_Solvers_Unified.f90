@@ -29,7 +29,7 @@ module StormRuler_Solvers_Unified
 use StormRuler_Parameters, only: dp, ip, i8, error_code
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArrayMold, FreeArray
+use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub 
 #$for type_, _ in [SCALAR_TYPES[0]]
@@ -40,8 +40,7 @@ use StormRuler_ConvParams, only: tConvParams
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_Chebyshev, only: Solve_Chebyshev
-use StormRuler_Solvers_MINRES, only: Solve_MINRES
-use StormRuler_Solvers_GMRES, only: Solve_GMRES
+use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
 #$for type_, _ in SCALAR_TYPES[0]
@@ -93,7 +92,7 @@ subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   ! 𝗲𝗻𝗱 𝗶𝗳,
   ! 𝘀𝗼𝗹v𝗲: 𝓐(𝒙) = 𝒇.
   ! ----------------------
-  call AllocArrayMold(t, f, mold=x)
+  call AllocArray(t, f, mold=x)
   call Fill(mesh, f, 0.0_dp)
   call MatVec(mesh, t, f)
   if (Norm_2(mesh, t) == 0.0_dp) then

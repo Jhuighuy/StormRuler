@@ -29,7 +29,7 @@ module StormRuler_Solvers_Newton
 use StormRuler_Parameters, only: dp
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArrayMold
+use StormRuler_Array, only: tArrayR, AllocArray
 
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -64,7 +64,7 @@ subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
   type(tArrayR) :: t, r
   type(tConvParams) :: jacParams 
 
-  call AllocArrayMold(t, r, mold=x)
+  call AllocArray(t, r, mold=x)
 
   ! ----------------------
   ! Newton's method:
@@ -121,7 +121,7 @@ subroutine Solve_JFNK(mesh, MatVec, x, b, params)
 
   type(tArrayR) :: t, y, z
 
-  call AllocArrayMold(t, y, z, mold=x)
+  call AllocArray(t, y, z, mold=x)
 
   call Solve_Newton(mesh, MatVec, ApproxJacMatVec_1, x, b, params)
 

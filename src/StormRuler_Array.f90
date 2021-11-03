@@ -49,8 +49,10 @@ type :: tArrayR
   integer(ip), contiguous, pointer :: mShape(:)
 
 contains
-  procedure :: Alloc => AllocArray
+  generic :: Alloc => AllocShape, AllocMold  
+  procedure :: AllocShape => AllocArray
   procedure :: AllocMold => AllocArrayMold$1
+
   procedure :: Free => FreeArray$1
 
   procedure :: Rank => ArrayRank
@@ -61,11 +63,12 @@ contains
 #$end do
 end type tArrayR
 
-interface AllocArrayMold
+interface AllocArray
+  module procedure AllocArray
 #$do N = 1, 10
   module procedure AllocArrayMold$N
 #$end do
-end interface AllocArrayMold
+end interface AllocArray
 
 interface FreeArray
 #$do N = 1, 10
@@ -90,6 +93,9 @@ subroutine AllocArray(array, shape)
 
 end subroutine AllocArray
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Allocate a contiguous array a mold.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do N = 1, 10
 subroutine AllocArrayMold$N(@{array$$}@, mold)
   class(tArrayR), intent(inout) :: @{array$$}@

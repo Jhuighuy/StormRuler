@@ -29,7 +29,7 @@ module StormRuler_Solvers_LSQR
 use StormRuler_Parameters, only: dp
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArrayMold
+use StormRuler_Array, only: tArrayR, AllocArray
 
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Scale, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -94,8 +94,8 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   type(tArrayR) :: s, t, r, u, v, w, z
   class(*), allocatable :: precond_env, precond_env_T
   
-  call AllocArrayMold(t, r, u, v, w, z, mold=x)
-  if (present(Precond)) call AllocArrayMold(s, mold=x)
+  call AllocArray(t, r, u, v, w, z, mold=x)
+  if (present(Precond)) call AllocArray(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -273,8 +273,8 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   type(tArrayR) :: r, s, t, w, h, u, v, z
   class(*), allocatable :: precond_env, precond_env_T
   
-  call AllocArrayMold(t, r, u, v, w, h, z, mold=x)
-  if (present(Precond)) call AllocArrayMold(s, mold=x)
+  call AllocArray(t, r, u, v, w, h, z, mold=x)
+  if (present(Precond)) call AllocArray(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.

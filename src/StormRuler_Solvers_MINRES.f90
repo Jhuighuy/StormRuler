@@ -29,7 +29,7 @@ module StormRuler_Solvers_MINRES
 use StormRuler_Parameters, only: dp
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArrayMold
+use StormRuler_Array, only: tArrayR, AllocArray
 
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -82,8 +82,8 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   type(tArrayR) :: tmp, p, q, q_bar, w, w_bar, w_bbar, z, z_bar, z_bbar
   class(*), allocatable :: precond_env
 
-  call AllocArrayMold(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
-  if (present(Precond)) call AllocArrayMold(q, q_bar, mold=x)
+  call AllocArray(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
+  if (present(Precond)) call AllocArray(q, q_bar, mold=x)
 
   ! ----------------------
   ! Initialize:
@@ -186,5 +186,19 @@ contains
     end if
   end subroutine SymOrtho
 end subroutine Solve_MINRES
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+subroutine Solve_GMRES(mesh, x, b, MatVec, params, Precond)
+  class(tMesh), intent(inout) :: mesh
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
+  procedure(tMatVecFuncR) :: MatVec
+  class(tConvParams), intent(inout) :: params
+  procedure(tPrecondFuncR), optional :: Precond
+
+  error stop 'not implemented'
+end subroutine Solve_GMRES
 
 end module StormRuler_Solvers_MINRES

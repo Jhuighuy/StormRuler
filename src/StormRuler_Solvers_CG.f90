@@ -28,12 +28,16 @@ module StormRuler_Solvers_CG
 
 use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
+
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -56,21 +60,21 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_CG(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
   
   real(dp) :: alpha, beta, gamma, delta
-  real(dp), pointer :: p(:,:), r(:,:), t(:,:), z(:,:)
+  type(tArrayR) :: p, r, t, z
   class(*), allocatable :: precond_env
   
-  allocate(p, r, t, mold=x)
+  call AllocArrayMold(p, r, t, mold=x)
   if (present(Precond)) then
-    allocate(z, mold=x)
+    call AllocArrayMold(z, mold=x)
   else
-    z => r
+    z = r
   end if
 
   ! ----------------------
@@ -148,22 +152,21 @@ end subroutine Solve_CG
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  real(dp), pointer :: p(:,:), r(:,:), r_tilde(:,:), &
-    & s(:,:), t(:,:), v(:,:), w(:,:), y(:,:), z(:,:)
+  type(tArrayR) :: p, r, r_tilde, s, t, v, w, y, z
   class(*), allocatable :: precond_env
 
-  allocate(p, r, r_tilde, s, t, v, mold=x)
+  call AllocArrayMold(p, r, r_tilde, s, t, v, mold=x)
   if (present(Precond)) then
-    allocate(w, y, z, mold=x)
+    call AllocArrayMold(w, y, z, mold=x)
   else
-    w => t; y => p; z => s
+    w = t; y = p; z = s
   end if
 
   ! ----------------------

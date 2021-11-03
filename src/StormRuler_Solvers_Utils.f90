@@ -23,7 +23,7 @@
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers_Utils
-
+#$if False
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
@@ -122,4 +122,5 @@ real(dp) function ResidualNorm_Squared(mesh, y, b, MatVec, &
 
 end function ResidualNorm_Squared
 
+#$end if
 end module StormRuler_Solvers_Utils

@@ -27,12 +27,16 @@ module StormRuler_Solvers_LSQR
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Scale, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
+
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -79,20 +83,19 @@ contains
 subroutine Solve_LSQR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
   
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
-  real(dp), pointer :: s(:,:), t(:,:), &
-    & r(:,:), u(:,:), v(:,:), w(:,:), z(:,:)
+  type(tArrayR) :: s, t, r, u, v, w, z
   class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(t, r, u, v, w, z, mold=x)
-  if (present(Precond)) allocate(s, mold=x)
+  call AllocArrayMold(t, r, u, v, w, z, mold=x)
+  if (present(Precond)) call AllocArrayMold(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -220,8 +223,8 @@ end subroutine Solve_LSQR
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_SymmLSQR(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
@@ -258,8 +261,8 @@ end subroutine Solve_SymmLSQR
 subroutine Solve_LSMR(mesh, x, b, MatVec, &
     & ConjMatVec, params, Precond, ConjPrecond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
@@ -267,12 +270,11 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   real(dp) :: alpha, alpha_bar, beta, rho, rho_bar, &
     & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
     & cs, sn, cs_bar, sn_bar
-  real(dp), pointer :: r(:,:), s(:,:), t(:,:), &
-    & w(:,:), h(:,:), u(:,:), v(:,:), z(:,:)
+  type(tArrayR) :: r, s, t, w, h, u, v, z
   class(*), allocatable :: precond_env, precond_env_T
   
-  allocate(t, r, u, v, w, h, z, mold=x)
-  if (present(Precond)) allocate(s, mold=x)
+  call AllocArrayMold(t, r, u, v, w, h, z, mold=x)
+  if (present(Precond)) call AllocArrayMold(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -409,8 +411,8 @@ end subroutine Solve_LSMR
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_SymmLSMR(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond

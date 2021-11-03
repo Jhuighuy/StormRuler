@@ -37,7 +37,7 @@ use StormRuler_IO
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
   & Integrate, FuncProd, SFuncProd
-#$for type_, _ in SCALAR_TYPES
+#$for type_, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
 
@@ -494,7 +494,7 @@ end subroutine cIO_Flush
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cFill$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
@@ -502,94 +502,94 @@ subroutine cFill$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill$T')
   $typename, intent(in), value :: beta
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:)
+  class(tArray$T), pointer :: xArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX)
+  call Unwrap(xArr, pX)
 
-  call Fill(mesh, x, alpha, beta)
+  call Fill(mesh, xArr, alpha, beta)
 
 end subroutine cFill$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cFill_Random$T(pMesh, pX, alpha, beta) bind(C, name='SR_Fill_Random$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
   real(dp), intent(in), value :: alpha, beta
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:)
+  class(tArray$T), pointer :: xArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX)
+  call Unwrap(xArr, pX)
 
-  call Fill_Random(mesh, x, alpha, beta)
+  call Fill_Random(mesh, xArr, alpha, beta)
 
 end subroutine cFill_Random$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cSet$T(pMesh, pY, pX) bind(C, name='SR_Set$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:)
+  class(tArray$T), pointer :: xArr, yArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY)
 
-  call Set(mesh, y, x)
+  call Set(mesh, yArr, xArr)
 
 end subroutine cSet$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cScale$T(pMesh, pY, pX, alpha) bind(C, name='SR_Scale$T')
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha
   type(c_ptr), intent(in), value :: pX, pY
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:)
+  class(tArray$T), pointer :: xArr, yArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY)
 
-  call Scale(mesh, y, x, alpha)
+  call Scale(mesh, yArr, xArr, alpha)
 
 end subroutine cScale$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cAdd$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='SR_Add$T')
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: alpha, beta
   type(c_ptr), intent(in), value :: pX, pY, pZ
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:), z(:,:)
+  class(tArray$T), pointer :: xArr, yArr, zArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY); call Unwrap(z, pZ)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY); call Unwrap(zArr, pZ)
 
-  call Add(mesh, z, y, x, alpha, beta)
+  call Add(mesh, zArr, yArr, xArr, alpha, beta)
 
 end subroutine cAdd$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in {SCALAR_TYPES[0]}
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cMul$T(pMesh, pZ, pY, pX) bind(C, name='SR_Mul$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY, pZ
@@ -607,7 +607,7 @@ end subroutine cMul$T
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 function cIntegrate$T(pMesh, pX, pF, pEnv) &
     & result(integral) bind(C, name='SR_Integrate$T')
   type(c_ptr), intent(in), value :: pMesh
@@ -627,14 +627,14 @@ function cIntegrate$T(pMesh, pX, pF, pEnv) &
   end interface
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:)
+  class(tArray$T), pointer :: xArr
   procedure(ctMapFunc), pointer :: f
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX)
+  call Unwrap(xArr, pX)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  integral = Integrate(mesh, x, cF)
+  integral = Integrate(mesh, xArr, cF)
 
 contains
   pure function cF(x) result(Fx)
@@ -649,7 +649,7 @@ end function cIntegrate$T
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_FuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -667,14 +667,14 @@ subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_FuncProd$T')
   end interface
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:)
+  class(tArray$T), pointer :: xArr, yArr
   procedure(ctMapFunc), pointer :: f
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  call FuncProd(mesh, y, x, cF)
+  call FuncProd(mesh, yArr, xArr, cF)
 
 contains
   pure function cF(x) result(Fx)
@@ -689,7 +689,7 @@ end subroutine cFuncProd$T
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
 subroutine cSFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_SFuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
@@ -708,14 +708,14 @@ subroutine cSFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_SFuncProd$T')
   end interface
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:)
+  class(tArray$T), pointer :: xArr, yArr
   procedure(ctSMapFunc), pointer :: f
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  call SFuncProd(mesh, y, x, cF)
+  call SFuncProd(mesh, yArr, xArr, cF)
 
 contains
   pure function cF(r, x) result(Fx)
@@ -755,39 +755,34 @@ subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
 
   class(tMesh), pointer :: mesh
   character(len=:), pointer :: method, precondMethod
-  $typename, pointer :: x(:,:), b(:,:)
+  class(tArray$T), pointer :: xArr, bArr
   procedure(ctMatVec), pointer :: MatVec, MatVec_H
   type(tConvParams) :: params
 
   call Unwrap(mesh, pMesh)
   call Unwrap(method, pMethod)
   call Unwrap(precondMethod, pPrecondMethod)
-  call Unwrap(x, pX); call Unwrap(b, pB)
+  call Unwrap(xArr, pX); call Unwrap(bArr, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
   if (c_associated(pMatVec_H)) then
     call c_f_procpointer(cptr=pMatVec_H, fptr=MatVec_H)
   end if
 
   call params%Init(1.0D-8, 1.0D-8, 2000)
-  call LinSolve(mesh, method, precondMethod, x, b, cMatVec, params)
+  call LinSolve(mesh, method, precondMethod, xArr, bArr, cMatVec, params)
 
 contains
   subroutine cMatVec(mesh_, Ax, x)
     class(tMesh), intent(inout), target :: mesh_
-    $typename, intent(inout), target :: x(:,:), Ax(:,:)
+    class(tArrayR), intent(inout), target :: x, Ax
 
     type(tFieldStruct$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
 
-    allocate(pX_C%mArray)
-    allocate(pAx_C%mArray)
-
-    allocate(pX_C%mArray%mShape, mold=shape(x)); pX_C%mArray%mShape = shape(x)
-    allocate(pAx_C%mArray%mShape, mold=shape(Ax)); pAx_C%mArray%mShape = shape(Ax)
-    call c_f_pointer(cptr=c_loc(x), fPtr=pX_C%mArray%mData, shape=[size(x)])
-    call c_f_pointer(cptr=c_loc(Ax), fPtr=pAx_C%mArray%mData, shape=[size(Ax)])
-
-    pX_C%mData => x; pAx_C%mData => Ax
+    pX_C%mArray => x
+    pAx_C%mArray => Ax
+    call pX_C%mArray%Get(pX_C%mData)
+    call pAx_C%mArray%Get(pAx_C%mData)
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
     call MatVec(pMesh, pAx, pX, pEnv)
@@ -815,34 +810,29 @@ subroutine cSolve_JFNK$T(pMesh, pX, pB, pMatVec, pEnv) bind(C, name='SR_Solve_JF
   end interface
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), b(:,:)
+  class(tArray$T), pointer :: xArr, bArr
   procedure(ctMatVec), pointer :: MatVec, MatVec_H
   type(tConvParams) :: params
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(b, pB)
+  call Unwrap(xArr, pX); call Unwrap(bArr, pB)
   call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
 
   call params%Init(1.0D-4, 1.0D-4, 100, 'JFNK')
-  call Solve_JFNK(mesh, cMatVec, x, b, params)
+  call Solve_JFNK(mesh, cMatVec, xArr, bArr, params)
 
 contains
   subroutine cMatVec(mesh_, Ax, x)
     class(tMesh), intent(inout), target :: mesh_
-    $typename, intent(inout), target :: x(:,:), Ax(:,:)
+    class(tArrayR), intent(inout), target :: x, Ax
 
     type(tFieldStruct$T), target :: pX_C, pAx_C
     type(c_ptr) :: pX, pAx
 
-    allocate(pX_C%mArray)
-    allocate(pAx_C%mArray)
-
-    allocate(pX_C%mArray%mShape, mold=shape(x)); pX_C%mArray%mShape = shape(x)
-    allocate(pAx_C%mArray%mShape, mold=shape(Ax)); pAx_C%mArray%mShape = shape(Ax)
-    call c_f_pointer(cptr=c_loc(x), fPtr=pX_C%mArray%mData, shape=[size(x)])
-    call c_f_pointer(cptr=c_loc(Ax), fPtr=pAx_C%mArray%mData, shape=[size(Ax)])
-
-    pX_C%mData => x; pAx_C%mData => Ax
+    pX_C%mArray => x
+    pAx_C%mArray => Ax
+    call pX_C%mArray%Get(pX_C%mData)
+    call pAx_C%mArray%Get(pAx_C%mData)
     pX = c_loc(pX_C); pAx = c_loc(pAx_C)
 
     call MatVec(pMesh, pAx, pX, pEnv)
@@ -851,6 +841,7 @@ contains
 end subroutine cSolve_JFNK$T
 #$end for
 
+#$if False
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
@@ -905,6 +896,7 @@ function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
 
 end function cRCI_LinSolve$T
 #$end for
+#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

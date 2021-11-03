@@ -50,12 +50,28 @@ type :: tArrayR
 
 contains
   procedure :: Alloc => AllocArray
-  procedure :: Free => FreeArray
+  procedure :: AllocMold => AllocArrayMold$1
+  procedure :: Free => FreeArray$1
 
   procedure :: Rank => ArrayRank
 
-  procedure :: Get => GetArrayData
+#$do N = 1, 10
+  generic :: Get => Get$N 
+  procedure :: Get$N => GetArrayData$N
+#$end do
 end type tArrayR
+
+interface AllocArrayMold
+#$do N = 1, 10
+  module procedure AllocArrayMold$N
+#$end do
+end interface AllocArrayMold
+
+interface FreeArray
+#$do N = 1, 10
+  module procedure FreeArray$N
+#$end do
+end interface FreeArray
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -74,16 +90,33 @@ subroutine AllocArray(array, shape)
 
 end subroutine AllocArray
 
+#$do N = 1, 10
+subroutine AllocArrayMold$N(@{array$$}@, mold)
+  class(tArrayR), intent(inout) :: @{array$$}@
+  class(tArrayR), intent(in) :: mold
+
+#$do I = 1, N
+  allocate(array$I%mShape, source=mold%mShape) 
+  allocate(array$I%mData, mold=mold%mData)
+#$end do
+
+end subroutine AllocArrayMold$N
+#$end do
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Free an array. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine FreeArray(array)
-  class(tArrayR), intent(inout) :: array
+#$do N = 1, 10
+subroutine FreeArray$N(@{array$$}@)
+  class(tArrayR), intent(inout) :: @{array$$}@
 
-  deallocate(array%mShape)
-  deallocate(array%mData)
+#$do I = 1, N
+  deallocate(array$I%mShape)
+  deallocate(array$I%mData)
+#$end do
 
-end subroutine FreeArray
+end subroutine FreeArray$N
+#$end do
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Get array rank.
@@ -117,23 +150,20 @@ end function Rerank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Get array data as a Fortran array pointer.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine GetArrayData(array, fData)
+#$do fRank = 1, 10
+subroutine GetArrayData$fRank(array, fData)
   class(tArrayR), intent(in) :: array
-  real(dp), intent(out), pointer :: fData(..)
+  real(dp), intent(out), pointer :: fData(@:)
 
   integer(ip) :: rank
+  integer(ip) :: fShape($fRank)
 
   rank = size(array%mShape)
 
-  select rank(fData)
-    rank(0)
-      error stop 'array argument `data` expected.'
-#$do fRank = 1, 15
-    rank($fRank)
-      call c_f_pointer(cptr=c_loc(array%mData), fptr=fData, shape=Rerank(array%mShape, $fRank))
-#$end do
-  end select
+  fShape = Rerank(array%mShape, $fRank)
+  call c_f_pointer(cptr=c_loc(array%mData), fptr=fData, shape=fShape)
 
-end subroutine GetArrayData
+end subroutine GetArrayData$fRank
+#$end do
 
 end module StormRuler_Array

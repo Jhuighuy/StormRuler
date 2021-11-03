@@ -27,9 +27,12 @@ module StormRuler_Solvers_GMRES
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
@@ -50,8 +53,8 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_GMRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond

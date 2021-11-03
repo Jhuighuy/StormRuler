@@ -281,7 +281,7 @@ SR_INL void SR_SubR(SR_tMesh mesh, SR_tFieldR z,
 }
 SR_INL void SR_SubC(SR_tMesh mesh, SR_tFieldC z,
     SR_tFieldC y, SR_tFieldC x, SR_COMPLEX alpha, SR_COMPLEX beta) {
-  SR_AddC(mesh, z, y, x, -alpha, beta);
+  assert(0); //SR_AddC(mesh, z, y, x, -alpha, beta);
 }
 SR_INL void SR_SubS(SR_tMesh mesh, SR_tFieldS z,
     SR_tFieldS y, SR_tFieldS x, SR_SYMBOL alpha, SR_SYMBOL beta) {
@@ -418,12 +418,14 @@ SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
 #endif
 /// @}
 
+#if 0
 SR_DEFINE_OPAQUE_(SR_tRequestMRCI);
 
 SR_API SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
   SR_STRING method, SR_STRING precondMethod, SR_tFieldR x, SR_tFieldR b);
 SR_API SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request);
 SR_API SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index);
+#endif
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //

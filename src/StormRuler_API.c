@@ -40,6 +40,7 @@ void SR_PrintPointer(const void* p) {
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
+#if 0
 struct SR_tRequestMRCIStruct {
   SR_STRING String;
   SR_tFieldR Ay, y;
@@ -63,3 +64,4 @@ SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index) {
   if (index == 2) return request->y;
   return NULL;
 } // SR_MRCI_ReadFields
+#endif

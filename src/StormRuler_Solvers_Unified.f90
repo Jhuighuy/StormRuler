@@ -29,8 +29,10 @@ module StormRuler_Solvers_Unified
 use StormRuler_Parameters, only: dp, ip, i8, error_code
 
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold, FreeArray
+
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub 
-#$for type_, _ in SCALAR_TYPES
+#$for type_, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
 
@@ -42,7 +44,7 @@ use StormRuler_Solvers_MINRES, only: Solve_MINRES
 use StormRuler_Solvers_GMRES, only: Solve_GMRES
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
-#$for type_, _ in SCALAR_TYPES
+#$for type_, _ in SCALAR_TYPES[0]
 use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
 #$end for
 use StormRuler_Solvers_Precond, only: &
@@ -72,13 +74,13 @@ contains
 subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: method, precondMethod
-  real(dp), intent(in), target :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in), target :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
 
   procedure(tMatVecFuncR), pointer :: uMatVec
-  real(dp), pointer :: t(:,:), f(:,:)
+  type(tArrayR) :: t, f
   
   ! ----------------------
   ! Check if the operator is non-uniform, e.g. 𝓐(𝒙) = 𝓐𝒙 + 𝒕:
@@ -91,12 +93,12 @@ subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   ! 𝗲𝗻𝗱 𝗶𝗳,
   ! 𝘀𝗼𝗹v𝗲: 𝓐(𝒙) = 𝒇.
   ! ----------------------
-  allocate(t, f, mold=x)
+  call AllocArrayMold(t, f, mold=x)
   call Fill(mesh, f, 0.0_dp)
   call MatVec(mesh, t, f)
   if (Norm_2(mesh, t) == 0.0_dp) then
     uMatVec => MatVec
-    deallocate(t, f); f => b
+    call FreeArray(t, f); f = b
   else
     uMatVec => MatVec_Uniformed
     call Sub(mesh, f, b, t)
@@ -153,7 +155,7 @@ contains
   end subroutine SelectMethod
   subroutine MatVec_Uniformed(mesh, Ax, x)
     class(tMesh), intent(inout), target :: mesh
-    real(dp), intent(inout), target :: x(:,:), Ax(:,:)
+    class(tArrayR), intent(inout), target :: x, Ax
 
     call MatVec(mesh, Ax, x)
     call Sub(mesh, Ax, Ax, t)
@@ -173,17 +175,17 @@ function LinSolve_RCI(mesh, method, precondMethod, &
     & x, b, params, Ay, y, resetState) result(request)
   class(tMesh), intent(inout), target, optional :: mesh
   character(len=*), intent(in), target, optional :: method, precondMethod
-  real(dp), intent(in), target, optional :: b(:,:)
-  real(dp), intent(inout), target, optional :: x(:,:)
+  class(tArrayR), intent(in), target, optional :: b
+  class(tArrayR), intent(inout), target, optional :: x
   class(tConvParams), intent(inout), target, optional :: params
-  real(dp), intent(out), pointer, optional :: Ay(:,:), y(:,:)
+  class(tArrayR), intent(out), pointer, optional :: Ay, y
   logical, intent(in), optional :: resetState
   character(len=:), allocatable :: request
 
   class(tMesh), pointer, save :: sMesh
   character(len=:), allocatable, save :: sMethod, sPrecondMethod
-  real(dp), pointer, save :: sX(:,:), sB(:,:)
-  real(dp), pointer, save :: sAy(:,:), sY(:,:)
+  class(tArrayR), pointer, save :: sX, sB
+  class(tArrayR), pointer, save :: sAy, sY
   type(tConvParams), save :: sParams
   character(len=:), allocatable, save :: sRequest
 
@@ -272,7 +274,7 @@ contains
   end subroutine StartRoutine
   subroutine MatVec_RCI(mesh, Ay, y)
     class(tMesh), intent(inout), target :: mesh
-    real(dp), intent(inout), target :: y(:,:), Ay(:,:)
+    class(tArrayR), intent(inout), target :: y, Ay
 
     ! ----------------------
     ! Pass the 'MatVec' or 'ConjMatVec' request 

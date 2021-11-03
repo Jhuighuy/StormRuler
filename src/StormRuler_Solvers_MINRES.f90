@@ -27,12 +27,16 @@ module StormRuler_Solvers_MINRES
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
+
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -66,8 +70,8 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
@@ -75,14 +79,11 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   real(dp) :: alpha, beta, beta_bar, gamma, &
     & delta, delta_bar, epsilon, epsilon_bar, &
     & tau, phi, phi_tilde, cs, sn
-  real(dp), pointer :: tmp(:,:), &
-    & p(:,:), q(:,:), q_bar(:,:), &
-    & w(:,:), w_bar(:,:), w_bbar(:,:), &
-    & z(:,:), z_bar(:,:), z_bbar(:,:)
+  type(tArrayR) :: tmp, p, q, q_bar, w, w_bar, w_bbar, z, z_bar, z_bbar
   class(*), allocatable :: precond_env
 
-  allocate(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
-  if (present(Precond)) allocate(q, q_bar, mold=x)
+  call AllocArrayMold(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
+  if (present(Precond)) call AllocArrayMold(q, q_bar, mold=x)
 
   ! ----------------------
   ! Initialize:
@@ -104,7 +105,7 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   if (present(Precond)) then
     call Precond(mesh, q, z_bar, MatVec, precond_env)
   else
-    q => z_bar
+    q = z_bar
   end if
   beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
@@ -133,13 +134,13 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
     call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, z_bbar, beta/beta_bar)
     if (present(Precond)) then
-      tmp => q_bar; q_bar => q; q => tmp
+      tmp = q_bar; q_bar = q; q = tmp
       call Precond(mesh, q, z, MatVec, precond_env)
     else
-      q_bar => q; q => z
+      q_bar = q; q = z
     end if
     beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
-    tmp => z_bbar; z_bbar => z_bar; z_bar => z; z => tmp
+    tmp = z_bbar; z_bbar = z_bar; z_bar = z; z = tmp
 
     ! ----------------------
     ! Construct and apply rotations:
@@ -163,7 +164,7 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
     call Sub(mesh, w, q_bar, w_bar, delta_bar/gamma, 1.0_dp/(beta_bar*gamma))
     call Sub(mesh, w, w, w_bbar, epsilon_bar/gamma)
     call Add(mesh, x, x, w, tau)
-    tmp => w_bbar; w_bbar => w_bar; w_bar => w; w => tmp
+    tmp = w_bbar; w_bbar = w_bar; w_bar = w; w = tmp
 
     ! ----------------------
     ! Check convergence for 𝜑 and 𝜑/𝜑̃.

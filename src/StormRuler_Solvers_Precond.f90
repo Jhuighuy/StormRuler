@@ -27,9 +27,12 @@ module StormRuler_Solvers_Precond
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR
+
 use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 #$end for
 
@@ -42,20 +45,20 @@ implicit none
 !! Preconditioner matrix-vector product function.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for type, typename in SCALAR_TYPES
-  subroutine tPrecondFunc$type(mesh, Pu, u, MatVec, precond_env)
-    import :: dp, tMesh, tMatVecFunc$type
+#$for T, typename in [SCALAR_TYPES[0]]
+  subroutine tPrecondFunc$T(mesh, PuArr, uArr, MatVec, precond_env)
+    import :: tMesh, tArray$T, tMatVecFunc$T
     class(tMesh), intent(inout) :: mesh
-    $typename, intent(in), target :: u(:,:)
-    $typename, intent(inout), target :: Pu(:,:)
-    procedure(tMatVecFunc$type) :: MatVec
+    class(tArray$T), intent(in), target :: uArr
+    class(tArray$T), intent(inout), target :: PuArr
+    procedure(tMatVecFunc$T) :: MatVec
     class(*), intent(inout), allocatable, target :: precond_env
-  end subroutine tPrecondFunc$type
+  end subroutine tPrecondFunc$T
 #$end for
 end interface
 
 type :: tPrecondEnv_Diag
-  real(dp), allocatable :: diag(:,:)
+  type(tArrayR), allocatable :: diag
 end type tPrecondEnv_Diag
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -69,8 +72,8 @@ contains
 subroutine Precondition_Jacobi(mesh, Px, x, MatVec, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: x(:,:)
-  real(dp), intent(inout), target :: Px(:,:)
+  class(tArrayR), intent(in), target :: x
+  class(tArrayR), intent(inout), target :: Px
   procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
@@ -103,7 +106,7 @@ subroutine Precondition_Jacobi(mesh, Px, x, MatVec, precond_env)
   ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
   ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  Px(:,:) = x(:,:)/diag_env%diag(:,:)
+  error stop 'Px(:,:) = x(:,:)/diag_env%diag(:,:)'
 
 end subroutine Precondition_Jacobi
 
@@ -113,15 +116,16 @@ end subroutine Precondition_Jacobi
 subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, precond_env)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in), target :: x(:,:)
-  real(dp), intent(inout), target :: Px(:,:)
+  class(tArrayR), intent(in), target :: x
+  class(tArrayR), intent(inout), target :: Px
   procedure(tMatVecFuncR) :: MatVec
   class(*), intent(inout), allocatable, target :: precond_env
   ! >>>>>>>>>>>>>>>>>>>>>>
 
   class(tPrecondEnv_Diag), pointer :: diag_env
-  real(dp), allocatable :: y(:,:)
-  allocate(y, mold=x)
+  type(tArrayR) :: y
+
+  call y%AllocMold(x)
 
   ! ----------------------
   ! Cast preconditioner environment.
@@ -151,7 +155,7 @@ subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, precond_env)
   ! ----------------------
   call Solve_Triangular(mesh, 'U', y, x, diag_env%diag, MatVec)
   ! TODO: this is not a correct diagonal multiplication in block case!
-  y(:,:) = diag_env%diag(:,:)*y(:,:)
+  error stop 'y(:,:) = diag_env%diag(:,:)*y(:,:)'
   call Solve_Triangular(mesh, 'L', Px, y, diag_env%diag, MatVec)
 
 end subroutine Precondition_LU_SGS

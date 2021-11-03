@@ -26,10 +26,11 @@ module StormRuler_BLAS
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, not_implemented_code, gCylCoords
-use StormRuler_Helpers, only: Re, Im, R2C, &
-  & operator(.inner.), operator(.outer.)
+use StormRuler_Parameters, only: dp, ip, gCylCoords
+use StormRuler_Helpers, only: Re, Im, R2C, operator(.inner.), operator(.outer.)
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -43,7 +44,7 @@ interface Dot
 end interface Dot
 
 interface Norm_1
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Norm_1$T
 #$end for
 end interface Norm_1
@@ -55,25 +56,25 @@ interface Norm_2
 end interface Norm_2
 
 interface Norm_C
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Norm_C$T
 #$end for
 end interface Norm_C
 
 interface Fill
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Fill$T
 #$end for
 end interface Fill
 
 interface Fill_Random
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Fill_Random$T
 #$end for
 end interface Fill_Random
 
 interface Set
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Set$T
 #$end for
 end interface Set
@@ -91,19 +92,19 @@ interface Set_Complex
 end interface Set_Complex
 
 interface Scale
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Scale$T
 #$end for
 end interface Scale
 
 interface Add
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Add$T
 #$end for
 end interface Add
 
 interface Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Sub$T
 #$end for
 end interface Sub
@@ -127,22 +128,46 @@ interface Mul_Outer
 end interface Mul_Outer
 
 interface SFuncProd
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure SFuncProd$T
 #$end for
 end interface SFuncProd
 
 interface Integrate
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
   module procedure Integrate$T
 #$end for
 end interface Integrate
+
+interface FuncProd
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure FuncProd$T
+#$end for
+end interface FuncProd
+
+interface MatVecProd_Diagonal
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure MatVecProd_Diagonal$T
+#$end for
+end interface MatVecProd_Diagonal
+
+interface MatVecProd_Triangular
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure MatVecProd_Triangular$T
+#$end for
+end interface MatVecProd_Triangular
+
+interface Solve_Triangular
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_Triangular$T
+#$end for
+end interface Solve_Triangular
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
   pure function tMapFunc$T(x) result(Mx)
     import dp
     $typename, intent(in) :: x(:)
@@ -150,30 +175,6 @@ abstract interface
   end function tMapFunc$T
 #$end for
 end interface
-
-interface FuncProd
-#$for T, _ in SCALAR_TYPES
-  module procedure FuncProd$T
-#$end for
-end interface FuncProd
-
-interface MatVecProd_Diagonal
-#$for T, _ in SCALAR_TYPES
-  module procedure MatVecProd_Diagonal$T
-#$end for
-end interface MatVecProd_Diagonal
-
-interface MatVecProd_Triangular
-#$for T, _ in SCALAR_TYPES
-  module procedure MatVecProd_Triangular$T
-#$end for
-end interface MatVecProd_Triangular
-
-interface Solve_Triangular
-#$for T, _ in SCALAR_TYPES
-  module procedure Solve_Triangular$T
-#$end for
-end interface Solve_Triangular
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
@@ -193,24 +194,24 @@ end interface
 !! Matrix-vector product function: 𝓐𝒙 ← 𝓐(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for T, typename in SCALAR_TYPES
+#$for T, typename in [SCALAR_TYPES[0]]
   subroutine tMatVecFunc$T(mesh, Ax, x)
-    import :: dp, tMesh
+    import :: tMesh, tArray$T
     class(tMesh), intent(inout), target :: mesh
-    $typename, intent(inout), target :: x(:,:), Ax(:,:)
+    class(tArray$T), intent(inout), target :: x, Ax
   end subroutine tMatVecFunc$T
 #$end for
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Matrix-vector product function with a parameter: 𝓐𝒙 ← 𝓐(𝒙,𝒙₀).
+!! Matrix-vector product function with a parameter: 𝓙𝒙 ← 𝓙(𝒙,𝒙₀).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for T, typename in SCALAR_TYPES
-  subroutine tBiMatVecFunc$T(mesh, Ax, x, x0)
-    import :: dp, tMesh
+#$for T, typename in [SCALAR_TYPES[0]]
+  subroutine tBiMatVecFunc$T(mesh, Jx, x, x0)
+    import :: tMesh, tArray$T
     class(tMesh), intent(inout), target :: mesh
-    $typename, intent(inout), target :: x(:,:), x0(:,:), Ax(:,:)
+    class(tArray$T), intent(inout), target :: x, x0, Jx
   end subroutine tBiMatVecFunc$T
 #$end for
 end interface
@@ -226,10 +227,14 @@ contains
 !! • 𝑑 ← [𝒙⋅𝒚] = 𝒙ᵀ𝒚 (do_conjg = false).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in [SCALAR_TYPES[0]]
-$typename function Dot$T(mesh, x, y, do_conjg) result(Dot)
+$typename function Dot$T(mesh, xArr, yArr, do_conjg) result(Dot)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:), y(:,:)
+  class(tArray$T), intent(in) :: xArr, yArr
   logical, intent(in), optional :: do_conjg
+
+  $typename, pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
   
 #$if T == 'C'
   if (present(do_conjg)) then
@@ -272,11 +277,15 @@ end function Dot$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ₁-norm: 𝑑 ← ‖𝒙‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-real(dp) function Norm_1$T(mesh, x) result(Norm_1)
+#$for T, typename in [SCALAR_TYPES[0]]
+real(dp) function Norm_1$T(mesh, xArr) result(Norm_1)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
-  
+  class(tArray$T), intent(in) :: xArr
+
+  $typename, pointer :: x(:,:)
+
+  call xArr%Get(x)
+
   Norm_1 = mesh%RunCellKernel_Sum(Norm_1_Kernel)
 
 contains
@@ -294,14 +303,14 @@ end function Norm_1$T
 !! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in [SCALAR_TYPES[0]]
-real(dp) function Norm_2$T(mesh, x) result(Norm_2)
+real(dp) function Norm_2$T(mesh, xArr) result(Norm_2)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
+  class(tArray$T), intent(in) :: xArr
 
 #$if T == 'C'
-  Norm_2 = sqrt( Re(Dot(mesh, x, x)) )
+  Norm_2 = sqrt( Re(Dot(mesh, xArr, xArr)) )
 #$else
-  Norm_2 = sqrt( Dot(mesh, x, x) )
+  Norm_2 = sqrt( Dot(mesh, xArr, xArr) )
 #$end if
 
 end function Norm_2$T
@@ -310,10 +319,14 @@ end function Norm_2$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute ℒ∞-norm: 𝑑 ← ‖𝒙‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-real(dp) function Norm_C$T(mesh, x) result(Norm_C)
+#$for T, typename in [SCALAR_TYPES[0]]
+real(dp) function Norm_C$T(mesh, xArr) result(Norm_C)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
+  class(tArray$T), intent(in) :: xArr
+
+  $typename, pointer :: x(:,:)
+
+  call xArr%Get(x)
 
   Norm_C = mesh%RunCellKernel_Max(Norm_C_Kernel)
 
@@ -330,17 +343,20 @@ end function Norm_C$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: 𝒚 ← 𝛼 + [𝛽], 𝛼 ∊ ℝ, [𝛽 ∊ ℝ or ℂ].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Fill$T(mesh, y, alpha, beta)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Fill$T(mesh, yArr, alpha, beta)
   class(tMesh), intent(inout) :: mesh
+  class(tArray$T), intent(inout) :: yArr
   real(dp), intent(in) :: alpha
-  $typename, intent(inout) :: y(:,:)
   $typename, intent(in), optional :: beta
 
+  $typename, pointer :: y(:,:)
   $typename :: gamma
 
   gamma = alpha
   if (present(beta)) gamma = gamma + beta
+
+  call yArr%Get(y)
 
   call mesh%RunCellKernel(Fill_Kernel)
 
@@ -359,11 +375,15 @@ end subroutine Fill$T
 !! • 𝛼ᵢ ~ 𝘜(𝑎,𝑏), 𝒚 ∊ ℝⁿ,
 !! • 𝛼ᵢ = 𝜙ᵢ + 𝑐⋅𝘦𝘹𝘱(𝑖𝜓ᵢ), 𝜙ᵢ ~ 𝘜(𝑎,𝑏), 𝜓ᵢ ~ 𝘜(0,2𝜋), 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Fill_Random$T(mesh, y, a, b)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Fill_Random$T(mesh, yArr, a, b)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(inout) :: y(:,:)
+  class(tArray$T), intent(inout) :: yArr
   real(dp), intent(in), optional :: a, b
+
+  $typename, pointer :: y(:,:)
+
+  call yArr%Get(y)
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)
@@ -385,8 +405,7 @@ contains
       end if
     end do
 #$else
-    print *, 'complex Fill_Random is not implemented yet!', "$type"
-    error stop not_implemented_code
+    error stop 'complex Fill_Random is not implemented yet!', "$type" 
 #$end if
     
   end subroutine Fill_Random_Kernel
@@ -396,21 +415,21 @@ end subroutine Fill_Random$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set: 𝒚 ← 𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Set$T(mesh, y, x)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Set$T(mesh, yArr, xArr)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
-  $typename, intent(inout) :: y(:,:)
-  ! >>>>>>>>>>>>>>>>>>>>>>
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: yArr
   
+  $typename, pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
   call mesh%RunCellKernel(Set_Kernel)
 
 contains
   subroutine Set_Kernel(iCell)
-    ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
-    ! >>>>>>>>>>>>>>>>>>>>>>
 
     y(:,iCell) = x(:,iCell)
 
@@ -478,11 +497,16 @@ end subroutine Set_Complex
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Scale$T(mesh, y, x, alpha)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Scale$T(mesh, yArr, xArr, alpha)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:), alpha
-  $typename, intent(inout) :: y(:,:)
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: yArr
+  $typename, intent(in) :: alpha
+
+  $typename, pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
 
   call mesh%RunCellKernel(Scale_Kernel)
 
@@ -499,17 +523,20 @@ end subroutine Scale$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← [[𝛽]]𝒚 + [𝛼]𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Add$T(mesh, z, y, x, alpha, beta)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Add$T(mesh, zArr, yArr, xArr, alpha, beta)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:), y(:,:)
-  $typename, intent(inout) :: z(:,:)
+  class(tArray$T), intent(in) :: xArr, yArr
+  class(tArray$T), intent(inout) :: zArr
   $typename, intent(in), optional :: alpha, beta
 
+  $typename, pointer :: x(:,:), y(:,:), z(:,:)
   $typename :: a, b
 
+  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present( beta)) b =  beta
+
   call mesh%RunCellKernel(Add_Kernel)
 
 contains
@@ -525,17 +552,20 @@ end subroutine Add$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute linear combination: 𝒛 ← 𝛽𝒚 - 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Sub$T(mesh, z, y, x, alpha, beta)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Sub$T(mesh, zArr, yArr, xArr, alpha, beta)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:), y(:,:)
-  $typename, intent(inout) :: z(:,:)
+  class(tArray$T), intent(in) :: xArr, yArr
+  class(tArray$T), intent(inout) :: zArr
   $typename, intent(in), optional :: alpha, beta
-  
+
+  $typename, pointer :: x(:,:), y(:,:), z(:,:)
   $typename :: a, b
 
+  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present( beta)) b =  beta
+
   call mesh%RunCellKernel(Sub_Kernel)
 
 contains
@@ -621,12 +651,16 @@ end subroutine Mul_Outer$rank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute integral average: 𝑖 ← ∫𝑓(𝒙(𝒓))𝑑𝛺/∫1𝑑𝛺.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-real(dp) function Integrate$T(mesh, x, f) result(integral)
+#$for T, typename in [SCALAR_TYPES[0]]
+real(dp) function Integrate$T(mesh, xArr, f) result(integral)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
+  class(tArray$T), intent(in) :: xArr
   procedure(tMapFunc$T) :: f
   
+  $typename, pointer :: x(:,:)
+
+  call xArr%Get(x)
+
   integral = mesh%RunCellKernel_Sum(Integrate_Kernel)/mesh%NumCells
 
 contains
@@ -645,12 +679,16 @@ end function Integrate$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine FuncProd$T(mesh, y, x, f)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine FuncProd$T(mesh, yArr, xArr, f)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
-  $typename, intent(inout) :: y(:,:)
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: yArr
   procedure(tMapFunc$T) :: f
+
+  $typename, pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
 
   call mesh%RunCellKernel(FuncProd_Kernel)
   
@@ -667,12 +705,16 @@ end subroutine FuncProd$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine SFuncProd$T(mesh, y, x, f)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine SFuncProd$T(mesh, yArr, xArr, f)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
-  $typename, intent(inout) :: y(:,:)
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: yArr
   procedure(tSMapFunc$T) :: f
+
+  $typename, pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
 
   call mesh%RunCellKernel(SFuncProd_Kernel)
   
@@ -692,12 +734,16 @@ end subroutine SFuncProd$T
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine MatVecProd_Diagonal$T(mesh, Dx, x, MatVec)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine MatVecProd_Diagonal$T(mesh, DxArr, xArr, MatVec)
   class(tMesh), intent(inout) :: mesh
-  $typename, intent(in) :: x(:,:)
-  $typename, intent(inout) :: Dx(:,:)
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: DxArr
   procedure(tMatVecFunc$T) :: MatVec
+
+  $typename, pointer :: x(:,:), Dx(:,:)
+
+  call xArr%Get(x); call DxArr%Get(Dx)
 
   call mesh%RunCellKernel_Block(MatVecProd_Diagonal_BlockKernel)
   call mesh%SetRange()
@@ -708,15 +754,18 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
-    $typename, allocatable :: e(:,:)
+    type(tArray$T) :: eArr
+    $typename, pointer :: e(:,:)
 
-    allocate(e, mold=x)
+    call eArr%AllocMold(xArr)
+    call eArr%Get(e)
+
     e(:,:) = 0.0_dp
 
     do iCell = firstCell, lastCell
       e(:,iCell) = x(:,iCell)
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Dx, e)
+      call MatVec(mesh, DxArr, eArr)
       e(:,iCell) = 0.0_dp
     end do
 
@@ -728,20 +777,22 @@ end subroutine MatVecProd_Diagonal$T
 !! Multiply a vector by a lower/upper triangular 
 !! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine MatVecProd_Triangular$T(mesh, upLo, Tx, x, MatVec)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine MatVecProd_Triangular$T(mesh, upLo, TxArr, xArr, MatVec)
   class(tMesh), intent(inout) :: mesh
-  character, intent(in) :: upLo
-  $typename, intent(in) :: x(:,:)
-  $typename, intent(inout) :: Tx(:,:)
+  class(tArray$T), intent(in) :: xArr
+  class(tArray$T), intent(inout) :: TxArr
   procedure(tMatVecFunc$T) :: MatVec
+  character, intent(in) :: upLo
+
+  $typename, pointer :: x(:,:), Tx(:,:)
+
+  call xArr%Get(x); call TxArr%Get(Tx)
 
   if (upLo == 'U') then
-    call mesh%RunCellKernel_Block( &
-      & MatVecProd_UpperTriangular_BlockKernel)
+    call mesh%RunCellKernel_Block(MatVecProd_UpperTriangular_BlockKernel)
   else if (upLo == 'L') then
-    call mesh%RunCellKernel_Block( &
-      & MatVecProd_LowerTriangular_BlockKernel)
+    call mesh%RunCellKernel_Block(MatVecProd_LowerTriangular_BlockKernel)
   end if
   call mesh%SetRange()
 
@@ -751,15 +802,18 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
-    $typename, allocatable :: e(:,:)
+    type(tArray$T) :: eArr
+    $typename, pointer :: e(:,:)
 
-    allocate(e, mold=x)
+    call eArr%AllocMold(xArr)
+    call eArr%Get(e)
+
     e(:,:firstCell-1) = 0.0_dp
     e(:,firstCell:) = x(:,firstCell:)
 
     do iCell = firstCell, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tx, e)
+      call MatVec(mesh, TxArr, eArr)
       e(:,iCell) = 0.0_dp
     end do
 
@@ -769,15 +823,18 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
-    $typename, allocatable :: e(:,:)
+    type(tArray$T) :: eArr
+    $typename, pointer :: e(:,:)
 
-    allocate(e, mold=x)
+    call eArr%AllocMold(xArr)
+    call eArr%Get(e)
+
     e(:,:lastCell) = x(:,:lastCell)
     e(:,lastCell+1:) = 0.0_dp
     
     do iCell = lastCell, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Tx, e)
+      call MatVec(mesh, TxArr, eArr)
       e(:,iCell) = 0.0_dp
     end do
 
@@ -789,22 +846,24 @@ end subroutine MatVecProd_Triangular$T
 !! Solve a linear system with a lower/upper 
 !! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$for T, typename in SCALAR_TYPES
-subroutine Solve_Triangular$T(mesh, upLo, x, b, diag, MatVec)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_Triangular$T(mesh, upLo, xArr, bArr, diagArr, MatVec)
   class(tMesh), intent(inout) :: mesh
-  character, intent(in) :: upLo
-  $typename, intent(in) :: b(:,:), diag(:,:)
-  $typename, intent(inout) :: x(:,:)
+  class(tArray$T), intent(in) :: bArr, diagArr
+  class(tArray$T), intent(out) :: xArr
   procedure(tMatVecFunc$T) :: MatVec
+  character, intent(in) :: upLo
+
+  $typename, pointer :: x(:,:), b(:,:), diag(:,:)
+
+  call xArr%Get(x); call bArr%Get(b); call diagArr%Get(diag)
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)
   if (upLo == 'U') then
-    call mesh%RunCellKernel_Block( &
-      & Solve_UpperTriangular_BlockKernel)
+    call mesh%RunCellKernel_Block(Solve_UpperTriangular_BlockKernel)
   else if (upLo == 'L') then
-    call mesh%RunCellKernel_Block( &
-      & Solve_LowerTriangular_BlockKernel)
+    call mesh%RunCellKernel_Block(Solve_LowerTriangular_BlockKernel)
   end if
   call mesh%SetRange()
 
@@ -814,16 +873,19 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
-    $typename, allocatable :: Ax(:,:)
+    type(tArray$T) :: AxArr
+    $typename, pointer :: Ax(:,:)
 
-    allocate(Ax, mold=x)
+    call AxArr%AllocMold(xArr)
+    call AxArr%Get(Ax)
+
     Ax(:,:) = 0.0_dp
-
     x(:,:) = 0.0_dp
     x(:,lastCell) = b(:,lastCell)/diag(:,lastCell)
+
     do iCell = lastCell - 1, firstCell, -1
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Ax, x)
+      call MatVec(mesh, AxArr, xArr)
       ! TODO: this is not a correct diagonal solution in block case!
       x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
     end do
@@ -834,16 +896,19 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
-    $typename, allocatable :: Ax(:,:)
+    type(tArray$T) :: AxArr
+    $typename, pointer :: Ax(:,:)
 
-    allocate(Ax, mold=x)
+    call AxArr%AllocMold(xArr)
+    call AxArr%Get(Ax)
+
     Ax(:,:) = 0.0_dp
-
     x(:,:) = 0.0_dp
     x(:,firstCell) = b(:,firstCell)/diag(:,firstCell)
+
     do iCell = firstCell + 1, lastCell
       call mesh%SetRange(iCell)
-      call MatVec(mesh, Ax, x)
+      call MatVec(mesh, AxArr, xArr)
       ! TODO: this is not a correct diagonal solution in block case!
       x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
     end do

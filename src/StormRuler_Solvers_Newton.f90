@@ -27,11 +27,15 @@ module StormRuler_Solvers_Newton
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T, tBiMatVecFunc$T
 #$end for
+
 use StormRuler_Solvers_Unified, only: LinSolve
 use StormRuler_ConvParams, only: tConvParams
 
@@ -51,16 +55,16 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   procedure(tBiMatVecFuncR) :: JacMatVec
   class(tConvParams), intent(inout) :: params
 
-  real(dp), pointer :: t(:,:), r(:,:)
+  type(tArrayR) :: t, r
   type(tConvParams) :: jacParams 
 
-  allocate(t, r, mold=x)
+  call AllocArrayMold(t, r, mold=x)
 
   ! ----------------------
   ! Newton's method:
@@ -94,7 +98,7 @@ subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
 contains
   subroutine JacMatVecAtX(mesh, Jy, y)
     class(tMesh), intent(inout), target :: mesh
-    real(dp), intent(inout), target :: y(:,:), Jy(:,:)
+    class(tArrayR), intent(inout), target :: y, Jy
 
     ! ----------------------
     ! 𝓙𝒚 ← 𝓙(𝒙)𝒚.
@@ -109,22 +113,22 @@ end subroutine Solve_Newton
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_JFNK(mesh, MatVec, x, b, params)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   procedure(tBiMatVecFuncR) :: JacMatVec
   class(tConvParams), intent(inout) :: params
 
-  real(dp), pointer :: t(:,:), y(:,:), z(:,:)
+  type(tArrayR) :: t, y, z
 
-  allocate(t, y, z, mold=x)
+  call AllocArrayMold(t, y, z, mold=x)
 
   call Solve_Newton(mesh, MatVec, ApproxJacMatVec_1, x, b, params)
 
 contains
   subroutine ApproxJacMatVec_1(mesh, Jx, x, x0)
     class(tMesh), intent(inout), target :: mesh
-    real(dp), intent(inout), target :: x(:,:), x0(:,:), Jx(:,:)
+    class(tArrayR), intent(inout), target :: x, x0, Jx
 
     real(dp), parameter :: epsilon = 1e-6_dp
 
@@ -146,7 +150,7 @@ contains
   end subroutine ApproxJacMatVec_1
   subroutine ApproxJacMatVec_2(mesh, Jx, x, x0)
     class(tMesh), intent(inout), target :: mesh
-    real(dp), intent(inout), target :: x(:,:), x0(:,:), Jx(:,:)
+    class(tArrayR), intent(inout), target :: x, x0, Jx
 
     real(dp), parameter :: epsilon = 1e-6_dp
 

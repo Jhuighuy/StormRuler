@@ -27,12 +27,16 @@ module StormRuler_Solvers_Chebyshev
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Array, only: tArrayR, AllocArrayMold
+
 use StormRuler_BLAS, only: Norm_2, Set, Fill, Add, Sub
-#$for T, _ in SCALAR_TYPES
+#$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
 use StormRuler_Solvers_Precond, only: tPrecondFunc$T
 #$end for
+
 use StormRuler_ConvParams, only: tConvParams
 !use StormRuler_SolversEVP_Lanczos, only: EigenPairs_Lanczos
 
@@ -54,22 +58,23 @@ contains
 subroutine Solve_Chebyshev(mesh, x, b, &
     & lambda_min, lambda_max, MatVec, params, Precond)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: lambda_min, lambda_max, b(:,:)
-  real(dp), intent(inout) :: x(:,:)
+  class(tArrayR), intent(in) :: b
+  class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPrecondFuncR), optional :: Precond
+  real(dp), intent(in) :: lambda_min, lambda_max
 
   logical :: first, second
   real(dp) :: c, d, alpha, beta, delta
-  real(dp), pointer :: p(:,:), r(:,:), z(:,:)
+  type(tArrayR) :: p, r, z
   class(*), allocatable :: precond_env
   
-  allocate(p, r, mold=x)
+  call AllocArrayMold(p, r, mold=x)
   if (present(Precond)) then
-    allocate(z, mold=x)
+    call AllocArrayMold(z, mold=x)
   else
-    z => r
+    z = r
   end if
 
   !call EigenPairs_Lanczos(mesh, x, b, MatVec, params, Precond)

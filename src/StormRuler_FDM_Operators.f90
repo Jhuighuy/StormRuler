@@ -54,18 +54,17 @@ contains
 !! Shape of 𝒖 is [1, NumVars]×[1, NumAllCells],
 !! shape of 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Gradient_Central(mesh, vAny, lambda, uAny, &
+subroutine FDM_Gradient_Central(mesh, vVecArr, lambda, uArr, &
     &                           dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
+  class(tArrayR), intent(in) :: uArr
+  class(tArrayR), intent(inout) :: vVecArr
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(..)
-  real(dp), intent(inout), target :: vAny(..)
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
   real(dp), pointer :: u(:,:), vVec(:,:,:)
 
-  u => AsField(uAny)
-  vVec => AsVecField(mesh%NumDims, vAny)
+  call uArr%Get(u); call vVecArr%Get(vVec)
 
   if (present(dirAll).or.present(dirFace).or.present(dirCellFace)) then
     call mesh%RunCellKernel(FDM_Gradient_Forward_Kernel)
@@ -282,18 +281,17 @@ end subroutine FDM_Gradient_Central
 !! Shape of 𝒖⃗ is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
 !! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Divergence_Central(mesh, vAny, lambda, uAny, &
+subroutine FDM_Divergence_Central(mesh, vArr, lambda, uVecArr, &
     &                             dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
+  class(tArrayR), intent(in) :: uVecArr
+  class(tArrayR), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
-  real(dp), intent(in), target :: uAny(..)
-  real(dp), intent(inout), target :: vAny(..) 
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
   real(dp), pointer :: uVec(:,:,:), v(:,:)
 
-  uVec => AsVecField(mesh%NumDims, uAny)
-  v => AsField(vAny)
+  call uVecArr%Get(uVec); call vArr%Get(v)
 
   if (present(dirAll).or.present(dirFace).or.present(dirCellFace)) then
     call mesh%RunCellKernel(FDM_Divergence_Backward_Kernel)

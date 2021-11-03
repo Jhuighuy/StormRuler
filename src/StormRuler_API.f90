@@ -1000,39 +1000,39 @@ end subroutine cApplyBCs_InOutLet$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cGrad$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
+subroutine cGradient$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU, pVVec
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: u(:,:), vVec(:,:,:)
+  class(tArray$T), pointer :: uArr, vVecArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(u, pU); call Unwrap(vVec, pVVec, mesh%NumDims)
+  call Unwrap(uArr, pU); call Unwrap(vVecArr, pVVec)
 
-  call FDM_Gradient_Central(mesh, vVec, lambda, u)
+  call FDM_Gradient_Central(mesh, vVecArr, lambda, uArr)
 
-end subroutine cGrad$T
+end subroutine cGradient$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cDiv$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
+subroutine cDivergence$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
   type(c_ptr), intent(in), value :: pMesh
   $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pUVec, pV
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: uVec(:,:,:), v(:,:)
+  class(tArray$T), pointer :: uVecArr, vArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(uVec, pUVec, mesh%NumDims); call Unwrap(v, pV)
+  call Unwrap(uVecArr, pUVec); call Unwrap(vArr, pV)
 
-  call FDM_Divergence_Central(mesh, v, lambda, uVec)
+  call FDM_Divergence_Central(mesh, vArr, lambda, uVecArr)
 
-end subroutine cDiv$T
+end subroutine cDivergence$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

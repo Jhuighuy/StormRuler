@@ -856,9 +856,7 @@ subroutine Solve_Triangular$T(mesh, upLo, xArr, bArr, diagArr, MatVec)
 
   $typename, pointer :: x(:,:), b(:,:), diag(:,:)
 
-  call xArr%Get(x); 
-  call bArr%Get(b); 
-  call diagArr%Get(diag)
+  call xArr%Get(x); call bArr%Get(b); call diagArr%Get(diag)
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)

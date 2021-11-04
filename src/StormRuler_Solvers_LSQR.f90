@@ -94,10 +94,10 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec, ConjPreMatVec
   
-  real(dp) :: alpha, beta, rho, rho_bar, &
-    & theta, phi, phi_bar, phi_tilde, cs, sn
+  real(dp) :: alpha, beta, rho, rhoBar, &
+    & theta, phi, phiBar, phiTilde, cs, sn
   type(tArray$T) :: s, t, r, u, v, w, z
-  class(*), allocatable :: precond_env, precond_env_T
+  class(*), allocatable :: preEnv, conjPreEnv
   
   call AllocArray(t, r, u, v, w, z, mold=x)
   if (present(PreMatVec)) call AllocArray(s, mold=x)
@@ -126,7 +126,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(PreMatVec)) then
     call ConjMatVec(mesh, s, u)
-    call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
+    call ConjPreMatVec(mesh, t, s, ConjMatVec, conjPreEnv)
   else
     call ConjMatVec(mesh, t, u)
   end if
@@ -137,7 +137,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   ! 𝒛 ← {0}ᵀ,
   ! 𝒘 ← 𝒗,
   ! ----------------------
-  phi_bar = beta; rho_bar = alpha
+  phiBar = beta; rhoBar = alpha
   call Fill(mesh, z, 0.0_dp)
   call Set(mesh, w, v)
 
@@ -145,8 +145,8 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   ! 𝜑̃ ← 𝜑̅,
   ! Check convergence for 𝜑̃.
   ! ----------------------
-  phi_tilde = phi_bar
-  if (params%Check(phi_tilde)) return
+  phiTilde = phiBar
+  if (params%Check(phiTilde)) return
   
   do
     ! ----------------------
@@ -163,7 +163,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(PreMatVec)) then
-      call PreMatVec(mesh, s, v, MatVec, precond_env)
+      call PreMatVec(mesh, s, v, MatVec, preEnv)
       call MatVec(mesh, t, s)
     else
       call MatVec(mesh, t, v)
@@ -172,7 +172,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(PreMatVec)) then
       call ConjMatVec(mesh, s, u)
-      call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
+      call ConjPreMatVec(mesh, t, s, ConjMatVec, conjPreEnv)
     else
       call ConjMatVec(mesh, t, u)
     end if
@@ -186,10 +186,10 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
     ! 𝜃 ← 𝑠𝑛⋅𝛼, 𝜌̅ ← -𝑐𝑠⋅𝛼,
     ! 𝜑 ← 𝑐𝑠⋅𝜑, 𝜑̅ ← 𝑠𝑛⋅𝜑̅.
     ! ----------------------
-    rho = hypot(rho_bar, beta)
-    cs = rho_bar/rho; sn = beta/rho
-    theta = sn*alpha; rho_bar = -cs*alpha
-    phi = cs*phi_bar; phi_bar = sn*phi_bar
+    rho = hypot(rhoBar, beta)
+    cs = rhoBar/rho; sn = beta/rho
+    theta = sn*alpha; rhoBar = -cs*alpha
+    phi = cs*phiBar; phiBar = sn*phiBar
 
     ! ----------------------
     ! Update 𝒛-solution:
@@ -201,7 +201,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
     ! ----------------------
     call Add(mesh, z, z, w, phi/rho)
     call Sub(mesh, w, v, w, theta/rho)
-    if (params%Check(phi_bar, phi_bar/phi_tilde)) exit
+    if (params%Check(phiBar, phiBar/phiTilde)) exit
   end do
 
   ! ----------------------
@@ -211,7 +211,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(PreMatVec)) then
-    call PreMatVec(mesh, t, z, MatVec, precond_env)
+    call PreMatVec(mesh, t, z, MatVec, preEnv)
     call Add(mesh, x, x, t)
   else
     call Add(mesh, x, x, z)
@@ -276,11 +276,10 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec, ConjPreMatVec
 
-  real(dp) :: alpha, alpha_bar, beta, rho, rho_bar, &
-    & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
-    & cs, sn, cs_bar, sn_bar
+  real(dp) :: alpha, alphaBar, beta, rho, rhoBar, cs, sn, &
+    & theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar
   type(tArray$T) :: r, s, t, w, h, u, v, z
-  class(*), allocatable :: precond_env, precond_env_T
+  class(*), allocatable :: preEnv, conjPreEnv
   
   call AllocArray(t, r, u, v, w, h, z, mold=x)
   if (present(PreMatVec)) call AllocArray(s, mold=x)
@@ -309,7 +308,7 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
   if (present(PreMatVec)) then
     call ConjMatVec(mesh, s, u)
-    call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
+    call ConjPreMatVec(mesh, t, s, ConjMatVec, conjPreEnv)
   else
     call ConjMatVec(mesh, t, u)
   end if
@@ -321,8 +320,8 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   ! 𝒛 ← {0}ᵀ,
   ! 𝒘 ← 𝒗, 𝒉 ← {0}ᵀ.
   ! ----------------------
-  alpha_bar = alpha; psi_bar = alpha*beta
-  zeta = 1.0_dp; cs_bar = 1.0_dp; sn_bar = 0.0_dp
+  alphaBar = alpha; psiBar = alpha*beta
+  zeta = 1.0_dp; csBar = 1.0_dp; snBar = 0.0_dp
   call Fill(mesh, z, 0.0_dp)
   call Set(mesh, w, v); call Fill(mesh, h, 0.0_dp)
 
@@ -330,8 +329,8 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   ! 𝜓̃ ← 𝜓̅,
   ! Check convergence for 𝜓̃.
   ! ----------------------
-  psi_tilde = psi_bar
-  if (params%Check(psi_tilde)) return
+  psiTilde = psiBar
+  if (params%Check(psiTilde)) return
   
   do
     ! ----------------------
@@ -348,7 +347,7 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(PreMatVec)) then
-      call PreMatVec(mesh, s, v, MatVec, precond_env)
+      call PreMatVec(mesh, s, v, MatVec, preEnv)
       call MatVec(mesh, t, s)
     else
       call MatVec(mesh, t, v)
@@ -357,7 +356,7 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
     if (present(PreMatVec)) then
       call ConjMatVec(mesh, s, u)
-      call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
+      call ConjPreMatVec(mesh, t, s, ConjMatVec, conjPreEnv)
     else
       call ConjMatVec(mesh, t, u)
     end if
@@ -373,27 +372,25 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
     ! 𝑐̅𝑠̅ ← 𝑐̅𝑠̅⋅𝜌/𝜌̅, 𝑠̅𝑛̅ ← 𝜃/𝜌̅,
     ! 𝜓 ← 𝑐̅𝑠̅⋅𝜓̅, 𝜓̅ ← -𝑠̅𝑛̅⋅𝜓̅.
     ! ----------------------
-    rho = hypot(alpha_bar, beta)
-    cs = alpha_bar/rho; sn = beta/rho
-    theta = sn*alpha; alpha_bar = cs*alpha
-    theta_bar = sn_bar*rho; rho_bar = hypot(cs_bar*rho, theta)
-    cs_bar = cs_bar*rho/rho_bar; sn_bar = theta/rho_bar
-    psi = cs_bar*psi_bar; psi_bar = -sn_bar*psi_bar
+    rho = hypot(alphaBar, beta)
+    cs = alphaBar/rho; sn = beta/rho
+    theta = sn*alpha; alphaBar = cs*alpha
+    thetaBar = snBar*rho; rhoBar = hypot(csBar*rho, theta)
+    csBar = csBar*rho/rhoBar; snBar = theta/rhoBar
+    psi = csBar*psiBar; psiBar = -snBar*psiBar
 
     ! ----------------------
     ! Update 𝒛-solution:
-    ! 𝒉 ← 𝒘 - (𝜃𝜌/𝜁)𝒉,
-    ! 𝜁 ← 𝜌𝜌̅,
+    ! 𝒉 ← 𝒘 - (𝜃𝜌/𝜁)𝒉, 𝜁 ← 𝜌𝜌̅,
     ! 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉,
     ! 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
     ! Check convergence for |𝜓̅| and |𝜓̅/𝜓̃|.
     ! ( |𝜓̅| and |𝜓̃| implicitly contain (𝓐[𝓟])*-residual norms, ‖(𝓐[𝓟])*𝒓‖. )
     ! ----------------------
-    call Sub(mesh, h, w, h, theta_bar*rho/zeta)
-    zeta = rho*rho_bar
+    call Sub(mesh, h, w, h, thetaBar*rho/zeta); zeta = rho*rhoBar
     call Add(mesh, z, z, h, psi/zeta)
     call Sub(mesh, w, v, w, theta/rho)
-    if (params%Check(abs(psi_bar), abs(psi_bar/psi_tilde))) exit
+    if (params%Check(abs(psiBar), abs(psiBar/psiTilde))) exit
   end do
 
   ! ----------------------
@@ -403,7 +400,7 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(PreMatVec)) then
-    call PreMatVec(mesh, t, z, MatVec, precond_env)
+    call PreMatVec(mesh, t, z, MatVec, preEnv)
     call Add(mesh, x, x, t)
   else
     call Add(mesh, x, x, z)

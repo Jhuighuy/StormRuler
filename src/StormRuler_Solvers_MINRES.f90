@@ -89,14 +89,13 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  real(dp) :: alpha, beta, beta_bar, gamma, &
-    & delta, delta_bar, epsilon, epsilon_bar, &
-    & tau, phi, phi_tilde, cs, sn
-  type(tArray$T) :: tmp, p, q, q_bar, w, w_bar, w_bbar, z, z_bar, z_bbar
-  class(*), allocatable :: precond_env
+  real(dp) :: alpha, beta, beta_bar, gamma, delta, deltaBar, &
+    & epsilon, epsilonBar, tau, phi, phiTilde, cs, sn
+  type(tArray$T) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
+  class(*), allocatable :: preEnv
 
-  call AllocArray(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
-  if (present(PreMatVec)) call AllocArray(q, q_bar, mold=x)
+  call AllocArray(p, w, wBar, wBarBar, z, zBar, zBarBar, mold=x)
+  if (present(PreMatVec)) call AllocArray(q, qBar, mold=x)
 
   ! ----------------------
   ! Initialize:
@@ -110,17 +109,17 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   ! 𝜑 ← 𝛽, 𝛿 ← 0, 𝜀 ← 0,
   ! 𝑐𝑠 ← -1, 𝑠𝑛 ← 0.
   ! ----------------------
-  call Fill(mesh, w_bar, 0.0_dp)
-  call Fill(mesh, w_bbar, 0.0_dp)
-  call MatVec(mesh, z_bar, x)
-  call Sub(mesh, z_bar, b, z_bar)
-  call Fill(mesh, z_bbar, 0.0_dp)
+  call Fill(mesh, wBar, 0.0_dp)
+  call Fill(mesh, wBarBar, 0.0_dp)
+  call MatVec(mesh, zBar, x)
+  call Sub(mesh, zBar, b, zBar)
+  call Fill(mesh, zBarBar, 0.0_dp)
   if (present(PreMatVec)) then
-    call PreMatVec(mesh, q, z_bar, MatVec, precond_env)
+    call PreMatVec(mesh, q, zBar, MatVec, preEnv)
   else
-    q = z_bar
+    q = zBar
   end if
-  beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, z_bar))
+  beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, zBar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
@@ -128,8 +127,8 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   ! 𝜑̃ ← 𝜑,
   ! Check convergence for 𝜑̃.
   ! ----------------------
-  phi_tilde = phi
-  if (params%Check(phi_tilde)) return
+  phiTilde = phi
+  if (params%Check(phiTilde)) return
 
   do
     ! ----------------------
@@ -144,16 +143,16 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     call MatVec(mesh, p, q)
     alpha = Dot(mesh, q, p)/(beta**2)
-    call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
-    call Sub(mesh, z, z, z_bbar, beta/beta_bar)
+    call Sub(mesh, z, p, zBar, alpha/beta, 1.0_dp/beta)
+    call Sub(mesh, z, z, zBarBar, beta/beta_bar)
     if (present(PreMatVec)) then
-      tmp = q_bar; q_bar = q; q = tmp
-      call PreMatVec(mesh, q, z, MatVec, precond_env)
+      tmp = qBar; qBar = q; q = tmp
+      call PreMatVec(mesh, q, z, MatVec, preEnv)
     else
-      q_bar = q; q = z
+      qBar = q; q = z
     end if
     beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
-    tmp = z_bbar; z_bbar = z_bar; z_bar = z; z = tmp
+    tmp = zBarBar; zBarBar = zBar; zBar = z; z = tmp
 
     ! ----------------------
     ! Construct and apply rotations:
@@ -162,8 +161,8 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝑐𝑠, 𝑠𝑛, 𝛾 ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝛾, 𝛽),
     ! 𝜏 ← 𝑐𝑠⋅𝜑, 𝜑 ← 𝑠𝑛⋅𝜑.
     ! ----------------------
-    delta_bar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
-    epsilon_bar = epsilon; epsilon = sn*beta; delta = -cs*beta
+    deltaBar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
+    epsilonBar = epsilon; epsilon = sn*beta; delta = -cs*beta
     call SymOrtho(gamma, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
@@ -174,16 +173,16 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝒙 ← 𝒙 + 𝜏𝒘,
     ! 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
     ! ----------------------
-    call Sub(mesh, w, q_bar, w_bar, delta_bar/gamma, 1.0_dp/(beta_bar*gamma))
-    call Sub(mesh, w, w, w_bbar, epsilon_bar/gamma)
+    call Sub(mesh, w, qBar, wBar, deltaBar/gamma, 1.0_dp/(beta_bar*gamma))
+    call Sub(mesh, w, w, wBarBar, epsilonBar/gamma)
     call Add(mesh, x, x, w, tau)
-    tmp = w_bbar; w_bbar = w_bar; w_bar = w; w = tmp
+    tmp = wBarBar; wBarBar = wBar; wBar = w; w = tmp
 
     ! ----------------------
     ! Check convergence for 𝜑 and 𝜑/𝜑̃.
     ! ( 𝜑 and 𝜑̃ implicitly contain residual norms. )
     ! ----------------------
-    if (params%Check(phi, phi/phi_tilde)) exit
+    if (params%Check(phi, phi/phiTilde)) exit
   end do
   
 contains

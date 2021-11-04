@@ -75,7 +75,7 @@ subroutine Solve_Chebyshev$T(mesh, x, b, &
   logical :: first, second
   real(dp) :: c, d, alpha, beta, delta
   type(tArrayR) :: p, r, z
-  class(*), allocatable :: precond_env
+  class(*), allocatable :: preEnv
   
   call AllocArray(p, r, mold=x)
   if (present(PreMatVec)) then
@@ -122,7 +122,7 @@ subroutine Solve_Chebyshev$T(mesh, x, b, &
     ! 𝗲𝗻𝗱 𝗶𝗳
     ! ----------------------
     if (present(PreMatVec)) &
-      & call PreMatVec(mesh, z, r, MatVec, precond_env)
+      & call PreMatVec(mesh, z, r, MatVec, preEnv)
     if (first) then
       first = .false.
       alpha = 1.0_dp/d

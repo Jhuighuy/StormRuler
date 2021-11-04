@@ -81,7 +81,7 @@ subroutine Solve_CG$T(mesh, x, b, MatVec, params, PreMatVec)
   
   real(dp) :: alpha, beta, gamma, delta
   type(tArray$T) :: p, r, t, z
-  class(*), allocatable :: precond_env
+  class(*), allocatable :: preEnv
   
   call AllocArray(p, r, t, mold=x)
   if (present(PreMatVec)) then
@@ -110,7 +110,7 @@ subroutine Solve_CG$T(mesh, x, b, MatVec, params, PreMatVec)
   ! 𝛾 ← <𝒓⋅𝒛>,
   ! ----------------------
   if (present(PreMatVec)) &
-    & call PreMatVec(mesh, z, r, MatVec, precond_env)
+    & call PreMatVec(mesh, z, r, MatVec, preEnv)
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -140,7 +140,7 @@ subroutine Solve_CG$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
     if (present(PreMatVec)) then
-      call PreMatVec(mesh, z, r, MatVec, precond_env)
+      call PreMatVec(mesh, z, r, MatVec, preEnv)
       alpha = Dot(mesh, r, z)
     end if
 
@@ -174,10 +174,10 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  type(tArray$T) :: p, r, r_tilde, s, t, v, w, y, z
-  class(*), allocatable :: precond_env
+  type(tArray$T) :: p, r, rTilde, s, t, v, w, y, z
+  class(*), allocatable :: preEnv
 
-  call AllocArray(p, r, r_tilde, s, t, v, mold=x)
+  call AllocArray(p, r, rTilde, s, t, v, mold=x)
   if (present(PreMatVec)) then
     call AllocArray(w, y, z, mold=x)
   else
@@ -203,7 +203,7 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
   ! 𝒑 ← {0}ᵀ, 𝒗 ← {0}ᵀ,
   ! 𝜌 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
   ! ----------------------
-  call Set(mesh, r_tilde, r)
+  call Set(mesh, rTilde, r)
   call Fill(mesh, p, 0.0_dp)
   call Fill(mesh, v, 0.0_dp)
   rho = 1.0_dp; alpha = 1.0_dp; omega = 1.0_dp
@@ -214,7 +214,7 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝛽 ← (𝜇/𝜌)⋅(𝛼/𝜔),
     ! 𝜌 ← 𝜇.
     ! ----------------------
-    mu = Dot(mesh, r_tilde, r)
+    mu = Dot(mesh, rTilde, r)
     beta = SafeDivide(mu, rho)*SafeDivide(alpha, omega)
     rho = mu
     
@@ -227,7 +227,7 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
     if (present(PreMatVec)) &
-      & call PreMatVec(mesh, y, p, MatVec, precond_env)
+      & call PreMatVec(mesh, y, p, MatVec, preEnv)
     call MatVec(mesh, v, y)
     
     ! ----------------------
@@ -236,10 +236,10 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝒛 ← 𝓟𝒔,
     ! 𝒕 ← 𝓐𝒛.
     ! ----------------------
-    alpha = SafeDivide(rho, Dot(mesh, r_tilde, v))
+    alpha = SafeDivide(rho, Dot(mesh, rTilde, v))
     call Sub(mesh, s, r, v, alpha)
     if (present(PreMatVec)) &
-      & call PreMatVec(mesh, z, s, MatVec, precond_env)
+      & call PreMatVec(mesh, z, s, MatVec, preEnv)
     call MatVec(mesh, t, z)
     
     ! ----------------------
@@ -250,7 +250,7 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝒙 ← 𝒙 + 𝛼𝒚,
     ! ----------------------
     if (present(PreMatVec)) &
-      & call PreMatVec(mesh, w, t, MatVec, precond_env)
+      & call PreMatVec(mesh, w, t, MatVec, preEnv)
     omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
     call Sub(mesh, r, s, t, omega)
     call Add(mesh, x, x, z, omega)

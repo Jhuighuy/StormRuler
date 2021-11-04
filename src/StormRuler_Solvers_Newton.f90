@@ -116,7 +116,6 @@ subroutine Solve_JFNK(mesh, MatVec, x, b, params)
   class(tArrayR), intent(in) :: b
   class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
-  procedure(tBiMatVecFuncR) :: JacMatVec
   class(tConvParams), intent(inout) :: params
 
   type(tArrayR) :: t, y, z

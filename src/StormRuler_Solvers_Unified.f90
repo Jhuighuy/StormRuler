@@ -32,8 +32,9 @@ use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub 
-#$for type_, _ in [SCALAR_TYPES[0]]
-use StormRuler_BLAS, only: tMatVecFunc$type_
+#$for T, _ in [SCALAR_TYPES[0]]
+use StormRuler_BLAS, only: tMatVecFunc$T
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
@@ -43,9 +44,6 @@ use StormRuler_Solvers_Chebyshev, only: Solve_Chebyshev
 use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
-#$for type_, _ in SCALAR_TYPES[0]
-use StormRuler_Solvers_Precond, only: tPrecondFunc$type_
-#$end for
 use StormRuler_Solvers_Precond, only: &
   & Precondition_Jacobi, Precondition_LU_SGS
 
@@ -70,13 +68,13 @@ contains
 !! • general nonsingular operator case:
 !!   [𝓟]𝓐𝒙 = [𝓟]𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
+subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tMesh), intent(inout) :: mesh
   class(tArrayR), intent(in) :: b
   class(tArrayR), intent(inout) :: x
   procedure(tMatVecFuncR) :: MatVec
   class(tConvParams), intent(inout) :: params
-  character(len=*), intent(in) :: method, precondMethod
+  character(len=*), intent(in) :: method, preMethod
 
   procedure(tMatVecFuncR), pointer :: uMatVec
   type(tArrayR) :: t, f
@@ -107,7 +105,7 @@ subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
   ! Two-step call is utilized 
   ! in order to match optional preconditioning.
   ! ----------------------
-  select case(precondMethod)
+  select case(preMethod)
     case('', 'none')
       params%Name = params%Name//'('
       call SelectMethod()
@@ -119,33 +117,33 @@ subroutine LinSolve(mesh, method, precondMethod, x, b, MatVec, params)
       call SelectMethod(Precondition_LU_SGS)
     case default
       write(error_unit, *) &
-        & 'invalid precond method, precondMethod=', precondMethod
+        & 'invalid precond method, preMethod=', preMethod
       error stop error_code
   end select
 
 contains
-  subroutine SelectMethod(Precond)
-    procedure(tPrecondFuncR), optional :: Precond
+  subroutine SelectMethod(PreMatVec)
+    procedure(tPreMatVecFuncR), optional :: PreMatVec
 
     select case(method)
       case('CG')
         params%Name = params%Name//'CG)'
-        call Solve_CG(mesh, x, f, uMatVec, params, Precond)
+        call Solve_CG(mesh, x, f, uMatVec, params, PreMatVec)
       case('BiCGStab')
         params%Name = params%Name//'BiCGStab)'
-        call Solve_BiCGStab(mesh, x, f, uMatVec, params, Precond)
+        call Solve_BiCGStab(mesh, x, f, uMatVec, params, PreMatVec)
       case('MINRES')
         params%Name = params%Name//'MINRES)'
-        call Solve_MINRES(mesh, x, f, uMatVec, params, Precond)
+        call Solve_MINRES(mesh, x, f, uMatVec, params, PreMatVec)
       case('GMRES')
         params%Name = params%Name//'GMRES)'
-        call Solve_GMRES(mesh, x, f, uMatVec, params, Precond)
+        call Solve_GMRES(mesh, x, f, uMatVec, params, PreMatVec)
       case('LSQR')
         params%Name = params%Name//'LSQR)'
-        call Solve_LSQR(mesh, x, f, uMatVec, params, Precond)
+        call Solve_LSQR(mesh, x, f, uMatVec, params, PreMatVec)
       case('LSMR')
         params%Name = params%Name//'LSMR)'
-        call Solve_LSMR(mesh, x, f, uMatVec, params, Precond)
+        call Solve_LSMR(mesh, x, f, uMatVec, params, PreMatVec)
       case default
         write(error_unit, *) 'invalid method, method=', method
         error stop error_code
@@ -170,10 +168,10 @@ end subroutine LinSolve
 !! • general nonsingular operator case:
 !!   [𝓟]𝓐𝒙 = [𝓟]𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-function LinSolve_RCI(mesh, method, precondMethod, &
+function LinSolve_RCI(mesh, method, preMethod, &
     & x, b, params, Ay, y, resetState) result(request)
   class(tMesh), intent(inout), target, optional :: mesh
-  character(len=*), intent(in), target, optional :: method, precondMethod
+  character(len=*), intent(in), target, optional :: method, preMethod
   class(tArrayR), intent(in), target, optional :: b
   class(tArrayR), intent(inout), target, optional :: x
   class(tConvParams), intent(inout), target, optional :: params
@@ -213,7 +211,7 @@ function LinSolve_RCI(mesh, method, precondMethod, &
     ! Save the arguments.
     ! ----------------------
     sMesh => mesh
-    sMethod = method; sPrecondMethod = precondMethod
+    sMethod = method; sPrecondMethod = preMethod
     sX => x; sB => b
     sParams = params
 

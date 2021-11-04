@@ -379,19 +379,19 @@ SR_DEFINE_FUNCPTR_(void, SR_tMatVecFuncS,
 
 /// @{
 SR_API void SR_LinSolveR(SR_tMesh mesh,
-  SR_STRING method, SR_STRING precondMethod,
+  SR_STRING method, SR_STRING preMethod,
   SR_tFieldR x, SR_tFieldR b, 
   SR_tMatVecFuncR MatVec, void* env,
   SR_tMatVecFuncR MatVec_H, void* env_H);
 SR_API void SR_LinSolveC(SR_tMesh mesh,
-  SR_STRING method, SR_STRING precondMethod,
+  SR_STRING method, SR_STRING preMethod,
   SR_tFieldC x, SR_tFieldC b, 
   SR_tMatVecFuncC MatVec, void* env,
   SR_tMatVecFuncC MatVec_H, void* env_H);
 #if SR_C11
-#define SR_LinSolve(mesh, method, precondMethod, x, b, MatVec, env, ...) \
+#define SR_LinSolve(mesh, method, preMethod, x, b, MatVec, env, ...) \
   SR_FIELD_GENERIC_(x, SR_LinSolve)( \
-    mesh, method, precondMethod, x, b, MatVec, env, ##__VA_ARGS__)
+    mesh, method, preMethod, x, b, MatVec, env, ##__VA_ARGS__)
 #endif
 /// @}
 
@@ -406,15 +406,15 @@ SR_API void SR_Solve_JFNKR(SR_tMesh mesh,
 
 /// @{
 SR_API SR_STRING SR_RCI_LinSolveR(SR_tMesh mesh,
-  SR_STRING method, SR_STRING precondMethod,
+  SR_STRING method, SR_STRING preMethod,
   SR_tFieldR x, SR_tFieldR b, SR_tFieldR* pAy, SR_tFieldR* pY);
 SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
-  SR_STRING method, SR_STRING precondMethod,
+  SR_STRING method, SR_STRING preMethod,
   SR_tFieldC x, SR_tFieldC b, SR_tFieldC* pAy, SR_tFieldC* pY);
 #if SR_C11
-#define SR_RCI_LinSolve(mesh, method, precondMethod, x, b, pAy, pY) \
+#define SR_RCI_LinSolve(mesh, method, preMethod, x, b, pAy, pY) \
   SR_FIELD_GENERIC_(x, SR_RCI_LinSolve)( \
-    mesh, method, precondMethod, x, b, pAy, pY)
+    mesh, method, preMethod, x, b, pAy, pY)
 #endif
 /// @}
 
@@ -422,7 +422,7 @@ SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
 SR_DEFINE_OPAQUE_(SR_tRequestMRCI);
 
 SR_API SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
-  SR_STRING method, SR_STRING precondMethod, SR_tFieldR x, SR_tFieldR b);
+  SR_STRING method, SR_STRING preMethod, SR_tFieldR x, SR_tFieldR b);
 SR_API SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request);
 SR_API SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index);
 #endif

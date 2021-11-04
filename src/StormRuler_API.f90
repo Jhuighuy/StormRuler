@@ -705,10 +705,10 @@ end subroutine cSFuncProd$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
+subroutine cLinSolve$T(pMesh, pMethod, pPreMethod, &
     & pX, pB, pMatVec, pEnv, pMatVec_H, pEnv_H) bind(C, name='SR_LinSolve$T')
   type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pMethod, pPrecondMethod
+  type(c_ptr), intent(in), value :: pMethod, pPreMethod
   type(c_ptr), intent(in), value :: pX, pB
   type(c_funptr), intent(in), value :: pMatVec, pMatVec_H
   type(c_ptr), intent(in), value :: pEnv, pEnv_H
@@ -725,7 +725,7 @@ subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, bArr
   procedure(ctMatVec), pointer :: MatVec, MatVec_H
-  character(len=:), pointer :: method, precondMethod
+  character(len=:), pointer :: method, preMethod
   type(tConvParams) :: params
 
   call Unwrap(mesh, pMesh)
@@ -734,11 +734,10 @@ subroutine cLinSolve$T(pMesh, pMethod, pPrecondMethod, &
   if (c_associated(pMatVec_H)) then
     call c_f_procpointer(cptr=pMatVec_H, fptr=MatVec_H)
   end if
-  call Unwrap(method, pMethod)
-  call Unwrap(precondMethod, pPrecondMethod)
+  call Unwrap(method, pMethod); call Unwrap(preMethod, pPreMethod)
 
   call params%Init(1.0D-8, 1.0D-8, 2000)
-  call LinSolve(mesh, method, precondMethod, xArr, bArr, cMatVec, params)
+  call LinSolve(mesh, method, preMethod, xArr, bArr, cMatVec, params)
 
 contains
   subroutine cMatVec(mesh_, Ax, x)
@@ -814,16 +813,16 @@ end subroutine cSolve_JFNK$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
+function cRCI_LinSolve$T(pMesh, pMethod, pPreMethod, &
     & pX, pB, pAy, pY) result(pRequest) bind(C, name='SR_RCI_LinSolve$T')
   type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pMethod, pPrecondMethod
+  type(c_ptr), intent(in), value :: pMethod, pPreMethod
   type(c_ptr), intent(in), value :: pX, pB
   type(c_ptr), intent(inout) :: pAy, pY
   type(c_ptr) :: pRequest
 
   class(tMesh), pointer :: mesh
-  character(len=:), pointer :: method, precondMethod
+  character(len=:), pointer :: method, preMethod
   $typename, pointer :: x(:,:), b(:,:), Ay(:,:), y(:,:)
 
   type(tConvParams) :: params
@@ -838,15 +837,14 @@ function cRCI_LinSolve$T(pMesh, pMethod, pPrecondMethod, &
   end if
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(method, pMethod)
-  call Unwrap(precondMethod, pPrecondMethod)
+  call Unwrap(method, pMethod); call Unwrap(preMethod, pPreMethod)
   call Unwrap(x, pX); call Unwrap(b, pB)
   
   call params%Init(1.0D-8, 1.0D-8, 2000)
 
   ! Get the request.
   sRequest = LinSolve_RCI( &
-    & mesh, method, precondMethod, x, b, params, Ay, y)
+    & mesh, method, preMethod, x, b, params, Ay, y)
 
   if (sRequest == 'Done') then
 

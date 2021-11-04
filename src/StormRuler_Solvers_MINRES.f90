@@ -34,7 +34,7 @@ use StormRuler_Array, only: tArrayR, AllocArray
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPrecondFunc$T
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
@@ -43,6 +43,18 @@ use StormRuler_ConvParams, only: tConvParams
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface Solve_MINRES
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_MINRES$T
+#$end for
+end interface Solve_MINRES
+
+interface Solve_GMRES
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_GMRES$T
+#$end for
+end interface Solve_GMRES
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -68,22 +80,23 @@ contains
 !!     “Iterative Methods for Singular Linear Equations and 
 !!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
   real(dp) :: alpha, beta, beta_bar, gamma, &
     & delta, delta_bar, epsilon, epsilon_bar, &
     & tau, phi, phi_tilde, cs, sn
-  type(tArrayR) :: tmp, p, q, q_bar, w, w_bar, w_bbar, z, z_bar, z_bbar
+  type(tArray$T) :: tmp, p, q, q_bar, w, w_bar, w_bbar, z, z_bar, z_bbar
   class(*), allocatable :: precond_env
 
   call AllocArray(p, w, w_bar, w_bbar, z, z_bar, z_bbar, mold=x)
-  if (present(Precond)) call AllocArray(q, q_bar, mold=x)
+  if (present(PreMatVec)) call AllocArray(q, q_bar, mold=x)
 
   ! ----------------------
   ! Initialize:
@@ -102,8 +115,8 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
   call MatVec(mesh, z_bar, x)
   call Sub(mesh, z_bar, b, z_bar)
   call Fill(mesh, z_bbar, 0.0_dp)
-  if (present(Precond)) then
-    call Precond(mesh, q, z_bar, MatVec, precond_env)
+  if (present(PreMatVec)) then
+    call PreMatVec(mesh, q, z_bar, MatVec, precond_env)
   else
     q = z_bar
   end if
@@ -133,9 +146,9 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, Precond)
     alpha = Dot(mesh, q, p)/(beta**2)
     call Sub(mesh, z, p, z_bar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, z_bbar, beta/beta_bar)
-    if (present(Precond)) then
+    if (present(PreMatVec)) then
       tmp = q_bar; q_bar = q; q = tmp
-      call Precond(mesh, q, z, MatVec, precond_env)
+      call PreMatVec(mesh, q, z, MatVec, precond_env)
     else
       q_bar = q; q = z
     end if
@@ -185,20 +198,23 @@ contains
       cs = 1.0_dp; sn = 0.0_dp
     end if
   end subroutine SymOrtho
-end subroutine Solve_MINRES
+end subroutine Solve_MINRES$T
+#$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !!
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_GMRES(mesh, x, b, MatVec, params, Precond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
   error stop 'not implemented'
-end subroutine Solve_GMRES
+end subroutine Solve_GMRES$T
+#$end for
 
 end module StormRuler_Solvers_MINRES

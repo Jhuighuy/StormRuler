@@ -34,7 +34,7 @@ use StormRuler_Array, only: tArrayR, AllocArray
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Scale, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPrecondFunc$T
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
@@ -45,13 +45,17 @@ use StormRuler_ConvParams, only: tConvParams
 implicit none
 
 interface Solve_LSQR
-  module procedure Solve_LSQR
-  module procedure Solve_SymmLSQR
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_LSQR$T
+  module procedure Solve_SymmLSQR$T
+#$end for
 end interface Solve_LSQR
 
 interface Solve_LSMR
-  module procedure Solve_LSMR
-  module procedure Solve_SymmLSMR
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_LSMR$T
+  module procedure Solve_SymmLSMR$T
+#$end for
 end interface Solve_LSMR
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -80,22 +84,23 @@ contains
 !!     “A preconditioner for the LSQR algorithm.” 
 !!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSQR(mesh, x, b, MatVec, &
-    & ConjMatVec, params, Precond, ConjPrecond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
+    & ConjMatVec, params, PreMatVec, ConjPreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec, ConjMatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec, ConjPreMatVec
   
   real(dp) :: alpha, beta, rho, rho_bar, &
     & theta, phi, phi_bar, phi_tilde, cs, sn
-  type(tArrayR) :: s, t, r, u, v, w, z
+  type(tArray$T) :: s, t, r, u, v, w, z
   class(*), allocatable :: precond_env, precond_env_T
   
   call AllocArray(t, r, u, v, w, z, mold=x)
-  if (present(Precond)) call AllocArray(s, mold=x)
+  if (present(PreMatVec)) call AllocArray(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -119,9 +124,9 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
-  if (present(Precond)) then
+  if (present(PreMatVec)) then
     call ConjMatVec(mesh, s, u)
-    call ConjPrecond(mesh, t, s, ConjMatVec, precond_env_T)
+    call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
   else
     call ConjMatVec(mesh, t, u)
   end if
@@ -157,17 +162,17 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
     ! 𝒕 ← 𝒕 - 𝛽𝒗,
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
-    if (present(Precond)) then
-      call Precond(mesh, s, v, MatVec, precond_env)
+    if (present(PreMatVec)) then
+      call PreMatVec(mesh, s, v, MatVec, precond_env)
       call MatVec(mesh, t, s)
     else
       call MatVec(mesh, t, v)
     end if
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
-    if (present(Precond)) then
+    if (present(PreMatVec)) then
       call ConjMatVec(mesh, s, u)
-      call ConjPrecond(mesh, t, s, ConjMatVec, precond_env_T)
+      call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
     else
       call ConjMatVec(mesh, t, u)
     end if
@@ -205,14 +210,15 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
-  if (present(Precond)) then
-    call Precond(mesh, t, z, MatVec, precond_env)
+  if (present(PreMatVec)) then
+    call PreMatVec(mesh, t, z, MatVec, precond_env)
     call Add(mesh, x, x, t)
   else
     call Add(mesh, x, x, z)
   end if
 
-end subroutine Solve_LSQR
+end subroutine Solve_LSQR$T
+#$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear self-adjoint: least squares
@@ -221,21 +227,23 @@ end subroutine Solve_LSQR
 !! LSQR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmLSQR(mesh, x, b, MatVec, params, Precond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_SymmLSQR$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  if (present(Precond)) then
-    call Solve_LSQR(mesh, x, b, MatVec, MatVec, params, Precond, Precond)
+  if (present(PreMatVec)) then
+    call Solve_LSQR(mesh, x, b, MatVec, MatVec, params, PreMatVec, PreMatVec)
   else
     call Solve_LSQR(mesh, x, b, MatVec, MatVec, params)
   end if
   
-end subroutine Solve_SymmLSQR
+end subroutine Solve_SymmLSQR$T
+#$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear least squares problem:
@@ -258,23 +266,24 @@ end subroutine Solve_SymmLSQR
 !!     “A preconditioner for the LSQR algorithm.” 
 !!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSMR(mesh, x, b, MatVec, &
-    & ConjMatVec, params, Precond, ConjPrecond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
+    & ConjMatVec, params, PreMatVec, ConjPreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec, ConjMatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond, ConjPrecond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec, ConjPreMatVec
 
   real(dp) :: alpha, alpha_bar, beta, rho, rho_bar, &
     & theta, theta_bar, psi, psi_bar, psi_tilde, zeta, &
     & cs, sn, cs_bar, sn_bar
-  type(tArrayR) :: r, s, t, w, h, u, v, z
+  type(tArray$T) :: r, s, t, w, h, u, v, z
   class(*), allocatable :: precond_env, precond_env_T
   
   call AllocArray(t, r, u, v, w, h, z, mold=x)
-  if (present(Precond)) call AllocArray(s, mold=x)
+  if (present(PreMatVec)) call AllocArray(s, mold=x)
 
   ! ----------------------
   ! Utilize the initial guess.
@@ -298,9 +307,9 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)
   beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
-  if (present(Precond)) then
+  if (present(PreMatVec)) then
     call ConjMatVec(mesh, s, u)
-    call ConjPrecond(mesh, t, s, ConjMatVec, precond_env_T)
+    call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
   else
     call ConjMatVec(mesh, t, u)
   end if
@@ -338,17 +347,17 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
     ! 𝒕 ← 𝒕 - 𝛽𝒗,
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
-    if (present(Precond)) then
-      call Precond(mesh, s, v, MatVec, precond_env)
+    if (present(PreMatVec)) then
+      call PreMatVec(mesh, s, v, MatVec, precond_env)
       call MatVec(mesh, t, s)
     else
       call MatVec(mesh, t, v)
     end if
     call Sub(mesh, t, t, u, alpha)
     beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
-    if (present(Precond)) then
+    if (present(PreMatVec)) then
       call ConjMatVec(mesh, s, u)
-      call ConjPrecond(mesh, t, s, ConjMatVec, precond_env_T)
+      call ConjPreMatVec(mesh, t, s, ConjMatVec, precond_env_T)
     else
       call ConjMatVec(mesh, t, u)
     end if
@@ -393,14 +402,15 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   !   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
-  if (present(Precond)) then
-    call Precond(mesh, t, z, MatVec, precond_env)
+  if (present(PreMatVec)) then
+    call PreMatVec(mesh, t, z, MatVec, precond_env)
     call Add(mesh, x, x, t)
   else
     call Add(mesh, x, x, z)
   end if
 
-end subroutine Solve_LSMR
+end subroutine Solve_LSMR$T
+#$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a right preconditioned linear self-adjoint: least squares
@@ -409,25 +419,22 @@ end subroutine Solve_LSMR
 !! Using LSMR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmLSMR(mesh, x, b, MatVec, params, Precond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_SymmLSMR$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  ! ----------------------
-  ! Using LSMR in symmetric case is not recommended,
-  ! use MINRES instead.
-  ! ----------------------
-
-  if (present(Precond)) then
-    call Solve_LSMR(mesh, x, b, MatVec, MatVec, params, Precond, Precond)
+  if (present(PreMatVec)) then
+    call Solve_LSMR(mesh, x, b, MatVec, MatVec, params, PreMatVec, PreMatVec)
   else
     call Solve_LSMR(mesh, x, b, MatVec, MatVec, params)
   end if
   
-end subroutine Solve_SymmLSMR
+end subroutine Solve_SymmLSMR$T
+#$end for
 
 end module StormRuler_Solvers_LSQR

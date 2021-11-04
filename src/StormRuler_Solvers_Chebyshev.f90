@@ -34,7 +34,7 @@ use StormRuler_Array, only: tArrayR, AllocArray
 use StormRuler_BLAS, only: Norm_2, Set, Fill, Add, Sub
 #$for T, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPrecondFunc$T
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
@@ -44,6 +44,12 @@ use StormRuler_ConvParams, only: tConvParams
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface Solve_Chebyshev
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Solve_Chebyshev$T
+#$end for
+end interface Solve_Chebyshev
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -55,15 +61,16 @@ contains
 !! [𝓟]𝓐𝒙 = [𝓟]𝒃, using the Chebyshev semi-iterative method.
 !! Some accurate estimates of spectrum of [𝓟]𝓐 are required. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_Chebyshev(mesh, x, b, &
-    & lambda_min, lambda_max, MatVec, params, Precond)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Solve_Chebyshev$T(mesh, x, b, &
+    & minLambda, maxLambda, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray$T), intent(in) :: b
+  class(tArray$T), intent(inout) :: x
+  procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPrecondFuncR), optional :: Precond
-  real(dp), intent(in) :: lambda_min, lambda_max
+  procedure(tPreMatVecFunc$T), optional :: PreMatVec
+  real(dp), intent(in) :: minLambda, maxLambda
 
   logical :: first, second
   real(dp) :: c, d, alpha, beta, delta
@@ -71,21 +78,21 @@ subroutine Solve_Chebyshev(mesh, x, b, &
   class(*), allocatable :: precond_env
   
   call AllocArray(p, r, mold=x)
-  if (present(Precond)) then
+  if (present(PreMatVec)) then
     call AllocArray(z, mold=x)
   else
     z = r
   end if
 
-  !call EigenPairs_Lanczos(mesh, x, b, MatVec, params, Precond)
+  !call EigenPairs_Lanczos(mesh, x, b, MatVec, params, PreMatVec)
 
   ! ----------------------
   ! 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
   ! 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   ! ----------------------
   first = .true.; second = .true.
-  c = 0.5_dp*(lambda_max - lambda_min)
-  d = 0.5_dp*(lambda_max + lambda_min)
+  c = 0.5_dp*(maxLambda - minLambda)
+  d = 0.5_dp*(maxLambda + minLambda)
 
   ! ----------------------
   ! 𝒓 ← 𝓐𝒙,
@@ -114,8 +121,8 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     !   𝒑 ← 𝒛 + 𝛽𝒑.
     ! 𝗲𝗻𝗱 𝗶𝗳
     ! ----------------------
-    if (present(Precond)) &
-      & call Precond(mesh, z, r, MatVec, precond_env)
+    if (present(PreMatVec)) &
+      & call PreMatVec(mesh, z, r, MatVec, precond_env)
     if (first) then
       first = .false.
       alpha = 1.0_dp/d
@@ -148,6 +155,7 @@ subroutine Solve_Chebyshev(mesh, x, b, &
     if (params%Check(beta, beta/delta)) exit
   end do
   
-end subroutine Solve_Chebyshev
+end subroutine Solve_Chebyshev$T
+#$end for
 
 end module StormRuler_Solvers_Chebyshev

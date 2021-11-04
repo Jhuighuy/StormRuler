@@ -46,14 +46,14 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for T, typename in [SCALAR_TYPES[0]]
-  subroutine tPrecondFunc$T(mesh, PuArr, uArr, MatVec, precond_env)
+  subroutine tPreMatVecFunc$T(mesh, PuArr, uArr, MatVec, precond_env)
     import :: tMesh, tArray$T, tMatVecFunc$T
     class(tMesh), intent(inout) :: mesh
     class(tArray$T), intent(in), target :: uArr
     class(tArray$T), intent(inout), target :: PuArr
     procedure(tMatVecFunc$T) :: MatVec
     class(*), intent(inout), allocatable, target :: precond_env
-  end subroutine tPrecondFunc$T
+  end subroutine tPreMatVecFunc$T
 #$end for
 end interface
 

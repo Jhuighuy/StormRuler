@@ -50,7 +50,7 @@ type :: tArrayR
 
 contains
   generic :: Alloc => AllocShape, AllocMold  
-  procedure :: AllocShape => AllocArray
+  procedure :: AllocShape => AllocArrayShape
   procedure :: AllocMold => AllocArrayMold$1
 
   procedure :: Free => FreeArray$1
@@ -64,7 +64,7 @@ contains
 end type tArrayR
 
 interface AllocArray
-  module procedure AllocArray
+  module procedure AllocArrayShape
 #$do N = 1, NUM_RANKS
   module procedure AllocArrayMold$N
 #$end do
@@ -84,14 +84,14 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Allocate a contiguous array with specified shape.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine AllocArray(array, shape)
+subroutine AllocArrayShape(array, shape)
   class(tArrayR), intent(inout) :: array
   integer(ip), intent(in) :: shape(:)
 
   allocate(array%mShape, mold=shape); array%mShape = shape
   allocate(array%mData(product(array%mShape)))
 
-end subroutine AllocArray
+end subroutine AllocArrayShape
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Allocate a contiguous array a mold.

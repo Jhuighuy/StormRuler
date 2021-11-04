@@ -93,7 +93,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   call AllocArray(t, f, mold=x)
   call Fill(mesh, f, 0.0_dp)
   call MatVec(mesh, t, f)
-  if (Norm_2(mesh, t) == 0.0_dp) then
+  if (Norm_2(mesh, t) <= epsilon(1.0_dp)) then
     uMatVec => MatVec
     call FreeArray(t, f); f = b
   else

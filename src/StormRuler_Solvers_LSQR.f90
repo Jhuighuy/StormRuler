@@ -94,8 +94,7 @@ subroutine Solve_LSQR$T(mesh, x, b, MatVec, &
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec, ConjPreMatVec
   
-  real(dp) :: alpha, beta, rho, rhoBar, &
-    & theta, phi, phiBar, phiTilde, cs, sn
+  real(dp) :: alpha, beta, rho, rhoBar, theta, phi, phiBar, phiTilde, cs, sn
   type(tArray$T) :: s, t, r, u, v, w, z
   class(*), allocatable :: preEnv, conjPreEnv
   
@@ -301,7 +300,7 @@ subroutine Solve_LSMR$T(mesh, x, b, MatVec, &
   ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
   !   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
   ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
-  ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/α.
+  ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   ! ----------------------
   call MatVec(mesh, r, x)
   call Sub(mesh, r, b, r)

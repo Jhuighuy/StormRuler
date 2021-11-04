@@ -147,22 +147,22 @@ contains
     call Sub(mesh, Jx, z, y, 1.0_dp/epsilon, 1.0_dp/epsilon)
 
   end subroutine ApproxJacMatVec_1
-  subroutine ApproxJacMatVec_2(mesh, Jx, x, x0)
-    class(tMesh), intent(inout), target :: mesh
-    class(tArrayR), intent(inout), target :: x, x0, Jx
-
-    real(dp), parameter :: epsilon = 1e-6_dp
-
-    ! ----------------------
-    ! Consider the second-order jacobian approximation:
-    ! 𝓐(𝒙₀ + 𝜀𝒙) = 𝓐(𝒙₀) + 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
-    ! 𝓐(𝒙₀ - 𝜀𝒙) = 𝓐(𝒙₀) - 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
-    ! 𝓙(𝒙₀)𝒙 ≈ [𝓐(𝒙₀ + 𝜀𝒙) - 𝓐(𝒙₀ - 𝜀𝒙)]/(2𝜀) = (∂𝓐(𝒙₀)/∂𝒙)𝒙 + 𝓞(𝜀²).
-    ! ----------------------
-
-    error stop 'unimplemented'
-
-  end subroutine ApproxJacMatVec_2
+!  subroutine ApproxJacMatVec_2(mesh, Jx, x, x0)
+!    class(tMesh), intent(inout), target :: mesh
+!    class(tArrayR), intent(inout), target :: x, x0, Jx
+!
+!    real(dp), parameter :: epsilon = 1e-6_dp
+!
+!    ! ----------------------
+!    ! Consider the second-order jacobian approximation:
+!    ! 𝓐(𝒙₀ + 𝜀𝒙) = 𝓐(𝒙₀) + 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
+!    ! 𝓐(𝒙₀ - 𝜀𝒙) = 𝓐(𝒙₀) - 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
+!    ! 𝓙(𝒙₀)𝒙 ≈ [𝓐(𝒙₀ + 𝜀𝒙) - 𝓐(𝒙₀ - 𝜀𝒙)]/(2𝜀) = (∂𝓐(𝒙₀)/∂𝒙)𝒙 + 𝓞(𝜀²).
+!    ! ----------------------
+!
+!    error stop 'unimplemented'
+!
+!  end subroutine ApproxJacMatVec_2
 end subroutine Solve_JFNK
 
 end module StormRuler_Solvers_Newton

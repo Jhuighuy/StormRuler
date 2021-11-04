@@ -140,7 +140,7 @@ end function SafeDivide
 real(dp) elemental function SafeInverse(a)
   real(dp), intent(in) :: a
   
-  SafeInverse = merge(0.0_dp, 1.0_dp/a, a==0.0_dp)
+  SafeInverse = merge(0.0_dp, 1.0_dp/a, abs(a) <= epsilon(1.0_dp))
 end function SafeInverse
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

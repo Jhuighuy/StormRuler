@@ -163,7 +163,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     deltaBar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilonBar = epsilon; epsilon = sn*beta; delta = -cs*beta
-    call SymOrtho(gamma, beta, cs, sn, gamma)
+    call SymOrtho(gamma + 0.0_dp, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------

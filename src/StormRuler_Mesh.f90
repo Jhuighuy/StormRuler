@@ -436,10 +436,10 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   class(tMesh), intent(inout) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
 
+#$if HAS_OpenMP
   integer(ip) :: i, thread
   integer(ip), allocatable :: ranges(:)
 
-#$if HAS_OpenMP
   ! ----------------------
   ! Launch the whole range as a block if sequential mode is requested.
   ! ----------------------
@@ -471,7 +471,9 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   call BlockKernel(mesh, ranges(thread), ranges(thread + 1) - 1)
   !$omp end parallel
 #$else
+
   call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())
+
 #$endif
 end subroutine tMesh_RunCellKernel_Block
 

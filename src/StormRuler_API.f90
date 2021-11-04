@@ -232,14 +232,14 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 #$if False
 
   integer(ip), Parameter :: Nx = 100, Ny = 100
-  Real(8), Parameter :: Dx = 1.0_dp/Nx, Dy = 1.0_dp/Ny, Dt = Dx*Dx
+  Real(8), Parameter :: Dx = 1.0_dp/Nx, Dy = 1.0_dp/Ny
   allocate(gMesh)
   gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
 
 #$else
 
-  real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp, Dt = Dx*Dx
+  real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
   allocate(gMesh)

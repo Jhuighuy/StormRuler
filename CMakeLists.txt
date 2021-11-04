@@ -65,7 +65,8 @@ endif()
 # TODO: add compile options based on Debug/Release configurations.
 if(NOT WIN32)
   target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-g -Ofast>)
+    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:
+      -g -Ofast -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
   target_compile_options(
     StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -Ofast>)
 endif()
@@ -106,8 +107,8 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads)
 if (Threads_FOUND)
-    message(STATUS "Threads enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE Threads::Threads)
+  message(STATUS "Threads enabled.")
+  target_link_libraries(StormRuler_BASE INTERFACE Threads::Threads)
 endif()
 
 # TODO: we should check for quality of the OpenMP implementation,

@@ -129,6 +129,15 @@ subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
     v(:,iBCCell) = v(:,iCell)  
     v(dim,iBCCell) = -v(dim,iCell)  
 
+    ! ----------------------
+    ! Propagate the boundary condition towards the ghost cells.
+    ! ----------------------
+    iGCell = mesh%CellToCell(iBCCellFace, iBCCell)
+    do while(iGCell /= 0)
+      v(:,iGCell) = v(:,iBCCell)
+      iGCell = mesh%CellToCell(iBCCellFace, iGCell)
+    end do
+
   end do
 
 end subroutine FDM_ApplyBCs_SlipWall
@@ -172,6 +181,15 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
 
     v(:,iBCCell) = 0.0_dp
     v(2,iBCCell) = -RRR*( R**2 - RR**2 )
+
+    ! ----------------------
+    ! Propagate the boundary condition towards the ghost cells.
+    ! ----------------------
+    iGCell = mesh%CellToCell(iBCCellFace, iBCCell)
+    do while(iGCell /= 0)
+      v(:,iGCell) = v(:,iBCCell)
+      iGCell = mesh%CellToCell(iBCCellFace, iGCell)
+    end do
 
   end do
 

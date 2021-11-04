@@ -41,44 +41,87 @@ add_library(StormRuler_BASE INTERFACE)
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
+# Detect Apple Silicon CPU.
+# Fortran compilers on Apple Silicon are not production-ready yet,
+# so we need to disable some features (for now).
 if(APPLE)
-  # Detect Apple Silicon CPU.
-  # Fortran compilers on Apple Silicon are not production-ready yet,
-  # so we need to disable some features (for now).
   include(CheckCxxCompilerFlag)
   check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
   message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 
-# NAG (unexpectedly) does not use byte-based kind system by default.
+# Warning and diagnostics options (Fortran).
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:
+      -Werror -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-fcheck=all>>)
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>: -warn all,nounused>)
+else()
+  message(WARNING 
+    "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, warning options not set.")
+endif()
+# Warning and diagnostics options (C/C++).
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:
+      -Werror -Wall -Wextra -Wpedantic 
+      -Wno-unused-function -Wno-unused-parameter>)
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
+       "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:
+      -Werror -Wall -Wextra -Wpedantic 
+      -Wno-unused-function -Wno-unused-parameter
+      -Wno-gnu-zero-variadic-macro-arguments>)
+else()
+  message(WARNING 
+    "Unknown C compiler ${CMAKE_C_COMPILER_ID}, warning options not set.")
+endif()
+
+# Optimization options (Fortran).
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -O0>>)
+  if (NOT APPLE_SILICON)
+    target_compile_options(StormRuler_BASE INTERFACE
+      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+  endif()
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -O0>>)
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+else()
+  message(WARNING 
+    "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, optimization options not set.")
+endif()
+# Optimization options (C/C++).
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
+       "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
+  target_compile_options(StormRuler_BASE INTERFACE
+    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+else()
+  message(WARNING 
+    "Unknown C compiler ${CMAKE_C_COMPILER_ID}, warning options not set.")
+endif()
+
+# Other options.
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-  target_compile_options(
-    StormRuler_BASE INTERFACE 
+  # NAG does not use byte-based kind system by default.
+  target_compile_options(StormRuler_BASE INTERFACE 
     $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
 endif()
-
-#target_compile_options(your_target
-#  PRIVATE
-#  $<$<COMPILE_LANGUAGE:CXX>:$<$<CONFIG:Debug>:${CMAKE_CXX_FLAGS_RELEASE}>>
-#  $<$<COMPILE_LANGUAGE:C>:$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_RELEASE}>>
-
-# TODO: add compile options based on Debug/Release configurations.
-if(NOT WIN32)
-  target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:
-      -g -Ofast -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
-  target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:C>:-g -Ofast>)
-endif()
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(
-    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-fcheck=all>)
-endif()
-# Enabled optimization fail on GFORTRAN/M1.
-#if(NOT APPLE_SILICON)
-#  target_compile_options(
-#    StormRuler_BASE INTERFACE $<$<COMPILE_LANGUAGE:Fortran>:-Ofast -march=native>)
-#endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.

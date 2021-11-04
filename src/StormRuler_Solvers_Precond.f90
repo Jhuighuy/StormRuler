@@ -29,7 +29,7 @@ module StormRuler_Solvers_Precond
 use StormRuler_Parameters, only: dp
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR
+use StormRuler_Array, only: tArrayR, AllocArray, ArrayAllocated
 
 use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -46,20 +46,16 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for T, typename in [SCALAR_TYPES[0]]
-  subroutine tPreMatVecFunc$T(mesh, PuArr, uArr, MatVec, precond_env)
+  subroutine tPreMatVecFunc$T(mesh, PuArr, uArr, MatVec, preEnv)
     import :: tMesh, tArray$T, tMatVecFunc$T
     class(tMesh), intent(inout) :: mesh
     class(tArray$T), intent(in), target :: uArr
     class(tArray$T), intent(inout), target :: PuArr
     procedure(tMatVecFunc$T) :: MatVec
-    class(*), intent(inout), allocatable, target :: precond_env
+    class(*), intent(inout), allocatable, target :: preEnv
   end subroutine tPreMatVecFunc$T
 #$end for
 end interface
-
-type :: tPrecondEnv_Diag
-  type(tArrayR), allocatable :: diag
-end type tPrecondEnv_Diag
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -69,83 +65,83 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Jacobi preconditioner: 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Precondition_Jacobi(mesh, Px, x, MatVec, precond_env)
-  ! <<<<<<<<<<<<<<<<<<<<<<
+subroutine Precondition_Jacobi(mesh, PxArr, xArr, MatVec, preEnv)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in), target :: x
-  class(tArrayR), intent(inout), target :: Px
+  class(tArrayR), intent(in), target :: xArr
+  class(tArrayR), intent(inout), target :: PxArr
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout), allocatable, target :: precond_env
-  ! >>>>>>>>>>>>>>>>>>>>>>
+  class(*), intent(inout), allocatable, target :: preEnv
 
-  class(tPrecondEnv_Diag), pointer :: diag_env
+  class(tArrayR), pointer :: diagArr
+  real(dp), pointer :: x(:,:), Px(:,:), diag(:,:)
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
-  if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_Diag :: precond_env)
+  if (.not.allocated(preEnv)) then
+    allocate(tArrayR :: preEnv)
   end if
-  select type(precond_env)
-    class is(tPrecondEnv_Diag)
-      diag_env => precond_env
+  select type(preEnv)
+    class is(tArrayR); diagArr => preEnv
+    class default; error stop 'Invalid `preEnv`'
   end select
 
   ! ----------------------
   ! Build the preconditioner.
   ! ----------------------
-  if (.not.allocated(diag_env%diag)) then
-    allocate(diag_env%diag, mold=x)
+  if (ArrayAllocated(diagArr)) then
+    call AllocArray(diagArr, mold=xArr)
 
     ! TODO: this is not a correct diagonal extraction in block case!
-    call Fill(mesh, Px, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec)
+    call Fill(mesh, PxArr, 1.0_dp)
+    call MatVecProd_Diagonal(mesh, diagArr, PxArr, MatVec)
   end if
 
   ! ----------------------
   ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
-  ! TODO: this is not a correct diagonal solution in block case!
   ! ----------------------
-  error stop 'Px(:,:) = x(:,:)/diag_env%diag(:,:)'
+  ! TODO: this is not a correct diagonal solution in block case!
+  Px(:,:) = x(:,:)/diag(:,:)
 
 end subroutine Precondition_Jacobi
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! LU-SGS preconditioner: 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝘥𝘪𝘢𝘨(𝓐)𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, precond_env)
+subroutine Precondition_LU_SGS(mesh, PxArr, xArr, MatVec, preEnv)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in), target :: x
-  class(tArrayR), intent(inout), target :: Px
+  class(tArrayR), intent(in), target :: xArr
+  class(tArrayR), intent(inout), target :: PxArr
   procedure(tMatVecFuncR) :: MatVec
-  class(*), intent(inout), allocatable, target :: precond_env
+  class(*), intent(inout), allocatable, target :: preEnv
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  class(tPrecondEnv_Diag), pointer :: diag_env
-  type(tArrayR) :: y
+  class(tArrayR), pointer :: diagArr
+  type(tArrayR) :: yArr
+  real(dp), pointer :: y(:,:), diag(:,:)
 
-  call y%AllocMold(x)
+  call yArr%AllocMold(xArr)
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
-  if (.not.allocated(precond_env)) then
-    allocate(tPrecondEnv_Diag :: precond_env)
+  if (.not.allocated(preEnv)) then
+    allocate(tArrayR :: preEnv)
   end if
-  select type(precond_env)
-    class is(tPrecondEnv_Diag)
-      diag_env => precond_env
+  select type(preEnv)
+    class is(tArrayR); diagArr => preEnv
+    class default; error stop 'Invalid `preEnv`'
   end select
 
   ! ----------------------
   ! Build the preconditioner.
   ! ----------------------
-  if (.not.allocated(diag_env%diag)) then
-    allocate(diag_env%diag, mold=x)
+  if (ArrayAllocated(diagArr)) then
+    call AllocArray(diagArr, mold=xArr)
 
-    call Fill(mesh, Px, 1.0_dp)
-    call MatVecProd_Diagonal(mesh, diag_env%diag, Px, MatVec)
+    call Fill(mesh, PxArr, 1.0_dp)
+    call MatVecProd_Diagonal(mesh, diagArr, PxArr, MatVec)
   end if
 
   ! ----------------------
@@ -153,10 +149,10 @@ subroutine Precondition_LU_SGS(mesh, Px, x, MatVec, precond_env)
   ! 𝒚 ← 𝘥𝘪𝘢𝘨(𝓐)𝒚,
   ! 𝓟𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)⁻¹𝒚.
   ! ----------------------
-  call Solve_Triangular(mesh, 'U', y, x, diag_env%diag, MatVec)
+  call Solve_Triangular(mesh, 'U', yArr, xArr, diagArr, MatVec)
   ! TODO: this is not a correct diagonal multiplication in block case!
-  error stop 'y(:,:) = diag_env%diag(:,:)*y(:,:)'
-  call Solve_Triangular(mesh, 'L', Px, y, diag_env%diag, MatVec)
+  y(:,:) = diag(:,:)*y(:,:)
+  call Solve_Triangular(mesh, 'L', PxArr, yArr, diagArr, MatVec)
 
 end subroutine Precondition_LU_SGS
 

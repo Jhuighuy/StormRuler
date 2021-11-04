@@ -145,17 +145,6 @@ void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
 
-void Fix_Mu(int dim, const SR_REAL* r,
-    int size, SR_REAL* fix_mu, const SR_REAL* mu, void* env) {
-  *fix_mu = *mu;
-
-  static const SR_REAL L = 2.0*M_PI;
-  if (fabs(2*L-r[1]) <= L*0.300 || fabs(r[1] < L*0.5)) {
-    *fix_mu = 0.1;
-  }
-
-} // Fix_Mu
-
 static SR_tFieldR rho_inv_, mu_;
 
 static void Poisson_VaD_MatVec(SR_tMesh mesh,

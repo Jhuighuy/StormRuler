@@ -42,11 +42,11 @@ type :: tArrayR
   ! ----------------------
   ! Contiguous data contained in the array.
   ! ----------------------
-  real(dp), contiguous, pointer :: mData(:)
+  real(dp), contiguous, pointer :: mData(:) => null()
   ! ----------------------
   ! Shape of the array.
   ! ----------------------
-  integer(ip), contiguous, pointer :: mShape(:)
+  integer(ip), contiguous, pointer :: mShape(:) => null()
 
 contains
   generic :: Alloc => AllocShape, AllocMold  
@@ -123,6 +123,12 @@ subroutine FreeArray$N(@{array$$}@)
 
 end subroutine FreeArray$N
 #$end do
+
+pure logical function ArrayAllocated(array)
+  class(tArrayR), intent(in) :: array
+
+  ArrayAllocated = associated(array%mShape)
+end function ArrayAllocated
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Get array rank.

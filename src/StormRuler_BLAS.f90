@@ -850,13 +850,15 @@ end subroutine MatVecProd_Triangular$T
 subroutine Solve_Triangular$T(mesh, upLo, xArr, bArr, diagArr, MatVec)
   class(tMesh), intent(inout) :: mesh
   class(tArray$T), intent(in) :: bArr, diagArr
-  class(tArray$T), intent(out) :: xArr
+  class(tArray$T), intent(inout) :: xArr
   procedure(tMatVecFunc$T) :: MatVec
   character, intent(in) :: upLo
 
   $typename, pointer :: x(:,:), b(:,:), diag(:,:)
 
-  call xArr%Get(x); call bArr%Get(b); call diagArr%Get(diag)
+  call xArr%Get(x); 
+  call bArr%Get(b); 
+  call diagArr%Get(diag)
 
   ! TODO: not very parallel..
   call mesh%SetRange(parallel=.false.)

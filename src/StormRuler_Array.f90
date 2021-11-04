@@ -25,6 +25,7 @@
 module StormRuler_Array
 
 #$use 'StormRuler_Params.fi'
+#$let NUM_ARRAYS = 10
 
 use StormRuler_Parameters, only: dp, ip
 
@@ -65,13 +66,13 @@ end type tArrayR
 
 interface AllocArray
   module procedure AllocArrayShape
-#$do N = 1, NUM_RANKS
+#$do N = 1, NUM_ARRAYS
   module procedure AllocArrayMold$N
 #$end do
 end interface AllocArray
 
 interface FreeArray
-#$do N = 1, NUM_RANKS
+#$do N = 1, NUM_ARRAYS
   module procedure FreeArray$N
 #$end do
 end interface FreeArray
@@ -96,14 +97,13 @@ end subroutine AllocArrayShape
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Allocate a contiguous array a mold.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do N = 1, NUM_RANKS
+#$do N = 1, NUM_ARRAYS
 subroutine AllocArrayMold$N(@{array$$}@, mold)
   class(tArrayR), intent(inout) :: @{array$$}@
   class(tArrayR), intent(in) :: mold
 
 #$do I = 1, N
-  allocate(array$I%mShape, source=mold%mShape) 
-  allocate(array$I%mData, mold=mold%mData)
+  call AllocArrayShape(array$I, mold%mShape) 
 #$end do
 
 end subroutine AllocArrayMold$N
@@ -112,7 +112,7 @@ end subroutine AllocArrayMold$N
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Free an array. 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$do N = 1, NUM_RANKS
+#$do N = 1, NUM_ARRAYS
 subroutine FreeArray$N(@{array$$}@)
   class(tArrayR), intent(inout) :: @{array$$}@
 

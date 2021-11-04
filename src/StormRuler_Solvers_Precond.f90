@@ -97,6 +97,8 @@ subroutine Precondition_Jacobi(mesh, PxArr, xArr, MatVec, preEnv)
     call MatVecProd_Diagonal(mesh, diagArr, PxArr, MatVec)
   end if
 
+  call xArr%Get(x); call PxArr%Get(Px); call diagArr%Get(diag)
+
   ! ----------------------
   ! 𝓟𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)⁻¹𝒙.
   ! ----------------------
@@ -117,11 +119,9 @@ subroutine Precondition_LU_SGS(mesh, PxArr, xArr, MatVec, preEnv)
   class(*), intent(inout), allocatable, target :: preEnv
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  class(tArrayR), pointer :: diagArr
   type(tArrayR) :: yArr
+  class(tArrayR), pointer :: diagArr
   real(dp), pointer :: y(:,:), diag(:,:)
-
-  call yArr%AllocMold(xArr)
 
   ! ----------------------
   ! Cast preconditioner environment.
@@ -137,12 +137,16 @@ subroutine Precondition_LU_SGS(mesh, PxArr, xArr, MatVec, preEnv)
   ! ----------------------
   ! Build the preconditioner.
   ! ----------------------
-  if (ArrayAllocated(diagArr)) then
+  if (.not.ArrayAllocated(diagArr)) then
     call AllocArray(diagArr, mold=xArr)
 
     call Fill(mesh, PxArr, 1.0_dp)
     call MatVecProd_Diagonal(mesh, diagArr, PxArr, MatVec)
   end if
+
+  call AllocArray(yArr, mold=xArr)
+  call yArr%Get(y); 
+  call diagArr%Get(diag)
 
   ! ----------------------
   ! 𝒚 ← 𝘵𝘳𝘪𝘶(𝓐)⁻¹𝒙,

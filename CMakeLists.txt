@@ -54,12 +54,15 @@ endif()
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>:
-      -Werror -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
+      -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-fcheck=all>>)
 elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>: -warn all,nounused>)
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+    #target_compile_options(StormRuler_BASE INTERFACE
+    #  $<$<COMPILE_LANGUAGE:Fortran>: -warn all,nounused>)
 else()
   message(WARNING 
     "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, warning options not set.")
@@ -67,15 +70,13 @@ endif()
 # Warning and diagnostics options (C/C++).
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:
-      -Werror -Wall -Wextra -Wpedantic 
-      -Wno-unused-function -Wno-unused-parameter>)
+    $<$<COMPILE_LANGUAGE:C,CXX>: -Werror -Wall -Wextra 
+       -Wpedantic -Wno-unused-function -Wno-unused-parameter>)
 elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
        "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
   target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:
-      -Werror -Wall -Wextra -Wpedantic 
-      -Wno-unused-function -Wno-unused-parameter
+    $<$<COMPILE_LANGUAGE:C,CXX>:-Werror -Wall -Wextra -Wpedantic 
+      -Wno-unused-function -Wno-unused-parameter 
       -Wno-gnu-zero-variadic-macro-arguments>)
 else()
   message(WARNING 
@@ -95,6 +96,11 @@ elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
     $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -O0>>)
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+    target_compile_options(StormRuler_BASE INTERFACE
+      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -C -O0>>)
+    target_compile_options(StormRuler_BASE INTERFACE
+      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -O4 -march=native>>)
 else()
   message(WARNING 
     "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, optimization options not set.")

@@ -116,9 +116,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
       params%Name = params%Name//'(LU-SGS-'
       call SelectMethod(Precondition_LU_SGS)
     case default
-      write(error_unit, *) &
-        & 'invalid precond method, preMethod=', preMethod
-      error stop error_code
+      error stop 'invalid precond method, preMethod='//preMethod
   end select
 
 contains
@@ -145,8 +143,7 @@ contains
         params%Name = params%Name//'LSMR)'
         call Solve_LSMR(mesh, x, f, uMatVec, params, PreMatVec)
       case default
-        write(error_unit, *) 'invalid method, method=', method
-        error stop error_code
+        error stop 'invalid method, method='//method
     end select
 
   end subroutine SelectMethod

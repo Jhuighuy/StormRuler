@@ -89,7 +89,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  real(dp) :: alpha, beta, beta_bar, gamma, delta, deltaBar, &
+  real(dp) :: alpha, beta, betaBar, gamma, delta, deltaBar, &
     & epsilon, epsilonBar, tau, phi, phiTilde, cs, sn
   type(tArray$T) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
   class(*), allocatable :: preEnv
@@ -119,7 +119,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
   else
     q = zBar
   end if
-  beta_bar = 1.0_dp; beta = sqrt(Dot(mesh, q, zBar))
+  betaBar = 1.0_dp; beta = sqrt(Dot(mesh, q, zBar))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
@@ -144,14 +144,14 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     call MatVec(mesh, p, q)
     alpha = Dot(mesh, q, p)/(beta**2)
     call Sub(mesh, z, p, zBar, alpha/beta, 1.0_dp/beta)
-    call Sub(mesh, z, z, zBarBar, beta/beta_bar)
+    call Sub(mesh, z, z, zBarBar, beta/betaBar)
     if (present(PreMatVec)) then
       tmp = qBar; qBar = q; q = tmp
       call PreMatVec(mesh, q, z, MatVec, preEnv)
     else
       qBar = q; q = z
     end if
-    beta_bar = beta; beta = sqrt(Dot(mesh, q, z))
+    betaBar = beta; beta = sqrt(Dot(mesh, q, z))
     tmp = zBarBar; zBarBar = zBar; zBar = z; z = tmp
 
     ! ----------------------
@@ -163,7 +163,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     deltaBar = cs*delta + sn*alpha; gamma = sn*delta - cs*alpha
     epsilonBar = epsilon; epsilon = sn*beta; delta = -cs*beta
-    call SymOrtho(gamma + 0.0_dp, beta, cs, sn, gamma)
+    call SymOrtho(+gamma, beta, cs, sn, gamma)
     tau = cs*phi; phi = sn*phi
     
     ! ----------------------
@@ -173,7 +173,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝒙 ← 𝒙 + 𝜏𝒘,
     ! 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
     ! ----------------------
-    call Sub(mesh, w, qBar, wBar, deltaBar/gamma, 1.0_dp/(beta_bar*gamma))
+    call Sub(mesh, w, qBar, wBar, deltaBar/gamma, 1.0_dp/(betaBar*gamma))
     call Sub(mesh, w, w, wBarBar, epsilonBar/gamma)
     call Add(mesh, x, x, w, tau)
     tmp = wBarBar; wBarBar = wBar; wBar = w; w = tmp

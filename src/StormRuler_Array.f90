@@ -50,16 +50,12 @@ type :: tArrayR
   integer(ip), contiguous, pointer :: mShape(:) => null()
 
 contains
-  generic :: Alloc => AllocShape, AllocMold  
-  procedure :: AllocShape => AllocArrayShape
-  procedure :: AllocMold => AllocArrayMold$1
-
   procedure :: Free => FreeArray$1
 
   procedure :: Rank => ArrayRank
 
 #$do N = 1, NUM_RANKS
-  generic :: Get => Get$N 
+  generic :: Get => Get$N
   procedure :: Get$N => GetArrayData$N
 #$end do
 end type tArrayR

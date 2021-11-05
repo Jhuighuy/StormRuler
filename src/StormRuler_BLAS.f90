@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp, ip, gCylCoords
 use StormRuler_Helpers, only: Re, Im, R2C, operator(.inner.), operator(.outer.)
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR
+use StormRuler_Array, only: tArrayR, AllocArray
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -757,7 +757,7 @@ contains
     type(tArray$T) :: eArr
     $typename, pointer :: e(:,:)
 
-    call eArr%AllocMold(xArr)
+    call AllocArray(eArr, mold=xArr)
     call eArr%Get(e)
 
     e(:,:) = 0.0_dp
@@ -805,7 +805,7 @@ contains
     type(tArray$T) :: eArr
     $typename, pointer :: e(:,:)
 
-    call eArr%AllocMold(xArr)
+    call AllocArray(eArr, mold=xArr)
     call eArr%Get(e)
 
     e(:,:firstCell-1) = 0.0_dp
@@ -826,7 +826,7 @@ contains
     type(tArray$T) :: eArr
     $typename, pointer :: e(:,:)
 
-    call eArr%AllocMold(xArr)
+    call AllocArray(eArr, mold=xArr)
     call eArr%Get(e)
 
     e(:,:lastCell) = x(:,:lastCell)
@@ -873,10 +873,11 @@ contains
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer(ip) :: iCell
+
     type(tArray$T) :: AxArr
     $typename, pointer :: Ax(:,:)
 
-    call AxArr%AllocMold(xArr)
+    call AllocArray(xArr, mold=AxArr)
     call AxArr%Get(Ax)
 
     Ax(:,:) = 0.0_dp
@@ -899,7 +900,7 @@ contains
     type(tArray$T) :: AxArr
     $typename, pointer :: Ax(:,:)
 
-    call AxArr%AllocMold(xArr)
+    call AllocArray(xArr, mold=AxArr)
     call AxArr%Get(Ax)
 
     Ax(:,:) = 0.0_dp

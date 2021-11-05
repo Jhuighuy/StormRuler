@@ -36,32 +36,3 @@ void SR_PrintPointer(const void* p) {
   fprintf(stdout, "PRINT_PTR=%p\n", p);
   fflush(stdout);
 } // SR_PrintPointer
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
-#if 0
-struct SR_tRequestMRCIStruct {
-  SR_STRING String;
-  SR_tFieldR Ay, y;
-}; // struct SR_tRequestMRCIStruct
-
-SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
-    SR_STRING method, SR_STRING precondMethod,
-    SR_tFieldR x, SR_tFieldR b) {
-  static SR_tRequestMRCIStruct request;
-  request.String = SR_RCI_LinSolveR(mesh, 
-    method, precondMethod, x, b, &request.Ay, &request.y);
-  return &request;
-} // SR_MRCI_LinSolveR
-
-SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request) {
-  return request->String != NULL ? request->String : "Done";
-} // SR_MRCI_ReadRequest
-
-SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index) {
-  if (index == 1) return request->Ay;
-  if (index == 2) return request->y;
-  return NULL;
-} // SR_MRCI_ReadFields
-#endif

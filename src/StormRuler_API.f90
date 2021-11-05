@@ -28,11 +28,10 @@ module StormRuler_API
 
 use StormRuler_Parameters, only: dp, ip, i8, error_code
 use StormRuler_Helpers
-use StormRuler_Array, only: tArrayR
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_IO, only: tIOList => IOList ! TODO:
-use StormRuler_IO
+use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
+use StormRuler_IO, only: tIOList => IOList
 
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
@@ -47,10 +46,10 @@ use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
-use StormRuler_FDM_Operators, only: &
-  & FDM_Gradient_Central, FDM_Divergence_Central, &
+use StormRuler_FDM_Operators, only: FDM_Gradient, FDM_Divergence, &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
-  use StormRuler_FDM_Convection, only: &
+use StormRuler_FDM_RhieChow, only: FDM_Divergence_RhieChow
+use StormRuler_FDM_Convection, only: &
   & FDM_Convection_Central
 
 use, intrinsic :: iso_fortran_env, only: error_unit
@@ -224,6 +223,7 @@ end subroutine UnwrapField$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
+  use StormRuler_IO, only: Load_PPM
   type(c_ptr) :: pMesh
 
   class(tMesh), pointer :: gMesh
@@ -266,20 +266,6 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 
 end function cInitMesh
 
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cMesh_NumCells(pMesh) result(numCells) bind(C, name='SR_Mesh_NumCells')
-  type(c_ptr), intent(in), value :: pMesh
-  integer(c_int) :: numCells
-
-  class(tMesh), pointer :: mesh
-
-  call Unwrap(mesh, pMesh)
-
-  numCells = int(mesh%NumCells, kind=c_int)
-
-end function cMesh_NumCells
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -305,7 +291,7 @@ function cAlloc$T(pMesh, numVars, rank) result(pY) bind(C, name='SR_Alloc$T')
   allocate(pY_C)
 #$if T == 'R'
   allocate(pY_C%mArray)
-  call pY_C%mArray%Alloc(shape)
+  call AllocArray(pY_C%mArray, shape=shape)
   call pY_C%mArray%Get(pY_C%mData)
 #$end if
   pY_C%mRank = rank
@@ -328,7 +314,7 @@ function cAlloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
   allocate(pY_C)
 #$if T == 'R'
   allocate(pY_C%mArray)
-  call pY_C%mArray%Alloc(pX_C%mArray%mShape)
+  call AllocArray(pY_C%mArray, mold=pX_C%mArray)
   call pY_C%mArray%Get(pY_C%mData)
 #$end if
   pY_C%mRank = pX_C%mRank
@@ -351,53 +337,6 @@ subroutine cFree$T(pX) bind(C, name='SR_Free$T')
   deallocate(pX_C%mArray)
 
 end subroutine cFree$T
-#$end for
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
-function cAt$T(pX, iCell) result(pXi) bind(C, name='SR_At$T')
-  type(c_ptr), intent(in), value :: pX
-  integer(c_int), intent(in), value :: iCell
-  type(c_ptr) :: pXi
-
-  $typename, pointer :: x(:,:)
-
-  call Unwrap(x, pX)
-
-  pXi = c_loc(x(:,iCell))
-
-end function cAt$T
-#$end for
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
-integer(c_int) function cIsVecField$T(pX) bind(C, name='SR_IsVecField$T')
-  type(c_ptr), intent(in), value :: pX
-
-  real(dp), pointer :: x(:,:)
-  integer :: rank
-
-  call Unwrap(x, pX, rank=rank)
-  cIsVecField$T = merge(1, 0, rank == 2)
-
-end function cIsVecField$T
-#$end for
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in SCALAR_TYPES
-integer(c_int) function cIsMatField$T(pX) bind(C, name='SR_IsMatField$T')
-  type(c_ptr), intent(in), value :: pX
-
-  real(dp), pointer :: x(:,:)
-  integer :: rank
-
-  call Unwrap(x, pX, rank=rank)
-  cIsMatField$T = merge(1, 0, rank == 3)
-
-end function cIsMatField$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -524,8 +463,8 @@ end subroutine cSet$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cScale$T(pMesh, pY, pX, alpha) bind(C, name='SR_Scale$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: alpha
   type(c_ptr), intent(in), value :: pX, pY
+  $typename, intent(in), value :: alpha
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, yArr
@@ -543,8 +482,8 @@ end subroutine cScale$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cAdd$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='SR_Add$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: alpha, beta
   type(c_ptr), intent(in), value :: pX, pY, pZ
+  $typename, intent(in), value :: alpha, beta
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, yArr, zArr
@@ -875,8 +814,8 @@ subroutine cApplyBCs$T(pMesh, pU, BCmask, &
       & alpha, beta, gamma) bind(C, name='SR_ApplyBCs$T')
   type(c_ptr), intent(in), value :: pMesh
   integer(c_int), intent(in), value :: BCmask
-  $typename, intent(in), value :: alpha, beta, gamma
   type(c_ptr), intent(in), value :: pU
+  $typename, intent(in), value :: alpha, beta, gamma
 
   class(tMesh), pointer :: mesh
   $typename, pointer :: u(:,:)
@@ -961,8 +900,8 @@ end subroutine cApplyBCs_InOutLet$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cGradient$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pU, pVVec
+  $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uArr, vVecArr
@@ -970,7 +909,7 @@ subroutine cGradient$T(pMesh, pVVec, lambda, pU) bind(C, name='SR_Grad$T')
   call Unwrap(mesh, pMesh)
   call Unwrap(uArr, pU); call Unwrap(vVecArr, pVVec)
 
-  call FDM_Gradient_Central(mesh, vVecArr, lambda, uArr)
+  call FDM_Gradient(mesh, vVecArr, lambda, uArr)
 
 end subroutine cGradient$T
 #$end for
@@ -980,8 +919,8 @@ end subroutine cGradient$T
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine cDivergence$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
   type(c_ptr), intent(in), value :: pMesh
-  $typename, intent(in), value :: lambda
   type(c_ptr), intent(in), value :: pUVec, pV
+  $typename, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uVecArr, vArr
@@ -989,10 +928,29 @@ subroutine cDivergence$T(pMesh, pV, lambda, pUVec) bind(C, name='SR_Div$T')
   call Unwrap(mesh, pMesh)
   call Unwrap(uVecArr, pUVec); call Unwrap(vArr, pV)
 
-  call FDM_Divergence_Central(mesh, vArr, lambda, uVecArr)
+  call FDM_Divergence(mesh, vArr, lambda, uVecArr)
 
 end subroutine cDivergence$T
 #$end for
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine cDivergence_RhieChow(pMesh, pV, lambda, pUVec, &
+    & tau, pP, pRho) bind(C, name='SR_DivRC')
+  type(c_ptr), intent(in), value :: pMesh
+  type(c_ptr), intent(in), value :: pUVec, pV, pP, pRho
+  real(dp), intent(in), value :: lambda, tau
+
+  class(tMesh), pointer :: mesh
+  class(tArrayR), pointer :: uVecArr, vArr, pArr, rhoArr
+
+  call Unwrap(mesh, pMesh)
+  call Unwrap(uVecArr, pUVec); call Unwrap(vArr, pV)
+  call Unwrap(pArr, pP); call Unwrap(rhoArr, pRho)
+
+  call FDM_Divergence_RhieChow(mesh, vArr, lambda, uVecArr, tau, pArr, rhoArr)
+
+end subroutine cDivergence_RhieChow
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

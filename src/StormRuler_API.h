@@ -95,25 +95,9 @@ SR_DEFINE_OPAQUE_(SR_tSymbol);
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-SR_DEFINE_OPAQUE_(SR_tCFunc);
-
-SR_API SR_tCFunc SR_NewCFunc(SR_STRING cSource);
-
-SR_API void SR_CFunc_Free(SR_tCFunc cFunc);
-
-SR_API void SR_CFunc_Bind(SR_tCFunc cFunc, 
-    SR_STRING cFuncSymbol, void* cFuncSymbolData);
-
-SR_API void* SR_CFunc_Query(SR_tCFunc cFunc, SR_STRING cFuncSymbol);
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
 SR_DEFINE_OPAQUE_(SR_tMesh);
 
 SR_API SR_tMesh SR_InitMesh(void);
-
-SR_API SR_INTEGER SR_Mesh_NumCells(SR_tMesh mesh);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -153,36 +137,6 @@ SR_API void SR_FreeS(SR_tFieldS x);
 #if SR_C11
 #define SR_Free(x) \
   SR_FIELD_GENERIC_EXT_(x, SR_Free)(x)
-#endif
-/// @}
-
-/// @{
-SR_API SR_REAL* SR_AtR(SR_tFieldR x, SR_INTEGER iCell);
-SR_API SR_COMPLEX* SR_AtC(SR_tFieldC x, SR_INTEGER iCell);
-SR_API SR_SYMBOL* SR_AtS(SR_tFieldS x, SR_INTEGER iCell);
-#if SR_C11
-#define SR_At(x) \
-  SR_FIELD_GENERIC_EXT_(x, SR_At)(x)
-#endif
-/// @}
-
-/// @{
-SR_API SR_INTEGER SR_IsVecFieldR(SR_tFieldR x);
-SR_API SR_INTEGER SR_IsVecFieldC(SR_tFieldC x);
-SR_API SR_INTEGER SR_IsVecFieldS(SR_tFieldS x);
-#if SR_C11
-#define SR_IsVecField(x) \
-  SR_FIELD_GENERIC_EXT_(x, SR_IsVecField)(x)
-#endif
-/// @}
-
-/// @{
-SR_API SR_INTEGER SR_IsMatFieldR(SR_tFieldR x);
-SR_API SR_INTEGER SR_IsMatFieldC(SR_tFieldC x);
-SR_API SR_INTEGER SR_IsMatFieldS(SR_tFieldS x);
-#if SR_C11
-#define SR_IsMatField(x) \
-  SR_FIELD_GENERIC_EXT_(x, SR_IsMatField)(x)
 #endif
 /// @}
 
@@ -418,15 +372,6 @@ SR_API SR_STRING SR_RCI_LinSolveC(SR_tMesh mesh,
 #endif
 /// @}
 
-#if 0
-SR_DEFINE_OPAQUE_(SR_tRequestMRCI);
-
-SR_API SR_tRequestMRCI SR_MRCI_LinSolveR(SR_tMesh mesh,
-  SR_STRING method, SR_STRING preMethod, SR_tFieldR x, SR_tFieldR b);
-SR_API SR_STRING SR_MRCI_ReadRequest(SR_tRequestMRCI request);
-SR_API SR_tFieldR SR_MRCI_ReadFields(SR_tRequestMRCI request, SR_INTEGER index);
-#endif
-
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
@@ -486,6 +431,11 @@ SR_API void SR_DivS(SR_tMesh mesh,
 #define SR_Div(mesh, v, lambda, uVec) \
   SR_FIELD_GENERIC_EXT_(v, SR_Div)(mesh, v, lambda, uVec)
 #endif
+/// @}
+
+/// @{
+SR_API void SR_DivRC(SR_tMesh mesh, SR_tFieldR v,
+  SR_REAL lambda, SR_tFieldR uVec, SR_REAL tau, SR_tFieldR p, SR_tFieldR rho);
 /// @}
 
 /// @{

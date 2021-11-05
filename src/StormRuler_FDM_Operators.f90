@@ -53,8 +53,8 @@ contains
 !! Shape of 𝒖 is [1, NumVars]×[1, NumAllCells],
 !! shape of 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Gradient_Central(mesh, vVecArr, lambda, uArr, &
-    &                           dirAll, dirFace, dirCellFace)
+subroutine FDM_Gradient(mesh, vVecArr, lambda, uArr, &
+    &                   dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
   class(tArrayR), intent(in) :: uArr
   class(tArrayR), intent(inout) :: vVecArr
@@ -273,15 +273,15 @@ contains
       end associate
     end do
   end subroutine FDM_Gradient_Forward_Kernel
-end subroutine FDM_Gradient_Central
+end subroutine FDM_Gradient
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The central FDM-approximate divergence: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖⃗.
 !! Shape of 𝒖⃗ is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
 !! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Divergence_Central(mesh, vArr, lambda, uVecArr, &
-    &                             dirAll, dirFace, dirCellFace)
+subroutine FDM_Divergence(mesh, vArr, lambda, uVecArr, &
+    &                     dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
   class(tArrayR), intent(in) :: uVecArr
   class(tArrayR), intent(inout) :: vArr
@@ -537,7 +537,7 @@ contains
       end associate
     end do
   end subroutine FDM_Divergence_Backward_Kernel
-end subroutine FDM_Divergence_Central
+end subroutine FDM_Divergence
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

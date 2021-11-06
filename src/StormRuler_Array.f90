@@ -54,6 +54,8 @@ contains
 
   procedure :: Rank => ArrayRank
 
+  procedure :: At => ArrayAt
+
 #$do N = 1, NUM_RANKS
   generic :: Get => Get$N
   procedure :: Get$N => GetArrayData$N
@@ -135,6 +137,19 @@ pure integer(ip) function ArrayRank(array)
   ArrayRank = size(array%mShape)
 
 end function ArrayRank
+
+!! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+type(tArrayR) function ArrayAt(array, index)
+  class(tArrayR), intent(in) :: array
+  integer(ip) :: index
+
+  real(dp), pointer :: data(:,:)
+
+  call array%Get(data)
+  ArrayAt%mShape => array%mShape(1:size(array%mShape)-1)
+  ArrayAt%mData => data(:,index)
+end function ArrayAt
 
 !! ----------------------------------------------------------------- !!
 !! Transform the shape.

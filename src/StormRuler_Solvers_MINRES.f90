@@ -26,7 +26,7 @@ module StormRuler_Solvers_MINRES
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp
+use StormRuler_Parameters, only: dp, ip
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR, AllocArray
@@ -60,6 +60,26 @@ end interface Solve_GMRES
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
+
+!! ----------------------------------------------------------------- !!
+!! Generate Givens rotation.
+!! ----------------------------------------------------------------- !!
+subroutine SymOrtho(a, b, cs, sn, rr)
+  real(dp), intent(in) :: a, b
+  real(dp), intent(out) :: cs, sn, rr
+
+  ! ----------------------
+  ! 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  ! 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟. 
+  ! ----------------------
+  rr = hypot(a, b)
+  if (rr > 0.0_dp) then
+    cs = a/rr; sn = b/rr
+  else
+    cs = 1.0_dp; sn = 0.0_dp
+  end if
+
+end subroutine SymOrtho
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear self-adjoint indefinite operator equation: 
@@ -184,24 +204,18 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     if (params%Check(phi, phi/phiTilde)) exit
   end do
-  
-contains
-  subroutine SymOrtho(a, b, cs, sn, rr)
-    real(dp), intent(in) :: a, b
-    real(dp), intent(out) :: cs, sn, rr
 
-    rr = hypot(a, b)
-    if (rr > 0.0_dp) then
-      cs = a/rr; sn = b/rr
-    else
-      cs = 1.0_dp; sn = 0.0_dp
-    end if
-  end subroutine SymOrtho
 end subroutine Solve_MINRES$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!!
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! the monstrous Generalized minimal residual method (GMRES).
+!! 
+!! GMRES may be applied to the singular problems, and the square
+!! least squares problems: ‖(𝓐[𝓜]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
+!! although convergeance to minimum norm solution is not guaranteed 
+!! (is this true?).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
@@ -211,6 +225,116 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   procedure(tMatVecFunc$T) :: MatVec
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
+
+  integer(ip), parameter :: MaxIter = 500
+
+  $typename :: chi, phi, phiTilde
+  $typename, pointer :: beta(:), cs(:), sn(:), y(:), H(:,:)
+  type(tArray$T) :: Q, Qq, Qi, r
+  integer(ip) :: i, k
+
+  associate(m => MaxIter)
+    allocate(beta(m+1), cs(m), sn(m), y(m), H(m+1,m))
+    call AllocArray(Q, shape=[x%mShape, m])
+  end associate
+  call AllocArray(r, mold=x)
+
+  ! ----------------------
+  ! Pre-initialize:
+  ! 𝒓 ← 𝓐𝒙,
+  ! 𝒓 ← 𝒃 - 𝒓,
+  ! 𝜑̃ ← ‖𝒓‖,
+  ! Check convergence for 𝜑̃.
+  ! ----------------------
+
+  do
+    ! ----------------------
+    ! Initialize:
+    ! 𝒓 ← 𝓐𝒙,
+    ! 𝒓 ← 𝒃 - 𝒓,
+    ! 𝜑̃ ← ‖𝒓‖,
+    ! Check convergence for 𝜑̃.
+    ! ----------------------
+    call MatVec(mesh, r, x)
+    call Sub(mesh, r, b, r)
+    phiTilde = Norm_2(mesh, r)
+    if (params%Check(phiTilde)) return
+
+    ! ----------------------
+    ! 𝒄𝒔 ← {0}ᵀ, 𝒔𝒏 ← {0}ᵀ,
+    ! 𝜷 ← {𝜑̃,0,…,0}ᵀ,
+    ! 𝓠₁ ← 𝒓/𝜑̃. 
+    ! ----------------------
+    cs(:) = 0.0_dp; sn(:) = 0.0_dp
+    beta(1) = phiTilde; beta(2:) = 0.0_dp
+    Qq = Q%At(1); call Scale(mesh, Qq, r, 1.0_dp/phiTilde)
+
+    do k = 1, MaxIter
+      ! ----------------------
+      ! Arnoldi iteration:
+      ! 𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
+      ! 𝗳𝗼𝗿 𝑖 = 1, 𝑘 𝗱𝗼:
+      !   𝓗ᵢₖ ← <𝓠ₖ₊₁⋅𝓠ᵢ>,
+      !   𝓠ₖ₊₁ ← 𝓠ₖ₊₁ - 𝓗ᵢₖ𝓠ᵢ,
+      ! 𝗲𝗻𝗱 𝗳𝗼𝗿
+      ! 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
+      ! ----------------------
+      Qi = Q%At(k); Qq = Q%At(k+1)
+      call MatVec(mesh, Qq, Qi)
+      do i = 1, k
+        Qi = Q%At(i); H(i,k) = Dot(mesh, Qq, Qi)
+        call Sub(mesh, Qq, Qq, Qi, H(i,k))
+      end do
+      H(k+1,k) = Norm_2(mesh, Qq); call Scale(mesh, Qq, Qq, 1.0_dp/H(k+1,k))
+
+      ! ----------------------
+      ! Eliminate the last element in 𝓗
+      ! and and update the rotation matrix:
+      ! 𝗳𝗼𝗿 𝑖 = 1, 𝑘 - 1 𝗱𝗼:
+      !   𝜒 ← 𝒄𝒔ᵢ⋅𝓗ᵢₖ + 𝒔𝒏ᵢ⋅𝓗ᵢ₊₁,ₖ,
+      !   𝓗ᵢ₊₁,ₖ ← -𝒔𝒏ᵢ⋅𝓗ᵢₖ + 𝒄𝒔ᵢ⋅𝓗ᵢ₊₁,ₖ 
+      !   𝓗ᵢₖ ← 𝜒,
+      ! 𝗲𝗻𝗱 𝗳𝗼𝗿
+      ! 𝒄𝒔ₖ, 𝒔𝒏ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝓗ₖₖ, 𝓗ₖ₊₁,ₖ),
+      ! 𝓗ₖₖ ← 𝒄𝒔ₖ⋅𝓗ₖₖ + 𝒔𝒏ₖ⋅𝓗ₖ₊₁,ₖ,
+      ! 𝓗ₖ₊₁,ₖ ← 0.
+      ! ----------------------
+      do i = 1, k - 1
+        chi = cs(i)*H(i,k) + sn(i)*H(i+1,k)
+        H(i+1,k) = -sn(i)*H(i,k) + cs(i)*H(i+1,k)
+        H(i,k) = chi
+      end do
+      call SymOrtho(H(k,k), H(k+1,k), cs(k), sn(k), chi)
+      H(k,k) = cs(k)*H(k,k) + sn(k)*H(k+1,k)
+      H(k+1,k) = 0.0_dp
+
+      ! ----------------------
+      ! Update the residual vector:
+      ! 𝜷ₖ₊₁ ← -𝒔𝒏ₖ𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
+      ! 𝜑 ← |𝜷ₖ₊₁|,
+      ! Check convergence for 𝜑 and 𝜑/𝜑̃.
+      ! TODO: is 𝜑 = ‖𝒓‖ here?
+      ! ----------------------
+      beta(k+1) = -sn(k)*beta(k); beta(k) = cs(k)*beta(k)
+      phi = abs(beta(k+1))
+      if (params%Check(phi, phi/phiTilde)) exit
+
+    end do
+
+    ! ----------------------
+    ! Compute 𝒙-solution:
+    ! 𝒚 ← (𝓗₁:ₖ,₁:ₖ)⁻¹𝜷₁:ₖ, 
+    ! // TODO: here should be ‖𝓗₁:ₖ,₁:ₖ𝒚 - 𝜷₁:ₖ‖₂ → 𝘮𝘪𝘯
+    ! 𝗳𝗼𝗿 𝑖 = 1, 𝑘 𝗱𝗼:
+    !   𝒙 ← 𝒙 + 𝒚ᵢ𝓠ᵢ.
+    ! 𝗲𝗻𝗱 𝗳𝗼𝗿
+    ! ----------------------
+    do i = 1, k
+      Qi = Q%At(i); call Add(mesh, x, x, Qi, y(i))
+    end do
+    error stop 229
+
+  end do
 
   error stop 'not implemented'
 end subroutine Solve_GMRES$T

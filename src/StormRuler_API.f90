@@ -41,7 +41,7 @@ use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
 
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Unified, only: LinSolve, LinSolve_RCI
+use StormRuler_Solvers_Unified, only: LinSolve
 use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &
@@ -230,10 +230,9 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 
 #$if False
 
-  integer(ip), Parameter :: Nx = 100, Ny = 100
-  Real(8), Parameter :: Dx = 1.0_dp/Nx, Dy = 1.0_dp/Ny
+  integer(ip), parameter :: nx = 100, ny = 100
+  real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
   allocate(gMesh)
-  gMesh%dt = dt
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
 
 #$else
@@ -241,19 +240,27 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
   integer(ip), allocatable :: pixels(:,:)
   integer(ip), allocatable :: colorToBCM(:)
+
   allocate(gMesh)
+
   call Load_PPM('test/Domain-100-Tube.ppm', pixels)
-  !colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
-  colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
-    & PixelToInt([0, 255, 0]), PixelToInt([0, 0, 255]), PixelToInt([255, 0, 255])]
+
+  colorToBCM = &
+    & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
+    &   PixelToInt([  0, 255,   0]), PixelToInt([0, 0, 255]), &
+    &   PixelToInt([255,   0, 255]) ]
   call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
+  
   allocate(gMesh%dr(1:2, 1:4))
+  
   gMesh%dl = [Dx,Dx,Dy,Dy]
   gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
   gMesh%dr(:,2) = [gMesh%dl(1), 0.0_dp]
   gMesh%dr(:,3) = [0.0_dp, gMesh%dl(3)]
   gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
+
   call gMesh%PrintTo_Neato('test/c2c.dot')
+  
   call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
 
 #$endif
@@ -746,62 +753,6 @@ contains
   end subroutine cMatVec
 end subroutine cSolve_JFNK$T
 #$end for
-
-#$if False
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-#$for T, typename in [SCALAR_TYPES[0]]
-function cRCI_LinSolve$T(pMesh, pMethod, pPreMethod, &
-    & pX, pB, pAy, pY) result(pRequest) bind(C, name='SR_RCI_LinSolve$T')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pMethod, pPreMethod
-  type(c_ptr), intent(in), value :: pX, pB
-  type(c_ptr), intent(inout) :: pAy, pY
-  type(c_ptr) :: pRequest
-
-  class(tMesh), pointer :: mesh
-  character(len=:), pointer :: method, preMethod
-  $typename, pointer :: x(:,:), b(:,:), Ay(:,:), y(:,:)
-
-  type(tConvParams) :: params
-  character(len=:), allocatable, target, save :: sRequest
-  type(tFieldStruct$T), target, save :: csY, csAy
-
-  if (.not.c_associated(pMesh)) then
-    sRequest = LinSolve_RCI(resetState=.true.)
-    if (allocated(sRequest)) deallocate(sRequest)
-    pRequest = c_null_ptr
-    return
-  end if
-
-  call Unwrap(mesh, pMesh)
-  call Unwrap(method, pMethod); call Unwrap(preMethod, pPreMethod)
-  call Unwrap(x, pX); call Unwrap(b, pB)
-  
-  call params%Init(1.0D-8, 1.0D-8, 2000)
-
-  ! Get the request.
-  sRequest = LinSolve_RCI( &
-    & mesh, method, preMethod, x, b, params, Ay, y)
-
-  if (sRequest == 'Done') then
-
-    deallocate(sRequest)
-    pRequest = c_null_ptr
-
-  else
-
-    sRequest = sRequest//c_null_char
-    pRequest = c_loc(sRequest)
-
-    csAy%mData => Ay; csY%mData => y
-    pAy = c_loc(csAy); pY = c_loc(csY)
-
-  end if
-
-end function cRCI_LinSolve$T
-#$end for
-#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

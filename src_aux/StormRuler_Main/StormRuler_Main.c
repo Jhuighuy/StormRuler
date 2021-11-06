@@ -238,7 +238,9 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   // 
   rhs = SR_Alloc_Mold(p);
   SR_Set(mesh, rhs, p);
-  SR_DivRC(mesh, rhs, 1.0, v_hat, tau, p, rho);
+  SR_Div(mesh, rhs, 1.0, v_hat);
+  SetBCs_w(mesh, rho);
+  SR_CorrRC(mesh, rhs, 1.0, tau, p, rho);
 
   SR_Set(mesh, p_hat, p);
   SR_LinSolve(mesh, "CG", "", p_hat, rhs, 

@@ -32,8 +32,6 @@ use StormRuler_Helpers, only: Flip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR
 
-use StormRuler_BLAS, only: Fill, Mul_Outer
-
 use StormRuler_FDM_Operators, only: gTruncErrorOrder
 use StormRuler_FDM_Base_Flux
 

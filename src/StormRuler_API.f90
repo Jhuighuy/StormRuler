@@ -48,9 +48,8 @@ use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: FDM_Gradient, FDM_Divergence, &
   & FDM_Laplacian_Central, FDM_DivWGrad_Central
-use StormRuler_FDM_RhieChow, only: FDM_Divergence_RhieChow
-use StormRuler_FDM_Convection, only: &
-  & FDM_Convection_Central
+use StormRuler_FDM_RhieChow, only: FDM_RhieChow_Correction
+use StormRuler_FDM_Convection, only: FDM_Convection_Central
 
 use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_long, &
@@ -247,7 +246,7 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   !colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0])]
   colorToBCM = [PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
     & PixelToInt([0, 255, 0]), PixelToInt([0, 0, 255]), PixelToInt([255, 0, 255])]
-  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 1)
+  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
   allocate(gMesh%dr(1:2, 1:4))
   gMesh%dl = [Dx,Dx,Dy,Dy]
   gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
@@ -935,22 +934,20 @@ end subroutine cDivergence$T
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine cDivergence_RhieChow(pMesh, pV, lambda, pUVec, &
-    & tau, pP, pRho) bind(C, name='SR_DivRC')
+subroutine cRhieChow_Correction(pMesh, pV, lambda, tau, pP, pRho) bind(C, name='SR_CorrRC')
   type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pUVec, pV, pP, pRho
+  type(c_ptr), intent(in), value ::  pV, pP, pRho
   real(dp), intent(in), value :: lambda, tau
 
   class(tMesh), pointer :: mesh
   class(tArrayR), pointer :: uVecArr, vArr, pArr, rhoArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(uVecArr, pUVec); call Unwrap(vArr, pV)
-  call Unwrap(pArr, pP); call Unwrap(rhoArr, pRho)
+  call Unwrap(vArr, pV); call Unwrap(pArr, pP); call Unwrap(rhoArr, pRho)
 
-  call FDM_Divergence_RhieChow(mesh, vArr, lambda, uVecArr, tau, pArr, rhoArr)
+  call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
 
-end subroutine cDivergence_RhieChow
+end subroutine cRhieChow_Correction
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

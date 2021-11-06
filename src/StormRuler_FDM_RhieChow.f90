@@ -32,6 +32,9 @@ use StormRuler_Helpers, only: Flip
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR
 
+use StormRuler_FDM_Operators, only: gTruncErrorOrder
+use StormRuler_FDM_Base, only: WFD4_C2
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -43,24 +46,81 @@ implicit none
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! The central FDM-approximate divergence with 
-!! Rhie-Chow type correction: 𝒗 ← 𝒗 - 𝜆∇⋅𝒖⃗ - 𝜏𝓡𝓒(𝒑,𝛒).
+!! The FDM-approximate Rhie-Chow type correction: 𝒗 ← 𝒗 - 𝜆𝜏𝓡𝓒(𝒑,𝛒),
+!! where 𝓡𝓒(𝒑,𝛒) = ∂(1/𝛒⋅∂³𝒑/∂𝑥³)/∂𝑥 + … + ∂(1/𝛒⋅∂³𝒑/∂𝑧)/∂𝑧.
 !!
 !! Rhie-Chow correction is used to eleminate the checkerboard 
 !! pressure phenomenon that may lead to the pressure-velocity 
 !! decoupling in the incompressible simulations.
 !!
-!! Shape of 𝒖⃗ is [1,NumDims]×[1,NumVars]×[1, NumAllCells],
-!! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
+!! shape of 𝒗,𝒑,𝛒 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Divergence_RhieChow(mesh, vArr, lambda, uVecArr, tau, pArr, rhoAny)
+subroutine FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoAny)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uVecArr, pArr
-  class(*), intent(in) :: rhoAny
+  class(tArrayR), intent(in) :: pArr
+  class(tArrayR), intent(in) :: rhoAny
   class(tArrayR), intent(inout) :: vArr
   real(dp), intent(in) :: lambda, tau
 
-  error stop 'RHIR CHOW!!!'
-end subroutine FDM_Divergence_RhieChow
+  real(dp), pointer :: v(:,:), p(:), rho(:)
+
+  call vArr%Get(v); call pArr%Get(p); call rhoAny%Get(rho) 
+
+  call mesh%RunCellKernel(FDM_RhieChow_Correction_Kernel)
+
+contains
+  subroutine FDM_RhieChow_Correction_Kernel(iCell)
+    integer(ip), intent(in) :: iCell
+
+    integer(ip) :: dim
+    integer(ip) :: iCellFace
+    integer(ip) :: rCell, rrCell, rrrCell, rrrrCell
+    integer(ip) :: lCell, llCell, lllCell, llllCell
+
+    ! ----------------------
+    ! For each direction do:
+    ! ----------------------
+    do dim = 1, mesh%NumDims
+      iCellFace = 2*(dim - 1) + 1
+
+      ! ----------------------
+      ! Find indices of the adjacent cells.
+      ! ----------------------
+      associate(rCellFace => iCellFace, &
+        &       lCellFace => Flip(iCellFace))
+        rCell = mesh%CellToCell(rCellFace, iCell)
+        lCell = mesh%CellToCell(lCellFace, iCell)
+        rrCell = mesh%CellToCell(rCellFace, rCell)
+        llCell = mesh%CellToCell(lCellFace, lCell)
+        if (gTruncErrorOrder >= 3) then
+          if (gTruncErrorOrder >= 5) then
+            rrrCell = mesh%CellToCell(rCellFace, rrCell)
+            lllCell = mesh%CellToCell(lCellFace, llCell)
+            if (gTruncErrorOrder >= 7) then
+              rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
+              llllCell = mesh%CellToCell(lCellFace, lllCell)
+            end if
+          end if
+        end if
+      end associate
+
+      ! ----------------------
+      ! Compute Rhie-Chow correction increment.
+      ! ----------------------
+      associate(dlInv => tau*lambda/mesh%dl(iCellFace))
+        select case(gTruncErrorOrder)
+          case(1:4)
+            v(:,iCell) = v(:,iCell) - &
+              &      ( dlInv*WFD4_C2(p(llCell), &
+              &   1.0_dp/rho(lCell), p( lCell), &
+              &   1.0_dp/rho(iCell), p( iCell), &
+              &   1.0_dp/rho(rCell), p( rCell), &
+              &                      p(rrCell)) )
+        end select
+      end associate
+    end do
+
+  end subroutine FDM_RhieChow_Correction_Kernel
+end subroutine FDM_RhieChow_Correction
 
 end module StormRuler_FDM_RhieChow

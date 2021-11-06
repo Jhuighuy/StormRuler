@@ -146,6 +146,7 @@ contains
         end select
       end associate
     end do
+
   end subroutine FDM_Gradient_Central_Kernel
   subroutine FDM_Gradient_Forward_Kernel(iCell)
     integer(ip), intent(in) :: iCell
@@ -272,6 +273,7 @@ contains
         end select
       end associate
     end do
+
   end subroutine FDM_Gradient_Forward_Kernel
 end subroutine FDM_Gradient
 
@@ -392,6 +394,7 @@ contains
         end select
       end associate
     end do
+
   end subroutine FDM_Divergence_Central_Kernel
   subroutine FDM_Divergence_Backward_Kernel(iCell)
     integer(ip), intent(in) :: iCell
@@ -536,6 +539,7 @@ contains
         end select
       end associate
     end do
+
   end subroutine FDM_Divergence_Backward_Kernel
 end subroutine FDM_Divergence
 
@@ -677,6 +681,7 @@ contains
         vVec(1,:,iCell) = vVec(1,:,iCell) - lambda*uVec(1,:,iCell)/( rho**2 )
       end associate
     end if
+    
   end subroutine FDM_Laplacian_Central_Kernel
 end subroutine FDM_Laplacian_Central
 

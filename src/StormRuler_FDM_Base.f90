@@ -299,7 +299,7 @@ elemental function FD2_C8(u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr)
 end function FD2_C8
 
 !! ----------------------------------------------------------------- !!
-!! Second order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
+!! Second order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
   real(dp), intent(in) :: w_l, w, w_r
@@ -311,7 +311,7 @@ elemental function WFD2_C2(w_l, u_l, w, u, w_r, u_r)
 end function WFD2_C2
 
 !! ----------------------------------------------------------------- !!
-!! Fourth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
+!! Fourth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
     &                      u, w_r, u_r, w_rr, u_rr)
@@ -324,7 +324,7 @@ elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C4
 
 !! ----------------------------------------------------------------- !!
-!! Sixth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
+!! Sixth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
     &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
@@ -337,7 +337,7 @@ elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
 end function WFD2_C6
 
 !! ----------------------------------------------------------------- !!
-!! Eighth order accuracy central undivided 𝑑(𝒘𝑑𝒖/𝑑𝜉)/𝑑𝜉 approximation.
+!! Eighth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
     &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
@@ -348,5 +348,24 @@ elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w
   WFD2_C8 = WFD2_C2(w_l, u_l, w, u, w_r, u_r) ! TODO
 
 end function WFD2_C8
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
+!! Second order accuracy central undivided ∂(𝒘∂³𝒖/∂𝜉³)/∂𝜉 approximation.
+!! ----------------------------------------------------------------- !!
+elemental function WFD4_C2(u_ll, w_l, u_l, w, u, w_r, u_r, u_rr)
+  real(dp), intent(in) :: w_l, w, w_r
+  real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr
+  real(dp) :: WFD4_C2
+
+  associate( &
+    & d3u_r => ( 0.25_dp*u_rr - 0.75_dp*u_r + 0.75_dp*u   - 0.25_dp*u_l ), &
+    & d3u_l => ( 0.25_dp*u_r  - 0.75_dp*u   + 0.75_dp*u_l - 0.25_dp*u_ll) )
+    WFD4_C2 = 0.5_dp*( (w_r + w)*d3u_r - (w + w_l)*d3u_l )
+  end associate
+
+end function WFD4_C2
 
 end module StormRuler_FDM_Base

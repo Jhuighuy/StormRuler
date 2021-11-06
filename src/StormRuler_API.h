@@ -434,8 +434,8 @@ SR_API void SR_DivS(SR_tMesh mesh,
 /// @}
 
 /// @{
-SR_API void SR_DivRC(SR_tMesh mesh, SR_tFieldR v,
-  SR_REAL lambda, SR_tFieldR uVec, SR_REAL tau, SR_tFieldR p, SR_tFieldR rho);
+SR_API void SR_CorrRC(SR_tMesh mesh, SR_tFieldR v,
+  SR_REAL lambda, SR_REAL tau, SR_tFieldR p, SR_tFieldR rho);
 /// @}
 
 /// @{

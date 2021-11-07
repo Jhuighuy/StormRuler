@@ -40,7 +40,7 @@
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
 
-static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
+static double tau = 1.0e-1, Gamma = 1.0e-4, sigma = 1.0;
 
 static void SetBCs_c(SR_tMesh mesh, SR_tFieldR c) {
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
@@ -65,6 +65,8 @@ static void SetBCs_v(SR_tMesh mesh, SR_tFieldR v) {
 } // SetBCs_v
 
 extern double D1_W_vs_phi[101][2];
+extern double nPart_vs_phi[101][3];
+extern double mol_mass[2];
 
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   const SR_REAL x = *c;
@@ -73,7 +75,7 @@ void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   //*Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
 
   // [0,1] CH.
-  *Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
+  //*Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
 
   // [0,1] MCH.
   const double h = 0.01;
@@ -82,15 +84,15 @@ void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
     return;
   }
   if (x > 1.0) {
-    *Wc = ( D1_W_vs_phi[99][1] + x*(D1_W_vs_phi[100][1] - D1_W_vs_phi[99][1])/h )/32.0;
+    *Wc = ( D1_W_vs_phi[100][1] - (x - 1.0)*(D1_W_vs_phi[99][1] - D1_W_vs_phi[100][1])/h )/32.0;
     return;
   }
-  const int il = floor(x/0.01);
-  const int ir = ceil(x/0.01);
+  const int il = floor(x/h);
+  const int ir = ceil(x/h);
   if (il == ir) {
     *Wc = ( D1_W_vs_phi[il][1] )/32.0;  
   }
-  *Wc = ( D1_W_vs_phi[il][1] + x*(D1_W_vs_phi[ir][1] - D1_W_vs_phi[il][1])/h )/32.0;
+  *Wc = ( D1_W_vs_phi[il][1] + (x - h*il)*(D1_W_vs_phi[ir][1] - D1_W_vs_phi[il][1])/h )/32.0;
   return;
 } // dWdC
 
@@ -163,11 +165,41 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   return SR_Integrate(mesh, c_hat, Vol, NULL);
 } // CahnHilliard_Step
 
-static double rho_1 = 1.0, rho_2 = 300.0, mu_1 = 0.1, mu_2 = 0.1;
+static double mu_1 = 0.08, mu_2 = 0.08;
+//static double rho_1 = 1.0, rho_2 = 300.0;
 
 void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
+
+void RhoVsC(int size, SR_REAL* rho, const SR_REAL* c, void* env) {
+  SR_REAL x = *c;
+
+  x = max(0.0, min(1.0, x));
+  *rho = 0.0;
+
+  for (int i = 1; i <= 2; ++i) {
+    double dd;
+    const double h = 0.01;
+    if (x < 0.0) {
+      dd = ( nPart_vs_phi[0][i] + x*(nPart_vs_phi[1][i] - nPart_vs_phi[0][i])/h );
+    }
+    else if (x > 1.0) {
+      dd = ( nPart_vs_phi[100][i] - (x - 1.0)*(nPart_vs_phi[99][i] - nPart_vs_phi[100][i])/h );
+    } else {
+      const int il = floor(x/0.01);
+      const int ir = ceil(x/0.01);
+      if (il == ir) {
+        dd = ( nPart_vs_phi[il][i] );  
+      } else {
+        dd = ( nPart_vs_phi[il][i] + (x - il*h)*(nPart_vs_phi[ir][i] - nPart_vs_phi[il][i])/h );
+      }
+    }
+    *rho += mol_mass[i-1]*dd; 
+  }
+
+  return;
+} // RhoVsC
 
 static SR_tFieldR rho_inv_, mu_;
 
@@ -204,7 +236,7 @@ static void NavierStokes_VaD_MatVec(SR_tMesh mesh,
 static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_tFieldR p, SR_tFieldR v,
   SR_tFieldR c, SR_tFieldR w,
-  SR_tFieldR p_hat, SR_tFieldR v_hat, SR_tFieldR d) {
+  SR_tFieldR p_hat, SR_tFieldR v_hat, SR_tFieldR d, SR_tFieldR rho) {
 
   // 
   // Compute a single time step of the incompressible
@@ -227,9 +259,9 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   //
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
-  SR_tFieldR rho = SR_Alloc_Mold(c);
-  SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
-  SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+  //SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
+  //SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+  SR_FuncProd(mesh, rho, c, RhoVsC, NULL);
 
   SR_tFieldR rho_inv = SR_Alloc_Mold(rho);
   SR_FuncProd(mesh, rho_inv, rho, InvRho, NULL);
@@ -264,6 +296,7 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_Set(mesh, rhs, p);
   SR_Div(mesh, rhs, 1.0, v_hat);
   SetBCs_w(mesh, rho);
+  SetBCs_w(mesh, rho_inv);
   SR_CorrRC(mesh, rhs, 1.0, tau, p, rho);
 
   SR_Set(mesh, p_hat, p);
@@ -286,7 +319,6 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
     SR_Div(mesh, d, -1.0, v);
   }
 
-  SR_Free(rho);
   SR_Free(rho_inv);
   SR_Free(mu);
 
@@ -310,15 +342,25 @@ void Initial_Data(int dim, const SR_REAL* r,
 
 int main() {
 
+  //FILE* dWdCF = fopen("dWdC.txt", "w");
+  //for (double x = -0.1; x <= 1.1; x += 0.0001) {
+  //  double y;
+  //  dWdC(1, &y, &x, NULL);
+  //  fprintf(dWdCF, "%f %f\n", x, y);
+  //}
+  //fclose(dWdCF);
+  //return 1;
+
   FILE* volFile = fopen("vol.txt", "w");
 
   SR_tMesh mesh = SR_InitMesh();
 
-  SR_tFieldR c, p, v, c_hat, w_hat, p_hat, v_hat, d;
+  SR_tFieldR c, p, v, c_hat, w_hat, p_hat, v_hat, d, rho;
   c = SR_AllocR(mesh, 1, 0);
   p = SR_AllocR(mesh, 1, 0);
   v = SR_AllocR(mesh, 1, 1);
   d = SR_AllocR(mesh, 1, 0);
+  rho = SR_AllocR(mesh, 1, 0);
   c_hat = SR_Alloc_Mold(c);
   w_hat = SR_Alloc_Mold(c);
   p_hat = SR_Alloc_Mold(p);
@@ -336,7 +378,7 @@ int main() {
     for (int frac = 0; time != 0 && frac < 1; ++ frac) {
 
       SR_REAL vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
-      NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d);
+      NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho);
       fprintf(volFile, "%f\n", vol), fflush(volFile);
 
       SR_Swap(&c, &c_hat);
@@ -350,7 +392,7 @@ int main() {
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, c, "phase");
     SR_IO_Add(io, p, "pressure");
-    SR_IO_Add(io, c, "density");
+    SR_IO_Add(io, rho, "density");
     SR_IO_Add(io, d, "divV");
     SR_IO_Flush(io, mesh, filename);
   }

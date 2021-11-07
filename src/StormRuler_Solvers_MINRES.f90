@@ -216,6 +216,12 @@ end subroutine Solve_MINRES$T
 !! least squares problems: ‖(𝓐[𝓜]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
 !! although convergeance to minimum norm solution is not guaranteed 
 !! (is this true?).
+!!
+!! References:
+!! [1] Saad and M.H. Schultz, 
+!!     "GMRES: A generalized minimal residual algorithm for solving 
+!!      nonsymmetric linear systems", 
+!!     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$for T, typename in [SCALAR_TYPES[0]]
 subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)

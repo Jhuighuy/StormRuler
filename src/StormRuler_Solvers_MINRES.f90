@@ -232,7 +232,7 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  integer(ip), parameter :: MaxIter = 500
+  integer(ip), parameter :: MaxIter = 1000
 
   $typename :: chi, phi, phiTilde
   $typename, pointer :: beta(:), cs(:), sn(:), y(:), H(:,:)
@@ -253,7 +253,7 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   ! Check convergence for 𝜑̃.
   ! ----------------------
 
-  do
+  !do
     ! ----------------------
     ! Initialize:
     ! 𝒓 ← 𝓐𝒙,
@@ -329,20 +329,27 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
 
     ! ----------------------
     ! Compute 𝒙-solution:
-    ! 𝒚 ← (𝓗₁:ₖ,₁:ₖ)⁻¹𝜷₁:ₖ, 
-    ! // TODO: here should be ‖𝓗₁:ₖ,₁:ₖ𝒚 - 𝜷₁:ₖ‖₂ → 𝘮𝘪𝘯
+    ! 𝜷₁:ₖ ← (𝓗₁:ₖ,₁:ₖ)⁻¹𝜷₁:ₖ, 
     ! 𝗳𝗼𝗿 𝑖 = 1, 𝑘 𝗱𝗼:
-    !   𝒙 ← 𝒙 + 𝒚ᵢ𝓠ᵢ.
+    !   𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ.
+    ! 𝗲𝗻𝗱 𝗳𝗼𝗿
+    ! // Since 𝓗₁:ₖ is upper triangular, 
+    ! // operations can be combined:
+    ! 𝗳𝗼𝗿 𝑖 = 𝑘, 1, -1 𝗱𝗼:
+    !   𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
+    !   𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ.
     ! 𝗲𝗻𝗱 𝗳𝗼𝗿
     ! ----------------------
-    do i = 1, k
-      Qi = Q%At(i); call Add(mesh, x, x, Qi, y(i))
+    do i = k, 1, -1
+      chi = chi + sum(abs(H(i,1:(i - 1))))
+      beta(i) = ( beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k)) )/H(i,i)
+      Qi = Q%At(i); call Add(mesh, x, x, Qi, beta(i))
     end do
-    error stop 229
 
-  end do
+  !end do
 
-  error stop 'not implemented'
+  error stop 'restarts not implemented!'
+
 end subroutine Solve_GMRES$T
 #$end for
 

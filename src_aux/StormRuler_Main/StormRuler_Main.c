@@ -37,10 +37,12 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#define YURI 0
+
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
 
-static double tau = 1.0e-1, Gamma = 1.0e-4, sigma = 1.0;
+static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
 static void SetBCs_c(SR_tMesh mesh, SR_tFieldR c) {
   SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
@@ -71,11 +73,12 @@ extern double mol_mass[2];
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   const SR_REAL x = *c;
 
+#if !YURI
   // [-1,+1] CH.
   //*Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
-
   // [0,1] CH.
-  //*Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
+  *Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
+#else
 
   // [0,1] MCH.
   const double h = 0.01;
@@ -94,6 +97,7 @@ void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   }
   *Wc = ( D1_W_vs_phi[il][1] + (x - h*il)*(D1_W_vs_phi[ir][1] - D1_W_vs_phi[il][1])/h )/32.0;
   return;
+#endif
 } // dWdC
 
 void Vol(int size, SR_REAL* Ic, const SR_REAL* c, void* env) {
@@ -154,7 +158,7 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, rhs, tau, w_hat);
 
   SR_Set(mesh, c_hat, c);
-  SR_LinSolve(mesh, "BiCGStab", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
+  SR_LinSolve(mesh, "GMRES", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
   SR_Free(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -166,7 +170,9 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
 } // CahnHilliard_Step
 
 static double mu_1 = 0.08, mu_2 = 0.08;
-//static double rho_1 = 1.0, rho_2 = 300.0;
+#if !YURI
+static double rho_1 = 1.0, rho_2 = 300.0;
+#endif
 
 void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
   *inv_rho = 1.0/(*rho);
@@ -259,9 +265,12 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   //
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
-  //SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
-  //SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+#if YURI
   SR_FuncProd(mesh, rho, c, RhoVsC, NULL);
+#else
+  SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
+  SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+#endif
 
   SR_tFieldR rho_inv = SR_Alloc_Mold(rho);
   SR_FuncProd(mesh, rho_inv, rho, InvRho, NULL);

@@ -84,8 +84,10 @@ although some of them are not parallelized.
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
-  * _(planned)_ Generalized Minimal Residual method solver
-    (`GMRES`, for the general linear problems);
+  * Generalized Minimal Residual method solver
+    (`GMRES`, for the general linear problems),
+  * _(planned)_ Transpose-free Quasi-Minimal Residual solver
+    (`TFQMR`, for the general linear problems);
 
 <!--
 - 🚂 Linear direct solvers (embedded into the matrix-free environment):

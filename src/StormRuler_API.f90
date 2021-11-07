@@ -681,7 +681,7 @@ subroutine cLinSolve$T(pMesh, pMethod, pPreMethod, &
   end if
   call Unwrap(method, pMethod); call Unwrap(preMethod, pPreMethod)
 
-  call params%Init(1.0D-8, 1.0D-8, 2000)
+  call params%Init(1.0D-6, 1.0D-6, 2000)
   call LinSolve(mesh, method, preMethod, xArr, bArr, cMatVec, params)
 
 contains

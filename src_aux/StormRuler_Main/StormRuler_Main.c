@@ -67,7 +67,8 @@ static void SetBCs_v(SR_tMesh mesh, SR_tFieldR v) {
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   const SR_REAL x = *c;
 
-  *Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
+  //*Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
+  *Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
 } // dWdC
 
 void Vol(int size, SR_REAL* Ic, const SR_REAL* c, void* env) {
@@ -128,7 +129,7 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, rhs, tau, w_hat);
 
   SR_Set(mesh, c_hat, c);
-  SR_LinSolve(mesh, "GMRES", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
+  SR_LinSolve(mesh, "BiCGStab", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
   SR_Free(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -278,7 +279,7 @@ void Initial_Data(int dim, const SR_REAL* r,
     in = 1.0;
   }
 
-  *c = -1.0;
+  *c = 0.0;
   if (in) {
     *c = 1.0;
   }

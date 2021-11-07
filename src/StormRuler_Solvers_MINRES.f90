@@ -233,11 +233,11 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   type(tArray$T) :: Q, Qq, Qi, r
   integer(ip) :: i, k
 
-  associate(m => MaxIter)
-    allocate(beta(m+1), cs(m), sn(m), y(m), H(m+1,m))
-    call AllocArray(Q, shape=[x%mShape, m])
-  end associate
   call AllocArray(r, mold=x)
+  associate(m => MaxIter)
+    call AllocArray(Q, shape=[x%mShape, m])
+    allocate(beta(m+1), cs(m), sn(m), y(m), H(m+1,m))
+  end associate
 
   ! ----------------------
   ! Pre-initialize:

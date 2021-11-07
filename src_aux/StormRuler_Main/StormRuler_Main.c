@@ -64,11 +64,34 @@ static void SetBCs_v(SR_tMesh mesh, SR_tFieldR v) {
   SR_ApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
+extern double D1_W_vs_phi[101][2];
+
 void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
   const SR_REAL x = *c;
 
+  // [-1,+1] CH.
   //*Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
+
+  // [0,1] CH.
   *Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
+
+  // [0,1] MCH.
+  const double h = 0.01;
+  if (x < 0.0) {
+    *Wc = ( D1_W_vs_phi[0][1] + x*(D1_W_vs_phi[1][1] - D1_W_vs_phi[0][1])/h )/32.0;
+    return;
+  }
+  if (x > 1.0) {
+    *Wc = ( D1_W_vs_phi[99][1] + x*(D1_W_vs_phi[100][1] - D1_W_vs_phi[99][1])/h )/32.0;
+    return;
+  }
+  const int il = floor(x/0.01);
+  const int ir = ceil(x/0.01);
+  if (il == ir) {
+    *Wc = ( D1_W_vs_phi[il][1] )/32.0;  
+  }
+  *Wc = ( D1_W_vs_phi[il][1] + x*(D1_W_vs_phi[ir][1] - D1_W_vs_phi[il][1])/h )/32.0;
+  return;
 } // dWdC
 
 void Vol(int size, SR_REAL* Ic, const SR_REAL* c, void* env) {

@@ -27,6 +27,7 @@ module StormRuler_Solvers_MINRES
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
+use StormRuler_Parameters, only: gMaxIterGMRES
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR, AllocArray
@@ -212,6 +213,9 @@ end subroutine Solve_MINRES$T
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
 !! the monstrous Generalized minimal residual method (GMRES).
 !! 
+!! The classical GMRES(𝑚) implementation with restarts
+!! after 𝑚 iterations is used.
+!! 
 !! GMRES may be applied to the singular problems, and the square
 !! least squares problems: ‖(𝓐[𝓜]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
 !! although convergeance to minimum norm solution is not guaranteed 
@@ -232,50 +236,55 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
   class(tConvParams), intent(inout) :: params
   procedure(tPreMatVecFunc$T), optional :: PreMatVec
 
-  integer(ip), parameter :: MaxIter = 1000
-
+  logical :: converged
   $typename :: chi, phi, phiTilde
   $typename, pointer :: beta(:), cs(:), sn(:), y(:), H(:,:)
-  type(tArray$T) :: Q, Qq, Qi, r
+  type(tArray$T) :: Q, t, s, r
   integer(ip) :: i, k
 
   call AllocArray(r, mold=x)
-  associate(m => MaxIter)
-    call AllocArray(Q, shape=[x%mShape, m])
-    allocate(beta(m+1), cs(m), sn(m), y(m), H(m+1,m))
+  associate(m => gMaxIterGMRES)
+    call AllocArray(Q, shape=[x%mShape, m + 1])
+    allocate(beta(m + 1), cs(m), sn(m), y(m), H(m + 1,m))
   end associate
 
   ! ----------------------
   ! Pre-initialize:
-  ! 𝒓 ← 𝓐𝒙,
-  ! 𝒓 ← 𝒃 - 𝒓,
-  ! 𝜑̃ ← ‖𝒓‖,
-  ! Check convergence for 𝜑̃.
+  ! 𝜑̃ ← 0,
+  ! 𝘤𝘰𝘯𝘷𝘦𝘳𝘨𝘦𝘥 ← 𝙛𝙖𝙡𝙨𝙚.
   ! ----------------------
+  phiTilde = 0.0_dp
+  converged = .false.
 
-  !do
+  do while(.not.converged)
     ! ----------------------
     ! Initialize:
     ! 𝒓 ← 𝓐𝒙,
     ! 𝒓 ← 𝒃 - 𝒓,
-    ! 𝜑̃ ← ‖𝒓‖,
-    ! Check convergence for 𝜑̃.
+    ! 𝜑 ← ‖𝒓‖,
+    ! 𝗶𝗳 𝜑̃ = 0: // first non-restarted pass.
+    !   𝜑̃ ← 𝜑,
+    !   Check convergence for 𝜑̃.
+    ! 𝗲𝗻𝗱 𝗶𝗳
     ! ----------------------
     call MatVec(mesh, r, x)
     call Sub(mesh, r, b, r)
-    phiTilde = Norm_2(mesh, r)
-    if (params%Check(phiTilde)) return
+    phi = Norm_2(mesh, r)
+    if (phiTilde <= 0.0) then
+      phiTilde = phi
+      if (params%Check(phiTilde)) return
+    end if
 
     ! ----------------------
     ! 𝒄𝒔 ← {0}ᵀ, 𝒔𝒏 ← {0}ᵀ,
-    ! 𝜷 ← {𝜑̃,0,…,0}ᵀ,
-    ! 𝓠₁ ← 𝒓/𝜑̃. 
+    ! 𝜷 ← {𝜑,0,…,0}ᵀ,
+    ! 𝓠₁ ← 𝒓/𝜑. 
     ! ----------------------
     cs(:) = 0.0_dp; sn(:) = 0.0_dp
-    beta(1) = phiTilde; beta(2:) = 0.0_dp
-    Qq = Q%At(1); call Scale(mesh, Qq, r, 1.0_dp/phiTilde)
+    beta(1) = phi; beta(2:) = 0.0_dp
+    t = Q%At(1); call Scale(mesh, t, r, 1.0_dp/phi)
 
-    do k = 1, MaxIter
+    do k = 1, gMaxIterGMRES
       ! ----------------------
       ! Arnoldi iteration:
       ! 𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
@@ -285,13 +294,13 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
       ! 𝗲𝗻𝗱 𝗳𝗼𝗿
       ! 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
       ! ----------------------
-      Qi = Q%At(k); Qq = Q%At(k+1)
-      call MatVec(mesh, Qq, Qi)
+      s = Q%At(k); t = Q%At(k+1)
+      call MatVec(mesh, t, s)
       do i = 1, k
-        Qi = Q%At(i); H(i,k) = Dot(mesh, Qq, Qi)
-        call Sub(mesh, Qq, Qq, Qi, H(i,k))
+        s = Q%At(i); H(i,k) = Dot(mesh, t, s)
+        call Sub(mesh, t, t, s, H(i,k))
       end do
-      H(k+1,k) = Norm_2(mesh, Qq); call Scale(mesh, Qq, Qq, 1.0_dp/H(k+1,k))
+      H(k+1,k) = Norm_2(mesh, t); call Scale(mesh, t, t, 1.0_dp/H(k+1,k))
 
       ! ----------------------
       ! Eliminate the last element in 𝓗
@@ -319,13 +328,18 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
       ! 𝜷ₖ₊₁ ← -𝒔𝒏ₖ𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
       ! 𝜑 ← |𝜷ₖ₊₁|,
       ! Check convergence for 𝜑 and 𝜑/𝜑̃.
-      ! TODO: is 𝜑 = ‖𝒓‖ here?
       ! ----------------------
       beta(k+1) = -sn(k)*beta(k); beta(k) = cs(k)*beta(k)
       phi = abs(beta(k+1))
       if (params%Check(phi, phi/phiTilde)) exit
 
     end do
+
+    ! ----------------------
+    ! Check if restart if required.
+    ! ----------------------
+    converged = k <= gMaxIter
+    if (.not.converged) k = gMaxIter
 
     ! ----------------------
     ! Compute 𝒙-solution:
@@ -341,14 +355,12 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝗲𝗻𝗱 𝗳𝗼𝗿
     ! ----------------------
     do i = k, 1, -1
-      chi = chi + sum(abs(H(i,1:(i - 1))))
-      beta(i) = ( beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k)) )/H(i,i)
-      Qi = Q%At(i); call Add(mesh, x, x, Qi, beta(i))
+      beta(i) = beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k))
+      beta(i) = beta(i)/H(i,i)
+      s = Q%At(i); call Add(mesh, x, x, s, beta(i))
     end do
 
-  !end do
-
-  error stop 'restarts not implemented!'
+  end do
 
 end subroutine Solve_GMRES$T
 #$end for

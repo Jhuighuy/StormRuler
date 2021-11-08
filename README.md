@@ -180,7 +180,8 @@ Legend:
   - [ ] 🚬 Some matrix API...
 
 * New linear solvers/eigensolvers:
-  - [ ] 🚬 `GMRES` solver implementation.
+  - [x] 🚬 `GMRES` solver implementation.
+  - [ ] 🪓 Preconditioned `GMRES` implementation.
   - [ ] 🧸 Recover existing eigensolvers.
   - [ ] 🧸 `PowerIterations` eigensolver,
   - [ ] 🪓 `Lanczos` hybrid eigensolver/solver,

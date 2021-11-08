@@ -338,8 +338,8 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     ! Check if restart if required.
     ! ----------------------
-    converged = k <= gMaxIter
-    if (.not.converged) k = gMaxIter
+    converged = k <= gMaxIterGMRES
+    if (.not.converged) k = gMaxIterGMRES
 
     ! ----------------------
     ! Compute 𝒙-solution:
@@ -357,7 +357,7 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     do i = k, 1, -1
       beta(i) = beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k))
       beta(i) = beta(i)/H(i,i)
-      s = Q%At(i); call Add(mesh, x, x, s, beta(i))
+      t = Q%At(i); call Add(mesh, x, x, t, beta(i))
     end do
 
   end do

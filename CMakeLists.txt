@@ -45,8 +45,8 @@ add_library(StormRuler_BASE INTERFACE)
 # Fortran compilers on Apple Silicon are not production-ready yet,
 # so we need to disable some features (for now).
 if(APPLE)
-  include(CheckCxxCompilerFlag)
-  check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag("-arch arm64" APPLE_SILICON)
   message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 

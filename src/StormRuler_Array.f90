@@ -54,7 +54,7 @@ contains
 
   procedure :: Rank => ArrayRank
 
-  procedure :: At => ArrayAt
+  procedure :: Slice => ArraySlice
 
 #$do N = 1, NUM_RANKS
   generic :: Get => Get$N
@@ -138,18 +138,24 @@ pure integer(ip) function ArrayRank(array)
 
 end function ArrayRank
 
-!! ----------------------------------------------------------------- !!
-!! ----------------------------------------------------------------- !!
-type(tArrayR) function ArrayAt(array, index)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Get a slice of the array.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type(tArrayR) function ArraySlice(array, index) result(slice)
   class(tArrayR), intent(in) :: array
   integer(ip) :: index
 
-  real(dp), pointer :: data(:,:)
+  associate(r => ArrayRank(array))
 
-  call array%Get(data)
-  ArrayAt%mShape => array%mShape(1:size(array%mShape)-1)
-  ArrayAt%mData => data(:,index)
-end function ArrayAt
+    slice%mShape => array%mShape(1:(r - 1))
+
+    associate(block => product(slice%mShape))
+      slice%mData => array%mData((block*(index - 1) + 1):(block*index + 1))
+    end associate
+
+  end associate
+
+end function ArraySlice
 
 !! ----------------------------------------------------------------- !!
 !! Transform the shape.

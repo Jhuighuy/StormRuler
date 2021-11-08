@@ -238,14 +238,14 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
 
   logical :: converged
   $typename :: chi, phi, phiTilde
-  $typename, pointer :: beta(:), cs(:), sn(:), y(:), H(:,:)
-  type(tArray$T) :: Q, t, s, r
+  $typename, pointer :: beta(:), cs(:), sn(:), H(:,:)
+  type(tArray$T) :: Q, s, t, r
   integer(ip) :: i, k
 
   call AllocArray(r, mold=x)
   associate(m => gMaxIterGMRES)
     call AllocArray(Q, shape=[x%mShape, m + 1])
-    allocate(beta(m + 1), cs(m), sn(m), y(m), H(m + 1,m))
+    allocate(beta(m + 1), cs(m), sn(m), H(m + 1,m))
   end associate
 
   ! ----------------------
@@ -282,7 +282,7 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     cs(:) = 0.0_dp; sn(:) = 0.0_dp
     beta(1) = phi; beta(2:) = 0.0_dp
-    t = Q%At(1); call Scale(mesh, t, r, 1.0_dp/phi)
+    t = Q%Slice(1); call Scale(mesh, t, r, 1.0_dp/phi)
 
     do k = 1, gMaxIterGMRES
       ! ----------------------
@@ -294,10 +294,10 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
       ! 𝗲𝗻𝗱 𝗳𝗼𝗿
       ! 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
       ! ----------------------
-      s = Q%At(k); t = Q%At(k+1)
+      s = Q%Slice(k); t = Q%Slice(k+1)
       call MatVec(mesh, t, s)
       do i = 1, k
-        s = Q%At(i); H(i,k) = Dot(mesh, t, s)
+        s = Q%Slice(i); H(i,k) = Dot(mesh, t, s)
         call Sub(mesh, t, t, s, H(i,k))
       end do
       H(k+1,k) = Norm_2(mesh, t); call Scale(mesh, t, t, 1.0_dp/H(k+1,k))
@@ -357,9 +357,8 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     do i = k, 1, -1
       beta(i) = beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k))
       beta(i) = beta(i)/H(i,i)
-      t = Q%At(i); call Add(mesh, x, x, t, beta(i))
+      t = Q%Slice(i); call Add(mesh, x, x, t, beta(i))
     end do
-
   end do
 
 end subroutine Solve_GMRES$T

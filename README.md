@@ -154,6 +154,7 @@ Legend:
   - [ ] 🪓 Faces,
   - [ ] 🧸 Redesigned VTK output,
   - [ ] 🪓 Cache-friendly cell sorting,
+  - [ ] 🪓 BC cells sorting and better BCs parallelization,
   - [ ] 🚬 GMG,
   - [ ] 🚬 Non-conforming multilevel mesh,
   - [ ] 🚬🚬 Cut cell methods.

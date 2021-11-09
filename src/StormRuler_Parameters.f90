@@ -41,7 +41,7 @@ integer, parameter :: i8 = int8
 
 logical, parameter :: gCylCoords = .false.
 
-integer(ip), parameter :: gMaxIterGMRES = 128
+integer(ip), parameter :: gMaxIterGMRES = 50
 
 integer(ip), parameter :: error_code = 1
 

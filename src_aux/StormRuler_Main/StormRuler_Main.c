@@ -24,6 +24,7 @@
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 #define _USE_MATH_DEFINES 1
+#define _GNU_SOURCE 1
 
 #define SR_MATLAB 0
 #include "StormRuler_API.h"
@@ -32,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -171,7 +173,7 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
 
 static double mu_1 = 0.08, mu_2 = 0.08;
 #if !YURI
-static double rho_1 = 1.0, rho_2 = 300.0;
+static double rho_1 = 1.0, rho_2 = 1.0;
 #endif
 
 void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
@@ -382,12 +384,24 @@ int main() {
   SR_Fill(mesh, v, 0.0, 0.0);
   SR_Fill(mesh, p, 0.0, 0.0);
 
-  for (int time = 0; time <= 200000; ++time) {
+  double total_time = 0.0;
+
+  for (int time = 0; time <= 20+0*200000; ++time) {
 
     for (int frac = 0; time != 0 && frac < 1; ++ frac) {
 
+      struct timespec start, finish;
+
+      clock_gettime(CLOCK_MONOTONIC, &start);
+
       SR_REAL vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
       NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho);
+
+      clock_gettime(CLOCK_MONOTONIC, &finish);
+      double elapsed = (finish.tv_sec - start.tv_sec);
+      elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+      total_time += elapsed;
+
       fprintf(volFile, "%f\n", vol), fflush(volFile);
 
       SR_Swap(&c, &c_hat);
@@ -396,6 +410,7 @@ int main() {
     }
 
     char filename[256];
+    printf("time = %f\n", total_time);
     sprintf(filename, "out/fld-%d.vtk", time);
     SR_tIOList io = SR_IO_Begin();
     SR_IO_Add(io, v, "velocity");

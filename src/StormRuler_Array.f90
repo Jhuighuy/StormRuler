@@ -145,9 +145,9 @@ type(tArrayR) function ArraySlice(array, index) result(slice)
   class(tArrayR), intent(in) :: array
   integer(ip) :: index
 
-  associate(r => ArrayRank(array))
+  associate(rank => ArrayRank(array))
 
-    slice%mShape => array%mShape(1:(r - 1))
+    slice%mShape => array%mShape(1:(rank - 1))
 
     associate(block => product(slice%mShape))
       slice%mData => array%mData((block*(index - 1) + 1):(block*index + 1))

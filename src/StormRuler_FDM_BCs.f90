@@ -62,6 +62,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
   !procedure(tSMapFuncR$rank), optional :: f
   
   integer(ip) :: iBCMPtr
+  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
 
   associate(bcmFirst => mesh%BCMs(iBCM), &
     &        bcmLast => mesh%BCMs(iBCM+1)-1, &
@@ -75,8 +76,8 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
     ! ----------------------
     ! For each BC cell with the specific mark do:
     ! ----------------------
+    !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
     do iBCMPtr = bcmFirst, bcmLast; block
-      integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
       iBCCell = bcmToCell(iBCMPtr)
       iBCCellFace = bcmToCellFace(iBCMPtr)
       iCell = cellToCell(Flip(iBCCellFace), iBCCell)
@@ -104,6 +105,7 @@ subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
         iGCell = cellToCell(iBCCellFace, iGCell)
       end do
     end block; end do
+    !$omp end parallel do
 
   end associate
 end subroutine FDM_ApplyBCs$rank
@@ -118,6 +120,7 @@ subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
   integer(ip) :: iBCMPtr
   integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
 
+  !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
   do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
 
     iBCCell = mesh%BCMToCell(iBCMPtr)
@@ -139,6 +142,7 @@ subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
     end do
 
   end do
+  !$omp end parallel do
 
 end subroutine FDM_ApplyBCs_SlipWall
 
@@ -155,6 +159,7 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
 
   R = 0.0_dp
 
+  !$omp parallel do  private(iCell, iBCCell, iBCCellFace, iGCell) reduction(max: R)
   do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
 
     iBCCell = mesh%BCMToCell(iBCMPtr)
@@ -166,9 +171,11 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
     R = max(R, mesh%CellCenter(1, iCell))
 
   end do
+  !$omp end parallel do
 
   R = R + 0.5_dp*mesh%dl(1)
 
+  !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
   do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
 
     iBCCell = mesh%BCMToCell(iBCMPtr)
@@ -192,6 +199,7 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
     end do
 
   end do
+  !$omp end parallel do
 
 end subroutine FDM_ApplyBCs_InOutLet
 

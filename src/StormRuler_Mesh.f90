@@ -82,33 +82,6 @@ type :: tMesh
   logical, allocatable, private :: mCellFacePeriodic(:,:)
 
   ! ----------------------
-  ! Number of interior faces.
-  ! ----------------------
-  integer(ip) :: NumFaces
-  ! ----------------------
-  ! Number of the boundary cells.
-  ! ----------------------
-  integer(ip) :: NumBCFaces
-  ! ----------------------
-  ! Total number of faces (including interior and BC faces).
-  ! ----------------------
-  integer(ip) :: NumAllFaces
-  ! ----------------------
-  ! Face connectivity table.
-  ! Shape is [1, NumCellFaces]×[1, NumAllFaces].
-  integer(ip), allocatable :: FaceToFace(:,:)
-  ! ----------------------
-  ! Face-cell connectivity table.
-  ! Shape is [1, 2]×[1, NumAllFaces].
-  ! ----------------------
-  integer(ip), allocatable :: FaceToCell(:,:)
-  ! ----------------------
-  ! Cell-face connectivity table. 
-  ! Shape is [1, NumCellFaces]×[1, NumAllCells].
-  ! ----------------------
-  integer(ip), allocatable :: CellToFace(:,:)
-
-  ! ----------------------
   ! Multidimensional index bounds table.
   ! Shape is [1, NumDims].
   ! ----------------------

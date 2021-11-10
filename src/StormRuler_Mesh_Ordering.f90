@@ -121,22 +121,32 @@ recursive subroutine Swap(i, j)
 end subroutine Swap
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute a 2D mesh ordering along the Hilbert curve. 
+!! Compute a 2D/3D mesh ordering along the Hilbert curve. 
+!!
+!! References:
+!! [1] MFEM source code: 
+!!     https://github.com/mfem/mfem/blob/master/mesh/mesh.cpp#L1807
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh_Ordering_Hilbert2D(mesh, iperm)
+subroutine Mesh_Ordering_HilbertCurve(mesh, iperm)
   class(tMesh), intent(inout) :: mesh
   integer(ip), intent(inout) :: iperm(:)
-
-  integer(ip) :: iCell
 
   ! ----------------------
   ! Generate identity inverse permutation.
   ! ----------------------
-  do iCell = 1, mesh%NumCells
-    iperm(iCell) = iCell
-  end do
+  block
+    integer(ip) :: iCell
 
-  call HilbertSort(1, mesh%NumCells + 1, 1, 0)
+    do iCell = 1, mesh%NumCells
+      iperm(iCell) = iCell
+    end do
+  end block
+
+  if (mesh%NumDims == 2) then
+    call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1)
+  else if (mesh%NumDims == 3) then
+    call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1, -1)
+  end if
 
 contains
   recursive pure logical function Condition(iCell, centerCoords, dim, sign)
@@ -160,14 +170,18 @@ contains
     allocate(ipermTemp(iCell:(iCellEnd - 1)))
     allocate(matchTemp(iCell:(iCellEnd - 1)))
 
+    ! ----------------------
     ! Precompute the condition.
+    ! ----------------------
     do jCell = iCell, iCellEnd - 1
       matchTemp(jCell) = Condition(jCell, centerCoords, dim, sign)
     end do
 
     kCell = iCell
 
+    ! ----------------------
     ! Copy the matching cells first.
+    ! ----------------------
     do jCell = iCell, iCellEnd - 1
       if (matchTemp(jCell)) then
         ipermTemp(kCell) = iperm(jCell); kCell = kCell + 1
@@ -176,7 +190,9 @@ contains
 
     Partition = kCell
 
+    ! ----------------------
     ! Copy the non-matching cells next.
+    ! ----------------------
     do jCell = iCell, iCellEnd - 1
       if (.not.matchTemp(jCell)) then
         ipermTemp(kCell) = iperm(jCell); kCell = kCell + 1
@@ -186,13 +202,16 @@ contains
     iperm(iCell:(iCellEnd - 1)) = ipermTemp(iCell:(iCellEnd - 1))
 
   end function Partition
-  recursive subroutine HilbertSort(iCell, iCellEnd, orientation, threads)
+  recursive subroutine HilbertSort(iCell, iCellEnd, dim1, sign1, sign2, sign3)
     integer(ip), intent(in) :: iCell, iCellEnd
-    integer(ip), intent(in) :: orientation, threads
+    integer(ip), intent(in) :: dim1, sign1, sign2
+    integer(ip), intent(in), optional :: sign3
 
-    real(dp) :: centerCoords(2)
-    integer(ip) :: lowerCoords(2), upperCoords(2)
-    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3
+    real(dp) :: centerCoords(mesh%NumDims)
+    integer(ip) :: lowerCoords(mesh%NumDims), upperCoords(mesh%NumDims)
+    integer(ip) :: iCellPiv0
+    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3, iCellPiv4
+    integer(ip) :: iCellPiv5, iCellPiv6, iCellPiv7, iCellPiv8
 
     ! ----------------------
     ! Check if recursion terminates.
@@ -215,99 +234,93 @@ contains
     ! ----------------------
     associate(blockShape => upperCoords - lowerCoords + 1)
       if (any(mod(abs(blockShape), 2) == 1)) then
-        !iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
+        iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
         return
       end if
     end associate
 
     ! ----------------------
-    ! Partition quoters based on the orientation.
+    ! Continue the recursive partition.
     ! ----------------------
-    select case(orientation)
-      
-      ! ----------------------
-      ! 4-|3
-      ! 1-|2 orienation.
-      ! ----------------------
-      case(1)
-        ! Partition lower and upper halves.
-        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 2, +1)
+    if (mesh%NumDims == 2) then
 
-        ! Partition left and right quadrants of the lower half.
-        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 1, +1)
+      iCellPiv0 = iCell; iCellPiv4 = iCellEnd
+      associate(dim2 => mod(dim1, 2) + 1)
 
-        ! Partition right and left quadrants of the upper half.
-        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, -1)
+        ! ----------------------
+        ! Partition block into the quadrants.
+        ! ----------------------
+        iCellPiv2 = Partition(iCellPiv0, iCellPiv4, centerCoords, dim1, +sign1)
+        iCellPiv1 = Partition(iCellPiv0, iCellPiv2, centerCoords, dim2, +sign2)
+        iCellPiv3 = Partition(iCellPiv2, iCellPiv4, centerCoords, dim2, -sign2)
 
-        ! Recursively process the quadrants.
-        call HilbertSort(iCell,     iCellPiv1, 2, 0)
-        call HilbertSort(iCellPiv1, iCellPiv2, 1, 0)
-        call HilbertSort(iCellPiv2, iCellPiv3, 1, 0)
-        call HilbertSort(iCellPiv3, iCellEnd,  3, 0)
+        ! ----------------------
+        ! Recursively sort the quadrants.
+        ! ----------------------
+        if (iCellPiv1 /= iCellPiv4) then
+          call HilbertSort(iCellPiv0, iCellPiv1, dim2, +sign2, +sign1)
+        end if
+        if (iCellPiv1 /= iCellPiv0.or.iCellPiv2 /= iCellPiv4) then
+          call HilbertSort(iCellPiv1, iCellPiv2, dim1, +sign1, +sign2)
+        end if
+        if (iCellPiv2 /= iCellPiv0.or.iCellPiv3 /= iCellPiv4) then
+          call HilbertSort(iCellPiv2, iCellPiv3, dim1, +sign1, +sign2)
+        end if
+        if (iCellPiv3 /= iCellPiv0) then
+          call HilbertSort(iCellPiv3, iCellPiv4, dim2, -sign2, -sign1)
+        end if
 
-      ! ----------------------
-      ! 2--3
-      ! 1||4 orientation.
-      ! ----------------------
-      case(2)
-        ! Partition left and right halves.
-        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 1, +1)
+      end associate
 
-        ! Partition lower and upper quadrants of the left half.
-        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 2, +1)
+    else if (mesh%NumDims == 3) then
 
-        ! Partition upper and lower quadrants of the right half.
-        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, -1)
+      iCellPiv0 = iCell; iCellPiv8 = iCellEnd
+      associate(dim2 => mod(dim1, 3) + 1, dim3 => mod(dim1 + 1, 3) + 1)
 
-        ! Recursively process the quadrants.
-        call HilbertSort(iCell,     iCellPiv1, 1, 0)
-        call HilbertSort(iCellPiv1, iCellPiv2, 2, 0)
-        call HilbertSort(iCellPiv2, iCellPiv3, 2, 0)
-        call HilbertSort(iCellPiv3, iCellEnd,  4, 0)
+        ! ----------------------
+        ! Partition block into the octants.
+        ! ----------------------
+        iCellPiv4 = Partition(iCellPiv0, iCellPiv8, centerCoords, dim1, +sign1)
+        iCellPiv2 = Partition(iCellPiv0, iCellPiv4, centerCoords, dim2, +sign2)
+        iCellPiv6 = Partition(iCellPiv4, iCellPiv8, centerCoords, dim2, -sign2)
+        iCellPiv1 = Partition(iCellPiv0, iCellPiv2, centerCoords, dim3, +sign3)
+        iCellPiv3 = Partition(iCellPiv2, iCellPiv4, centerCoords, dim3, -sign3)
+        iCellPiv5 = Partition(iCellPiv4, iCellPiv6, centerCoords, dim3, +sign3)
+        iCellPiv7 = Partition(iCellPiv6, iCellPiv8, centerCoords, dim3, -sign3)
 
-      ! ----------------------
-      ! 4||1
-      ! 3--2 orientation.
-      ! ----------------------
-      case(3)
-        ! Partition right and left halves.
-        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 1, -1)
+        ! ----------------------
+        ! Recursively sort the octants.
+        ! ----------------------
+        if (iCellPiv1 /= iCellPiv8) then
+          call HilbertSort(iCellPiv0, iCellPiv1, dim3, +sign3, +sign1, +sign2)
+        end if
+        if (iCellPiv1 /= iCellPiv0.or.iCellPiv2 /= iCellPiv8) then
+          call HilbertSort(iCellPiv1, iCellPiv2, dim2, +sign2, +sign3, +sign1)
+        end if
+        if (iCellPiv2 /= iCellPiv0.or.iCellPiv3 /= iCellPiv8) then
+          call HilbertSort(iCellPiv2, iCellPiv3, dim2, +sign2, +sign3, +sign1)
+        end if
+        if (iCellPiv3 /= iCellPiv0.or.iCellPiv4 /= iCellPiv8) then
+          call HilbertSort(iCellPiv3, iCellPiv4, dim1, +sign1, -sign2, -sign3)
+        end if
+        if (iCellPiv4 /= iCellPiv0.or.iCellPiv5 /= iCellPiv8) then
+          call HilbertSort(iCellPiv4, iCellPiv5, dim1, +sign1, -sign2, -sign3)
+        end if
+        if (iCellPiv5 /= iCellPiv0.or.iCellPiv6 /= iCellPiv8) then
+          call HilbertSort(iCellPiv5, iCellPiv6, dim2, -sign2, +sign3, -sign1)
+        end if
+        if (iCellPiv6 /= iCellPiv0.or.iCellPiv7 /= iCellPiv8) then
+          call HilbertSort(iCellPiv6, iCellPiv7, dim2, -sign2, +sign3, -sign1)
+        end if
+        if (iCellPiv7 /= iCellPiv0) then
+          call HilbertSort(iCellPiv7, iCellPiv8, dim3, -sign3, -sign1, +sign2)
+        end if
 
-        ! Partition upper and lower quadrants of the right half.
-        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 2, -1)
+      end associate
 
-        ! Partition lower and upper quadrants of the left half.
-        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, +1)
-
-        ! Recursively process the quadrants.
-        call HilbertSort(iCell,     iCellPiv1, 4, 0)
-        call HilbertSort(iCellPiv1, iCellPiv2, 3, 0)
-        call HilbertSort(iCellPiv2, iCellPiv3, 3, 0)
-        call HilbertSort(iCellPiv3, iCellEnd,  1, 0)
-
-      ! ----------------------
-      ! 2|-1
-      ! 3|-4 orientation.
-      ! ----------------------
-      case(4)
-        ! Partition upper and lower halves.
-        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 2, -1)
-
-        ! Partition right and left quadrants of the lower half.
-        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 1, -1)
-
-        ! Partition left and right quadrants of the upper half.
-        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, +1)
-
-        ! Recursively process the quadrants.
-        call HilbertSort(iCell,     iCellPiv1, 3, 0)
-        call HilbertSort(iCellPiv1, iCellPiv2, 4, 0)
-        call HilbertSort(iCellPiv2, iCellPiv3, 4, 0)
-        call HilbertSort(iCellPiv3, iCellEnd,  2, 0)
-
-    end select
+    end if
 
   end subroutine HilbertSort
-end subroutine Mesh_Ordering_Hilbert2D
+end subroutine Mesh_Ordering_HilbertCurve
 
 end module StormRuler_Mesh_Ordering

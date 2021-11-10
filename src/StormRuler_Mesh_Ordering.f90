@@ -137,33 +137,64 @@ subroutine Mesh_Ordering_Hilbert2D(mesh, iperm)
   end do
 
   call Sort(1, mesh%NumCells + 1, &
-    & 0.0_dp*mesh%MDIndexBounds + 1.0_dp, &
-    & 1.0_dp*mesh%MDIndexBounds, 2, 0)
+    & 0.0_dp*mesh%MDIndexBounds, &
+    & 1.0_dp*mesh%MDIndexBounds - 1.0_dp, 1, 0)
 
 contains
-  recursive subroutine Separate(iCell, iCellEnd, centerCoords, dim, sign)
-    integer(ip), intent(inout) :: iCell, iCellEnd
+  recursive pure logical function Condition(iCell, centerCoords, dim, sign)
+    integer(ip), intent(in) :: iCell
     real(dp), intent(in) :: centerCoords(:)
     integer(ip), intent(in) :: dim, sign
 
-    do while(iCell /= iCellEnd)
-      if (sign*(mesh%CellMDIndex(dim,iperm(iCell)) - centerCoords(dim)) > 0) then
-        iCellEnd = iCellEnd - 1
-        call Swap(iperm(iCell), iperm(iCellEnd))
-      else
-        iCell = iCell + 1
+    Condition = sign*(mesh%CellMDIndex(dim,iperm(iCell)) - centerCoords(dim)) < 0
+
+  end function Condition
+  recursive integer(ip) function Partition(iCell, iCellEnd, centerCoords, dim, sign)
+    integer(ip), intent(in) :: iCell, iCellEnd
+    real(dp), intent(in) :: centerCoords(:)
+    integer(ip), intent(in) :: dim, sign
+
+    integer(ip) :: jCell, kCell
+
+    integer(ip), allocatable :: ipermTemp(:)
+    logical, allocatable :: matchTemp(:)
+
+    allocate(ipermTemp(iCell:(iCellEnd - 1)))
+    allocate(matchTemp(iCell:(iCellEnd - 1)))
+
+    ! Precompute the condition.
+    do jCell = iCell, iCellEnd - 1
+      matchTemp(jCell) = Condition(jCell, centerCoords, dim, sign)
+    end do
+
+    kCell = iCell
+
+    ! Copy the matching cells first.
+    do jCell = iCell, iCellEnd - 1
+      if (matchTemp(jCell)) then
+        ipermTemp(kCell) = iperm(jCell); kCell = kCell + 1
       end if
     end do
-  end subroutine Separate
+
+    Partition = kCell
+
+    ! Copy the non-matching cells next.
+    do jCell = iCell, iCellEnd - 1
+      if (.not.matchTemp(jCell)) then
+        ipermTemp(kCell) = iperm(jCell); kCell = kCell + 1
+      end if
+    end do
+
+    iperm(iCell:(iCellEnd - 1)) = ipermTemp(iCell:(iCellEnd - 1))
+
+  end function Partition
   recursive subroutine Sort(iCell, iCellEnd, &
       & lowerCoords,upperCoords, orientation, threads)
     integer(ip), intent(in) :: iCell, iCellEnd
     real(dp), intent(in) :: lowerCoords(:),upperCoords(:)
     integer(ip), intent(in) :: orientation, threads
 
-    integer(ip) :: iCellPiv1, iCellEnd1
-    integer(ip) :: iCellPiv2, iCellEnd2
-    integer(ip) :: iCellPiv3, iCellEnd3
+    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3
     real(dp) :: centerCoords(2)
 
     ! ----------------------
@@ -173,7 +204,7 @@ contains
     if (any(lowerCoords >= upperCoords)) return
 
     ! ----------------------
-    ! Separate quoters based on the orientation.
+    ! Partition quoters based on the orientation.
     ! ----------------------
     centerCoords = 0.5_dp*(lowerCoords + upperCoords)
     select case(orientation)
@@ -183,140 +214,112 @@ contains
       ! 1-|2 orienation.
       ! ----------------------
       case(1)
-        ! Separate lower and upper halves.
-        iCellPiv2 = iCell; iCellEnd2 = iCellEnd
-        call Separate(iCellPiv2, iCellEnd2, centerCoords, 2, +1)
+        ! Partition lower and upper halves.
+        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 2, +1)
 
-        ! Separate left and right quadrants of the lower half.
-        iCellPiv1 = iCell; iCellEnd1 = iCellPiv2
-        call Separate(iCellPiv1, iCellEnd1, centerCoords, 1, +1)
+        ! Partition left and right quadrants of the lower half.
+        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 1, +1)
 
-        ! Separate right and left quadrants of the upper half.
-        iCellPiv3 = iCellPiv2; iCellEnd3 = iCellEnd
-        call Separate(iCellPiv3, iCellEnd3, centerCoords, 1, -1)
+        ! Partition right and left quadrants of the upper half.
+        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, -1)
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
           & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], &
-          & 2, 0)
+          & [centerCoords(1), centerCoords(2)], 2, 0)
         call Sort(iCellPiv1, iCellPiv2, &
           & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], &
-          & 1, 0)
+          & [ upperCoords(1), centerCoords(2)], 1, 0)
         call Sort(iCellPiv2, iCellPiv3, &
           & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], &
-          & 1, 0)
+          & [ upperCoords(1),  upperCoords(2)], 1, 0)
         call Sort(iCellPiv3, iCellEnd, &
           & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], &
-          & 3, 0)
+          & [centerCoords(1),  upperCoords(2)], 3, 0)
 
       ! ----------------------
       ! 2--3
       ! 1||4 orientation.
       ! ----------------------
       case(2)
-        ! Separate left and right halves.
-        iCellPiv2 = iCell; iCellEnd2 = iCellEnd
-        call Separate(iCellPiv2, iCellEnd2, centerCoords, 1, +1)
+        ! Partition left and right halves.
+        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 1, +1)
 
-        ! Separate lower and upper quadrants of the left half.
-        iCellPiv1 = iCell; iCellEnd1 = iCellPiv2
-        call Separate(iCellPiv1, iCellEnd1, centerCoords, 2, +1)
+        ! Partition lower and upper quadrants of the left half.
+        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 2, +1)
 
-        ! Separate upper and lower quadrants of the right half.
-        iCellPiv3 = iCellPiv2; iCellEnd3 = iCellEnd
-        call Separate(iCellPiv3, iCellEnd3, centerCoords, 2, -1)
+        ! Partition upper and lower quadrants of the right half.
+        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, -1)
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
           & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], &
-          & 1, 0)
+          & [centerCoords(1), centerCoords(2)], 1, 0)
         call Sort(iCellPiv1, iCellPiv2, &
           & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], &
-          & 2, 0)
+          & [centerCoords(1),  upperCoords(2)], 2, 0)
         call Sort(iCellPiv2, iCellPiv3, &
           & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], &
-          & 2, 0)
+          & [ upperCoords(1),  upperCoords(2)], 2, 0)
         call Sort(iCellPiv3, iCellEnd, &
           & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], &
-          & 4, 0)
+          & [ upperCoords(1), centerCoords(2)], 4, 0)
 
       ! ----------------------
       ! 4||1
       ! 3--2 orientation.
       ! ----------------------
       case(3)
-        ! Separate right and left halves.
-        iCellPiv2 = iCell; iCellEnd2 = iCellEnd
-        call Separate(iCellPiv2, iCellEnd2, centerCoords, 1, -1)
+        ! Partition right and left halves.
+        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 1, -1)
 
-        ! Separate upper and lower quadrants of the right half.
-        iCellPiv1 = iCell; iCellEnd1 = iCellPiv2
-        call Separate(iCellPiv1, iCellEnd1, centerCoords, 2, -1)
+        ! Partition upper and lower quadrants of the right half.
+        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 2, -1)
 
-        ! Separate lower and upper quadrants of the left half.
-        iCellPiv3 = iCellPiv2; iCellEnd3 = iCellEnd
-        call Separate(iCellPiv3, iCellEnd3, centerCoords, 2, +1)
+        ! Partition lower and upper quadrants of the left half.
+        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, +1)
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
           & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], &
-          & 4, 0)
+          & [ upperCoords(1),  upperCoords(2)], 4, 0)
         call Sort(iCellPiv1, iCellPiv2, &
           & [centerCoords(1) , lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], &
-          & 3, 0)
+          & [ upperCoords(1), centerCoords(2)], 3, 0)
         call Sort(iCellPiv2, iCellPiv3, &
           & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], &
-          & 3, 0)
+          & [centerCoords(1), centerCoords(2)], 3, 0)
         call Sort(iCellPiv3, iCellEnd, &
           & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], &
-          & 1, 0)
+          & [centerCoords(1),  upperCoords(2)], 1, 0)
 
       ! ----------------------
       ! 2|-1
       ! 3|-4 orientation.
       ! ----------------------
       case(4)
-        ! Separate upper and lower halves.
-        iCellPiv2 = iCell; iCellEnd2 = iCellEnd
-        call Separate(iCellPiv2, iCellEnd2, centerCoords, 2, -1)
+        ! Partition upper and lower halves.
+        iCellPiv2 = Partition(iCell, iCellEnd, centerCoords, 2, -1)
 
-        ! Separate right and left quadrants of the lower half.
-        iCellPiv1 = iCell; iCellEnd1 = iCellPiv2
-        call Separate(iCellPiv1, iCellEnd1, centerCoords, 1, -1)
+        ! Partition right and left quadrants of the lower half.
+        iCellPiv1 = Partition(iCell, iCellPiv2, centerCoords, 1, -1)
 
-        ! Separate left and right quadrants of the upper half.
-        iCellPiv3 = iCellPiv2; iCellEnd3 = iCellEnd
-        call Separate(iCellPiv3, iCellEnd3, centerCoords, 1, +1)
+        ! Partition left and right quadrants of the upper half.
+        iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, +1)
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
           & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], &
-          & 3, 0)
+          & [ upperCoords(1),  upperCoords(2)], 3, 0)
         call Sort(iCellPiv1, iCellPiv2, &
           & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], &
-          & 4, 0)
+          & [centerCoords(1),  upperCoords(2)], 4, 0)
         call Sort(iCellPiv2, iCellPiv3, &
           & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], &
-          & 4, 0)
+          & [centerCoords(1), centerCoords(2)], 4, 0)
         call Sort(iCellPiv3, iCellEnd, &
           & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], &
-          & 2, 0)
+          & [ upperCoords(1), centerCoords(2)], 2, 0)
 
     end select
 

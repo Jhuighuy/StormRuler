@@ -136,9 +136,7 @@ subroutine Mesh_Ordering_Hilbert2D(mesh, iperm)
     iperm(iCell) = iCell
   end do
 
-  call Sort(1, mesh%NumCells + 1, &
-    & 0*mesh%MDIndexBounds + 1, &
-    & 1*mesh%MDIndexBounds, 1, 0)
+  call HilbertSort(1, mesh%NumCells + 1, 1, 0)
 
 contains
   recursive pure logical function Condition(iCell, centerCoords, dim, sign)
@@ -188,14 +186,13 @@ contains
     iperm(iCell:(iCellEnd - 1)) = ipermTemp(iCell:(iCellEnd - 1))
 
   end function Partition
-  recursive subroutine Sort(iCell, iCellEnd, &
-      & lowerCoords,upperCoords, orientation, threads)
+  recursive subroutine HilbertSort(iCell, iCellEnd, orientation, threads)
     integer(ip), intent(in) :: iCell, iCellEnd
-    integer(ip), intent(in) :: lowerCoords(:),upperCoords(:)
     integer(ip), intent(in) :: orientation, threads
 
-    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3
     real(dp) :: centerCoords(2)
+    integer(ip) :: lowerCoords(2), upperCoords(2)
+    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3
 
     ! ----------------------
     ! Check if recursion terminates.
@@ -203,16 +200,29 @@ contains
     if (iCell >= iCellEnd - 1) return
 
     ! ----------------------
+    ! Compute the bounding coordinates.
+    ! ----------------------
+    lowerCoords = mesh%CellMDIndex(:,iperm(iCell))
+    upperCoords = mesh%CellMDIndex(:,iperm(iCell))
+    do iCellPiv1 = iCell + 1, iCellEnd - 1
+      lowerCoords = min(lowerCoords, mesh%CellMDIndex(:,iperm(iCellPiv1)))
+      upperCoords = max(upperCoords, mesh%CellMDIndex(:,iperm(iCellPiv1)))
+    end do
+    centerCoords = 0.5_dp*(lowerCoords + upperCoords)
+
+    ! ----------------------
     ! Terminate if odd block is detected. 
     ! ----------------------
-    associate(deltaCoords => upperCoords - lowerCoords + 1)
-      if (any(mod(abs(deltaCoords), 2) == 1)) return
+    associate(blockShape => upperCoords - lowerCoords + 1)
+      if (any(mod(abs(blockShape), 2) == 1)) then
+        !iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
+        return
+      end if
     end associate
 
     ! ----------------------
     ! Partition quoters based on the orientation.
     ! ----------------------
-    centerCoords = 0.5_dp*(lowerCoords + upperCoords)
     select case(orientation)
       
       ! ----------------------
@@ -230,18 +240,10 @@ contains
         iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, -1)
 
         ! Recursively process the quadrants.
-        call Sort(iCell, iCellPiv1, &
-          & [         lowerCoords(1),           lowerCoords(2) ], &
-          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 2, 0)
-        call Sort(iCellPiv1, iCellPiv2, &
-          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
-          & [         upperCoords(1),    floor(centerCoords(2))], 1, 0)
-        call Sort(iCellPiv2, iCellPiv3, &
-          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
-          & [         upperCoords(1),           upperCoords(2) ], 1, 0)
-        call Sort(iCellPiv3, iCellEnd, &
-          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
-          & [  floor(centerCoords(1)),          upperCoords(2) ], 3, 0)
+        call HilbertSort(iCell,     iCellPiv1, 2, 0)
+        call HilbertSort(iCellPiv1, iCellPiv2, 1, 0)
+        call HilbertSort(iCellPiv2, iCellPiv3, 1, 0)
+        call HilbertSort(iCellPiv3, iCellEnd,  3, 0)
 
       ! ----------------------
       ! 2--3
@@ -258,18 +260,10 @@ contains
         iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, -1)
 
         ! Recursively process the quadrants.
-        call Sort(iCell, iCellPiv1, &
-          & [         lowerCoords(1),           lowerCoords(2) ], &
-          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 1, 0)
-        call Sort(iCellPiv1, iCellPiv2, &
-          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
-          & [  floor(centerCoords(1)),          upperCoords(2) ], 2, 0)
-        call Sort(iCellPiv2, iCellPiv3, &
-          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
-          & [         upperCoords(1),           upperCoords(2) ], 2, 0)
-        call Sort(iCellPiv3, iCellEnd, &
-          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
-          & [         upperCoords(1),    floor(centerCoords(2))], 4, 0)
+        call HilbertSort(iCell,     iCellPiv1, 1, 0)
+        call HilbertSort(iCellPiv1, iCellPiv2, 2, 0)
+        call HilbertSort(iCellPiv2, iCellPiv3, 2, 0)
+        call HilbertSort(iCellPiv3, iCellEnd,  4, 0)
 
       ! ----------------------
       ! 4||1
@@ -286,18 +280,10 @@ contains
         iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 2, +1)
 
         ! Recursively process the quadrants.
-        call Sort(iCell, iCellPiv1, &
-          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
-          & [         upperCoords(1),           upperCoords(2) ], 4, 0)
-        call Sort(iCellPiv1, iCellPiv2, &
-          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
-          & [         upperCoords(1),    floor(centerCoords(2))], 3, 0)
-        call Sort(iCellPiv2, iCellPiv3, &
-          & [         lowerCoords(1),           lowerCoords(2) ], &
-          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 3, 0)
-        call Sort(iCellPiv3, iCellEnd, &
-          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
-          & [  floor(centerCoords(1)),          upperCoords(2) ], 1, 0)
+        call HilbertSort(iCell,     iCellPiv1, 4, 0)
+        call HilbertSort(iCellPiv1, iCellPiv2, 3, 0)
+        call HilbertSort(iCellPiv2, iCellPiv3, 3, 0)
+        call HilbertSort(iCellPiv3, iCellEnd,  1, 0)
 
       ! ----------------------
       ! 2|-1
@@ -314,22 +300,14 @@ contains
         iCellPiv3 = Partition(iCellPiv2, iCellEnd, centerCoords, 1, +1)
 
         ! Recursively process the quadrants.
-        call Sort(iCell, iCellPiv1, &
-          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
-          & [         upperCoords(1),           upperCoords(2) ], 3, 0)
-        call Sort(iCellPiv1, iCellPiv2, &
-          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
-          & [  floor(centerCoords(1)),          upperCoords(2) ], 4, 0)
-        call Sort(iCellPiv2, iCellPiv3, &
-          & [       lowerCoords(1),             lowerCoords(2) ], &
-          & [floor(centerCoords(1)),     floor(centerCoords(2))], 4, 0)
-        call Sort(iCellPiv3, iCellEnd, &
-          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
-          & [         upperCoords(1),    floor(centerCoords(2))], 2, 0)
+        call HilbertSort(iCell,     iCellPiv1, 3, 0)
+        call HilbertSort(iCellPiv1, iCellPiv2, 4, 0)
+        call HilbertSort(iCellPiv2, iCellPiv3, 4, 0)
+        call HilbertSort(iCellPiv3, iCellEnd,  2, 0)
 
     end select
 
-  end subroutine Sort
+  end subroutine HilbertSort
 end subroutine Mesh_Ordering_Hilbert2D
 
 end module StormRuler_Mesh_Ordering

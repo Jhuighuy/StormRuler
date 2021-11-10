@@ -54,6 +54,18 @@ end interface
 contains
 
 !! ----------------------------------------------------------------- !!
+!! Swap function.
+!! ----------------------------------------------------------------- !!
+recursive subroutine Swap(i, j)
+  integer(ip), intent(inout) :: i, j
+
+  integer(ip) :: k
+
+  k = i; i = j; j = k
+
+end subroutine Swap
+
+!! ----------------------------------------------------------------- !!
 !! Flip integer oddity, e.g. 1→2, 2→1, 3→4, 4→3, ...
 !! ----------------------------------------------------------------- !!
 integer(ip) pure function Flip(value)

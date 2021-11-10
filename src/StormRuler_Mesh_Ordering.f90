@@ -27,7 +27,7 @@ module StormRuler_Mesh_Ordering
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: I2S
+use StormRuler_Helpers, only: Swap, I2S
 
 use StormRuler_Mesh, only: tMesh
 
@@ -108,17 +108,20 @@ end subroutine Mesh_Ordering_Dump
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! ----------------------------------------------------------------- !!
-!! Swap function.
-!! ----------------------------------------------------------------- !!
-recursive subroutine Swap(i, j)
-  integer(ip), intent(inout) :: i, j
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute an identity ordering.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh_Ordering_Identity(mesh, iperm)
+  class(tMesh), intent(inout) :: mesh
+  integer(ip), intent(inout) :: iperm(:)
 
-  integer(ip) :: k
+  integer(ip) :: iCell
 
-  k = i; i = j; j = k
+  do iCell = 1, mesh%NumCells
+    iperm(iCell) = iCell
+  end do
 
-end subroutine Swap
+end subroutine Mesh_Ordering_Identity
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a 2D/3D mesh ordering along the Hilbert curve. 
@@ -134,18 +137,17 @@ subroutine Mesh_Ordering_HilbertCurve(mesh, iperm)
   ! ----------------------
   ! Generate identity inverse permutation.
   ! ----------------------
-  block
-    integer(ip) :: iCell
+  call Mesh_Ordering_Identity(mesh, iperm)
 
-    do iCell = 1, mesh%NumCells
-      iperm(iCell) = iCell
-    end do
-  end block
-
+  ! ----------------------
+  ! Generate the ordering!
+  ! ----------------------
   if (mesh%NumDims == 2) then
     call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1)
   else if (mesh%NumDims == 3) then
     call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1, -1)
+  else
+    error stop 'Hilbert ordering supports 2D/3D meshes only.'
   end if
 
 contains

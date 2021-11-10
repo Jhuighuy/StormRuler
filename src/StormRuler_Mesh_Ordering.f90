@@ -137,8 +137,8 @@ subroutine Mesh_Ordering_Hilbert2D(mesh, iperm)
   end do
 
   call Sort(1, mesh%NumCells + 1, &
-    & 0.0_dp*mesh%MDIndexBounds, &
-    & 1.0_dp*mesh%MDIndexBounds - 1.0_dp, 1, 0)
+    & 0*mesh%MDIndexBounds + 1, &
+    & 1*mesh%MDIndexBounds, 1, 0)
 
 contains
   recursive pure logical function Condition(iCell, centerCoords, dim, sign)
@@ -191,7 +191,7 @@ contains
   recursive subroutine Sort(iCell, iCellEnd, &
       & lowerCoords,upperCoords, orientation, threads)
     integer(ip), intent(in) :: iCell, iCellEnd
-    real(dp), intent(in) :: lowerCoords(:),upperCoords(:)
+    integer(ip), intent(in) :: lowerCoords(:),upperCoords(:)
     integer(ip), intent(in) :: orientation, threads
 
     integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3
@@ -201,7 +201,13 @@ contains
     ! Check if recursion terminates.
     ! ----------------------
     if (iCell >= iCellEnd - 1) return
-    if (any(lowerCoords >= upperCoords)) return
+
+    ! ----------------------
+    ! Terminate if odd block is detected. 
+    ! ----------------------
+    associate(deltaCoords => upperCoords - lowerCoords + 1)
+      if (any(mod(abs(deltaCoords), 2) == 1)) return
+    end associate
 
     ! ----------------------
     ! Partition quoters based on the orientation.
@@ -225,17 +231,17 @@ contains
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
-          & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], 2, 0)
+          & [         lowerCoords(1),           lowerCoords(2) ], &
+          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 2, 0)
         call Sort(iCellPiv1, iCellPiv2, &
-          & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], 1, 0)
+          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
+          & [         upperCoords(1),    floor(centerCoords(2))], 1, 0)
         call Sort(iCellPiv2, iCellPiv3, &
-          & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], 1, 0)
+          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
+          & [         upperCoords(1),           upperCoords(2) ], 1, 0)
         call Sort(iCellPiv3, iCellEnd, &
-          & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], 3, 0)
+          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
+          & [  floor(centerCoords(1)),          upperCoords(2) ], 3, 0)
 
       ! ----------------------
       ! 2--3
@@ -253,17 +259,17 @@ contains
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
-          & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], 1, 0)
+          & [         lowerCoords(1),           lowerCoords(2) ], &
+          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 1, 0)
         call Sort(iCellPiv1, iCellPiv2, &
-          & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], 2, 0)
+          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
+          & [  floor(centerCoords(1)),          upperCoords(2) ], 2, 0)
         call Sort(iCellPiv2, iCellPiv3, &
-          & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], 2, 0)
+          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
+          & [         upperCoords(1),           upperCoords(2) ], 2, 0)
         call Sort(iCellPiv3, iCellEnd, &
-          & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], 4, 0)
+          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
+          & [         upperCoords(1),    floor(centerCoords(2))], 4, 0)
 
       ! ----------------------
       ! 4||1
@@ -281,17 +287,17 @@ contains
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
-          & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], 4, 0)
+          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
+          & [         upperCoords(1),           upperCoords(2) ], 4, 0)
         call Sort(iCellPiv1, iCellPiv2, &
-          & [centerCoords(1) , lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], 3, 0)
+          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
+          & [         upperCoords(1),    floor(centerCoords(2))], 3, 0)
         call Sort(iCellPiv2, iCellPiv3, &
-          & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], 3, 0)
+          & [         lowerCoords(1),           lowerCoords(2) ], &
+          & [  floor(centerCoords(1)),   floor(centerCoords(2))], 3, 0)
         call Sort(iCellPiv3, iCellEnd, &
-          & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], 1, 0)
+          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
+          & [  floor(centerCoords(1)),          upperCoords(2) ], 1, 0)
 
       ! ----------------------
       ! 2|-1
@@ -309,17 +315,17 @@ contains
 
         ! Recursively process the quadrants.
         call Sort(iCell, iCellPiv1, &
-          & [centerCoords(1), centerCoords(2)], &
-          & [ upperCoords(1),  upperCoords(2)], 3, 0)
+          & [ceiling(centerCoords(1)), ceiling(centerCoords(2))], &
+          & [         upperCoords(1),           upperCoords(2) ], 3, 0)
         call Sort(iCellPiv1, iCellPiv2, &
-          & [ lowerCoords(1), centerCoords(2)], &
-          & [centerCoords(1),  upperCoords(2)], 4, 0)
+          & [         lowerCoords(1),  ceiling(centerCoords(2))], &
+          & [  floor(centerCoords(1)),          upperCoords(2) ], 4, 0)
         call Sort(iCellPiv2, iCellPiv3, &
-          & [ lowerCoords(1),  lowerCoords(2)], &
-          & [centerCoords(1), centerCoords(2)], 4, 0)
+          & [       lowerCoords(1),             lowerCoords(2) ], &
+          & [floor(centerCoords(1)),     floor(centerCoords(2))], 4, 0)
         call Sort(iCellPiv3, iCellEnd, &
-          & [centerCoords(1),  lowerCoords(2)], &
-          & [ upperCoords(1), centerCoords(2)], 2, 0)
+          & [ceiling(centerCoords(1)),          lowerCoords(2) ], &
+          & [         upperCoords(1),    floor(centerCoords(2))], 2, 0)
 
     end select
 

@@ -30,6 +30,9 @@ use StormRuler_Parameters, only: dp, ip, i8, error_code
 use StormRuler_Helpers
 
 use StormRuler_Mesh, only: tMesh
+use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
+  & Mesh_Ordering_Dump, Mesh_Ordering_Hilbert2D
+
 use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
 
@@ -269,6 +272,22 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   allocate(pMesh_C)
   pMesh_C%mObj => gMesh
   pMesh = c_loc(pMesh_C)
+
+!  block
+!    integer(ip), allocatable :: iperm(:)
+!
+!    allocate(iperm(gMesh%NumCells))
+!
+!    call Mesh_Ordering_Dump(gMesh, 'test/MO-O.txt')
+!    print *, 'quality = ', Mesh_Ordering_Quality(gMesh)
+!
+!    call Mesh_Ordering_Hilbert2D(gMesh, iperm)
+!
+!    call Mesh_Ordering_Dump(gMesh, 'test/MO-H.txt', iperm)
+!    print *, 'quality(h) = ', Mesh_Ordering_Quality(gMesh, iperm)
+!
+!    error stop 229
+!  end block
 
 end function cInitMesh
 

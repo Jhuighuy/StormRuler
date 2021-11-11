@@ -160,7 +160,7 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   SR_DivGrad(mesh, rhs, tau, w_hat);
 
   SR_Set(mesh, c_hat, c);
-  SR_LinSolve(mesh, "GMRES", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
+  SR_LinSolve(mesh, "BiCGStab", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
   SR_Free(rhs);
 
   SetBCs_c(mesh, c_hat);

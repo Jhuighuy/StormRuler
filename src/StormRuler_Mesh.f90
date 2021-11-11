@@ -175,6 +175,11 @@ contains
   procedure, private :: GenerateBCCells => tMesh_GenerateBCCells
 
   ! ----------------------
+  ! Ordering routines. 
+  ! ----------------------
+  procedure :: ApplyOrdering => tMesh_ApplyOrdering
+
+  ! ----------------------
   ! Printers.
   ! ----------------------
   procedure :: PrintTo_Neato => tMesh_PrintTo_Neato
@@ -683,6 +688,53 @@ subroutine tMesh_GenerateBCCells(mesh, numBCLayers)
   print *, 'ERROR PRONE CHECK:', iBCCell-1
   print *, 'AGAIN BCMs:', mesh%BCMs
 end subroutine tMesh_GenerateBCCells
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Apply the specified cell ordering.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine tMesh_ApplyOrdering(mesh, iperm)
+  class(tMesh), intent(inout) :: mesh
+  integer(ip), intent(in) :: iperm(:)
+
+  integer(ip) :: iCell, iCellFace
+  integer(ip), allocatable :: cellToCellTemp(:,:)
+  integer(ip), allocatable :: cellMDIndexTemp(:,:)
+
+  ! ----------------------
+  ! Order cell-cell graph columns.
+  ! ----------------------
+  do iCell = 1, mesh%NumAllCells
+    do iCellFace = 1, mesh%NumCellFaces
+      associate(jCell => mesh%CellToCell(iCellFace, iCell))
+
+        if (0 < jCell.and.jCell <= mesh%NumCells) jCell = iperm(jCell)
+
+      end associate
+    end do
+  end do
+
+  ! ----------------------
+  ! Order cell-cell graph rows.
+  ! ----------------------
+  allocate(cellToCellTemp(mesh%NumCellFaces, mesh%NumCells))
+  allocate(cellMDIndexTemp(mesh%NumDims, mesh%NumCells))
+  
+  cellToCellTemp(:,:) = mesh%CellToCell(:,1:mesh%NumCells)
+  cellMDIndexTemp(:,:) = mesh%CellMDIndex(:,1:mesh%NumCells)
+  
+  do iCell = 1, mesh%NumCells
+    associate(jCell => iperm(iCell))
+
+      mesh%CellToCell(:,jCell) = cellToCellTemp(:,iCell)
+      mesh%CellMDIndex(:,jCell) = cellMDIndexTemp(:,iCell)
+
+    end associate
+  end do
+
+end subroutine tMesh_ApplyOrdering
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

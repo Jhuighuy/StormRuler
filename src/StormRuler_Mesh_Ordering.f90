@@ -48,7 +48,7 @@ real(dp) function Mesh_Ordering_Quality(mesh, iperm) result(quality)
   class(tMesh), intent(inout) :: mesh
   integer(ip), intent(in), optional :: iperm(:)
 
-  quality = mesh%RunCellKernel_Sum(Quality_Kernel)
+  quality = mesh%RunCellKernel_Sum(Quality_Kernel)/mesh%NumCells
 
 contains
   real(dp) function Quality_Kernel(iCell) result(q)
@@ -56,10 +56,11 @@ contains
 
     integer(ip) :: iCellFace
 
+    q = 0.0_dp
+
     ! ----------------------
     ! For each cell face:
     ! ----------------------
-    q = 0.0_dp
     do iCellFace = 1, mesh%NumCellFaces
       ! ----------------------
       ! Quality is measured as the absolute value of the
@@ -67,13 +68,15 @@ contains
       ! (or permuted indices).
       ! ----------------------
       associate(jCell => mesh%CellToCell(iCellFace, iCell))
+
         if (jCell <= mesh%NumCells) then
           if (present(iperm)) then
-            q = q + abs(iperm(iCell) - iperm(jCell))
+            q = q + log(abs(iperm(iCell) - iperm(jCell)) + 0.0_dp)
           else
-            q = q + abs(iCell - jCell)
+            q = q + log(abs(iCell - jCell) + 0.0_dp)
           end if
         end if
+
       end associate
     end do
 
@@ -117,9 +120,11 @@ subroutine Mesh_Ordering_Identity(mesh, iperm)
 
   integer(ip) :: iCell
 
+  !$omp parallel do default(none) shared(mesh, iPerm)
   do iCell = 1, mesh%NumCells
     iperm(iCell) = iCell
   end do
+  !$omp end parallel do
 
 end subroutine Mesh_Ordering_Identity
 
@@ -142,9 +147,7 @@ subroutine Mesh_Ordering_HilbertCurve(mesh, iperm)
   ! ----------------------
   ! Generate the ordering!
   ! ----------------------
-  if (mesh%NumDims == 2) then
-    call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1)
-  else if (mesh%NumDims == 3) then
+  if (mesh%NumDims == 2.or.mesh%NumDims == 3) then
     call HilbertSort(1, mesh%NumCells + 1, 1, -1, -1, -1)
   else
     error stop 'Hilbert ordering supports 2D/3D meshes only.'
@@ -226,8 +229,10 @@ contains
     lowerCoords = mesh%CellMDIndex(:,iperm(iCell))
     upperCoords = mesh%CellMDIndex(:,iperm(iCell))
     do iCellPiv1 = iCell + 1, iCellEnd - 1
-      lowerCoords = min(lowerCoords, mesh%CellMDIndex(:,iperm(iCellPiv1)))
-      upperCoords = max(upperCoords, mesh%CellMDIndex(:,iperm(iCellPiv1)))
+      lowerCoords = min(lowerCoords, &
+        & mesh%CellMDIndex(:,iperm(iCellPiv1)))
+      upperCoords = max(upperCoords, &
+        & mesh%CellMDIndex(:,iperm(iCellPiv1)))
     end do
     centerCoords = 0.5_dp*(lowerCoords + upperCoords)
 
@@ -235,10 +240,12 @@ contains
     ! Terminate if odd block is detected. 
     ! ----------------------
     associate(blockShape => upperCoords - lowerCoords + 1)
+    
       if (any(mod(abs(blockShape), 2) == 1)) then
-        iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
+        !iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
         return
       end if
+    
     end associate
 
     ! ----------------------

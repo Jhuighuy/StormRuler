@@ -386,7 +386,7 @@ int main() {
 
   double total_time = 0.0;
 
-  for (int time = 0; time <= 20+0*200000; ++time) {
+  for (int time = 0; time <= 0*20+1*200000; ++time) {
 
     for (int frac = 0; time != 0 && frac < 1; ++ frac) {
 

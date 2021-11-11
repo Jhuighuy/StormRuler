@@ -39,10 +39,4 @@
 #$let HAS_OpenMP = False
 #$end if
 
-#$if not defined('HAS_LAPACK')
-#$let HAS_LAPACK = False
-#$end if
-
 #$let SCALAR_TYPES = [('R', 'real(dp)'), ('C', 'complex(dp)')]
-
-#$let check = 'call Assert'

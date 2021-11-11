@@ -72,14 +72,8 @@ although some of them are not parallelized.
     (`JFNK`, for the general nonlinear problems);
 
 - 🏎 Matrix-free linear iterative solvers:
-  * Chebyshev Semi-Iterative solver
-    (`Chebyshev`, for the _definite symmetric_ linear problems),
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
-  * _(planned)_ Hybrid Chebyshev-CG solver,
-    (`ConjugateChebyshev`, for the _definite symmetric_ linear problems,
-     _theoretically **the fastest** existing SPD-solver 
-      for the repeated-computation_),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
@@ -100,28 +94,12 @@ although some of them are not parallelized.
   * Least squares-MINRES solver
     (`LSMR`, for the general linear least squares problems);
 
-- 🚢 Matrix-free eigensolvers:
-  * _(planned)_ Power iteration eigensolver
-    (`PowerIteration`, for the general problems),
-  * _(planned)_ Lanczos eigensolver
-    (`Lanczos`, for the _symmetric_ problems,
-     coupled with optional Lanczos-CG linear solver),
-  * _(planned)_ Arnoldi eigensolver
-    (`Arnoldi`, for the problems);
-
 - 🚨 Matrix-free preconditioners:
   * Block Jacobi preconditioner
     (`Jacobi`),
   * Block LU-SGS preconditioner
     (`LU_SGS`),
   * _(planned)_ Block SPAI preconditioner.
-
-- 🛰 Some very specific solvers:
-  * _(planned)_ Symmetric tridiagonal eigensolvers
-    (`bisection`, `divide-and-conquer`, `QR`,
-     for the symmetric tridiagonal matrices, ),
-  * LAPACK Symmetric tridiagonal eigensolvers
-    (for the symmetric tridiagonal matrices, from [LAPACK](https://bit.ly/3yWg8qM)),
 
 <!----------------------------------------------------------------->
 ## 🛤Road map

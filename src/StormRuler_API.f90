@@ -233,7 +233,7 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 
 #$if False
 
-  integer(ip), parameter :: nx = 100, ny = 100
+  integer(ip), parameter :: nx = 400, ny = 400
   real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
   allocate(gMesh)
   call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
@@ -273,21 +273,22 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   pMesh_C%mObj => gMesh
   pMesh = c_loc(pMesh_C)
 
-!  block
-!    integer(ip), allocatable :: iperm(:)
-!
-!    allocate(iperm(gMesh%NumCells))
-!
-!    call Mesh_Ordering_Dump(gMesh, 'test/MO-O.txt')
-!    print *, 'quality = ', Mesh_Ordering_Quality(gMesh)
-!
-!    call Mesh_Ordering_HilbertCurve(gMesh, iperm)
-!
-!    call Mesh_Ordering_Dump(gMesh, 'test/MO-H.txt', iperm)
-!    print *, 'quality(h) = ', Mesh_Ordering_Quality(gMesh, iperm)
-!
-!    error stop 229
-!  end block
+  block
+    integer(ip), allocatable :: iperm(:)
+
+    allocate(iperm(gMesh%NumCells))
+
+    call Mesh_Ordering_Dump(gMesh, 'test/MO-O.txt')
+    print *, 'quality = ', Mesh_Ordering_Quality(gMesh)
+
+    call Mesh_Ordering_HilbertCurve(gMesh, iperm)
+
+    call Mesh_Ordering_Dump(gMesh, 'test/MO-H.txt', iperm)
+    print *, 'quality(h) = ', Mesh_Ordering_Quality(gMesh, iperm)
+
+    call gMesh%ApplyOrdering(iperm)
+    !error stop 229
+  end block
 
 end function cInitMesh
 

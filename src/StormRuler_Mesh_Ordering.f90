@@ -241,10 +241,7 @@ contains
     ! ----------------------
     associate(blockShape => upperCoords - lowerCoords + 1)
     
-      if (any(mod(abs(blockShape), 2) == 1)) then
-        !iperm(iCell:(iCellEnd - 1)) = iperm((iCellEnd - 1):iCell:-1)
-        return
-      end if
+      if (any(mod(abs(blockShape), 2) == 1)) return
     
     end associate
 

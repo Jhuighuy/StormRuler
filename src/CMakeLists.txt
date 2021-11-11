@@ -30,7 +30,7 @@
 project(StormRuler_Lib
   VERSION 1.0
   DESCRIPTION "StormRuler shared library"
-  LANGUAGES Fortran C)
+  LANGUAGES Fortran CXX)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Sources and preprocessing.
@@ -38,7 +38,7 @@ project(StormRuler_Lib
 
 # Locate the Fortran and C++ sources.
 file(GLOB Fortran_SOURCES "./*.f90") 
-file(GLOB C_SOURCES "./*.c")
+file(GLOB CXX_SOURCES "./*.c*")
 
 # Build a list of Fortiel options.
 set(Fortiel_DEFINES "")
@@ -50,12 +50,6 @@ if(WIN32)
 endif()
 if(OpenMP_Fortran_ENABLED)
   list(APPEND Fortiel_DEFINES "-DHAS_OpenMP=True")
-endif()
-if(MKL_ENABLED)
-  list(APPEND Fortiel_DEFINES "-DHAS_MKL=True")
-endif()
-if(LAPACK_ENABLED)
-  list(APPEND Fortiel_DEFINES "-DHAS_LAPACK=True")
 endif()
 
 # Find Fortiel preprocessor.
@@ -93,7 +87,7 @@ endforeach()
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 add_library(StormRuler SHARED ${Fortran_SOURCES}
-  ${Fortran_SOURCES_PREPROCESSED} ${C_SOURCES})
+  ${Fortran_SOURCES_PREPROCESSED} ${CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)

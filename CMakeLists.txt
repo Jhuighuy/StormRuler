@@ -26,13 +26,13 @@
 cmake_minimum_required(VERSION 3.12)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Setup StormRuler project, using Fortran and C.
+## Setup StormRuler project, using Fortran and C++.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 project(StormRuler
   VERSION 1.0
   DESCRIPTION "A very high order CFD solver and beyond"
-  LANGUAGES Fortran C)
+  LANGUAGES Fortran CXX)
 
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
@@ -45,8 +45,8 @@ add_library(StormRuler_BASE INTERFACE)
 # Fortran compilers on Apple Silicon are not production-ready yet,
 # so we need to disable some features (for now).
 if(APPLE)
-  include(CheckCCompilerFlag)
-  check_c_compiler_flag("-arch arm64" APPLE_SILICON)
+  include(CheckCxxCompilerFlag)
+  check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
   message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 
@@ -68,19 +68,19 @@ else()
     "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, warning options not set.")
 endif()
 # Warning and diagnostics options (C/C++).
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>: -Werror -Wall -Wextra 
        -Wpedantic -Wno-unused-function -Wno-unused-parameter>)
-elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
-       "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>:-Werror -Wall -Wextra -Wpedantic 
       -Wno-unused-function -Wno-unused-parameter 
       -Wno-gnu-zero-variadic-macro-arguments>)
 else()
   message(WARNING 
-    "Unknown C compiler ${CMAKE_C_COMPILER_ID}, warning options not set.")
+    "Unknown C++ compiler ${CMAKE_CXX_COMPILER_ID}, warning options not set.")
 endif()
 
 # Optimization options (Fortran).
@@ -106,20 +106,20 @@ else()
     "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, optimization options not set.")
 endif()
 # Optimization options (C/C++).
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
-elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
-       "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
   target_compile_options(StormRuler_BASE INTERFACE
     $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
 else()
   message(WARNING 
-    "Unknown C compiler ${CMAKE_C_COMPILER_ID}, warning options not set.")
+    "Unknown C++ compiler ${CMAKE_CXX_COMPILER_ID}, warning options not set.")
 endif()
 
 # Other options.
@@ -152,17 +152,6 @@ if(GIT_FOUND)
   endif()
 endif()
 
-# Find threads.
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads)
-if (Threads_FOUND)
-  message(STATUS "Threads enabled.")
-  target_link_libraries(StormRuler_BASE INTERFACE Threads::Threads)
-endif()
-
-# TODO: we should check for quality of the OpenMP implementation,
-# e.g. support of block constructs inside of the parallel loops.
-
 # Find OpenMP.
 if(StormRuler_NO_OpenMP)
   message(STATUS "StormRuler OpenMP was disabled by user.")
@@ -178,95 +167,36 @@ else()
       target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
     endif()
   endif()
-  if(OpenMP_C_FOUND)
+  if(OpenMP_CXX_FOUND)
     if(OpenMP_Fortran_ENABLED)
-      # Enable C OpenMP only in case Fortran and C compiler vendors match.
+      # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
       # Mixing different OpenMP runtimes is generally not a good idea.
-      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_C_COMPILER_ID}")
-        set(OpenMP_C_ENABLED 1)
+      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+        set(OpenMP_CXX_ENABLED 1)
       endif()
       # NAG uses system C compiler as a backend,
       # which can should theoretically match used C compiler.
       if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-        set(OpenMP_C_ENABLED 1)
+        set(OpenMP_CXX_ENABLED 1)
       endif()
     endif()
-    if(OpenMP_C_ENABLED)
+    if(OpenMP_CXX_ENABLED)
       message(STATUS "C OpenMP enabled.")
-      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_C)
+      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
     else()
-      message(STATUS "C OpenMP disabled, different Fortran and C compiler vendors.")
+      message(STATUS "C OpenMP disabled, different Fortran and C++ compiler vendors.")
     endif()
   endif()
 endif()
 
-# Find MKL.
-if(StormRuler_NO_MKL)
-  message(STATUS "StormRuler MKL was disabled by user.")
-else()
-  # Configure OpenMP library to the Fortran compiler native one.
-  if(OpenMP_Fortran_ENABLED)
-    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
-      set(MKL_THREADING "intel_thread")
-    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-      set(MKL_THREADING "gnu_thread")
-    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
-      set(MKL_THREADING "pgi_thread")
-    endif()
-  endif()
-  # Configure MKL to use 32-bit integers.
-  set(MKL_INTERFACE lp64)
-  find_package(MKL CONFIG)
-  if(MKL_FOUND)
-    set(MKL_ENABLED 1)
-    message(STATUS "MKL enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
-    # Intel suggest the other more explicit way, see: https://intel.ly/3ABZNsK
-    #target_compile_options(
-    #  StormRuler_BASE INTERFACE 
-    #    $<TARGET_PROPERTY:MKL::MKL,INTERFACE_COMPILE_OPTIONS>)
-    #target_include_directories(
-    #  StormRuler_BASE INTERFACE 
-    #    $<TARGET_PROPERTY:MKL::MKL,INTERFACE_INCLUDE_DIRECTORIES>)
-    #target_link_libraries(
-    #  StormRuler_BASE INTERFACE $<LINK_ONLY:MKL::MKL>)
-  endif()
-endif()
-
-# Find LAPACK.
-# Possible bug with ifort: accidental crashes when
-# compiled with 'NO_OpenMP=1' and 'NO_MKL=1' flags, and
-# CMake detects MKL as LAPACK.
-if(StormRuler_NO_LAPACK)
-  message(STATUS "StormRuler LAPACK was disabled by user.")
-elseif(MKL_ENABLED)
-  # Separate LAPACK is not needed in case MKL is used.
-  set(LAPACK_ENABLED 1)
-  message(STATUS "LAPACK enabled (MKL).")
-else()
-  find_package(LAPACK)
-  if(LAPACK_FOUND)
-    set(LAPACK_ENABLED 1)
-    message(STATUS "LAPACK enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
-  endif()
-endif()
-
-# Find Lua.
-#if(StormRuler_NO_Lua)
-#  message(STATUS "StormRuler Lua was disabled by user.")
+# Find Gecko.
+#if(StormRuler_NO_Gecko)
+#  message(STATUS "StormRuler Gecko was disabled by user.")
 #else()
-#  find_package(Lua)
-#  if(LUA_FOUND)
-#    message(STATUS "Lua enabled.")
-#    set(Lua_ENABLED 1)
-#    # Lua target is missing.
-#    #target_link_libraries(StormRuler_BASE INTERFACE Lua::Lua)
-#    target_link_libraries(
-#      StormRuler_BASE INTERFACE "${LUA_LIBRARIES}")
-#    target_include_directories(
-#      StormRuler_BASE INTERFACE "${LUA_INCLUDE_DIR}")
-#  endif()
+#  # Gecko is carried as a submodule.
+#  message(STATUS "Gecko enabled.")
+#  add_subdirectory("${CMAKE_SOURCE_DIR}/ext/gecko")
+#  target_link_libraries(StormRuler_BASE INTERFACE gecko)
 #endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
@@ -280,9 +210,3 @@ add_subdirectory(
 message(STATUS "Adding StormRuler main executable.")
 add_subdirectory(
   "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
-
-#if(Lua_ENABLED)
-#  message(STATUS "Adding StormRuler Lua executable.")
-#  add_subdirectory(
-#    "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main_Lua")
-#endif()

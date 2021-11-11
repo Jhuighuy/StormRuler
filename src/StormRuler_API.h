@@ -31,15 +31,14 @@
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-#ifndef SR_MATLAB
-#define SR_MATLAB 1
-#endif
-
+// Detect C11.
 #if (__STDC_VERSION__ >= 201112L)
 #define SR_C11 1
 #else
 #define SR_C11 0
 #endif
+
+// Detect C++.
 #if defined(__cplusplus)
 #define SR_CPP 1
 #else
@@ -58,11 +57,7 @@
   typedef struct type##Struct type##Struct; \
   typedef type##Struct* type
 
-#if SR_MATLAB
-#define SR_DEFINE_FUNCPTR_(type, name, ...) typedef void* name
-#else
 #define SR_DEFINE_FUNCPTR_(type, name, ...) typedef type(*name)(__VA_ARGS__)
-#endif
 
 #if SR_C11
 #define SR_API extern
@@ -76,12 +71,7 @@
 #define SR_REAL double
 #define SR_STRING const char*
 
-#if SR_MATLAB
-typedef struct {
-  SR_REAL Re, Im;
-} SR_tComplex;
-#define SR_COMPLEX SR_tComplex
-#elif SR_C11
+#if SR_C11
 #include <complex.h>
 #define SR_COMPLEX double complex
 #elif SR_CPP

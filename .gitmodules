@@ -1,3 +1,7 @@
 [submodule "ext/fortiel"]
 path = ext/fortiel
 url = https://github.com/Jhuighuy/fortiel
+
+[submodule "ext/gecko"]
+path = ext/gecko
+url = https://github.com/LLNL/gecko.git

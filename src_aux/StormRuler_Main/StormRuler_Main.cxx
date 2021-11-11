@@ -26,8 +26,7 @@
 #define _USE_MATH_DEFINES 1
 #define _GNU_SOURCE 1
 
-#define SR_MATLAB 0
-#include "StormRuler_API.h"
+#include <StormRuler_API.h>
 
 #include <math.h>
 #include <stdio.h>

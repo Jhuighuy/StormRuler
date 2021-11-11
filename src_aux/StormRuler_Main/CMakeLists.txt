@@ -30,20 +30,20 @@
 project(StormRuler_Main
   VERSION 1.0
   DESCRIPTION "StormRuler main executable"
-  LANGUAGES C)
+  LANGUAGES CXX)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Sources.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-# Locate the C sources.
-file(GLOB_RECURSE C_SOURCES "./*.c")
+# Locate the C++ sources.
+file(GLOB CXX_SOURCES "./*.c*")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main executable library.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
-add_executable(StormRuler_Main ${C_SOURCES})
+add_executable(StormRuler_Main ${CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler_Main PUBLIC StormRuler_BASE)

@@ -40,7 +40,6 @@ use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
 use StormRuler_ConvParams, only: tConvParams
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
-use StormRuler_Solvers_Chebyshev, only: Solve_Chebyshev
 use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 

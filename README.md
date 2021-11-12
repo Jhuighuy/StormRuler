@@ -119,27 +119,24 @@ Legend:
 * C/C++ API:
   - [x] 🐏 Pure C API,
   - [ ] 💄 Untyped C API,
-  - [ ] 💄 Redesign the C API,
-  - [x] 💄 Unified Fortran solver API,
-  - [x] 💄 Unified Fortran solver RCI API,
-  - [ ] 🐏 PThread and semaphores for Windows,
-  - [x] 🚬🪦 Unified RCI C solver API,
-  - [ ] 🚬 MATLAB API,
-  - [ ] 🚬 Lua API.
+  - [ ] 💄 Untyped C API,
+  - [ ] 🐏 High-level C++ API,
+  - [ ] 🚬🐏 Python API.
 
 * Mesh:
   - [ ] 🪓 Nodes,
   - [ ] 🪓 Faces,
   - [ ] 🧸 Redesigned VTK output,
-  - [ ] 🪓 Cache-friendly cell sorting,
+  - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
+  - [ ] 🪓 Cache-friendly cell sorting: METIS,
   - [ ] 🪓 BC cells sorting and better BCs parallelization,
-  - [ ] 🚬 GMG,
-  - [ ] 🚬 Non-conforming multilevel mesh,
+  - [ ] 🪓 Block mesh (pre MPI),
+  - [ ] 🚬🚬 Non-conforming multilevel mesh,
+  - [ ] 🚬🚬🚬 AMR,
   - [ ] 🚬🚬 Cut cell methods.
 
 * General architecture:
   - [ ] 🦜🐞 Segfaults,
-  - [ ] 🚬🪦 Custom threading (without OpenMP on Fortran level),
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
 
@@ -158,17 +155,9 @@ Legend:
   - [ ] 🚬🚬🚬 Graph-coloring problem,
   - [ ] 🚬 Some matrix API...
 
-* New linear solvers/eigensolvers:
+* New linear solvers:
   - [x] 🚬 `GMRES` solver implementation.
   - [ ] 🪓 Preconditioned `GMRES` implementation.
-  - [ ] 🧸 Recover existing eigensolvers.
-  - [ ] 🧸 `PowerIterations` eigensolver,
-  - [ ] 🪓 `Lanczos` hybrid eigensolver/solver,
-  - [ ] 🪓 `Arnoldi` hybrid eigensolver/solver,
-  - [ ] 🪓 `ConjugateChebyshev` solver,
-  - [ ] 🦜 Custom eigensolvers for the tridiagonal Hermitian matrices,
-  - [ ] 🧸 LAPACK eigensolvers for the Hessenberg matrices,
-  - [ ] 🦜 Custom eigensolvers for the Hessenberg matrices,
   - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
 
 * Nonlinear solvers:
@@ -184,7 +173,8 @@ Legend:
   - [ ] 🦜 Block tridiagonal preconditioner,
   - [ ] 🚬 Matrix-free SPAI preconditioner,
   - [ ] 🚬 Matrix-based preconditioning,
-  - [ ] 🦜 Nnlinear preconditioner.
+  - [ ] 🦜 Nonlinear preconditioner.
+  - [ ] 🚬 GMG..
 
 * Add support for complex numbers:
   - [x] 🪓 Support for complex numbers on BLAS level in Fortran,

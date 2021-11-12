@@ -38,7 +38,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 0
+#define YURI 1
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
@@ -179,34 +179,34 @@ void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
 
-void RhoVsC(int size, SR_REAL* rho, const SR_REAL* c, void* env) {
+static int II;
+
+void NVsC(int size, SR_REAL* n, const SR_REAL* c, void* env) {
   SR_REAL x = *c;
 
   x = max(0.0, min(1.0, x));
-  *rho = 0.0;
 
-  for (int i = 1; i <= 2; ++i) {
-    double dd;
-    const double h = 0.01;
-    if (x < 0.0) {
-      dd = ( nPart_vs_phi[0][i] + x*(nPart_vs_phi[1][i] - nPart_vs_phi[0][i])/h );
-    }
-    else if (x > 1.0) {
-      dd = ( nPart_vs_phi[100][i] - (x - 1.0)*(nPart_vs_phi[99][i] - nPart_vs_phi[100][i])/h );
-    } else {
-      const int il = floor(x/0.01);
-      const int ir = ceil(x/0.01);
-      if (il == ir) {
-        dd = ( nPart_vs_phi[il][i] );  
-      } else {
-        dd = ( nPart_vs_phi[il][i] + (x - il*h)*(nPart_vs_phi[ir][i] - nPart_vs_phi[il][i])/h );
-      }
-    }
-    *rho += mol_mass[i-1]*dd; 
+  const int i = II;
+  double dd;
+  const double h = 0.01;
+  if (x < 0.0) {
+    dd = ( nPart_vs_phi[0][i] + x*(nPart_vs_phi[1][i] - nPart_vs_phi[0][i])/h );
   }
+  else if (x > 1.0) {
+    dd = ( nPart_vs_phi[100][i] - (x - 1.0)*(nPart_vs_phi[99][i] - nPart_vs_phi[100][i])/h );
+  } else {
+    const int il = floor(x/0.01);
+    const int ir = ceil(x/0.01);
+    if (il == ir) {
+      dd = ( nPart_vs_phi[il][i] );  
+    } else {
+      dd = ( nPart_vs_phi[il][i] + (x - il*h)*(nPart_vs_phi[ir][i] - nPart_vs_phi[il][i])/h );
+    }
+  }
+  *n = dd; 
 
   return;
-} // RhoVsC
+} // NVsC
 
 static SR_tFieldR rho_inv_, mu_;
 
@@ -243,7 +243,11 @@ static void NavierStokes_VaD_MatVec(SR_tMesh mesh,
 static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SR_tFieldR p, SR_tFieldR v,
   SR_tFieldR c, SR_tFieldR w,
-  SR_tFieldR p_hat, SR_tFieldR v_hat, SR_tFieldR d, SR_tFieldR rho) {
+  SR_tFieldR p_hat, SR_tFieldR v_hat, SR_tFieldR d, SR_tFieldR rho
+#if YURI
+  , SR_tFieldR n1, SR_tFieldR n2
+#endif
+) {
 
   // 
   // Compute a single time step of the incompressible
@@ -267,7 +271,9 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
 #if YURI
-  SR_FuncProd(mesh, rho, c, RhoVsC, NULL);
+  II = 1; SR_FuncProd(mesh, n1, c, NVsC, NULL);
+  II = 2; SR_FuncProd(mesh, n2, c, NVsC, NULL);
+  SR_Add(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
   SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
   SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
@@ -375,6 +381,11 @@ int main() {
   w_hat = SR_Alloc_Mold(c);
   p_hat = SR_Alloc_Mold(p);
   v_hat = SR_Alloc_Mold(v);
+#if YURI
+  SR_tFieldR n1, n2;
+  n1 = SR_Alloc_Mold(c);
+  n2 = SR_Alloc_Mold(c);
+#endif
 
   //SR_Fill(mesh, c, 1.0, 0.0);
   SR_SFuncProd(mesh, c, c, Initial_Data, NULL);
@@ -394,7 +405,11 @@ int main() {
       clock_gettime(CLOCK_MONOTONIC, &start);
 
       SR_REAL vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
-      NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho);
+      NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho
+#if YURI
+        , n1, n2
+#endif
+      );
 
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
@@ -417,6 +432,10 @@ int main() {
     SR_IO_Add(io, p, "pressure");
     SR_IO_Add(io, rho, "density");
     SR_IO_Add(io, d, "divV");
+#if YURI
+    SR_IO_Add(io, n1, "n1");
+    SR_IO_Add(io, n2, "n2");
+#endif
     SR_IO_Flush(io, mesh, filename);
   }
 

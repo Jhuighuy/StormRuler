@@ -51,6 +51,9 @@ endif()
 if(OpenMP_Fortran_ENABLED)
   list(APPEND Fortiel_DEFINES "-DHAS_OpenMP=True")
 endif()
+if(METIS_ENABLED)
+  list(APPEND Fortiel_DEFINES "-DHAS_METIS=True")
+endif()
 
 # Find Fortiel preprocessor.
 if(NOT "$ENV{StormRuler_Fortiel_PATH}" STREQUAL "")

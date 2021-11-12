@@ -203,19 +203,6 @@ else()
   endif()
 endif()
 
-# Find Gecko.
-if(StormRuler_NO_Gecko)
-  message(STATUS "StormRuler Gecko was disabled by user.")
-else()
-  # Gecko is carried as a submodule.
-  message(STATUS "Gecko enabled.")
-  set(Gecko_BINARY_DIR "${CMAKE_SOURCE_DIR}/ext/gecko/build")
-  file(MAKE_DIRECTORY "${Gecko_BINARY_DIR}")
-  add_subdirectory(
-    "${CMAKE_SOURCE_DIR}/ext/gecko" "${Gecko_BINARY_DIR}" EXCLUDE_FROM_ALL)
-  target_link_libraries(StormRuler_BASE INTERFACE gecko)
-endif()
-
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main shared library and the executable.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##

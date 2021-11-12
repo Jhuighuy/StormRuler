@@ -133,6 +133,9 @@ endif()
 ## Libraries.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
+# CMake modules.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
+
 # Library include directories.
 target_include_directories(
   StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/src")
@@ -144,7 +147,7 @@ find_package(Git)
 if(GIT_FOUND)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     RESULT_VARIABLE GIT_SUBMODULE_RESULT)
   if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
     message(FATAL_ERROR "`git submodule update --init --recursive`"
@@ -189,15 +192,29 @@ else()
   endif()
 endif()
 
+# Find METIS.
+if(StormRuler_NO_METIS)
+  message(STATUS "StormRuler METIS was disabled by user.")
+else()
+  find_package(METIS)
+  if(METIS_FOUND)
+    message(STATUS "METIS enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE METIS)
+  endif()
+endif()
+
 # Find Gecko.
-#if(StormRuler_NO_Gecko)
-#  message(STATUS "StormRuler Gecko was disabled by user.")
-#else()
-#  # Gecko is carried as a submodule.
-#  message(STATUS "Gecko enabled.")
-#  add_subdirectory("${CMAKE_SOURCE_DIR}/ext/gecko")
-#  target_link_libraries(StormRuler_BASE INTERFACE gecko)
-#endif()
+if(StormRuler_NO_Gecko)
+  message(STATUS "StormRuler Gecko was disabled by user.")
+else()
+  # Gecko is carried as a submodule.
+  message(STATUS "Gecko enabled.")
+  set(Gecko_BINARY_DIR "${CMAKE_SOURCE_DIR}/ext/gecko/build")
+  file(MAKE_DIRECTORY "${Gecko_BINARY_DIR}")
+  add_subdirectory(
+    "${CMAKE_SOURCE_DIR}/ext/gecko" "${Gecko_BINARY_DIR}" EXCLUDE_FROM_ALL)
+  target_link_libraries(StormRuler_BASE INTERFACE gecko)
+endif()
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main shared library and the executable.

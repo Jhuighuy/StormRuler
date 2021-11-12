@@ -329,4 +329,36 @@ contains
   end subroutine HilbertSort
 end subroutine Mesh_Ordering_HilbertCurve
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute a 2D/3D mesh ordering with Gecko.
+!!
+!! References:
+!! [1] Lindstrom, P. 
+!!     “The Minimum Edge Product Linear Ordering Problem” 
+!!     LLNL technical report LLNL-TR-496076, August 26, 2011.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh_Ordering_Gecko(mesh, iperm)
+  class(tMesh), intent(inout) :: mesh
+  integer(ip), intent(inout) :: iperm(:)
+
+  error stop 'not implemented'
+
+end subroutine Mesh_Ordering_Gecko
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compute a 2D/3D mesh ordering with Gecko.
+!!
+!! References:
+!! [1] Lindstrom, P. 
+!!     “The Minimum Edge Product Linear Ordering Problem” 
+!!     LLNL technical report LLNL-TR-496076, August 26, 2011.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine Mesh_Ordering_Gecko(mesh, iperm)
+  class(tMesh), intent(inout) :: mesh
+  integer(ip), intent(inout) :: iperm(:)
+
+  error stop 'not implemented'
+
+end subroutine Mesh_Ordering_Gecko
+
 end module StormRuler_Mesh_Ordering

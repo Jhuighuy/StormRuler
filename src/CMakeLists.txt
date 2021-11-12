@@ -98,7 +98,7 @@ target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
 # Require C11.
 set_target_properties(
   StormRuler PROPERTIES 
-  C_STANDARD 11 C_STANDARD_REQUIRED YES)
+  CXX_STANDARD 14 CXX_STANDARD_REQUIRED YES)
 
 # Let Fortran linker work.
 set_target_properties(

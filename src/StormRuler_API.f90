@@ -27,11 +27,11 @@ module StormRuler_API
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, i8, error_code
-use StormRuler_Helpers
+use StormRuler_Helpers, only: PrintBanner, PixelToInt
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
-  & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve
+  & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve, Mesh_Ordering_METIS
 
 use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
@@ -231,41 +231,47 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
   class(tMesh), pointer :: gMesh
   type(tMeshStruct), pointer :: pMesh_C
 
+  call PrintBanner
+
 #$if False
+  block
 
-  integer(ip), parameter :: nx = 400, ny = 400
-  real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
-  allocate(gMesh)
-  call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
+    integer(ip), parameter :: nx = 256, ny = 256
+    real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
+    allocate(gMesh)
+    call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
 
+  end block
 #$else
+  block
 
-  real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
-  integer(ip), allocatable :: pixels(:,:)
-  integer(ip), allocatable :: colorToBCM(:)
+    real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
+    integer(ip), allocatable :: pixels(:,:)
+    integer(ip), allocatable :: colorToBCM(:)
 
-  allocate(gMesh)
+    allocate(gMesh)
 
-  call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    call Load_PPM('test/Domain-100-Tube.ppm', pixels)
 
-  colorToBCM = &
-    & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
-    &   PixelToInt([  0, 255,   0]), PixelToInt([0, 0, 255]), &
-    &   PixelToInt([255,   0, 255]) ]
-  call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
-  
-  allocate(gMesh%dr(1:2, 1:4))
-  
-  gMesh%dl = [Dx,Dx,Dy,Dy]
-  gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
-  gMesh%dr(:,2) = [gMesh%dl(1), 0.0_dp]
-  gMesh%dr(:,3) = [0.0_dp, gMesh%dl(3)]
-  gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
+    colorToBCM = &
+      & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
+      &   PixelToInt([  0, 255,   0]), PixelToInt([0, 0, 255]), &
+      &   PixelToInt([255,   0, 255]) ]
+    call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
+    
+    allocate(gMesh%dr(1:2, 1:4))
+    
+    gMesh%dl = [Dx,Dx,Dy,Dy]
+    gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
+    gMesh%dr(:,2) = [gMesh%dl(1), 0.0_dp]
+    gMesh%dr(:,3) = [0.0_dp, gMesh%dl(3)]
+    gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
 
-  call gMesh%PrintTo_Neato('test/c2c.dot')
-  
-  call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
+    call gMesh%PrintTo_Neato('test/c2c.dot')
+    
+    call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
 
+  end block
 #$endif
 
   call gMesh%SetRange()
@@ -279,15 +285,20 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
     allocate(iperm(gMesh%NumCells))
 
     call Mesh_Ordering_Dump(gMesh, 'test/MO-O.txt')
-    print *, 'quality = ', Mesh_Ordering_Quality(gMesh)
+    print *, 'quality(i) = ', Mesh_Ordering_Quality(gMesh)
 
     call Mesh_Ordering_HilbertCurve(gMesh, iperm)
-
     call Mesh_Ordering_Dump(gMesh, 'test/MO-H.txt', iperm)
     print *, 'quality(h) = ', Mesh_Ordering_Quality(gMesh, iperm)
 
+    call Mesh_Ordering_METIS(gMesh, iperm)
+    call Mesh_Ordering_Dump(gMesh, 'test/MO-M.txt', iperm)
+    print *, 'quality(m) = ', Mesh_Ordering_Quality(gMesh, iperm)
+
     call gMesh%ApplyOrdering(iperm)
-    !error stop 229
+
+    error stop
+
   end block
 
 end function cInitMesh

@@ -54,6 +54,27 @@ end interface
 contains
 
 !! ----------------------------------------------------------------- !!
+!! Print an epic banner.
+!! ----------------------------------------------------------------- !!
+subroutine PrintBanner
+  
+  print *, ''
+  print *, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+  print *, '|      _____ __                       ____        __            |'
+  print *, '|     / ___// /_____  _________ ___  / __ \__  __/ ___  _____   |'
+  print *, '|     \__ \/ __/ __ \/ ___/ __ `__ \/ /_/ / / / / / _ \/ ___/   |'
+  print *, '|    ___/ / /_/ /_/ / /  / / / / / / _, _/ /_/ / /  __/ /       |'
+  print *, '|   /____/\__/\____/_/  /_/ /_/ /_/_/ |_|\__,_/_/\___/_/        |'
+  print *, '|                                                               |'
+  print *, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+  print *, ''
+
+end subroutine PrintBanner
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
 !! Swap function.
 !! ----------------------------------------------------------------- !!
 recursive subroutine Swap(i, j)
@@ -72,6 +93,7 @@ integer(ip) pure function Flip(value)
   integer(ip), intent(in) :: value
 
   Flip = merge(value+1, value-1, mod(value, 2) == 1)
+
 end function Flip
 
 !! ----------------------------------------------------------------- !!
@@ -84,6 +106,7 @@ integer(ip) pure function IndexOf(value, array)
     if (array(IndexOf) == value) return
   end do
   IndexOf = 0
+
 end function IndexOf
 
 !! ----------------------------------------------------------------- !!
@@ -92,22 +115,20 @@ end function IndexOf
 subroutine BubbleSort(array)
   integer(ip), intent(inout) :: array(:)
   
-  integer(ip) :: temp
-  integer(ip) :: i, j
+  integer(ip) :: i, j, k
   logical :: swapped
  
-  do j = size(array)-1, 1, -1
+  do j = size(array) - 1, 1, -1
     swapped = .false.
     do i = 1, j
       if (array(i) > array(i+1)) then
-        temp = array(i)
-        array(i) = array(i+1)
-        array(i+1) = temp
+        call Swap(array(i), array(i+1))
         swapped = .true.
       end if
     end do
     if (.not.swapped) exit
   end do
+
 end subroutine BubbleSort
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

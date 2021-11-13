@@ -38,41 +38,41 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 1
+#define YURI 0
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
 
 static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
-static void SetBCs_c(SR_tMesh mesh, SR_tFieldR c) {
-  SR_ApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
-  //SR_ApplyBCs(mesh, c, 4, SR_DIRICHLET(1.0));
+static void SetBCs_c(stormMesh_t mesh, stormArrayR_t c) {
+  stormApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
+  //stormApplyBCs(mesh, c, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
-static void SetBCs_w(SR_tMesh mesh, SR_tFieldR w) {
-  SR_ApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
+static void SetBCs_w(stormMesh_t mesh, stormArrayR_t w) {
+  stormApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
 } // SetBCs_w
 
-static void SetBCs_p(SR_tMesh mesh, SR_tFieldR p) {
-  SR_ApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  ////SR_ApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  ////SR_ApplyBCs(mesh, p, 4, SR_DIRICHLET(50.0));
+static void SetBCs_p(stormMesh_t mesh, stormArrayR_t p) {
+  stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
+  //stormApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
+  //stormApplyBCs(mesh, p, 4, SR_DIRICHLET(50.0));
 } // SetBCs_p
 
-static void SetBCs_v(SR_tMesh mesh, SR_tFieldR v) {
-  SR_ApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
-  SR_ApplyBCs_SlipWall(mesh, v, 3);
-  SR_ApplyBCs_InOutLet(mesh, v, 2);
-  SR_ApplyBCs_InOutLet(mesh, v, 4);
+static void SetBCs_v(stormMesh_t mesh, stormArrayR_t v) {
+  stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
+  stormApplyBCs_SlipWall(mesh, v, 3);
+  stormApplyBCs_InOutLet(mesh, v, 2);
+  stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
 extern double D1_W_vs_phi[101][2];
 extern double nPart_vs_phi[101][3];
 extern double mol_mass[2];
 
-void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
-  const SR_REAL x = *c;
+void dWdC(int size, stormReal_t* Wc, const stormReal_t* c, void* env) {
+  const stormReal_t x = *c;
 
 #if !YURI
   // [-1,+1] CH.
@@ -101,39 +101,39 @@ void dWdC(int size, SR_REAL* Wc, const SR_REAL* c, void* env) {
 #endif
 } // dWdC
 
-void Vol(int size, SR_REAL* Ic, const SR_REAL* c, void* env) {
-  SR_REAL x = *c;
+void Vol(int size, stormReal_t* Ic, const stormReal_t* c, void* env) {
+  stormReal_t x = *c;
 
   x = min(+1.0, max(-1.0, x));
   x = 0.5*(x + 1.0);
   *Ic = round(x);
 }
 
-SR_tFieldR vvv;
+stormArrayR_t vvv;
 
-static void CahnHilliard_MatVec(SR_tMesh mesh,
-    SR_tFieldR Qc, SR_tFieldR c, void* env) {
+static void CahnHilliard_MatVec(stormMesh_t mesh,
+    stormArrayR_t Qc, stormArrayR_t c, void* env) {
 
-  SR_tFieldR v = vvv;
+  stormArrayR_t v = vvv;
   SetBCs_c(mesh, c);
   SetBCs_v(mesh, v);
 
-  SR_tFieldR tmp = SR_Alloc_Mold(c);
-  SR_Scale(mesh, tmp, c, 2.0*sigma);
-  SR_DivGrad(mesh, tmp, -Gamma, c);
+  stormArrayR_t tmp = SR_Alloc_Mold(c);
+  stormScale(mesh, tmp, c, 2.0*sigma);
+  stormDivGrad(mesh, tmp, -Gamma, c);
 
   SetBCs_w(mesh, tmp);
   
-  SR_Set(mesh, Qc, c);
-  SR_Conv(mesh, Qc, -tau, c, vvv);
-  SR_DivGrad(mesh, Qc, -tau, tmp);
+  stormSet(mesh, Qc, c);
+  stormConvection(mesh, Qc, -tau, c, vvv);
+  stormDivGrad(mesh, Qc, -tau, tmp);
 
-  SR_Free(tmp);
+  stormFree(tmp);
 } // CahnHilliard_MatVec
 
-static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
-    SR_tFieldR c, SR_tFieldR v,
-    SR_tFieldR c_hat, SR_tFieldR w_hat) {
+static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
+    stormArrayR_t c, stormArrayR_t v,
+    stormArrayR_t c_hat, stormArrayR_t w_hat) {
 
   // 
   // Compute a single time step of the
@@ -151,21 +151,22 @@ static SR_REAL CahnHilliard_Step(SR_tMesh mesh,
   SetBCs_c(mesh, c);
   SetBCs_v(mesh, v);
 
-  SR_tFieldR rhs = SR_Alloc_Mold(c);
-  SR_Set(mesh, rhs, c);
+  stormArrayR_t rhs = SR_Alloc_Mold(c);
+  stormSet(mesh, rhs, c);
   SR_FuncProd(mesh, w_hat, c, dWdC, NULL);
-  SR_Sub(mesh, w_hat, w_hat, c, 2.0*sigma, 1.0);
+  stormSub(mesh, w_hat, w_hat, c, 2.0*sigma, 1.0);
   SetBCs_w(mesh, w_hat);
-  SR_DivGrad(mesh, rhs, tau, w_hat);
+  stormDivGrad(mesh, rhs, tau, w_hat);
 
-  SR_Set(mesh, c_hat, c);
-  SR_LinSolve(mesh, "BiCGStab", "", c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
-  SR_Free(rhs);
+  stormSet(mesh, c_hat, c);
+  stormLinSolve(mesh, stormBiCGStab, stormNone, 
+    c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
+  stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
 
   SR_FuncProd(mesh, w_hat, c_hat, dWdC, NULL);
-  SR_DivGrad(mesh, w_hat, -Gamma, c_hat);
+  stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
   return SR_Integrate(mesh, c_hat, Vol, NULL);
 } // CahnHilliard_Step
@@ -175,14 +176,14 @@ static double mu_1 = 0.08, mu_2 = 0.08;
 static double rho_1 = 1.0, rho_2 = 1.0;
 #endif
 
-void InvRho(int size, SR_REAL* inv_rho, const SR_REAL* rho, void* env) {
+void InvRho(int size, stormReal_t* inv_rho, const stormReal_t* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
 
 static int II;
 
-void NVsC(int size, SR_REAL* n, const SR_REAL* c, void* env) {
-  SR_REAL x = *c;
+void NVsC(int size, stormReal_t* n, const stormReal_t* c, void* env) {
+  stormReal_t x = *c;
 
   x = max(0.0, min(1.0, x));
 
@@ -208,44 +209,44 @@ void NVsC(int size, SR_REAL* n, const SR_REAL* c, void* env) {
   return;
 } // NVsC
 
-static SR_tFieldR rho_inv_, mu_;
+static stormArrayR_t rho_inv_, mu_;
 
-static void Poisson_VaD_MatVec(SR_tMesh mesh,
-    SR_tFieldR Lp, SR_tFieldR p, void* env) {
+static void Poisson_VaD_MatVec(stormMesh_t mesh,
+    stormArrayR_t Lp, stormArrayR_t p, void* env) {
   
-  SR_tFieldR rho_inv = rho_inv_;
+  stormArrayR_t rho_inv = rho_inv_;
 
   SetBCs_p(mesh, p);
 
-  SR_Set(mesh, Lp, p);
-  SR_DivKGrad(mesh, Lp, -tau, rho_inv, p);
+  stormSet(mesh, Lp, p);
+  stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
   
 } // Poisson_MatVec
 
-static void NavierStokes_VaD_MatVec(SR_tMesh mesh,
-    SR_tFieldR Av, SR_tFieldR v, void* env) {
+static void NavierStokes_VaD_MatVec(stormMesh_t mesh,
+    stormArrayR_t Av, stormArrayR_t v, void* env) {
 
   SetBCs_v(mesh, v);
 
-  SR_Set(mesh, Av, v);
-  SR_Conv(mesh, Av, -tau, v, v);
+  stormSet(mesh, Av, v);
+  stormConvection(mesh, Av, -tau, v, v);
 
-  SR_tFieldR tmp = SR_Alloc_Mold(v);
-  SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_DivGrad(mesh, tmp, tau, v);
-  SR_Mul(mesh, tmp, mu_, tmp);
-  SR_Mul(mesh, tmp, rho_inv_, tmp);
-  SR_Sub(mesh, Av, Av, tmp, 1.0, 1.0);
-  SR_Free(tmp);
+  stormArrayR_t tmp = SR_Alloc_Mold(v);
+  stormFill(mesh, tmp, 0.0, 0.0);
+  stormDivGrad(mesh, tmp, tau, v);
+  stormMul(mesh, tmp, mu_, tmp);
+  stormMul(mesh, tmp, rho_inv_, tmp);
+  stormSub(mesh, Av, Av, tmp, 1.0, 1.0);
+  stormFree(tmp);
 
 } // NavierStokes_VaD_MatVec
 
-static void NavierStokes_VaD_Step(SR_tMesh mesh,
-  SR_tFieldR p, SR_tFieldR v,
-  SR_tFieldR c, SR_tFieldR w,
-  SR_tFieldR p_hat, SR_tFieldR v_hat, SR_tFieldR d, SR_tFieldR rho
+static void NavierStokes_VaD_Step(stormMesh_t mesh,
+  stormArrayR_t p, stormArrayR_t v,
+  stormArrayR_t c, stormArrayR_t w,
+  stormArrayR_t p_hat, stormArrayR_t v_hat, stormArrayR_t d, stormArrayR_t rho
 #if YURI
-  , SR_tFieldR n1, SR_tFieldR n2
+  , stormArrayR_t n1, stormArrayR_t n2
 #endif
 ) {
 
@@ -273,18 +274,18 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
 #if YURI
   II = 1; SR_FuncProd(mesh, n1, c, NVsC, NULL);
   II = 2; SR_FuncProd(mesh, n2, c, NVsC, NULL);
-  SR_Add(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
+  stormAdd(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
-  SR_Fill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
-  SR_Add(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
+  stormFill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
+  stormAdd(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
 #endif
 
-  SR_tFieldR rho_inv = SR_Alloc_Mold(rho);
+  stormArrayR_t rho_inv = SR_Alloc_Mold(rho);
   SR_FuncProd(mesh, rho_inv, rho, InvRho, NULL);
 
-  SR_tFieldR mu = SR_Alloc_Mold(c);
-  SR_Fill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
-  SR_Add(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
+  stormArrayR_t mu = SR_Alloc_Mold(c);
+  stormFill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
+  stormAdd(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
 
   //
   // Compute 𝒗̂ prediction.
@@ -292,58 +293,58 @@ static void NavierStokes_VaD_Step(SR_tMesh mesh,
   SetBCs_w(mesh, w);
   SetBCs_v(mesh, v);
 
-  SR_tFieldR rhs = SR_Alloc_Mold(v);
-  SR_Fill(mesh, rhs, 0.0, 0.0);
-  SR_Grad(mesh, rhs, tau, w);
-  SR_Mul(mesh, rhs, c, rhs);
-  SR_Mul(mesh, rhs, rho_inv, rhs);
+  stormArrayR_t rhs = SR_Alloc_Mold(v);
+  stormFill(mesh, rhs, 0.0, 0.0);
+  stormGradient(mesh, rhs, tau, w);
+  stormMul(mesh, rhs, c, rhs);
+  stormMul(mesh, rhs, rho_inv, rhs);
 
-  SR_Add(mesh, rhs, rhs, v, 1.0, 1.0);
+  stormAdd(mesh, rhs, rhs, v, 1.0, 1.0);
   
-  SR_Set(mesh, v_hat, v);
+  stormSet(mesh, v_hat, v);
   rho_inv_ = rho_inv, mu_ = mu;
-  SR_Solve_JFNK(mesh, v_hat, v, NavierStokes_VaD_MatVec, NULL);
-  SR_Free(rhs);
+  stormNonlinSolve(mesh, stormJFNK, v_hat, v, NavierStokes_VaD_MatVec, NULL);
+  stormFree(rhs);
 
   //
   // Solve pressure equation and correct 𝒗̂.
   // 
   rhs = SR_Alloc_Mold(p);
-  SR_Set(mesh, rhs, p);
-  SR_Div(mesh, rhs, 1.0, v_hat);
+  stormSet(mesh, rhs, p);
+  stormDivergence(mesh, rhs, 1.0, v_hat);
   SetBCs_w(mesh, rho);
   SetBCs_w(mesh, rho_inv);
-  SR_CorrRC(mesh, rhs, 1.0, tau, p, rho);
+  stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
-  SR_Set(mesh, p_hat, p);
-  SR_LinSolve(mesh, "CG", "", p_hat, rhs, 
+  stormSet(mesh, p_hat, p);
+  stormLinSolve(mesh, stormCG, stormNone, p_hat, rhs, 
     Poisson_VaD_MatVec, rho_inv_=rho_inv, NULL, NULL);
-  SR_Free(rhs);
+  stormFree(rhs);
 
   SetBCs_p(mesh, p_hat);
 
-  SR_tFieldR tmp = SR_Alloc_Mold(v);
-  SR_Fill(mesh, tmp, 0.0, 0.0);
-  SR_Grad(mesh, tmp, tau, p_hat);
-  SR_Mul(mesh, tmp, rho_inv, tmp);
-  SR_Add(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
-  SR_Free(tmp);
+  stormArrayR_t tmp = SR_Alloc_Mold(v);
+  stormFill(mesh, tmp, 0.0, 0.0);
+  stormGradient(mesh, tmp, tau, p_hat);
+  stormMul(mesh, tmp, rho_inv, tmp);
+  stormAdd(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
+  stormFree(tmp);
 
   if (d != NULL) {
     SetBCs_v(mesh, v_hat);
-    SR_Fill(mesh, d, 0.0, 0.0);
-    SR_Div(mesh, d, -1.0, v);
+    stormFill(mesh, d, 0.0, 0.0);
+    stormDivergence(mesh, d, -1.0, v);
   }
 
-  SR_Free(rho_inv);
-  SR_Free(mu);
+  stormFree(rho_inv);
+  stormFree(mu);
 
 } // NavierStokes_VaD_Step
 
-void Initial_Data(int dim, const SR_REAL* r,
-    int size, SR_REAL* c, const SR_REAL* _, void* env) {
+void Initial_Data(int dim, const stormReal_t* r,
+    int size, stormReal_t* c, const stormReal_t* _, void* env) {
 
-  static const SR_REAL L = 1.0;
+  static const stormReal_t L = 1.0;
   int in = 0;
   if (fabs(r[0]-0*L) <= L*0.101 && 
       fabs(2*L-r[1]) <= L*0.665) {
@@ -369,9 +370,9 @@ int main() {
 
   FILE* volFile = fopen("vol.txt", "w");
 
-  SR_tMesh mesh = SR_InitMesh();
+  stormMesh_t mesh = SR_InitMesh();
 
-  SR_tFieldR c, p, v, c_hat, w_hat, p_hat, v_hat, d, rho;
+  stormArrayR_t c, p, v, c_hat, w_hat, p_hat, v_hat, d, rho;
   c = SR_AllocR(mesh, 1, 0);
   p = SR_AllocR(mesh, 1, 0);
   v = SR_AllocR(mesh, 1, 1);
@@ -382,17 +383,17 @@ int main() {
   p_hat = SR_Alloc_Mold(p);
   v_hat = SR_Alloc_Mold(v);
 #if YURI
-  SR_tFieldR n1, n2;
+  stormArrayR_t n1, n2;
   n1 = SR_Alloc_Mold(c);
   n2 = SR_Alloc_Mold(c);
 #endif
 
-  //SR_Fill(mesh, c, 1.0, 0.0);
+  //stormFill(mesh, c, 1.0, 0.0);
   SR_SFuncProd(mesh, c, c, Initial_Data, NULL);
   //SR_SFuncProd(mesh, v, v, Initial_Data, NULL);
-  //SR_Fill_Random(mesh, c, -1.0, +1.0);
-  SR_Fill(mesh, v, 0.0, 0.0);
-  SR_Fill(mesh, p, 0.0, 0.0);
+  //stormFillRandom(mesh, c, -1.0, +1.0);
+  stormFill(mesh, v, 0.0, 0.0);
+  stormFill(mesh, p, 0.0, 0.0);
 
   double total_time = 0.0;
 
@@ -404,7 +405,7 @@ int main() {
 
       clock_gettime(CLOCK_MONOTONIC, &start);
 
-      SR_REAL vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
+      stormReal_t vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
       NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho
 #if YURI
         , n1, n2
@@ -418,9 +419,9 @@ int main() {
 
       fprintf(volFile, "%f\n", vol), fflush(volFile);
 
-      SR_Swap(&c, &c_hat);
-      SR_Swap(&p, &p_hat);
-      SR_Swap(&v, &v_hat);
+      stormSwap(c, c_hat);
+      stormSwap(p, p_hat);
+      stormSwap(v, v_hat);
     }
 
     char filename[256];

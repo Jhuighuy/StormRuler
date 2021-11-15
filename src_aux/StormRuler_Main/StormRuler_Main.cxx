@@ -118,7 +118,7 @@ static void CahnHilliard_MatVec(stormMesh_t mesh,
   SetBCs_c(mesh, c);
   SetBCs_v(mesh, v);
 
-  stormArrayR_t tmp = SR_Alloc_Mold(c);
+  stormArrayR_t tmp = stormAllocLike(c);
   stormScale(mesh, tmp, c, 2.0*sigma);
   stormDivGrad(mesh, tmp, -Gamma, c);
 
@@ -151,21 +151,21 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   SetBCs_c(mesh, c);
   SetBCs_v(mesh, v);
 
-  stormArrayR_t rhs = SR_Alloc_Mold(c);
+  stormArrayR_t rhs = stormAllocLike(c);
   stormSet(mesh, rhs, c);
-  SR_FuncProd(mesh, w_hat, c, dWdC, NULL);
+  stormFuncProd(mesh, w_hat, c, dWdC, NULL);
   stormSub(mesh, w_hat, w_hat, c, 2.0*sigma, 1.0);
   SetBCs_w(mesh, w_hat);
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve(mesh, stormBiCGStab, stormNone, 
+  stormLinSolve(mesh, STORM_METHOD_BiCGStab, STORM_PRE_NONE, 
     c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
 
-  SR_FuncProd(mesh, w_hat, c_hat, dWdC, NULL);
+  stormFuncProd(mesh, w_hat, c_hat, dWdC, NULL);
   stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
   return SR_Integrate(mesh, c_hat, Vol, NULL);
@@ -231,7 +231,7 @@ static void NavierStokes_VaD_MatVec(stormMesh_t mesh,
   stormSet(mesh, Av, v);
   stormConvection(mesh, Av, -tau, v, v);
 
-  stormArrayR_t tmp = SR_Alloc_Mold(v);
+  stormArrayR_t tmp = stormAllocLike(v);
   stormFill(mesh, tmp, 0.0, 0.0);
   stormDivGrad(mesh, tmp, tau, v);
   stormMul(mesh, tmp, mu_, tmp);
@@ -272,18 +272,18 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
 #if YURI
-  II = 1; SR_FuncProd(mesh, n1, c, NVsC, NULL);
-  II = 2; SR_FuncProd(mesh, n2, c, NVsC, NULL);
+  II = 1; stormFuncProd(mesh, n1, c, NVsC, NULL);
+  II = 2; stormFuncProd(mesh, n2, c, NVsC, NULL);
   stormAdd(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
   stormFill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
   stormAdd(mesh, rho, rho, c, 0.5*(rho_2 - rho_1), 1.0);
 #endif
 
-  stormArrayR_t rho_inv = SR_Alloc_Mold(rho);
-  SR_FuncProd(mesh, rho_inv, rho, InvRho, NULL);
+  stormArrayR_t rho_inv = stormAllocLike(rho);
+  stormFuncProd(mesh, rho_inv, rho, InvRho, NULL);
 
-  stormArrayR_t mu = SR_Alloc_Mold(c);
+  stormArrayR_t mu = stormAllocLike(c);
   stormFill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
   stormAdd(mesh, mu, mu, c, 0.5*(mu_2 - mu_1), 1.0);
 
@@ -293,7 +293,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   SetBCs_w(mesh, w);
   SetBCs_v(mesh, v);
 
-  stormArrayR_t rhs = SR_Alloc_Mold(v);
+  stormArrayR_t rhs = stormAllocLike(v);
   stormFill(mesh, rhs, 0.0, 0.0);
   stormGradient(mesh, rhs, tau, w);
   stormMul(mesh, rhs, c, rhs);
@@ -303,13 +303,13 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   
   stormSet(mesh, v_hat, v);
   rho_inv_ = rho_inv, mu_ = mu;
-  stormNonlinSolve(mesh, stormJFNK, v_hat, v, NavierStokes_VaD_MatVec, NULL);
+  stormNonlinSolve(mesh, STORM_METHOD_JFNK, v_hat, v, NavierStokes_VaD_MatVec, NULL);
   stormFree(rhs);
 
   //
   // Solve pressure equation and correct 𝒗̂.
   // 
-  rhs = SR_Alloc_Mold(p);
+  rhs = stormAllocLike(p);
   stormSet(mesh, rhs, p);
   stormDivergence(mesh, rhs, 1.0, v_hat);
   SetBCs_w(mesh, rho);
@@ -317,13 +317,13 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve(mesh, stormCG, stormNone, p_hat, rhs, 
+  stormLinSolve(mesh, STORM_METHOD_CG, STORM_PRE_NONE, p_hat, rhs, 
     Poisson_VaD_MatVec, rho_inv_=rho_inv, NULL, NULL);
   stormFree(rhs);
 
   SetBCs_p(mesh, p_hat);
 
-  stormArrayR_t tmp = SR_Alloc_Mold(v);
+  stormArrayR_t tmp = stormAllocLike(v);
   stormFill(mesh, tmp, 0.0, 0.0);
   stormGradient(mesh, tmp, tau, p_hat);
   stormMul(mesh, tmp, rho_inv, tmp);
@@ -378,18 +378,18 @@ int main() {
   v = SR_AllocR(mesh, 1, 1);
   d = SR_AllocR(mesh, 1, 0);
   rho = SR_AllocR(mesh, 1, 0);
-  c_hat = SR_Alloc_Mold(c);
-  w_hat = SR_Alloc_Mold(c);
-  p_hat = SR_Alloc_Mold(p);
-  v_hat = SR_Alloc_Mold(v);
+  c_hat = stormAllocLike(c);
+  w_hat = stormAllocLike(c);
+  p_hat = stormAllocLike(p);
+  v_hat = stormAllocLike(v);
 #if YURI
   stormArrayR_t n1, n2;
-  n1 = SR_Alloc_Mold(c);
-  n2 = SR_Alloc_Mold(c);
+  n1 = stormAllocLike(c);
+  n2 = stormAllocLike(c);
 #endif
 
   //stormFill(mesh, c, 1.0, 0.0);
-  SR_SFuncProd(mesh, c, c, Initial_Data, NULL);
+  stormSpFuncProd(mesh, c, c, Initial_Data, NULL);
   //SR_SFuncProd(mesh, v, v, Initial_Data, NULL);
   //stormFillRandom(mesh, c, -1.0, +1.0);
   stormFill(mesh, v, 0.0, 0.0);

@@ -60,11 +60,11 @@
 #define SR_DEFINE_FUNCPTR_(type, name, ...) typedef type(*name)(__VA_ARGS__)
 
 #if STORM_C11_
-#define SR_API extern
-#define SR_INL static
+#define STORM_API extern
+#define STORM_INL static
 #elif STORM_CXX_
-#define SR_API extern "C"
-#define SR_INL inline
+#define STORM_API extern "C"
+#define STORM_INL inline
 #endif
 
 typedef int stormInt_t;
@@ -94,7 +94,7 @@ SR_DEFINE_OPAQUE_(stormSymbol_t);
 
 SR_DEFINE_OPAQUE_(stormMesh_t);
 
-SR_API stormMesh_t SR_InitMesh(void);
+STORM_API stormMesh_t SR_InitMesh(void);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
@@ -104,54 +104,50 @@ SR_DEFINE_OPAQUE_(stormArrayC_t);
 SR_DEFINE_OPAQUE_(stormArrayS_t);
 
 #if STORM_C11_
-#define STORM_GENERIC_(x, func) \
-  _Generic((x), stormArrayR_t: func##R, stormArrayC_t: func##C)
-#define STORM_GENERIC_EXT_(x, func) \
-  _Generic((x), stormArrayR_t: func##R, stormArrayC_t: func##C, stormArrayS_t: func##S)
+#define _STORM_GENERIC_(x, func) \
+  ( _Generic((x), stormArrayR_t: func##R, stormArrayC_t: func##C) )
+#define _STORM_GENERIC_EXT_(x, func) \
+  ( _Generic((x), stormArrayR_t: func##R, stormArrayC_t: func##C, stormArrayS_t: func##S) )
 #elif STORM_CXX_
-#if 1
-#define SR__Generic(x, f, ...) f
-#else
 template<typename R, typename C, typename S=void*>
-inline auto SR__Generic(stormArrayR_t, R r, C, S=nullptr) { return r; }
+constexpr R _stormGeneric_(stormArrayR_t, R r, C, S=NULL) { return r; }
 template<typename R, typename C, typename S=void*>
-inline auto SR__Generic(stormArrayC_t, R, C c, S=nullptr) { return c; }
+constexpr C _stormGeneric_(stormArrayC_t, R, C c, S=NULL) { return c; }
 template<typename R, typename C, typename S>
-inline auto SR__Generic(stormArrayS_t, R, C, S s) { return s; }
-#endif
-#define STORM_GENERIC_(x, func) \
-  ( SR__Generic(x, func##R, func##C) )
-#define STORM_GENERIC_EXT_(x, func, ...) \
-  ( SR__Generic(x, func##R, func##C, func##S) )
+constexpr S _stormGenericExt_(stormArrayS_t, R, C, S s) { return s; }
+#define _STORM_GENERIC_(x, func) \
+  ( _stormGeneric_(x, func##R, func##C) )
+#define _STORM_GENERIC_EXT_(x, func) \
+  ( _stormGeneric_(x, func##R, func##C, func##S) )
 #endif
 
 /// @{
-SR_API stormArrayR_t SR_AllocR(
+STORM_API stormArrayR_t SR_AllocR(
   stormMesh_t mesh, stormInt_t numVars, stormInt_t rank);
-SR_API stormArrayC_t SR_AllocC(
+STORM_API stormArrayC_t SR_AllocC(
   stormMesh_t mesh, stormInt_t numVars, stormInt_t rank);
-SR_API stormArrayS_t SR_AllocS(
+STORM_API stormArrayS_t SR_AllocS(
   stormMesh_t mesh, stormInt_t numVars, stormInt_t rank);
 /// @}
 
 /// @{
-SR_API stormArrayR_t SR_Alloc_MoldR(stormArrayR_t mold);
-SR_API stormArrayC_t SR_Alloc_MoldC(stormArrayC_t mold);
-SR_API stormArrayS_t SR_Alloc_MoldS(stormArrayS_t mold);
-#define SR_Alloc_Mold(mold) \
-  STORM_GENERIC_EXT_(mold, SR_Alloc_Mold)(mold)
+STORM_API stormArrayR_t stormAllocLikeR(stormArrayR_t mold);
+STORM_API stormArrayC_t stormAllocLikeC(stormArrayC_t mold);
+STORM_API stormArrayS_t stormAllocLikeS(stormArrayS_t mold);
+#define stormAllocLike(mold) \
+  _STORM_GENERIC_EXT_(mold, stormAllocLike)(mold)
 /// @}
 
 /// @{
-SR_API void stormFreeR(stormArrayR_t x);
-SR_API void stormFreeC(stormArrayC_t x);
-SR_API void stormFreeS(stormArrayS_t x);
-#define stormFree(x) STORM_GENERIC_EXT_(x, stormFree)(x)
+STORM_API void stormFreeR(stormArrayR_t x);
+STORM_API void stormFreeC(stormArrayC_t x);
+STORM_API void stormFreeS(stormArrayS_t x);
+#define stormFree(x) _STORM_GENERIC_EXT_(x, stormFree)(x)
 /// @}
 
 /// @{
 #if STORM_C11_
-SR_INL void stormSwapP(void** pX, void** pY) {
+STORM_INL void stormSwapP(void** pX, void** pY) {
   void* z = *pX; *pX = *pY, *pY = z;
 }
 #define stormSwap(x, y) stormSwapP((void**)(&x), (void**)(&y))
@@ -165,146 +161,146 @@ SR_INL void stormSwapP(void** pX, void** pY) {
 
 SR_DEFINE_OPAQUE_(SR_tIOList);
 
-SR_API SR_tIOList SR_IO_Begin();
+STORM_API SR_tIOList SR_IO_Begin();
 
-SR_API void SR_IO_Add(SR_tIOList IO, 
+STORM_API void SR_IO_Add(SR_tIOList IO, 
   stormArrayR_t x, const char* name);
 
-SR_API void SR_IO_Flush(SR_tIOList IO, 
+STORM_API void SR_IO_Flush(SR_tIOList IO, 
   stormMesh_t mesh, const char* filename);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 /// @{
-SR_API void stormFillR(stormMesh_t mesh, 
-                       stormArrayR_t x, 
-                       stormReal_t alpha, 
-                       STORM_DEFAULT_(stormReal_t beta, 0.0));
-SR_API void stormFillC(stormMesh_t mesh, 
-                       stormArrayC_t x, 
-                       stormReal_t alpha, 
-                       STORM_DEFAULT_(stormComplex_t beta, 0.0));
-SR_API void stormFillS(stormMesh_t mesh, 
-                       stormArrayS_t x, 
-                       stormReal_t alpha, 
-                       STORM_DEFAULT_(stormSymbol_t beta, {}));
+STORM_API void stormFillR(stormMesh_t mesh, 
+                          stormArrayR_t x, 
+                          stormReal_t alpha, 
+                          STORM_DEFAULT_(stormReal_t beta, 0.0));
+STORM_API void stormFillC(stormMesh_t mesh, 
+                          stormArrayC_t x, 
+                          stormReal_t alpha, 
+                          STORM_DEFAULT_(stormComplex_t beta, 0.0));
+STORM_API void stormFillS(stormMesh_t mesh, 
+                          stormArrayS_t x, 
+                          stormReal_t alpha, 
+                          STORM_DEFAULT_(stormSymbol_t beta, {}));
 #define stormFill(mesh, x, alpha, beta) \
-  STORM_GENERIC_EXT_(x, stormFill)(mesh, x, alpha, beta)
+  _STORM_GENERIC_EXT_(x, stormFill)(mesh, x, alpha, beta)
 /// @}
 
 /// @{
-SR_API void stormRandFillR(stormMesh_t mesh, 
-                           stormArrayR_t x, 
-                           STORM_DEFAULT_(stormReal_t a, -1.0), 
-                           STORM_DEFAULT_(stormReal_t b, +1.0));
-SR_API void stormRandFillC(stormMesh_t mesh, 
-                           stormArrayC_t x, 
-                           STORM_DEFAULT_(stormReal_t a, -1.0), 
-                           STORM_DEFAULT_(stormReal_t b, +1.0));
+STORM_API void stormRandFillR(stormMesh_t mesh, 
+                              stormArrayR_t x, 
+                              STORM_DEFAULT_(stormReal_t a, -1.0), 
+                              STORM_DEFAULT_(stormReal_t b, +1.0));
+STORM_API void stormRandFillC(stormMesh_t mesh, 
+                              stormArrayC_t x, 
+                              STORM_DEFAULT_(stormReal_t a, -1.0), 
+                              STORM_DEFAULT_(stormReal_t b, +1.0));
 #define stormRandFill(mesh, x, alpha, beta) \
-  STORM_GENERIC_(x, stormRandFill)(mesh, x, alpha, beta)
+  _STORM_GENERIC_(x, stormRandFill)(mesh, x, alpha, beta)
 /// @}
 
 /// @{
-SR_API void stormSetR(stormMesh_t mesh, 
-                      stormArrayR_t y, 
-                      stormArrayR_t x);
-SR_API void stormSetC(stormMesh_t mesh, 
-                      stormArrayC_t y,
-                      stormArrayC_t x);
-SR_API void stormSetS(stormMesh_t mesh, 
-                      stormArrayS_t y, 
-                      stormArrayS_t x);
+STORM_API void stormSetR(stormMesh_t mesh, 
+                         stormArrayR_t y, 
+                         stormArrayR_t x);
+STORM_API void stormSetC(stormMesh_t mesh, 
+                         stormArrayC_t y,
+                         stormArrayC_t x);
+STORM_API void stormSetS(stormMesh_t mesh, 
+                         stormArrayS_t y, 
+                         stormArrayS_t x);
 #define stormSet(mesh, y, x) \
-  STORM_GENERIC_EXT_(y, stormSet)(mesh, y, x)
+  _STORM_GENERIC_EXT_(y, stormSet)(mesh, y, x)
 /// @}
 
 /// @{
-SR_API void stormScaleR(stormMesh_t mesh, 
-                        stormArrayR_t y, 
-                        stormArrayR_t x, 
-                        stormReal_t alpha);
-SR_API void stormScaleC(stormMesh_t mesh, 
-                        stormArrayC_t y, 
-                        stormArrayC_t x, 
-                        stormComplex_t alpha);
-SR_API void stormScaleS(stormMesh_t mesh, 
-                        stormArrayS_t y, 
-                        stormArrayS_t x, 
-                        stormSymbol_t alpha);
+STORM_API void stormScaleR(stormMesh_t mesh, 
+                           stormArrayR_t y, 
+                           stormArrayR_t x, 
+                           stormReal_t alpha);
+STORM_API void stormScaleC(stormMesh_t mesh, 
+                           stormArrayC_t y, 
+                           stormArrayC_t x, 
+                           stormComplex_t alpha);
+STORM_API void stormScaleS(stormMesh_t mesh, 
+                           stormArrayS_t y, 
+                           stormArrayS_t x, 
+                           stormSymbol_t alpha);
 #define stormScale(mesh, y, x, alpha) \
-  STORM_GENERIC_EXT_(y, stormScale)(mesh, y, x, alpha)
+  _STORM_GENERIC_EXT_(y, stormScale)(mesh, y, x, alpha)
 /// @}
 
 /// @{
-SR_API void stormAddR(stormMesh_t mesh, 
-                      stormArrayR_t z, 
-                      stormArrayR_t y,
-                      stormArrayR_t x, 
-                      STORM_DEFAULT_(stormReal_t alpha, 1.0), 
-                      STORM_DEFAULT_(stormReal_t  beta, 1.0));
-SR_API void stormAddC(stormMesh_t mesh, 
-                      stormArrayC_t z, 
-                      stormArrayC_t y,
-                      stormArrayC_t x, 
-                      STORM_DEFAULT_(stormComplex_t alpha, 1.0), 
-                      STORM_DEFAULT_(stormComplex_t  beta, 1.0));
-SR_API void stormAddS(stormMesh_t mesh, 
-                      stormArrayS_t z, 
-                      stormArrayS_t y,
-                      stormArrayS_t x, 
-                      STORM_DEFAULT_(stormSymbol_t alpha, {}), 
-                      STORM_DEFAULT_(stormSymbol_t  beta, {}));
-#define stormAdd(mesh, z, y, x, alpha, beta) \
-  STORM_GENERIC_EXT_(y, stormAdd)(mesh, z, y, x, alpha, beta)
+STORM_API void stormAddR(stormMesh_t mesh, 
+                         stormArrayR_t z, 
+                         stormArrayR_t y,
+                         stormArrayR_t x, 
+                         STORM_DEFAULT_(stormReal_t alpha, 1.0), 
+                         STORM_DEFAULT_(stormReal_t  beta, 1.0));
+STORM_API void stormAddC(stormMesh_t mesh, 
+                         stormArrayC_t z, 
+                         stormArrayC_t y,
+                         stormArrayC_t x, 
+                         STORM_DEFAULT_(stormComplex_t alpha, 1.0), 
+                         STORM_DEFAULT_(stormComplex_t  beta, 1.0));
+STORM_API void stormAddS(stormMesh_t mesh, 
+                         stormArrayS_t z, 
+                         stormArrayS_t y,
+                         stormArrayS_t x, 
+                         STORM_DEFAULT_(stormSymbol_t alpha, {}), 
+                         STORM_DEFAULT_(stormSymbol_t  beta, {}));
+#define stormAdd(mesh, z, y, x, ...) \
+  _STORM_GENERIC_EXT_(y, stormAdd)(mesh, z, y, x, ##__VA_ARGS__)
 /// @}
 
 /// @{
 // No need to import these from Fortran.
-SR_INL void stormSubR(stormMesh_t mesh, 
-                      stormArrayR_t z,
-                      stormArrayR_t y, 
-                      stormArrayR_t x, 
-                      STORM_DEFAULT_(stormReal_t alpha, 1.0),
-                      STORM_DEFAULT_(stormReal_t  beta, 1.0)) {
+STORM_INL void stormSubR(stormMesh_t mesh, 
+                         stormArrayR_t z,
+                         stormArrayR_t y, 
+                         stormArrayR_t x, 
+                         STORM_DEFAULT_(stormReal_t alpha, 1.0),
+                         STORM_DEFAULT_(stormReal_t  beta, 1.0)) {
   stormAddR(mesh, z, y, x, -alpha, beta);
 }
-SR_INL void stormSubC(stormMesh_t mesh, 
-                      stormArrayC_t z,
-                      stormArrayC_t y, 
-                      stormArrayC_t x, 
-                      STORM_DEFAULT_(stormComplex_t alpha, 1.0), 
-                      STORM_DEFAULT_(stormComplex_t  beta, 1.0)) {
+STORM_INL void stormSubC(stormMesh_t mesh, 
+                         stormArrayC_t z,
+                         stormArrayC_t y, 
+                         stormArrayC_t x, 
+                         STORM_DEFAULT_(stormComplex_t alpha, 1.0), 
+                         STORM_DEFAULT_(stormComplex_t  beta, 1.0)) {
   stormAddC(mesh, z, y, x, -alpha, beta);
 }
-SR_INL void stormSubS(stormMesh_t mesh, 
-                      stormArrayS_t z,
-                      stormArrayS_t y, 
-                      stormArrayS_t x, 
-                      STORM_DEFAULT_(stormSymbol_t alpha, {}), 
-                      STORM_DEFAULT_(stormSymbol_t  beta, {})) {
+STORM_INL void stormSubS(stormMesh_t mesh, 
+                         stormArrayS_t z,
+                         stormArrayS_t y, 
+                         stormArrayS_t x, 
+                         STORM_DEFAULT_(stormSymbol_t alpha, {}), 
+                         STORM_DEFAULT_(stormSymbol_t  beta, {})) {
   assert(0); //stormAddS(mesh, z, y, x, -alpha, beta);
 }
-#define stormSub(mesh, z, y, x, alpha, beta) \
-  STORM_GENERIC_EXT_(y, stormSub)(mesh, z, y, x, alpha, beta)
+#define stormSub(mesh, z, y, x, ...) \
+  _STORM_GENERIC_EXT_(y, stormSub)(mesh, z, y, x, ##__VA_ARGS__)
 /// @}
 
 /// @{
-SR_API void stormMulR(stormMesh_t mesh,
-                      stormArrayR_t z, 
-                      stormArrayR_t y, 
-                      stormArrayR_t x);
-SR_API void stormMulC(stormMesh_t mesh, 
-                      stormArrayC_t z, 
-                      stormArrayC_t y, 
-                      stormArrayC_t x);
-SR_API void stormMulS(stormMesh_t mesh, 
-                      stormArrayS_t z, 
-                      stormArrayS_t y, 
-                      stormArrayS_t x);
+STORM_API void stormMulR(stormMesh_t mesh,
+                         stormArrayR_t z, 
+                         stormArrayR_t y, 
+                         stormArrayR_t x);
+STORM_API void stormMulC(stormMesh_t mesh, 
+                         stormArrayC_t z, 
+                         stormArrayC_t y, 
+                         stormArrayC_t x);
+STORM_API void stormMulS(stormMesh_t mesh, 
+                         stormArrayS_t z, 
+                         stormArrayS_t y, 
+                         stormArrayS_t x);
 #define stormMul(mesh, z, y, x) \
-  STORM_GENERIC_EXT_(y, stormMul)(mesh, z, y, x)
+  _STORM_GENERIC_EXT_(y, stormMul)(mesh, z, y, x)
 /// @}
 
 /// @{
@@ -323,36 +319,36 @@ typedef void(*stormMapFuncS_t)(stormInt_t size,
 /// @}
 
 /// @{
-SR_API stormReal_t SR_IntegrateR(stormMesh_t mesh,
-                                 stormArrayR_t x, 
-                                 stormMapFuncR_t f, 
-                                 void* env);
-SR_API stormComplex_t SR_IntegrateC(stormMesh_t mesh,
-                                    stormArrayC_t x, 
-                                    stormMapFuncC_t f, 
+STORM_API stormReal_t SR_IntegrateR(stormMesh_t mesh,
+                                    stormArrayR_t x, 
+                                    stormMapFuncR_t f, 
                                     void* env);
+STORM_API stormComplex_t SR_IntegrateC(stormMesh_t mesh,
+                                       stormArrayC_t x, 
+                                       stormMapFuncC_t f, 
+                                       void* env);
 #define SR_Integrate(mesh, x, f, env) \
-  STORM_GENERIC_(x, SR_Integrate)(mesh, x, f, env)
+  _STORM_GENERIC_(x, SR_Integrate)(mesh, x, f, env)
 /// @}
 
 /// @{
-SR_API void SR_FuncProdR(stormMesh_t mesh,
-                         stormArrayR_t y, 
-                         stormArrayR_t x, 
-                         stormMapFuncR_t f, 
-                         STORM_DEFAULT_(void* env, NULL));
-SR_API void SR_FuncProdC(stormMesh_t mesh,
-                         stormArrayC_t y, 
-                         stormArrayC_t x, 
-                         stormMapFuncC_t f, 
-                         STORM_DEFAULT_(void* env, NULL));
-SR_API void SR_FuncProdS(stormMesh_t mesh,
-                         stormArrayS_t y, 
-                         stormArrayS_t x, 
-                         stormMapFuncS_t f, 
-                         STORM_DEFAULT_(void* env, NULL));
-#define SR_FuncProd(mesh, y, x, f, env) \
-  STORM_GENERIC_EXT_(y, SR_FuncProd)(mesh, y, x, f, env)
+STORM_API void stormFuncProdR(stormMesh_t mesh,
+                              stormArrayR_t y, 
+                              stormArrayR_t x, 
+                              stormMapFuncR_t f, 
+                              STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormFuncProdC(stormMesh_t mesh,
+                              stormArrayC_t y, 
+                              stormArrayC_t x, 
+                              stormMapFuncC_t f, 
+                              STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormFuncProdS(stormMesh_t mesh,
+                              stormArrayS_t y, 
+                              stormArrayS_t x, 
+                              stormMapFuncS_t f, 
+                              STORM_DEFAULT_(void* env, NULL));
+#define stormFuncProd(mesh, y, x, f, env) \
+  _STORM_GENERIC_EXT_(y, stormFuncProd)(mesh, y, x, f, env)
 /// @}
 
 /// @{
@@ -377,23 +373,23 @@ typedef void(*stormSpMapFuncS_t)(stormInt_t dim,
 /// @}
 
 /// @{
-SR_API void SR_SFuncProdR(stormMesh_t mesh,
-                          stormArrayR_t y, 
-                          stormArrayR_t x, 
-                          stormSpMapFuncR_t f, 
-                          STORM_DEFAULT_(void* env, NULL));
-SR_API void SR_SFuncProdC(stormMesh_t mesh,
-                          stormArrayC_t y, 
-                          stormArrayC_t x, 
-                          stormSpMapFuncC_t f, 
-                          STORM_DEFAULT_(void* env, NULL));
-SR_API void SR_SFuncProdS(stormMesh_t mesh,
-                          stormArrayS_t y, 
-                          stormArrayS_t x, 
-                          stormSpMapFuncS_t f, 
-                          STORM_DEFAULT_(void* env, NULL));
-#define SR_SFuncProd(mesh, y, x, f, env) \
-  STORM_GENERIC_EXT_(y, SR_SFuncProd)(mesh, y, x, f, env)
+STORM_API void stormSpFuncProdR(stormMesh_t mesh,
+                                stormArrayR_t y, 
+                                stormArrayR_t x, 
+                                stormSpMapFuncR_t f, 
+                                STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormSpFuncProdC(stormMesh_t mesh,
+                                stormArrayC_t y, 
+                                stormArrayC_t x, 
+                                stormSpMapFuncC_t f, 
+                                STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormSpFuncProdS(stormMesh_t mesh,
+                                stormArrayS_t y, 
+                                stormArrayS_t x, 
+                                stormSpMapFuncS_t f, 
+                                STORM_DEFAULT_(void* env, NULL));
+#define stormSpFuncProd(mesh, y, x, f, env) \
+  _STORM_GENERIC_EXT_(y, stormSpFuncProd)(mesh, y, x, f, env)
 /// @}
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
@@ -415,65 +411,65 @@ typedef void(*stormMatVecFuncS_t)(stormMesh_t mesh,
 /// @}
 
 /// @{
-#define stormCG       "CG"
-#define stormBiCGStab "BiCGStab"
-#define stormMINRES   "MINRES"
-#define stormGMRES    "GMRES"
-#define stormTFQMR    "TFQMR"
-#define stormLSQR     "LSQR"
-#define stormLSMR     "LSMR"
+#define STORM_METHOD_CG       "CG"
+#define STORM_METHOD_BiCGStab "BiCGStab"
+#define STORM_METHOD_MINRES   "MINRES"
+#define STORM_METHOD_GMRES    "GMRES"
+#define STORM_METHOD_TFQMR    "TFQMR"
+#define STORM_METHOD_LSQR     "LSQR"
+#define STORM_METHOD_LSMR     "LSMR"
 /// @}
 
 /// @{
-#define stormNone   ""
-#define stormJacobi "Jacobi"
-#define stormLU_SGS "LU_SGS"
+#define STORM_PRE_NONE   ""
+#define STORM_PRE_JACOBI "Jacobi"
+#define STORM_PRE_LU_SGS "LU_SGS"
 /// @}
 
 /// @{
-SR_API void stormLinSolveR(stormMesh_t mesh,
-                           stormString_t method,
-                           stormString_t preMethod,
-                           stormArrayR_t x, 
-                           stormArrayR_t b, 
-                           stormMatVecFuncR_t MatVec, 
-                           STORM_DEFAULT_(void* env, NULL),
-                           STORM_DEFAULT_(stormMatVecFuncR_t MatVec_H, NULL), 
-                           STORM_DEFAULT_(void* env_H, NULL));
-SR_API void stormLinSolveC(stormMesh_t mesh,
-                           stormString_t method, 
-                           stormString_t preMethod,
-                           stormArrayC_t x, 
-                           stormArrayC_t b, 
-                           stormMatVecFuncC_t MatVec, 
-                           STORM_DEFAULT_(void* env, NULL),
-                           STORM_DEFAULT_(stormMatVecFuncC_t MatVec_H, NULL), 
-                           STORM_DEFAULT_(void* env_H, NULL));
+STORM_API void stormLinSolveR(stormMesh_t mesh,
+                              stormString_t method,
+                              stormString_t preMethod,
+                              stormArrayR_t x, 
+                              stormArrayR_t b, 
+                              stormMatVecFuncR_t MatVec, 
+                              STORM_DEFAULT_(void* env, NULL),
+                              STORM_DEFAULT_(stormMatVecFuncR_t MatVec_H, NULL), 
+                              STORM_DEFAULT_(void* env_H, NULL));
+STORM_API void stormLinSolveC(stormMesh_t mesh,
+                              stormString_t method, 
+                              stormString_t preMethod,
+                              stormArrayC_t x, 
+                              stormArrayC_t b, 
+                              stormMatVecFuncC_t MatVec, 
+                              STORM_DEFAULT_(void* env, NULL),
+                              STORM_DEFAULT_(stormMatVecFuncC_t MatVec_H, NULL), 
+                              STORM_DEFAULT_(void* env_H, NULL));
 #define stormLinSolve(mesh, method, preMethod, x, b, MatVec, env, ...) \
-  STORM_GENERIC_(x, stormLinSolve)( \
+  _STORM_GENERIC_(x, stormLinSolve)( \
     mesh, method, preMethod, x, b, MatVec, env, ##__VA_ARGS__)
 /// @}
 
 /// @{
-#define stormNewton "Newton"
-#define stormJFNK   "JFNK"
+#define STORM_METHOD_NEWTON "Newton"
+#define STORM_METHOD_JFNK   "JFNK"
 /// @}
 
 /// @{
-SR_API void stormNonlinSolveR(stormMesh_t mesh,
-                              stormString_t method,
-                              stormArrayR_t x,
-                              stormArrayR_t b, 
-                              stormMatVecFuncR_t MatVec, 
-                              STORM_DEFAULT_(void* env, NULL));
-SR_API void stormNonlinSolveC(stormMesh_t mesh,
-                              stormString_t method,
-                              stormArrayC_t x,
-                              stormArrayC_t b, 
-                              stormMatVecFuncC_t MatVec, 
-                              STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormNonlinSolveR(stormMesh_t mesh,
+                                 stormString_t method,
+                                 stormArrayR_t x,
+                                 stormArrayR_t b, 
+                                 stormMatVecFuncR_t MatVec, 
+                                 STORM_DEFAULT_(void* env, NULL));
+STORM_API void stormNonlinSolveC(stormMesh_t mesh,
+                                 stormString_t method,
+                                 stormArrayC_t x,
+                                 stormArrayC_t b, 
+                                 stormMatVecFuncC_t MatVec, 
+                                 STORM_DEFAULT_(void* env, NULL));
 #define stormNonlinSolve(mesh, method, x, b, MatVec, env, ...) \
-  STORM_GENERIC_(x, stormNonlinSolve)( \
+  _STORM_GENERIC_(x, stormNonlinSolve)( \
     mesh, method, x, b, MatVec, env, ##__VA_ARGS__)
 /// @}
 
@@ -481,26 +477,26 @@ SR_API void stormNonlinSolveC(stormMesh_t mesh,
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 /// @{
-SR_API void stormApplyBCsR(stormMesh_t mesh, 
-                           stormArrayR_t u,
-                           stormInt_t iBC, 
-                           stormReal_t alpha, 
-                           stormReal_t beta, 
-                           stormReal_t gamma);
-SR_API void stormApplyBCsC(stormMesh_t mesh, 
-                           stormArrayR_t u,
-                           stormInt_t iBC, 
-                           stormComplex_t alpha, 
-                           stormComplex_t beta, 
-                           stormComplex_t gamma);
-SR_API void stormApplyBCsS(stormMesh_t mesh, 
-                           stormArrayR_t u,
-                           stormInt_t iBC, 
-                           stormSymbol_t alpha, 
-                           stormSymbol_t beta, 
-                           stormSymbol_t gamma);
+STORM_API void stormApplyBCsR(stormMesh_t mesh, 
+                              stormArrayR_t u,
+                              stormInt_t iBC, 
+                              stormReal_t alpha, 
+                              stormReal_t beta, 
+                              stormReal_t gamma);
+STORM_API void stormApplyBCsC(stormMesh_t mesh, 
+                              stormArrayR_t u,
+                              stormInt_t iBC, 
+                              stormComplex_t alpha, 
+                              stormComplex_t beta, 
+                              stormComplex_t gamma);
+STORM_API void stormApplyBCsS(stormMesh_t mesh, 
+                              stormArrayR_t u,
+                              stormInt_t iBC, 
+                              stormSymbol_t alpha, 
+                              stormSymbol_t beta, 
+                              stormSymbol_t gamma);
 #define stormApplyBCs(mesh, u, iBC, ...) \
-  STORM_GENERIC_EXT_(u, stormApplyBCs)(mesh, u, iBC, ##__VA_ARGS__)
+  _STORM_GENERIC_EXT_(u, stormApplyBCs)(mesh, u, iBC, ##__VA_ARGS__)
 /// @}
 
 #define SR_ALL 0
@@ -511,117 +507,117 @@ SR_API void stormApplyBCsS(stormMesh_t mesh,
 #define SR_NEUMANN(gamma)   0.0, 1.0, (gamma)
 
 /// @{
-SR_API void stormApplyBCs_SlipWallR(stormMesh_t mesh, 
-                                    stormArrayR_t u,
-                                    stormInt_t iBC);
+STORM_API void stormApplyBCs_SlipWallR(stormMesh_t mesh, 
+                                       stormArrayR_t u,
+                                       stormInt_t iBC);
 #define stormApplyBCs_SlipWall stormApplyBCs_SlipWallR
 /// @}
 
 /// @{
-SR_API void stormApplyBCs_InOutLetR(stormMesh_t mesh, 
-                                  stormArrayR_t u,
-                                  stormInt_t iBC);
+STORM_API void stormApplyBCs_InOutLetR(stormMesh_t mesh, 
+                                       stormArrayR_t u,
+                                       stormInt_t iBC);
 #define stormApplyBCs_InOutLet stormApplyBCs_InOutLetR
 /// @}
 
 /// @{
-SR_API void stormGradientR(stormMesh_t mesh, 
-                           stormArrayR_t vVec, 
-                           stormReal_t lambda, 
-                           stormArrayR_t u);
-SR_API void stormGradientC(stormMesh_t mesh,
-                           stormArrayC_t vVec, 
-                           stormComplex_t lambda, 
-                           stormArrayC_t u);
-SR_API void stormGradientS(stormMesh_t mesh,
-                           stormArrayS_t vVec, 
-                           stormSymbol_t lambda, 
-                           stormArrayS_t u);
+STORM_API void stormGradientR(stormMesh_t mesh, 
+                              stormArrayR_t vVec, 
+                              stormReal_t lambda, 
+                              stormArrayR_t u);
+STORM_API void stormGradientC(stormMesh_t mesh,
+                              stormArrayC_t vVec, 
+                              stormComplex_t lambda, 
+                              stormArrayC_t u);
+STORM_API void stormGradientS(stormMesh_t mesh,
+                              stormArrayS_t vVec, 
+                              stormSymbol_t lambda, 
+                              stormArrayS_t u);
 #define stormGradient(mesh, vVec, lambda, u) \
-  STORM_GENERIC_EXT_(vVec, stormGradient)(mesh, vVec, lambda, u)
+  _STORM_GENERIC_EXT_(vVec, stormGradient)(mesh, vVec, lambda, u)
 /// @}
 
 /// @{
-SR_API void stormDivergenceR(stormMesh_t mesh, 
-                             stormArrayR_t v, 
-                             stormReal_t lambda, 
-                             stormArrayR_t uVec);
-SR_API void stormDivergenceC(stormMesh_t mesh,
-                             stormArrayC_t v, 
-                             stormComplex_t lambda, 
-                             stormArrayC_t uVec);
-SR_API void stormDivergenceS(stormMesh_t mesh,
-                             stormArrayS_t v, 
-                             stormSymbol_t lambda, 
-                             stormArrayS_t uVec);
+STORM_API void stormDivergenceR(stormMesh_t mesh, 
+                                stormArrayR_t v, 
+                                stormReal_t lambda, 
+                                stormArrayR_t uVec);
+STORM_API void stormDivergenceC(stormMesh_t mesh,
+                                stormArrayC_t v, 
+                                stormComplex_t lambda, 
+                                stormArrayC_t uVec);
+STORM_API void stormDivergenceS(stormMesh_t mesh,
+                                stormArrayS_t v, 
+                                stormSymbol_t lambda, 
+                                stormArrayS_t uVec);
 #define stormDivergence(mesh, v, lambda, uVec) \
-  STORM_GENERIC_EXT_(v, stormDivergence)(mesh, v, lambda, uVec)
+  _STORM_GENERIC_EXT_(v, stormDivergence)(mesh, v, lambda, uVec)
 /// @}
 
 /// @{
-SR_API void stormRhieChowCorrection(stormMesh_t mesh, 
-                                    stormArrayR_t v,
-                                    stormReal_t lambda, 
-                                    stormReal_t tau, 
-                                    stormArrayR_t p, 
-                                    stormArrayR_t rho);
+STORM_API void stormRhieChowCorrection(stormMesh_t mesh, 
+                                       stormArrayR_t v,
+                                       stormReal_t lambda, 
+                                       stormReal_t tau, 
+                                       stormArrayR_t p, 
+                                       stormArrayR_t rho);
 /// @}
 
 /// @{
-SR_API void stormConvectionR(stormMesh_t mesh, 
+STORM_API void stormConvectionR(stormMesh_t mesh, 
+                                stormArrayR_t v, 
+                                stormReal_t lambda, 
+                                stormArrayR_t u, 
+                                stormArrayR_t aVec);
+STORM_API void stormConvectionC(stormMesh_t mesh,
+                                stormArrayC_t v, 
+                                stormComplex_t lambda, 
+                                stormArrayC_t u, 
+                                stormArrayR_t aVec);
+STORM_API void stormConvectionS(stormMesh_t mesh,
+                                stormArrayS_t v, 
+                                stormSymbol_t lambda, 
+                                stormArrayS_t u, 
+                                stormArrayR_t aVec);
+#define stormConvection(mesh, v, lambda, u, a) \
+  _STORM_GENERIC_EXT_(v, stormConvection)(mesh, v, lambda, u, a)
+/// @}
+
+/// @{
+STORM_API void stormDivGradR(stormMesh_t mesh,
                              stormArrayR_t v, 
                              stormReal_t lambda, 
-                             stormArrayR_t u, 
-                             stormArrayR_t a);
-SR_API void stormConvectionC(stormMesh_t mesh,
+                             stormArrayR_t u);
+STORM_API void stormDivGradC(stormMesh_t mesh,
                              stormArrayC_t v, 
                              stormComplex_t lambda, 
-                             stormArrayC_t u, 
-                             stormArrayR_t a);
-SR_API void stormConvectionS(stormMesh_t mesh,
+                             stormArrayC_t u);
+STORM_API void stormDivGradS(stormMesh_t mesh,
                              stormArrayS_t v, 
                              stormSymbol_t lambda, 
-                             stormArrayS_t u, 
-                             stormArrayR_t a);
-#define stormConvection(mesh, v, lambda, u, a) \
-  STORM_GENERIC_EXT_(v, stormConvection)(mesh, v, lambda, u, a)
-/// @}
-
-/// @{
-SR_API void stormDivGradR(stormMesh_t mesh,
-                          stormArrayR_t v, 
-                          stormReal_t lambda, 
-                          stormArrayR_t u);
-SR_API void stormDivGradC(stormMesh_t mesh,
-                          stormArrayC_t v, 
-                          stormComplex_t lambda, 
-                          stormArrayC_t u);
-SR_API void stormDivGradS(stormMesh_t mesh,
-                          stormArrayS_t v, 
-                          stormSymbol_t lambda, 
-                          stormArrayS_t u);
+                             stormArrayS_t u);
 #define stormDivGrad(mesh, v, lambda, u) \
-  STORM_GENERIC_EXT_(v, stormDivGrad)(mesh, v, lambda, u)
+  _STORM_GENERIC_EXT_(v, stormDivGrad)(mesh, v, lambda, u)
 /// @}
 
 /// @{
-SR_API void stormDivWGradR(stormMesh_t mesh,
-                           stormArrayR_t v, 
-                           stormReal_t lambda, 
-                           stormArrayR_t k, 
-                           stormArrayR_t u);
-SR_API void stormDivWGradC(stormMesh_t mesh,
-                           stormArrayC_t v, 
-                           stormComplex_t lambda, 
-                           stormArrayC_t k, 
-                           stormArrayC_t u);
-SR_API void stormDivWGradS(stormMesh_t mesh,
-                           stormArrayS_t v, 
-                           stormSymbol_t lambda, 
-                           stormArrayR_t k, 
-                           stormArrayS_t u);
+STORM_API void stormDivWGradR(stormMesh_t mesh,
+                              stormArrayR_t v, 
+                              stormReal_t lambda, 
+                              stormArrayR_t k, 
+                              stormArrayR_t u);
+STORM_API void stormDivWGradC(stormMesh_t mesh,
+                              stormArrayC_t v, 
+                              stormComplex_t lambda, 
+                              stormArrayC_t k, 
+                              stormArrayC_t u);
+STORM_API void stormDivWGradS(stormMesh_t mesh,
+                              stormArrayS_t v, 
+                              stormSymbol_t lambda, 
+                              stormArrayR_t k, 
+                              stormArrayS_t u);
 #define stormDivWGrad(mesh, v, lambda, k, u) \
-  STORM_GENERIC_EXT_(v, stormDivWGrad)(mesh, v, lambda, k, u)
+  _STORM_GENERIC_EXT_(v, stormDivWGrad)(mesh, v, lambda, k, u)
 /// @}
 
 #endif // ifndef STORM_RULER_API_H

@@ -331,7 +331,7 @@ end function cAlloc$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in SCALAR_TYPES
-function cAlloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
+function cAllocLike$T(pX) result(pY) bind(C, name='stormAllocLike$T')
   type(c_ptr), intent(in), value :: pX
   type(c_ptr) :: pY
 
@@ -348,7 +348,7 @@ function cAlloc_Mold$T(pX) result(pY) bind(C, name='SR_Alloc_Mold$T')
   pY_C%mRank = pX_C%mRank
   pY = c_loc(pY_C)
 
-end function cAlloc_Mold$T
+end function cAllocLike$T
 #$end for
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
@@ -586,7 +586,7 @@ end function cIntegrate$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_FuncProd$T')
+subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormFuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
   type(c_funptr), intent(in), value :: pF
@@ -626,7 +626,7 @@ end subroutine cFuncProd$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cSFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='SR_SFuncProd$T')
+subroutine cSFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormSpFuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
   type(c_funptr), intent(in), value :: pF

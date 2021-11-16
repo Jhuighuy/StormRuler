@@ -45,8 +45,10 @@ file(GLOB CXX_SOURCES "./*.c*")
 
 add_executable(StormRuler_Main ${CXX_SOURCES})
 
-# Link with the base target.
-target_link_libraries(StormRuler_Main PUBLIC StormRuler_BASE)
+# Require C++17.
+set_target_properties(
+  StormRuler_Main PROPERTIES 
+  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
 # Link with the main library.
 target_link_libraries(StormRuler_Main PUBLIC StormRuler)

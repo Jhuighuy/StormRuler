@@ -153,22 +153,22 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
 
   stormArrayR_t rhs = stormAllocLike(c);
   stormSet(mesh, rhs, c);
-  stormFuncProd(mesh, w_hat, c, dWdC, NULL);
-  stormSub(mesh, w_hat, w_hat, c, 2.0*sigma, 1.0);
+  stormFuncProd(mesh, w_hat, c, dWdC, STORM_NULL);
+  stormSub(mesh, w_hat, w_hat, c, 2.0*sigma);
   SetBCs_w(mesh, w_hat);
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
   stormLinSolve(mesh, STORM_METHOD_BiCGStab, STORM_PRE_NONE, 
-    c_hat, rhs, CahnHilliard_MatVec, vvv=v, NULL, NULL);
+    c_hat, rhs, CahnHilliard_MatVec, vvv=v, STORM_NULL, STORM_NULL);
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
 
-  stormFuncProd(mesh, w_hat, c_hat, dWdC, NULL);
+  stormFuncProd(mesh, w_hat, c_hat, dWdC, STORM_NULL);
   stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
-  return SR_Integrate(mesh, c_hat, Vol, NULL);
+  return SR_Integrate(mesh, c_hat, Vol, STORM_NULL);
 } // CahnHilliard_Step
 
 static double mu_1 = 0.08, mu_2 = 0.08;
@@ -272,8 +272,8 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
 #if YURI
-  II = 1; stormFuncProd(mesh, n1, c, NVsC, NULL);
-  II = 2; stormFuncProd(mesh, n2, c, NVsC, NULL);
+  II = 1; stormFuncProd(mesh, n1, c, NVsC, STORM_NULL);
+  II = 2; stormFuncProd(mesh, n2, c, NVsC, STORM_NULL);
   stormAdd(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
   stormFill(mesh, rho, 0.5*(rho_1 + rho_2), 0.0);
@@ -281,7 +281,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
 #endif
 
   stormArrayR_t rho_inv = stormAllocLike(rho);
-  stormFuncProd(mesh, rho_inv, rho, InvRho, NULL);
+  stormFuncProd(mesh, rho_inv, rho, InvRho, STORM_NULL);
 
   stormArrayR_t mu = stormAllocLike(c);
   stormFill(mesh, mu, 0.5*(mu_1 + mu_2), 0.0);
@@ -303,7 +303,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   
   stormSet(mesh, v_hat, v);
   rho_inv_ = rho_inv, mu_ = mu;
-  stormNonlinSolve(mesh, STORM_METHOD_JFNK, v_hat, v, NavierStokes_VaD_MatVec, NULL);
+  stormNonlinSolve(mesh, STORM_METHOD_JFNK, v_hat, v, NavierStokes_VaD_MatVec, STORM_NULL);
   stormFree(rhs);
 
   //
@@ -318,7 +318,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
 
   stormSet(mesh, p_hat, p);
   stormLinSolve(mesh, STORM_METHOD_CG, STORM_PRE_NONE, p_hat, rhs, 
-    Poisson_VaD_MatVec, rho_inv_=rho_inv, NULL, NULL);
+    Poisson_VaD_MatVec, rho_inv_=rho_inv, STORM_NULL, STORM_NULL);
   stormFree(rhs);
 
   SetBCs_p(mesh, p_hat);
@@ -330,7 +330,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, v_hat, v_hat, tmp, 1.0, 1.0);
   stormFree(tmp);
 
-  if (d != NULL) {
+  if (d != STORM_NULL) {
     SetBCs_v(mesh, v_hat);
     stormFill(mesh, d, 0.0, 0.0);
     stormDivergence(mesh, d, -1.0, v);
@@ -362,7 +362,7 @@ int main() {
   //FILE* dWdCF = fopen("dWdC.txt", "w");
   //for (double x = -0.1; x <= 1.1; x += 0.0001) {
   //  double y;
-  //  dWdC(1, &y, &x, NULL);
+  //  dWdC(1, &y, &x, STORM_NULL);
   //  fprintf(dWdCF, "%f %f\n", x, y);
   //}
   //fclose(dWdCF);
@@ -389,8 +389,8 @@ int main() {
 #endif
 
   //stormFill(mesh, c, 1.0, 0.0);
-  stormSpFuncProd(mesh, c, c, Initial_Data, NULL);
-  //SR_SFuncProd(mesh, v, v, Initial_Data, NULL);
+  stormSpFuncProd(mesh, c, c, Initial_Data, STORM_NULL);
+  //SR_SFuncProd(mesh, v, v, Initial_Data, STORM_NULL);
   //stormFillRandom(mesh, c, -1.0, +1.0);
   stormFill(mesh, v, 0.0, 0.0);
   stormFill(mesh, p, 0.0, 0.0);
@@ -427,7 +427,7 @@ int main() {
     char filename[256];
     printf("time = %f\n", total_time);
     sprintf(filename, "out/fld-%d.vtk", time);
-    SR_tIOList io = SR_IO_Begin();
+    stormIOList_t io = SR_IO_Begin();
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, c, "phase");
     SR_IO_Add(io, p, "pressure");

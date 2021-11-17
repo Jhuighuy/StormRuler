@@ -677,14 +677,14 @@ subroutine cLinSolve$T(pMesh, pMethod, pPreMethod, &
   type(c_ptr), intent(in), value :: pX, pB
   character(c_char), intent(in) :: pMethod(*), pPreMethod(*)
   type(c_funptr), intent(in), value :: pMatVec, pMatVec_H
-  type(c_ptr), intent(in), value :: pEnv, pEnv_H
+  type(*), intent(in) :: pEnv, pEnv_H
 
   abstract interface
     subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
       import :: c_ptr, dp
       type(c_ptr), intent(in), value :: pMesh
       type(c_ptr), intent(in), value :: pAx, pX
-      type(c_ptr), intent(in), value :: pEnv
+      type(*), intent(in) :: pEnv
     end subroutine ctMatVec
   end interface
 
@@ -734,14 +734,14 @@ subroutine cNonlinSolve$T(pMesh, pMethod, &
   type(c_ptr), intent(in), value :: pX, pB
   character(c_char), intent(in) :: pMethod(*)
   type(c_funptr), intent(in), value :: pMatVec
-  type(c_ptr), intent(in), value :: pEnv
+  type(*), intent(in) :: pEnv
 
   abstract interface
     subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
       import :: c_ptr
       type(c_ptr), intent(in), value :: pMesh
       type(c_ptr), intent(in), value :: pAx, pX
-      type(c_ptr), intent(in), value :: pEnv
+      type(*), intent(in) :: pEnv
     end subroutine ctMatVec
   end interface
 

@@ -27,7 +27,7 @@ module StormRuler_BLAS
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, gCylCoords
-use StormRuler_Helpers, only: Re, Im, R2C, operator(.inner.), operator(.outer.)
+use StormRuler_Helpers, only: Re, Im, R2C
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArrayR, AllocArray
@@ -110,28 +110,16 @@ interface Sub
 end interface Sub
 
 interface Mul
-#$do rank = 0, NUM_RANKS-3
-  module procedure Mul$rank
-#$end do
+#$for T, _ in [SCALAR_TYPES[0]]
+  module procedure Mul$T
+#$end for
 end interface Mul
 
-interface Mul_Inner
-#$do rank = 0, NUM_RANKS-3
-  module procedure Mul_Inner$rank
-#$end do
-end interface Mul_Inner
-
-interface Mul_Outer
-#$do rank = 0, NUM_RANKS-3
-  module procedure Mul_Outer$rank
-#$end do
-end interface Mul_Outer
-
-interface SFuncProd
+interface SpFuncProd
 #$for T, _ in [SCALAR_TYPES[0]]
-  module procedure SFuncProd$T
+  module procedure SpFuncProd$T
 #$end for
-end interface SFuncProd
+end interface SpFuncProd
 
 interface Integrate
 #$for T, _ in [SCALAR_TYPES[0]]
@@ -181,12 +169,12 @@ end interface
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
 #$for T, typename in SCALAR_TYPES
-  pure function tSMapFunc$T(r, x) result(SMx)
+  pure function tSpMapFunc$T(r, x) result(Mx)
     import dp
     real(dp), intent(in) :: r(:)
     $typename, intent(in) :: x(:)
-    $typename :: SMx(size(x))
-  end function tSMapFunc$T
+    $typename :: Mx(size(x))
+  end function tSpMapFunc$T
 #$end for
 end interface
 
@@ -339,6 +327,9 @@ contains
   end function Norm_C_Kernel
 end function Norm_C$T
 #$end for
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Fill vector components: 𝒚 ← 𝛼 + [𝛽], 𝛼 ∊ ℝ, [𝛽 ∊ ℝ or ℂ].
@@ -533,9 +524,10 @@ subroutine Add$T(mesh, zArr, yArr, xArr, alpha, beta)
   $typename, pointer :: x(:,:), y(:,:), z(:,:)
   $typename :: a, b
 
-  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present( beta)) b =  beta
+
+  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
 
   call mesh%RunCellKernel(Add_Kernel)
 
@@ -562,9 +554,10 @@ subroutine Sub$T(mesh, zArr, yArr, xArr, alpha, beta)
   $typename, pointer :: x(:,:), y(:,:), z(:,:)
   $typename :: a, b
 
-  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
   a = 1.0_dp; if (present(alpha)) a = alpha
   b = 1.0_dp; if (present( beta)) b =  beta
+
+  call xArr%Get(x); call yArr%Get(y); call zArr%Get(z)
 
   call mesh%RunCellKernel(Sub_Kernel)
 
@@ -579,71 +572,64 @@ end subroutine Sub$T
 #$end for
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute product: u̅ ← vw̅.
+!! Compute a product: 𝒛 ← 𝒚𝒙.
+!! • Scalar multiplier case:
+!!   Shape of 𝒙, 𝒛 is [1, NumVars]×[1, NumAllCells],
+!!   Shape of 𝒚 is [1, NumAllCells].
+!! • Diagonal multiplier case:
+!!   Shape of 𝒙, 𝒚, 𝒛 is [1, NumVars]×[1, NumAllCells].
+!! • Matrix multiplier case:
+!!   Shape of 𝒙, 𝒛 is [1, NumVars]×[1, NumAllCells],
+!!   Shape of 𝒚 is [1, NumVars]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS-3
-subroutine Mul$rank(mesh, u, v, w, power)
+#$for T, typename in [SCALAR_TYPES[0]]
+subroutine Mul$T(mesh, zArr, yArr, xArr)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: v(:), w(@:,:)
-  real(dp), intent(inout) :: u(@:,:)
-  integer(ip), intent(in), optional :: power
+  class(tArray$T), intent(in) :: xArr, yArr
+  class(tArray$T), intent(inout) :: zArr
+
+  $typename, pointer :: x(:,:), z(:,:)
+  $typename, pointer :: yScal(:), yDiag(:,:), yMat(:,:,:)
+
+  call xArr%Get(x); call zArr%Get(z)
+  if (yArr%Rank() == 1) then
+    call yArr%Get(yScal)
+
+    call mesh%RunCellKernel(MulScal_Kernel)
+
+  else if (yArr%Rank() == 2) then
+    call yArr%Get(yDiag)
+
+    call mesh%RunCellKernel(Mul_Kernel)
   
-  integer(ip) :: p
-  p = 1; if (present(power)) p = power
+  else if (yArr%Rank() == 3) then
+    call yArr%Get(yMat)
+
+    call mesh%RunCellKernel(MulMat_Kernel)
   
-  call mesh%RunCellKernel(Mul_Kernel)
+  end if
 
 contains
+  subroutine MulScal_Kernel(iCell)
+    integer(ip), intent(in) :: iCell
+
+    z(:,iCell) = yScal(iCell)*x(:,iCell)
+    
+  end subroutine MulScal_Kernel
   subroutine Mul_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
-    u(@:,iCell) = (v(iCell)**p)*w(@:,iCell)
-
+    z(:,iCell) = yDiag(:,iCell)*x(:,iCell)
+    
   end subroutine Mul_Kernel
-end subroutine Mul$rank
-#$end do
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an inner product: 𝒛 ← 𝒚⋅𝒙.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS-3
-subroutine Mul_Inner$rank(mesh, z, y, x)
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: y(:,:), x(:,@:,:)
-  real(dp), intent(inout) :: z(@:,:)
-  
-  call mesh%RunCellKernel(Mul_Inner_Kernel)
-
-contains
-  subroutine Mul_Inner_Kernel(iCell)
+  subroutine MulMat_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
-    z(@:,iCell) = y(:,iCell).inner.x(:,@:,iCell)
-
-  end subroutine Mul_Inner_Kernel
-end subroutine Mul_Inner$rank
-#$end do
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute an outer product: 𝒛 ← 𝒚⊗𝒙.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-#$do rank = 0, NUM_RANKS-3
-subroutine Mul_Outer$rank(mesh, z, y, x)
-  class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: y(:,:), x(@:,:)
-  real(dp), intent(inout) :: z(:,@:,:)
-  
-  call mesh%RunCellKernel(Mul_Outer_Kernel)
-
-contains
-  subroutine Mul_Outer_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
-
-    z(:,@:,iCell) = y(:,iCell).outer.x(@:,iCell)
-
-  end subroutine Mul_Outer_Kernel
-end subroutine Mul_Outer$rank
-#$end do
+    z(:,iCell) = matmul(yMat(:,:,iCell), x(:,iCell))
+    
+  end subroutine MulMat_Kernel
+end subroutine Mul$T
+#$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -706,26 +692,26 @@ end subroutine FuncProd$T
 !! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine SFuncProd$T(mesh, yArr, xArr, f)
+subroutine SpFuncProd$T(mesh, yArr, xArr, f)
   class(tMesh), intent(inout) :: mesh
   class(tArray$T), intent(in) :: xArr
   class(tArray$T), intent(inout) :: yArr
-  procedure(tSMapFunc$T) :: f
+  procedure(tSpMapFunc$T) :: f
 
   $typename, pointer :: x(:,:), y(:,:)
 
   call xArr%Get(x); call yArr%Get(y)
 
-  call mesh%RunCellKernel(SFuncProd_Kernel)
+  call mesh%RunCellKernel(SpFuncProd_Kernel)
   
 contains
-  subroutine SFuncProd_Kernel(iCell)
+  subroutine SpFuncProd_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
     y(:,iCell) = f(mesh%CellCenter(iCell), x(:,iCell))
 
-  end subroutine SFuncProd_Kernel
-end subroutine SFuncProd$T
+  end subroutine SpFuncProd_Kernel
+end subroutine SpFuncProd$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

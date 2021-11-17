@@ -38,7 +38,7 @@ use StormRuler_IO, only: tIOList => IOList
 
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
-  & Integrate, FuncProd, SFuncProd
+  & Integrate, FuncProd, SpFuncProd
 #$for type_, _ in [SCALAR_TYPES[0]]
 use StormRuler_BLAS, only: tMatVecFunc$type_
 #$end for
@@ -64,7 +64,7 @@ use, intrinsic :: iso_c_binding, only: c_char, c_int, &
 
 implicit none
 
-#$let ctype(typename) = {'real(dp)': 'real(c_double)'}[typename]
+#$let c_typename(T) = {'R': 'real(c_double)'}[T]
 
 #$let KLASSES = ['tMesh', 'tIOList']
 
@@ -435,7 +435,7 @@ subroutine cFill$T(pMesh, pX, alpha, beta) bind(C, name='stormFill$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX
   real(c_double), intent(in), value :: alpha
-  ${ctype(typename)}$, intent(in), value :: beta
+  ${c_typename(T)}$, intent(in), value :: beta
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr
@@ -491,7 +491,7 @@ end subroutine cSet$T
 subroutine cScale$T(pMesh, pY, pX, alpha) bind(C, name='stormScale$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
-  ${ctype(typename)}$, intent(in), value :: alpha
+  ${c_typename(T)}$, intent(in), value :: alpha
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, yArr
@@ -510,7 +510,7 @@ end subroutine cScale$T
 subroutine cAdd$T(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='stormAdd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY, pZ
-  ${ctype(typename)}$, intent(in), value :: alpha, beta
+  ${c_typename(T)}$, intent(in), value :: alpha, beta
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, yArr, zArr
@@ -531,12 +531,12 @@ subroutine cMul$T(pMesh, pZ, pY, pX) bind(C, name='stormMul$T')
   type(c_ptr), intent(in), value :: pX, pY, pZ
 
   class(tMesh), pointer :: mesh
-  $typename, pointer :: x(:,:), y(:,:), z(:,:)
+  class(tArray$T), pointer :: xArr, yArr, zArr
 
   call Unwrap(mesh, pMesh)
-  call Unwrap(x, pX); call Unwrap(y, pY); call Unwrap(z, pZ)
+  call Unwrap(xArr, pX); call Unwrap(yArr, pY); call Unwrap(zArr, pZ)
 
-  call Mul(mesh, z, y(1,:), x)
+  call Mul(mesh, zArr, yArr, xArr)
 
 end subroutine cMul$T
 #$end for
@@ -590,15 +590,15 @@ subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormFuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
   type(c_funptr), intent(in), value :: pF
-  type(c_ptr), intent(in), value :: pEnv
+  type(*), intent(in) :: pEnv
 
   abstract interface
     pure subroutine ctMapFunc(size, Fx, x, pEnv) bind(C)
-      import :: c_int, c_ptr, c_double
+      import :: c_int, c_double
       integer(c_int), intent(in), value :: size
-      ${ctype(typename)}$, intent(in) :: x(*)
-      ${ctype(typename)}$, intent(inout) :: Fx(*)
-      type(c_ptr), intent(in), value :: pEnv
+      ${c_typename(T)}$, intent(in) :: x(*)
+      ${c_typename(T)}$, intent(inout) :: Fx(*)
+      type(*), intent(in) :: pEnv
     end subroutine ctMapFunc
   end interface
 
@@ -614,8 +614,8 @@ subroutine cFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormFuncProd$T')
 
 contains
   pure function cF(x) result(Fx)
-    ${ctype(typename)}$, intent(in) :: x(:)
-    ${ctype(typename)}$ :: Fx(size(x))
+    ${c_typename(T)}$, intent(in) :: x(:)
+    ${c_typename(T)}$ :: Fx(size(x))
     
     call f(int(size(x), kind=c_int), Fx, x, pEnv)
 
@@ -626,43 +626,43 @@ end subroutine cFuncProd$T
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 #$for T, typename in [SCALAR_TYPES[0]]
-subroutine cSFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormSpFuncProd$T')
+subroutine cSpFuncProd$T(pMesh, pY, pX, pF, pEnv) bind(C, name='stormSpFuncProd$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pX, pY
   type(c_funptr), intent(in), value :: pF
-  type(c_ptr), intent(in), value :: pEnv
+  type(*), intent(in) :: pEnv
 
   abstract interface
-    pure subroutine ctSMapFunc(dim, r, size, Fx, x, pEnv) bind(C)
-      import :: c_int, c_ptr, c_double
+    pure subroutine ctSpMapFunc(dim, r, size, Fx, x, pEnv) bind(C)
+      import :: c_int, c_double
       integer(c_int), intent(in), value :: dim, size
       real(c_double), intent(in) :: r(*)
-      ${ctype(typename)}$, intent(in) :: x(*)
-      ${ctype(typename)}$, intent(inout) :: Fx(*)
-      type(c_ptr), intent(in), value :: pEnv
-    end subroutine ctSMapFunc
+      ${c_typename(T)}$, intent(in) :: x(*)
+      ${c_typename(T)}$, intent(inout) :: Fx(*)
+      type(*), intent(in) :: pEnv
+    end subroutine ctSpMapFunc
   end interface
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: xArr, yArr
-  procedure(ctSMapFunc), pointer :: f
+  procedure(ctSpMapFunc), pointer :: f
 
   call Unwrap(mesh, pMesh)
   call Unwrap(xArr, pX); call Unwrap(yArr, pY)
   call c_f_procpointer(cptr=pF, fptr=f)
 
-  call SFuncProd(mesh, yArr, xArr, cF)
+  call SpFuncProd(mesh, yArr, xArr, cF)
 
 contains
   pure function cF(r, x) result(Fx)
     real(dp), intent(in) :: r(:)
-    ${ctype(typename)}$, intent(in) :: x(:)
-    ${ctype(typename)}$ :: Fx(size(x))
+    ${c_typename(T)}$, intent(in) :: x(:)
+    ${c_typename(T)}$ :: Fx(size(x))
     
     call f(int(size(r), kind=c_int), r, int(size(x), kind=c_int), Fx, x, pEnv)
 
   end function cF
-end subroutine cSFuncProd$T
+end subroutine cSpFuncProd$T
 #$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -874,7 +874,7 @@ end subroutine cApplyBCs_InOutLet$T
 subroutine cGradient$T(pMesh, pVVec, lambda, pU) bind(C, name='stormGradient$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pU, pVVec
-  ${ctype(typename)}$, intent(in), value :: lambda
+  ${c_typename(T)}$, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uArr, vVecArr
@@ -893,7 +893,7 @@ end subroutine cGradient$T
 subroutine cDivergence$T(pMesh, pV, lambda, pUVec) bind(C, name='stormDivergence$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pUVec, pV
-  ${ctype(typename)}$, intent(in), value :: lambda
+  ${c_typename(T)}$, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uVecArr, vArr
@@ -930,7 +930,7 @@ end subroutine cRhieChowCorrection
 subroutine cConvection$T(pMesh, pV, lambda, pU, pA) bind(C, name='stormConvection$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pU, pV, pA
-  ${ctype(typename)}$, intent(in), value :: lambda
+  ${c_typename(T)}$, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uArr, vArr, aArr
@@ -949,7 +949,7 @@ end subroutine cConvection$T
 subroutine cDivGrad$T(pMesh, pV, lambda, pU) bind(C, name='stormDivGrad$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pU, pV
-  ${ctype(typename)}$, intent(in), value :: lambda
+  ${c_typename(T)}$, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uArr, vArr
@@ -968,7 +968,7 @@ end subroutine cDivGrad$T
 subroutine cDivWGrad$T(pMesh, pV, lambda, pW, pU) bind(C, name='stormDivWGrad$T')
   type(c_ptr), intent(in), value :: pMesh
   type(c_ptr), intent(in), value :: pU, pV, pW
-  ${ctype(typename)}$, intent(in), value :: lambda
+  ${c_typename(T)}$, intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray$T), pointer :: uArr, vArr, wArr

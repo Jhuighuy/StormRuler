@@ -39,7 +39,7 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Fortran-style array with inplace reshapes.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-type :: tArrayR
+type :: tArray
   ! ----------------------
   ! Contiguous data contained in the array.
   ! ----------------------
@@ -60,7 +60,7 @@ contains
   generic :: Get => Get$N
   procedure :: Get$N => GetArrayData$N
 #$end do
-end type tArrayR
+end type tArray
 
 interface AllocArray
   module procedure AllocArrayShape
@@ -84,7 +84,7 @@ contains
 !! Allocate a contiguous array with specified shape.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine AllocArrayShape(array, shape)
-  class(tArrayR), intent(inout) :: array
+  class(tArray), intent(inout) :: array
   integer(ip), intent(in) :: shape(:)
 
   allocate(array%mShape, mold=shape); array%mShape = shape
@@ -97,8 +97,8 @@ end subroutine AllocArrayShape
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do N = 1, NUM_ARRAYS
 subroutine AllocArrayMold$N(@{array$$}@, mold)
-  class(tArrayR), intent(inout) :: @{array$$}@
-  class(tArrayR), intent(in) :: mold
+  class(tArray), intent(inout) :: @{array$$}@
+  class(tArray), intent(in) :: mold
 
 #$do I = 1, N
   call AllocArrayShape(array$I, mold%mShape) 
@@ -112,7 +112,7 @@ end subroutine AllocArrayMold$N
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 #$do N = 1, NUM_ARRAYS
 subroutine FreeArray$N(@{array$$}@)
-  class(tArrayR), intent(inout) :: @{array$$}@
+  class(tArray), intent(inout) :: @{array$$}@
 
 #$do I = 1, N
   deallocate(array$I%mShape)
@@ -123,7 +123,7 @@ end subroutine FreeArray$N
 #$end do
 
 pure logical function ArrayAllocated(array)
-  class(tArrayR), intent(in) :: array
+  class(tArray), intent(in) :: array
 
   ArrayAllocated = associated(array%mShape)
 end function ArrayAllocated
@@ -132,7 +132,7 @@ end function ArrayAllocated
 !! Get array rank.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 pure integer(ip) function ArrayRank(array)
-  class(tArrayR), intent(in) :: array
+  class(tArray), intent(in) :: array
 
   ArrayRank = size(array%mShape)
 
@@ -141,8 +141,8 @@ end function ArrayRank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Get a slice of the array.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type(tArrayR) function ArraySlice(array, index) result(slice)
-  class(tArrayR), intent(in) :: array
+type(tArray) function ArraySlice(array, index) result(slice)
+  class(tArray), intent(in) :: array
   integer(ip) :: index
 
   associate(rank => ArrayRank(array))
@@ -181,7 +181,7 @@ end function Rerank
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do fRank = 1, NUM_RANKS
 subroutine GetArrayData$fRank(array, fData)
-  class(tArrayR), intent(in) :: array
+  class(tArray), intent(in) :: array
   real(dp), intent(out), pointer :: fData(@:)
 
   integer(ip) :: rank

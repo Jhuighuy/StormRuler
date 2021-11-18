@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR
+use StormRuler_Array, only: tArray
 
 use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
   & FD1_F1, FD1_F2, FD1_F3, FD1_F4, FD1_F5, FD1_F6, FD1_F7, FD1_F8, &
@@ -42,6 +42,22 @@ use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
 implicit none
 
 integer(ip), parameter :: gTruncErrorOrder = 1
+
+interface FDM_Gradient
+  module procedure FDM_Gradient
+end interface FDM_Gradient
+
+interface FDM_Divergence
+  module procedure FDM_Divergence
+end interface FDM_Divergence
+
+interface FDM_Laplacian_Central
+  module procedure FDM_Laplacian_Central
+end interface FDM_Laplacian_Central
+
+interface FDM_DivWGrad_Central
+  module procedure FDM_DivWGrad_Central
+end interface FDM_DivWGrad_Central
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -56,8 +72,8 @@ contains
 subroutine FDM_Gradient(mesh, vVecArr, lambda, uArr, &
     &                   dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uArr
-  class(tArrayR), intent(inout) :: vVecArr
+  class(tArray), intent(in) :: uArr
+  class(tArray), intent(inout) :: vVecArr
   real(dp), intent(in) :: lambda
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
@@ -116,14 +132,14 @@ contains
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &          ( dlInv*FD1_C2(u(:,lCell), &
               &                         u(:,rCell)) )
-          ! ----------------------
+
           case(3:4)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &         ( dlInv*FD1_C4(u(:,llCell), &
               &                        u(:, lCell), &
               &                        u(:, rCell), &
               &                        u(:,rrCell)) )
-          ! ----------------------
+
           case(5:6)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &        ( dlInv*FD1_C6(u(:,lllCell), &
@@ -132,7 +148,7 @@ contains
               &                       u(:,  rCell), &
               &                       u(:, rrCell), &
               &                       u(:,rrrCell)) )
-          ! ----------------------
+
           case(7:8)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &       ( dlInv*FD1_C8(u(:,llllCell), &
@@ -155,7 +171,7 @@ contains
     integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-    integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
+    integer(ip) :: lCell, llCell, lllCell
     
     ! ----------------------
     ! For each direction do:
@@ -187,10 +203,8 @@ contains
               lllCell = mesh%CellToCell(lCellFace, llCell)
               if (gTruncErrorOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
-                llllCell = mesh%CellToCell(lCellFace, lllCell)
                 if (gTruncErrorOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
-                  lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
               end if
             end if
@@ -207,20 +221,20 @@ contains
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &      dir*( dlInv*FD1_F1(u(:,iCell), &
               &                         u(:,rCell)) )
-          ! ----------------------
+
           case(2)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &     dir*( dlInv*FD1_F2(u(:, iCell), &
               &                        u(:, rCell), &
               &                        u(:,rrCell)) )
-          ! ----------------------
+
           case(3)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &     dir*( dlInv*FD1_F3(u(:, lCell), &
               &                        u(:, iCell), &
               &                        u(:, rCell), &
               &                        u(:,rrCell)) )
-          ! ----------------------
+
           case(4)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &    dir*( dlInv*FD1_F4(u(:,  lCell), &
@@ -228,7 +242,7 @@ contains
               &                       u(:,  rCell), &
               &                       u(:, rrCell), &
               &                       u(:,rrrCell)) )
-          ! ----------------------
+
           case(5)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &    dir*( dlInv*FD1_F5(u(:, llCell), &
@@ -237,7 +251,7 @@ contains
               &                       u(:,  rCell), &
               &                       u(:, rrCell), &
               &                       u(:,rrrCell)) )
-          ! ----------------------
+
           case(6)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &   dir*( dlInv*FD1_F6(u(:,  llCell), &
@@ -247,7 +261,7 @@ contains
               &                      u(:,  rrCell), &
               &                      u(:, rrrCell), &
               &                      u(:,rrrrCell)) )
-          ! ----------------------
+
           case(7)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &   dir*( dlInv*FD1_F7(u(:, lllCell), &
@@ -258,7 +272,7 @@ contains
               &                      u(:,  rrCell), &
               &                      u(:, rrrCell), &
               &                      u(:,rrrrCell)) )
-          ! ----------------------
+
           case(8)
             vVec(dim,:,iCell) = vVec(dim,:,iCell) - &
               &  dir*( dlInv*FD1_F8(u(:,  lllCell), &
@@ -285,8 +299,8 @@ end subroutine FDM_Gradient
 subroutine FDM_Divergence(mesh, vArr, lambda, uVecArr, &
     &                     dirAll, dirFace, dirCellFace)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uVecArr
-  class(tArrayR), intent(inout) :: vArr
+  class(tArray), intent(in) :: uVecArr
+  class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
   integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
@@ -364,14 +378,14 @@ contains
             v(:,iCell) = v(:,iCell) - &
               & ( dlInv*FD1_C2(uVec(dim,:,lCell), &
               &                uVec(dim,:,rCell)) )
-          ! ----------------------
+          
           case(3:4)
             v(:,iCell) = v(:,iCell) - &
               & ( dlInv*FD1_C4(uVec(dim,:,llCell), &
               &                uVec(dim,:, lCell), &
               &                uVec(dim,:, rCell), &
               &                uVec(dim,:,rrCell)) )
-          ! ----------------------
+
           case(5:6)
             v(:,iCell) = v(:,iCell) - &
               & ( dlInv*FD1_C6(uVec(dim,:,lllCell), &
@@ -380,7 +394,7 @@ contains
               &                uVec(dim,:,  rCell), &
               &                uVec(dim,:, rrCell), &
               &                uVec(dim,:,rrrCell)) )
-          ! ----------------------
+
           case(7:8)
             v(:,iCell) = v(:,iCell) - &
               & ( dlInv*FD1_C8(uVec(dim,:,llllCell), &
@@ -403,7 +417,7 @@ contains
     integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
-    integer(ip) :: lCell, llCell, lllCell, llllCell, lllllCell
+    integer(ip) :: lCell, llCell, lllCell
     
     ! ----------------------
     ! For each direction do:
@@ -435,10 +449,8 @@ contains
               lllCell = mesh%CellToCell(lCellFace, llCell)
               if (gTruncErrorOrder >= 6) then
                 rrrrCell = mesh%CellToCell(rCellFace, rrrCell)
-                llllCell = mesh%CellToCell(lCellFace, lllCell)
                 if (gTruncErrorOrder >= 8) then
                   rrrrrCell = mesh%CellToCell(rCellFace, rrrrCell)
-                  lllllCell = mesh%CellToCell(lCellFace, llllCell)
                 end if
               end if
             end if
@@ -469,24 +481,25 @@ contains
         ! General case.
         ! ----------------------
         select case(gTruncErrorOrder)
+
           case(1)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F1(uVec(dim,:,iCell), &
               &                    uVec(dim,:,rCell)) )
-          ! ----------------------
+  
           case(2)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F2(uVec(dim,:, iCell), &
               &                    uVec(dim,:, rCell), &
               &                    uVec(dim,:,rrCell)) )
-          ! ----------------------
+
           case(3)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F3(uVec(dim,:, lCell), &
               &                    uVec(dim,:, iCell), &
               &                    uVec(dim,:, rCell), &
               &                    uVec(dim,:,rrCell)) )
-          ! ----------------------
+
           case(4)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F4(uVec(dim,:,  lCell), &
@@ -494,7 +507,7 @@ contains
               &                    uVec(dim,:,  rCell), &
               &                    uVec(dim,:, rrCell), &
               &                    uVec(dim,:,rrrCell)) )
-          ! ----------------------
+
           case(5)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F5(uVec(dim,:, llCell), &
@@ -503,7 +516,7 @@ contains
               &                    uVec(dim,:,  rCell), &
               &                    uVec(dim,:, rrCell), &
               &                    uVec(dim,:,rrrCell)) )
-          ! ----------------------
+
           case(6)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F6(uVec(dim,:,  llCell), &
@@ -513,7 +526,7 @@ contains
               &                    uVec(dim,:,  rrCell), &
               &                    uVec(dim,:, rrrCell), &
               &                    uVec(dim,:,rrrrCell)) )
-          ! ----------------------
+
           case(7)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F7(uVec(dim,:, lllCell), &
@@ -524,7 +537,7 @@ contains
               &                    uVec(dim,:,  rrCell), &
               &                    uVec(dim,:, rrrCell), &
               &                    uVec(dim,:,rrrrCell)) )
-          ! ----------------------
+
           case(8)
             v(:,iCell) = v(:,iCell) - &
               & dir*( dlInv*FD1_F8(uVec(dim,:,  lllCell), &
@@ -555,8 +568,8 @@ end subroutine FDM_Divergence
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uArr
-  class(tArrayR), intent(inout) :: vArr
+  class(tArray), intent(in) :: uArr
+  class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
 
   real(dp), pointer :: u(:,:), v(:,:)
@@ -635,7 +648,7 @@ contains
               & ( dlSqrInv*FD2_C2(u(:,lCell), &
               &                   u(:,iCell), &
               &                   u(:,rCell)) )
-          ! ----------------------
+
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*FD2_C4(u(:,llCell), &
@@ -643,7 +656,7 @@ contains
               &                   u(:, iCell), &
               &                   u(:, rCell), &
               &                   u(:,rrCell)) )
-          ! ----------------------
+
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*FD2_C6(u(:,lllCell), &
@@ -653,7 +666,7 @@ contains
               &                   u(:,  rCell), &
               &                   u(:, rrCell), &
               &                   u(:,rrrCell)) )
-          ! ----------------------
+
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*FD2_C8(u(:,llllCell), &
@@ -696,8 +709,8 @@ end subroutine FDM_Laplacian_Central
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uArr, wArr
-  class(tArrayR), intent(inout) :: vArr
+  class(tArray), intent(in) :: uArr, wArr
+  class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
 
   real(dp), pointer :: u(:,:), v(:,:), w(:,:)
@@ -774,7 +787,7 @@ contains
               & ( dlSqrInv*WFD2_C2(w(:,lCell), u(:,lCell), &
               &                    w(:,iCell), u(:,iCell), &
               &                    w(:,rCell), u(:,rCell)) )
-          ! ----------------------
+
           case(3:4)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C4(w(:,llCell), u(:,llCell), &
@@ -782,7 +795,7 @@ contains
               &                    w(:, iCell), u(:, iCell), &
               &                    w(:, rCell), u(:, rCell), &
               &                    w(:,rrCell), u(:,rrCell)) )
-          ! ----------------------
+
           case(5:6)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C6(w(:,lllCell), u(:,lllCell), &
@@ -792,7 +805,7 @@ contains
               &                    w(:,  rCell), u(:,  rCell), &
               &                    w(:, rrCell), u(:, rrCell), &
               &                    w(:,rrrCell), u(:,rrrCell)) )
-          ! ----------------------
+
           case(7:8)
             v(:,iCell) = v(:,iCell) + &
               & ( dlSqrInv*WFD2_C8(w(:,llllCell), u(:,llllCell), &

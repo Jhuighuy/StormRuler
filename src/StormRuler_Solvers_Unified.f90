@@ -29,13 +29,11 @@ module StormRuler_Solvers_Unified
 use StormRuler_Parameters, only: dp, ip, i8, error_code
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArray, FreeArray
+use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub 
-#$for T, _ in [SCALAR_TYPES[0]]
-use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
-#$end for
+use StormRuler_BLAS, only: tMatVecFunc
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
@@ -67,14 +65,14 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: b
-  class(tArrayR), intent(inout) :: x
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  procedure(tMatVecFuncR), pointer :: uMatVec
-  type(tArrayR) :: t, f
+  procedure(tMatVecFunc), pointer :: uMatVec
+  type(tArray) :: t, f
   
   ! ----------------------
   ! Check if the operator is non-uniform, e.g. 𝓐(𝒙) = 𝓐𝒙 + 𝒕:
@@ -118,7 +116,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
 
 contains
   subroutine SelectMethod(PreMatVec)
-    procedure(tPreMatVecFuncR), optional :: PreMatVec
+    procedure(tPreMatVecFunc), optional :: PreMatVec
 
     select case(method)
       case('CG')
@@ -146,7 +144,7 @@ contains
   end subroutine SelectMethod
   subroutine MatVec_Uniformed(mesh, Ax, x)
     class(tMesh), intent(inout), target :: mesh
-    class(tArrayR), intent(inout), target :: x, Ax
+    class(tArray), intent(inout), target :: x, Ax
 
     call MatVec(mesh, Ax, x)
     call Sub(mesh, Ax, Ax, t)

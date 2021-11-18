@@ -30,13 +30,11 @@ use StormRuler_Parameters, only: dp, ip
 use StormRuler_Parameters, only: gMaxIterGMRES
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArray
+use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
-#$for T, _ in [SCALAR_TYPES[0]]
-use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
-#$end for
+use StormRuler_BLAS, only: tMatVecFunc
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
@@ -46,15 +44,11 @@ use StormRuler_ConvParams, only: tConvParams
 implicit none
 
 interface Solve_MINRES
-#$for T, _ in [SCALAR_TYPES[0]]
-  module procedure Solve_MINRES$T
-#$end for
+  module procedure Solve_MINRES
 end interface Solve_MINRES
 
 interface Solve_GMRES
-#$for T, _ in [SCALAR_TYPES[0]]
-  module procedure Solve_GMRES$T
-#$end for
+  module procedure Solve_GMRES
 end interface Solve_GMRES
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -101,18 +95,17 @@ end subroutine SymOrtho
 !!     “Iterative Methods for Singular Linear Equations and 
 !!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$for T, typename in [SCALAR_TYPES[0]]
-subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_MINRES(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArray$T), intent(in) :: b
-  class(tArray$T), intent(inout) :: x
-  procedure(tMatVecFunc$T) :: MatVec
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc$T), optional :: PreMatVec
+  procedure(tPreMatVecFunc), optional :: PreMatVec
 
   real(dp) :: alpha, beta, betaBar, gamma, delta, deltaBar, &
     & epsilon, epsilonBar, tau, phi, phiTilde, cs, sn
-  type(tArray$T) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
+  type(tArray) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
   class(*), allocatable :: preEnv
 
   call AllocArray(p, w, wBar, wBarBar, z, zBar, zBarBar, mold=x)
@@ -206,8 +199,7 @@ subroutine Solve_MINRES$T(mesh, x, b, MatVec, params, PreMatVec)
     if (params%Check(phi, phi/phiTilde)) exit
   end do
 
-end subroutine Solve_MINRES$T
-#$end for
+end subroutine Solve_MINRES
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
@@ -227,19 +219,18 @@ end subroutine Solve_MINRES$T
 !!      nonsymmetric linear systems", 
 !!     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$for T, typename in [SCALAR_TYPES[0]]
-subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArray$T), intent(in) :: b
-  class(tArray$T), intent(inout) :: x
-  procedure(tMatVecFunc$T) :: MatVec
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc$T), optional :: PreMatVec
+  procedure(tPreMatVecFunc), optional :: PreMatVec
 
   logical :: converged
-  $typename :: chi, phi, phiTilde
-  $typename, pointer :: beta(:), cs(:), sn(:), H(:,:)
-  type(tArray$T) :: Q, s, t, r
+  real(dp) :: chi, phi, phiTilde
+  real(dp), pointer :: beta(:), cs(:), sn(:), H(:,:)
+  type(tArray) :: Q, s, t, r
   integer(ip) :: i, k
 
   call AllocArray(r, mold=x)
@@ -361,7 +352,6 @@ subroutine Solve_GMRES$T(mesh, x, b, MatVec, params, PreMatVec)
     end do
   end do
 
-end subroutine Solve_GMRES$T
-#$end for
+end subroutine Solve_GMRES
 
 end module StormRuler_Solvers_MINRES

@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR
+use StormRuler_Array, only: tArray
 
 use StormRuler_FDM_Operators, only: gTruncErrorOrder
 use StormRuler_FDM_Base, only: WFD4_C2
@@ -39,6 +39,10 @@ use StormRuler_FDM_Base, only: WFD4_C2
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface FDM_RhieChow_Correction
+  module procedure FDM_RhieChow_Correction
+end interface FDM_RhieChow_Correction
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -57,9 +61,9 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoAny)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: pArr
-  class(tArrayR), intent(in) :: rhoAny
-  class(tArrayR), intent(inout) :: vArr
+  class(tArray), intent(in) :: pArr
+  class(tArray), intent(in) :: rhoAny
+  class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda, tau
 
   real(dp), pointer :: v(:,:), p(:), rho(:)

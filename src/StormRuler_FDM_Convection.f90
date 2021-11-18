@@ -30,7 +30,7 @@ use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR
+use StormRuler_Array, only: tArray
 
 use StormRuler_FDM_Operators, only: gTruncErrorOrder
 use StormRuler_FDM_Base_Flux
@@ -39,6 +39,10 @@ use StormRuler_FDM_Base_Flux
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface FDM_Convection_Central
+  module procedure FDM_Convection_Central
+end interface FDM_Convection_Central
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -52,8 +56,8 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in) :: uArr, aArr
-  class(tArrayR), intent(inout) :: vArr
+  class(tArray), intent(in) :: uArr, aArr
+  class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
 
   real(dp), pointer :: u(:,:), v(:,:), aVec(:,:)

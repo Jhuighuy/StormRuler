@@ -29,32 +29,36 @@ module StormRuler_Solvers_Precond
 use StormRuler_Parameters, only: dp
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArray, ArrayAllocated
+use StormRuler_Array, only: tArray, AllocArray, ArrayAllocated
 
+use StormRuler_BLAS, only: tMatVecFunc
 use StormRuler_BLAS, only: Fill, MatVecProd_Diagonal, Solve_Triangular
-#$for T, _ in [SCALAR_TYPES[0]]
-use StormRuler_BLAS, only: tMatVecFunc$T
-#$end for
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
+interface Precondition_Jacobi
+  module procedure Precondition_Jacobi
+end interface Precondition_Jacobi
+
+interface Precondition_LU_SGS
+  module procedure Precondition_LU_SGS
+end interface Precondition_LU_SGS
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Preconditioner matrix-vector product function.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-#$for T, typename in [SCALAR_TYPES[0]]
-  subroutine tPreMatVecFunc$T(mesh, PuArr, uArr, MatVec, preEnv)
-    import :: tMesh, tArray$T, tMatVecFunc$T
+  subroutine tPreMatVecFunc(mesh, PuArr, uArr, MatVec, preEnv)
+    import :: tMesh, tArray, tMatVecFunc
     class(tMesh), intent(inout) :: mesh
-    class(tArray$T), intent(in), target :: uArr
-    class(tArray$T), intent(inout), target :: PuArr
-    procedure(tMatVecFunc$T) :: MatVec
+    class(tArray), intent(in), target :: uArr
+    class(tArray), intent(inout), target :: PuArr
+    procedure(tMatVecFunc) :: MatVec
     class(*), intent(inout), allocatable, target :: preEnv
-  end subroutine tPreMatVecFunc$T
-#$end for
+  end subroutine tPreMatVecFunc
 end interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -67,22 +71,22 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Precondition_Jacobi(mesh, PxArr, xArr, MatVec, preEnv)
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in), target :: xArr
-  class(tArrayR), intent(inout), target :: PxArr
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray), intent(in), target :: xArr
+  class(tArray), intent(inout), target :: PxArr
+  procedure(tMatVecFunc) :: MatVec
   class(*), intent(inout), allocatable, target :: preEnv
 
-  class(tArrayR), pointer :: diagArr
+  class(tArray), pointer :: diagArr
   real(dp), pointer :: x(:,:), Px(:,:), diag(:,:)
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
   if (.not.allocated(preEnv)) then
-    allocate(tArrayR :: preEnv)
+    allocate(tArray :: preEnv)
   end if
   select type(preEnv)
-    class is(tArrayR); diagArr => preEnv
+    class is(tArray); diagArr => preEnv
     class default; error stop 'Invalid `preEnv`'
   end select
 
@@ -113,24 +117,24 @@ end subroutine Precondition_Jacobi
 subroutine Precondition_LU_SGS(mesh, PxArr, xArr, MatVec, preEnv)
   ! <<<<<<<<<<<<<<<<<<<<<<
   class(tMesh), intent(inout) :: mesh
-  class(tArrayR), intent(in), target :: xArr
-  class(tArrayR), intent(inout), target :: PxArr
-  procedure(tMatVecFuncR) :: MatVec
+  class(tArray), intent(in), target :: xArr
+  class(tArray), intent(inout), target :: PxArr
+  procedure(tMatVecFunc) :: MatVec
   class(*), intent(inout), allocatable, target :: preEnv
   ! >>>>>>>>>>>>>>>>>>>>>>
 
-  type(tArrayR) :: yArr
-  class(tArrayR), pointer :: diagArr
+  type(tArray) :: yArr
+  class(tArray), pointer :: diagArr
   real(dp), pointer :: y(:,:), diag(:,:)
 
   ! ----------------------
   ! Cast preconditioner environment.
   ! ----------------------
   if (.not.allocated(preEnv)) then
-    allocate(tArrayR :: preEnv)
+    allocate(tArray :: preEnv)
   end if
   select type(preEnv)
-    class is(tArrayR); diagArr => preEnv
+    class is(tArray); diagArr => preEnv
     class default; error stop 'Invalid `preEnv`'
   end select
 

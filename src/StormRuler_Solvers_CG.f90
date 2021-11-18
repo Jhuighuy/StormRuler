@@ -30,13 +30,11 @@ use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 
 use StormRuler_Mesh, only: tMesh
-use StormRuler_Array, only: tArrayR, AllocArray
+use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
-#$for T, _ in [SCALAR_TYPES[0]]
-use StormRuler_BLAS, only: tMatVecFunc$T
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc$T
-#$end for
+use StormRuler_BLAS, only: tMatVecFunc
+use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
@@ -46,15 +44,11 @@ use StormRuler_ConvParams, only: tConvParams
 implicit none
 
 interface Solve_CG
-#$for T, _ in [SCALAR_TYPES[0]]
-  module procedure Solve_CG$T
-#$end for
+  module procedure Solve_CG
 end interface Solve_CG
 
 interface Solve_BiCGStab
-#$for T, _ in [SCALAR_TYPES[0]]
-  module procedure Solve_BiCGStab$T
-#$end for
+  module procedure Solve_BiCGStab
 end interface Solve_BiCGStab
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -70,17 +64,16 @@ contains
 !! CG may be applied to the consistent singular problems, 
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$for T, typename in [SCALAR_TYPES[0]]
-subroutine Solve_CG$T(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_CG(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArray$T), intent(in) :: b
-  class(tArray$T), intent(inout) :: x
-  procedure(tMatVecFunc$T) :: MatVec
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc$T), optional :: PreMatVec
+  procedure(tPreMatVecFunc), optional :: PreMatVec
   
   real(dp) :: alpha, beta, gamma, delta
-  type(tArray$T) :: p, r, t, z
+  type(tArray) :: p, r, t, z
   class(*), allocatable :: preEnv
   
   call AllocArray(p, r, t, mold=x)
@@ -154,8 +147,7 @@ subroutine Solve_CG$T(mesh, x, b, MatVec, params, PreMatVec)
     gamma = alpha
   end do
 
-end subroutine Solve_CG$T
-#$end for
+end subroutine Solve_CG
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
@@ -164,17 +156,16 @@ end subroutine Solve_CG$T
 !! BiCGStab may be applied to the consistent singular problems,
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-#$for T, typename in [SCALAR_TYPES[0]]
-subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
   class(tMesh), intent(inout) :: mesh
-  class(tArray$T), intent(in) :: b
-  class(tArray$T), intent(inout) :: x
-  procedure(tMatVecFunc$T) :: MatVec
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc$T), optional :: PreMatVec
+  procedure(tPreMatVecFunc), optional :: PreMatVec
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  type(tArray$T) :: p, r, rTilde, s, t, v, w, y, z
+  type(tArray) :: p, r, rTilde, s, t, v, w, y, z
   class(*), allocatable :: preEnv
 
   call AllocArray(p, r, rTilde, s, t, v, mold=x)
@@ -264,7 +255,6 @@ subroutine Solve_BiCGStab$T(mesh, x, b, MatVec, params, PreMatVec)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
   end do
 
-end subroutine Solve_BiCGStab$T
-#$end for
+end subroutine Solve_BiCGStab
 
 end module StormRuler_Solvers_CG

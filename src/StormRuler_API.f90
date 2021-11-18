@@ -70,9 +70,9 @@ implicit none
 !! Class wrapper struct.
 !! ----------------------------------------------------------------- !!
 #$for klass in KLASSES
-type :: c$klass
-  class($klass), pointer :: mObject
-end type !c$klass
+type :: tWrapped_$klass
+  class($klass), pointer :: mPointer
+end type !tWrapped_$klass
 #$end for
 
 interface Wrap
@@ -103,15 +103,15 @@ contains
 !! Unwrap a class pointer.
 !! ----------------------------------------------------------------- !!
 #$for klass in KLASSES
-function Wrap_$klass(obj) result(pObj)
-  class($klass), intent(in), pointer :: obj
-  type(c_ptr) :: pObj
+function Wrap_$klass(object) result(objectPtr)
+  class($klass), intent(in), pointer :: object
+  type(c_ptr) :: objectPtr
 
-  type(c$klass), pointer :: cpObj
+  type(tWrapped_$klass), pointer :: wrappedObject
 
-  allocate(cpObj)
-  cpObj%mObject => obj
-  pObj = c_loc(cpObj)
+  allocate(wrappedObject)
+  wrappedObject%mPointer => object
+  objectPtr = c_loc(wrappedObject)
 
 end function Wrap_$klass
 #$end for
@@ -120,18 +120,18 @@ end function Wrap_$klass
 !! Unwrap a class pointer.
 !! ----------------------------------------------------------------- !!
 #$for klass in KLASSES
-subroutine Unwrap_$klass(pObject, object, free)
-  type(c_ptr), intent(in), value :: pObject
+subroutine Unwrap_$klass(objectPtr, object, free)
+  type(c_ptr), intent(in), value :: objectPtr
   class($klass), intent(out), pointer :: object
   logical, intent(in), optional :: free
 
-  type(c$klass), pointer :: cObject
+  type(tWrapped_$klass), pointer :: wrappedObject
 
-  call c_f_pointer(cptr=pObject, fptr=cObject)
-  object => cObject%mObject
+  call c_f_pointer(cptr=objectPtr, fptr=wrappedObject)
+  object => wrappedObject%mPointer
 
   if (present(free)) then
-    if (free) deallocate(cObject)
+    if (free) deallocate(wrappedObject)
   end if
 
 end subroutine Unwrap_$klass
@@ -140,42 +140,42 @@ end subroutine Unwrap_$klass
 !! ----------------------------------------------------------------- !!
 !! Unwrap a string pointer.
 !! ----------------------------------------------------------------- !!
-subroutine Unwrap_String(pString, string)
-  character(c_char), intent(in) :: pString(*)
+subroutine Unwrap_String(stringPtr, string)
+  character(c_char), intent(in) :: stringPtr(*)
   character(len=:), intent(out), pointer :: string
 
   interface
-    pure function cStrlen(pString) bind(C, name='strlen')
+    pure function Strlen(stringPtr) bind(C, name='strlen')
       import :: c_char, c_size_t
-      character(c_char), intent(in) :: pString(*)
-      integer(c_size_t) :: cStrlen
-    end function cStrlen
-    pure subroutine cStrncpy(pOutString, pString, len) bind(C, name='strncpy')
+      character(c_char), intent(in) :: stringPtr(*)
+      integer(c_size_t) :: Strlen
+    end function Strlen
+    pure subroutine Strncpy(pOutString, stringPtr, len) bind(C, name='strncpy')
       import :: c_char, c_size_t, c_ptr
       type(c_ptr), intent(in), value :: pOutString
-      character(c_char), intent(in) :: pString(*)
+      character(c_char), intent(in) :: stringPtr(*)
       integer(c_size_t), intent(in), value :: len
-    end subroutine cStrncpy
+    end subroutine Strncpy
   end interface
 
-  associate(len => cStrlen(pString))
+  associate(len => Strlen(stringPtr))
 
     allocate(character(len=len) :: string)
-    call cStrncpy(c_loc(string), pString, len)
+    call Strncpy(c_loc(string), stringPtr, len)
 
   end associate
 
 end subroutine Unwrap_String
 
 #$for klass in KLASSES
-subroutine Free_$klass(pObject, mold)
-  type(c_ptr), intent(in), value :: pObject
+subroutine Free_$klass(objectPtr, mold)
+  type(c_ptr), intent(in), value :: objectPtr
   class($klass), intent(in) :: mold
 
-  type(c$klass), pointer :: cObject
+  type(tWrapped_$klass), pointer :: wrappedObject
 
-  call c_f_pointer(cptr=pObject, fptr=cObject)
-  deallocate(cObject)
+  call c_f_pointer(cptr=objectPtr, fptr=wrappedObject)
+  deallocate(wrappedObject)
 
 end subroutine Free_$klass
 #$end for
@@ -185,9 +185,9 @@ end subroutine Free_$klass
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
+function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
   use StormRuler_IO, only: Load_PPM
-  type(c_ptr) :: pMesh
+  type(c_ptr) :: meshPtr
 
   class(tMesh), pointer :: gMesh
 
@@ -258,7 +258,7 @@ function cInitMesh() result(pMesh) bind(C, name='SR_InitMesh')
 
   end block
 
-  pMesh = Wrap(gMesh)
+  meshPtr = Wrap(gMesh)
 
 end function cInitMesh
 
@@ -267,17 +267,17 @@ end function cInitMesh
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cAlloc(pMesh, numVars, rank) result(pY) bind(C, name='SR_Alloc')
-  type(c_ptr), intent(in), value :: pMesh
+function cAlloc(meshPtr, numVars, rank) result(yPtr) bind(C, name='SR_Alloc')
+  type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: numVars, rank
-  type(c_ptr) :: pY
+  type(c_ptr) :: yPtr
 
   integer(ip) :: shape(rank + 2)
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: yArr
 
-  call Unwrap(pMesh, mesh)
+  call Unwrap(meshPtr, mesh)
 
   shape(:rank) = mesh%NumDims
   shape(rank + 1) = numVars
@@ -286,35 +286,35 @@ function cAlloc(pMesh, numVars, rank) result(pY) bind(C, name='SR_Alloc')
   allocate(yArr)
   call AllocArray(yArr, shape=shape)
 
-  pY = Wrap(yArr)
+  yPtr = Wrap(yArr)
 
 end function cAlloc
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function stormAllocLike(pX) result(pY) bind(C, name='stormAllocLike')
-  type(c_ptr), intent(in), value :: pX
-  type(c_ptr) :: pY
+function stormAllocLike(xPtr) result(yPtr) bind(C, name='stormAllocLike')
+  type(c_ptr), intent(in), value :: xPtr
+  type(c_ptr) :: yPtr
 
   class(tArray), pointer :: xArr, yArr
 
-  call Unwrap(pX, xArr)
+  call Unwrap(xPtr, xArr)
 
   allocate(yArr)
   call AllocArray(yArr, mold=xArr)
 
-  pY = Wrap(yArr)
+  yPtr = Wrap(yArr)
 
 end function stormAllocLike
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFree(pX) bind(C, name='stormFree')
-  type(c_ptr), intent(in), value :: pX
+subroutine stormFree(xPtr) bind(C, name='stormFree')
+  type(c_ptr), intent(in), value :: xPtr
 
   class(tArray), pointer :: xArr
 
-  call Unwrap(pX, xArr, free=.true.)
+  call Unwrap(xPtr, xArr, free=.true.)
   call FreeArray(xArr)
 
 end subroutine stormFree
@@ -324,30 +324,30 @@ end subroutine stormFree
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cIO_Begin() result(pIOList) bind(C, name='SR_IO_Begin') 
-  type(c_ptr) :: pIOList
+function cIO_Begin() result(ioListPtr) bind(C, name='SR_IO_Begin') 
+  type(c_ptr) :: ioListPtr
   class(tIOList), pointer :: ioList
 
   allocate(ioList)
-  pIOList = Wrap(ioList)
+  ioListPtr = Wrap(ioList)
 
 end function cIO_Begin
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine cIO_Add(pIOList, pX, pName) bind(C, name='SR_IO_Add') 
-  type(c_ptr), intent(in), value :: pIOList
-  type(c_ptr), intent(in), value :: pX
-  character(c_char), intent(in) :: pName(*)
+subroutine cIO_Add(ioListPtr, xPtr, namePtr) bind(C, name='SR_IO_Add') 
+  type(c_ptr), intent(in), value :: ioListPtr
+  type(c_ptr), intent(in), value :: xPtr
+  character(c_char), intent(in) :: namePtr(*)
 
   class(tIOList), pointer :: ioList
   class(tArray), pointer :: xArr
   real(dp), pointer :: x(:,:)
   character(len=:), pointer :: name
 
-  call Unwrap(pIOList, ioList)
-  call Unwrap(pName, name)
-  call Unwrap(pX, xArr)
+  call Unwrap(ioListPtr, ioList)
+  call Unwrap(namePtr, name)
+  call Unwrap(xPtr, xArr)
 
   call xArr%Get(x)
 
@@ -362,18 +362,18 @@ end subroutine cIO_Add
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine cIO_Flush(pIOList, pMesh, pFileName) bind(C, name='SR_IO_Flush') 
-  type(c_ptr), intent(in), value :: pIOList
-  type(c_ptr), intent(in), value :: pMesh
-  character(c_char), intent(in) :: pFileName(*)
+subroutine cIO_Flush(ioListPtr, meshPtr, filenamePtr) bind(C, name='SR_IO_Flush') 
+  type(c_ptr), intent(in), value :: ioListPtr
+  type(c_ptr), intent(in), value :: meshPtr
+  character(c_char), intent(in) :: filenamePtr(*)
 
   class(tIOList), pointer :: ioList
   class(tMesh), pointer :: mesh
   character(len=:), pointer :: filename
 
-  call Unwrap(pIOList, ioList, free=.true.)
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pFileName, filename)
+  call Unwrap(ioListPtr, ioList, free=.true.)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(filenamePtr, filename)
 
   call mesh%PrintTo_LegacyVTK(filename, ioList)
   deallocate(ioList)
@@ -385,17 +385,17 @@ end subroutine cIO_Flush
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFill(pMesh, pX, alpha, beta) bind(C, name='stormFill')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX
+subroutine stormFill(meshPtr, xPtr, alpha, beta) bind(C, name='stormFill')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr
   real(c_double), intent(in), value :: alpha
   real(c_double), intent(in), value :: beta
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr)
 
   call Fill(mesh, xArr, alpha, beta)
 
@@ -403,16 +403,16 @@ end subroutine stormFill
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormRandFill(pMesh, pX, a, b) bind(C, name='stormRandFill')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX
+subroutine stormRandFill(meshPtr, xPtr, a, b) bind(C, name='stormRandFill')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr
   real(c_double), intent(in), value :: a, b
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr)
 
   call Fill_Random(mesh, xArr, a, b)
 
@@ -420,15 +420,15 @@ end subroutine stormRandFill
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormSet(pMesh, pY, pX) bind(C, name='stormSet')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY
+subroutine stormSet(meshPtr, yPtr, xPtr) bind(C, name='stormSet')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
 
   call Set(mesh, yArr, xArr)
 
@@ -436,16 +436,16 @@ end subroutine stormSet
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormScale(pMesh, pY, pX, alpha) bind(C, name='stormScale')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY
+subroutine stormScale(meshPtr, yPtr, xPtr, alpha) bind(C, name='stormScale')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr
   real(c_double), intent(in), value :: alpha
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
 
   call Scale(mesh, yArr, xArr, alpha)
 
@@ -453,16 +453,16 @@ end subroutine stormScale
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormAdd(pMesh, pZ, pY, pX, alpha, beta) bind(C, name='stormAdd')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY, pZ
+subroutine stormAdd(meshPtr, zPtr, yPtr, xPtr, alpha, beta) bind(C, name='stormAdd')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr, zPtr
   real(c_double), intent(in), value :: alpha, beta
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr, zArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr); call Unwrap(pZ, zArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr); call Unwrap(zPtr, zArr)
 
   call Add(mesh, zArr, yArr, xArr, alpha, beta)
 
@@ -470,46 +470,50 @@ end subroutine stormAdd
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormMul(pMesh, pZ, pY, pX) bind(C, name='stormMul')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY, pZ
+subroutine stormMul(meshPtr, zPtr, yPtr, xPtr) bind(C, name='stormMul')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr, zPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr, zArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr); call Unwrap(pZ, zArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr); call Unwrap(zPtr, zArr)
 
   call Mul(mesh, zArr, yArr, xArr)
 
 end subroutine stormMul
 
+!! TODO: wrap `cFunc` into the something separate.
+
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-real(c_double) function stormIntegrate(pMesh, pX, pF, pEnv) &
+real(c_double) function stormIntegrate(meshPtr, xPtr, fPtr, env) &
     & bind(C, name='stormIntegrate')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX
-  type(c_funptr), intent(in), value :: pF
-  type(c_ptr), intent(in), value :: pEnv
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr
+  type(c_funptr), intent(in), value :: fPtr
+  type(*), intent(in) :: env
 
   abstract interface
-    pure subroutine ctMapFunc(size, Fx, x, pEnv) bind(C)
-      import :: c_int, c_ptr, dp
+    pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
+      import :: c_int, c_double
       integer(c_int), intent(in), value :: size
-      real(dp), intent(in) :: x(*)
-      real(dp), intent(inout) :: Fx(*)
-      type(c_ptr), intent(in), value :: pEnv
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(inout) :: Fx(*)
+      type(*), intent(in) :: env
     end subroutine ctMapFunc
   end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
+
   procedure(ctMapFunc), pointer :: f
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr)
-  call c_f_procpointer(cptr=pF, fptr=f)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr)
+
+  call c_f_procpointer(cptr=fPtr, fptr=f)
 
   stormIntegrate = Integrate(mesh, xArr, cFunc)
 
@@ -518,36 +522,38 @@ contains
     real(dp), intent(in) :: x(:)
     real(dp) :: Fx(size(x))
     
-    call f(int(size(x), kind=c_int), Fx, x, pEnv)
+    call f(int(size(x), kind=c_int), Fx, x, env)
 
   end function cFunc
 end function stormIntegrate
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFuncProd(pMesh, pY, pX, pF, pEnv) bind(C, name='stormFuncProd')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY
-  type(c_funptr), intent(in), value :: pF
-  type(*), intent(in) :: pEnv
+subroutine stormFuncProd(meshPtr, yPtr, xPtr, fPtr, env) bind(C, name='stormFuncProd')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr
+  type(c_funptr), intent(in), value :: fPtr
+  type(*), intent(in) :: env
 
   abstract interface
-    pure subroutine ctMapFunc(size, Fx, x, pEnv) bind(C)
+    pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
       import :: c_int, c_double
       integer(c_int), intent(in), value :: size
       real(c_double), intent(in) :: x(*)
       real(c_double), intent(inout) :: Fx(*)
-      type(*), intent(in) :: pEnv
+      type(*), intent(in) :: env
     end subroutine ctMapFunc
   end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr
+
   procedure(ctMapFunc), pointer :: f
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr)
-  call c_f_procpointer(cptr=pF, fptr=f)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
+
+  call c_f_procpointer(cptr=fPtr, fptr=f)
 
   call FuncProd(mesh, yArr, xArr, cFunc)
 
@@ -556,27 +562,26 @@ contains
     real(c_double), intent(in) :: x(:)
     real(c_double) :: Fx(size(x))
     
-    call f(int(size(x), kind=c_int), Fx, x, pEnv)
+    call f(int(size(x), kind=c_int), Fx, x, env)
 
   end function cFunc
 end subroutine stormFuncProd
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormSpFuncProd(pMesh, pY, pX, pF, pEnv) bind(C, name='stormSpFuncProd')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pY
-  type(c_funptr), intent(in), value :: pF
-  type(*), intent(in) :: pEnv
+subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, fPtr, env) bind(C, name='stormSpFuncProd')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr
+  type(c_funptr), intent(in), value :: fPtr
+  type(*), intent(in) :: env
 
   abstract interface
-    pure subroutine ctSpMapFunc(dim, r, size, Fx, x, pEnv) bind(C)
+    pure subroutine ctSpMapFunc(dim, r, size, Fx, x, env) bind(C)
       import :: c_int, c_double
       integer(c_int), intent(in), value :: dim, size
-      real(c_double), intent(in) :: r(*)
-      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(in) :: r(*), x(*)
       real(c_double), intent(inout) :: Fx(*)
-      type(*), intent(in) :: pEnv
+      type(*), intent(in) :: env
     end subroutine ctSpMapFunc
   end interface
 
@@ -584,9 +589,10 @@ subroutine stormSpFuncProd(pMesh, pY, pX, pF, pEnv) bind(C, name='stormSpFuncPro
   class(tArray), pointer :: xArr, yArr
   procedure(ctSpMapFunc), pointer :: f
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pY, yArr)
-  call c_f_procpointer(cptr=pF, fptr=f)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
+
+  call c_f_procpointer(cptr=fPtr, fptr=f)
 
   call SpFuncProd(mesh, yArr, xArr, cFunc)
 
@@ -596,7 +602,7 @@ contains
     real(c_double), intent(in) :: x(:)
     real(c_double) :: Fx(size(x))
     
-    call f(int(size(r), kind=c_int), r, int(size(x), kind=c_int), Fx, x, pEnv)
+    call f(int(size(r), kind=c_int), r, int(size(x), kind=c_int), Fx, x, env)
 
   end function cFunc
 end subroutine stormSpFuncProd
@@ -604,39 +610,43 @@ end subroutine stormSpFuncProd
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
+!! TODO: wrap `cMatVec` into the something separate.
+
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormLinSolve(pMesh, pMethod, pPreMethod, &
-    & pX, pB, pMatVec, pEnv, pMatVec_H, pEnv_H) bind(C, name='stormLinSolve')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pB
-  character(c_char), intent(in) :: pMethod(*), pPreMethod(*)
-  type(c_funptr), intent(in), value :: pMatVec, pMatVec_H
-  type(*), intent(in) :: pEnv, pEnv_H
+subroutine stormLinSolve(meshPtr, methodPtr, preMethodPtr, &
+    & xPtr, bPtr, MatVecPtr, env, ConjMatVecPtr, conjEnv) bind(C, name='stormLinSolve')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, bPtr
+  character(c_char), intent(in) :: methodPtr(*), preMethodPtr(*)
+  type(c_funptr), intent(in), value :: MatVecPtr, ConjMatVecPtr
+  type(*), intent(in) :: env, conjEnv
 
   abstract interface
-    subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
+    subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
       import :: c_ptr, dp
-      type(c_ptr), intent(in), value :: pMesh
-      type(c_ptr), intent(in), value :: pAx, pX
-      type(*), intent(in) :: pEnv
-    end subroutine ctMatVec
+      type(c_ptr), intent(in), value :: meshPtr
+      type(c_ptr), intent(in), value :: AxPtr, xPtr
+      type(*), intent(in) :: env
+    end subroutine ctMatVecFunc
   end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, bArr
-  procedure(ctMatVec), pointer :: MatVec, MatVec_H
   character(len=:), pointer :: method, preMethod
+  procedure(ctMatVecFunc), pointer :: MatVec, ConjMatVec
   type(tConvParams) :: params
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pB, bArr)
-  call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
-  if (c_associated(pMatVec_H)) then
-    call c_f_procpointer(cptr=pMatVec_H, fptr=MatVec_H)
-  end if
-  call Unwrap(pMethod, method); call Unwrap(pPreMethod, preMethod)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
+  call Unwrap(methodPtr, method); call Unwrap(preMethodPtr, preMethod)
 
+  call c_f_procpointer(cptr=MatVecPtr, fptr=MatVec)
+  if (c_associated(ConjMatVecPtr)) then
+    call c_f_procpointer(cptr=ConjMatVecPtr, fptr=ConjMatVec)
+  end if
+
+  !! TODO: convergence parameters.
   call params%Init(1.0D-6, 1.0D-6, 2000)
   call LinSolve(mesh, method, preMethod, xArr, bArr, cMatVec, params)
 
@@ -645,47 +655,49 @@ contains
     class(tMesh), intent(inout), target :: mesh
     class(tArray), intent(inout), target :: xArr, AxArr
 
-    type(c_ptr) :: pMesh, pX, pAx
+    type(c_ptr) :: meshPtr, xPtr, AxPtr
 
-    pMesh = Wrap(mesh)
-    pX = Wrap(xArr); pAx = Wrap(AxArr)
+    meshPtr = Wrap(mesh)
+    xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
 
-    call MatVec(pMesh, pAx, pX, pEnv)
+    call MatVec(meshPtr, AxPtr, xPtr, env)
 
-    call Free(pMesh, mold=mesh)
-    call Free(pX, mold=xArr); call Free(pAx, mold=AxArr)
+    call Free(meshPtr, mold=mesh)
+    call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
 
   end subroutine cMatVec
 end subroutine stormLinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormNonlinSolve(pMesh, pMethod, &
-    & pX, pB, pMatVec, pEnv) bind(C, name='stormNonlinSolve')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pX, pB
-  character(c_char), intent(in) :: pMethod(*)
-  type(c_funptr), intent(in), value :: pMatVec
-  type(*), intent(in) :: pEnv
+subroutine stormNonlinSolve(meshPtr, methodPtr, &
+    & xPtr, bPtr, MatVecPtr, env) bind(C, name='stormNonlinSolve')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, bPtr
+  character(c_char), intent(in) :: methodPtr(*)
+  type(c_funptr), intent(in), value :: MatVecPtr
+  type(*), intent(in) :: env
 
   abstract interface
-    subroutine ctMatVec(pMesh, pAx, pX, pEnv) bind(C)
+    subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
       import :: c_ptr
-      type(c_ptr), intent(in), value :: pMesh
-      type(c_ptr), intent(in), value :: pAx, pX
-      type(*), intent(in) :: pEnv
-    end subroutine ctMatVec
+      type(c_ptr), intent(in), value :: meshPtr
+      type(c_ptr), intent(in), value :: AxPtr, xPtr
+      type(*), intent(in) :: env
+    end subroutine ctMatVecFunc
   end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, bArr
-  procedure(ctMatVec), pointer :: MatVec, MatVec_H
+  procedure(ctMatVecFunc), pointer :: MatVec
   type(tConvParams) :: params
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pX, xArr); call Unwrap(pB, bArr)
-  call c_f_procpointer(cptr=pMatVec, fptr=MatVec)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
 
+  call c_f_procpointer(cptr=MatVecPtr, fptr=MatVec)
+
+  !! TODO: convergence parameters.
   !! TODO: select method.
   call params%Init(1.0D-4, 1.0D-4, 100, 'JFNK')
   call Solve_JFNK(mesh, cMatVec, xArr, bArr, params)
@@ -695,15 +707,15 @@ contains
     class(tMesh), intent(inout), target :: mesh
     class(tArray), intent(inout), target :: xArr, AxArr
 
-    type(c_ptr) :: pMesh, pX, pAx
+    type(c_ptr) :: meshPtr, xPtr, AxPtr
 
-    pMesh = Wrap(mesh)
-    pX = Wrap(xArr); pAx = Wrap(AxArr)
+    meshPtr = Wrap(mesh)
+    xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
 
-    call MatVec(pMesh, pAx, pX, pEnv)
+    call MatVec(meshPtr, AxPtr, xPtr, env)
 
-    call Free(pMesh, mold=mesh)
-    call Free(pX, mold=xArr); call Free(pAx, mold=AxArr)
+    call Free(meshPtr, mold=mesh)
+    call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
 
   end subroutine cMatVec
 end subroutine stormNonlinSolve
@@ -713,21 +725,18 @@ end subroutine stormNonlinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs(pMesh, pU, BCmask, alpha, beta, gamma) bind(C, name='stormApplyBCs')
-  type(c_ptr), intent(in), value :: pMesh
+subroutine stormApplyBCs(meshPtr, uPtr, BCmask, alpha, beta, gamma) bind(C, name='stormApplyBCs')
+  type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
-  type(c_ptr), intent(in), value :: pU
-  real(dp), intent(in), value :: alpha, beta, gamma
+  type(c_ptr), intent(in), value :: uPtr
+  real(c_double), intent(in), value :: alpha, beta, gamma
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  real(dp), pointer :: u(:,:)
   integer(ip) :: iBC, firstBC, lastBC
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr)
-
-  call uArr%Get(u)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr)
 
   if (BCmask /= 0) then
     firstBC = BCmask; lastBC = BCmask
@@ -736,27 +745,29 @@ subroutine stormApplyBCs(pMesh, pU, BCmask, alpha, beta, gamma) bind(C, name='st
   end if
 
   do iBC = firstBC, lastBC
-    call FDM_ApplyBCs(mesh, iBC, u, alpha, beta, gamma)
+    block
+      !! TODO: fix me!
+      real(dp), pointer :: u(:,:)
+      call uArr%Get(u)
+      call FDM_ApplyBCs(mesh, iBC, u, alpha, beta, gamma)
+    end block
   end do
 
 end subroutine stormApplyBCs
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_SlipWall(pMesh, pU, BCmask) bind(C, name='stormApplyBCs_SlipWall')
-  type(c_ptr), intent(in), value :: pMesh
+subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, BCmask) bind(C, name='stormApplyBCs_SlipWall')
+  type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
-  type(c_ptr), intent(in), value :: pU
+  type(c_ptr), intent(in), value :: uPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  real(dp), pointer :: u(:,:)
   integer(ip) :: iBC, firstBC, lastBC
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr)
-
-  call uArr%Get(u)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr)
 
   if (BCmask /= 0) then
     firstBC = BCmask; lastBC = BCmask
@@ -765,27 +776,29 @@ subroutine stormApplyBCs_SlipWall(pMesh, pU, BCmask) bind(C, name='stormApplyBCs
   end if
 
   do iBC = firstBC, lastBC
-    call FDM_ApplyBCs_SlipWall(mesh, iBC, u)
+    block
+      !! TODO: fix me!
+      real(dp), pointer :: u(:,:)
+      call uArr%Get(u)
+      call FDM_ApplyBCs_SlipWall(mesh, iBC, u)
+    end block
   end do
 
 end subroutine stormApplyBCs_SlipWall
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_InOutLet(pMesh, pU, BCmask) bind(C, name='stormApplyBCs_InOutLet')
-  type(c_ptr), intent(in), value :: pMesh
+subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, BCmask) bind(C, name='stormApplyBCs_InOutLet')
+  type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
-  type(c_ptr), intent(in), value :: pU
+  type(c_ptr), intent(in), value :: uPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  real(dp), pointer :: u(:,:)
   integer(ip) :: iBC, firstBC, lastBC
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr)
-
-  call uArr%Get(u)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr)
 
   if (BCmask /= 0) then
     firstBC = BCmask; lastBC = BCmask
@@ -794,23 +807,28 @@ subroutine stormApplyBCs_InOutLet(pMesh, pU, BCmask) bind(C, name='stormApplyBCs
   end if
 
   do iBC = firstBC, lastBC
-    call FDM_ApplyBCs_InOutLet(mesh, iBC, u)
+    block
+      !! TODO: fix me!
+      real(dp), pointer :: u(:,:)
+      call uArr%Get(u)
+      call FDM_ApplyBCs_InOutLet(mesh, iBC, u)
+    end block
   end do
 
 end subroutine stormApplyBCs_InOutLet
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormGradient(pMesh, pVVec, lambda, pU) bind(C, name='stormGradient')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pU, pVVec
+subroutine stormGradient(meshPtr, vVecPtr, lambda, uPtr) bind(C, name='stormGradient')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uPtr, vVecPtr
   real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr, vVecArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr); call Unwrap(pVVec, vVecArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr); call Unwrap(vVecPtr, vVecArr)
 
   call FDM_Gradient(mesh, vVecArr, lambda, uArr)
 
@@ -818,16 +836,16 @@ end subroutine stormGradient
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivergence(pMesh, pV, lambda, pUVec) bind(C, name='stormDivergence')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pUVec, pV
+subroutine stormDivergence(meshPtr, vPtr, lambda, uVecPtr) bind(C, name='stormDivergence')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uVecPtr, vPtr
   real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uVecArr, vArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pUVec, uVecArr); call Unwrap(pV, vArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uVecPtr, uVecArr); call Unwrap(vPtr, vArr)
 
   call FDM_Divergence(mesh, vArr, lambda, uVecArr)
 
@@ -835,17 +853,17 @@ end subroutine stormDivergence
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormRhieChowCorrection(pMesh, pV, lambda, tau, &
-    & pP, pRho) bind(C, name='stormRhieChowCorrection')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value ::  pV, pP, pRho
+subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
+    & pPtr, rhoPtr) bind(C, name='stormRhieChowCorrection')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value ::  vPtr, pPtr, rhoPtr
   real(c_double), intent(in), value :: lambda, tau
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uVecArr, vArr, pArr, rhoArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pV, vArr); call Unwrap(pP, pArr); call Unwrap(pRho, rhoArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(vPtr, vArr); call Unwrap(pPtr, pArr); call Unwrap(rhoPtr, rhoArr)
 
   call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
 
@@ -853,16 +871,16 @@ end subroutine stormRhieChowCorrection
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormConvection(pMesh, pV, lambda, pU, pA) bind(C, name='stormConvection')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pU, pV, pA
+subroutine stormConvection(meshPtr, vPtr, lambda, uPtr, aPtr) bind(C, name='stormConvection')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uPtr, vPtr, aPtr
   real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr, vArr, aArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr); call Unwrap(pV, vArr); call Unwrap(pA, aArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr); call Unwrap(aPtr, aArr)
 
   call FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
 
@@ -870,16 +888,16 @@ end subroutine stormConvection
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivGrad(pMesh, pV, lambda, pU) bind(C, name='stormDivGrad')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pU, pV
+subroutine stormDivGrad(meshPtr, vPtr, lambda, uPtr) bind(C, name='stormDivGrad')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uPtr, vPtr
   real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr, vArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr); call Unwrap(pV, vArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr)
 
   call FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
 
@@ -887,16 +905,16 @@ end subroutine stormDivGrad
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivWGrad(pMesh, pV, lambda, pW, pU) bind(C, name='stormDivWGrad')
-  type(c_ptr), intent(in), value :: pMesh
-  type(c_ptr), intent(in), value :: pU, pV, pW
+subroutine stormDivWGrad(meshPtr, vPtr, lambda, wPtr, uPtr) bind(C, name='stormDivWGrad')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uPtr, vPtr, wPtr
   real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr, vArr, wArr
 
-  call Unwrap(pMesh, mesh)
-  call Unwrap(pU, uArr); call Unwrap(pV, vArr); call Unwrap(pW, wArr)
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr); call Unwrap(wPtr, wArr)
 
   call FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
 

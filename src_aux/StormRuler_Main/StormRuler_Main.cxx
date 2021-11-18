@@ -45,22 +45,22 @@
 
 static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
-static void SetBCs_c(stormMesh_t mesh, stormArrayR_t c) {
+static void SetBCs_c(stormMesh_t mesh, stormArray_t c) {
   stormApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
   //stormApplyBCs(mesh, c, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
-static void SetBCs_w(stormMesh_t mesh, stormArrayR_t w) {
+static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
   stormApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
 } // SetBCs_w
 
-static void SetBCs_p(stormMesh_t mesh, stormArrayR_t p) {
+static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   //stormApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
   //stormApplyBCs(mesh, p, 4, SR_DIRICHLET(50.0));
 } // SetBCs_p
 
-static void SetBCs_v(stormMesh_t mesh, stormArrayR_t v) {
+static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
   stormApplyBCs_InOutLet(mesh, v, 2);
@@ -110,8 +110,8 @@ void Vol(int size, stormReal_t* Ic, const stormReal_t* c, void* env) {
 }
 
 static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
-    stormArrayR_t c, stormArrayR_t v,
-    stormArrayR_t c_hat, stormArrayR_t w_hat) {
+    stormArray_t c, stormArray_t v,
+    stormArray_t c_hat, stormArray_t w_hat) {
 
   // 
   // Compute a single time step of the
@@ -129,7 +129,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   SetBCs_c(mesh, c);
   SetBCs_v(mesh, v);
 
-  stormArrayR_t rhs = stormAllocLike(c);
+  stormArray_t rhs = stormAllocLike(c);
   stormSet(mesh, rhs, c);
   stormFuncProd(mesh, w_hat, c, dWdC, STORM_NULL);
   stormSub(mesh, w_hat, w_hat, c, 2.0*sigma);
@@ -137,12 +137,12 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolveT(mesh, STORM_BiCGStab, STORM_NONE, c_hat, rhs, 
-    [&](stormMesh_t mesh, stormArrayR_t Qc, stormArrayR_t c) {
+  stormLinSolve(mesh, STORM_BiCGStab, STORM_NONE, c_hat, rhs, 
+    [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
 
-      stormArrayR_t tmp = stormAllocLike(c);
+      stormArray_t tmp = stormAllocLike(c);
 
       stormScale(mesh, tmp, c, 2.0*sigma);
       stormDivGrad(mesh, tmp, -Gamma, c);
@@ -161,7 +161,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormFuncProd(mesh, w_hat, c_hat, dWdC, STORM_NULL);
   stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
-  return SR_Integrate(mesh, c_hat, Vol, STORM_NULL);
+  return stormIntegrate(mesh, c_hat, Vol, STORM_NULL);
 } // CahnHilliard_Step
 
 static double mu_1 = 0.08, mu_2 = 0.08;
@@ -203,11 +203,11 @@ void NVsC(int size, stormReal_t* n, const stormReal_t* c, void* env) {
 } // NVsC
 
 static void NavierStokes_VaD_Step(stormMesh_t mesh,
-  stormArrayR_t p, stormArrayR_t v,
-  stormArrayR_t c, stormArrayR_t w,
-  stormArrayR_t p_hat, stormArrayR_t v_hat, stormArrayR_t d, stormArrayR_t rho
+  stormArray_t p, stormArray_t v,
+  stormArray_t c, stormArray_t w,
+  stormArray_t p_hat, stormArray_t v_hat, stormArray_t d, stormArray_t rho
 #if YURI
-  , stormArrayR_t n1, stormArrayR_t n2
+  , stormArray_t n1, stormArray_t n2
 #endif
 ) {
 
@@ -241,10 +241,10 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, rho, rho, c, 0.5*(rho_2 - rho_1));
 #endif
 
-  stormArrayR_t rho_inv = stormAllocLike(rho);
+  stormArray_t rho_inv = stormAllocLike(rho);
   stormFuncProd(mesh, rho_inv, rho, InvRho, STORM_NULL);
 
-  stormArrayR_t mu = stormAllocLike(c);
+  stormArray_t mu = stormAllocLike(c);
   stormFill(mesh, mu, 0.5*(mu_1 + mu_2));
   stormAdd(mesh, mu, mu, c, 0.5*(mu_2 - mu_1));
 
@@ -254,7 +254,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   SetBCs_w(mesh, w);
   SetBCs_v(mesh, v);
 
-  stormArrayR_t rhs = stormAllocLike(v);
+  stormArray_t rhs = stormAllocLike(v);
 
   stormFill(mesh, rhs, 0.0);
   stormGradient(mesh, rhs, tau, w);
@@ -264,14 +264,14 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, rhs, rhs, v);
   
   stormSet(mesh, v_hat, v);
-  stormNonlinSolveT(mesh, STORM_JFNK, v_hat, v, 
-    [&](stormMesh_t mesh, stormArrayR_t Av, stormArrayR_t v) {
+  stormNonlinSolve(mesh, STORM_JFNK, v_hat, v, 
+    [&](stormMesh_t mesh, stormArray_t Av, stormArray_t v) {
       SetBCs_v(mesh, v);
 
       stormSet(mesh, Av, v);
       stormConvection(mesh, Av, -tau, v, v);
 
-      stormArrayR_t tmp = stormAllocLike(v);
+      stormArray_t tmp = stormAllocLike(v);
 
       stormFill(mesh, tmp, 0.0);
       stormDivGrad(mesh, tmp, tau, v);
@@ -296,8 +296,8 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolveT(mesh, STORM_CG, STORM_NONE, p_hat, rhs,
-    [&](stormMesh_t mesh, stormArrayR_t Lp, stormArrayR_t p) {
+  stormLinSolve(mesh, STORM_CG, STORM_NONE, p_hat, rhs,
+    [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 
       stormSet(mesh, Lp, p);
@@ -308,7 +308,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
 
   SetBCs_p(mesh, p_hat);
 
-  stormArrayR_t tmp = stormAllocLike(v);
+  stormArray_t tmp = stormAllocLike(v);
   stormFill(mesh, tmp, 0.0);
   stormGradient(mesh, tmp, tau, p_hat);
   stormMul(mesh, tmp, rho_inv, tmp);
@@ -357,18 +357,18 @@ int main() {
 
   stormMesh_t mesh = SR_InitMesh();
 
-  stormArrayR_t c, p, v, c_hat, w_hat, p_hat, v_hat, d, rho;
-  c = SR_AllocR(mesh, 1, 0);
-  p = SR_AllocR(mesh, 1, 0);
-  v = SR_AllocR(mesh, 1, 1);
-  d = SR_AllocR(mesh, 1, 0);
-  rho = SR_AllocR(mesh, 1, 0);
+  stormArray_t c, p, v, c_hat, w_hat, p_hat, v_hat, d, rho;
+  c = SR_Alloc(mesh, 1, 0);
+  p = SR_Alloc(mesh, 1, 0);
+  v = SR_Alloc(mesh, 1, 1);
+  d = SR_Alloc(mesh, 1, 0);
+  rho = SR_Alloc(mesh, 1, 0);
   c_hat = stormAllocLike(c);
   w_hat = stormAllocLike(c);
   p_hat = stormAllocLike(p);
   v_hat = stormAllocLike(v);
 #if YURI
-  stormArrayR_t n1, n2;
+  stormArray_t n1, n2;
   n1 = stormAllocLike(c);
   n2 = stormAllocLike(c);
 #endif

@@ -411,11 +411,10 @@ end subroutine cIO_Flush
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFill(meshPtr, xPtr, alpha, beta) bind(C, name='stormFill')
+subroutine stormFill(meshPtr, xPtr, alpha) bind(C, name='stormFill')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr
   real(c_double), intent(in), value :: alpha
-  real(c_double), intent(in), value :: beta
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
@@ -423,7 +422,7 @@ subroutine stormFill(meshPtr, xPtr, alpha, beta) bind(C, name='stormFill')
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr)
 
-  call Fill(mesh, xArr, alpha, beta)
+  call Fill(mesh, xArr, alpha)
 
 end subroutine stormFill
 
@@ -510,7 +509,10 @@ subroutine stormMul(meshPtr, zPtr, yPtr, xPtr) bind(C, name='stormMul')
 
 end subroutine stormMul
 
-#$macro WrapMapFunc ^(?P<Func>\w+)\s+(?P<cFunc>\w+)\s+(?P<env>\w+)\s*$
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+#$macro WrapMapFunc ^(?P<cFunc>\w+)\s+(?P<Func>\w+)\s+(?P<env>\w+)\s*$
 pure function $Func(x) result(Fx)
   real(dp), intent(in) :: x(:)
   real(dp) :: Fx(size(x))
@@ -520,7 +522,7 @@ pure function $Func(x) result(Fx)
 end function $Func
 #$end macro
 
-#$macro WrapSpMapFunc ^(?P<SpFunc>\w+)\s+(?P<cSpFunc>\w+)\s+(?P<env>\w+)\s*$
+#$macro WrapSpMapFunc ^(?P<cSpFunc>\w+)\s+(?P<SpFunc>\w+)\s+(?P<env>\w+)\s*$
 pure function $SpFunc(r, x) result(Fx)
   real(dp), intent(in) :: r(:), x(:)
   real(dp) :: Fx(size(x))
@@ -552,12 +554,13 @@ real(c_double) function stormIntegrate(meshPtr, xPtr, cFuncPtr, env) &
   stormIntegrate = Integrate(mesh, xArr, Func)
 
 contains
-  @WrapMapFunc Func cFunc env
+  @WrapMapFunc cFunc Func env
 end function stormIntegrate
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFuncProd(meshPtr, yPtr, xPtr, cFuncPtr, env) bind(C, name='stormFuncProd')
+subroutine stormFuncProd(meshPtr, yPtr, xPtr, cFuncPtr, env) &
+    & bind(C, name='stormFuncProd')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, yPtr
   type(c_funptr), intent(in), value :: cFuncPtr
@@ -576,12 +579,13 @@ subroutine stormFuncProd(meshPtr, yPtr, xPtr, cFuncPtr, env) bind(C, name='storm
   call FuncProd(mesh, yArr, xArr, Func)
 
 contains
-  @WrapMapFunc Func cFunc env
+  @WrapMapFunc cFunc Func env
 end subroutine stormFuncProd
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, cSpFuncPtr, env) bind(C, name='stormSpFuncProd')
+subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, cSpFuncPtr, env) &
+    & bind(C, name='stormSpFuncProd')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, yPtr
   type(c_funptr), intent(in), value :: cSpFuncPtr
@@ -599,13 +603,13 @@ subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, cSpFuncPtr, env) bind(C, name='s
   call SpFuncProd(mesh, yArr, xArr, SpFunc)
 
 contains
-  @WrapSpMapFunc SpFunc cSpFunc env
+  @WrapSpMapFunc cSpFunc SpFunc env
 end subroutine stormSpFuncProd
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-#$macro WrapMatVecFunc ^(?P<MatVec>\w+)\s+(?P<cMatVec>\w+)\s+(?P<env>\w+)\s*$
+#$macro WrapMatVecFunc ^(?P<cMatVec>\w+)\s+(?P<MatVec>\w+)\s+(?P<env>\w+)\s*$
 subroutine $MatVec(mesh, AxArr, xArr)
   class(tMesh), intent(inout), target :: mesh
   class(tArray), intent(inout), target :: xArr, AxArr
@@ -626,7 +630,8 @@ end subroutine $MatVec
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 subroutine stormLinSolve(meshPtr, methodPtr, preMethodPtr, &
-    & xPtr, bPtr, cMatVecPtr, env, cConjMatVecPtr, conjEnv) bind(C, name='stormLinSolve')
+    & xPtr, bPtr, cMatVecPtr, env, cConjMatVecPtr, conjEnv) &
+    & bind(C, name='stormLinSolve')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, bPtr
   character(c_char), intent(in) :: methodPtr(*), preMethodPtr(*)
@@ -654,8 +659,8 @@ subroutine stormLinSolve(meshPtr, methodPtr, preMethodPtr, &
   call LinSolve(mesh, method, preMethod, xArr, bArr, MatVec, params)
 
 contains
-  @WrapMatVecFunc MatVec cMatVec env
-  @WrapMatVecFunc ConjMatVec cConjMatVec conjEnv
+  @WrapMatVecFunc cMatVec MatVec env
+  @WrapMatVecFunc cConjMatVec ConjMatVec conjEnv
 end subroutine stormLinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
@@ -667,15 +672,6 @@ subroutine stormNonlinSolve(meshPtr, methodPtr, &
   character(c_char), intent(in) :: methodPtr(*)
   type(c_funptr), intent(in), value :: cMatVecPtr
   type(*), intent(in) :: env
-
-  abstract interface
-    subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
-      import :: c_ptr
-      type(c_ptr), intent(in), value :: meshPtr
-      type(c_ptr), intent(in), value :: AxPtr, xPtr
-      type(*), intent(in) :: env
-    end subroutine ctMatVecFunc
-  end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, bArr
@@ -693,7 +689,7 @@ subroutine stormNonlinSolve(meshPtr, methodPtr, &
   call Solve_JFNK(mesh, MatVec, xArr, bArr, params)
 
 contains
-  @WrapMatVecFunc MatVec cMatVec env
+  @WrapMatVecFunc cMatVec MatVec env
 end subroutine stormNonlinSolve
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -704,7 +700,8 @@ end subroutine stormNonlinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs(meshPtr, uPtr, BCmask, alpha, beta, gamma) bind(C, name='stormApplyBCs')
+subroutine stormApplyBCs(meshPtr, uPtr, BCmask, alpha, beta, gamma) &
+    & bind(C, name='stormApplyBCs')
   type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
   type(c_ptr), intent(in), value :: uPtr
@@ -736,7 +733,8 @@ end subroutine stormApplyBCs
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, BCmask) bind(C, name='stormApplyBCs_SlipWall')
+subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, BCmask) &
+    & bind(C, name='stormApplyBCs_SlipWall')
   type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
   type(c_ptr), intent(in), value :: uPtr
@@ -767,7 +765,8 @@ end subroutine stormApplyBCs_SlipWall
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, BCmask) bind(C, name='stormApplyBCs_InOutLet')
+subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, BCmask) &
+    & bind(C, name='stormApplyBCs_InOutLet')
   type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: BCmask
   type(c_ptr), intent(in), value :: uPtr
@@ -798,7 +797,8 @@ end subroutine stormApplyBCs_InOutLet
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormGradient(meshPtr, vVecPtr, lambda, uPtr) bind(C, name='stormGradient')
+subroutine stormGradient(meshPtr, vVecPtr, lambda, uPtr) &
+    & bind(C, name='stormGradient')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: uPtr, vVecPtr
   real(c_double), intent(in), value :: lambda
@@ -815,7 +815,8 @@ end subroutine stormGradient
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivergence(meshPtr, vPtr, lambda, uVecPtr) bind(C, name='stormDivergence')
+subroutine stormDivergence(meshPtr, vPtr, lambda, uVecPtr) &
+    & bind(C, name='stormDivergence')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: uVecPtr, vPtr
   real(c_double), intent(in), value :: lambda
@@ -850,7 +851,8 @@ end subroutine stormRhieChowCorrection
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormConvection(meshPtr, vPtr, lambda, uPtr, aPtr) bind(C, name='stormConvection')
+subroutine stormConvection(meshPtr, vPtr, lambda, uPtr, aPtr) &
+    & bind(C, name='stormConvection')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: uPtr, vPtr, aPtr
   real(c_double), intent(in), value :: lambda
@@ -867,7 +869,8 @@ end subroutine stormConvection
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivGrad(meshPtr, vPtr, lambda, uPtr) bind(C, name='stormDivGrad')
+subroutine stormDivGrad(meshPtr, vPtr, lambda, uPtr) &
+    & bind(C, name='stormDivGrad')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: uPtr, vPtr
   real(c_double), intent(in), value :: lambda
@@ -884,7 +887,8 @@ end subroutine stormDivGrad
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivWGrad(meshPtr, vPtr, lambda, wPtr, uPtr) bind(C, name='stormDivWGrad')
+subroutine stormDivWGrad(meshPtr, vPtr, lambda, wPtr, uPtr) &
+    & bind(C, name='stormDivWGrad')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: uPtr, vPtr, wPtr
   real(c_double), intent(in), value :: lambda

@@ -241,19 +241,14 @@ end function Norm_C
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Fill vector components: 𝒚 ← 𝛼 + [𝛽], 𝛼 ∊ ℝ, [𝛽 ∊ ℝ or ℂ].
+!! Fill vector components: 𝒚 ← 𝛼, 𝛼 ∊ ℝ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Fill(mesh, yArr, alpha, beta)
+subroutine Fill(mesh, yArr, alpha)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(inout) :: yArr
   real(dp), intent(in) :: alpha
-  real(dp), intent(in), optional :: beta
 
   real(dp), pointer :: y(:,:)
-  real(dp) :: gamma
-
-  gamma = alpha
-  if (present(beta)) gamma = gamma + beta
 
   call yArr%Get(y)
 
@@ -263,7 +258,7 @@ contains
   subroutine Fill_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
-    y(:,iCell) = gamma
+    y(:,iCell) = alpha
     
   end subroutine Fill_Kernel
 end subroutine Fill

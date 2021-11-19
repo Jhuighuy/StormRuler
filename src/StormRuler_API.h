@@ -145,8 +145,7 @@ STORM_API void SR_IO_Flush(stormIOList_t IO,
 
 STORM_API void stormFill(stormMesh_t mesh,
                          stormArray_t x,
-                         stormReal_t alpha,
-                         _STORM_DEFAULT_(stormReal_t beta, 0.0));
+                         stormReal_t alpha);
 
 STORM_API void stormRandFill(stormMesh_t mesh,
                              stormArray_t x,

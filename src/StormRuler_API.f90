@@ -94,6 +94,32 @@ interface Free
 #$end for
 end interface
 
+abstract interface
+  pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
+    import :: c_int, c_double
+    integer(c_int), intent(in), value :: size
+    real(c_double), intent(in) :: x(*)
+    real(c_double), intent(inout) :: Fx(*)
+    type(*), intent(in) :: env
+  end subroutine ctMapFunc
+  pure subroutine ctSpMapFunc(dim, r, size, Fx, x, env) bind(C)
+    import :: c_int, c_double
+    integer(c_int), intent(in), value :: dim, size
+    real(c_double), intent(in) :: r(*), x(*)
+    real(c_double), intent(inout) :: Fx(*)
+    type(*), intent(in) :: env
+  end subroutine ctSpMapFunc
+end interface
+
+abstract interface
+  subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
+    import :: c_ptr
+    type(c_ptr), intent(in), value :: meshPtr
+    type(c_ptr), intent(in), value :: AxPtr, xPtr
+    type(*), intent(in) :: env
+  end subroutine ctMatVecFunc
+end interface
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -484,198 +510,162 @@ subroutine stormMul(meshPtr, zPtr, yPtr, xPtr) bind(C, name='stormMul')
 
 end subroutine stormMul
 
-!! TODO: wrap `cFunc` into the something separate.
+#$macro WrapMapFunc ^(?P<Func>\w+)\s+(?P<cFunc>\w+)\s+(?P<env>\w+)\s*$
+pure function $Func(x) result(Fx)
+  real(dp), intent(in) :: x(:)
+  real(dp) :: Fx(size(x))
+
+  call $cFunc(size(x), Fx, x, $env)
+
+end function $Func
+#$end macro
+
+#$macro WrapSpMapFunc ^(?P<SpFunc>\w+)\s+(?P<cSpFunc>\w+)\s+(?P<env>\w+)\s*$
+pure function $SpFunc(r, x) result(Fx)
+  real(dp), intent(in) :: r(:), x(:)
+  real(dp) :: Fx(size(x))
+
+  call $cSpFunc(size(r), r, size(x), Fx, x, $env)
+
+end function $SpFunc
+#$end macro
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-real(c_double) function stormIntegrate(meshPtr, xPtr, fPtr, env) &
+real(c_double) function stormIntegrate(meshPtr, xPtr, cFuncPtr, env) &
     & bind(C, name='stormIntegrate')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr
-  type(c_funptr), intent(in), value :: fPtr
+  type(c_funptr), intent(in), value :: cFuncPtr
   type(*), intent(in) :: env
-
-  abstract interface
-    pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
-      import :: c_int, c_double
-      integer(c_int), intent(in), value :: size
-      real(c_double), intent(in) :: x(*)
-      real(c_double), intent(inout) :: Fx(*)
-      type(*), intent(in) :: env
-    end subroutine ctMapFunc
-  end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
 
-  procedure(ctMapFunc), pointer :: f
+  procedure(ctMapFunc), pointer :: cFunc
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr)
 
-  call c_f_procpointer(cptr=fPtr, fptr=f)
+  call c_f_procpointer(cptr=cFuncPtr, fptr=cFunc)
 
-  stormIntegrate = Integrate(mesh, xArr, cFunc)
+  stormIntegrate = Integrate(mesh, xArr, Func)
 
 contains
-  pure function cFunc(x) result(Fx)
-    real(dp), intent(in) :: x(:)
-    real(dp) :: Fx(size(x))
-    
-    call f(int(size(x), kind=c_int), Fx, x, env)
-
-  end function cFunc
+  @WrapMapFunc Func cFunc env
 end function stormIntegrate
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFuncProd(meshPtr, yPtr, xPtr, fPtr, env) bind(C, name='stormFuncProd')
+subroutine stormFuncProd(meshPtr, yPtr, xPtr, cFuncPtr, env) bind(C, name='stormFuncProd')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, yPtr
-  type(c_funptr), intent(in), value :: fPtr
+  type(c_funptr), intent(in), value :: cFuncPtr
   type(*), intent(in) :: env
-
-  abstract interface
-    pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
-      import :: c_int, c_double
-      integer(c_int), intent(in), value :: size
-      real(c_double), intent(in) :: x(*)
-      real(c_double), intent(inout) :: Fx(*)
-      type(*), intent(in) :: env
-    end subroutine ctMapFunc
-  end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr
 
-  procedure(ctMapFunc), pointer :: f
+  procedure(ctMapFunc), pointer :: cFunc
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
 
-  call c_f_procpointer(cptr=fPtr, fptr=f)
+  call c_f_procpointer(cptr=cFuncPtr, fptr=cFunc)
 
-  call FuncProd(mesh, yArr, xArr, cFunc)
+  call FuncProd(mesh, yArr, xArr, Func)
 
 contains
-  pure function cFunc(x) result(Fx)
-    real(c_double), intent(in) :: x(:)
-    real(c_double) :: Fx(size(x))
-    
-    call f(int(size(x), kind=c_int), Fx, x, env)
-
-  end function cFunc
+  @WrapMapFunc Func cFunc env
 end subroutine stormFuncProd
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, fPtr, env) bind(C, name='stormSpFuncProd')
+subroutine stormSpFuncProd(meshPtr, yPtr, xPtr, cSpFuncPtr, env) bind(C, name='stormSpFuncProd')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, yPtr
-  type(c_funptr), intent(in), value :: fPtr
+  type(c_funptr), intent(in), value :: cSpFuncPtr
   type(*), intent(in) :: env
-
-  abstract interface
-    pure subroutine ctSpMapFunc(dim, r, size, Fx, x, env) bind(C)
-      import :: c_int, c_double
-      integer(c_int), intent(in), value :: dim, size
-      real(c_double), intent(in) :: r(*), x(*)
-      real(c_double), intent(inout) :: Fx(*)
-      type(*), intent(in) :: env
-    end subroutine ctSpMapFunc
-  end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, yArr
-  procedure(ctSpMapFunc), pointer :: f
+  procedure(ctSpMapFunc), pointer :: cSpFunc
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
 
-  call c_f_procpointer(cptr=fPtr, fptr=f)
+  call c_f_procpointer(cptr=cSpFuncPtr, fptr=cSpFunc)
 
-  call SpFuncProd(mesh, yArr, xArr, cFunc)
+  call SpFuncProd(mesh, yArr, xArr, SpFunc)
 
 contains
-  pure function cFunc(r, x) result(Fx)
-    real(dp), intent(in) :: r(:)
-    real(c_double), intent(in) :: x(:)
-    real(c_double) :: Fx(size(x))
-    
-    call f(int(size(r), kind=c_int), r, int(size(x), kind=c_int), Fx, x, env)
-
-  end function cFunc
+  @WrapSpMapFunc SpFunc cSpFunc env
 end subroutine stormSpFuncProd
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! TODO: wrap `cMatVec` into the something separate.
+#$macro WrapMatVecFunc ^(?P<MatVec>\w+)\s+(?P<cMatVec>\w+)\s+(?P<env>\w+)\s*$
+subroutine $MatVec(mesh, AxArr, xArr)
+  class(tMesh), intent(inout), target :: mesh
+  class(tArray), intent(inout), target :: xArr, AxArr
+
+  type(c_ptr) :: meshPtr, xPtr, AxPtr
+
+  meshPtr = Wrap(mesh)
+  xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
+
+  call $cMatVec(meshPtr, AxPtr, xPtr, $env)
+
+  call Free(meshPtr, mold=mesh)
+  call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
+
+end subroutine $MatVec
+#$end macro
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 subroutine stormLinSolve(meshPtr, methodPtr, preMethodPtr, &
-    & xPtr, bPtr, MatVecPtr, env, ConjMatVecPtr, conjEnv) bind(C, name='stormLinSolve')
+    & xPtr, bPtr, cMatVecPtr, env, cConjMatVecPtr, conjEnv) bind(C, name='stormLinSolve')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, bPtr
   character(c_char), intent(in) :: methodPtr(*), preMethodPtr(*)
-  type(c_funptr), intent(in), value :: MatVecPtr, ConjMatVecPtr
+  type(c_funptr), intent(in), value :: cMatVecPtr, cConjMatVecPtr
   type(*), intent(in) :: env, conjEnv
-
-  abstract interface
-    subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
-      import :: c_ptr, dp
-      type(c_ptr), intent(in), value :: meshPtr
-      type(c_ptr), intent(in), value :: AxPtr, xPtr
-      type(*), intent(in) :: env
-    end subroutine ctMatVecFunc
-  end interface
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, bArr
   character(len=:), pointer :: method, preMethod
-  procedure(ctMatVecFunc), pointer :: MatVec, ConjMatVec
+  procedure(ctMatVecFunc), pointer :: cMatVec, cConjMatVec
   type(tConvParams) :: params
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
   call Unwrap(methodPtr, method); call Unwrap(preMethodPtr, preMethod)
 
-  call c_f_procpointer(cptr=MatVecPtr, fptr=MatVec)
-  if (c_associated(ConjMatVecPtr)) then
-    call c_f_procpointer(cptr=ConjMatVecPtr, fptr=ConjMatVec)
+  call c_f_procpointer(cptr=cMatVecPtr, fptr=cMatVec)
+  if (c_associated(cConjMatVecPtr)) then
+    call c_f_procpointer(cptr=cConjMatVecPtr, fptr=cConjMatVec)
   end if
 
   !! TODO: convergence parameters.
+  !! TODO: utilize `ConjMatVec` somehow.
   call params%Init(1.0D-6, 1.0D-6, 2000)
-  call LinSolve(mesh, method, preMethod, xArr, bArr, cMatVec, params)
+  call LinSolve(mesh, method, preMethod, xArr, bArr, MatVec, params)
 
 contains
-  subroutine cMatVec(mesh, AxArr, xArr)
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: xArr, AxArr
-
-    type(c_ptr) :: meshPtr, xPtr, AxPtr
-
-    meshPtr = Wrap(mesh)
-    xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
-
-    call MatVec(meshPtr, AxPtr, xPtr, env)
-
-    call Free(meshPtr, mold=mesh)
-    call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
-
-  end subroutine cMatVec
+  @WrapMatVecFunc MatVec cMatVec env
+  @WrapMatVecFunc ConjMatVec cConjMatVec conjEnv
 end subroutine stormLinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 subroutine stormNonlinSolve(meshPtr, methodPtr, &
-    & xPtr, bPtr, MatVecPtr, env) bind(C, name='stormNonlinSolve')
+    & xPtr, bPtr, cMatVecPtr, env) bind(C, name='stormNonlinSolve')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, bPtr
   character(c_char), intent(in) :: methodPtr(*)
-  type(c_funptr), intent(in), value :: MatVecPtr
+  type(c_funptr), intent(in), value :: cMatVecPtr
   type(*), intent(in) :: env
 
   abstract interface
@@ -689,39 +679,28 @@ subroutine stormNonlinSolve(meshPtr, methodPtr, &
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr, bArr
-  procedure(ctMatVecFunc), pointer :: MatVec
+  procedure(ctMatVecFunc), pointer :: cMatVec
   type(tConvParams) :: params
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
 
-  call c_f_procpointer(cptr=MatVecPtr, fptr=MatVec)
+  call c_f_procpointer(cptr=cMatVecPtr, fptr=cMatVec)
 
   !! TODO: convergence parameters.
   !! TODO: select method.
   call params%Init(1.0D-4, 1.0D-4, 100, 'JFNK')
-  call Solve_JFNK(mesh, cMatVec, xArr, bArr, params)
+  call Solve_JFNK(mesh, MatVec, xArr, bArr, params)
 
 contains
-  subroutine cMatVec(mesh, AxArr, xArr)
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: xArr, AxArr
-
-    type(c_ptr) :: meshPtr, xPtr, AxPtr
-
-    meshPtr = Wrap(mesh)
-    xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
-
-    call MatVec(meshPtr, AxPtr, xPtr, env)
-
-    call Free(meshPtr, mold=mesh)
-    call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
-
-  end subroutine cMatVec
+  @WrapMatVecFunc MatVec cMatVec env
 end subroutine stormNonlinSolve
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! TODO: some more generic `stormApplyBCs` function
+!!       that includes the specific BCs. 
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

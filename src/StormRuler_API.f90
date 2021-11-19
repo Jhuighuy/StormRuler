@@ -47,15 +47,14 @@ use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
-use StormRuler_FDM_Operators, only: FDM_Gradient, FDM_Divergence, &
-  & FDM_Laplacian_Central, FDM_DivWGrad_Central
+use StormRuler_FDM_Operators, only: &
+  & FDM_Gradient, FDM_Divergence, FDM_DivGrad, FDM_DivWGrad
 use StormRuler_FDM_RhieChow, only: FDM_RhieChow_Correction
 use StormRuler_FDM_Convection, only: FDM_Convection_Central
 
-use, intrinsic :: iso_fortran_env, only: error_unit
 use, intrinsic :: iso_c_binding, only: c_char, c_int, &
   & c_double, c_size_t, c_ptr, c_funptr, c_null_char, &
-  & c_loc, c_f_pointer, c_f_procpointer, c_associated
+  & c_associated, c_loc, c_f_pointer, c_f_procpointer
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -833,21 +832,39 @@ end subroutine stormDivergence
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
-    & pPtr, rhoPtr) bind(C, name='stormRhieChowCorrection')
+subroutine stormDivGrad(meshPtr, vPtr, lambda, uPtr) &
+    & bind(C, name='stormDivGrad')
   type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value ::  vPtr, pPtr, rhoPtr
-  real(c_double), intent(in), value :: lambda, tau
+  type(c_ptr), intent(in), value :: uPtr, vPtr
+  real(c_double), intent(in), value :: lambda
 
   class(tMesh), pointer :: mesh
-  class(tArray), pointer :: uVecArr, vArr, pArr, rhoArr
+  class(tArray), pointer :: uArr, vArr
 
   call Unwrap(meshPtr, mesh)
-  call Unwrap(vPtr, vArr); call Unwrap(pPtr, pArr); call Unwrap(rhoPtr, rhoArr)
+  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr)
 
-  call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
+  call FDM_DivGrad(mesh, vArr, lambda, uArr)
 
-end subroutine stormRhieChowCorrection
+end subroutine stormDivGrad
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormDivWGrad(meshPtr, vPtr, lambda, wPtr, uPtr) &
+    & bind(C, name='stormDivWGrad')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: uPtr, vPtr, wPtr
+  real(c_double), intent(in), value :: lambda
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: uArr, vArr, wArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr); call Unwrap(wPtr, wArr)
+
+  call FDM_DivWGrad(mesh, vArr, lambda, wArr, uArr)
+
+end subroutine stormDivWGrad
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
@@ -869,38 +886,20 @@ end subroutine stormConvection
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivGrad(meshPtr, vPtr, lambda, uPtr) &
-    & bind(C, name='stormDivGrad')
+subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
+    & pPtr, rhoPtr) bind(C, name='stormRhieChowCorrection')
   type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: uPtr, vPtr
-  real(c_double), intent(in), value :: lambda
+  type(c_ptr), intent(in), value ::  vPtr, pPtr, rhoPtr
+  real(c_double), intent(in), value :: lambda, tau
 
   class(tMesh), pointer :: mesh
-  class(tArray), pointer :: uArr, vArr
+  class(tArray), pointer :: uVecArr, vArr, pArr, rhoArr
 
   call Unwrap(meshPtr, mesh)
-  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr)
+  call Unwrap(vPtr, vArr); call Unwrap(pPtr, pArr); call Unwrap(rhoPtr, rhoArr)
 
-  call FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
+  call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
 
-end subroutine stormDivGrad
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormDivWGrad(meshPtr, vPtr, lambda, wPtr, uPtr) &
-    & bind(C, name='stormDivWGrad')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: uPtr, vPtr, wPtr
-  real(c_double), intent(in), value :: lambda
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: uArr, vArr, wArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(uPtr, uArr); call Unwrap(vPtr, vArr); call Unwrap(wPtr, wArr)
-
-  call FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
-
-end subroutine stormDivWGrad
+end subroutine stormRhieChowCorrection
 
 end module StormRuler_API

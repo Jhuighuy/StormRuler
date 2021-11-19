@@ -340,19 +340,6 @@ STORM_API void stormDivergence(stormMesh_t mesh,
                                stormReal_t lambda,
                                stormArray_t uVec);
 
-STORM_API void stormRhieChowCorrection(stormMesh_t mesh,
-                                       stormArray_t v,
-                                       stormReal_t lambda,
-                                       stormReal_t tau,
-                                       stormArray_t p,
-                                       stormArray_t rho);
-
-STORM_API void stormConvection(stormMesh_t mesh,
-                               stormArray_t v,
-                               stormReal_t lambda,
-                               stormArray_t u,
-                               stormArray_t aVec);
-
 STORM_API void stormDivGrad(stormMesh_t mesh,
                             stormArray_t v,
                             stormReal_t lambda,
@@ -363,5 +350,18 @@ STORM_API void stormDivWGrad(stormMesh_t mesh,
                              stormReal_t lambda,
                              stormArray_t k,
                              stormArray_t u);
+
+STORM_API void stormConvection(stormMesh_t mesh,
+                               stormArray_t v,
+                               stormReal_t lambda,
+                               stormArray_t u,
+                               stormArray_t aVec);
+
+STORM_API void stormRhieChowCorrection(stormMesh_t mesh,
+                                       stormArray_t v,
+                                       stormReal_t lambda,
+                                       stormReal_t tau,
+                                       stormArray_t p,
+                                       stormArray_t rho);
 
 #endif // ifndef STORM_RULER_API_H

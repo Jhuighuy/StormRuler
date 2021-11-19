@@ -80,6 +80,8 @@ although some of them are not parallelized.
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
+  * _(planned)_ Quasi-Minimal Residual solver
+    (`QMR`, for the general linear problems);
   * _(planned)_ Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
 
@@ -118,27 +120,35 @@ Legend:
 
 * C/C++ API:
   - [x] 🐏 Pure C API,
-  - [ ] 💄 Untyped C API,
-  - [ ] 💄 Untyped C API,
-  - [ ] 🐏 High-level C++ API,
+  - [ ] 🐏 Higher-level C++ API,
   - [ ] 🚬🐏 Python API.
-
-* Mesh:
-  - [ ] 🪓 Nodes,
-  - [ ] 🪓 Faces,
-  - [ ] 🧸 Redesigned VTK output,
-  - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
-  - [ ] 🪓 Cache-friendly cell sorting: METIS,
-  - [ ] 🪓 BC cells sorting and better BCs parallelization,
-  - [ ] 🪓 Block mesh (pre MPI),
-  - [ ] 🚬🚬 Non-conforming multilevel mesh,
-  - [ ] 🚬🚬🚬 AMR,
-  - [ ] 🚬🚬 Cut cell methods.
 
 * General architecture:
   - [ ] 🦜🐞 Segfaults,
+  - [x] 🐞 with `type(c_ptr), value :: env` fixed globally for ifort,
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
+
+* Parameters system:
+  - [ ] 💄 ???
+
+* Mesh:
+  - [ ] 🧸 Move kernel runners away from mesh,
+  - [ ] 🪓 Refactor mesh generation in rectangle/cube,
+  - [ ] 🪓 Refactor mesh generation with image,
+  - [ ] 🪓 Generate nodes,
+  - [ ] 🪓 Generate faces,
+  - [ ] 🧸 Redesigned VTK output,
+  - [ ] 🚬 Better cell ordering quality functional, 
+  - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
+  - [x] 🪓 Cache-friendly cell sorting: METIS,
+  - [ ] 🧸 Unified API for cell sorting,
+  - [ ] 🪓 BC cells sorting and better BCs parallelization,
+  - [ ] 🚬 Mesh coarsening and refinement (pre GMG),
+  - [ ] 🪓 Block mesh (pre MPI),
+  - [ ] 🚬🚬 Non-conforming multilevel mesh,
+  - [ ] 🚬🚬🚬 AMR,
+  - [ ] 🚬🚬🚬 Cut cell methods.
 
 * New differential operators and boundary conditions:
   - [ ] 🧸 Variable weight Laplace operator with 4+ order approx.,
@@ -150,28 +160,38 @@ Legend:
   - [ ] 🪓 Godunov/WENO nonlinear convection operator,
   - [ ] 🪓 Riemann solvers, Euler equations...
 
-* Matrix reconstruction:
-  - [ ] 🚬 Matrix portrait construction,
-  - [ ] 🚬🚬🚬 Graph-coloring problem,
-  - [ ] 🚬 Some matrix API...
+* Linear solvers:
+  - [ ] 🧻 Clean-up unified solver to use conjugate MatVec,
+  - [ ] 🧻 Convergence parameters in C/C++ API,
+  - [ ] 💄 Some better residual monitor,
+  - [x] 🚬 `GMRES` solver implementation,
+  - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
+  - [ ] 🪓 `QMR` solver implementation,
+  - [ ] 🪓 `TFQMR` solver implementation.
 
-* New linear solvers:
-  - [x] 🚬 `GMRES` solver implementation.
-  - [ ] 🪓 Preconditioned `GMRES` implementation.
-  - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`)...
+* Matrix reconstruction:
+  - [ ] 🪓 Matrix portrait construction,
+  - [ ] 🚬🚬🚬 Graph-coloring problem,
+  - [ ] 🪓 `ILU`/`ICHOL` preconditioners,
+  - [ ] 🪓 `SPAI` preconditioner,
+  - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
+
+* Preconditioning:
+  - [ ] 🧻 Refactor precondtioner from function pointer to class,
+  - [ ] 🧸 Add user-defined preconditioner in C/C++ API,
+  - [ ] 🦜 Fix block case diagonal extraction,
+  - [ ] 🦜 Block tridiagonal preconditioner,
+  - [ ] 🚬🚬🚬 Matrix-free SPAI preconditioner,
+  - [ ] 🚬 V-cycle GMG,
+  - [ ] 🚬🚬 F-cycle GMG,
+  - [ ] 🚬🚬🚬 W-cycle GMG.
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,
+  - [ ] 💄 Better API for the exact Newton-Raphson solver, 
   - [ ] 🦜 Relaxed Newton solver,
   - [x] 🧸 Jacobian-Free Newton-Raphson solver,
-  - [ ] 🧸 Select an epsilon in JFNK,
-  - [ ] 🧻 Refactor JFNK without using the general Newton solver,
-  - [ ] 🧸 Second order JFNK solver.
-
-* Preconditioning:
-  - [ ] 🦜 Fix block case diagonal extraction,
-  - [ ] 🦜 Block tridiagonal preconditioner,
-  - [ ] 🚬 Matrix-free SPAI preconditioner,
-  - [ ] 🚬 Matrix-based preconditioning,
-  - [ ] 🦜 Nonlinear preconditioner.
-  - [ ] 🚬 GMG..
+  - [ ] 🧻 Optimized first order JFNK,
+  - [ ] 🧸 Select an epsilon in the first order JFNK,
+  - [ ] 🧸 Second order JFNK solver,
+  - [ ] 🦜 Nonlinear preconditioning..

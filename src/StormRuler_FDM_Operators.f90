@@ -51,13 +51,13 @@ interface FDM_Divergence
   module procedure FDM_Divergence
 end interface FDM_Divergence
 
-interface FDM_Laplacian_Central
-  module procedure FDM_Laplacian_Central
-end interface FDM_Laplacian_Central
+interface FDM_DivGrad
+  module procedure FDM_DivGrad
+end interface FDM_DivGrad
 
-interface FDM_DivWGrad_Central
-  module procedure FDM_DivWGrad_Central
-end interface FDM_DivWGrad_Central
+interface FDM_DivWGrad
+  module procedure FDM_DivWGrad
+end interface FDM_DivWGrad
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -566,7 +566,7 @@ end subroutine FDM_Divergence
 !! • Vector case:
 !!   Shape of 𝒖⃗, 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
+subroutine FDM_DivGrad(mesh, vArr, lambda, uArr)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: uArr
   class(tArray), intent(inout) :: vArr
@@ -580,10 +580,10 @@ subroutine FDM_Laplacian_Central(mesh, vArr, lambda, uArr)
     call uArr%Get(uVec); call vArr%Get(vVec)
   end if
 
-  call mesh%RunCellKernel(FDM_Laplacian_Central_Kernel)
+  call mesh%RunCellKernel(FDM_DivGrad_Kernel)
 
 contains
-  subroutine FDM_Laplacian_Central_Kernel(iCell)
+  subroutine FDM_DivGrad_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
     integer(ip) :: dim
@@ -695,8 +695,8 @@ contains
       end associate
     end if
     
-  end subroutine FDM_Laplacian_Central_Kernel
-end subroutine FDM_Laplacian_Central
+  end subroutine FDM_DivGrad_Kernel
+end subroutine FDM_DivGrad
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! The FDM-approximate variable coefficient 
@@ -707,7 +707,7 @@ end subroutine FDM_Laplacian_Central
 !! • Tensor coefficient case (not implemented):
 !!   Shape of ̂𝒘 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
+subroutine FDM_DivWGrad(mesh, vArr, lambda, wArr, uArr)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: uArr, wArr
   class(tArray), intent(inout) :: vArr
@@ -717,10 +717,10 @@ subroutine FDM_DivWGrad_Central(mesh, vArr, lambda, wArr, uArr)
 
   call uArr%Get(u); call vArr%Get(v); call wArr%Get(w)
 
-  call mesh%RunCellKernel(FDM_DivWGrad_Central_Kernel)
+  call mesh%RunCellKernel(FDM_DivWGrad_Kernel)
 
 contains
-  subroutine FDM_DivWGrad_Central_Kernel(iCell)
+  subroutine FDM_DivWGrad_Kernel(iCell)
     ! <<<<<<<<<<<<<<<<<<<<<<
     integer(ip), intent(in) :: iCell
     ! >>>>>>>>>>>>>>>>>>>>>>
@@ -821,7 +821,7 @@ contains
       end associate
     end do
 
-  end subroutine FDM_DivWGrad_Central_Kernel
-end subroutine FDM_DivWGrad_Central
+  end subroutine FDM_DivWGrad_Kernel
+end subroutine FDM_DivWGrad
 
 end module StormRuler_FDM_Operators

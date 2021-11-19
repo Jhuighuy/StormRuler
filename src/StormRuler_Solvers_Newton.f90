@@ -34,7 +34,7 @@ use StormRuler_Array, only: tArray, AllocArray
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_BLAS, only: tMatVecFunc, tBiMatVecFunc
 
-use StormRuler_Solvers_Unified, only: LinSolve
+use StormRuler_Solvers, only: LinSolve
 use StormRuler_ConvParams, only: tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

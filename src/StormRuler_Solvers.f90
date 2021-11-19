@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Solvers_Unified
+module StormRuler_Solvers
 
 #$use 'StormRuler_Params.fi'
 
@@ -36,16 +36,12 @@ use StormRuler_BLAS, only: tMatVecFunc
 use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Precond, only: tPreconditioner
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_QMR, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
-
-use StormRuler_Solvers_Precond, only: &
-  & Precondition_Jacobi, Precondition_LU_SGS
-
-use, intrinsic :: iso_fortran_env, only: error_unit
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -101,49 +97,49 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   ! Two-step call is utilized 
   ! in order to match optional preconditioning.
   ! ----------------------
-  select case(preMethod)
-    case('', 'none')
+  !select case(preMethod)
+  !  case('', 'none')
       params%Name = params%Name//'('
       call SelectMethod()
-    case('Jacobi')
-      params%Name = params%Name//'(Jacobi-'
-      call SelectMethod(Precondition_Jacobi)
-    case('LU_SGS')
-      params%Name = params%Name//'(LU-SGS-'
-      call SelectMethod(Precondition_LU_SGS)
-    case default
-      error stop 'invalid precond method, preMethod='//preMethod
-  end select
+  !  case('Jacobi')
+  !    params%Name = params%Name//'(Jacobi-'
+  !    call SelectMethod(Precondition_Jacobi)
+  !  case('LU_SGS')
+  !    params%Name = params%Name//'(LU-SGS-'
+  !    call SelectMethod(Precondition_LU_SGS)
+  !  case default
+  !    error stop 'invalid precond method, preMethod='//preMethod
+  !end select
 
 contains
-  subroutine SelectMethod(PreMatVec)
-    procedure(tPreMatVecFunc), optional :: PreMatVec
+  subroutine SelectMethod(precond)
+    class(tPreconditioner), intent(inout), optional :: precond
 
     select case(method)
       case('CG')
         params%Name = params%Name//'CG)'
-        call Solve_CG(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_CG(mesh, x, f, uMatVec, params, precond)
       case('BiCGStab')
         params%Name = params%Name//'BiCGStab)'
-        call Solve_BiCGStab(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_BiCGStab(mesh, x, f, uMatVec, params, precond)
       case('MINRES')
         params%Name = params%Name//'MINRES)'
-        call Solve_MINRES(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_MINRES(mesh, x, f, uMatVec, params, precond)
       case('GMRES')
         params%Name = params%Name//'GMRES)'
-        call Solve_GMRES(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_GMRES(mesh, x, f, uMatVec, params, precond)
       case('QMR')
         params%Name = params%Name//'QMR)'
-        call Solve_QMR(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_QMR(mesh, x, f, uMatVec, params, precond)
       case('TFQMR')
         params%Name = params%Name//'TFQMR)'
-        call Solve_QMR(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_QMR(mesh, x, f, uMatVec, params, precond)
       case('LSQR')
         params%Name = params%Name//'LSQR)'
-        call Solve_LSQR(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_LSQR(mesh, x, f, uMatVec, params, precond)
       case('LSMR')
         params%Name = params%Name//'LSMR)'
-        call Solve_LSMR(mesh, x, f, uMatVec, params, PreMatVec)
+        call Solve_LSMR(mesh, x, f, uMatVec, params, precond)
       case default
         error stop 'invalid method, method='//method
     end select
@@ -159,4 +155,4 @@ contains
   end subroutine MatVec_Uniformed
 end subroutine LinSolve
 
-end module StormRuler_Solvers_Unified
+end module StormRuler_Solvers

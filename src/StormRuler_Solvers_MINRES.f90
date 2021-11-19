@@ -34,9 +34,9 @@ use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Dot, Norm_2, Fill, Set, Scale, Add, Sub
 use StormRuler_BLAS, only: tMatVecFunc
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Precond, only: tPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -104,21 +104,23 @@ end subroutine SymOrtho
 !!     “Iterative Methods for Singular Linear Equations and 
 !!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_MINRES(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_MINRES(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
 
   real(dp) :: alpha, beta, betaBar, gamma, delta, deltaBar, &
     & epsilon, epsilonBar, tau, phi, phiTilde, cs, sn
   type(tArray) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
-  class(*), allocatable :: preEnv
 
   call AllocArray(p, w, wBar, wBarBar, z, zBar, zBarBar, mold=x)
-  if (present(PreMatVec)) call AllocArray(q, qBar, mold=x)
+  if (present(precond)) then
+    call AllocArray(q, qBar, mold=x)
+    call precond%Init(mesh, MatVec)
+  end if
 
   ! ----------------------
   ! Initialize:
@@ -137,8 +139,8 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, PreMatVec)
   call MatVec(mesh, zBar, x)
   call Sub(mesh, zBar, b, zBar)
   call Fill(mesh, zBarBar, 0.0_dp)
-  if (present(PreMatVec)) then
-    call PreMatVec(mesh, q, zBar, MatVec, preEnv)
+  if (present(precond)) then
+    call precond%Apply(mesh, q, zBar, MatVec)
   else
     q = zBar
   end if
@@ -168,9 +170,9 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, PreMatVec)
     alpha = Dot(mesh, q, p)/(beta**2)
     call Sub(mesh, z, p, zBar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, zBarBar, beta/betaBar)
-    if (present(PreMatVec)) then
+    if (present(precond)) then
       tmp = qBar; qBar = q; q = tmp
-      call PreMatVec(mesh, q, z, MatVec, preEnv)
+      call precond%Apply(mesh, q, z, MatVec)
     else
       qBar = q; q = z
     end if
@@ -211,14 +213,14 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, PreMatVec)
 end subroutine Solve_MINRES
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 
 !! the monstrous Generalized Minimal Residual method (GMRES).
 !! 
 !! The classical GMRES(𝑚) implementation with restarts
 !! after 𝑚 iterations is used.
 !! 
 !! GMRES may be applied to the singular problems, and the square
-!! least squares problems: ‖(𝓐[𝓜]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
+!! least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, 
 !! although convergeance to minimum norm solution is not guaranteed 
 !! (is this true?).
 !!
@@ -228,19 +230,19 @@ end subroutine Solve_MINRES
 !!      nonsymmetric linear systems", 
 !!     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_GMRES(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
 
   logical :: converged
+  integer(ip) :: i, k
   real(dp) :: chi, phi, phiTilde
   real(dp), pointer :: beta(:), cs(:), sn(:), H(:,:)
   type(tArray) :: Q, s, t, r
-  integer(ip) :: i, k
 
   call AllocArray(r, mold=x)
   associate(m => gMaxIterGMRES)
@@ -248,7 +250,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
     allocate(beta(m + 1), cs(m), sn(m), H(m + 1,m))
   end associate
 
-  if (present(PreMatVec)) then
+  if (present(precond)) then
     error stop 'preconditioned GMRES solver is not implemented.'
   end if
 
@@ -329,7 +331,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
 
       ! ----------------------
       ! Update the residual vector:
-      ! 𝜷ₖ₊₁ ← -𝒔𝒏ₖ𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
+      ! 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
       ! 𝜑 ← |𝜷ₖ₊₁|,
       ! Check convergence for 𝜑 and 𝜑/𝜑̃.
       ! ----------------------
@@ -368,20 +370,20 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
 end subroutine Solve_GMRES
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 
 !! the Quasi-Minimal Residual method (QMR).
 !! 
 !! References:
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_QMR(mesh, x, b, &
-    & MatVec, ConjMatVec, params, PreMatVec, ConjPreMatVec)
+    & MatVec, ConjMatVec, params, precond, conjPrecond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec, ConjMatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec, ConjPreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond, conjPrecond
+  procedure(tMatVecFunc) :: MatVec, ConjMatVec
 
   error stop 'QMR solver is not implemented.'
 
@@ -391,19 +393,19 @@ end subroutine Solve_QMR
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
 !! the Quasi-Minimal Residual method (QMR).
 !! 
-!! References:
-!! [1] ???
+!! Using QMR is not recommended in the self-adjoint case,
+!! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
 
-  if (present(PreMatVec)) then
-    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, PreMatVec, PreMatVec)
+  if (present(precond)) then
+    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, precond, precond)
   else
     call Solve_QMR(mesh, x, b, MatVec, MatVec, params)
   end if
@@ -411,21 +413,25 @@ subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, PreMatVec)
 end subroutine Solve_SymmQMR
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 
 !! the Transpose-Free Quasi-Minimal Residual method (TFQMR).
 !! 
 !! References:
 !! [1] Freund, Roland W. 
+!!     “A Transpose-Free Quasi-Minimal Residual Algorithm 
+!!      for Non-Hermitian Linear Systems.” 
+!!     SIAM J. Sci. Comput. 14 (1993): 470-482.
+!! [2] Freund, Roland W. 
 !!     “Transpose-Free Quasi-Minimal Residual Methods 
 !!      for Non-Hermitian Linear Systems.” (1994).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_TFQMR(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_TFQMR(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
 
   error stop 'TFQMR solver is not implemented.'
 

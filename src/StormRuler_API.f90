@@ -42,7 +42,7 @@ use StormRuler_BLAS, only: Norm_2, &
 use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers_Unified, only: LinSolve
+use StormRuler_Solvers, only: LinSolve
 use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &

@@ -34,9 +34,9 @@ use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 use StormRuler_BLAS, only: tMatVecFunc
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
+use StormRuler_Precond, only: tPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -64,21 +64,21 @@ contains
 !! CG may be applied to the consistent singular problems, 
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_CG(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_CG(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
   
   real(dp) :: alpha, beta, gamma, delta
   type(tArray) :: p, r, t, z
-  class(*), allocatable :: preEnv
   
   call AllocArray(p, r, t, mold=x)
-  if (present(PreMatVec)) then
+  if (present(precond)) then
     call AllocArray(z, mold=x)
+    call precond%Init(mesh, MatVec)
   else
     z = r
   end if
@@ -102,8 +102,9 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, PreMatVec)
   ! 𝒑 ← 𝒛,
   ! 𝛾 ← <𝒓⋅𝒛>,
   ! ----------------------
-  if (present(PreMatVec)) &
-    & call PreMatVec(mesh, z, r, MatVec, preEnv)
+  if (present(precond)) then
+    call precond%Apply(mesh, z, r, MatVec)
+  end if
   call Set(mesh, p, z)
   gamma = Dot(mesh, r, z)
 
@@ -132,8 +133,8 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, PreMatVec)
     !   𝛼 ← <𝒓⋅𝒛>,
     ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
-    if (present(PreMatVec)) then
-      call PreMatVec(mesh, z, r, MatVec, preEnv)
+    if (present(precond)) then
+      call precond%Apply(mesh, z, r, MatVec)
       alpha = Dot(mesh, r, z)
     end if
 
@@ -145,6 +146,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, PreMatVec)
     beta = SafeDivide(alpha, gamma)
     call Add(mesh, p, z, p, beta)
     gamma = alpha
+
   end do
 
 end subroutine Solve_CG
@@ -156,21 +158,21 @@ end subroutine Solve_CG
 !! BiCGStab may be applied to the consistent singular problems,
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
+subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, precond)
   class(tMesh), intent(inout) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
-  procedure(tPreMatVecFunc), optional :: PreMatVec
+  class(tPreconditioner), intent(inout), optional :: precond
+  procedure(tMatVecFunc) :: MatVec
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
   type(tArray) :: p, r, rTilde, s, t, v, w, y, z
-  class(*), allocatable :: preEnv
 
   call AllocArray(p, r, rTilde, s, t, v, mold=x)
-  if (present(PreMatVec)) then
+  if (present(precond)) then
     call AllocArray(w, y, z, mold=x)
+    call precond%Init(mesh, MatVec)
   else
     w = t; y = p; z = s
   end if
@@ -217,8 +219,9 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     call Sub(mesh, p, p, v, omega)
     call Add(mesh, p, r, p, beta)
-    if (present(PreMatVec)) &
-      & call PreMatVec(mesh, y, p, MatVec, preEnv)
+    if (present(precond)) then
+      call precond%Apply(mesh, y, p, MatVec)
+    end if
     call MatVec(mesh, v, y)
     
     ! ----------------------
@@ -229,8 +232,9 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     alpha = SafeDivide(rho, Dot(mesh, rTilde, v))
     call Sub(mesh, s, r, v, alpha)
-    if (present(PreMatVec)) &
-      & call PreMatVec(mesh, z, s, MatVec, preEnv)
+    if (present(precond)) then
+      call precond%Apply(mesh, z, s, MatVec)
+    end if
     call MatVec(mesh, t, z)
     
     ! ----------------------
@@ -240,8 +244,9 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
     ! 𝒙 ← 𝒙 + 𝜔𝒛,
     ! 𝒙 ← 𝒙 + 𝛼𝒚,
     ! ----------------------
-    if (present(PreMatVec)) &
-      & call PreMatVec(mesh, w, t, MatVec, preEnv)
+    if (present(precond)) then
+      call precond%Apply(mesh, w, t, MatVec)
+    end if
     omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
     call Sub(mesh, r, s, t, omega)
     call Add(mesh, x, x, z, omega)
@@ -253,6 +258,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, PreMatVec)
     ! ----------------------
     gamma = Dot(mesh, r, r)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
+
   end do
 
 end subroutine Solve_BiCGStab

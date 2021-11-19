@@ -51,6 +51,15 @@ interface Solve_GMRES
   module procedure Solve_GMRES
 end interface Solve_GMRES
 
+interface Solve_QMR
+  module procedure Solve_QMR
+  module procedure Solve_SymmQMR
+end interface Solve_QMR
+
+interface Solve_TFQMR
+  module procedure Solve_TFQMR
+end interface Solve_TFQMR
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -203,7 +212,7 @@ end subroutine Solve_MINRES
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
-!! the monstrous Generalized minimal residual method (GMRES).
+!! the monstrous Generalized Minimal Residual method (GMRES).
 !! 
 !! The classical GMRES(𝑚) implementation with restarts
 !! after 𝑚 iterations is used.
@@ -238,6 +247,10 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
     call AllocArray(Q, shape=[x%mShape, m + 1])
     allocate(beta(m + 1), cs(m), sn(m), H(m + 1,m))
   end associate
+
+  if (present(PreMatVec)) then
+    error stop 'preconditioned GMRES solver is not implemented.'
+  end if
 
   ! ----------------------
   ! Pre-initialize:
@@ -327,7 +340,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
     end do
 
     ! ----------------------
-    ! Check if restart if required.
+    ! Check if restart is required.
     ! ----------------------
     converged = k <= gMaxIterGMRES
     if (.not.converged) k = gMaxIterGMRES
@@ -353,5 +366,69 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, PreMatVec)
   end do
 
 end subroutine Solve_GMRES
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! the Quasi-Minimal Residual method (QMR).
+!! 
+!! References:
+!! [1] ???
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+subroutine Solve_QMR(mesh, x, b, &
+    & MatVec, ConjMatVec, params, PreMatVec, ConjPreMatVec)
+  class(tMesh), intent(inout) :: mesh
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec, ConjMatVec
+  class(tConvParams), intent(inout) :: params
+  procedure(tPreMatVecFunc), optional :: PreMatVec, ConjPreMatVec
+
+  error stop 'QMR solver is not implemented.'
+
+end subroutine Solve_QMR
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! the Quasi-Minimal Residual method (QMR).
+!! 
+!! References:
+!! [1] ???
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, PreMatVec)
+  class(tMesh), intent(inout) :: mesh
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
+  class(tConvParams), intent(inout) :: params
+  procedure(tPreMatVecFunc), optional :: PreMatVec
+
+  if (present(PreMatVec)) then
+    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, PreMatVec, PreMatVec)
+  else
+    call Solve_QMR(mesh, x, b, MatVec, MatVec, params)
+  end if
+
+end subroutine Solve_SymmQMR
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+!! the Transpose-Free Quasi-Minimal Residual method (TFQMR).
+!! 
+!! References:
+!! [1] Freund, Roland W. 
+!!     “Transpose-Free Quasi-Minimal Residual Methods 
+!!      for Non-Hermitian Linear Systems.” (1994).
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+subroutine Solve_TFQMR(mesh, x, b, MatVec, params, PreMatVec)
+  class(tMesh), intent(inout) :: mesh
+  class(tArray), intent(in) :: b
+  class(tArray), intent(inout) :: x
+  procedure(tMatVecFunc) :: MatVec
+  class(tConvParams), intent(inout) :: params
+  procedure(tPreMatVecFunc), optional :: PreMatVec
+
+  error stop 'TFQMR solver is not implemented.'
+
+end subroutine Solve_TFQMR
 
 end module StormRuler_Solvers_MINRES

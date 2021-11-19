@@ -38,7 +38,8 @@ use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 use StormRuler_ConvParams, only: tConvParams
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
-use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
+use StormRuler_Solvers_MINRES, only: &
+  & Solve_MINRES, Solve_GMRES, Solve_QMR, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
 use StormRuler_Solvers_Precond, only: &
@@ -131,6 +132,12 @@ contains
       case('GMRES')
         params%Name = params%Name//'GMRES)'
         call Solve_GMRES(mesh, x, f, uMatVec, params, PreMatVec)
+      case('QMR')
+        params%Name = params%Name//'QMR)'
+        call Solve_QMR(mesh, x, f, uMatVec, params, PreMatVec)
+      case('TFQMR')
+        params%Name = params%Name//'TFQMR)'
+        call Solve_QMR(mesh, x, f, uMatVec, params, PreMatVec)
       case('LSQR')
         params%Name = params%Name//'LSQR)'
         call Solve_LSQR(mesh, x, f, uMatVec, params, PreMatVec)

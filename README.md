@@ -134,6 +134,7 @@ Legend:
 
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
+  - [ ] 🧸 BC kernels,
   - [ ] 🪓 Refactor mesh generation in rectangle/cube,
   - [ ] 🪓 Refactor mesh generation with image,
   - [ ] 🪓 Generate nodes,

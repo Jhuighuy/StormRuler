@@ -45,6 +45,8 @@ use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers, only: LinSolve
 use StormRuler_Solvers_Newton, only: Solve_JFNK
 
+use StormRuler_Matrix!, only: ...
+
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &
@@ -261,6 +263,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   call gMesh%SetRange()
 
+#$if False
   block
     integer(ip), allocatable :: iperm(:)
 
@@ -282,6 +285,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     call gMesh%ApplyOrdering(iperm)
 
   end block
+#$end if
 
   meshPtr = Wrap(gMesh)
 

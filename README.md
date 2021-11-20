@@ -143,6 +143,7 @@ Legend:
   - [ ] 🚬 Better cell ordering quality functional, 
   - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
   - [x] 🪓 Cache-friendly cell sorting: METIS,
+  - [ ] 🐞 Something looks broken..
   - [ ] 🧸 Unified API for cell sorting,
   - [ ] 🪓 BC cells sorting and better BCs parallelization,
   - [ ] 🚬 Mesh coarsening and refinement (pre GMG),

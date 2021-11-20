@@ -88,7 +88,7 @@ type :: tMesh
   integer(ip), allocatable :: MDIndexBounds(:)
   ! ----------------------
   ! Cell multidimensional index table.
-  ! Shape is [1, NumDims]×[1, NumCells].
+  ! Shape is [1, NumDims]×[1, NumAllCells].
   ! ----------------------
   integer(ip), allocatable :: CellMDIndex(:,:)
 
@@ -825,8 +825,10 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
       iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
 
       do
-        associate(color => trim(PALETTE(iBCM)))
+        associate(color => PALETTE(iBCM))
+
           iiBCCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell) 
+          
           write(unit, "('  ', A, '->', A, ' [color=', A, ']')") &
             & 'C'//I2S(iBCCell), & ! source ID
             & 'C'//I2S(iiBCCell), color ! dest ID and color

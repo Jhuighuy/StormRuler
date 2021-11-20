@@ -129,7 +129,7 @@ Legend:
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
 
-* Parameters system:
+* Options system:
   - [ ] 💄 ???
 
 * Mesh:
@@ -140,17 +140,26 @@ Legend:
   - [ ] 🪓 Generate nodes,
   - [ ] 🪓 Generate faces,
   - [ ] 🧸 Redesigned VTK output,
-  - [ ] 🚬 Better cell ordering quality functional, 
+
+* Mesh ordering:
   - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
   - [x] 🪓 Cache-friendly cell sorting: METIS,
   - [ ] 🐞 Something looks broken..
-  - [ ] 🧸 Unified API for cell sorting,
-  - [ ] 🪓 BC cells sorting and better BCs parallelization,
-  - [ ] 🚬 Mesh coarsening and refinement (pre GMG),
+  - [ ] 🚬 Better cell ordering quality functional, 
+  - [ ] 🧸 Functional-based unified API for cell ordering,
+  - [ ] 🪓 BC cells sorting and better BCs parallelization.
+
+* AMR/cut cell:
   - [ ] 🪓 Block mesh (pre MPI),
   - [ ] 🚬🚬 Non-conforming multilevel mesh,
-  - [ ] 🚬🚬🚬 AMR,
-  - [ ] 🚬🚬🚬 Cut cell methods.
+  - [ ] 🚬🚬🚬 AMR...
+  - [ ] 🚬🚬🚬 Cut cell methods...
+
+* GMG:
+  - [ ] 🚬 Mesh coarsening and refinement (pre GMG),
+  - [ ] 🚬🚬 V-cycle GMG,
+  - [ ] 🚬🚬 F-cycle GMG,
+  - [ ] 🚬🚬 W-cycle GMG.
 
 * New differential operators and boundary conditions:
   - [ ] 🧸 Variable weight Laplace operator with 4+ order approx.,
@@ -165,28 +174,32 @@ Legend:
 * Linear solvers:
   - [ ] 🧻 Clean-up unified solver to use conjugate MatVec,
   - [ ] 🧻 Convergence parameters in C/C++ API,
+  - [ ] 🧻 Non-uniform solver on higher-level,
   - [ ] 💄 Some better residual monitor,
   - [x] 🚬 `GMRES` solver implementation,
   - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
   - [ ] 🪓 `QMR` solver implementation,
   - [ ] 🪓 `TFQMR` solver implementation.
-
-* Matrix reconstruction:
-  - [ ] 🪓 Matrix portrait construction,
-  - [ ] 🚬🚬🚬 Graph-coloring problem,
-  - [ ] 🪓 `ILU`/`ICHOL` preconditioners,
-  - [ ] 🪓 `SPAI` preconditioner,
   - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
+
+* Matrix extraction:
+  - [ ] 🧸 CSR matrix class, CSR matvec,
+  - [ ] 🧸 CSC matrix class, CSC matvec,
+  - [ ] 🧸 CS* matrix transposition,
+  - [ ] 🧸 CS* matrix sparsification with specified tolerance,
+  - [x] 🧸 Extraction with prescribed coloring.
+  - [ ] 🧻 Extraction with prescribed coloring (refactor).
+  - [x] 🪓 Bandwidth-based column coloring problem,
+  - [ ] 🦜 Portrait-based column coloring problem,
+  - [ ] 🚬 Some more optimal column coloring problem..
 
 * Preconditioning:
   - [x] 🧻 Refactor precondtioner from function pointer to class,
-  - [ ] 🧸 Add user-defined preconditioner in C/C++ API,
-  - [ ] 🦜 Fix block case diagonal extraction,
-  - [ ] 🦜 Block tridiagonal preconditioner,
-  - [ ] 🚬🚬🚬 Matrix-free SPAI preconditioner,
-  - [ ] 🚬 V-cycle GMG,
-  - [ ] 🚬🚬 F-cycle GMG,
-  - [ ] 🚬🚬🚬 W-cycle GMG.
+  - [ ] 🚬 `SPAI` preconditioner,
+  - [ ] 🪓 MKL-based `ILU`/`ICHOL` preconditioners,
+  - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
+  - [ ] 🧻 Refactor unified and C/C++ API for preconditioning,
+  - [ ] 🧸 Add user-defined preconditioner in C/C++ API.
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,

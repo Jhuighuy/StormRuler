@@ -270,7 +270,6 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   real(dp) :: alpha, alphaBar, beta, rho, rhoBar, cs, sn, &
     & theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar
   type(tArray) :: r, s, t, w, h, u, v, z
-  class(*), allocatable :: preEnv
   
   call AllocArray(t, r, u, v, w, h, z, mold=x)
   if (present(precond)) then

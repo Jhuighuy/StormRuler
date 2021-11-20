@@ -46,7 +46,7 @@ contains
 end type tPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize preconditioner.
+!! Initialize preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tInitPrecondFunc(precond, mesh, MatVec)
@@ -58,7 +58,7 @@ abstract interface
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply preconditioner.
+!! Apply preconditioner: 𝓟𝒙 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tApplyPrecondFunc(precond, mesh, PxArr, xArr, MatVec)

@@ -178,7 +178,7 @@ Legend:
   - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
 
 * Preconditioning:
-  - [ ] 🧻 Refactor precondtioner from function pointer to class,
+  - [x] 🧻 Refactor precondtioner from function pointer to class,
   - [ ] 🧸 Add user-defined preconditioner in C/C++ API,
   - [ ] 🦜 Fix block case diagonal extraction,
   - [ ] 🦜 Block tridiagonal preconditioner,

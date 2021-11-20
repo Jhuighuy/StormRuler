@@ -33,10 +33,11 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub 
 use StormRuler_BLAS, only: tMatVecFunc
-use StormRuler_Solvers_Precond, only: tPreMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Precond, only: tPreconditioner
+
+use StormRuler_Matrix!, only: ...
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
@@ -67,6 +68,8 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   procedure(tMatVecFunc) :: MatVec
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
+
+  type(tColumnMatrix) :: matrix
 
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
@@ -114,6 +117,19 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
 contains
   subroutine SelectMethod(precond)
     class(tPreconditioner), intent(inout), optional :: precond
+    
+    if (preMethod == 'extr') then; block
+      type(tColumnColoring) :: coloring
+
+      call InitBandedColumnMatrix(matrix, mesh, 2)
+      call ColorColumns_Banded(coloring, mesh, matrix)
+      call ReconstructMatrix(matrix, coloring, mesh, uMatVec, mold=x)
+
+      params%Name = params%Name//'EXTR)'
+      call Solve_BiCGStab(mesh, x, f, MatVec_Extracted, params, precond)
+      return
+
+    end block; end if
 
     select case(method)
       case('CG')
@@ -133,7 +149,7 @@ contains
         call Solve_QMR(mesh, x, f, uMatVec, params, precond)
       case('TFQMR')
         params%Name = params%Name//'TFQMR)'
-        call Solve_QMR(mesh, x, f, uMatVec, params, precond)
+        call Solve_TFQMR(mesh, x, f, uMatVec, params, precond)
       case('LSQR')
         params%Name = params%Name//'LSQR)'
         call Solve_LSQR(mesh, x, f, uMatVec, params, precond)
@@ -153,6 +169,13 @@ contains
     call Sub(mesh, Ax, Ax, t)
 
   end subroutine MatVec_Uniformed
+  subroutine MatVec_Extracted(mesh, Ax, x)
+    class(tMesh), intent(inout), target :: mesh
+    class(tArray), intent(inout), target :: x, Ax
+
+    call ColumnMatVec(mesh, matrix, Ax, x)
+
+  end subroutine MatVec_Extracted
 end subroutine LinSolve
 
 end module StormRuler_Solvers

@@ -137,7 +137,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve(mesh, STORM_BiCGStab, STORM_NONE, c_hat, rhs, 
+  stormLinSolve(mesh, STORM_BiCGStab, "extr", c_hat, rhs, 
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);

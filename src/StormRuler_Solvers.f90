@@ -38,6 +38,7 @@ use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Precond, only: tPreconditioner
 
 use StormRuler_Matrix!, only: ...
+use StormRuler_Matrix_Coloring!, only: ...
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
@@ -69,7 +70,8 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  type(tColumnMatrix) :: matrix
+  type(tRowMatrix) :: rowMatrix
+  type(tColumnMatrix) :: colMatrix
 
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
@@ -121,9 +123,11 @@ contains
     if (preMethod == 'extr') then; block
       type(tColumnColoring) :: coloring
 
-      call InitBandedColumnMatrix(matrix, mesh, 2)
-      call ColorColumns_Banded(coloring, mesh, matrix)
-      call ReconstructMatrix(matrix, coloring, mesh, uMatVec, mold=x)
+      call InitBandedColumnMatrix(colMatrix, mesh, 2)
+      call ColorColumns_Banded(coloring, mesh, colMatrix)
+      call ReconstructMatrix(colMatrix, coloring, mesh, uMatVec, mold=x)
+
+      call ColumnToRowMatrix(mesh, rowMatrix, colMatrix)
 
       params%Name = params%Name//'EXTR)'
       call Solve_BiCGStab(mesh, x, f, MatVec_Extracted, params, precond)
@@ -173,7 +177,7 @@ contains
     class(tMesh), intent(inout), target :: mesh
     class(tArray), intent(inout), target :: x, Ax
 
-    call ColumnMatVec(mesh, matrix, Ax, x)
+    call RowMatVec(mesh, rowMatrix, Ax, x)
 
   end subroutine MatVec_Extracted
 end subroutine LinSolve

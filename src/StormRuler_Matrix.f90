@@ -40,61 +40,75 @@ use StormRuler_BLAS, only: tMatVecFunc
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Marix column coloring.
+!! Compressed sparse row (CSR) block matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tColumnColoring
-  ! ----------------------
-  ! Number of the colors.
-  ! ----------------------
-  integer(ip) :: NumColors
+type :: tRowMatrix
 
   ! ----------------------
-  ! Shape is [1, Cells].
-  ! ----------------------
-  integer(ip), allocatable :: ColumnColor(:)
-
-  ! ----------------------
-  ! Shape is [1, NumColors + 1].
-  ! ----------------------
-  integer(ip), allocatable :: ColorColumns(:)
-  ! ----------------------
-  ! Shape is [1, Cells].
-  ! ----------------------
-  integer(ip), allocatable :: ColorColumnIndices(:)
-end type tColumnColoring
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compressed sparse column (CSC) matrix.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tColumnMatrix
-  ! ----------------------
+  ! Row nonzeroes pointers.
   ! Shape is [1, NumCells + 1].
   ! ----------------------
-  integer(ip), allocatable :: ColumnPtr(:)
+  integer(ip), allocatable :: RowPtrs(:)
+
   ! ----------------------
-  ! Column nonzeroes indices.
-  ! Shape is [1, ColumnPtrs(NumCells + 1)].
+  ! Row nonzeroes column indices.
+  ! Shape is [1, RowPtrs(NumCells + 1) - 1].
+  ! ----------------------
+  integer(ip), allocatable :: ColumnIndices(:)
+
+  ! ----------------------
+  ! Row nonzeroes column coefficients.
+  ! Shape is [1, NumVars]×[1, NumVars]×[1, RowPtrs(NumCells + 1) - 1].
+  ! ----------------------
+  real(dp), allocatable :: ColumnCoeffs(:,:,:)
+
+end type tRowMatrix
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compressed sparse column (CSC) block matrix.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type :: tColumnMatrix
+
+  ! ----------------------
+  ! Column nonzeroes pointers.
+  ! Shape is [1, NumCells + 1].
+  ! ----------------------
+  integer(ip), allocatable :: ColumnPtrs(:)
+
+  ! ----------------------
+  ! Column nonzeroes row indices.
+  ! Shape is [1, ColumnPtrs(NumCells + 1) - 1].
   ! ----------------------
   integer(ip), allocatable :: RowIndices(:)
+
   ! ----------------------
-  ! Column nonzeroes values.
-  ! Shape is [1, ColumnPtrs(NumCells + 1)].
-  ! TODO: Should be [1, NumVars]×[1, NumVars]×Shape in block case.
+  ! Column nonzeroes row coefficients.
+  ! Shape is [1, NumVars]×[1, NumVars]×[1, RowPtrs(NumCells + 1) - 1].
   ! ----------------------
-  real(dp), allocatable :: RowEntries(:)
+  real(dp), allocatable :: RowCoeffs(:,:,:)
+
 end type tColumnMatrix
+
+interface SparseMatVec
+  module procedure RowMatVec
+  module procedure ColumnMatVec
+end interface SparseMatVec
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Initialize compressed sparse column matrix 
+!! with the specified power of mesh bandwidth.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine InitBandedColumnMatrix(matrix, mesh, power)
   class(tColumnMatrix), intent(inout) :: matrix
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: power
 
-  integer(ip) :: cell, cellFace, column, row
+  integer(ip) :: cell, cellFace, row, column
   integer(ip) :: bandwidth, halfBandwidth
 
   ! ----------------------
@@ -103,39 +117,39 @@ subroutine InitBandedColumnMatrix(matrix, mesh, power)
   halfBandwidth = 0
   do cell = 1, mesh%NumCells
     do cellFace = 1, mesh%NumCellFaces
+      
       associate(cellCell => mesh%CellToCell(cellFace, cell))
-
         if (cellCell <= mesh%NumCells) then
           halfBandwidth = max(halfBandwidth, abs(cell - cellCell))
         end if
-
       end associate
+
     end do
   end do
 
-  halfBandwidth = halfBandwidth*power
+  halfBandwidth = power*halfBandwidth
   bandwidth = 2*halfBandwidth + 1
 
   ! ----------------------
-  ! Fill the columns entries.
+  ! Fill the columns pointers and row entries.
   ! ----------------------
-  allocate(matrix%ColumnPtr(mesh%NumCells + 1))
+  allocate(matrix%ColumnPtrs(mesh%NumCells + 1))
   !! TODO: size is overestimated here.
   !! (nc + 1)*nc/2 - ...
   associate(size => mesh%NumCells*bandwidth)
     allocate(matrix%RowIndices(size))
-    allocate(matrix%RowEntries(size))
+    allocate(matrix%RowCoeffs(1,1,size))
   end associate
 
-  matrix%ColumnPtr(1) = 1
+  matrix%ColumnPtrs(1) = 1
   do column = 1, mesh%NumCells
 
-    associate(columnPtr => matrix%ColumnPtr(column + 1))
-      columnPtr = matrix%ColumnPtr(column)
+    associate(columnPtr => matrix%ColumnPtrs(column + 1))
+      columnPtr = matrix%ColumnPtrs(column)
       do row = max(column - halfBandwidth, 1), &
              & min(column + halfBandwidth, mesh%NumCells)
         matrix%RowIndices(columnPtr) = row
-        matrix%RowEntries(columnPtr) = 0.0_dp
+        matrix%RowCoeffs(:,:,columnPtr) = 0.0_dp
         columnPtr = columnPtr + 1
       end do
     end associate
@@ -144,132 +158,126 @@ subroutine InitBandedColumnMatrix(matrix, mesh, power)
 
 end subroutine InitBandedColumnMatrix
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Generate column coloring using the banded algorithm.
-!!
-!! Estimated number of colors is ≈ 𝘣𝘸(𝓐ᵖ) = 𝑝⋅(𝘣𝘸(𝓐) - 1) + 1,
-!! where 𝘣𝘸(𝓐) is the bandwidth of 𝓐.
-!! 
-!! Banded algorithm is simple and fast, but suboptimal in 
-!! the most practical cases (for 𝑝 = 1 it generates ≈2 times
-!! more colors than more sophisticated coloring algorithms).
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine ColorColumns_Banded(coloring, mesh, matrix)
-  class(tColumnColoring), intent(inout) :: coloring
-  class(tMesh), intent(in) :: mesh
-  class(tColumnMatrix), intent(in) :: matrix
+subroutine ColumnToRowMatrix(mesh, rowMat, colMat)
+  class(tMesh), intent(inout) :: mesh
+  class(tRowMatrix), intent(inout) :: rowMat
+  class(tColumnMatrix), intent(in) :: colMat
 
-  integer(ip) :: cell, color
-  integer(ip) :: bandwidth
+  integer(ip) :: row, column, columnPtr, index, numEntries
 
+  allocate(rowMat%RowPtrs, mold=colMat%ColumnPtrs)
+  allocate(rowMat%ColumnIndices, mold=colMat%RowIndices)
+  allocate(rowMat%ColumnCoeffs, mold=colMat%RowCoeffs)
+
+  numEntries = colMat%ColumnPtrs(size(colMat%ColumnPtrs)) - 1
+  
   ! ----------------------
-  ! Compute bandwidth.
+  ! Fill row pointers.
   ! ----------------------
-  bandwidth = 401
-  coloring%NumColors = bandwidth
+  rowMat%RowPtrs(:) = 0
+  do index = 1, numEntries
 
-  ! ----------------------
-  ! Fill the column to color table.
-  ! ----------------------
-  allocate(coloring%ColumnColor(mesh%NumCells))
-  do cell = 1, mesh%NumCells
-
-    color = mod(cell - 1, coloring%NumColors) + 1 
-    coloring%ColumnColor(cell) = color
-
-  end do
-
-  ! ----------------------
-  ! Fill the color to column table.
-  ! ----------------------
-  allocate(coloring%ColorColumns(coloring%NumColors + 1))
-  allocate(coloring%ColorColumnIndices(mesh%NumCells))
-
-  coloring%ColorColumns(1) = 1
-  do color = 1, coloring%NumColors
-
-    associate(colorColumn => coloring%ColorColumns(color + 1))
-      colorColumn = coloring%ColorColumns(color)
-      do cell = color, mesh%NumCells, bandwidth
-        coloring%ColorColumnIndices(colorColumn) = cell 
-        colorColumn = colorColumn + 1
-      end do
+    associate(rowPtr => rowMat%RowPtrs(colMat%RowIndices(index) + 1))
+      rowPtr = rowPtr + 1
     end associate
-
+  
   end do
 
-  print *, coloring%ColorColumns
+  rowMat%RowPtrs(1) = 1
+  do row = 1, mesh%NumCells
+  
+    rowMat%RowPtrs(row + 1) = rowMat%RowPtrs(row) + rowMat%RowPtrs(row + 1)
+  
+  end do
 
-end subroutine ColorColumns_Banded
+  ! ----------------------
+  ! Fill column entries.
+  ! ----------------------
+  do column = 1, mesh%NumCells
+    do columnPtr = colMat%ColumnPtrs(column), colMat%ColumnPtrs(column + 1) - 1
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+      associate(row => colMat%RowIndices(columnPtr), &
+           & coeffs => colMat%RowCoeffs(:,:,columnPtr))
+        associate(rowPtr => rowMat%RowPtrs(row))
+          rowMat%ColumnIndices(rowPtr) = column
+          rowMat%ColumnCoeffs(:,:,rowPtr) = coeffs
+          rowPtr = rowPtr + 1
+        end associate
+      end associate
 
-subroutine ReconstructMatrix(matrix, coloring, mesh, MatVec, mold)
-  class(tColumnMatrix), intent(inout) :: matrix
-  class(tColumnColoring), intent(in) :: coloring
+    end do
+  end do
+
+  rowMat%RowPtrs = eoshift(rowMat%RowPtrs, shift=-1)
+  rowMat%RowPtrs(1) = 1
+
+end subroutine ColumnToRowMatrix
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compressed sparse column matrix-vector product. 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine RowMatVec(mesh, mat, yArr, xArr)
   class(tMesh), intent(inout) :: mesh
-  class(tArray), intent(in) :: mold
-  procedure(tMatVecFunc) :: MatVec
+  class(tRowMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
 
-  integer(ip) :: cell, row, column, color
-  real(dp), pointer :: tDat(:,:)
-  type(tArray) :: Q, t, s
+  real(dp), pointer :: x(:,:), y(:,:)
 
-  call AllocArray(t, mold=mold)
-  call AllocArray(Q, shape=[mold%mShape, coloring%NumColors])
+  call xArr%Get(x); call yArr%Get(y)
 
-  ! ----------------------
-  ! Reconstruct the compressed columns.
-  ! ----------------------
-  do color = 1, coloring%NumColors
-    call Fill(mesh, t, 0.0_dp)
-    do column = coloring%ColorColumns(color), coloring%ColorColumns(color + 1) - 1
-      call t%Get(tDat)
-      tDat(:,coloring%ColorColumnIndices(column)) = 1.0_dp
-    end do
-    s = Q%Slice(color); call MatVec(mesh, s, t)
-  end do
+  call mesh%RunCellKernel(RowMatVec_Kernel)
 
-  ! ----------------------
-  ! Decompress the columns.
-  ! ----------------------
-  do cell = 1, mesh%NumCells
-    color = coloring%ColumnColor(cell)
-    t = Q%Slice(color); call t%Get(tDat)
-    do column = matrix%ColumnPtr(cell), matrix%ColumnPtr(cell + 1) - 1
+contains
+  subroutine RowMatVec_Kernel(row)
+    integer(ip), intent(in) :: row
 
-      matrix%RowEntries(column) = tDat(1,matrix%RowIndices(column))
+    integer(ip) :: rowPtr
+
+    y(:,row) = 0.0_dp
+
+    do rowPtr = mat%RowPtrs(row), mat%RowPtrs(row + 1) - 1
+
+      associate(column => mat%ColumnIndices(rowPtr), &
+              & coeffs => mat%ColumnCoeffs(:,:,rowPtr))
+        y(:,row) = y(:,row) + matmul(coeffs, x(:,column))
+      end associate
 
     end do
-  end do
 
-end subroutine ReconstructMatrix
+  end subroutine RowMatVec_Kernel
+end subroutine RowMatVec
 
-subroutine ColumnMatVec(mesh, matrix, Ax, x)
-  class(tColumnMatrix), intent(inout) :: matrix
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Compressed sparse column matrix-vector product. 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine ColumnMatVec(mesh, mat, yArr, xArr)
   class(tMesh), intent(inout) :: mesh
-  class(tArray), intent(inout) :: Ax, x
+  class(tColumnMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
 
-  integer(ip) :: cell, row, column, color
+  real(dp), pointer :: x(:,:), y(:,:)
 
-  real(dp) :: a
-  real(dp), pointer :: y(:), z(:)
+  call xArr%Get(x); call yArr%Get(y)
+  
+  call Fill(mesh, yArr, 0.0_dp)
+  call mesh%RunCellKernel(ColumnMatVec_Kernel)
 
-  call Ax%Get(y)
-  call x%Get(z)
+contains
+  subroutine ColumnMatVec_Kernel(column)
+    integer(ip), intent(in) :: column
 
-  y(:) = 0.0_dp
-  do cell = 1, mesh%NumCells
-    do column = matrix%ColumnPtr(cell), matrix%ColumnPtr(cell + 1) - 1
-      row = matrix%RowIndices(column)
-      a = matrix%RowEntries(column)
+    integer(ip) :: columnPtr
 
-      y(row) = y(row) + a*z(cell)
+    do columnPtr = mat%ColumnPtrs(column), mat%ColumnPtrs(column + 1) - 1
+
+      associate(row => mat%RowIndices(columnPtr), &
+           & coeffs => mat%RowCoeffs(:,:,columnPtr))
+        y(:,row) = y(:,row) + matmul(coeffs, x(:,column))
+      end associate
 
     end do
-  end do
 
+  end subroutine ColumnMatVec_Kernel
 end subroutine ColumnMatVec
 
 end module StormRuler_Matrix

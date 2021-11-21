@@ -93,18 +93,6 @@ interface FuncProd
   module procedure FuncProd
 end interface FuncProd
 
-interface MatVecProd_Diagonal
-  module procedure MatVecProd_Diagonal
-end interface MatVecProd_Diagonal
-
-interface MatVecProd_Triangular
-  module procedure MatVecProd_Triangular
-end interface MatVecProd_Triangular
-
-interface Solve_Triangular
-  module procedure Solve_Triangular
-end interface Solve_Triangular
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -169,14 +157,14 @@ real(dp) function Dot(mesh, xArr, yArr)
   Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
 
 contains
-  real(dp) function Dot_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  real(dp) function Dot_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
     ! ----------------------
     ! 𝑑 ← 𝑑 + 𝒙ᵢ𝒚ᵢ. 
     ! ----------------------
-    Dot_Kernel = sum(x(:,iCell)*y(:,iCell))
-    if (gCylCoords) Dot_Kernel = Dot_Kernel*mesh%CellCenter(1,iCell)
+    Dot_Kernel = sum(x(:,cell)*y(:,cell))
+    if (gCylCoords) Dot_Kernel = Dot_Kernel*mesh%CellCenter(1,cell)
     
   end function Dot_Kernel
 end function Dot
@@ -195,11 +183,11 @@ real(dp) function Norm_1(mesh, xArr)
   Norm_1 = mesh%RunCellKernel_Sum(Norm_1_Kernel)
 
 contains
-  real(dp) function Norm_1_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  real(dp) function Norm_1_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    Norm_1_Kernel = sum(abs(x(:,iCell)))
-    if (gCylCoords) Norm_1_Kernel = Norm_1_Kernel*mesh%CellCenter(1,iCell)
+    Norm_1_Kernel = sum(abs(x(:,cell)))
+    if (gCylCoords) Norm_1_Kernel = Norm_1_Kernel*mesh%CellCenter(1,cell)
 
   end function Norm_1_Kernel
 end function Norm_1
@@ -229,10 +217,10 @@ real(dp) function Norm_C(mesh, xArr)
   Norm_C = mesh%RunCellKernel_Max(Norm_C_Kernel)
 
 contains
-  real(dp) function Norm_C_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  real(dp) function Norm_C_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    Norm_C_Kernel = maxval(abs(x(:,iCell)))
+    Norm_C_Kernel = maxval(abs(x(:,cell)))
     
   end function Norm_C_Kernel
 end function Norm_C
@@ -255,10 +243,10 @@ subroutine Fill(mesh, yArr, alpha)
   call mesh%RunCellKernel(Fill_Kernel)
 
 contains
-  subroutine Fill_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Fill_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    y(:,iCell) = alpha
+    y(:,cell) = alpha
     
   end subroutine Fill_Kernel
 end subroutine Fill
@@ -287,12 +275,12 @@ contains
     class(tMesh), intent(inout), target :: mesh
     integer(ip), intent(in) :: firstCell, lastCell
 
-    integer :: iCell
+    integer :: cell
 
-    do iCell = firstCell, lastCell
-      call random_number(y(:,iCell))
+    do cell = firstCell, lastCell
+      call random_number(y(:,cell))
       if (present(a).and.present(b)) then
-        y(:,iCell) = min(a, b) + abs(b - a)*y(:,iCell)
+        y(:,cell) = min(a, b) + abs(b - a)*y(:,cell)
       end if
     end do
     
@@ -314,10 +302,10 @@ subroutine Set(mesh, yArr, xArr)
   call mesh%RunCellKernel(Set_Kernel)
 
 contains
-  subroutine Set_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Set_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    y(:,iCell) = x(:,iCell)
+    y(:,cell) = x(:,cell)
 
   end subroutine Set_Kernel
 end subroutine Set
@@ -338,10 +326,10 @@ subroutine Scale(mesh, yArr, xArr, alpha)
   call mesh%RunCellKernel(Scale_Kernel)
 
 contains
-  subroutine Scale_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Scale_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    y(:,iCell) = alpha*x(:,iCell)
+    y(:,cell) = alpha*x(:,cell)
 
   end subroutine Scale_Kernel
 end subroutine Scale
@@ -366,10 +354,10 @@ subroutine Add(mesh, zArr, yArr, xArr, alpha, beta)
   call mesh%RunCellKernel(Add_Kernel)
 
 contains
-  subroutine Add_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Add_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    z(:,iCell) = b*y(:,iCell) + a*x(:,iCell)
+    z(:,cell) = b*y(:,cell) + a*x(:,cell)
 
   end subroutine Add_Kernel
 end subroutine Add
@@ -394,10 +382,10 @@ subroutine Sub(mesh, zArr, yArr, xArr, alpha, beta)
   call mesh%RunCellKernel(Sub_Kernel)
 
 contains
-  subroutine Sub_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Sub_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    z(:,iCell) = b*y(:,iCell) - a*x(:,iCell)
+    z(:,cell) = b*y(:,cell) - a*x(:,cell)
     
   end subroutine Sub_Kernel
 end subroutine Sub
@@ -440,22 +428,22 @@ subroutine Mul(mesh, zArr, yArr, xArr)
   end if
 
 contains
-  subroutine MulScal_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine MulScal_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    z(:,iCell) = yScal(iCell)*x(:,iCell)
+    z(:,cell) = yScal(cell)*x(:,cell)
     
   end subroutine MulScal_Kernel
-  subroutine Mul_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine Mul_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    z(:,iCell) = yDiag(:,iCell)*x(:,iCell)
+    z(:,cell) = yDiag(:,cell)*x(:,cell)
     
   end subroutine Mul_Kernel
-  subroutine MulMat_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine MulMat_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    z(:,iCell) = matmul(yMat(:,:,iCell), x(:,iCell))
+    z(:,cell) = matmul(yMat(:,:,cell), x(:,cell))
     
   end subroutine MulMat_Kernel
 end subroutine Mul
@@ -478,13 +466,13 @@ real(dp) function Integrate(mesh, xArr, f) result(integral)
   integral = mesh%RunCellKernel_Sum(Integrate_Kernel)/mesh%NumCells
 
 contains
-  real(dp) function Integrate_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  real(dp) function Integrate_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    associate(y => f(x(:,iCell)))
+    associate(y => f(x(:,cell)))
       Integrate_Kernel = y(1)
     end associate
-    if (gCylCoords) Integrate_Kernel = Integrate_Kernel*mesh%CellCenter(1,iCell)
+    if (gCylCoords) Integrate_Kernel = Integrate_Kernel*mesh%CellCenter(1,cell)
 
   end function Integrate_Kernel
 end function Integrate
@@ -505,10 +493,10 @@ subroutine FuncProd(mesh, yArr, xArr, f)
   call mesh%RunCellKernel(FuncProd_Kernel)
   
 contains
-  subroutine FuncProd_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine FuncProd_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    y(:,iCell) = f(x(:,iCell))
+    y(:,cell) = f(x(:,cell))
 
   end subroutine FuncProd_Kernel
 end subroutine FuncProd
@@ -529,196 +517,12 @@ subroutine SpFuncProd(mesh, yArr, xArr, f)
   call mesh%RunCellKernel(SpFuncProd_Kernel)
   
 contains
-  subroutine SpFuncProd_Kernel(iCell)
-    integer(ip), intent(in) :: iCell
+  subroutine SpFuncProd_Kernel(cell)
+    integer(ip), intent(in) :: cell
 
-    y(:,iCell) = f(mesh%CellCenter(iCell), x(:,iCell))
+    y(:,cell) = f(mesh%CellCenter(cell), x(:,cell))
 
   end subroutine SpFuncProd_Kernel
 end subroutine SpFuncProd
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Multiply a vector by diagonal of the matrix: 𝓓𝒙 ← 𝘥𝘪𝘢𝘨(𝓐)𝒙.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine MatVecProd_Diagonal(mesh, DxArr, xArr, MatVec)
-  class(tMesh), intent(inout) :: mesh
-  class(tArray), intent(in) :: xArr
-  class(tArray), intent(inout) :: DxArr
-  procedure(tMatVecFunc) :: MatVec
-
-  real(dp), pointer :: x(:,:), Dx(:,:)
-
-  call xArr%Get(x); call DxArr%Get(Dx)
-
-  call mesh%RunCellKernel_Block(MatVecProd_Diagonal_BlockKernel)
-  call mesh%SetRange()
-
-contains
-  subroutine MatVecProd_Diagonal_BlockKernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
-    integer(ip), intent(in) :: firstCell, lastCell
-
-    integer(ip) :: iCell
-    type(tArray) :: eArr
-    real(dp), pointer :: e(:,:)
-
-    call AllocArray(eArr, mold=xArr)
-    call eArr%Get(e)
-
-    e(:,:) = 0.0_dp
-
-    do iCell = firstCell, lastCell
-      e(:,iCell) = x(:,iCell)
-      call mesh%SetRange(iCell)
-      call MatVec(mesh, DxArr, eArr)
-      e(:,iCell) = 0.0_dp
-    end do
-
-  end subroutine MatVecProd_Diagonal_BlockKernel  
-end subroutine MatVecProd_Diagonal
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Multiply a vector by a lower/upper triangular 
-!! part of the matrix: 𝓣𝒙 ← 𝘵𝘳𝘪𝘶(𝓐)𝒙 or 𝓣𝒙 ← 𝘵𝘳𝘪𝘭(𝓐)𝒙.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine MatVecProd_Triangular(mesh, upLo, TxArr, xArr, MatVec)
-  class(tMesh), intent(inout) :: mesh
-  class(tArray), intent(in) :: xArr
-  class(tArray), intent(inout) :: TxArr
-  procedure(tMatVecFunc) :: MatVec
-  character, intent(in) :: upLo
-
-  real(dp), pointer :: x(:,:), Tx(:,:)
-
-  call xArr%Get(x); call TxArr%Get(Tx)
-
-  if (upLo == 'U') then
-    call mesh%RunCellKernel_Block(MatVecProd_UpperTriangular_BlockKernel)
-  else if (upLo == 'L') then
-    call mesh%RunCellKernel_Block(MatVecProd_LowerTriangular_BlockKernel)
-  end if
-  call mesh%SetRange()
-
-contains
-  subroutine MatVecProd_UpperTriangular_BlockKernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
-    integer(ip), intent(in) :: firstCell, lastCell
-
-    integer(ip) :: iCell
-    type(tArray) :: eArr
-    real(dp), pointer :: e(:,:)
-
-    call AllocArray(eArr, mold=xArr)
-    call eArr%Get(e)
-
-    e(:,:firstCell-1) = 0.0_dp
-    e(:,firstCell:) = x(:,firstCell:)
-
-    do iCell = firstCell, lastCell
-      call mesh%SetRange(iCell)
-      call MatVec(mesh, TxArr, eArr)
-      e(:,iCell) = 0.0_dp
-    end do
-
-  end subroutine MatVecProd_UpperTriangular_BlockKernel 
-  subroutine MatVecProd_LowerTriangular_BlockKernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
-    integer(ip), intent(in) :: firstCell, lastCell
-
-    integer(ip) :: iCell
-    type(tArray) :: eArr
-    real(dp), pointer :: e(:,:)
-
-    call AllocArray(eArr, mold=xArr)
-    call eArr%Get(e)
-
-    e(:,:lastCell) = x(:,:lastCell)
-    e(:,lastCell+1:) = 0.0_dp
-    
-    do iCell = lastCell, firstCell, -1
-      call mesh%SetRange(iCell)
-      call MatVec(mesh, TxArr, eArr)
-      e(:,iCell) = 0.0_dp
-    end do
-
-  end subroutine MatVecProd_LowerTriangular_BlockKernel 
-end subroutine MatVecProd_Triangular
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve a linear system with a lower/upper 
-!! triangular part of the matrix: 𝘵𝘳𝘪𝘶(𝓐)𝒙 = 𝒃 or 𝘵𝘳𝘪𝘭(𝓐)𝒙 = 𝒃.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Solve_Triangular(mesh, upLo, xArr, bArr, diagArr, MatVec)
-  class(tMesh), intent(inout) :: mesh
-  class(tArray), intent(in) :: bArr, diagArr
-  class(tArray), intent(inout) :: xArr
-  procedure(tMatVecFunc) :: MatVec
-  character, intent(in) :: upLo
-
-  real(dp), pointer :: x(:,:), b(:,:), diag(:,:)
-
-  call xArr%Get(x); call bArr%Get(b); call diagArr%Get(diag)
-
-  ! TODO: not very parallel..
-  call mesh%SetRange(parallel=.false.)
-  if (upLo == 'U') then
-    call mesh%RunCellKernel_Block(Solve_UpperTriangular_BlockKernel)
-  else if (upLo == 'L') then
-    call mesh%RunCellKernel_Block(Solve_LowerTriangular_BlockKernel)
-  end if
-  call mesh%SetRange()
-
-contains
-  subroutine Solve_UpperTriangular_BlockKernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
-    integer(ip), intent(in) :: firstCell, lastCell
-
-    integer(ip) :: iCell
-
-    type(tArray) :: AxArr
-    real(dp), pointer :: Ax(:,:)
-
-    call AllocArray(xArr, mold=AxArr)
-    call AxArr%Get(Ax)
-
-    Ax(:,:) = 0.0_dp
-    x(:,:) = 0.0_dp
-    x(:,lastCell) = b(:,lastCell)/diag(:,lastCell)
-
-    do iCell = lastCell - 1, firstCell, -1
-      call mesh%SetRange(iCell)
-      call MatVec(mesh, AxArr, xArr)
-      ! TODO: this is not a correct diagonal solution in block case!
-      x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
-    end do
-
-  end subroutine Solve_UpperTriangular_BlockKernel 
-  subroutine Solve_LowerTriangular_BlockKernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
-    integer(ip), intent(in) :: firstCell, lastCell
-
-    integer(ip) :: iCell
-    type(tArray) :: AxArr
-    real(dp), pointer :: Ax(:,:)
-
-    call AllocArray(xArr, mold=AxArr)
-    call AxArr%Get(Ax)
-
-    Ax(:,:) = 0.0_dp
-    x(:,:) = 0.0_dp
-    x(:,firstCell) = b(:,firstCell)/diag(:,firstCell)
-
-    do iCell = firstCell + 1, lastCell
-      call mesh%SetRange(iCell)
-      call MatVec(mesh, AxArr, xArr)
-      ! TODO: this is not a correct diagonal solution in block case!
-      x(:,iCell) = (b(:,iCell) - Ax(:,iCell))/diag(:,iCell)
-    end do
-
-  end subroutine Solve_LowerTriangular_BlockKernel 
-end subroutine Solve_Triangular
 
 end module StormRuler_BLAS

@@ -32,7 +32,7 @@ use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: tMatVecFunc, Fill
-use StormRuler_Matrix, only: tColumnMatrix
+use StormRuler_Matrix!, only: tColumnMatrix
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -40,30 +40,32 @@ use StormRuler_Matrix, only: tColumnMatrix
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Marix column coloring.
+!! Marix column labeling.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tColumnColoring
+type :: tMatrixLabeling
 
   ! ----------------------
   ! Number of the colors.
   ! ----------------------
-  integer(ip) :: NumColors
+  integer(ip) :: NumLabels
 
   ! ----------------------
   ! Shape is [1, Cells].
   ! ----------------------
-  integer(ip), allocatable :: ColumnColor(:)
+  integer(ip), allocatable :: ColLbls(:)
 
   ! ----------------------
-  ! Shape is [1, NumColors + 1].
+  ! Label addresses.
+  ! Shape is [1, NumLabels + 1].
   ! ----------------------
-  integer(ip), allocatable :: ColorPtrs(:)
+  integer(ip), allocatable :: LabelAddrs(:)
   ! ----------------------
+  ! Label column indices.
   ! Shape is [1, Cells].
   ! ----------------------
-  integer(ip), allocatable :: ColorColumnIndices(:)
+  integer(ip), allocatable :: LabelColIndices(:)
 
-end type tColumnColoring
+end type tMatrixLabeling
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -71,106 +73,115 @@ end type tColumnColoring
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Generate column coloring using the banded algorithm.
+!! Generate column labeling using the banded algorithm.
 !!
-!! Estimated number of colors is ≈ 𝘣𝘸(𝓐ᵖ) = 𝑝⋅(𝘣𝘸(𝓐) - 1) + 1,
+!! Estimated number of label is ≈ 𝘣𝘸(𝓐ᵖ) = 𝑝⋅(𝘣𝘸(𝓐) - 1) + 1,
 !! where 𝘣𝘸(𝓐) is the bandwidth of 𝓐.
 !! 
 !! Banded algorithm is simple and fast, but suboptimal in 
 !! the most practical cases (for 𝑝 = 1 it generates ≈2 times
-!! more colors than more sophisticated coloring algorithms).
+!! more labels than more sophisticated labeling algorithms).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine ColorColumns_Banded(coloring, mesh, matrix)
-  class(tColumnColoring), intent(inout) :: coloring
+subroutine LabelColumns_Banded(mesh, mat, labeling)
   class(tMesh), intent(in) :: mesh
-  class(tColumnMatrix), intent(in) :: matrix
+  class(tMatrix), intent(in) :: mat
+  class(tMatrixLabeling), intent(inout) :: labeling
 
-  integer(ip) :: column, color
-  integer(ip) :: bandwidth
-
-  ! ----------------------
-  ! Compute bandwidth.
-  ! ----------------------
-  bandwidth = 401
-  coloring%NumColors = bandwidth
+  integer(ip) :: row, rowAddr, col, lbl
 
   ! ----------------------
-  ! Fill the column to color table.
+  ! Compute number of colors as matrix bandwidth.
   ! ----------------------
-  allocate(coloring%ColumnColor(mesh%NumCells))
-  do column = 1, mesh%NumCells
+  labeling%NumLabels = 0
+  do row = 1, mesh%NumCells
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr))
 
-    color = mod(column - 1, coloring%NumColors) + 1 
-    coloring%ColumnColor(column) = color
+        labeling%NumLabels = max(labeling%NumLabels, abs(row - col))
 
+      end associate
+    end do
+  end do
+  labeling%NumLabels = 2*labeling%NumLabels + 1
+
+  ! ----------------------
+  ! Fill the column to label table.
+  ! ----------------------
+  allocate(labeling%ColLbls(mesh%NumCells))
+  do col = 1, mesh%NumCells
+
+    lbl = mod(col - 1, labeling%NumLabels) + 1 
+    labeling%ColLbls(col) = lbl
+  
   end do
 
   ! ----------------------
-  ! Fill the color to column table.
+  ! Fill the label to column table.
   ! ----------------------
-  allocate(coloring%ColorPtrs(coloring%NumColors + 1))
-  allocate(coloring%ColorColumnIndices(mesh%NumCells))
-
-  coloring%ColorPtrs(1) = 1
-  do color = 1, coloring%NumColors
-    
-    associate(colorPtr => coloring%ColorPtrs(color + 1))
-      colorPtr = coloring%ColorPtrs(color)
-      do column = color, mesh%NumCells, bandwidth
-        coloring%ColorColumnIndices(colorPtr) = column 
-        colorPtr = colorPtr + 1
+  allocate(labeling%LabelAddrs(labeling%NumLabels + 1))
+  allocate(labeling%LabelColIndices(mesh%NumCells))
+  labeling%LabelAddrs(1) = 1
+  do lbl = 1, labeling%NumLabels
+    associate(lblAddr => labeling%LabelAddrs(lbl + 1))
+      
+      lblAddr = labeling%LabelAddrs(lbl)
+      do col = lbl, mesh%NumCells, labeling%NumLabels
+        labeling%LabelColIndices(lblAddr) = col 
+        lblAddr = lblAddr + 1
       end do
-    end associate
 
+    end associate
   end do
 
-end subroutine ColorColumns_Banded
+end subroutine LabelColumns_Banded
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-subroutine ReconstructMatrix(matrix, coloring, mesh, MatVec, mold)
-  class(tColumnMatrix), intent(inout) :: matrix
-  class(tColumnColoring), intent(in) :: coloring
+subroutine ExtractMatrix(mesh, mat, labeling, MatVec, mold)
   class(tMesh), intent(inout) :: mesh
+  class(tMatrix), intent(inout) :: mat
+  class(tMatrixLabeling), intent(in) :: labeling
   class(tArray), intent(in) :: mold
   procedure(tMatVecFunc) :: MatVec
 
-  integer(ip) :: row, column, columnPtr, color, colorPtr
-  real(dp), pointer :: tDat(:,:)
-  type(tArray) :: Q, t, s
+  integer(ip) :: row, rowAddr, col, lbl, lblAddr
 
-  call AllocArray(t, mold=mold)
-  call AllocArray(Q, shape=[mold%mShape, coloring%NumColors])
+  real(dp), pointer :: t(:,:), Q(:,:,:,:)
+  type(tArray) :: QArr, tArr, sArr
+
+  call AllocArray(tArr, mold=mold)
+  call AllocArray(QArr, shape=[mold%mShape, labeling%NumLabels])
+  call QArr%Get(q)
 
   ! ----------------------
   ! Reconstruct the compressed columns.
   ! ----------------------
-  do color = 1, coloring%NumColors
+  do lbl = 1, labeling%NumLabels
 
-    call Fill(mesh, t, 0.0_dp)
-    do colorPtr = coloring%ColorPtrs(color), coloring%ColorPtrs(color + 1) - 1
-      column = coloring%ColorColumnIndices(colorPtr)
-      call t%Get(tDat); tDat(:,column) = 1.0_dp
+    call Fill(mesh, tArr, 0.0_dp)
+
+    do lblAddr = labeling%LabelAddrs(lbl), labeling%LabelAddrs(lbl + 1) - 1
+      col = labeling%LabelColIndices(lblAddr)
+      call tArr%Get(t); t(:,col) = 1.0_dp
     end do
   
-    s = Q%Slice(color); call MatVec(mesh, s, t)
+    sArr = QArr%Slice(lbl); call MatVec(mesh, sArr, tArr)
   
   end do
 
   ! ----------------------
-  ! Decompress the columns.
+  ! Decompress the columns to the CSR matrix.
   ! ----------------------
-  do column = 1, mesh%NumCells
+  do row = 1, mesh%NumCells
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
 
-    color = coloring%ColumnColor(column)
-    t = Q%Slice(color); call t%Get(tDat)
-    do columnPtr = matrix%ColumnPtrs(column), matrix%ColumnPtrs(column + 1) - 1
-      matrix%RowCoeffs(:,:,columnPtr) = tDat(1,matrix%RowIndices(columnPtr))
+      lbl = labeling%ColLbls(mat%ColIndices(rowAddr))
+      mat%ColCoeffs(:,:,rowAddr) = Q(:,:,row,lbl)
+
     end do
-
   end do
 
-end subroutine ReconstructMatrix
+end subroutine ExtractMatrix
 
 end module StormRuler_Matrix_Coloring

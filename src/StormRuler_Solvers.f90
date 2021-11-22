@@ -70,8 +70,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  type(tRowMatrix) :: rowMatrix
-  type(tColumnMatrix) :: colMatrix
+  type(tMatrix) :: mat
 
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
@@ -121,13 +120,11 @@ contains
     class(tPreconditioner), intent(inout), optional :: precond
     
     if (preMethod == 'extr') then; block
-      type(tColumnColoring) :: coloring
+      type(tMatrixLabeling) :: labeling
 
-      call InitBandedColumnMatrix(colMatrix, mesh, 2)
-      call ColorColumns_Banded(coloring, mesh, colMatrix)
-      call ReconstructMatrix(colMatrix, coloring, mesh, uMatVec, mold=x)
-
-      call ColumnToRowMatrix(mesh, rowMatrix, colMatrix)
+      call InitMatrix(mesh, mat, 2)
+      call LabelColumns_Banded(mesh, mat, labeling)
+      call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
 
       params%Name = params%Name//'EXTR)'
       call Solve_BiCGStab(mesh, x, f, MatVec_Extracted, params, precond)
@@ -177,7 +174,7 @@ contains
     class(tMesh), intent(inout), target :: mesh
     class(tArray), intent(inout), target :: x, Ax
 
-    call RowMatVec(mesh, rowMatrix, Ax, x)
+    call MatrixVector(mesh, mat, Ax, x)
 
   end subroutine MatVec_Extracted
 end subroutine LinSolve

@@ -27,6 +27,7 @@ module StormRuler_Matrix
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
+use StormRuler_Helpers!, only: 
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray
@@ -42,57 +43,27 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compressed sparse row (CSR) block matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tRowMatrix
+type :: tMatrix
 
   ! ----------------------
-  ! Row nonzeroes pointers.
+  ! Row nonzeroes addresses.
   ! Shape is [1, NumCells + 1].
   ! ----------------------
-  integer(ip), allocatable :: RowPtrs(:)
+  integer(ip), allocatable :: RowAddrs(:)
 
   ! ----------------------
   ! Row nonzeroes column indices.
-  ! Shape is [1, RowPtrs(NumCells + 1) - 1].
+  ! Shape is [1, RowAddrs(NumCells + 1) - 1].
   ! ----------------------
-  integer(ip), allocatable :: ColumnIndices(:)
+  integer(ip), allocatable :: ColIndices(:)
 
   ! ----------------------
   ! Row nonzeroes column coefficients.
-  ! Shape is [1, NumVars]×[1, NumVars]×[1, RowPtrs(NumCells + 1) - 1].
+  ! Shape is [1, NumVars]×[1, NumVars]×[1, RowAddrs(NumCells + 1) - 1].
   ! ----------------------
-  real(dp), allocatable :: ColumnCoeffs(:,:,:)
+  real(dp), allocatable :: ColCoeffs(:,:,:)
 
-end type tRowMatrix
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compressed sparse column (CSC) block matrix.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tColumnMatrix
-
-  ! ----------------------
-  ! Column nonzeroes pointers.
-  ! Shape is [1, NumCells + 1].
-  ! ----------------------
-  integer(ip), allocatable :: ColumnPtrs(:)
-
-  ! ----------------------
-  ! Column nonzeroes row indices.
-  ! Shape is [1, ColumnPtrs(NumCells + 1) - 1].
-  ! ----------------------
-  integer(ip), allocatable :: RowIndices(:)
-
-  ! ----------------------
-  ! Column nonzeroes row coefficients.
-  ! Shape is [1, NumVars]×[1, NumVars]×[1, RowPtrs(NumCells + 1) - 1].
-  ! ----------------------
-  real(dp), allocatable :: RowCoeffs(:,:,:)
-
-end type tColumnMatrix
-
-interface SparseMatVec
-  module procedure RowMatVec
-  module procedure ColumnMatVec
-end interface SparseMatVec
+end type tMatrix
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -103,181 +74,155 @@ contains
 !! Initialize compressed sparse column matrix 
 !! with the specified power of mesh bandwidth.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitBandedColumnMatrix(matrix, mesh, power)
-  class(tColumnMatrix), intent(inout) :: matrix
+subroutine InitBandedMatrix(mesh, mat, power)
   class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(inout) :: mat
   integer(ip), intent(in) :: power
 
-  integer(ip) :: cell, cellFace, row, column
-  integer(ip) :: bandwidth, halfBandwidth
+  integer(ip) :: cell, cellFace, row, col
+  integer(ip) :: bw, halfBw
 
   ! ----------------------
   ! Compute bandwidth.
   ! ----------------------
-  halfBandwidth = 0
+  halfBw = 0
   do cell = 1, mesh%NumCells
     do cellFace = 1, mesh%NumCellFaces
-      
       associate(cellCell => mesh%CellToCell(cellFace, cell))
-        if (cellCell <= mesh%NumCells) then
-          halfBandwidth = max(halfBandwidth, abs(cell - cellCell))
-        end if
-      end associate
 
+        if (cellCell <= mesh%NumCells) then
+          halfBw = max(halfBw, abs(cell - cellCell))
+        end if
+
+      end associate
     end do
   end do
 
-  halfBandwidth = power*halfBandwidth
-  bandwidth = 2*halfBandwidth + 1
+  halfBw = power*halfBw; bw = 2*halfBw + 1
 
   ! ----------------------
   ! Fill the columns pointers and row entries.
   ! ----------------------
-  allocate(matrix%ColumnPtrs(mesh%NumCells + 1))
+  allocate(mat%RowAddrs(mesh%NumCells + 1))
   !! TODO: size is overestimated here.
   !! (nc + 1)*nc/2 - ...
-  associate(size => mesh%NumCells*bandwidth)
-    allocate(matrix%RowIndices(size))
-    allocate(matrix%RowCoeffs(1,1,size))
+  associate(size => mesh%NumCells*bw)
+    allocate(mat%ColIndices(size))
+    allocate(mat%ColCoeffs(1, 1, size))
   end associate
 
-  matrix%ColumnPtrs(1) = 1
-  do column = 1, mesh%NumCells
-
-    associate(columnPtr => matrix%ColumnPtrs(column + 1))
-      columnPtr = matrix%ColumnPtrs(column)
-      do row = max(column - halfBandwidth, 1), &
-             & min(column + halfBandwidth, mesh%NumCells)
-        matrix%RowIndices(columnPtr) = row
-        matrix%RowCoeffs(:,:,columnPtr) = 0.0_dp
-        columnPtr = columnPtr + 1
-      end do
-    end associate
-
-  end do
-
-end subroutine InitBandedColumnMatrix
-
-subroutine ColumnToRowMatrix(mesh, rowMat, colMat)
-  class(tMesh), intent(inout) :: mesh
-  class(tRowMatrix), intent(inout) :: rowMat
-  class(tColumnMatrix), intent(in) :: colMat
-
-  integer(ip) :: row, column, columnPtr, index, numEntries
-
-  allocate(rowMat%RowPtrs, mold=colMat%ColumnPtrs)
-  allocate(rowMat%ColumnIndices, mold=colMat%RowIndices)
-  allocate(rowMat%ColumnCoeffs, mold=colMat%RowCoeffs)
-
-  numEntries = colMat%ColumnPtrs(size(colMat%ColumnPtrs)) - 1
-  
-  ! ----------------------
-  ! Fill row pointers.
-  ! ----------------------
-  rowMat%RowPtrs(:) = 0
-  do index = 1, numEntries
-
-    associate(rowPtr => rowMat%RowPtrs(colMat%RowIndices(index) + 1))
-      rowPtr = rowPtr + 1
-    end associate
-  
-  end do
-
-  rowMat%RowPtrs(1) = 1
+  mat%RowAddrs(1) = 1
   do row = 1, mesh%NumCells
-  
-    rowMat%RowPtrs(row + 1) = rowMat%RowPtrs(row) + rowMat%RowPtrs(row + 1)
-  
+    associate(rowAddr => mat%RowAddrs(row + 1))
+
+      rowAddr = mat%RowAddrs(row)
+      do col = max(1, row - halfBw), min(row + halfBw, mesh%NumCells)
+        mat%ColIndices(rowAddr) = col
+        mat%ColCoeffs(:,:,rowAddr) = 0.0_dp
+        rowAddr = rowAddr + 1
+      end do
+
+    end associate
   end do
 
-  ! ----------------------
-  ! Fill column entries.
-  ! ----------------------
-  do column = 1, mesh%NumCells
-    do columnPtr = colMat%ColumnPtrs(column), colMat%ColumnPtrs(column + 1) - 1
-
-      associate(row => colMat%RowIndices(columnPtr), &
-           & coeffs => colMat%RowCoeffs(:,:,columnPtr))
-        associate(rowPtr => rowMat%RowPtrs(row))
-          rowMat%ColumnIndices(rowPtr) = column
-          rowMat%ColumnCoeffs(:,:,rowPtr) = coeffs
-          rowPtr = rowPtr + 1
-        end associate
-      end associate
-
-    end do
-  end do
-
-  rowMat%RowPtrs = eoshift(rowMat%RowPtrs, shift=-1)
-  rowMat%RowPtrs(1) = 1
-
-end subroutine ColumnToRowMatrix
+end subroutine InitBandedMatrix
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compressed sparse column matrix-vector product. 
+!! Initialize a basic matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine RowMatVec(mesh, mat, yArr, xArr)
+subroutine InitMatrix(mesh, mat, power)
   class(tMesh), intent(inout) :: mesh
-  class(tRowMatrix), intent(in) :: mat
+  class(tMatrix), intent(inout) :: mat
+  integer(ip), intent(in) :: power
+
+  type :: tMatrixRow
+    integer(ip), allocatable :: ColIndices(:)
+  end type tMatrixRow
+
+  integer(ip) :: k, row, col, colCol, colAddr, colColAddr
+  type(tMatrixRow), allocatable :: matRows(:)
+
+  ! ----------------------
+  ! Generate matrix rows.
+  ! ----------------------
+  allocate(matRows(mesh%NumCells))
+  do row = 1, mesh%NumCells
+
+    col = row
+    matRows(row)%ColIndices = [col]
+
+    do k = 1, power
+      do colAddr = 1, size(matRows(row)%ColIndices)
+        col = matRows(row)%ColIndices(colAddr)
+        do colColAddr = 1, mesh%NumCellFaces
+          colCol = mesh%CellToCell(colColAddr,col)
+          if ((colCol <= mesh%NumCells).and. &
+              & (IndexOf(colCol, matRows(row)%ColIndices) == 0)) then
+            matRows(row)%ColIndices = [matRows(row)%ColIndices, colCol]
+          end if
+        end do
+      end do
+    end do
+    
+    call BubbleSort(matRows(row)%ColIndices)
+
+  end do
+
+  ! ----------------------
+  ! Compress the rows.
+  ! ----------------------
+  allocate(mat%RowAddrs(mesh%NumCells + 1))
+  mat%RowAddrs(1) = 1
+  do row = 1, mesh%NumCells
+    mat%RowAddrs(row + 1) = mat%RowAddrs(row) + size(matRows(row)%ColIndices)
+  end do
+  
+  associate(nnz => mat%RowAddrs(mesh%NumCells + 1) - 1)
+    allocate(mat%ColIndices(nnz), mat%ColCoeffs(1, 1, nnz))
+  end associate
+  do row = 1, mesh%NumCells
+
+    associate(first => mat%RowAddrs(row), last => mat%RowAddrs(row + 1) - 1)
+      mat%ColIndices(first:last) = matRows(row)%ColIndices
+      mat%ColCoeffs(:,:,first:last) = 0.0_dp
+    end associate
+
+  end do
+
+end subroutine InitMatrix
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Sparse matrix-vector product. 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine MatrixVector(mesh, mat, yArr, xArr)
+  class(tMesh), intent(inout) :: mesh
+  class(tMatrix), intent(in) :: mat
   class(tArray), intent(inout) :: xArr, yArr
 
   real(dp), pointer :: x(:,:), y(:,:)
 
   call xArr%Get(x); call yArr%Get(y)
 
-  call mesh%RunCellKernel(RowMatVec_Kernel)
+  call mesh%RunCellKernel(MatrixVector_Kernel)
 
 contains
-  subroutine RowMatVec_Kernel(row)
+  subroutine MatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowPtr
+    integer(ip) :: rowAddr
 
     y(:,row) = 0.0_dp
 
-    do rowPtr = mat%RowPtrs(row), mat%RowPtrs(row + 1) - 1
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
 
-      associate(column => mat%ColumnIndices(rowPtr), &
-              & coeffs => mat%ColumnCoeffs(:,:,rowPtr))
-        y(:,row) = y(:,row) + matmul(coeffs, x(:,column))
+        y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+
       end associate
-
     end do
 
-  end subroutine RowMatVec_Kernel
-end subroutine RowMatVec
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compressed sparse column matrix-vector product. 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine ColumnMatVec(mesh, mat, yArr, xArr)
-  class(tMesh), intent(inout) :: mesh
-  class(tColumnMatrix), intent(in) :: mat
-  class(tArray), intent(inout) :: xArr, yArr
-
-  real(dp), pointer :: x(:,:), y(:,:)
-
-  call xArr%Get(x); call yArr%Get(y)
-  
-  call Fill(mesh, yArr, 0.0_dp)
-  call mesh%RunCellKernel(ColumnMatVec_Kernel)
-
-contains
-  subroutine ColumnMatVec_Kernel(column)
-    integer(ip), intent(in) :: column
-
-    integer(ip) :: columnPtr
-
-    do columnPtr = mat%ColumnPtrs(column), mat%ColumnPtrs(column + 1) - 1
-
-      associate(row => mat%RowIndices(columnPtr), &
-           & coeffs => mat%RowCoeffs(:,:,columnPtr))
-        y(:,row) = y(:,row) + matmul(coeffs, x(:,column))
-      end associate
-
-    end do
-
-  end subroutine ColumnMatVec_Kernel
-end subroutine ColumnMatVec
+  end subroutine MatrixVector_Kernel
+end subroutine MatrixVector
 
 end module StormRuler_Matrix

@@ -38,7 +38,7 @@ use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Precond, only: tPreconditioner
 
 use StormRuler_Matrix!, only: ...
-use StormRuler_Matrix_Coloring!, only: ...
+use StormRuler_Matrix_Extraction!, only: ...
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
@@ -70,7 +70,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  type(tMatrix) :: mat
+  type(tMatrix), save :: mat
 
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
@@ -120,10 +120,12 @@ contains
     class(tPreconditioner), intent(inout), optional :: precond
     
     if (preMethod == 'extr') then; block
-      type(tMatrixLabeling) :: labeling
+      type(tMatrixLabeling), save :: labeling
 
-      call InitMatrix(mesh, mat, 2)
-      call LabelColumns_Banded(mesh, mat, labeling)
+      if (labeling%NumLabels == 0) then
+        call InitMatrix(mesh, mat, 2)
+        call LabelColumns_Patterned(mesh, mat, labeling)
+      end if
       call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
 
       params%Name = params%Name//'EXTR)'

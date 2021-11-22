@@ -183,14 +183,10 @@ Legend:
   - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
 
 * Matrix extraction:
-  - [ ] 🧸 CSR matrix class, CSR matvec,
-  - [ ] 🧸 CSC matrix class, CSC matvec,
-  - [ ] 🧸 CS* matrix transposition,
-  - [ ] 🧸 CS* matrix sparsification with specified tolerance,
+  - [x] 🧸 CSR matrix class, CSR matvec,
   - [x] 🧸 Extraction with prescribed coloring.
-  - [ ] 🧻 Extraction with prescribed coloring (refactor).
   - [x] 🪓 Bandwidth-based column coloring problem,
-  - [ ] 🦜 Portrait-based column coloring problem,
+  - [x] 🪓 Portrait-based column coloring problem,
   - [ ] 🚬 Some more optimal column coloring problem..
 
 * Preconditioning:

@@ -71,63 +71,6 @@ end type tMatrix
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize compressed sparse column matrix 
-!! with the specified power of mesh bandwidth.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitBandedMatrix(mesh, mat, power)
-  class(tMesh), intent(in) :: mesh
-  class(tMatrix), intent(inout) :: mat
-  integer(ip), intent(in) :: power
-
-  integer(ip) :: cell, cellFace, row, col
-  integer(ip) :: bw, halfBw
-
-  ! ----------------------
-  ! Compute bandwidth.
-  ! ----------------------
-  halfBw = 0
-  do cell = 1, mesh%NumCells
-    do cellFace = 1, mesh%NumCellFaces
-      associate(cellCell => mesh%CellToCell(cellFace, cell))
-
-        if (cellCell <= mesh%NumCells) then
-          halfBw = max(halfBw, abs(cell - cellCell))
-        end if
-
-      end associate
-    end do
-  end do
-
-  halfBw = power*halfBw; bw = 2*halfBw + 1
-
-  ! ----------------------
-  ! Fill the columns pointers and row entries.
-  ! ----------------------
-  allocate(mat%RowAddrs(mesh%NumCells + 1))
-  !! TODO: size is overestimated here.
-  !! (nc + 1)*nc/2 - ...
-  associate(size => mesh%NumCells*bw)
-    allocate(mat%ColIndices(size))
-    allocate(mat%ColCoeffs(1, 1, size))
-  end associate
-
-  mat%RowAddrs(1) = 1
-  do row = 1, mesh%NumCells
-    associate(rowAddr => mat%RowAddrs(row + 1))
-
-      rowAddr = mat%RowAddrs(row)
-      do col = max(1, row - halfBw), min(row + halfBw, mesh%NumCells)
-        mat%ColIndices(rowAddr) = col
-        mat%ColCoeffs(:,:,rowAddr) = 0.0_dp
-        rowAddr = rowAddr + 1
-      end do
-
-    end associate
-  end do
-
-end subroutine InitBandedMatrix
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Initialize a basic matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine InitMatrix(mesh, mat, power)
@@ -154,16 +97,19 @@ subroutine InitMatrix(mesh, mat, power)
     do k = 1, power
       do colAddr = 1, size(matRows(row)%ColIndices)
         col = matRows(row)%ColIndices(colAddr)
+
         do colColAddr = 1, mesh%NumCellFaces
           colCol = mesh%CellToCell(colColAddr,col)
-          if ((colCol <= mesh%NumCells).and. &
+
+          if ((colCol <= mesh%NumCells).and.&
               & (IndexOf(colCol, matRows(row)%ColIndices) == 0)) then
             matRows(row)%ColIndices = [matRows(row)%ColIndices, colCol]
           end if
+          
         end do
       end do
     end do
-    
+
     call BubbleSort(matRows(row)%ColIndices)
 
   end do
@@ -176,17 +122,17 @@ subroutine InitMatrix(mesh, mat, power)
   do row = 1, mesh%NumCells
     mat%RowAddrs(row + 1) = mat%RowAddrs(row) + size(matRows(row)%ColIndices)
   end do
-  
+
   associate(nnz => mat%RowAddrs(mesh%NumCells + 1) - 1)
     allocate(mat%ColIndices(nnz), mat%ColCoeffs(1, 1, nnz))
   end associate
   do row = 1, mesh%NumCells
-
     associate(first => mat%RowAddrs(row), last => mat%RowAddrs(row + 1) - 1)
-      mat%ColIndices(first:last) = matRows(row)%ColIndices
-      mat%ColCoeffs(:,:,first:last) = 0.0_dp
-    end associate
 
+      mat%ColIndices(first:last) = matRows(row)%ColIndices(:)
+      mat%ColCoeffs(:,:,first:last) = 0.0_dp
+
+    end associate
   end do
 
 end subroutine InitMatrix

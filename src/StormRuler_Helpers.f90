@@ -110,6 +110,59 @@ integer(ip) pure function IndexOf(value, array)
 end function IndexOf
 
 !! ----------------------------------------------------------------- !!
+!! Find value index in the sorted array.
+!! ----------------------------------------------------------------- !!
+integer(ip) pure function SortedIndexOf(value, array) result(pivot)
+  integer(ip), intent(in) :: value, array(:)
+  
+  integer(ip) :: first, last
+
+  first = 1
+  if (value < array(first)) then
+    pivot = 0; return  
+  end if
+
+  last = size(array)
+  if (value > array(last)) then
+    pivot = 0; return  
+  end if
+  
+  do while (first + 1 < last)
+    pivot = (first + last)/2
+    if (array(pivot) == value) then
+      return
+    else if (array(pivot) > value) then
+      last = pivot
+    else if (array(pivot) < value) then
+      first = pivot
+    end if
+  end do
+  pivot = 0
+
+end function SortedIndexOf
+
+!! ----------------------------------------------------------------- !!
+!! Check if two sorted arrays inetersect.
+!! ----------------------------------------------------------------- !!
+logical pure function ArraysIntersect(left, right) result(intersects)
+  integer(ip), intent(in) :: left(:), right(:)
+
+  integer(ip) :: i, j
+
+  i = 1; j = 1; intersects = .false.
+  do while((i <= size(left)).and.(j <= size(right)))
+    if (left(i) == right(j)) then
+      intersects = .true.; return
+    else if (left(i) < right(j)) then
+      i = i + 1
+    else if (left(i) > right(j)) then
+      j = j + 1
+    end if
+  end do
+
+end function ArraysIntersect
+
+!! ----------------------------------------------------------------- !!
 !! Bubble-sort the integer array.
 !! ----------------------------------------------------------------- !!
 subroutine BubbleSort(array)

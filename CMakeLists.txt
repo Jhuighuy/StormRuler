@@ -192,6 +192,30 @@ else()
   endif()
 endif()
 
+# Find MKL.
+if(StormRuler_NO_MKL)
+  message(STATUS "StormRuler MKL was disabled by user.")
+else()
+  # Configure OpenMP library to the Fortran compiler native one.
+  if(OpenMP_Fortran_ENABLED)
+    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
+      set(MKL_THREADING "intel_thread")
+    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+      set(MKL_THREADING "gnu_thread")
+    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+      set(MKL_THREADING "pgi_thread")
+    endif()
+  endif()
+  # Configure MKL to use 32-bit integers.
+  set(MKL_INTERFACE lp64)
+  find_package(MKL CONFIG)
+  if(MKL_FOUND)
+    set(MKL_ENABLED 1)
+    message(STATUS "MKL enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
+  endif()
+endif()
+
 # Find METIS.
 if(StormRuler_NO_METIS)
   message(STATUS "StormRuler METIS was disabled by user.")

@@ -192,7 +192,8 @@ Legend:
 * Preconditioning:
   - [x] 🧻 Refactor precondtioner from function pointer to class,
   - [ ] 🚬 `SPAI` preconditioner,
-  - [ ] 🪓 MKL-based `ILU`/`ICHOL` preconditioners,
+  - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
+  - [ ] 🪓 MKL-based `ILUT_MKL` preconditioners,
   - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
   - [ ] 🧻 Refactor unified and C/C++ API for preconditioning,
   - [ ] 🧸 Add user-defined preconditioner in C/C++ API.

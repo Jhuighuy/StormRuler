@@ -36,18 +36,6 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 
 implicit none  
 
-interface operator(.inner.)
-#$do rank = 0, NUM_RANKS-1
-  module procedure Inner$rank
-#$end do
-end interface
-
-interface operator(.outer.)
-#$do rank = 0, NUM_RANKS-1
-  module procedure Outer$rank
-#$end do
-end interface
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -59,14 +47,14 @@ contains
 subroutine PrintBanner
   
   print *, ''
-  print *, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+  print *, '//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\\'
   print *, '|      _____ __                       ____        __            |'
   print *, '|     / ___// /_____  _________ ___  / __ \__  __/ ___  _____   |'
   print *, '|     \__ \/ __/ __ \/ ___/ __ `__ \/ /_/ / / / / / _ \/ ___/   |'
   print *, '|    ___/ / /_/ /_/ / /  / / / / / / _, _/ /_/ / /  __/ /       |'
   print *, '|   /____/\__/\____/_/  /_/ /_/ /_/_/ |_|\__,_/_/\___/_/        |'
   print *, '|                                                               |'
-  print *, '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+  print *, '\\-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-//'
   print *, ''
 
 end subroutine PrintBanner
@@ -228,58 +216,6 @@ real(dp) elemental function SafeInverse(a)
   
   SafeInverse = merge(0.0_dp, 1.0_dp/a, abs(a) <= epsilon(1.0_dp))
 end function SafeInverse
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! ----------------------------------------------------------------- !!
-!! Inner vector-vector product: z ← y⋅x.
-!! ----------------------------------------------------------------- !!
-pure function Inner$0(y, x) result(z)
-  real(dp), intent(in) :: y(:), x(:)
-  real(dp) :: z
-  
-  z = dot_product(y, x)
-
-end function Inner$0
-#$do rank = 1, NUM_RANKS-1
-pure function Inner$rank(y, x) result(z)
-  real(dp), intent(in) :: y(:), x(:,@:)
-  real(dp) :: z(@{size(x, dim=$$+1)}@)
-  
-  integer(ip) :: i
-
-  z(@:) = 0.0_dp
-  do i = 1, size(y)
-    z(@:) = z(@:) + y(i)*x(i,@:)
-  end do
-
-end function Inner$rank
-#$end do
-
-!! ----------------------------------------------------------------- !!
-!! Outer vector-tensor product: z ← y⊗x.
-!! ----------------------------------------------------------------- !!
-pure function Outer$0(y, x) result(z)
-  real(dp), intent(in) :: y(:), x
-  real(dp) :: z(size(y))
-  
-  z(:) = y(:)*x
-
-end function Outer$0
-#$do rank = 1, NUM_RANKS-1
-pure function Outer$rank(y, x) result(z)
-  real(dp), intent(in) :: y(:), x(@:)
-  real(dp) :: z(size(y, dim=1), @{size(x, dim=$$)}@)
-  
-  integer(ip) :: i
-  
-  do i = 1, size(y, dim=1)
-    z(i,@:) = y(i)*x(@:)
-  end do
-
-end function Outer$rank
-#$end do
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

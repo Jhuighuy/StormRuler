@@ -58,14 +58,14 @@ abstract interface
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply preconditioner: 𝓟𝒙 ← 𝓟(𝓐)𝒙.
+!! Apply preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tApplyPrecondFunc(precond, mesh, PxArr, xArr, MatVec)
+  subroutine tApplyPrecondFunc(precond, mesh, yArr, xArr, MatVec)
     import :: tMesh, tArray, tPreconditioner, tMatVecFunc
     class(tPreconditioner), intent(inout) :: precond
     class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: xArr, PxArr
+    class(tArray), intent(inout), target :: xArr, yArr
     procedure(tMatVecFunc) :: MatVec
   end subroutine tApplyPrecondFunc
 end interface

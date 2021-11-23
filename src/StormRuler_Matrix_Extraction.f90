@@ -134,16 +134,12 @@ subroutine LabelColumns_Patterned(mesh, mat, labeling)
   allocate(matCols(mesh%NumCells))
   do row = 1, mesh%NumCells
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-
       col = mat%ColIndices(rowAddr)
       matCols(col)%RowIndices = [matCols(col)%RowIndices, row]
-
     end do
   end do
   do col = 1, mesh%NumCells
-
     call BubbleSort(matCols(col)%RowIndices)
-
   end do
 
   ! ----------------------
@@ -158,7 +154,7 @@ subroutine LabelColumns_Patterned(mesh, mat, labeling)
     ! Assign the label.
     ! ----------------------
     labeling%ColLabels(col) = labeling%NumLabels + 1
-    labeling%NumLabels = labeling%NumLabels + 1
+    labeling%NumLabels = labeling%ColLabels(col)
 
     ! ----------------------
     ! Try to assign the same label to the following column.

@@ -26,7 +26,7 @@ module StormRuler_Solvers
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, i8, error_code
+use StormRuler_Parameters, only: dp, ip
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
@@ -39,6 +39,7 @@ use StormRuler_Precond, only: tPreconditioner
 
 use StormRuler_Matrix!, only: ...
 use StormRuler_Matrix_Extraction!, only: ...
+use StormRuler_Precond_SPAI!, only: ...
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
@@ -50,10 +51,65 @@ use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
 implicit none
 
+include 'mkl.fi'
+
+type, extends(tPreconditioner) :: tPreconditioner_ILU0_MKL
+  type(tMatrix), pointer :: Mat => null()
+  real(dp), allocatable :: ColCoeffsILU0(:)
+
+contains
+  procedure Init => InitPrecond_ILU0_MKL
+  procedure Apply => ApplyPrecond_ILU0_MKL
+end type tPreconditioner_ILU0_MKL
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
+
+subroutine InitPrecond_ILU0_MKL(precond, mesh, MatVec)
+  class(tPreconditioner_ILU0_MKL), intent(inout) :: precond
+  class(tMesh), intent(inout), target :: mesh
+  procedure(tMatVecFunc) :: MatVec
+
+  integer(ip) :: iparam(128), ierror
+  real(dp) :: dparam(128)
+
+  iparam(:) = 0; dparam(:) = 0
+  iparam(2) = 6; dparam(31) = 1.0e-16_dp 
+  allocate(precond%ColCoeffsILU0(size(precond%Mat%ColCoeffs)))
+
+  call dcsrilu0(mesh%NumCells, precond%Mat%ColCoeffs, precond%Mat%RowAddrs, &
+    & precond%Mat%ColIndices, precond%ColCoeffsILU0, iparam, dparam, ierror)
+  if (ierror /= 0) then
+    error stop 'MKL `dcsrilu0` has failed, ierror='//I2S(ierror)
+  end if
+
+end subroutine InitPrecond_ILU0_MKL
+
+subroutine ApplyPrecond_ILU0_MKL(precond, mesh, yArr, xArr, MatVec)
+  class(tPreconditioner_ILU0_MKL), intent(inout) :: precond
+  class(tMesh), intent(inout), target :: mesh
+  class(tArray), intent(inout), target :: xArr, yArr
+  procedure(tMatVecFunc) :: MatVec
+
+  type(tArray) :: tArr
+  real(dp), pointer :: t(:), x(:), y(:)
+
+  call AllocArray(tArr, mold=xArr)
+
+  ! solve (L*U)*y = L*(U*y) = x
+  ! solve L*t = x
+  ! solve U*y = t
+
+  call tArr%Get(t); call xArr%Get(x); call yArr%Get(y)
+
+  call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
+    & precond%ColCoeffsILU0, precond%Mat%RowAddrs, precond%Mat%ColIndices, x, t)
+  call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
+    & precond%ColCoeffsILU0, precond%Mat%RowAddrs, precond%Mat%ColIndices, t, y)
+
+end subroutine ApplyPrecond_ILU0_MKL
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear operator equation: 
@@ -70,7 +126,7 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  type(tMatrix), save :: mat
+  type(tMatrix), target, save :: mat
 
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
@@ -121,15 +177,17 @@ contains
     
     if (preMethod == 'extr') then; block
       type(tMatrixLabeling), save :: labeling
+      type(tPreconditioner_ILU0_MKL) :: ilu
 
       if (labeling%NumLabels == 0) then
         call InitMatrix(mesh, mat, 2)
         call LabelColumns_Patterned(mesh, mat, labeling)
       end if
       call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
+      ilu%mat => mat
 
       params%Name = params%Name//'EXTR)'
-      call Solve_BiCGStab(mesh, x, f, MatVec_Extracted, params, precond)
+      call Solve_BiCGStab(mesh, x, f, uMatVec, params, ilu)
       return
 
     end block; end if
@@ -172,13 +230,6 @@ contains
     call Sub(mesh, Ax, Ax, t)
 
   end subroutine MatVec_Uniformed
-  subroutine MatVec_Extracted(mesh, Ax, x)
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: x, Ax
-
-    call MatrixVector(mesh, mat, Ax, x)
-
-  end subroutine MatVec_Extracted
 end subroutine LinSolve
 
 end module StormRuler_Solvers

@@ -156,8 +156,8 @@ end function ArraysIntersect
 subroutine BubbleSort(array)
   integer(ip), intent(inout) :: array(:)
   
-  integer(ip) :: i, j, k
   logical :: swapped
+  integer(ip) :: i, j
  
   do j = size(array) - 1, 1, -1
     swapped = .false.

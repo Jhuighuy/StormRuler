@@ -185,12 +185,11 @@ subroutine Unwrap_String(stringPtr, string)
     end subroutine Strncpy
   end interface
 
-  associate(len => Strlen(stringPtr))
+  integer(c_size_t) :: len
 
-    allocate(character(len=len) :: string)
-    call Strncpy(c_loc(string), stringPtr, len)
-
-  end associate
+  len = Strlen(stringPtr)
+  allocate(character(len=len) :: string)
+  call Strncpy(c_loc(string), stringPtr, len)
 
 end subroutine Unwrap_String
 
@@ -897,7 +896,7 @@ subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
   real(c_double), intent(in), value :: lambda, tau
 
   class(tMesh), pointer :: mesh
-  class(tArray), pointer :: uVecArr, vArr, pArr, rhoArr
+  class(tArray), pointer :: vArr, pArr, rhoArr
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(vPtr, vArr); call Unwrap(pPtr, pArr); call Unwrap(rhoPtr, rhoArr)

@@ -140,7 +140,12 @@ subroutine LabelColumns_Patterned(mesh, mat, labeling)
   do row = 1, mesh%NumCells
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
       col = mat%ColIndices(rowAddr)
-      matCols(col)%RowIndices = [matCols(col)%RowIndices, row]
+      !! TODO: refactor with `SortedInsert`.
+      if (allocated(matCols(col)%RowIndices)) then
+        matCols(col)%RowIndices = [matCols(col)%RowIndices, row]
+      else
+        matCols(col)%RowIndices = [row]
+      end if
     end do
   end do
   do col = 1, mesh%NumCells

@@ -384,7 +384,7 @@ int main() {
 
   for (int time = 0; time <= 0*20+1*200000; ++time) {
 
-    for (int frac = 0; time != 0 && frac < 1; ++ frac) {
+    for (int frac = 0; time != 0 && frac < 10; ++ frac) {
 
       struct timespec start, finish;
 

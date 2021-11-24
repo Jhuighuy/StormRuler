@@ -126,21 +126,18 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   procedure(tMatVecFunc) :: MatVec
 
   integer(ip) :: k
-  type(tArray) :: tArr, sArr
+  type(tArray) :: tArr
 
   if (.not.associated(pre%Mat)) then
     error stop 'Matrix for the LU-SGS preconditioner is not set.'
   end if
 
   call AllocArray(tArr, mold=xArr)
-  if (gMaxIterLU_SGS > 1) call AllocArray(sArr, mold=xArr)
-
-  call Set(mesh, yArr, xArr)
 
   ! ----------------------
   ! First LU-SGS iteration:
-  ! 𝒕 ← (𝓛 + 𝓓)⁻¹𝒙,
-  ! 𝒕 ← 𝓓𝒕,
+  ! 𝒚 ← (𝓛 + 𝓓)⁻¹𝒙,
+  ! 𝒕 ← 𝓓𝒚,
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
   block
@@ -148,8 +145,8 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
     call tArr%Get(t); call xArr%Get(x); call yArr%Get(y)
 
     call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
-      & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, x, t)
-    call DiagMatrixVector(mesh, pre%Mat, tArr, tArr)
+      & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, x, y)
+    call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
     call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
       & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
   end block
@@ -157,22 +154,22 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   do k = 2, gMaxIterLU_SGS
     ! ----------------------
     ! Full LU-SGS iterations:
-    ! 𝒔 ← 𝓤𝒚, 𝒔 ← 𝓓⁻¹𝒔, 𝒕 ← 𝓛𝒔, 𝒔 ← 𝒕 + 𝒙,
-    ! 𝒕 ← (𝓛 + 𝓓)⁻¹𝒔,
-    ! 𝒕 ← 𝓓𝒕,
+    ! 𝒕 ← 𝓤𝒚, 𝒚 ← 𝓓⁻¹𝒕, 𝒕 ← 𝓛𝒚, 𝒕 ← 𝒕 + 𝒙,
+    ! 𝒚 ← (𝓛 + 𝓓)⁻¹𝒕,
+    ! 𝒕 ← 𝓓𝒚,
     ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
     ! ----------------------
-    call UpperMatrixVector(mesh, pre%Mat, sArr, yArr)
-    call InvDiagMatrixVector(mesh, pre%Mat, sArr, sArr)
-    call UpperMatrixVector(mesh, pre%Mat, tArr, sArr)
-    call Add(mesh, sArr, tArr, xArr)
+    call PartialMatrixVector(mesh, 'U', pre%Mat, tArr, yArr)
+    call InvDiagMatrixVector(mesh, pre%Mat, yArr, tArr)
+    call PartialMatrixVector(mesh, 'L', pre%Mat, tArr, yArr)
+    call Add(mesh, tArr, tArr, xArr)
     block
-      real(dp), pointer :: t(:), s(:), y(:)
-      call tArr%Get(t); call sArr%Get(s); call yArr%Get(y)
+      real(dp), pointer :: t(:), y(:)
+      call tArr%Get(t); call yArr%Get(y)
   
       call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
-        & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, s, t)
-      call DiagMatrixVector(mesh, pre%Mat, tArr, tArr)
+        & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
+      call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
       call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
         & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
     end block

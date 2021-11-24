@@ -143,7 +143,8 @@ end subroutine InitMatrix
 subroutine MatrixVector(mesh, mat, yArr, xArr)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
-  class(tArray), intent(inout) :: xArr, yArr
+  class(tArray), intent(in) :: xArr
+  class(tArray), intent(inout) :: yArr
 
   real(dp), pointer :: x(:,:), y(:,:)
 
@@ -171,19 +172,54 @@ contains
   end subroutine MatrixVector_Kernel
 end subroutine MatrixVector
 
-subroutine DiagMatrixVector(mesh, mat, yArr, xArr)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Sparse partial matrix-vector product: 𝒚 ← 𝓓𝒙, 𝒚 ← 𝓛𝒙 or 𝒚 ← 𝓤𝒙,
+!! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
+!! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
-  class(tArray), intent(inout) :: xArr, yArr
+  class(tArray), intent(in) :: xArr
+  class(tArray), intent(inout) :: yArr
+  character, intent(in) :: part
 
   real(dp), pointer :: x(:,:), y(:,:)
 
   call xArr%Get(x); call yArr%Get(y)
 
-  call mesh%RunCellKernel(MatrixVector_Kernel)
+  select case(part)
+    case('l', 'L')
+      call mesh%RunCellKernel(LowerMatrixVector_Kernel)
+    case('d', 'D')
+      call mesh%RunCellKernel(DiagMatrixVector_Kernel)
+    case('u', 'U')
+      call mesh%RunCellKernel(UpperMatrixVector_Kernel)
+  end select
 
 contains
-  subroutine MatrixVector_Kernel(row)
+  subroutine LowerMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    y(:,row) = 0.0_dp
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        ! ----------------------
+        ! Perform the multiplication until diagonal block is reached.
+        ! ----------------------
+        if (row >= col) return
+        y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+
+      end associate
+    end do
+
+  end subroutine LowerMatrixVector_Kernel
+  subroutine DiagMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
     integer(ip) :: rowAddr
@@ -192,13 +228,33 @@ contains
       associate(col => mat%ColIndices(rowAddr), &
            & coeffs => mat%ColCoeffs(:,:,rowAddr))
 
-        if (row == col) y(:,row) = matmul(coeffs, x(:,col))
+        if (row == col) then 
+          y(:,row) = matmul(coeffs, x(:,col))
+          return
+        end if
 
       end associate
     end do
 
-  end subroutine MatrixVector_Kernel
-end subroutine DiagMatrixVector
+  end subroutine DiagMatrixVector_Kernel
+  subroutine UpperMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    y(:,row) = 0.0_dp
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        if (row > col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+
+      end associate
+    end do
+
+  end subroutine UpperMatrixVector_Kernel
+end subroutine PartialMatrixVector
 
 subroutine InvDiagMatrixVector(mesh, mat, yArr, xArr)
   class(tMesh), intent(in) :: mesh
@@ -228,67 +284,5 @@ contains
 
   end subroutine MatrixVector_Kernel
 end subroutine InvDiagMatrixVector
-
-subroutine UpperMatrixVector(mesh, mat, yArr, xArr)
-  class(tMesh), intent(in) :: mesh
-  class(tMatrix), intent(in) :: mat
-  class(tArray), intent(inout) :: xArr, yArr
-
-  real(dp), pointer :: x(:,:), y(:,:)
-
-  call xArr%Get(x); call yArr%Get(y)
-
-  call mesh%RunCellKernel(MatrixVector_Kernel)
-
-contains
-  subroutine MatrixVector_Kernel(row)
-    integer(ip), intent(in) :: row
-
-    integer(ip) :: rowAddr
-
-    y(:,row) = 0.0_dp
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        if (row > col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
-
-      end associate
-    end do
-
-  end subroutine MatrixVector_Kernel
-end subroutine UpperMatrixVector
-
-subroutine LowerMatrixVector(mesh, mat, yArr, xArr)
-  class(tMesh), intent(in) :: mesh
-  class(tMatrix), intent(in) :: mat
-  class(tArray), intent(inout) :: xArr, yArr
-
-  real(dp), pointer :: x(:,:), y(:,:)
-
-  call xArr%Get(x); call yArr%Get(y)
-
-  call mesh%RunCellKernel(MatrixVector_Kernel)
-
-contains
-  subroutine MatrixVector_Kernel(row)
-    integer(ip), intent(in) :: row
-
-    integer(ip) :: rowAddr
-
-    y(:,row) = 0.0_dp
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        if (row < col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
-
-      end associate
-    end do
-
-  end subroutine MatrixVector_Kernel
-end subroutine LowerMatrixVector
 
 end module StormRuler_Matrix

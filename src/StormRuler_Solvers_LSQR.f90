@@ -67,7 +67,7 @@ contains
 !! but but has better numerical properties.
 !!
 !! The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, 
-!! while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+!! while the normal equation'sArr residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
 !! is not guaranteed to decrease.
 !!
 !! References:
@@ -78,21 +78,21 @@ contains
 !!     “A preconditioner for the LSQR algorithm.” 
 !!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSQR(mesh, x, b, MatVec, &
+subroutine Solve_LSQR(mesh, xArr, bArr, MatVec, &
     & ConjMatVec, params, pre, conjPre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre, conjPre
   procedure(tMatVecFunc) :: MatVec, ConjMatVec
   
   real(dp) :: alpha, beta, rho, rhoBar, theta, phi, phiBar, phiTilde, cs, sn
-  type(tArray) :: s, t, r, u, v, w, z
+  type(tArray) :: sArr, tArr, rArr, uArr, vArr, wArr, zArr
   
-  call AllocArray(t, r, u, v, w, z, mold=x)
+  call AllocArray(tArr, rArr, uArr, vArr, wArr, zArr, mold=xArr)
   if (present(pre)) then
-    call AllocArray(s, mold=x)
+    call AllocArray(sArr, mold=xArr)
     call pre%Init(mesh, MatVec)
     call conjPre%Init(mesh, MatVec)
   end if
@@ -116,16 +116,16 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   ! ----------------------
-  call MatVec(mesh, r, x)
-  call Sub(mesh, r, b, r)
-  beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
+  call MatVec(mesh, rArr, xArr)
+  call Sub(mesh, rArr, bArr, rArr)
+  beta = Norm_2(mesh, rArr); call Scale(mesh, uArr, rArr, 1.0_dp/beta)
   if (present(pre)) then
-    call ConjMatVec(mesh, s, u)
-    call conjPre%Apply(mesh, t, s, ConjMatVec)
+    call ConjMatVec(mesh, sArr, uArr)
+    call conjPre%Apply(mesh, tArr, sArr, ConjMatVec)
   else
-    call ConjMatVec(mesh, t, u)
+    call ConjMatVec(mesh, tArr, uArr)
   end if
-  alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
+  alpha = Norm_2(mesh, tArr); call Scale(mesh, vArr, tArr, 1.0_dp/alpha)
 
   ! ----------------------
   ! 𝜑̅ ← 𝛽, 𝜌̅ ← 𝛼.
@@ -133,8 +133,8 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   ! 𝒘 ← 𝒗,
   ! ----------------------
   phiBar = beta; rhoBar = alpha
-  call Fill(mesh, z, 0.0_dp)
-  call Set(mesh, w, v)
+  call Fill(mesh, zArr, 0.0_dp)
+  call Set(mesh, wArr, vArr)
 
   ! ----------------------
   ! 𝜑̃ ← 𝜑̅,
@@ -158,21 +158,21 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(pre)) then
-      call pre%Apply(mesh, s, v, MatVec)
-      call MatVec(mesh, t, s)
+      call pre%Apply(mesh, sArr, vArr, MatVec)
+      call MatVec(mesh, tArr, sArr)
     else
-      call MatVec(mesh, t, v)
+      call MatVec(mesh, tArr, vArr)
     end if
-    call Sub(mesh, t, t, u, alpha)
-    beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
+    call Sub(mesh, tArr, tArr, uArr, alpha)
+    beta = Norm_2(mesh, tArr); call Scale(mesh, uArr, tArr, 1.0_dp/beta)
     if (present(pre)) then
-      call ConjMatVec(mesh, s, u)
-      call conjPre%Apply(mesh, t, s, ConjMatVec)
+      call ConjMatVec(mesh, sArr, uArr)
+      call conjPre%Apply(mesh, tArr, sArr, ConjMatVec)
     else
-      call ConjMatVec(mesh, t, u)
+      call ConjMatVec(mesh, tArr, uArr)
     end if
-    call Sub(mesh, t, t, v, beta)
-    alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
+    call Sub(mesh, tArr, tArr, vArr, beta)
+    alpha = Norm_2(mesh, tArr); call Scale(mesh, vArr, tArr, 1.0_dp/alpha)
     
     ! ----------------------
     ! Construct and apply rotation:
@@ -194,8 +194,8 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
     ! ( 𝜑̅ and 𝜑̃ implicitly contain residual norms;
     !   𝜑̅|𝜌̅| implicitly contain (𝓐[𝓟])*-residual norms, ‖(𝓐[𝓟])*𝒓‖. )
     ! ----------------------
-    call Add(mesh, z, z, w, phi/rho)
-    call Sub(mesh, w, v, w, theta/rho)
+    call Add(mesh, zArr, zArr, wArr, phi/rho)
+    call Sub(mesh, wArr, vArr, wArr, theta/rho)
     if (params%Check(phiBar, phiBar/phiTilde)) exit
   end do
 
@@ -206,10 +206,10 @@ subroutine Solve_LSQR(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(pre)) then
-    call pre%Apply(mesh, t, z, MatVec)
-    call Add(mesh, x, x, t)
+    call pre%Apply(mesh, tArr, zArr, MatVec)
+    call Add(mesh, xArr, xArr, tArr)
   else
-    call Add(mesh, x, x, z)
+    call Add(mesh, xArr, xArr, zArr)
   end if
 
 end subroutine Solve_LSQR
@@ -221,18 +221,18 @@ end subroutine Solve_LSQR
 !! LSQR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmLSQR(mesh, x, b, MatVec, params, pre)
+subroutine Solve_SymmLSQR(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   if (present(pre)) then
-    call Solve_LSQR(mesh, x, b, MatVec, MatVec, params, pre, pre)
+    call Solve_LSQR(mesh, xArr, bArr, MatVec, MatVec, params, pre, pre)
   else
-    call Solve_LSQR(mesh, x, b, MatVec, MatVec, params)
+    call Solve_LSQR(mesh, xArr, bArr, MatVec, MatVec, params)
   end if
   
 end subroutine Solve_SymmLSQR
@@ -246,7 +246,7 @@ end subroutine Solve_SymmLSQR
 !! (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 !! but but has better numerical properties.
 !! 
-!! The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+!! The normal equation'sArr residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
 !! decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂   
 !! is not guaranteed to decrease (but decreases on practice).
 !!
@@ -258,22 +258,22 @@ end subroutine Solve_SymmLSQR
 !!     “A preconditioner for the LSQR algorithm.” 
 !!     Journal of applied mathematics & informatics 26 (2008): 213-222.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_LSMR(mesh, x, b, MatVec, &
+subroutine Solve_LSMR(mesh, xArr, bArr, MatVec, &
     & ConjMatVec, params, pre, conjPre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre, conjPre
   procedure(tMatVecFunc) :: MatVec, ConjMatVec
 
   real(dp) :: alpha, alphaBar, beta, rho, rhoBar, cs, sn, &
     & theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar
-  type(tArray) :: r, s, t, w, h, u, v, z
+  type(tArray) :: rArr, sArr, tArr, wArr, h, uArr, vArr, zArr
   
-  call AllocArray(t, r, u, v, w, h, z, mold=x)
+  call AllocArray(tArr, rArr, uArr, vArr, wArr, h, zArr, mold=xArr)
   if (present(pre)) then
-    call AllocArray(s, mold=x)
+    call AllocArray(sArr, mold=xArr)
     call pre%Init(mesh, MatVec)
     call conjPre%Init(mesh, MatVec)
   end if
@@ -297,16 +297,16 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   ! ----------------------
-  call MatVec(mesh, r, x)
-  call Sub(mesh, r, b, r)
-  beta = Norm_2(mesh, r); call Scale(mesh, u, r, 1.0_dp/beta)
+  call MatVec(mesh, rArr, xArr)
+  call Sub(mesh, rArr, bArr, rArr)
+  beta = Norm_2(mesh, rArr); call Scale(mesh, uArr, rArr, 1.0_dp/beta)
   if (present(pre)) then
-    call ConjMatVec(mesh, s, u)
-    call conjPre%Apply(mesh, t, s, ConjMatVec)
+    call ConjMatVec(mesh, sArr, uArr)
+    call conjPre%Apply(mesh, tArr, sArr, ConjMatVec)
   else
-    call ConjMatVec(mesh, t, u)
+    call ConjMatVec(mesh, tArr, uArr)
   end if
-  alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
+  alpha = Norm_2(mesh, tArr); call Scale(mesh, vArr, tArr, 1.0_dp/alpha)
 
   ! ----------------------
   ! 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
@@ -316,8 +316,8 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   ! ----------------------
   alphaBar = alpha; psiBar = alpha*beta
   zeta = 1.0_dp; csBar = 1.0_dp; snBar = 0.0_dp
-  call Fill(mesh, z, 0.0_dp)
-  call Set(mesh, w, v); call Fill(mesh, h, 0.0_dp)
+  call Fill(mesh, zArr, 0.0_dp)
+  call Set(mesh, wArr, vArr); call Fill(mesh, h, 0.0_dp)
 
   ! ----------------------
   ! 𝜓̃ ← 𝜓̅,
@@ -341,21 +341,21 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
     ! 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
     ! ----------------------
     if (present(pre)) then
-      call pre%Apply(mesh, s, v, MatVec)
-      call MatVec(mesh, t, s)
+      call pre%Apply(mesh, sArr, vArr, MatVec)
+      call MatVec(mesh, tArr, sArr)
     else
-      call MatVec(mesh, t, v)
+      call MatVec(mesh, tArr, vArr)
     end if
-    call Sub(mesh, t, t, u, alpha)
-    beta = Norm_2(mesh, t); call Scale(mesh, u, t, 1.0_dp/beta)
+    call Sub(mesh, tArr, tArr, uArr, alpha)
+    beta = Norm_2(mesh, tArr); call Scale(mesh, uArr, tArr, 1.0_dp/beta)
     if (present(pre)) then
-      call ConjMatVec(mesh, s, u)
-      call conjPre%Apply(mesh, t, s, ConjMatVec)
+      call ConjMatVec(mesh, sArr, uArr)
+      call conjPre%Apply(mesh, tArr, sArr, ConjMatVec)
     else
-      call ConjMatVec(mesh, t, u)
+      call ConjMatVec(mesh, tArr, uArr)
     end if
-    call Sub(mesh, t, t, v, beta)
-    alpha = Norm_2(mesh, t); call Scale(mesh, v, t, 1.0_dp/alpha)
+    call Sub(mesh, tArr, tArr, vArr, beta)
+    alpha = Norm_2(mesh, tArr); call Scale(mesh, vArr, tArr, 1.0_dp/alpha)
     
     ! ----------------------
     ! Construct and apply rotations:
@@ -381,9 +381,9 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
     ! Check convergence for |𝜓̅| and |𝜓̅/𝜓̃|.
     ! ( |𝜓̅| and |𝜓̃| implicitly contain (𝓐[𝓟])*-residual norms, ‖(𝓐[𝓟])*𝒓‖. )
     ! ----------------------
-    call Sub(mesh, h, w, h, thetaBar*rho/zeta); zeta = rho*rhoBar
-    call Add(mesh, z, z, h, psi/zeta)
-    call Sub(mesh, w, v, w, theta/rho)
+    call Sub(mesh, h, wArr, h, thetaBar*rho/zeta); zeta = rho*rhoBar
+    call Add(mesh, zArr, zArr, h, psi/zeta)
+    call Sub(mesh, wArr, vArr, wArr, theta/rho)
     if (params%Check(abs(psiBar), abs(psiBar/psiTilde))) exit
   end do
 
@@ -394,10 +394,10 @@ subroutine Solve_LSMR(mesh, x, b, MatVec, &
   ! 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   ! ----------------------
   if (present(pre)) then
-    call pre%Apply(mesh, t, z, MatVec)
-    call Add(mesh, x, x, t)
+    call pre%Apply(mesh, tArr, zArr, MatVec)
+    call Add(mesh, xArr, xArr, tArr)
   else
-    call Add(mesh, x, x, z)
+    call Add(mesh, xArr, xArr, zArr)
   end if
 
 end subroutine Solve_LSMR
@@ -409,18 +409,18 @@ end subroutine Solve_LSMR
 !! Using LSMR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmLSMR(mesh, x, b, MatVec, params, pre)
+subroutine Solve_SymmLSMR(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   if (present(pre)) then
-    call Solve_LSMR(mesh, x, b, MatVec, MatVec, params, pre, pre)
+    call Solve_LSMR(mesh, xArr, bArr, MatVec, MatVec, params, pre, pre)
   else
-    call Solve_LSMR(mesh, x, b, MatVec, MatVec, params)
+    call Solve_LSMR(mesh, xArr, bArr, MatVec, MatVec, params)
   end if
   
 end subroutine Solve_SymmLSMR

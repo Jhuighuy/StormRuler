@@ -42,8 +42,6 @@ use StormRuler_Matrix!, only: tMatrix, DiagMatrixVector
 
 implicit none
 
-include 'mkl_spblas.fi'
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! LU Symmetric Gauss-Seidel (LU-SGS) preconditioner.
 !!
@@ -63,11 +61,14 @@ include 'mkl_spblas.fi'
 !! where 𝒚 and 𝒚̂ are the current and updated solution vectors.
 !! 
 !! In preconditioning, computation of the vector 𝒚 = 𝓟𝒙 ≈ 𝓐⁻¹𝒙 
-!! can be organized with a few LU-SGS iterations with 𝒃 = 𝒙.
-!! For the simplicity, the term 𝓛𝓓⁻¹𝓤𝒙 is negleted 
-!! on the first iteration.
+!! can be organized with a few LU-SGS iterations with 𝒃 = 𝒙 
+!! with zero initial guess.
+!! The number of inner iterations is controlled by  
+!! the parameter `MaxIterLU_SGS`.
 !! In most practical cases, a single LU-SGS iteration
 !! is enough for the considarable preconditioning.
+!! Four our more LU-SGS iterations are not recommended
+!! due to the numerical instability issues.
 !! 
 !! Like the other triangular matrix-based preconditioners,
 !! LU-SGS may suffer from poor parallel scaling.
@@ -140,16 +141,9 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   ! 𝒕 ← 𝓓𝒚,
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
-  block
-    real(dp), pointer :: t(:), x(:), y(:)
-    call tArr%Get(t); call xArr%Get(x); call yArr%Get(y)
-
-    call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
-      & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, x, y)
-    call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-    call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
-      & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
-  end block
+  call SolveTrianular(mesh, 'L', pre%Mat, yArr, xArr)
+  call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
+  call SolveTrianular(mesh, 'U', pre%Mat, yArr, tArr)
 
   do k = 2, gMaxIterLU_SGS
     ! ----------------------
@@ -160,19 +154,12 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
     ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
     ! ----------------------
     call PartialMatrixVector(mesh, 'U', pre%Mat, tArr, yArr)
-    call InvDiagMatrixVector(mesh, pre%Mat, yArr, tArr)
+    call SolveDiag(mesh, pre%Mat, yArr, tArr)
     call PartialMatrixVector(mesh, 'L', pre%Mat, tArr, yArr)
     call Add(mesh, tArr, tArr, xArr)
-    block
-      real(dp), pointer :: t(:), y(:)
-      call tArr%Get(t); call yArr%Get(y)
-  
-      call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
-        & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
-      call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-      call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
-        & pre%Mat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
-    end block
+    call SolveTrianular(mesh, 'L', pre%Mat, yArr, tArr)
+    call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
+    call SolveTrianular(mesh, 'U', pre%Mat, yArr, tArr)
   end do
 
 end subroutine ApplyPreconditioner_LU_SGS

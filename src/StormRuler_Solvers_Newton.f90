@@ -49,20 +49,20 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, using the Newton-Raphson method.
+!! where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, using the Newton's method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
+subroutine Solve_Newton(mesh, MatVec, JacobianMatVec, xArr, bArr, params)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
-  procedure(tBiMatVecFunc) :: JacMatVec
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
+  procedure(tMatVecFunc) :: MatVec
+  procedure(tBiMatVecFunc) :: JacobianMatVec
 
-  type(tArray) :: t, r
-  type(tConvParams) :: jacParams 
+  type(tArray) :: tArr, rArr
+  type(tConvParams) :: jacConvParams 
 
-  call AllocArray(t, r, mold=x)
+  call AllocArray(tArr, rArr, mold=xArr)
 
   ! ----------------------
   ! Newton's method:
@@ -74,60 +74,69 @@ subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
 
   do
     ! ----------------------
+    ! Compute residual:
     ! 𝒓 ← 𝓐(𝒙),
     ! 𝒓 ← 𝒃 - 𝒓,
     ! Check convergence for ‖𝒓‖.
     ! ----------------------
-    call MatVec(mesh, r, x)
-    call Sub(mesh, r, b, r)
-    if (params%Check(Norm_2(mesh, r))) exit
+    call MatVec(mesh, rArr, xArr)
+    call Sub(mesh, rArr, bArr, rArr)
+    if (params%Check(Norm_2(mesh, rArr))) exit
 
     ! ----------------------
+    ! Solve the Jacobian equation:
     ! 𝒕 ← 𝒓,
     ! 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
     ! 𝒙 ← 𝒙 + 𝒕.
     ! ----------------------
-    call Set(mesh, t, r)
-    call jacParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    call LinSolve(mesh, 'BiCGStab', '', t, r, JacMatVecAtX, jacParams)
-    call Add(mesh, x, x, t)
+    call Set(mesh, tArr, rArr)
+    !! TODO: equation parameters!
+    call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
+    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, JacobianMatVecWithX, jacConvParams)
+    call Add(mesh, xArr, xArr, tArr)
+
   end do
 
 contains
-  subroutine JacMatVecAtX(mesh, Jy, y)
+  subroutine JacobianMatVecWithX(mesh, zArr, yArr)
     class(tMesh), intent(in), target :: mesh
-    class(tArray), intent(inout), target :: y, Jy
+    class(tArray), intent(inout), target :: yArr, zArr
 
     ! ----------------------
-    ! 𝓙𝒚 ← 𝓙(𝒙)𝒚.
+    ! 𝒛 ← 𝓙(𝒙)𝒚.
     ! ----------------------
-    call JacMatVec(mesh, Jy, y, x)
-  end subroutine JacMatVecAtX
+    call JacobianMatVec(mesh, zArr, yArr, xArr)
+
+  end subroutine JacobianMatVecWithX
 end subroutine Solve_Newton
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! using the jacobian free-Newton-Krylov method.
+!! using the Jacobian free-Newton-Krylov method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_JFNK(mesh, MatVec, x, b, params)
+subroutine Solve_JFNK(mesh, MatVec, xArr, bArr, params)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
-  procedure(tMatVecFunc) :: MatVec
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
+  procedure(tMatVecFunc) :: MatVec
 
-  type(tArray) :: t, y, z
+  type(tArray) :: tArr, yArr, zArr
 
-  call AllocArray(t, y, z, mold=x)
+  !! TODO: reimplement me in the optimized manner!
 
-  call Solve_Newton(mesh, MatVec, ApproxJacMatVec_1, x, b, params)
+  call AllocArray(tArr, yArr, zArr, mold=xArr)
+
+  call Solve_Newton(mesh, MatVec, ApproxJacMatVec_1, xArr, bArr, params)
 
 contains
-  subroutine ApproxJacMatVec_1(mesh, Jx, x, x0)
+  subroutine ApproxJacMatVec_1(mesh, Jx, xArr, xTildeArr)
     class(tMesh), intent(in), target :: mesh
-    class(tArray), intent(inout), target :: x, x0, Jx
+    class(tArray), intent(inout), target :: xArr, xTildeArr, Jx
 
     real(dp), parameter :: epsilon = 1e-6_dp
+
+    !! TODO: selection of 𝜀 is missing! 
 
     ! ----------------------
     ! Consider the first-order jacobian approximation:
@@ -140,14 +149,14 @@ contains
     ! 𝒚 ← 𝓐(𝒙₀), 𝒛 ← 𝓐(𝒕),
     ! 𝓙𝒙 ← (1/𝜀)𝒛 - (1/𝜀)𝒚.
     ! ----------------------
-    call Add(mesh, t, x0, x, epsilon)
-    call MatVec(mesh, y, x0); call MatVec(mesh, z, t)
-    call Sub(mesh, Jx, z, y, 1.0_dp/epsilon, 1.0_dp/epsilon)
+    call Add(mesh, tArr, xTildeArr, xArr, epsilon)
+    call MatVec(mesh, yArr, xTildeArr); call MatVec(mesh, zArr, tArr)
+    call Sub(mesh, Jx, zArr, yArr, 1.0_dp/epsilon, 1.0_dp/epsilon)
 
   end subroutine ApproxJacMatVec_1
-!  subroutine ApproxJacMatVec_2(mesh, Jx, x, x0)
+!  subroutine ApproxJacMatVec_2(mesh, Jx, xArr, xTildeArr)
 !    class(tMesh), intent(inout), target :: mesh
-!    class(tArray), intent(inout), target :: x, x0, Jx
+!    class(tArray), intent(inout), target :: xArr, xTildeArr, Jx
 !
 !    real(dp), parameter :: epsilon = 1e-6_dp
 !

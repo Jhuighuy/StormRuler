@@ -26,8 +26,8 @@ module StormRuler_BLAS
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, gCylCoords
-use StormRuler_Helpers, only: Re, Im, R2C
+use StormRuler_Parameters, only: dp, ip
+use StormRuler_Parameters, only: gCylCoords
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray
@@ -119,10 +119,10 @@ end interface
 !! Matrix-vector product function: 𝒚 ← 𝓐(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tMatVecFunc(mesh, y, x)
+  subroutine tMatVecFunc(mesh, yArr, xArr)
     import :: tMesh, tArray
     class(tMesh), intent(in), target :: mesh
-    class(tArray), intent(inout), target :: x, y
+    class(tArray), intent(inout), target :: xArr, yArr
   end subroutine tMatVecFunc
 end interface
 
@@ -130,10 +130,10 @@ end interface
 !! Matrix-vector product function with a parameter: 𝒚 ← 𝓙(𝒙,𝒙̃).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tBiMatVecFunc(mesh, y, x, xTilde)
+  subroutine tBiMatVecFunc(mesh, yArr, xArr, xTildeArr)
     import :: tMesh, tArray
     class(tMesh), intent(in), target :: mesh
-    class(tArray), intent(inout), target :: x, xTilde, y
+    class(tArray), intent(inout), target :: xArr, xTildeArr, yArr
   end subroutine tBiMatVecFunc
 end interface
 

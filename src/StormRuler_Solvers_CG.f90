@@ -64,37 +64,37 @@ contains
 !! CG may be applied to the consistent singular problems, 
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_CG(mesh, x, b, MatVec, params, pre)
+subroutine Solve_CG(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
   
   real(dp) :: alpha, beta, gamma, delta
-  type(tArray) :: p, r, t, z
+  type(tArray) :: pArr, rArr, tArr, zArr
   
-  call AllocArray(p, r, t, mold=x)
+  call AllocArray(pArr, rArr, tArr, mold=xArr)
   if (present(pre)) then
-    call AllocArray(z, mold=x)
+    call AllocArray(zArr, mold=xArr)
     call pre%Init(mesh, MatVec)
   else
-    z = r
+    zArr = rArr
   end if
 
   ! ----------------------
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒕.
   ! ----------------------
-  call MatVec(mesh, r, x)
-  call Sub(mesh, r, b, r)
+  call MatVec(mesh, rArr, xArr)
+  call Sub(mesh, rArr, bArr, rArr)
 
   ! ----------------------
   ! 𝛿 ← <𝒓⋅𝒓>,
   ! Check convergence for √𝛿.
   ! ----------------------
-  delta = Dot(mesh, r, r)
+  delta = Dot(mesh, rArr, rArr)
   if (params%Check(sqrt(delta))) return
   
   ! ----------------------
@@ -103,10 +103,10 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, pre)
   ! 𝛾 ← <𝒓⋅𝒛>,
   ! ----------------------
   if (present(pre)) then
-    call pre%Apply(mesh, z, r, MatVec)
+    call pre%Apply(mesh, zArr, rArr, MatVec)
   end if
-  call Set(mesh, p, z)
-  gamma = Dot(mesh, r, z)
+  call Set(mesh, pArr, zArr)
+  gamma = Dot(mesh, rArr, zArr)
 
   do
     ! ----------------------
@@ -115,16 +115,16 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, pre)
     ! 𝒙 ← 𝒙 + 𝛼𝒑,
     ! 𝒓 ← 𝒓 - 𝛼𝒕,
     ! ----------------------
-    call MatVec(mesh, t, p)
-    alpha = SafeDivide(gamma, Dot(mesh, p, t))
-    call Add(mesh, x, x, p, alpha)
-    call Sub(mesh, r, r, t, alpha)
+    call MatVec(mesh, tArr, pArr)
+    alpha = SafeDivide(gamma, Dot(mesh, pArr, tArr))
+    call Add(mesh, xArr, xArr, pArr, alpha)
+    call Sub(mesh, rArr, rArr, tArr, alpha)
 
     ! ----------------------
     ! 𝛼 ← <𝒓⋅𝒓>,
     ! Check convergence for √𝛼 and √𝛼/√𝛿.
     ! ----------------------
-    alpha = Dot(mesh, r, r)
+    alpha = Dot(mesh, rArr, rArr)
     if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
 
     ! ----------------------
@@ -134,8 +134,8 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, pre)
     ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
     ! ----------------------
     if (present(pre)) then
-      call pre%Apply(mesh, z, r, MatVec)
-      alpha = Dot(mesh, r, z)
+      call pre%Apply(mesh, zArr, rArr, MatVec)
+      alpha = Dot(mesh, rArr, zArr)
     end if
 
     ! ----------------------
@@ -144,7 +144,7 @@ subroutine Solve_CG(mesh, x, b, MatVec, params, pre)
     ! 𝛾 ← 𝛼.
     ! ----------------------
     beta = SafeDivide(alpha, gamma)
-    call Add(mesh, p, z, p, beta)
+    call Add(mesh, pArr, zArr, pArr, beta)
     gamma = alpha
 
   end do
@@ -158,37 +158,37 @@ end subroutine Solve_CG
 !! BiCGStab may be applied to the consistent singular problems,
 !! it converges towards..
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
+subroutine Solve_BiCGStab(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   real(dp) :: alpha, beta, gamma, delta, mu, rho, omega
-  type(tArray) :: p, r, rTilde, s, t, v, w, y, z
+  type(tArray) :: pArr, rArr, rTildeArr, sArr, tArr, vArr, wArr, yArr, zArr
 
-  call AllocArray(p, r, rTilde, s, t, v, mold=x)
+  call AllocArray(pArr, rArr, rTildeArr, sArr, tArr, vArr, mold=xArr)
   if (present(pre)) then
-    call AllocArray(w, y, z, mold=x)
+    call AllocArray(wArr, yArr, zArr, mold=xArr)
     call pre%Init(mesh, MatVec)
   else
-    w = t; y = p; z = s
+    wArr = tArr; yArr = pArr; zArr = sArr
   end if
 
   ! ----------------------
   ! 𝒓 ← 𝓐𝒙,
   ! 𝒓 ← 𝒃 - 𝒓.
   ! ----------------------
-  call MatVec(mesh, r, x)
-  call Sub(mesh, r, b, r)
+  call MatVec(mesh, rArr, xArr)
+  call Sub(mesh, rArr, bArr, rArr)
 
   ! ----------------------
   ! 𝛿 ← <𝒓⋅𝒓>,
   ! Check convergence for √𝛿.
   ! ----------------------
-  delta = Dot(mesh, r, r)
+  delta = Dot(mesh, rArr, rArr)
   if (params%Check(sqrt(delta))) return
   
   ! ----------------------
@@ -196,9 +196,9 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
   ! 𝒑 ← {0}ᵀ, 𝒗 ← {0}ᵀ,
   ! 𝜌 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
   ! ----------------------
-  call Set(mesh, rTilde, r)
-  call Fill(mesh, p, 0.0_dp)
-  call Fill(mesh, v, 0.0_dp)
+  call Set(mesh, rTildeArr, rArr)
+  call Fill(mesh, pArr, 0.0_dp)
+  call Fill(mesh, vArr, 0.0_dp)
   rho = 1.0_dp; alpha = 1.0_dp; omega = 1.0_dp
 
   do
@@ -207,7 +207,7 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
     ! 𝛽 ← (𝜇/𝜌)⋅(𝛼/𝜔),
     ! 𝜌 ← 𝜇.
     ! ----------------------
-    mu = Dot(mesh, rTilde, r)
+    mu = Dot(mesh, rTildeArr, rArr)
     beta = SafeDivide(mu, rho)*SafeDivide(alpha, omega)
     rho = mu
     
@@ -217,12 +217,12 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
     ! 𝒚 ← 𝓟𝒑,
     ! 𝒗 ← 𝓐𝒚.
     ! ----------------------
-    call Sub(mesh, p, p, v, omega)
-    call Add(mesh, p, r, p, beta)
+    call Sub(mesh, pArr, pArr, vArr, omega)
+    call Add(mesh, pArr, rArr, pArr, beta)
     if (present(pre)) then
-      call pre%Apply(mesh, y, p, MatVec)
+      call pre%Apply(mesh, yArr, pArr, MatVec)
     end if
-    call MatVec(mesh, v, y)
+    call MatVec(mesh, vArr, yArr)
     
     ! ----------------------
     ! 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
@@ -230,12 +230,12 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
     ! 𝒛 ← 𝓟𝒔,
     ! 𝒕 ← 𝓐𝒛.
     ! ----------------------
-    alpha = SafeDivide(rho, Dot(mesh, rTilde, v))
-    call Sub(mesh, s, r, v, alpha)
+    alpha = SafeDivide(rho, Dot(mesh, rTildeArr, vArr))
+    call Sub(mesh, sArr, rArr, vArr, alpha)
     if (present(pre)) then
-      call pre%Apply(mesh, z, s, MatVec)
+      call pre%Apply(mesh, zArr, sArr, MatVec)
     end if
-    call MatVec(mesh, t, z)
+    call MatVec(mesh, tArr, zArr)
     
     ! ----------------------
     ! 𝒘 ← 𝓟𝒕,
@@ -245,18 +245,18 @@ subroutine Solve_BiCGStab(mesh, x, b, MatVec, params, pre)
     ! 𝒙 ← 𝒙 + 𝛼𝒚,
     ! ----------------------
     if (present(pre)) then
-      call pre%Apply(mesh, w, t, MatVec)
+      call pre%Apply(mesh, wArr, tArr, MatVec)
     end if
-    omega = SafeDivide(Dot(mesh, w, z), Dot(mesh, w, w))
-    call Sub(mesh, r, s, t, omega)
-    call Add(mesh, x, x, z, omega)
-    call Add(mesh, x, x, y, alpha)
+    omega = SafeDivide(Dot(mesh, wArr, zArr), Dot(mesh, wArr, wArr))
+    call Sub(mesh, rArr, sArr, tArr, omega)
+    call Add(mesh, xArr, xArr, zArr, omega)
+    call Add(mesh, xArr, xArr, yArr, alpha)
     
     ! ----------------------
     ! 𝛾 ← <𝒓⋅𝒓>,
     ! Check convergence for √𝛾 and √𝛾/√𝛿.
     ! ----------------------
-    gamma = Dot(mesh, r, r)
+    gamma = Dot(mesh, rArr, rArr)
     if (params%Check(sqrt(gamma), sqrt(gamma/delta))) exit
 
   end do

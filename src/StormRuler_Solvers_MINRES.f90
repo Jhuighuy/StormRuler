@@ -104,21 +104,22 @@ end subroutine SymOrtho
 !!     “Iterative Methods for Singular Linear Equations and 
 !!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_MINRES(mesh, x, b, MatVec, params, pre)
+subroutine Solve_MINRES(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   real(dp) :: alpha, beta, betaBar, gamma, delta, deltaBar, &
     & epsilon, epsilonBar, tau, phi, phiTilde, cs, sn
-  type(tArray) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
+  type(tArray) :: tmp, pArr, qArr, qBarArr, &
+    & wArr, wBar, wBarBar, zArr, zBarArr, zBarBarArr
 
-  call AllocArray(p, w, wBar, wBarBar, z, zBar, zBarBar, mold=x)
+  call AllocArray(pArr, wArr, wBar, wBarBar, zArr, zBarArr, zBarBarArr, mold=xArr)
   if (present(pre)) then
-    call AllocArray(q, qBar, mold=x)
+    call AllocArray(qArr, qBarArr, mold=xArr)
     call pre%Init(mesh, MatVec)
   end if
 
@@ -136,15 +137,15 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, pre)
   ! ----------------------
   call Fill(mesh, wBar, 0.0_dp)
   call Fill(mesh, wBarBar, 0.0_dp)
-  call MatVec(mesh, zBar, x)
-  call Sub(mesh, zBar, b, zBar)
-  call Fill(mesh, zBarBar, 0.0_dp)
+  call MatVec(mesh, zBarArr, xArr)
+  call Sub(mesh, zBarArr, bArr, zBarArr)
+  call Fill(mesh, zBarBarArr, 0.0_dp)
   if (present(pre)) then
-    call pre%Apply(mesh, q, zBar, MatVec)
+    call pre%Apply(mesh, qArr, zBarArr, MatVec)
   else
-    q = zBar
+    qArr = zBarArr
   end if
-  betaBar = 1.0_dp; beta = sqrt(Dot(mesh, q, zBar))
+  betaBar = 1.0_dp; beta = sqrt(Dot(mesh, qArr, zBarArr))
   phi = beta; delta = 0.0_dp; epsilon = 0.0_dp
   cs = -1.0_dp; sn = 0.0_dp
 
@@ -166,18 +167,18 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, pre)
     ! 𝛽̅ ← 𝛽, 𝛽 ← √<𝒒⋅𝒛>,
     ! 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
     ! ----------------------
-    call MatVec(mesh, p, q)
-    alpha = Dot(mesh, q, p)/(beta**2)
-    call Sub(mesh, z, p, zBar, alpha/beta, 1.0_dp/beta)
-    call Sub(mesh, z, z, zBarBar, beta/betaBar)
+    call MatVec(mesh, pArr, qArr)
+    alpha = Dot(mesh, qArr, pArr)/(beta**2)
+    call Sub(mesh, zArr, pArr, zBarArr, alpha/beta, 1.0_dp/beta)
+    call Sub(mesh, zArr, zArr, zBarBarArr, beta/betaBar)
     if (present(pre)) then
-      tmp = qBar; qBar = q; q = tmp
-      call pre%Apply(mesh, q, z, MatVec)
+      tmp = qBarArr; qBarArr = qArr; qArr = tmp
+      call pre%Apply(mesh, qArr, zArr, MatVec)
     else
-      qBar = q; q = z
+      qBarArr = qArr; qArr = zArr
     end if
-    betaBar = beta; beta = sqrt(Dot(mesh, q, z))
-    tmp = zBarBar; zBarBar = zBar; zBar = z; z = tmp
+    betaBar = beta; beta = sqrt(Dot(mesh, qArr, zArr))
+    tmp = zBarBarArr; zBarBarArr = zBarArr; zBarArr = zArr; zArr = tmp
 
     ! ----------------------
     ! Construct and apply rotations:
@@ -198,10 +199,10 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, pre)
     ! 𝒙 ← 𝒙 + 𝜏𝒘,
     ! 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
     ! ----------------------
-    call Sub(mesh, w, qBar, wBar, deltaBar/gamma, 1.0_dp/(betaBar*gamma))
-    call Sub(mesh, w, w, wBarBar, epsilonBar/gamma)
-    call Add(mesh, x, x, w, tau)
-    tmp = wBarBar; wBarBar = wBar; wBar = w; w = tmp
+    call Sub(mesh, wArr, qBarArr, wBar, deltaBar/gamma, 1.0_dp/(betaBar*gamma))
+    call Sub(mesh, wArr, wArr, wBarBar, epsilonBar/gamma)
+    call Add(mesh, xArr, xArr, wArr, tau)
+    tmp = wBarBar; wBarBar = wBar; wBar = wArr; wArr = tmp
 
     ! ----------------------
     ! Check convergence for 𝜑 and 𝜑/𝜑̃.
@@ -230,10 +231,10 @@ end subroutine Solve_MINRES
 !!      nonsymmetric linear systems", 
 !!     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
+subroutine Solve_GMRES(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
@@ -242,11 +243,11 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
   integer(ip) :: i, k
   real(dp) :: chi, phi, phiTilde
   real(dp), pointer :: beta(:), cs(:), sn(:), H(:,:)
-  type(tArray) :: Q, s, t, r
+  type(tArray) :: QArr, sArr, tArr, rArr
 
-  call AllocArray(r, mold=x)
+  call AllocArray(rArr, mold=xArr)
   associate(m => gMaxIterGMRES)
-    call AllocArray(Q, shape=[x%mShape, m + 1])
+    call AllocArray(QArr, shape=[xArr%mShape, m + 1])
     allocate(beta(m + 1), cs(m), sn(m), H(m + 1,m))
   end associate
 
@@ -273,9 +274,9 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
     !   Check convergence for 𝜑̃.
     ! 𝗲𝗻𝗱 𝗶𝗳
     ! ----------------------
-    call MatVec(mesh, r, x)
-    call Sub(mesh, r, b, r)
-    phi = Norm_2(mesh, r)
+    call MatVec(mesh, rArr, xArr)
+    call Sub(mesh, rArr, bArr, rArr)
+    phi = Norm_2(mesh, rArr)
     if (phiTilde <= 0.0) then
       phiTilde = phi
       if (params%Check(phiTilde)) return
@@ -288,7 +289,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
     ! ----------------------
     cs(:) = 0.0_dp; sn(:) = 0.0_dp
     beta(1) = phi; beta(2:) = 0.0_dp
-    t = Q%Slice(1); call Scale(mesh, t, r, 1.0_dp/phi)
+    tArr = QArr%Slice(1); call Scale(mesh, tArr, rArr, 1.0_dp/phi)
 
     do k = 1, gMaxIterGMRES
       ! ----------------------
@@ -300,13 +301,13 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
       ! 𝗲𝗻𝗱 𝗳𝗼𝗿
       ! 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
       ! ----------------------
-      s = Q%Slice(k); t = Q%Slice(k+1)
-      call MatVec(mesh, t, s)
+      sArr = QArr%Slice(k); tArr = QArr%Slice(k+1)
+      call MatVec(mesh, tArr, sArr)
       do i = 1, k
-        s = Q%Slice(i); H(i,k) = Dot(mesh, t, s)
-        call Sub(mesh, t, t, s, H(i,k))
+        sArr = QArr%Slice(i); H(i,k) = Dot(mesh, tArr, sArr)
+        call Sub(mesh, tArr, tArr, sArr, H(i,k))
       end do
-      H(k+1,k) = Norm_2(mesh, t); call Scale(mesh, t, t, 1.0_dp/H(k+1,k))
+      H(k+1,k) = Norm_2(mesh, tArr); call Scale(mesh, tArr, tArr, 1.0_dp/H(k+1,k))
 
       ! ----------------------
       ! Eliminate the last element in 𝓗
@@ -363,7 +364,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
     do i = k, 1, -1
       beta(i) = beta(i) - dot_product(H(i,(i + 1):k), beta((i + 1):k))
       beta(i) = beta(i)/H(i,i)
-      t = Q%Slice(i); call Add(mesh, x, x, t, beta(i))
+      tArr = QArr%Slice(i); call Add(mesh, xArr, xArr, tArr, beta(i))
     end do
   end do
 
@@ -376,11 +377,11 @@ end subroutine Solve_GMRES
 !! References:
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_QMR(mesh, x, b, &
+subroutine Solve_QMR(mesh, xArr, bArr, &
     & MatVec, ConjMatVec, params, pre, conjPre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre, conjPre
   procedure(tMatVecFunc) :: MatVec, ConjMatVec
@@ -396,18 +397,18 @@ end subroutine Solve_QMR
 !! Using QMR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, pre)
+subroutine Solve_SymmQMR(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   if (present(pre)) then
-    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, pre, pre)
+    call Solve_QMR(mesh, xArr, bArr, MatVec, MatVec, params, pre, pre)
   else
-    call Solve_QMR(mesh, x, b, MatVec, MatVec, params)
+    call Solve_QMR(mesh, xArr, bArr, MatVec, MatVec, params)
   end if
 
 end subroutine Solve_SymmQMR
@@ -425,10 +426,10 @@ end subroutine Solve_SymmQMR
 !!     “Transpose-Free Quasi-Minimal Residual Methods 
 !!      for Non-Hermitian Linear Systems.” (1994).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_TFQMR(mesh, x, b, MatVec, params, pre)
+subroutine Solve_TFQMR(mesh, xArr, bArr, MatVec, params, pre)
   class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: b
-  class(tArray), intent(inout) :: x
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
   class(tConvParams), intent(inout) :: params
   class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec

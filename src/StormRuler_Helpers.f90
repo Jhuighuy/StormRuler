@@ -182,9 +182,9 @@ subroutine EnsurePositive(value)
   real(dp), intent(in) :: value
   
   if (ieee_is_nan(value).or.(value <= 0)) then
-    write(error_unit, *) 'NEGATIVE, ZERO OR NaN VALUE', value
-    error stop 1
+    error stop 'NEGATIVE, ZERO OR NaN VALUE: '//R2S(value)
   end if
+
 end subroutine EnsurePositive
 
 !! ----------------------------------------------------------------- !!
@@ -194,92 +194,78 @@ subroutine EnsureNonNegative(value)
   real(dp), intent(in) :: value
   
   if (ieee_is_nan(value).or.(value < 0)) then
-    write(error_unit, *) 'NEGATIVE OR NaN VALUE', value
-    error stop 1
+    error stop 'NEGATIVE OR NaN VALUE: '//R2S(value)
   end if
+
 end subroutine EnsureNonNegative
 
 !! ----------------------------------------------------------------- !!
+!! Compute pseudo inverse: 𝑎⁺ ← 1/𝑎 𝗶𝗳 𝑎 ≠ 0 𝗲𝗹𝘀𝗲 0.
+!! ----------------------------------------------------------------- !!
+pure real(dp) elemental function SafeInverse(a)
+  real(dp), intent(in) :: a
+  
+  SafeInverse = merge(0.0_dp, 1.0_dp/a, abs(a) <= tiny(1.0_dp))
+
+end function SafeInverse
+
+!! ----------------------------------------------------------------- !!
+!! Divide with pseudo inverse: 𝑑 ← 𝑏⁺⋅𝑎.
 !! ----------------------------------------------------------------- !!
 real(dp) function SafeDivide(a, b)
   real(dp), intent(in) :: a, b
   
-  call EnsurePositive(abs(b))
-  SafeDivide = a/b
+  SafeDivide = SafeInverse(b)*a
+
 end function SafeDivide
 
 !! ----------------------------------------------------------------- !!
-!! Compute pseudo inverse: i ← 1/a if a ≠ 0 else 0.
+!! Solve a small dense linear SLAE: 𝓐𝒙 = 𝒃.
 !! ----------------------------------------------------------------- !!
-real(dp) elemental function SafeInverse(a)
-  real(dp), intent(in) :: a
-  
-  SafeInverse = merge(0.0_dp, 1.0_dp/a, abs(a) <= epsilon(1.0_dp))
-end function SafeInverse
+pure function DenseSolve(A, b) result(x)
+  real(dp), intent(in) :: A(:,:), b(:)
+  real(dp) :: x(size(b))
+
+  !! TODO: real implementation is missing!
+  x(:) = b(:)/A(1,1)
+
+end function DenseSolve
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Get real part of a complex number.
-!! ----------------------------------------------------------------- !!
-real(dp) elemental function Re(z)
-  complex(dp), intent(in) :: z
-
-  Re = real(z, kind=dp)
-end function Re
-
-!! ----------------------------------------------------------------- !!
-!! Get imaginary part of a complex number.
-!! ----------------------------------------------------------------- !!
-real(dp) elemental function Im(z)
-  complex(dp), intent(in) :: z
-
-  Im = aimag(z) !! TODO: is this operation double-precision preserving?
-end function Im
-
-!! ----------------------------------------------------------------- !!
-!! Convert real number (or a pair of two) into the complex number.
-!! ----------------------------------------------------------------- !!
-complex(dp) elemental function R2C(x, y)
-  real(dp), intent(in) :: x
-  real(dp), intent(in), optional :: y
-
-  if (present(y)) then
-    R2C = cmplx(x, y, kind=dp)
-  else
-    R2C = cmplx(x, 0.0_dp, kind=dp)
-  end if
-end function R2C
-
-!! ----------------------------------------------------------------- !!
 !! Convert an integer to string.
 !! ----------------------------------------------------------------- !!
-function I2S(value)
+pure function I2S(value)
   integer(ip), intent(in) :: value
   character(len=:), allocatable :: I2S
   
   character(len=256) :: buffer
+  
   write(buffer, *) value
   I2S = trim(adjustl(buffer))
+
 end function I2S
 
 !! ----------------------------------------------------------------- !!
 !! Convert a real number to string.
 !! ----------------------------------------------------------------- !!
-function R2S(value)
+pure function R2S(value)
   real(dp), intent(in) :: value
   character(len=:), allocatable :: R2S
   
   character(len=256) :: buffer
+
   write(buffer, *) value
   R2S = trim(adjustl(buffer))
+
 end function R2S
 
 !! ----------------------------------------------------------------- !!
 !! Ternary operator for strings.
 !! ----------------------------------------------------------------- !!
-function MergeString(trueString, falseString, condition)
+pure function MergeString(trueString, falseString, condition)
   character(len=*), intent(in) :: trueString, falseString
   logical, intent(in) :: condition
   character(len=:), allocatable :: MergeString
@@ -289,6 +275,7 @@ function MergeString(trueString, falseString, condition)
   else
     MergeString = falseString
   end if
+
 end function MergeString
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -304,6 +291,7 @@ pure function PixelToInt(colorChannels) result(int)
   int = ior(iand(255, colorChannels(1)), &
     &       ior(ishft(iand(255, colorChannels(2)), 8), &
     &           ishft(iand(255, colorChannels(3)), 16)))
+
 end function PixelToInt
 
 !! ----------------------------------------------------------------- !!
@@ -316,6 +304,7 @@ pure function IntToPixel(int) result(colorChannels)
   colorChannels(1) = iand(255, int)
   colorChannels(2) = iand(255, ishft(int, -8))
   colorChannels(3) = iand(255, ishft(int, -16))
+
 end function IntToPixel
 
 end module StormRuler_Helpers

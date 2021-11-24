@@ -40,6 +40,8 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 implicit none
 
+include 'mkl_spblas.fi'
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compressed sparse row (CSR) block matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -137,6 +139,9 @@ subroutine InitMatrix(mesh, mat, power)
 
 end subroutine InitMatrix
 
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Sparse matrix-vector product: 𝒚 ← 𝓐𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -156,17 +161,13 @@ contains
   subroutine MatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr
+    integer(ip) :: rowAddr, col
 
     y(:,row) = 0.0_dp
 
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
-
-      end associate
+      col = mat%ColIndices(rowAddr)
+      y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
     end do
 
   end subroutine MatrixVector_Kernel
@@ -189,74 +190,67 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
   call xArr%Get(x); call yArr%Get(y)
 
   select case(part)
-    case('l', 'L')
-      call mesh%RunCellKernel(LowerMatrixVector_Kernel)
     case('d', 'D')
       call mesh%RunCellKernel(DiagMatrixVector_Kernel)
+    case('l', 'L')
+      call mesh%RunCellKernel(LowerMatrixVector_Kernel)
     case('u', 'U')
       call mesh%RunCellKernel(UpperMatrixVector_Kernel)
   end select
 
 contains
-  subroutine LowerMatrixVector_Kernel(row)
+subroutine DiagMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr
-
-    y(:,row) = 0.0_dp
+    integer(ip) :: rowAddr, col
 
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        ! ----------------------
-        ! Perform the multiplication until diagonal block is reached.
-        ! ----------------------
-        if (row >= col) return
-        y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
-
-      end associate
-    end do
-
-  end subroutine LowerMatrixVector_Kernel
-  subroutine DiagMatrixVector_Kernel(row)
-    integer(ip), intent(in) :: row
-
-    integer(ip) :: rowAddr
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        if (row == col) then 
-          y(:,row) = matmul(coeffs, x(:,col))
-          return
-        end if
-
-      end associate
+      col = mat%ColIndices(rowAddr)
+      if (row == col) then
+        y(:,row) = matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
+      end if
     end do
 
   end subroutine DiagMatrixVector_Kernel
-  subroutine UpperMatrixVector_Kernel(row)
+  subroutine LowerMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr
+    integer(ip) :: rowAddr, col
 
     y(:,row) = 0.0_dp
 
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+      col = mat%ColIndices(rowAddr)
+      if (row < col) then
+        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
+      end if
+    end do
 
-        if (row > col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+  end subroutine LowerMatrixVector_Kernel
+  subroutine UpperMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
 
-      end associate
+    integer(ip) :: rowAddr, col
+
+    y(:,row) = 0.0_dp
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      col = mat%ColIndices(rowAddr)
+      if (row > col) then
+        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
+      end if
     end do
 
   end subroutine UpperMatrixVector_Kernel
 end subroutine PartialMatrixVector
 
-subroutine InvDiagMatrixVector(mesh, mat, yArr, xArr)
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Solve equation 𝓓𝒙 = 𝒚, where 𝓓 is the (block-)diagonal of 𝓐.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine SolveDiag(mesh, mat, yArr, xArr)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(inout) :: xArr, yArr
@@ -265,24 +259,38 @@ subroutine InvDiagMatrixVector(mesh, mat, yArr, xArr)
 
   call xArr%Get(x); call yArr%Get(y)
 
-  call mesh%RunCellKernel(MatrixVector_Kernel)
+  call mesh%RunCellKernel(SolveDiag_Kernel)
 
 contains
-  subroutine MatrixVector_Kernel(row)
+  subroutine SolveDiag_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr
+    integer(ip) :: rowAddr, col
 
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      associate(col => mat%ColIndices(rowAddr), &
-           & coeffs => mat%ColCoeffs(:,:,rowAddr))
-
-        if (row == col) y(:,row) = x(:,col)/coeffs(1,1)
-
-      end associate
+      col = mat%ColIndices(rowAddr)
+      if (row == col) then
+        y(:,row) = DenseSolve(mat%ColCoeffs(:,:,rowAddr), x(:,col))
+      end if
     end do
 
-  end subroutine MatrixVector_Kernel
-end subroutine InvDiagMatrixVector
+  end subroutine SolveDiag_Kernel
+end subroutine SolveDiag
+
+subroutine SolveTrianular(mesh, part, mat, yArr, xArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(in) :: xArr
+  class(tArray), intent(inout) :: yArr
+  character, intent(in) :: part
+
+  real(dp), pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
+  call mkl_dcsrtrsv(part, 'N', 'N', mesh%NumCells, &
+      & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
+
+end subroutine SolveTrianular
 
 end module StormRuler_Matrix

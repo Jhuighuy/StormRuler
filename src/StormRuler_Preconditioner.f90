@@ -45,10 +45,11 @@ type, abstract :: tPreconditioner
 contains
   procedure(tInitPreconditionerFunc), deferred :: Init
   procedure(tApplyPreconditionerFunc), deferred :: Apply
+
 end type tPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
+!! Initialize the preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tInitPreconditionerFunc(pre, mesh, MatVec)
@@ -60,7 +61,7 @@ abstract interface
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Apply preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
+!! Apply the preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tApplyPreconditionerFunc(pre, mesh, yArr, xArr, MatVec)
@@ -78,6 +79,7 @@ end interface
 type, extends(tPreconditioner), abstract :: tMatrixBasedPreconditioner
 contains
   procedure(tSetPreconditionerMatrixFunc), deferred :: SetMatrix
+
 end type tMatrixBasedPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

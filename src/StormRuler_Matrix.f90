@@ -171,4 +171,124 @@ contains
   end subroutine MatrixVector_Kernel
 end subroutine MatrixVector
 
+subroutine DiagMatrixVector(mesh, mat, yArr, xArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
+
+  real(dp), pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
+  call mesh%RunCellKernel(MatrixVector_Kernel)
+
+contains
+  subroutine MatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        if (row == col) y(:,row) = matmul(coeffs, x(:,col))
+
+      end associate
+    end do
+
+  end subroutine MatrixVector_Kernel
+end subroutine DiagMatrixVector
+
+subroutine InvDiagMatrixVector(mesh, mat, yArr, xArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
+
+  real(dp), pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
+  call mesh%RunCellKernel(MatrixVector_Kernel)
+
+contains
+  subroutine MatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        if (row == col) y(:,row) = x(:,col)/coeffs(1,1)
+
+      end associate
+    end do
+
+  end subroutine MatrixVector_Kernel
+end subroutine InvDiagMatrixVector
+
+subroutine UpperMatrixVector(mesh, mat, yArr, xArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
+
+  real(dp), pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
+  call mesh%RunCellKernel(MatrixVector_Kernel)
+
+contains
+  subroutine MatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    y(:,row) = 0.0_dp
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        if (row > col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+
+      end associate
+    end do
+
+  end subroutine MatrixVector_Kernel
+end subroutine UpperMatrixVector
+
+subroutine LowerMatrixVector(mesh, mat, yArr, xArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(inout) :: xArr, yArr
+
+  real(dp), pointer :: x(:,:), y(:,:)
+
+  call xArr%Get(x); call yArr%Get(y)
+
+  call mesh%RunCellKernel(MatrixVector_Kernel)
+
+contains
+  subroutine MatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr
+
+    y(:,row) = 0.0_dp
+
+    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
+      associate(col => mat%ColIndices(rowAddr), &
+           & coeffs => mat%ColCoeffs(:,:,rowAddr))
+
+        if (row < col) y(:,row) = y(:,row) + matmul(coeffs, x(:,col))
+
+      end associate
+    end do
+
+  end subroutine MatrixVector_Kernel
+end subroutine LowerMatrixVector
+
 end module StormRuler_Matrix

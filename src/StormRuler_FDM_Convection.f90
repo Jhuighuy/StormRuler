@@ -55,7 +55,7 @@ contains
 !! shape of 𝒂 is [1, NumDims]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uArr, aArr
   class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
@@ -85,7 +85,7 @@ contains
       ! Find indices of the adjacent cells.
       ! ----------------------
       associate(rCellFace => iCellFace, &
-        &       lCellFace => Flip(iCellFace))
+              & lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
         if (gTruncErrorOrder >= 3) then

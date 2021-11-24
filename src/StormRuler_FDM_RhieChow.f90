@@ -60,7 +60,7 @@ contains
 !! shape of 𝒗,𝒑,𝛒 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoAny)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: pArr
   class(tArray), intent(in) :: rhoAny
   class(tArray), intent(inout) :: vArr
@@ -91,7 +91,7 @@ contains
       ! Find indices of the adjacent cells.
       ! ----------------------
       associate(rCellFace => iCellFace, &
-        &       lCellFace => Flip(iCellFace))
+              & lCellFace => Flip(iCellFace))
         rCell = mesh%CellToCell(rCellFace, iCell)
         lCell = mesh%CellToCell(lCellFace, iCell)
         rrCell = mesh%CellToCell(rCellFace, rCell)

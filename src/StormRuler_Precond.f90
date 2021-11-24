@@ -31,6 +31,8 @@ use StormRuler_Array, only: tArray
 
 use StormRuler_BLAS, only: tMatVecFunc
 
+use StormRuler_Matrix, only: tMatrix
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -49,10 +51,10 @@ end type tPreconditioner
 !! Initialize preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tInitPrecondFunc(precond, mesh, MatVec)
+  subroutine tInitPrecondFunc(pre, mesh, MatVec)
     import :: tMesh, tPreconditioner, tMatVecFunc
-    class(tPreconditioner), intent(inout) :: precond
-    class(tMesh), intent(inout), target :: mesh
+    class(tPreconditioner), intent(inout) :: pre
+    class(tMesh), intent(in), target :: mesh
     procedure(tMatVecFunc) :: MatVec
   end subroutine tInitPrecondFunc
 end interface
@@ -61,13 +63,32 @@ end interface
 !! Apply preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tApplyPrecondFunc(precond, mesh, yArr, xArr, MatVec)
+  subroutine tApplyPrecondFunc(pre, mesh, yArr, xArr, MatVec)
     import :: tMesh, tArray, tPreconditioner, tMatVecFunc
-    class(tPreconditioner), intent(inout) :: precond
-    class(tMesh), intent(inout), target :: mesh
+    class(tPreconditioner), intent(inout) :: pre
+    class(tMesh), intent(in), target :: mesh
     class(tArray), intent(inout), target :: xArr, yArr
     procedure(tMatVecFunc) :: MatVec
   end subroutine tApplyPrecondFunc
+end interface
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Matrix-based preconditioner class.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type, extends(tPreconditioner), abstract :: tMatrixBasedPreconditioner
+contains
+  procedure(tPrecondSetMatrixFunc), deferred :: SetMatrix
+end type tMatrixBasedPreconditioner
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Set matrix for the matrix-based preconditioner.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+abstract interface
+  subroutine tPrecondSetMatrixFunc(pre, mat)
+    import :: tMatrixBasedPreconditioner, tMatrix
+    class(tMatrixBasedPreconditioner), intent(inout) :: pre
+    class(tMatrix), intent(inout), target :: mat
+  end subroutine tPrecondSetMatrixFunc
 end interface
 
 end module StormRuler_Precond

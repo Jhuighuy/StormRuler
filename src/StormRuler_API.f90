@@ -516,21 +516,21 @@ end subroutine stormMul
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 #$macro WrapMapFunc ^(?P<cFunc>\w+)\s+(?P<Func>\w+)\s+(?P<env>\w+)\s*$
-pure function $Func(x) result(Fx)
+pure function $Func(x) result(y)
   real(dp), intent(in) :: x(:)
-  real(dp) :: Fx(size(x))
+  real(dp) :: y(size(x))
 
-  call $cFunc(size(x), Fx, x, $env)
+  call $cFunc(size(x), y, x, $env)
 
 end function $Func
 #$end macro
 
 #$macro WrapSpMapFunc ^(?P<cSpFunc>\w+)\s+(?P<SpFunc>\w+)\s+(?P<env>\w+)\s*$
-pure function $SpFunc(r, x) result(Fx)
+pure function $SpFunc(r, x) result(y)
   real(dp), intent(in) :: r(:), x(:)
-  real(dp) :: Fx(size(x))
+  real(dp) :: y(size(x))
 
-  call $cSpFunc(size(r), r, size(x), Fx, x, $env)
+  call $cSpFunc(size(r), r, size(x), y, x, $env)
 
 end function $SpFunc
 #$end macro
@@ -613,19 +613,19 @@ end subroutine stormSpFuncProd
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 #$macro WrapMatVecFunc ^(?P<cMatVec>\w+)\s+(?P<MatVec>\w+)\s+(?P<env>\w+)\s*$
-subroutine $MatVec(mesh, AxArr, xArr)
-  class(tMesh), intent(inout), target :: mesh
-  class(tArray), intent(inout), target :: xArr, AxArr
+subroutine $MatVec(mesh, yArr, xArr)
+  class(tMesh), intent(in), target :: mesh
+  class(tArray), intent(inout), target :: xArr, yArr
 
-  type(c_ptr) :: meshPtr, xPtr, AxPtr
+  type(c_ptr) :: meshPtr, xPtr, yPtr
 
   meshPtr = Wrap(mesh)
-  xPtr = Wrap(xArr); AxPtr = Wrap(AxArr)
+  xPtr = Wrap(xArr); yPtr = Wrap(yArr)
 
-  call $cMatVec(meshPtr, AxPtr, xPtr, $env)
+  call $cMatVec(meshPtr, yPtr, xPtr, $env)
 
   call Free(meshPtr, mold=mesh)
-  call Free(xPtr, mold=xArr); call Free(AxPtr, mold=AxArr)
+  call Free(xPtr, mold=xArr); call Free(yPtr, mold=yArr)
 
 end subroutine $MatVec
 #$end macro

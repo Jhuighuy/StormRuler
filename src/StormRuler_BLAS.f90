@@ -94,47 +94,46 @@ interface FuncProd
 end interface FuncProd
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Mathematical function: ℳ𝒙 ← 𝑓(𝒙).
+!! Mathematical function: 𝑦 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  pure function tMapFunc(x) result(Mx)
+  pure function tMapFunc(x) result(y)
     import dp
     real(dp), intent(in) :: x(:)
-    real(dp) :: Mx(size(x))
+    real(dp) :: y(size(x))
   end function tMapFunc
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Mathematical function: ℳ𝒙 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
+!! Mathematical function: 𝑦 ← 𝑓(𝒓,𝒙), 𝒓 ∊ 𝛺.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  pure function tSpMapFunc(r, x) result(Mx)
+  pure function tSpMapFunc(r, x) result(y)
     import dp
-    real(dp), intent(in) :: r(:)
-    real(dp), intent(in) :: x(:)
-    real(dp) :: Mx(size(x))
+    real(dp), intent(in) :: r(:), x(:)
+    real(dp) :: y(size(x))
   end function tSpMapFunc
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Matrix-vector product function: 𝓐𝒙 ← 𝓐(𝒙).
+!! Matrix-vector product function: 𝒚 ← 𝓐(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tMatVecFunc(mesh, Ax, x)
+  subroutine tMatVecFunc(mesh, y, x)
     import :: tMesh, tArray
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: x, Ax
+    class(tMesh), intent(in), target :: mesh
+    class(tArray), intent(inout), target :: x, y
   end subroutine tMatVecFunc
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Matrix-vector product function with a parameter: 𝓙𝒙 ← 𝓙(𝒙,𝒙₀).
+!! Matrix-vector product function with a parameter: 𝒚 ← 𝓙(𝒙,𝒙̃).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
-  subroutine tBiMatVecFunc(mesh, Jx, x, x0)
+  subroutine tBiMatVecFunc(mesh, y, x, xTilde)
     import :: tMesh, tArray
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: x, x0, Jx
+    class(tMesh), intent(in), target :: mesh
+    class(tArray), intent(inout), target :: x, xTilde, y
   end subroutine tBiMatVecFunc
 end interface
 
@@ -147,7 +146,7 @@ contains
 !! Compute dot product: 𝑑 ← <𝒙⋅𝒚> = 𝒙ᵀ𝒚.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 real(dp) function Dot(mesh, xArr, yArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr, yArr
 
   real(dp), pointer :: x(:,:), y(:,:)
@@ -173,7 +172,7 @@ end function Dot
 !! Compute ℒ₁-norm: 𝑑 ← ‖𝒙‖₁.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 real(dp) function Norm_1(mesh, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
 
   real(dp), pointer :: x(:,:)
@@ -196,7 +195,7 @@ end function Norm_1
 !! Compute ℒ₂-norm: 𝑑 ← ‖𝒙‖₂.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 real(dp) function Norm_2(mesh, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
 
   Norm_2 = sqrt( Dot(mesh, xArr, xArr) )
@@ -207,7 +206,7 @@ end function Norm_2
 !! Compute ℒ∞-norm: 𝑑 ← ‖𝒙‖∞.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 real(dp) function Norm_C(mesh, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
 
   real(dp), pointer :: x(:,:)
@@ -232,7 +231,7 @@ end function Norm_C
 !! Fill vector components: 𝒚 ← 𝛼, 𝛼 ∊ ℝ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Fill(mesh, yArr, alpha)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(inout) :: yArr
   real(dp), intent(in) :: alpha
 
@@ -257,7 +256,7 @@ end subroutine Fill
 !! • 𝛼ᵢ = 𝜙ᵢ + 𝑐⋅𝘦𝘹𝘱(𝑖𝜓ᵢ), 𝜙ᵢ ~ 𝘜(𝑎,𝑏), 𝜓ᵢ ~ 𝘜(0,2𝜋), 𝒚 ∊ ℂⁿ.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Fill_Random(mesh, yArr, a, b)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(inout) :: yArr
   real(dp), intent(in), optional :: a, b
 
@@ -265,14 +264,10 @@ subroutine Fill_Random(mesh, yArr, a, b)
 
   call yArr%Get(y)
 
-  ! TODO: not very parallel..
-  call mesh%SetRange(parallel=.false.)
   call mesh%RunCellKernel_Block(Fill_Random_Kernel)
-  call mesh%SetRange()
 
 contains
-  subroutine Fill_Random_Kernel(mesh, firstCell, lastCell)
-    class(tMesh), intent(inout), target :: mesh
+  subroutine Fill_Random_Kernel(firstCell, lastCell)
     integer(ip), intent(in) :: firstCell, lastCell
 
     integer :: cell
@@ -291,7 +286,7 @@ end subroutine Fill_Random
 !! Set: 𝒚 ← 𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Set(mesh, yArr, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
   
@@ -314,7 +309,7 @@ end subroutine Set
 !! Scale: 𝒚 ← 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Scale(mesh, yArr, xArr, alpha)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
   real(dp), intent(in) :: alpha
@@ -338,7 +333,7 @@ end subroutine Scale
 !! Compute linear combination: 𝒛 ← [[𝛽]]𝒚 + [𝛼]𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Add(mesh, zArr, yArr, xArr, alpha, beta)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr, yArr
   class(tArray), intent(inout) :: zArr
   real(dp), intent(in), optional :: alpha, beta
@@ -366,7 +361,7 @@ end subroutine Add
 !! Compute linear combination: 𝒛 ← 𝛽𝒚 - 𝛼𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Sub(mesh, zArr, yArr, xArr, alpha, beta)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr, yArr
   class(tArray), intent(inout) :: zArr
   real(dp), intent(in), optional :: alpha, beta
@@ -402,7 +397,7 @@ end subroutine Sub
 !!   Shape of 𝒚 is [1, NumVars]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine Mul(mesh, zArr, yArr, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr, yArr
   class(tArray), intent(inout) :: zArr
 
@@ -455,7 +450,7 @@ end subroutine Mul
 !! Compute integral average: 𝑖 ← ∫𝑓(𝒙(𝒓))𝑑𝛺/∫1𝑑𝛺.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 real(dp) function Integrate(mesh, xArr, f) result(integral)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
   procedure(tMapFunc) :: f
   
@@ -481,7 +476,7 @@ end function Integrate
 !! Compute a function product: 𝒚 ← 𝑓(𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FuncProd(mesh, yArr, xArr, f)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
   procedure(tMapFunc) :: f
@@ -505,7 +500,7 @@ end subroutine FuncProd
 !! Compute a function product: 𝒚 ← 𝑓(𝒓,𝒙).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine SpFuncProd(mesh, yArr, xArr, f)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
   procedure(tSpMapFunc) :: f

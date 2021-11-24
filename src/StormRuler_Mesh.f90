@@ -204,9 +204,8 @@ abstract interface
 end interface
 
 abstract interface
-  subroutine tBlockKernelFunc(mesh, firstCell, lastCell)
-    import ip, tMesh
-    class(tMesh), intent(inout), target :: mesh
+  subroutine tBlockKernelFunc(firstCell, lastCell)
+    import ip
     integer(ip), intent(in) :: firstCell, lastCell
   end subroutine tBlockKernelFunc
 end interface
@@ -307,7 +306,7 @@ end function tMesh_LastCell
 !! Launch a cell kernel.
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_RunCellKernel(mesh, Kernel)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   procedure(tKernelFunc) :: Kernel
 
   integer :: iCell
@@ -331,7 +330,7 @@ end subroutine tMesh_RunCellKernel
 !! ----------------------------------------------------------------- !!
 #$for T, typename in SCALAR_TYPES
 function tMesh_RunCellKernel_Sum$T(mesh, Kernel) result(sum)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   procedure(tReduceKernelFunc$T) :: Kernel
   $typename :: sum
 
@@ -357,7 +356,7 @@ end function tMesh_RunCellKernel_Sum$T
 !! Launch a MIN-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMin
 
@@ -382,7 +381,7 @@ end function tMesh_RunCellKernel_Min
 !! Launch a MAX-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   procedure(tReduceKernelFuncR) :: Kernel
   real(dp) :: mMax
 
@@ -407,7 +406,7 @@ end function tMesh_RunCellKernel_Max
 !! Launch a block-kernel.
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
 
 #$if HAS_OpenMP
@@ -418,7 +417,7 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! Launch the whole range as a block if sequential mode is requested.
   ! ----------------------
   if (.not.mesh%mParallel) then
-    call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())
+    call BlockKernel(mesh%FirstCell(), mesh%LastCell())
     return
   end if
 
@@ -440,13 +439,13 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! ----------------------
   ! Lauch threads.
   ! ----------------------
-  !$omp parallel default(none) shared(mesh, ranges) private(thread)
+  !$omp parallel default(none) shared(ranges) private(thread)
   thread = omp_get_thread_num() + 1
-  call BlockKernel(mesh, ranges(thread), ranges(thread + 1) - 1)
+  call BlockKernel(ranges(thread), ranges(thread + 1) - 1)
   !$omp end parallel
 #$else
 
-  call BlockKernel(mesh, mesh%FirstCell(), mesh%LastCell())
+  call BlockKernel(mesh%FirstCell(), mesh%LastCell())
 
 #$endif
 end subroutine tMesh_RunCellKernel_Block

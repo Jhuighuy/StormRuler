@@ -71,10 +71,10 @@ end type tMatrix
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize a basic matrix.
+!! Initialize a basic sparse matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine InitMatrix(mesh, mat, power)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(inout) :: mat
   integer(ip), intent(in) :: power
 
@@ -138,10 +138,10 @@ subroutine InitMatrix(mesh, mat, power)
 end subroutine InitMatrix
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Sparse matrix-vector product. 
+!! Sparse matrix-vector product: 𝒚 ← 𝓐𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine MatrixVector(mesh, mat, yArr, xArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(inout) :: xArr, yArr
 

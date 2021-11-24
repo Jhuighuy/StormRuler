@@ -104,12 +104,12 @@ end subroutine SymOrtho
 !!     “Iterative Methods for Singular Linear Equations and 
 !!     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_MINRES(mesh, x, b, MatVec, params, precond)
-  class(tMesh), intent(inout) :: mesh
+subroutine Solve_MINRES(mesh, x, b, MatVec, params, pre)
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: precond
+  class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   real(dp) :: alpha, beta, betaBar, gamma, delta, deltaBar, &
@@ -117,9 +117,9 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, precond)
   type(tArray) :: tmp, p, q, qBar, w, wBar, wBarBar, z, zBar, zBarBar
 
   call AllocArray(p, w, wBar, wBarBar, z, zBar, zBarBar, mold=x)
-  if (present(precond)) then
+  if (present(pre)) then
     call AllocArray(q, qBar, mold=x)
-    call precond%Init(mesh, MatVec)
+    call pre%Init(mesh, MatVec)
   end if
 
   ! ----------------------
@@ -139,8 +139,8 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, precond)
   call MatVec(mesh, zBar, x)
   call Sub(mesh, zBar, b, zBar)
   call Fill(mesh, zBarBar, 0.0_dp)
-  if (present(precond)) then
-    call precond%Apply(mesh, q, zBar, MatVec)
+  if (present(pre)) then
+    call pre%Apply(mesh, q, zBar, MatVec)
   else
     q = zBar
   end if
@@ -170,9 +170,9 @@ subroutine Solve_MINRES(mesh, x, b, MatVec, params, precond)
     alpha = Dot(mesh, q, p)/(beta**2)
     call Sub(mesh, z, p, zBar, alpha/beta, 1.0_dp/beta)
     call Sub(mesh, z, z, zBarBar, beta/betaBar)
-    if (present(precond)) then
+    if (present(pre)) then
       tmp = qBar; qBar = q; q = tmp
-      call precond%Apply(mesh, q, z, MatVec)
+      call pre%Apply(mesh, q, z, MatVec)
     else
       qBar = q; q = z
     end if
@@ -230,12 +230,12 @@ end subroutine Solve_MINRES
 !!      nonsymmetric linear systems", 
 !!     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_GMRES(mesh, x, b, MatVec, params, precond)
-  class(tMesh), intent(inout) :: mesh
+subroutine Solve_GMRES(mesh, x, b, MatVec, params, pre)
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: precond
+  class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   logical :: converged
@@ -250,7 +250,7 @@ subroutine Solve_GMRES(mesh, x, b, MatVec, params, precond)
     allocate(beta(m + 1), cs(m), sn(m), H(m + 1,m))
   end associate
 
-  if (present(precond)) then
+  if (present(pre)) then
     error stop 'preconditioned GMRES solver is not implemented.'
   end if
 
@@ -377,12 +377,12 @@ end subroutine Solve_GMRES
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_QMR(mesh, x, b, &
-    & MatVec, ConjMatVec, params, precond, conjPrecond)
-  class(tMesh), intent(inout) :: mesh
+    & MatVec, ConjMatVec, params, pre, conjPre)
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: precond, conjPrecond
+  class(tPreconditioner), intent(inout), optional :: pre, conjPre
   procedure(tMatVecFunc) :: MatVec, ConjMatVec
 
   error stop 'QMR solver is not implemented.'
@@ -396,16 +396,16 @@ end subroutine Solve_QMR
 !! Using QMR is not recommended in the self-adjoint case,
 !! please consider MINRES instead.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, precond)
-  class(tMesh), intent(inout) :: mesh
+subroutine Solve_SymmQMR(mesh, x, b, MatVec, params, pre)
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: precond
+  class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
-  if (present(precond)) then
-    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, precond, precond)
+  if (present(pre)) then
+    call Solve_QMR(mesh, x, b, MatVec, MatVec, params, pre, pre)
   else
     call Solve_QMR(mesh, x, b, MatVec, MatVec, params)
   end if
@@ -425,12 +425,12 @@ end subroutine Solve_SymmQMR
 !!     “Transpose-Free Quasi-Minimal Residual Methods 
 !!      for Non-Hermitian Linear Systems.” (1994).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_TFQMR(mesh, x, b, MatVec, params, precond)
-  class(tMesh), intent(inout) :: mesh
+subroutine Solve_TFQMR(mesh, x, b, MatVec, params, pre)
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: precond
+  class(tPreconditioner), intent(inout), optional :: pre
   procedure(tMatVecFunc) :: MatVec
 
   error stop 'TFQMR solver is not implemented.'

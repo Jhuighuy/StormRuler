@@ -47,22 +47,19 @@ In order to implement the high performance implicit schemes,
 several algebraic problems, like systems of linear and nonlinear
 equations, have to be solved.
 
-<!--For the sake of convenience, all auxiliary solvers are implemented 
-in the matrix-free manner: no assembled matrix is required to find 
+For the sake of convenience, all auxiliary solvers are implemented 
+in the _matrix-free_ manner: no assembled matrix is required to find 
 a solution of the algebraic problem, only the matrix-vector product 
 function is used.
 
 Although most of the problems can be solved in the matrix-free 
 manner using the Krylov subspace iterative solver, in some 
-pathological cases an assembled matrix be required to 
-construct a suitable preconditioner or utilize a direct solver.
-**StormRuler** reconstructs a matrix using the matrix-vector 
-product function automatically, using the 
-_graph coloring based-algorithm_ in order to minimize an 
-amount of the matrix-vector products required to construct it.-->
-
-Several preconditioners are available in pure matrix-free context,
-although some of them are not parallelized.
+cases an assembled matrix be required to construct a suitable 
+preconditioner or utilize a direct solver.
+**StormRuler** extracts a matrix using the matrix-vector 
+product function automatically, using the _column coloring algorithm_ 
+in order to minimize an amount of the extraction matrix-vector 
+products.
 
 **StormRuler** contains:
 - 🛸 Matrix-free nonlinear solvers:
@@ -74,21 +71,20 @@ although some of them are not parallelized.
 - 🏎 Matrix-free linear iterative solvers:
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
+  * _(planned)_ Flexible Conjugate Gradients solver 
+    (`FCG`, for the _definite symmetric_ linear problems with),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGSTAB`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
+  * _(planned)_ Flexible Generalized Minimal Residual method solver
+    (`FGMRES`, for the general linear problems),
   * _(planned)_ Quasi-Minimal Residual solver
     (`QMR`, for the general linear problems);
   * _(planned)_ Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
-
-<!--
-- 🚂 Linear direct solvers (embedded into the matrix-free environment):
-  * MKL Direct Sparse Solver 
-    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).-->
 
 - 🚜 Matrix-free linear iterative least squares solvers:
   * Least squares-QR solver
@@ -96,12 +92,31 @@ although some of them are not parallelized.
   * Least squares-MINRES solver
     (`LSMR`, for the general linear least squares problems);
 
-- 🚨 Matrix-free preconditioners:
-  * Block Jacobi preconditioner
+- 🚂 Linear direct solvers (embedded into the matrix-free environment):
+  * _(planned)_ MKL Direct Sparse Solver 
+    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).
+  * _(planned)_ PARDISO direct solver
+    (`PARDISO`/`PARDISO_MKL`),
+  * _(planned)_ SuperLU direct solver
+    (`SuperLU`);
+
+- 🚨 Matrix-based preconditioners (embedded into the matrix-free environment):
+  * _(planned)_ Block Jacobi preconditioner
     (`Jacobi`),
-  * Block LU-SGS preconditioner
-    (`LU_SGS`),
-  * _(planned)_ Block SPAI preconditioner.
+  * _(planned)_ Block LU-SGS preconditioner
+    (`LU-SGS`),
+  * _(planned)_ Block Incomplete Cholesky preconditioner,
+    (`ICHOL`)
+  * _(planned)_ Block Incomplete LU preconditioner,
+    (`ILU`),
+  * _(planned)_ Block SPAI preconditioner,
+    (`SPAI`);
+
+- Matrix-free preconditioners:
+  * _(planned)_ Polynomial preconditioner
+    (`Poly`),
+  * _(planned)_ Approximate Inverse preconditioner
+    (`AINV`).
 
 <!----------------------------------------------------------------->
 ## 🛤Road map

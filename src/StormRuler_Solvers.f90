@@ -35,81 +35,27 @@ use StormRuler_BLAS, only: Norm_2, Fill, Set, Sub
 use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Precond, only: tPreconditioner
-
-use StormRuler_Matrix!, only: ...
-use StormRuler_Matrix_Extraction!, only: ...
-use StormRuler_Precond_SPAI!, only: ...
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_QMR, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
+use StormRuler_Precond, only: tPreconditioner
+
+use StormRuler_Matrix!, only: ...
+use StormRuler_Matrix_Extraction!, only: ...
+use StormRuler_Precond_ILU_MKL!, only: ...
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-include 'mkl.fi'
-
-type, extends(tPreconditioner) :: tPreconditioner_ILU0_MKL
-  type(tMatrix), pointer :: Mat => null()
-  real(dp), allocatable :: ColCoeffsILU0(:)
-
-contains
-  procedure Init => InitPrecond_ILU0_MKL
-  procedure Apply => ApplyPrecond_ILU0_MKL
-end type tPreconditioner_ILU0_MKL
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
-
-subroutine InitPrecond_ILU0_MKL(precond, mesh, MatVec)
-  class(tPreconditioner_ILU0_MKL), intent(inout) :: precond
-  class(tMesh), intent(inout), target :: mesh
-  procedure(tMatVecFunc) :: MatVec
-
-  integer(ip) :: iparam(128), ierror
-  real(dp) :: dparam(128)
-
-  iparam(:) = 0; dparam(:) = 0
-  iparam(2) = 6; dparam(31) = 1.0e-16_dp 
-  allocate(precond%ColCoeffsILU0(size(precond%Mat%ColCoeffs)))
-
-  call dcsrilu0(mesh%NumCells, precond%Mat%ColCoeffs, precond%Mat%RowAddrs, &
-    & precond%Mat%ColIndices, precond%ColCoeffsILU0, iparam, dparam, ierror)
-  if (ierror /= 0) then
-    error stop 'MKL `dcsrilu0` has failed, ierror='//I2S(ierror)
-  end if
-
-end subroutine InitPrecond_ILU0_MKL
-
-subroutine ApplyPrecond_ILU0_MKL(precond, mesh, yArr, xArr, MatVec)
-  class(tPreconditioner_ILU0_MKL), intent(inout) :: precond
-  class(tMesh), intent(inout), target :: mesh
-  class(tArray), intent(inout), target :: xArr, yArr
-  procedure(tMatVecFunc) :: MatVec
-
-  type(tArray) :: tArr
-  real(dp), pointer :: t(:), x(:), y(:)
-
-  call AllocArray(tArr, mold=xArr)
-
-  ! solve (L*U)*y = L*(U*y) = x
-  ! solve L*t = x
-  ! solve U*y = t
-
-  call tArr%Get(t); call xArr%Get(x); call yArr%Get(y)
-
-  call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
-    & precond%ColCoeffsILU0, precond%Mat%RowAddrs, precond%Mat%ColIndices, x, t)
-  call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
-    & precond%ColCoeffsILU0, precond%Mat%RowAddrs, precond%Mat%ColIndices, t, y)
-
-end subroutine ApplyPrecond_ILU0_MKL
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve a linear operator equation: 
@@ -119,7 +65,7 @@ end subroutine ApplyPrecond_ILU0_MKL
 !!   [𝓟]𝓐𝒙 = [𝓟]𝒃.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   procedure(tMatVecFunc) :: MatVec
@@ -180,11 +126,11 @@ contains
       type(tPreconditioner_ILU0_MKL) :: ilu
 
       if (labeling%NumLabels == 0) then
-        call InitMatrix(mesh, mat, 2)
+        call InitMatrix(mesh, mat, 1)
         call LabelColumns_Patterned(mesh, mat, labeling)
       end if
       call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
-      ilu%mat => mat
+      call ilu%SetMatrix(mat)
 
       params%Name = params%Name//'EXTR)'
       call Solve_BiCGStab(mesh, x, f, uMatVec, params, ilu)
@@ -222,12 +168,12 @@ contains
     end select
 
   end subroutine SelectMethod
-  subroutine MatVec_Uniformed(mesh, Ax, x)
-    class(tMesh), intent(inout), target :: mesh
-    class(tArray), intent(inout), target :: x, Ax
+  subroutine MatVec_Uniformed(mesh, y, x)
+    class(tMesh), intent(in), target :: mesh
+    class(tArray), intent(inout), target :: x, y
 
-    call MatVec(mesh, Ax, x)
-    call Sub(mesh, Ax, Ax, t)
+    call MatVec(mesh, y, x)
+    call Sub(mesh, y, y, t)
 
   end subroutine MatVec_Uniformed
 end subroutine LinSolve

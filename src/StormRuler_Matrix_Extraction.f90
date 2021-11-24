@@ -113,6 +113,11 @@ end subroutine LabelColumns_Banded
 !! the maximum amount of the non-zero entries per row of 𝓐.
 !!
 !! Labeling construction may be slow.
+!!
+!! References:
+!! [1] Curtis, A. R. and Powell M. J. D., and Reid J. K. 
+!!     “On the Estimation of Sparse Jacobian Matrices.“ 
+!!     IMA Journal of Applied Mathematics 13 (1974): 117–119.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine LabelColumns_Patterned(mesh, mat, labeling)
   class(tMesh), intent(in) :: mesh
@@ -195,7 +200,7 @@ end subroutine LabelColumns_Patterned
 !! with the specified column labeling.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine ExtractMatrix(mesh, mat, labeling, MatVec, mold)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(inout) :: mat
   class(tMatrixLabeling), intent(in) :: labeling
   class(tArray), intent(in) :: mold

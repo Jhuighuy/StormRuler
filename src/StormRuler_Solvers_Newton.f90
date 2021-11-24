@@ -52,7 +52,7 @@ contains
 !! where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, using the Newton-Raphson method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   procedure(tMatVecFunc) :: MatVec
@@ -95,7 +95,7 @@ subroutine Solve_Newton(mesh, MatVec, JacMatVec, x, b, params)
 
 contains
   subroutine JacMatVecAtX(mesh, Jy, y)
-    class(tMesh), intent(inout), target :: mesh
+    class(tMesh), intent(in), target :: mesh
     class(tArray), intent(inout), target :: y, Jy
 
     ! ----------------------
@@ -110,7 +110,7 @@ end subroutine Solve_Newton
 !! using the jacobian free-Newton-Krylov method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_JFNK(mesh, MatVec, x, b, params)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: b
   class(tArray), intent(inout) :: x
   procedure(tMatVecFunc) :: MatVec
@@ -124,7 +124,7 @@ subroutine Solve_JFNK(mesh, MatVec, x, b, params)
 
 contains
   subroutine ApproxJacMatVec_1(mesh, Jx, x, x0)
-    class(tMesh), intent(inout), target :: mesh
+    class(tMesh), intent(in), target :: mesh
     class(tArray), intent(inout), target :: x, x0, Jx
 
     real(dp), parameter :: epsilon = 1e-6_dp

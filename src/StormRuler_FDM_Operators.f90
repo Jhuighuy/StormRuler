@@ -71,7 +71,7 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient(mesh, vVecArr, lambda, uArr, &
     &                   dirAll, dirFace, dirCellFace)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uArr
   class(tArray), intent(inout) :: vVecArr
   real(dp), intent(in) :: lambda
@@ -290,7 +290,7 @@ end subroutine FDM_Gradient
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence(mesh, vArr, lambda, uVecArr, &
     &                     dirAll, dirFace, dirCellFace)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uVecArr
   class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
@@ -550,7 +550,7 @@ end subroutine FDM_Divergence
 !!   Shape of 𝒖⃗, 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_DivGrad(mesh, vArr, lambda, uArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uArr
   class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
@@ -689,7 +689,7 @@ end subroutine FDM_DivGrad
 !!   Shape of ̂𝒘 is [1, NumDims]×[1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_DivWGrad(mesh, vArr, lambda, wArr, uArr)
-  class(tMesh), intent(inout) :: mesh
+  class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uArr, wArr
   class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda

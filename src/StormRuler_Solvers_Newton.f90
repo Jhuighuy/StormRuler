@@ -42,6 +42,14 @@ use StormRuler_ConvParams, only: tConvParams
 
 implicit none
 
+interface Solve_Newton
+  module procedure Solve_Newton
+end interface Solve_Newton
+
+interface Solve_JFNK
+  module procedure Solve_JFNK
+end interface Solve_JFNK
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 

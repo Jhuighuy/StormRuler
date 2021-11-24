@@ -103,8 +103,8 @@ products.
 - 🚨 Matrix-based preconditioners (embedded into the matrix-free environment):
   * _(planned)_ Block Jacobi preconditioner
     (`Jacobi`),
-  * _(planned)_ Block LU-SGS preconditioner
-    (`LU-SGS`),
+  * LU Symmetric Gauss-Seidel (LU-SGS) preconditioner
+    (`LU-SGS` for any linear problems),
   * _(planned)_ Block Incomplete Cholesky preconditioner,
     (`ICHOL`)
   * _(planned)_ Block Incomplete LU preconditioner,
@@ -195,10 +195,13 @@ Legend:
   - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
   - [ ] 🪓 `QMR` solver implementation,
   - [ ] 🪓 `TFQMR` solver implementation.
+  - [ ] 🪓 `FCG` solver implementation,
+  - [ ] 🪓 `FGMRES` solver implementation,
   - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
 
 * Matrix extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
+  - [ ] 🧸 CSC matrix class, fast CSR-CSR tranpositions,
   - [x] 🧸 Extraction with prescribed coloring.
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,
@@ -206,10 +209,14 @@ Legend:
 
 * Preconditioning:
   - [x] 🧻 Refactor precondtioner from function pointer to class,
+  - [x] 🪓 `LU_SGS` preconditioner,
   - [ ] 🚬 `SPAI` preconditioner,
   - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
   - [ ] 🪓 MKL-based `ILUT_MKL` preconditioners,
   - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
+  - [ ] 🧸 Sequential triangular solvers,
+  - [ ] 🚬 Parallel DAG-based triangular solvers,
+  - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
   - [ ] 🧻 Refactor unified and C/C++ API for preconditioning,
   - [ ] 🧸 Add user-defined preconditioner in C/C++ API.
 

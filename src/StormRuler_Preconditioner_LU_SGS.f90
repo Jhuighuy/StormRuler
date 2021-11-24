@@ -43,7 +43,7 @@ use StormRuler_Matrix!, only: tMatrix, DiagMatrixVector
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! LU Symmetric Gauss-Seidel (LU-SGS) preconditioner.
+!! Block LU Symmetric Gauss-Seidel (LU-SGS) preconditioner.
 !!
 !! Consider the decomposition: 𝓐 = 𝓛 + 𝓓 + 𝓤, where 𝓓 is the 
 !! (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper strict

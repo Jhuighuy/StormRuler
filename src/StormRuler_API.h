@@ -234,7 +234,7 @@ typedef void(*stormMatVecFunc_t)(stormMesh_t mesh,
 /// @{
 #define STORM_NONE     ""
 #define STORM_JACOBI   "Jacobi"
-#define STORM_LU_SGS   "LU_SGS"
+#define STORM_LU_SGS   "LU-SGS"
 #define STORM_ILU0     "ILU0"
 #define STORM_ILU0_MKL "ILU0_MKL"
 /// @}

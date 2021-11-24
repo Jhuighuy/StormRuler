@@ -41,11 +41,12 @@ use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_QMR, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
-use StormRuler_Precond, only: tPreconditioner
+use StormRuler_Preconditioner, only: tPreconditioner
 
 use StormRuler_Matrix!, only: ...
 use StormRuler_Matrix_Extraction!, only: ...
-use StormRuler_Precond_ILU_MKL!, only: ...
+use StormRuler_Preconditioner_LU_SGS!, only: ...
+use StormRuler_Preconditioner_ILU_MKL!, only: ...
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -123,17 +124,19 @@ contains
     
     if (preMethod == 'extr') then; block
       type(tMatrixLabeling), save :: labeling
-      type(tPreconditioner_ILU0_MKL) :: ilu
+      !type(tPreconditioner_ILU0_MKL) :: prepre
+      type(tPreconditioner_LU_SGS) :: prepre
 
       if (labeling%NumLabels == 0) then
         call InitMatrix(mesh, mat, 1)
         call LabelColumns_Patterned(mesh, mat, labeling)
       end if
       call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
-      call ilu%SetMatrix(mat)
+      call prepre%SetMatrix(mat)
 
       params%Name = params%Name//'EXTR)'
-      call Solve_BiCGStab(mesh, x, f, uMatVec, params, ilu)
+      call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
+
       return
 
     end block; end if

@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Precond_ILU_MKL
+module StormRuler_Preconditioner_ILU_MKL
 
 #$use 'StormRuler_Params.fi'
 #$if HAS_MKL
@@ -35,7 +35,7 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: tMatVecFunc
 
-use StormRuler_Precond, only: tMatrixBasedPreconditioner
+use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 use StormRuler_Matrix, only: tMatrix
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -54,9 +54,9 @@ type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_ILU0_MKL
   real(dp), allocatable, private :: FactorsColCoeffs(:)
 
 contains
-  procedure SetMatrix => SetPrecondMatrix_ILU0_MKL
-  procedure Init => InitPrecond_ILU0_MKL
-  procedure Apply => ApplyPrecond_ILU0_MKL
+  procedure SetMatrix => SetPreconditionerMatrix_ILU0_MKL
+  procedure Init => InitPreconditioner_ILU0_MKL
+  procedure Apply => ApplyPreconditioner_ILU0_MKL
 end type tPreconditioner_ILU0_MKL
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -64,15 +64,15 @@ end type tPreconditioner_ILU0_MKL
 
 contains
 
-subroutine SetPrecondMatrix_ILU0_MKL(pre, mat)
+subroutine SetPreconditionerMatrix_ILU0_MKL(pre, mat)
   class(tPreconditioner_ILU0_MKL), intent(inout) :: pre
   class(tMatrix), intent(inout), target :: mat
 
   pre%Mat => mat
 
-end subroutine SetPrecondMatrix_ILU0_MKL
+end subroutine SetPreconditionerMatrix_ILU0_MKL
 
-subroutine InitPrecond_ILU0_MKL(pre, mesh, MatVec)
+subroutine InitPreconditioner_ILU0_MKL(pre, mesh, MatVec)
   class(tPreconditioner_ILU0_MKL), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   procedure(tMatVecFunc) :: MatVec
@@ -90,9 +90,9 @@ subroutine InitPrecond_ILU0_MKL(pre, mesh, MatVec)
     error stop 'MKL `dcsrilu0` has failed, ierror='//I2S(ierror)
   end if
 
-end subroutine InitPrecond_ILU0_MKL
+end subroutine InitPreconditioner_ILU0_MKL
 
-subroutine ApplyPrecond_ILU0_MKL(pre, mesh, yArr, xArr, MatVec)
+subroutine ApplyPreconditioner_ILU0_MKL(pre, mesh, yArr, xArr, MatVec)
   class(tPreconditioner_ILU0_MKL), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   class(tArray), intent(inout), target :: xArr, yArr
@@ -114,8 +114,8 @@ subroutine ApplyPrecond_ILU0_MKL(pre, mesh, yArr, xArr, MatVec)
   call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
     & pre%FactorsColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
 
-end subroutine ApplyPrecond_ILU0_MKL
+end subroutine ApplyPreconditioner_ILU0_MKL
 
 #$end if
 
-end module StormRuler_Precond_ILU_MKL
+end module StormRuler_Preconditioner_ILU_MKL

@@ -36,7 +36,7 @@ use StormRuler_BLAS, only: Fill, Set, Dot, Add, Sub
 use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Precond, only: tPreconditioner
+use StormRuler_Preconditioner, only: tPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

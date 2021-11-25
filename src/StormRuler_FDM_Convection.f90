@@ -26,13 +26,14 @@ module StormRuler_FDM_Convection
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
+use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Parameters, only: gCylCoords, gTruncErrorOrder
+
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray
 
-use StormRuler_FDM_Operators, only: gTruncErrorOrder
 use StormRuler_FDM_Base_Flux
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

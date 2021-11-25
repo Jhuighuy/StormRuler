@@ -314,7 +314,7 @@ end function WFD2_C2
 !! Fourth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C4(w_ll, u_ll, w_l, u_l, w, &
-    &                      u, w_r, u_r, w_rr, u_rr)
+                         & u, w_r, u_r, w_rr, u_rr)
   real(dp), intent(in) :: w_ll, w_l, w, w_r, w_rr
   real(dp), intent(in) :: u_ll, u_l, u, u_r, u_rr
   real(dp) :: WFD2_C4
@@ -327,7 +327,7 @@ end function WFD2_C4
 !! Sixth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C6(w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
-    &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
+                         & u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr)
   real(dp), intent(in) :: w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr
   real(dp), intent(in) :: u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr
   real(dp) :: WFD2_C6
@@ -340,7 +340,7 @@ end function WFD2_C6
 !! Eighth order accuracy central undivided ∂(𝒘∂𝒖/∂𝜉)/∂𝜉 approximation.
 !! ----------------------------------------------------------------- !!
 elemental function WFD2_C8(w_llll, u_llll, w_lll, u_lll, w_ll, u_ll, w_l, u_l, w, &
-    &                      u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
+                         & u, w_r, u_r, w_rr, u_rr, w_rrr, u_rrr, w_rrrr, u_rrrr)
   real(dp), intent(in) :: w_llll, w_lll, w_ll, w_l, w, w_r, w_rr, w_rrr, w_rrrr
   real(dp), intent(in) :: u_llll, u_lll, u_ll, u_l, u, u_r, u_rr, u_rrr, u_rrrr
   real(dp) :: WFD2_C8

@@ -26,7 +26,9 @@ module StormRuler_FDM_Operators
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
+use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Parameters, only: gCylCoords, gTruncErrorOrder
+
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh
@@ -40,8 +42,6 @@ use StormRuler_FDM_Base, only: FD1_C2, FD1_C4, FD1_C6, FD1_C8, &
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-integer(ip), parameter :: gTruncErrorOrder = 1
 
 interface FDM_Gradient
   module procedure FDM_Gradient
@@ -70,7 +70,7 @@ contains
 !! shape of 𝒗⃗ is [1, NumDims]×[1, NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Gradient(mesh, vVecArr, lambda, uArr, &
-    &                   dirAll, dirFace, dirCellFace)
+                      & dirAll, dirFace, dirCellFace)
   class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uArr
   class(tArray), intent(inout) :: vVecArr
@@ -289,7 +289,7 @@ end subroutine FDM_Gradient
 !! shape of 𝒗 is [1,NumVars]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine FDM_Divergence(mesh, vArr, lambda, uVecArr, &
-    &                     dirAll, dirFace, dirCellFace)
+                        & dirAll, dirFace, dirCellFace)
   class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: uVecArr
   class(tArray), intent(inout) :: vArr

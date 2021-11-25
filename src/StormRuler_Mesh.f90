@@ -54,6 +54,11 @@ type :: tMesh
   ! Number of faces (edges in 2D) per each cell.
   ! ----------------------
   integer(ip) :: NumCellFaces
+  ! ----------------------
+  ! ???
+  ! ----------------------
+  integer(ip) :: NumExtDirs
+
 
   ! ----------------------
   ! Number of interior cells.
@@ -80,7 +85,7 @@ type :: tMesh
   ! Logical table for the periodic face connections.
   ! Shape is [1, NumCellFaces]×[1, NumAllCells].
   ! ----------------------
-  logical, allocatable, private :: mCellFacePeriodic(:,:)
+  logical, allocatable, private :: mIsCellFacePeriodic(:,:)
 
   ! ----------------------
   ! Multidimensional index bounds table.
@@ -113,13 +118,11 @@ type :: tMesh
 
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.
-  ! ( in the curvilinear coordinates, uniform. )
   ! Shape is [1, NumCellFaces].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
-  ! ( in the curvilinear coordinates, uniform. )
   ! Shape is [1, NumDims]×[1, NumCellFaces].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
@@ -137,46 +140,38 @@ contains
   ! ----------------------
   ! Parallel mesh walkthough subroutines.
   ! ----------------------
-  procedure :: RunCellKernel => tMesh_RunCellKernel
-  procedure :: RunCellKernel_Sum => tMesh_RunCellKernel_Sum
-  procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
-  procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
-  procedure :: RunCellKernel_Block => tMesh_RunCellKernel_Block
+  procedure :: RunCellKernel => RunMeshCellSimpleKernel
+  procedure :: RunCellKernel_Block => RunMeshBlockCellKernel
+  procedure :: RunCellKernel_Sum => RunMeshSumCellKernel
+  procedure :: RunCellKernel_Min => RunMeshMinCellKernel
+  procedure :: RunCellKernel_Max => RunMeshMaxCellKernel
 
   ! ----------------------
   ! Field wrappers.
   ! ----------------------
-  procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
   generic :: CellCenter => CellCenterVec, CellCenterCoord
-  procedure :: CellCenterVec => tMesh_CellCenterVec
-  procedure :: CellCenterCoord => tMesh_CellCenterCoord
+  procedure :: CellCenterVec => GetMeshCellCenterVec
+  procedure :: CellCenterCoord => GetMeshCellCenterCoord
+  procedure :: IsCellFacePeriodic => IsMeshCellFacePeriodic
 
   ! ----------------------
   ! Ordering routines. 
   ! ----------------------
-  procedure :: ApplyOrdering => tMesh_ApplyOrdering
+  procedure :: ApplyOrdering => ApplyMeshOrdering
 
   ! ----------------------
   ! Printers.
   ! ----------------------
-  procedure :: PrintTo_Neato => tMesh_PrintTo_Neato
-  procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
+  procedure :: PrintTo_Neato => PrintMeshToNeato
+  procedure :: PrintTo_LegacyVTK => PrintMeshToLegacyVTK
   
 end type tMesh
 
 abstract interface
-  subroutine tKernelFunc(iCell)
+  subroutine tKernelFunc(cell)
     import ip
-    integer(ip), intent(in) :: iCell
+    integer(ip), intent(in) :: cell
   end subroutine tKernelFunc
-end interface
-
-abstract interface
-  function tReduceKernelFunc(iCell) result(r)
-    import ip, dp
-    integer(ip), intent(in) :: iCell
-    real(dp) :: r
-  end function tReduceKernelFunc
 end interface
 
 abstract interface
@@ -184,6 +179,14 @@ abstract interface
     import ip
     integer(ip), intent(in) :: firstCell, lastCell
   end subroutine tBlockKernelFunc
+end interface
+
+abstract interface
+  function tReduceKernelFunc(cell) result(r)
+    import ip, dp
+    integer(ip), intent(in) :: cell
+    real(dp) :: r
+  end function tReduceKernelFunc
 end interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -194,81 +197,24 @@ contains
 !! ----------------------------------------------------------------- !!
 !! Launch a cell kernel.
 !! ----------------------------------------------------------------- !!
-subroutine tMesh_RunCellKernel(mesh, Kernel)
+subroutine RunMeshCellSimpleKernel(mesh, Kernel)
   class(tMesh), intent(in) :: mesh
   procedure(tKernelFunc) :: Kernel
 
-  integer :: iCell
+  integer :: cell
 
   !$omp parallel do default(none) shared(mesh) schedule(static)
-  do iCell = 1, mesh%NumCells
-    call Kernel(iCell)
+  do cell = 1, mesh%NumCells
+    call Kernel(cell)
   end do
   !$omp end parallel do
 
-end subroutine tMesh_RunCellKernel
-
-!! ----------------------------------------------------------------- !!
-!! Launch a SUM-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function tMesh_RunCellKernel_Sum(mesh, Kernel) result(sum)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: sum
-
-  integer :: iCell
-
-  sum = 0.0_dp
-  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(+:sum)
-  do iCell = 1, mesh%NumCells
-    sum = sum + Kernel(iCell)
-  end do
-  !$omp end parallel do
-
-end function tMesh_RunCellKernel_Sum
-
-!! ----------------------------------------------------------------- !!
-!! Launch a MIN-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: mMin
-
-  integer :: iCell
-
-  mMin = +huge(mMin)
-  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(min:mMin)
-  do iCell = 1, mesh%NumCells
-    mMin = min(mMin, Kernel(iCell))
-  end do
-  !$omp end parallel do
-
-end function tMesh_RunCellKernel_Min
-
-!! ----------------------------------------------------------------- !!
-!! Launch a MAX-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: mMax
-
-  integer :: iCell
-
-  mMax = -huge(mMax)
-  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(max:mMax)
-  do iCell = 1, mesh%NumCells
-    mMax = max(mMax, Kernel(iCell))
-  end do
-  !$omp end parallel do
-
-end function tMesh_RunCellKernel_Max
+end subroutine RunMeshCellSimpleKernel
 
 !! ----------------------------------------------------------------- !!
 !! Launch a block-kernel.
 !! ----------------------------------------------------------------- !!
-subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
+subroutine RunMeshBlockCellKernel(mesh, BlockKernel)
   class(tMesh), intent(in) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
 
@@ -285,7 +231,7 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   ! Compute block range for each thread.
   ! ----------------------
   allocate(ranges(omp_get_max_threads()))
-  associate(size => ( mesh%NumCells - 1 + 1 ) )
+  associate(size => mesh%NumCells)
     ranges(:) = size/omp_get_max_threads()
     associate(remainder => ranges(:mod(size, omp_get_max_threads())))
       remainder(:) = remainder(:) + 1
@@ -305,46 +251,110 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   !$omp end parallel
 
 #$endif
-end subroutine tMesh_RunCellKernel_Block
+end subroutine RunMeshBlockCellKernel
+
+!! ----------------------------------------------------------------- !!
+!! Launch a SUM-reduction cell kernel.
+!! ----------------------------------------------------------------- !!
+function RunMeshSumCellKernel(mesh, Kernel) result(sum)
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: sum
+
+  integer :: cell
+
+  sum = 0.0_dp
+  !$omp parallel do default(none) shared(mesh) &
+  !$omp & schedule(static) reduction(+:sum)
+  do cell = 1, mesh%NumCells
+    sum = sum + Kernel(cell)
+  end do
+  !$omp end parallel do
+
+end function RunMeshSumCellKernel
+
+!! ----------------------------------------------------------------- !!
+!! Launch a min-reduction cell kernel.
+!! ----------------------------------------------------------------- !!
+function RunMeshMinCellKernel(mesh, Kernel) result(minValue)
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: minValue
+
+  integer :: cell
+
+  minValue = +huge(minValue)
+  !$omp parallel do default(none) shared(mesh) &
+  !$omp & schedule(static) reduction(min:minValue)
+  do cell = 1, mesh%NumCells
+    minValue = min(minValue, Kernel(cell))
+  end do
+  !$omp end parallel do
+
+end function RunMeshMinCellKernel
+
+!! ----------------------------------------------------------------- !!
+!! Launch a max-reduction cell kernel.
+!! ----------------------------------------------------------------- !!
+function RunMeshMaxCellKernel(mesh, Kernel) result(maxValue)
+  class(tMesh), intent(in) :: mesh
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: maxValue
+
+  integer :: cell
+
+  maxValue = -huge(maxValue)
+  !$omp parallel do default(none) shared(mesh) &
+  !$omp & schedule(static) reduction(max:maxValue)
+  do cell = 1, mesh%NumCells
+    maxValue = max(maxValue, Kernel(cell))
+  end do
+  !$omp end parallel do
+
+end function RunMeshMaxCellKernel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! ----------------------------------------------------------------- !!
-logical pure function tMesh_CellFacePeriodic(mesh, iCellFace, iCell)
-  class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iCell, iCellFace
-  
-  tMesh_CellFacePeriodic = allocated(mesh%mCellFacePeriodic)
-  if (tMesh_CellFacePeriodic) then
-    tMesh_CellFacePeriodic = mesh%mCellFacePeriodic(iCellFace, iCell)
-  end if
-
-end function tMesh_CellFacePeriodic
-
-!! ----------------------------------------------------------------- !!
 !! Get cell center.
 !! ----------------------------------------------------------------- !!
-pure function tMesh_CellCenterVec(mesh, iCell)
+pure function GetMeshCellCenterVec(mesh, cell) result(cellCenter)
   class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iCell
-  real(dp) :: tMesh_CellCenterVec(mesh%NumDims)
+  integer(ip), intent(in) :: cell
+  real(dp) :: cellCenter(mesh%NumDims)
 
-  tMesh_CellCenterVec = &
-    & [0.0_dp,0.0_dp] + mesh%dl(::2)*(mesh%CellMDIndex(:,iCell) - 0.5_dp)
-
-end function tMesh_CellCenterVec
-pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
-  class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iDim, iCell
-  real(dp) :: tMesh_CellCenterCoord
-
-  associate(r => mesh%CellCenterVec(iCell))
-    tMesh_CellCenterCoord = r(iDim)
+  !! TODO: add initial offset as mesh class field.
+  associate(cellIndex => mesh%CellMDIndex(:,cell))
+    cellCenter = [0.0_dp,0.0_dp] + mesh%dl(::2)*(cellIndex - 0.5_dp)
   end associate
 
-end function tMesh_CellCenterCoord
+end function GetMeshCellCenterVec
+pure function GetMeshCellCenterCoord(mesh, dim, cell) result(cellCenterCoord)
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: dim, cell
+  real(dp) :: cellCenterCoord
+
+  associate(cellCenter => mesh%CellCenterVec(cell))
+    cellCenterCoord = cellCenter(dim)
+  end associate
+
+end function GetMeshCellCenterCoord
+
+!! ----------------------------------------------------------------- !!
+!! Check if cell face connects it to the BC cell or 
+!! to the interioir periodic. 
+!! ----------------------------------------------------------------- !!
+logical pure function IsMeshCellFacePeriodic(mesh, cellFace, cell) result(isPeriodicFace)
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: cell, cellFace
+  
+  isPeriodicFace = allocated(mesh%mIsCellFacePeriodic)
+  if (isPeriodicFace) then
+    isPeriodicFace = mesh%mIsCellFacePeriodic(cellFace, cell)
+  end if
+
+end function IsMeshCellFacePeriodic
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -529,22 +539,22 @@ end subroutine tMesh_GenerateBCCells
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Apply the specified cell ordering.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine tMesh_ApplyOrdering(mesh, iperm)
+subroutine ApplyMeshOrdering(mesh, iperm)
   class(tMesh), intent(inout) :: mesh
   integer(ip), intent(in) :: iperm(:)
 
-  integer(ip) :: iCell, iCellFace
+  integer(ip) :: cell, cellFace
   integer(ip), allocatable :: cellToCellTemp(:,:)
-  integer(ip), allocatable :: cellMDIndexTemp(:,:)
+  integer(ip), allocatable :: cellIndexTemp(:,:)
 
   ! ----------------------
   ! Order cell-cell graph columns.
   ! ----------------------
-  do iCell = 1, mesh%NumAllCells
-    do iCellFace = 1, mesh%NumCellFaces
-      associate(jCell => mesh%CellToCell(iCellFace, iCell))
+  do cell = 1, mesh%NumAllCells
+    do cellFace = 1, mesh%NumCellFaces
+      associate(cellCell => mesh%CellToCell(cellFace, cell))
 
-        if (0 < jCell.and.jCell <= mesh%NumCells) jCell = iperm(jCell)
+        if (0 < cellCell.and.cellCell <= mesh%NumCells) cellCell = iperm(cellCell)
 
       end associate
     end do
@@ -553,22 +563,18 @@ subroutine tMesh_ApplyOrdering(mesh, iperm)
   ! ----------------------
   ! Order cell-cell graph rows.
   ! ----------------------
-  allocate(cellToCellTemp(mesh%NumCellFaces, mesh%NumCells))
-  allocate(cellMDIndexTemp(mesh%NumDims, mesh%NumCells))
-  
-  cellToCellTemp(:,:) = mesh%CellToCell(:,1:mesh%NumCells)
-  cellMDIndexTemp(:,:) = mesh%CellMDIndex(:,1:mesh%NumCells)
-  
-  do iCell = 1, mesh%NumCells
-    associate(jCell => iperm(iCell))
+  cellToCellTemp = mesh%CellToCell(:,1:mesh%NumCells)
+  cellIndexTemp = mesh%CellMDIndex(:,1:mesh%NumCells)
+  do cell = 1, mesh%NumCells
+    associate(cellCell => iperm(cell))
 
-      mesh%CellToCell(:,jCell) = cellToCellTemp(:,iCell)
-      mesh%CellMDIndex(:,jCell) = cellMDIndexTemp(:,iCell)
+      mesh%CellToCell(:,cellCell) = cellToCellTemp(:,cell)
+      mesh%CellMDIndex(:,cellCell) = cellIndexTemp(:,cell)
 
     end associate
   end do
 
-end subroutine tMesh_ApplyOrdering
+end subroutine ApplyMeshOrdering
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -577,16 +583,15 @@ end subroutine tMesh_ApplyOrdering
 !! Print mesh connectivity in '.dot' format.
 !! Output may be visualized with: 'neato -n -Tpng c2c.dot > c2c.png' 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine tMesh_PrintTo_Neato(mesh, file)
+subroutine PrintMeshToNeato(mesh, file)
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
-  
+
   integer(ip) :: unit
-  integer(ip) :: iCell, iiCell, iCellFace
-  integer(ip) :: iBCM, iBCMPtr, iBCCell, iiBCCell, iBCCellFace
+  integer(ip) :: cell, cellCell, cellFace
+  integer(ip) :: bcMark, bcMarkAddr, bcCell, bcCellCell, bcCellFace
 
   integer(ip), parameter :: DPI = 72
-
   character(len=10), parameter :: SHAPES(*) = &
     & [character(len=10) :: 'box', 'diamond']
   character(len=10), parameter :: PALETTE(*) = &
@@ -607,101 +612,112 @@ subroutine tMesh_PrintTo_Neato(mesh, file)
   write(unit, "(A)") '# Generated by StormRuler/Mesh2Neato'
   write(unit, "(A)") 'digraph Mesh {'
   
+  ! ----------------------
   ! Write cell MD indices of the cells as graph nodes.
-  ! Difference node shapes are use for different face 
+  ! ----------------------
+  ! Difference node shapes are use for different face
   ! directions of the BC/ghost cells faces.
-  do iCell = 1, mesh%NumCells
-    associate(iCellPos => DPI*mesh%CellMDIndex(:,iCell))
+  do cell = 1, mesh%NumCells
+    associate(cellPosition => DPI*mesh%CellMDIndex(:,cell))
+
       write(unit, "('  ', A, '[label=', A, ' ', 'pos=', A, ']')") &
-        & 'C'//I2S(iCell), '"C"', & ! ID and label
-        & '"'//I2S(iCellPos(1))//','//I2S(iCellPos(2))//'!"' ! pos
+        & 'C'//I2S(cell), '"C"', & ! ID and label
+        & '"'//I2S(cellPosition(1))//','//I2S(cellPosition(2))//'!"' ! pos
+
     end associate
   end do
 
-  do iBCM = 1, mesh%NumBCMs
-    do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
-      iBCCell = mesh%BCMToCell(iBCMPtr)
-      iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
+  do bcMark = 1, mesh%NumBCMs
+    do bcMarkAddr = mesh%BCMs(bcMark), mesh%BCMs(bcMark+1)-1
+      bcCell = mesh%BCMToCell(bcMarkAddr)
+      bcCellFace = mesh%BCMToCellFace(bcMarkAddr)
   
-      do while(iBCCell /= 0)
-        associate(iBCCellPos => DPI*mesh%CellMDIndex(:,iBCCell))
+      do while(bcCell /= 0)
+        associate(iBCCellPos => DPI*mesh%CellMDIndex(:,bcCell))
 
           write(unit, "('  ', A, '[label=', A, ' pos=', A, ' shape=', A, ']')") &
-            & 'C'//I2S(iBCCell), & ! ID
-            & '"B'//I2S(iBCM)//'"', & ! label
+            & 'C'//I2S(bcCell), & ! ID
+            & '"B'//I2S(bcMark)//'"', & ! label
             & '"'//I2S(iBCCellPos(1))//','//I2S(iBCCellPos(2))//'!"', & ! pos
-            & trim(SHAPES((iBCCellFace+1)/2)) ! shape
+            & trim(SHAPES((bcCellFace+1)/2)) ! shape
         
         end associate
-        iBCCell = mesh%CellToCell(iBCCellFace, iBCCell)
+        bcCell = mesh%CellToCell(bcCellFace, bcCell)
       end do
   
     end do
   end do
   
+  ! ----------------------
   ! Write cell to cell connectivity as graph edges.
+  ! ----------------------
   ! BC/ghost cells are colored by the BC mark.
-  do iCell = 1, mesh%NumCells
-    do iCellFace = 1, mesh%NumCellFaces
+  do cell = 1, mesh%NumCells
+    do cellFace = 1, mesh%NumCellFaces
       ! Do not dump the periodic faces.
-      if (mesh%CellFacePeriodic(iCellFace, iCell)) cycle
+      if (mesh%IsCellFacePeriodic(cellFace, cell)) cycle
       
-      iiCell = mesh%CellToCell(iCellFace, iCell)
+      cellCell = mesh%CellToCell(cellFace, cell)
       write(unit, "('  ', A, '->', A)") &
-        & 'C'//I2S(iCell), 'C'//I2S(iiCell) ! source and dest ID
+        & 'C'//I2S(cell), 'C'//I2S(cellCell) ! source and dest ID
 
     end do
   end do
 
-  do iBCM = 1, mesh%NumBCMs
-    do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
-      iBCCell = mesh%BCMToCell(iBCMPtr)
-      iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
+  do bcMark = 1, mesh%NumBCMs
+    do bcMarkAddr = mesh%BCMs(bcMark), mesh%BCMs(bcMark+1)-1
+      bcCell = mesh%BCMToCell(bcMarkAddr)
+      bcCellFace = mesh%BCMToCellFace(bcMarkAddr)
 
       do
-        associate(color => PALETTE(iBCM))
+        associate(color => PALETTE(bcMark))
 
-          iiBCCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell) 
+          bcCellCell = mesh%CellToCell(Flip(bcCellFace), bcCell) 
           
           write(unit, "('  ', A, '->', A, ' [color=', A, ']')") &
-            & 'C'//I2S(iBCCell), & ! source ID
-            & 'C'//I2S(iiBCCell), color ! dest ID and color
+            & 'C'//I2S(bcCell), & ! source ID
+            & 'C'//I2S(bcCellCell), color ! dest ID and color
 
-          iiBCCell = mesh%CellToCell(iBCCellFace, iBCCell) 
-          if (iiBCCell == 0) exit
+          bcCellCell = mesh%CellToCell(bcCellFace, bcCell) 
+          if (bcCellCell == 0) exit
 
           write(unit, "('  ', A, '->', A, ' [color=', A, ']')") &
-            & 'C'//I2S(iBCCell), & ! source ID
-            & 'C'//I2S(iiBCCell), color ! dest ID and color
+            & 'C'//I2S(bcCell), & ! source ID
+            & 'C'//I2S(bcCellCell), color ! dest ID and color
             
         end associate
 
-        iBCCell = iiBCCell
+        bcCell = bcCellCell
       end do
 
     end do
   end do
-  
-  ! Close file and exit.
+
   write(unit, "(A)") '}'
+  
+  ! ----------------------
+  ! Close file and exit.
+  ! ----------------------
   close(unit)
 
-end subroutine tMesh_PrintTo_Neato
+end subroutine PrintMeshToNeato
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Print mesh in Legacy VTK '.vtk' format.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
+subroutine PrintMeshToLegacyVTK(mesh, file, fields)
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
   type(IOList), intent(in), optional :: fields
   
   integer(ip) :: unit
-  integer(ip) :: numVTKCells, iVTKCell
-  integer(ip) :: iCell, iiCell, iCellFace, jiCell, jCellFace
-  logical, allocatable :: cellToCellIsAllInternal(:)
+  integer(ip) :: numVtkCells, vtkCell
+  integer(ip) :: cell, cellCell, cellFace, cellCellCell, cellCellFace
+  logical, allocatable :: cellIsFullInternal(:)
   class(IOListItem), pointer :: item
-  
+
+  !! TODO: it feels like this thing can be seriously optimized..
+
   if ((mesh%NumDims /= 2).and.(mesh%NumDims /= 3)) then
     error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
   end if
@@ -720,8 +736,8 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! Write cell centers as VTK nodes.
   ! ----------------------
   write(unit, "('POINTS ', A, ' double')") I2S(mesh%NumCells)
-  do iCell = 1, mesh%NumCells
-    associate(r => mesh%CellCenter(iCell))
+  do cell = 1, mesh%NumCells
+    associate(r => mesh%CellCenter(cell))
       if (mesh%NumDims == 2) then
         write(unit, "(A, ' ', A, ' ', A)") R2S(r(1)), R2S(r(2)), '0.0'
       else
@@ -734,11 +750,11 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! ----------------------
   ! Precompute if cell is far away from boundaries.
   ! ----------------------
-  allocate(cellToCellIsAllInternal(mesh%NumCells))
+  allocate(cellIsFullInternal(mesh%NumCells))
   !$omp parallel do
-  do iCell = 1, mesh%NumCells
-    cellToCellIsAllInternal(iCell) = &
-      & all(mesh%CellToCell(:,iCell) <= mesh%NumCells)
+  do cell = 1, mesh%NumCells
+    cellIsFullInternal(cell) = &
+      & all(mesh%CellToCell(:,cell) <= mesh%NumCells)
   end do
   !$omp end parallel do
   
@@ -747,63 +763,74 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
   ! VTK cell connectivity is generated on the fly via parity algorithm.
   ! ----------------------
 #$do writePass = 1, 2
-#$if writePass == 1
-  numVTKCells = 0
-  !$omp parallel do reduction(+:numVTKCells) &
-  !$omp private(iCellFace, iiCell, jCellFace, jiCell)
-#$end if
-  do iCell = 1, mesh%NumCells
+
+  numVtkCells = 0
+  !$omp parallel do reduction(+:numVtkCells) &
+  !$omp private(cellFace, cellCell, cellCellFace, cellCellCell) if($writePass == 1)
+  do cell = 1, mesh%NumCells
+
     ! ----------------------
-    ! Locate the first cell (VTK cell node).
+    ! Locate the second cell (VTK cell node).
     ! ----------------------
-    do iCellFace = 1, mesh%NumCellFaces
-      if (mesh%CellFacePeriodic(iCellFace, iCell)) cycle
-      iiCell = mesh%CellToCell(iCellFace, iCell)
-      if (iiCell > mesh%NumCells) cycle
+    do cellFace = 1, mesh%NumCellFaces
+      if (mesh%IsCellFacePeriodic(cellFace, cell)) cycle
+      cellCell = mesh%CellToCell(cellFace, cell)
+      if (cellCell > mesh%NumCells) cycle
 
       ! ----------------------
-      ! Locate the second cell (VTK cell node).
+      ! Locate the third cell (VTK cell node).
       ! ----------------------
-      do jCellFace = 1, mesh%NumCellFaces
-        if (jCellFace == iCellFace) cycle
-        if (mesh%CellFacePeriodic(jCellFace, iCell)) cycle
-        jiCell = mesh%CellToCell(jCellFace, iCell)
-        if (jiCell > mesh%NumCells) cycle
-    
+      do cellCellFace = 1, mesh%NumCellFaces
+        if (cellCellFace == cellFace) cycle
+        if (mesh%IsCellFacePeriodic(cellCellFace, cell)) cycle
+        cellCellCell = mesh%CellToCell(cellCellFace, cell)
+        if (cellCellCell > mesh%NumCells) cycle
+
         ! ----------------------
-        ! Generate the VTK cell.
+        ! Generate the VTK cell (triangle).
         ! ----------------------
-        ! Denote cells with same MD index components parity as primary.
+        ! Denote cells with same index components parity as primary.
         ! Primary cells are used to generate VTK cells around them.
         ! Secondary cells are used to generate VTK cells near boundaries.
-        associate(iCellMD => mesh%CellMDIndex(:,iCell))
-          if (mod(iCellMD(1)-iCellMD(2), 2) /= 0) then
+        associate(cellIndex => mesh%CellMDIndex(:,cell))
+          if (mod(cellIndex(1) - cellIndex(2), 2) /= 0) then
             ! Skip secondary cells far away from boundaries.
-            if ( cellToCellIsAllInternal(iiCell).or. &
-              &  cellToCellIsAllInternal(jiCell) ) cycle
+            if ( cellIsFullInternal(cellCell).or. &
+              &  cellIsFullInternal(cellCellCell) ) cycle
           end if
         end associate
-#$if writePass == 1
-        numVTKCells = numVTKCells + 1
-#$else
-        write(unit, "('3 ', A, ' ', A, ' ', A)") I2S(iCell-1), I2S(iiCell-1), I2S(jiCell-1)
+
+        numVtkCells = numVtkCells + 1
+#$if writePass == 2
+        write(unit, "('3 ', A, ' ', A, ' ', A)") &
+          & I2S(cell-1), I2S(cellCell-1), I2S(cellCellCell-1)
 #$end if
+
       end do
     end do
   end do
-#$if writePass == 1
   !$omp end parallel do
-  associate(numVTKCellNodes => numVTKCells*(mesh%NumDims+2))
-    write(unit, "('CELLS ', A, ' ', A)") I2S(numVTKCells), I2S(numVTKCellNodes)
+
+  ! ----------------------
+  ! Write a number of the VTK cells as the result of the first pass.
+  ! ----------------------
+#$if writePass == 1
+  associate(numVTKCellNodes => numVtkCells*(mesh%NumDims + 2))
+    write(unit, "('CELLS ', A, ' ', A)") I2S(numVtkCells), I2S(numVTKCellNodes)
   end associate
 #$end if
+
 #$end do
-  write(unit, "('CELL_TYPES ', A)") I2S(numVTKCells)
-  do iVTKCell = 1, numVTKCells
-    write(unit, "(A)") '5'
+
+  ! ----------------------
+  ! Write VTK cell types.
+  ! ----------------------
+  write(unit, "('CELL_TYPES ', A)") I2S(numVtkCells)
+  do vtkCell = 1, numVtkCells
+    write(unit, "(A)") '5' ! 5 is triangle.
   end do
   write(unit, "(A)") ''
-  
+
   ! ----------------------
   ! Write fields.
   ! ----------------------
@@ -812,33 +839,39 @@ subroutine tMesh_PrintTo_LegacyVTK(mesh, file, fields)
     item => fields%first
     do while(associated(item))
       select type(item)
+        ! ----------------------
         ! Scalar field.
+        ! ----------------------
         class is(IOListItem$0)
           write(unit, "('SCALARS ', A, ' double 1')") item%name 
           write(unit, "(A)") 'LOOKUP_TABLE default'
-          do iCell = 1, mesh%NumCells
-            write(unit, "(A)") R2S(item%values(iCell))
+          do cell = 1, mesh%NumCells
+            write(unit, "(A)") R2S(item%values(cell))
           end do
+
         ! ----------------------
         ! Vector field.
+        ! ----------------------
         class is(IOListItem$1)
           write(unit, "('VECTORS ', A, ' double')") item%name 
-          do iCell = 1, mesh%NumCells
-            associate(v => item%values(:,iCell))
+          do cell = 1, mesh%NumCells
+            associate(v => item%values(:,cell))
               write(unit, '(A, " ", A, " ", A)') R2S(v(1)), R2S(v(2)), '0.0'
             end associate
           end do
+
         end select
       write(unit, "(A)") ''
       item => item%next
     end do
   end if
-  
+
   ! ----------------------
   ! Close file and exit.
   ! ----------------------
   close(unit)
-end subroutine tMesh_PrintTo_LegacyVTK
+
+end subroutine PrintMeshToLegacyVTK
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -943,7 +976,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     mesh%dr(:,4) = [0.0_dp, mesh%dl(2)]
     mesh%NumCellFaces = 4
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
-    allocate(mesh%mCellFacePeriodic(4, mesh%NumAllCells))
+    allocate(mesh%mIsCellFacePeriodic(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
     ! ----------------------
     ! Fill the cell information for the interior cells.
@@ -959,11 +992,11 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
           &  cellToIndex(xCell, yCell+1), &
           &  cellToIndex(xCell, yCell-1)]
         !---
-        mesh%mCellFacePeriodic(:,iCell) = .false.
-        if (xCell==1) mesh%mCellFacePeriodic(2, iCell) = .true.
-        if (yCell==1) mesh%mCellFacePeriodic(4, iCell) = .true.
-        if (xCell==xNumCells) mesh%mCellFacePeriodic(1, iCell) = .true.
-        if (yCell==yNumCells) mesh%mCellFacePeriodic(3, iCell) = .true.
+        mesh%mIsCellFacePeriodic(:,iCell) = .false.
+        if (xCell==1) mesh%mIsCellFacePeriodic(2, iCell) = .true.
+        if (yCell==1) mesh%mIsCellFacePeriodic(4, iCell) = .true.
+        if (xCell==xNumCells) mesh%mIsCellFacePeriodic(1, iCell) = .true.
+        if (yCell==yNumCells) mesh%mIsCellFacePeriodic(3, iCell) = .true.
       end do
     end do
     !$omp end parallel do

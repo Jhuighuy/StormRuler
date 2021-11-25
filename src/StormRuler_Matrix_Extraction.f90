@@ -27,12 +27,13 @@ module StormRuler_Matrix_Extraction
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
+use StormRuler_Helpers, only: ArraysIntersect, BubbleSort
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: tMatVecFunc, Fill
-use StormRuler_Matrix!, only: tColumnMatrix
+use StormRuler_Matrix, only: tMatrix
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

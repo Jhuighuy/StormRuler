@@ -74,7 +74,7 @@ products.
   * _(planned)_ Flexible Conjugate Gradients solver 
     (`FCG`, for the _definite symmetric_ linear problems with),
   * Biconjugate Gradients (stabilized) solver
-    (`BiCGSTAB`, for the general _non-singular_ linear problems),
+    (`BiCGStab`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * Generalized Minimal Residual method solver
@@ -197,15 +197,16 @@ Legend:
   - [ ] 🪓 `TFQMR` solver implementation.
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🪓 `FGMRES` solver implementation,
-  - [ ] 🦜 Direct solver (`MKL_DSS`, `PARDISO`, `SuperLU`).
+  - [ ] 🦜 Direct solvers (`MKL_DSS`, `PARDISO`, `SuperLU`).
 
 * Matrix extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
-  - [ ] 🧸 CSC matrix class, fast CSR-CSR tranpositions,
-  - [x] 🧸 Extraction with prescribed coloring.
+  - [ ] 🧸 CSC matrix class, fast CSR-CSC tranpositions,
+  - [x] 🧸 Extraction with prescribed coloring,
+  - [ ] 🦜 Block extraction with prescribed coloring,
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,
-  - [ ] 🚬 Some more optimal column coloring problem..
+  - [ ] 🚬 Some more optimal column coloring algorthms..
 
 * Preconditioning:
   - [x] 🧻 Refactor precondtioner from function pointer to class,
@@ -214,7 +215,7 @@ Legend:
   - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
   - [ ] 🪓 MKL-based `ILUT_MKL` preconditioners,
   - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
-  - [ ] 🧸 Sequential triangular solvers,
+  - [x] 🧸 Sequential triangular solvers,
   - [ ] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
   - [ ] 🧻 Refactor unified and C/C++ API for preconditioning,

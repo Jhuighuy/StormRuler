@@ -34,8 +34,9 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
+use StormRuler_Matrix, only: tMatrix, &
+  & PartialMatrixVector, SolveDiag, SolveTrianular
 use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
-use StormRuler_Matrix!, only: tMatrix, DiagMatrixVector
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -62,16 +63,14 @@ implicit none
 !! 
 !! In preconditioning, computation of the vector 𝒚 = 𝓟𝒙 ≈ 𝓐⁻¹𝒙 
 !! can be organized with a few LU-SGS iterations with 𝒃 = 𝒙 
-!! with zero initial guess.
-!! The number of inner iterations is controlled by  
-!! the parameter `MaxIterLU_SGS`.
-!! In most practical cases, a single LU-SGS iteration
-!! is enough for the considarable preconditioning.
-!! Four our more LU-SGS iterations are not recommended
+!! with zero initial guess. The number of inner iterations is 
+!! controlled by the parameter `MaxIterLU_SGS`. In most practical 
+!! cases, a single LU-SGS iteration is enough for the considarable 
+!! preconditioning. More than 5 LU-SGS iterations is not recommended 
 !! due to the numerical instability issues.
 !! 
-!! Like the other triangular matrix-based preconditioners,
-!! LU-SGS may suffer from poor parallel scaling.
+!! Like the other triangular matrix-based preconditioners, LU-SGS 
+!! may suffer from poor parallel scaling.
 !! 
 !! References:
 !! [1] ???

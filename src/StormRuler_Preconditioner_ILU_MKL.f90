@@ -35,16 +35,15 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: tMatVecFunc
 
-use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 use StormRuler_Matrix, only: tMatrix
+use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
+
+use StormRuler_MKL, only: dcsrilu0, mkl_dcsrtrsv
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-include 'mkl_spblas.fi'
-include 'mkl_rci.fi'
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Incomplete LU preconditioner, MKL based.

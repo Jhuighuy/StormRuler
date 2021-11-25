@@ -6,7 +6,7 @@
 !! files (the "Software"), to deal in the Software without
 !! restriction, including without limitation the rights  to use,
 !! copy, modify, merge, publish, distribute, sublicense, and/or
-!! sell copies of the Software, and to permit persons to whom the 
+!! sell copies of the Software, and to permit persons to whom the
 !! Software is furnished to do so, subject to the following
 !! conditions:
 !!
@@ -22,33 +22,23 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Parameters
+module StormRuler_MKL
 
-use, intrinsic :: iso_fortran_env, only: int8, int32
-use, intrinsic :: iso_c_binding
+#$use 'StormRuler_Params.fi'
+#$if HAS_MKL
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-!! Double persicion kind for real numbers.
-integer, parameter :: dp = c_double
+include 'mkl.fi'
 
-integer, parameter :: ip = int32
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-integer, parameter :: i8 = int8
+contains
 
-logical, parameter :: gUseMKL = .true.
+#$end if
 
-logical, parameter :: gCylCoords = .false.
-
-integer(ip), parameter :: gMaxIterGMRES = 50
-
-integer(ip), parameter :: gMaxIterLU_SGS = 1
-
-integer(ip), parameter :: error_code = 1
-
-integer(ip), parameter :: not_implemented_code = 1000
-
-end module StormRuler_Parameters
+end module StormRuler_MKL

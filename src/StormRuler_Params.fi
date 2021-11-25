@@ -46,5 +46,3 @@
 #$if not defined('HAS_METIS')
 #$let HAS_METIS = False
 #$end if
-
-#$let SCALAR_TYPES = [('R', 'real(dp)'), ('C', 'complex(dp)')]

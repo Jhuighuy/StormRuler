@@ -47,8 +47,9 @@ integer(ip), parameter :: gMaxIterGMRES = 50
 
 integer(ip), parameter :: gMaxIterLU_SGS = 1
 
-integer(ip), parameter :: error_code = 1
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-integer(ip), parameter :: not_implemented_code = 1000
+contains
 
 end module StormRuler_Parameters

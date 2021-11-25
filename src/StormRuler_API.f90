@@ -26,7 +26,7 @@ module StormRuler_API
 
 #$use 'StormRuler_Params.fi'
 
-use StormRuler_Parameters, only: dp, ip, i8, error_code
+use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: PrintBanner, PixelToInt
 
 use StormRuler_Mesh, only: tMesh
@@ -259,8 +259,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   end block
 #$endif
-
-  call gMesh%SetRange()
 
 #$if False
   block

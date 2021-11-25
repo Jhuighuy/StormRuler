@@ -28,9 +28,6 @@ module StormRuler_FDM_BCs
 
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip
-#$for type_, _ in SCALAR_TYPES
-!use StormRuler_Helpers, only: tSMapFunc$type_
-#$end for
 use StormRuler_Mesh, only: tMesh
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

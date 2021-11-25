@@ -31,6 +31,7 @@ use StormRuler_Helpers, only: Flip, IndexOf, I2S, R2S, IntToPixel
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit
+
 #$if HAS_OpenMP
 use :: omp_lib
 #$endif
@@ -113,58 +114,17 @@ type :: tMesh
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.
   ! ( in the curvilinear coordinates, uniform. )
-  ! Shape is [1, NumFaces].
+  ! Shape is [1, NumCellFaces].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
   ! ( in the curvilinear coordinates, uniform. )
-  ! Shape is [1, NumDims]×[1, NumFaces].
+  ! Shape is [1, NumDims]×[1, NumCellFaces].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
 
-  ! ----------------------
-  ! Cell center coordinates.
-  ! Shape is [1, NumDims]×[1, NumCells].
-  ! ----------------------
-  real(dp), allocatable :: mCellCenter(:,:)
-
-  ! ----------------------
-  ! Cell range indicators.
-  ! ----------------------
-  logical, private :: mParallel = .true.
-#$if HAS_OpenMP
-  integer(ip), allocatable, private :: mCellRange(:,:)
-#$else
-  integer(ip), private :: mCellRange(2)
-#$end if
-
 contains
-
-  ! ----------------------
-  ! Mesh walkthough subroutines.
-  ! ----------------------
-  procedure :: SetRange => tMesh_SetRange
-  procedure :: FirstCell => tMesh_FirstCell
-  procedure :: LastCell => tMesh_LastCell
-  procedure :: RunCellKernel => tMesh_RunCellKernel
-#$for T, _ in [SCALAR_TYPES[0]]
-  generic :: RunCellKernel_Sum => RunCellKernel_Sum$T
-  procedure :: RunCellKernel_Sum$T => tMesh_RunCellKernel_Sum$T
-#$end for
-  procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
-  procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
-  procedure :: RunCellKernel_Block => tMesh_RunCellKernel_Block
-  procedure :: RunCellKernel_Forward => tMesh_RunCellKernel_Forward
-  procedure :: RunCellKernel_Backward => tMesh_RunCellKernel_Backward
-
-  ! ----------------------
-  ! Field wrappers.
-  ! ----------------------
-  procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
-  generic :: CellCenter => CellCenterVec, CellCenterCoord
-  procedure :: CellCenterVec => tMesh_CellCenterVec
-  procedure :: CellCenterCoord => tMesh_CellCenterCoord
 
   ! ----------------------
   ! Initializers.
@@ -173,6 +133,23 @@ contains
   procedure :: InitFromImage2D => tMesh_InitFromImage2D
   procedure :: InitFromImage3D => tMesh_InitFromImage3D
   procedure, private :: GenerateBCCells => tMesh_GenerateBCCells
+
+  ! ----------------------
+  ! Parallel mesh walkthough subroutines.
+  ! ----------------------
+  procedure :: RunCellKernel => tMesh_RunCellKernel
+  procedure :: RunCellKernel_Sum => tMesh_RunCellKernel_Sum
+  procedure :: RunCellKernel_Min => tMesh_RunCellKernel_Min
+  procedure :: RunCellKernel_Max => tMesh_RunCellKernel_Max
+  procedure :: RunCellKernel_Block => tMesh_RunCellKernel_Block
+
+  ! ----------------------
+  ! Field wrappers.
+  ! ----------------------
+  procedure :: CellFacePeriodic => tMesh_CellFacePeriodic
+  generic :: CellCenter => CellCenterVec, CellCenterCoord
+  procedure :: CellCenterVec => tMesh_CellCenterVec
+  procedure :: CellCenterCoord => tMesh_CellCenterCoord
 
   ! ----------------------
   ! Ordering routines. 
@@ -184,6 +161,7 @@ contains
   ! ----------------------
   procedure :: PrintTo_Neato => tMesh_PrintTo_Neato
   procedure :: PrintTo_LegacyVTK => tMesh_PrintTo_LegacyVTK
+  
 end type tMesh
 
 abstract interface
@@ -194,13 +172,11 @@ abstract interface
 end interface
 
 abstract interface
-#$for type, typename in SCALAR_TYPES
-  function tReduceKernelFunc$type(iCell) result(r)
+  function tReduceKernelFunc(iCell) result(r)
     import ip, dp
     integer(ip), intent(in) :: iCell
-    $typename :: r
-  end function tReduceKernelFunc$type
-#$end for
+    real(dp) :: r
+  end function tReduceKernelFunc
 end interface
 
 abstract interface
@@ -216,93 +192,6 @@ end interface
 contains
 
 !! ----------------------------------------------------------------- !!
-!! ----------------------------------------------------------------- !!
-subroutine tMesh_SetRange(mesh, firstCell, lastCell, parallel)
-  class(tMesh), intent(inout) :: mesh
-  integer(ip), intent(in), optional :: firstCell, lastCell
-  logical, optional :: parallel
-
-#$if HAS_OpenMP
-  ! Preallocate and reset the ranges.
-  if (.not.allocated(mesh%mCellRange)) then
-    !$omp single
-    allocate(mesh%mCellRange(2, omp_get_max_threads()))
-    mesh%mCellRange(1,:) = 1
-    mesh%mCellRange(2,:) = mesh%NumCells
-    !$omp end single
-  end if
-  if (present(firstCell)) then
-    mesh%mParallel = .false.
-    mesh%mCellRange(:,omp_get_thread_num()+1) = firstCell
-    if (present(lastCell)) then
-      mesh%mCellRange(2,omp_get_thread_num()+1) = lastCell
-    end if
-  else
-    if (omp_in_parallel()) then
-      write(error_unit, *) &
-        & 'SetRange cannot be called without ', &
-        & 'arguments inside of the parallel section.'
-      error stop 2
-    end if
-    mesh%mParallel = .true.
-    if (present(parallel)) then
-      mesh%mParallel = parallel
-    end if
-    mesh%mCellRange(1,:) = 1
-    mesh%mCellRange(2,:) = mesh%NumCells
-  end if
-#$else
-  if (present(firstCell)) then
-    mesh%mCellRange(:) = firstCell
-    if (present(lastCell)) then
-      mesh%mCellRange(2) = lastCell
-    end if
-  else
-    mesh%mCellRange(1) = 1
-    mesh%mCellRange(2) = mesh%NumCells
-  end if
-#$end if
-end subroutine tMesh_SetRange
-
-!! ----------------------------------------------------------------- !!
-!! Indicate if the computation should be performed in parallel.
-!! ----------------------------------------------------------------- !!
-pure logical function tMesh_Parallel(mesh)
-  class(tMesh), intent(in) :: mesh
-
-  tMesh_Parallel = mesh%mParallel
-
-end function tMesh_Parallel
-
-!! ----------------------------------------------------------------- !!
-!! Get the lower cell bound for the current computation.
-!! ----------------------------------------------------------------- !!
-integer(ip) function tMesh_FirstCell(mesh)
-  class(tMesh), intent(in) :: mesh
-
-#$if HAS_OpenMP
-  tMesh_FirstCell = mesh%mCellRange(1, omp_get_thread_num()+1)
-#$else
-  tMesh_FirstCell = mesh%mCellRange(1)
-#$end if
-
-end function tMesh_FirstCell
-
-!! ----------------------------------------------------------------- !!
-!! Get the upper cell bound for the current computation.
-!! ----------------------------------------------------------------- !!
-integer(ip) function tMesh_LastCell(mesh)
-  class(tMesh), intent(in) :: mesh
-
-#$if HAS_OpenMP
-  tMesh_LastCell = mesh%mCellRange(2, omp_get_thread_num()+1)
-#$else
-  tMesh_LastCell = mesh%mCellRange(2)
-#$end if
-
-end function tMesh_LastCell
-
-!! ----------------------------------------------------------------- !!
 !! Launch a cell kernel.
 !! ----------------------------------------------------------------- !!
 subroutine tMesh_RunCellKernel(mesh, Kernel)
@@ -311,69 +200,49 @@ subroutine tMesh_RunCellKernel(mesh, Kernel)
 
   integer :: iCell
 
-  if (mesh%mParallel) then
-    !$omp parallel do schedule(static)
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      call Kernel(iCell)
-    end do
-    !$omp end parallel do
-  else
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      call Kernel(iCell)
-    end do
-  end if
+  !$omp parallel do default(none) shared(mesh) schedule(static)
+  do iCell = 1, mesh%NumCells
+    call Kernel(iCell)
+  end do
+  !$omp end parallel do
 
 end subroutine tMesh_RunCellKernel
 
 !! ----------------------------------------------------------------- !!
 !! Launch a SUM-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
-#$for T, typename in SCALAR_TYPES
-function tMesh_RunCellKernel_Sum$T(mesh, Kernel) result(sum)
+function tMesh_RunCellKernel_Sum(mesh, Kernel) result(sum)
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc$T) :: Kernel
-  $typename :: sum
+  procedure(tReduceKernelFunc) :: Kernel
+  real(dp) :: sum
 
   integer :: iCell
 
   sum = 0.0_dp
-  if (mesh%mParallel) then
-    !$omp parallel do schedule(static) reduction(+:sum)
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      sum = sum + Kernel(iCell)
-    end do
-    !$omp end parallel do
-  else
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      sum = sum + Kernel(iCell)
-    end do
-  end if
+  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(+:sum)
+  do iCell = 1, mesh%NumCells
+    sum = sum + Kernel(iCell)
+  end do
+  !$omp end parallel do
 
-end function tMesh_RunCellKernel_Sum$T
-#$end for
+end function tMesh_RunCellKernel_Sum
 
 !! ----------------------------------------------------------------- !!
 !! Launch a MIN-reduction cell kernel.
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Min(mesh, Kernel) result(mMin)
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFuncR) :: Kernel
+  procedure(tReduceKernelFunc) :: Kernel
   real(dp) :: mMin
 
   integer :: iCell
 
   mMin = +huge(mMin)
-  if (mesh%mParallel) then
-    !$omp parallel do schedule(static) reduction(min:mMin)
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      mMin = min(mMin, Kernel(iCell))
-    end do
-    !$omp end parallel do
-  else
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      mMin = min(mMin, Kernel(iCell))
-    end do
-  end if
+  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(min:mMin)
+  do iCell = 1, mesh%NumCells
+    mMin = min(mMin, Kernel(iCell))
+  end do
+  !$omp end parallel do
 
 end function tMesh_RunCellKernel_Min
 
@@ -382,23 +251,17 @@ end function tMesh_RunCellKernel_Min
 !! ----------------------------------------------------------------- !!
 function tMesh_RunCellKernel_Max(mesh, Kernel) result(mMax)
   class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFuncR) :: Kernel
+  procedure(tReduceKernelFunc) :: Kernel
   real(dp) :: mMax
 
   integer :: iCell
 
   mMax = -huge(mMax)
-  if (mesh%mParallel) then
-    !$omp parallel do schedule(static) reduction(max:mMax)
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      mMax = max(mMax, Kernel(iCell))
-    end do
-    !$omp end parallel do
-  else
-    do iCell = mesh%FirstCell(), mesh%LastCell()
-      mMax = max(mMax, Kernel(iCell))
-    end do
-  end if
+  !$omp parallel do default(none) shared(mesh) schedule(static) reduction(max:mMax)
+  do iCell = 1, mesh%NumCells
+    mMax = max(mMax, Kernel(iCell))
+  end do
+  !$omp end parallel do
 
 end function tMesh_RunCellKernel_Max
 
@@ -409,29 +272,26 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   class(tMesh), intent(in) :: mesh
   procedure(tBlockKernelFunc) :: BlockKernel
 
-#$if HAS_OpenMP
+#$if not HAS_OpenMP
+
+  call BlockKernel(1, mesh%NumCells)
+
+#$else
+
   integer(ip) :: i, thread
   integer(ip), allocatable :: ranges(:)
-
-  ! ----------------------
-  ! Launch the whole range as a block if sequential mode is requested.
-  ! ----------------------
-  if (.not.mesh%mParallel) then
-    call BlockKernel(mesh%FirstCell(), mesh%LastCell())
-    return
-  end if
 
   ! ----------------------
   ! Compute block range for each thread.
   ! ----------------------
   allocate(ranges(omp_get_max_threads()))
-  associate(size => ( mesh%LastCell() - mesh%FirstCell() + 1 ) )
+  associate(size => ( mesh%NumCells - 1 + 1 ) )
     ranges(:) = size/omp_get_max_threads()
     associate(remainder => ranges(:mod(size, omp_get_max_threads())))
       remainder(:) = remainder(:) + 1
     end associate
   end associate
-  ranges = [mesh%FirstCell(), ranges]
+  ranges = [1, ranges]
   do i = 1, omp_get_max_threads()
     ranges(i + 1) = ranges(i) + ranges(i + 1) 
   end do
@@ -443,36 +303,9 @@ subroutine tMesh_RunCellKernel_Block(mesh, BlockKernel)
   thread = omp_get_thread_num() + 1
   call BlockKernel(ranges(thread), ranges(thread + 1) - 1)
   !$omp end parallel
-#$else
-
-  call BlockKernel(mesh%FirstCell(), mesh%LastCell())
 
 #$endif
 end subroutine tMesh_RunCellKernel_Block
-
-subroutine tMesh_RunCellKernel_Forward(mesh, Kernel)
-  class(tMesh), intent(inout) :: mesh
-  procedure(tKernelFunc) :: Kernel
-
-  integer :: iCell
-
-  do iCell = mesh%FirstCell(), mesh%LastCell()
-    call Kernel(iCell)
-  end do
-
-end subroutine tMesh_RunCellKernel_Forward
-
-subroutine tMesh_RunCellKernel_Backward(mesh, Kernel)
-  class(tMesh), intent(inout) :: mesh
-  procedure(tKernelFunc) :: Kernel
-
-  integer :: iCell
-
-  do iCell = mesh%LastCell(), mesh%FirstCell(), -1
-    call Kernel(iCell)
-  end do
-  
-end subroutine tMesh_RunCellKernel_Backward
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -500,6 +333,7 @@ pure function tMesh_CellCenterVec(mesh, iCell)
 
   tMesh_CellCenterVec = &
     & [0.0_dp,0.0_dp] + mesh%dl(::2)*(mesh%CellMDIndex(:,iCell) - 0.5_dp)
+
 end function tMesh_CellCenterVec
 pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
   class(tMesh), intent(in) :: mesh
@@ -509,6 +343,7 @@ pure function tMesh_CellCenterCoord(mesh, iDim, iCell)
   associate(r => mesh%CellCenterVec(iCell))
     tMesh_CellCenterCoord = r(iDim)
   end associate
+
 end function tMesh_CellCenterCoord
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -1107,7 +942,6 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     mesh%dr(:,3) = [0.0_dp, mesh%dl(2)]
     mesh%dr(:,4) = [0.0_dp, mesh%dl(2)]
     mesh%NumCellFaces = 4
-    allocate(mesh%mCellCenter(1:mesh%NumAllCells, 1:3))
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
     allocate(mesh%mCellFacePeriodic(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
@@ -1118,8 +952,6 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
       do xCell = 1, xNumCells
         iCell = cellToIndex(xCell, yCell)
         mesh%CellMDIndex(:,iCell) = [xCell, yCell]
-        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                                    ,yDelta*(yCell+0.5_dp), 0.0_dp]
         !---
         mesh%CellToCell(:,iCell) = &
           & [cellToIndex(xCell+1, yCell), &
@@ -1142,15 +974,11 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     do yCell = 1, yNumCells
       do xCell = 1-xNumLayers, 0
         iCell = cellToIndex(xCell, yCell)
-        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ cellToIndex(1, yCell), 0, 0, 0 ]
       end do
       do xCell = xNumCells+1, xNumCells+xNumLayers 
         iCell = cellToIndex(xCell, yCell)
-        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                              , yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, cellToIndex(xNumCells, yCell), 0, 0 ]
       end do
@@ -1160,15 +988,11 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     do xCell = 1, xNumCells
       do yCell = 1-yNumLayers, 0
         iCell = cellToIndex(xCell, yCell)
-        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, 0, cellToIndex(xCell, 1), 0 ]
       end do
       do yCell = yNumCells+1, yNumCells+yNumLayers
         iCell = cellToIndex(xCell, yCell)
-        mesh%mCellCenter(iCell, :) = [xDelta*(xCell+0.5_dp)&
-                              ,yDelta*(yCell+0.5_dp), 0.0_dp]
         mesh%CellToCell(iCell, :) &
           = [ 0, 0, 0, cellToIndex(xCell, yNumCells) ]
       end do

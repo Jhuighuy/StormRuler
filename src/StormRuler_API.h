@@ -26,6 +26,7 @@
 #define STORM_RULER_API_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <assert.h>
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
@@ -51,6 +52,10 @@
 
 #if !STORM_C11_ && !STORM_CXX17_
 #error StormRuler API: neither C11 nor C++17 targets found.
+#endif
+
+#if STORM_CXX17_
+#include <vector>
 #endif
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
@@ -88,6 +93,7 @@
 
 // Basic types.
 typedef int stormInt_t;
+typedef size_t stormSize_t;
 typedef double stormReal_t;
 typedef void* stormOpaque_t;
 typedef const char* stormString_t;
@@ -111,6 +117,16 @@ _STORM_OPAQUE_(stormArray);
 
 STORM_API stormArray_t SR_Alloc(
   stormMesh_t mesh, stormInt_t numVars, stormInt_t rank);
+
+STORM_API stormArray_t stormAllocOnMesh(stormMesh_t mesh,
+                                        stormSize_t size,
+                                        const stormSize_t* shape);
+#if STORM_CXX17_
+STORM_INL stormArray_t stormAllocOnMesh(stormMesh_t mesh,
+                                        const std::vector<stormSize_t>& shape) {
+  return stormAllocOnMesh(mesh, shape.size(), shape.data());
+} // stormAllocOnMesh
+#endif
 
 STORM_API stormArray_t stormAllocLike(stormArray_t array);
 
@@ -366,5 +382,34 @@ STORM_API void stormRhieChowCorrection(stormMesh_t mesh,
                                        stormReal_t tau,
                                        stormArray_t p,
                                        stormArray_t rho);
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+STORM_API void stormLbmStream(stormMesh_t mesh,
+                              stormArray_t g,
+                              stormArray_t f);
+
+STORM_API void stormLbmMacroscopics(stormMesh_t mesh,
+                                    stormArray_t rho,
+                                    stormArray_t v,
+                                    stormSize_t sizeOfM,
+                                    const stormReal_t* m,
+                                    stormArray_t f);
+#if STORM_CXX17_
+STORM_INL void stormLbmMacroscopics(stormMesh_t mesh,
+                                    stormArray_t rho,
+                                    stormArray_t v,
+                                    const std::vector<stormReal_t>& m,
+                                    stormArray_t f) {
+  stormLbmMacroscopics(mesh, rho, v, m.size(), m.data(), f);
+} // stormLbmMacroscopics
+#endif
+
+STORM_API void stormLbmCollisionBGK(stormMesh_t mesh,
+                                    stormArray_t f,
+                                    stormReal_t tau,
+                                    stormArray_t rho,
+                                    stormArray_t v);
 
 #endif // ifndef STORM_RULER_API_H

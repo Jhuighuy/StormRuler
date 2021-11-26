@@ -264,7 +264,8 @@ subroutine Fill_Random(mesh, yArr, a, b)
 
   call yArr%Get(y)
 
-  call mesh%RunCellKernel_Block(Fill_Random_Kernel)
+  !call mesh%RunCellKernel_Block(Fill_Random_Kernel)
+  call Fill_Random_Kernel(1, mesh%NumCells)
 
 contains
   subroutine Fill_Random_Kernel(firstCell, lastCell)

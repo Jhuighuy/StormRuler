@@ -393,6 +393,7 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   ! ----------------------
   mesh%NumDims = $dim
   mesh%NumCellFaces = ${2*dim}$
+  mesh%NumExtDirs = mesh%NumCellFaces + 1
   mesh%MDIndexBounds = shape(image)-2
   mesh%NumBCMs = size(colorToBCM, dim=1)
   allocate(mesh%BCMs(mesh%NumBCMs+1)); mesh%BCMs(:) = 0
@@ -969,11 +970,12 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     allocate(mesh%dl(1:4))
     mesh%dl(:) = [xDelta, xDelta, yDelta, yDelta]
     mesh%MDIndexBounds = [xNumCells, yNumCells]
-    allocate(mesh%dr(1:2, 1:4))
-    mesh%dr(:,1) = [mesh%dl(1), 0.0_dp]
-    mesh%dr(:,2) = [mesh%dl(1), 0.0_dp]
-    mesh%dr(:,3) = [0.0_dp, mesh%dl(2)]
-    mesh%dr(:,4) = [0.0_dp, mesh%dl(2)]
+    allocate(mesh%dr(1:2, 1:5))
+    mesh%dr(:,1) = [+1.0_dp+0*mesh%dl(1), 0.0_dp]
+    mesh%dr(:,2) = [-1.0_dp+0*mesh%dl(1), 0.0_dp]
+    mesh%dr(:,3) = [0.0_dp, +1.0_dp+0*mesh%dl(2)]
+    mesh%dr(:,4) = [0.0_dp, -1.0_dp+0*mesh%dl(2)]
+    mesh%dr(:,5) = [0.0_dp, 0.0_dp]
     mesh%NumCellFaces = 4
     allocate(mesh%CellToCell(4, mesh%NumAllCells))
     allocate(mesh%mIsCellFacePeriodic(4, mesh%NumAllCells))

@@ -54,6 +54,10 @@ use StormRuler_FDM_Operators, only: &
 use StormRuler_FDM_RhieChow, only: FDM_RhieChow_Correction
 use StormRuler_FDM_Convection, only: FDM_Convection_Central
 
+use StormRuler_LBM_BCs, only:
+use StormRuler_LBM_Operators, only: &
+  & LBM_Stream, LBM_Macroscopics, LBM_Collision_BGK
+
 use, intrinsic :: iso_c_binding, only: c_char, c_int, &
   & c_double, c_size_t, c_ptr, c_funptr, c_null_char, &
   & c_associated, c_loc, c_f_pointer, c_f_procpointer
@@ -219,13 +223,14 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   call PrintBanner
 
-#$if False
+#$if True
   block
 
-    integer(ip), parameter :: nx = 256, ny = 256
+    integer(ip), parameter :: nx = 128, ny = 128
     real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
     allocate(gMesh)
     call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
+    gMesh%NumExtDirs = 5
 
   end block
 #$else
@@ -315,6 +320,32 @@ function cAlloc(meshPtr, numVars, rank) result(yPtr) bind(C, name='SR_Alloc')
   yPtr = Wrap(yArr)
 
 end function cAlloc
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+function stormAllocOnMesh(meshPtr, rank, &
+    & shape) result(yPtr) bind(C, name='stormAllocOnMesh')
+  type(c_ptr), intent(in), value :: meshPtr
+  integer(c_size_t), intent(in), value :: rank
+  integer(c_size_t), intent(in) :: shape(rank)
+  type(c_ptr) :: yPtr
+
+  integer(ip) :: trueShape(rank + 1)
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: yArr
+
+  call Unwrap(meshPtr, mesh)
+
+  trueShape(:rank) = shape
+  trueShape(rank + 1) = mesh%NumAllCells
+
+  allocate(yArr)
+  call AllocArray(yArr, shape=trueShape)
+
+  yPtr = Wrap(yArr)
+
+end function stormAllocOnMesh
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
@@ -517,6 +548,7 @@ pure function $Func(x) result(y)
   real(dp), intent(in) :: x(:)
   real(dp) :: y(size(x))
 
+  y(:) = x(:)
   call $cFunc(size(x), y, x, $env)
 
 end function $Func
@@ -527,6 +559,7 @@ pure function $SpFunc(r, x) result(y)
   real(dp), intent(in) :: r(:), x(:)
   real(dp) :: y(size(x))
 
+  y(:) = x(:)
   call $cSpFunc(size(r), r, size(x), y, x, $env)
 
 end function $SpFunc
@@ -902,5 +935,61 @@ subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
   call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
 
 end subroutine stormRhieChowCorrection
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormLbmStream(meshPtr, gPtr, fPtr) bind(C, name='stormLbmStream')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value ::  fPtr, gPtr
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: fArr, gArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(fPtr, fArr); call Unwrap(gPtr, gArr)
+
+  call LBM_Stream(mesh, gArr, fArr)
+
+end subroutine stormLbmStream
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormLbmMacroscopics(meshPtr, rhoPtr, vPtr, &
+    & sizeOfM, m, fPtr) bind(C, name='stormLbmMacroscopics')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value ::  fPtr, rhoPtr, vPtr
+  integer(c_size_t), intent(in), value :: sizeOfM
+  real(c_double), intent(in) :: m(sizeOfM)
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: fArr, rhoArr, vArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(fPtr, fArr); call Unwrap(rhoPtr, rhoArr); call Unwrap(vPtr, vArr)
+
+  call LBM_Macroscopics(mesh, rhoArr, vArr, m, fArr)
+
+end subroutine stormLbmMacroscopics
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormLbmCollisionBGK(meshPtr, fPtr, tau, &
+    & rhoPtr, vPtr) bind(C, name='stormLbmCollisionBGK')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value ::  fPtr, rhoPtr, vPtr
+  real(c_double), intent(in), value :: tau
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: fArr, rhoArr, vArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(fPtr, fArr); call Unwrap(rhoPtr, rhoArr); call Unwrap(vPtr, vArr)
+
+  call LBM_Collision_BGK(mesh, fArr, tau, rhoArr, vArr)
+
+end subroutine stormLbmCollisionBGK
 
 end module StormRuler_API

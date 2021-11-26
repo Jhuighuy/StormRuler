@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -40,32 +41,44 @@
 
 //static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
+void InitF(int dim, const stormReal_t* r,
+    int size, stormReal_t* f, const stormReal_t* _, void* __) {
+
+  f[0] += 1.0; 
+
+} // Initial_Data
+
 int main() {
 
   stormMesh_t mesh = SR_InitMesh();
 
-  stormArray_t p, v, rho;
+  stormArray_t f, fHat, p, v, rho;
+  f = stormAllocOnMesh(mesh, { 5 });
+  fHat = stormAllocLike(f);
+
   p = SR_Alloc(mesh, 1, 0);
   v = SR_Alloc(mesh, 1, 1);
   rho = SR_Alloc(mesh, 1, 0);
 
-  //stormFill(mesh, c, 1.0);
-  //stormSpFuncProd(mesh, c, c, Initial_Data, STORM_NULL);
-  //SR_SFuncProd(mesh, v, v, Initial_Data, STORM_NULL);
-  //stormFillRandom(mesh, c, -1.0, +1.0);
-  stormFill(mesh, v, 0.0);
-  stormFill(mesh, p, 0.0);
+  stormRandFill(mesh, f, 0.99, 1.01);
+  stormSpFuncProd(mesh, f, f, InitF, STORM_NULL);
 
   double total_time = 0.0;
 
   for (int time = 0; time <= 0*20+1*200000; ++time) {
-
-    for (int frac = 0; time != 0 && frac < 10; ++frac) {
+    for (int frac = 0; time != 0 && frac < 1; ++frac) {
 
       struct timespec start, finish;
 
       clock_gettime(CLOCK_MONOTONIC, &start);
 
+      ////////
+
+      stormLbmMacroscopics(mesh, rho, v, {1.0}, f);
+      stormLbmCollisionBGK(mesh, f, 1.0, rho, v);
+      stormLbmStream(mesh, fHat, f);
+
+      stormSwap(f, fHat);
       ////////
 
       clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -75,10 +88,13 @@ int main() {
 
     }
 
+    stormLbmMacroscopics(mesh, rho, v, {1.0}, f);
+
     char filename[256];
     printf("time = %f\n", total_time);
     sprintf(filename, "out/fld-%d.vtk", time);
     stormIOList_t io = SR_IO_Begin();
+    SR_IO_Add(io, f, "distr");
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, p, "pressure");
     SR_IO_Add(io, rho, "density");

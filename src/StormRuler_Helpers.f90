@@ -59,6 +59,17 @@ subroutine PrintBanner
 
 end subroutine PrintBanner
 
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Error stop with message.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine ErrorStop(message)
+  character(len=*), intent(in), optional :: message
+
+  if (present(message)) write(error_unit,*) message
+  error stop 1
+
+end subroutine ErrorStop
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -182,7 +193,7 @@ subroutine EnsurePositive(value)
   real(dp), intent(in) :: value
   
   if (ieee_is_nan(value).or.(value <= 0)) then
-    error stop 'NEGATIVE, ZERO OR NaN VALUE: '//R2S(value)
+    call ErrorStop('unexpected negative, zero or NaN value: '//R2S(value))
   end if
 
 end subroutine EnsurePositive
@@ -194,7 +205,7 @@ subroutine EnsureNonNegative(value)
   real(dp), intent(in) :: value
   
   if (ieee_is_nan(value).or.(value < 0)) then
-    error stop 'NEGATIVE OR NaN VALUE: '//R2S(value)
+    call ErrorStop('unexpected negative or NaN value: '//R2S(value))
   end if
 
 end subroutine EnsureNonNegative

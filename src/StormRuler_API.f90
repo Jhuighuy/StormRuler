@@ -230,7 +230,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     real(dp), parameter :: dx = 1.0_dp/Nx, dy = 1.0_dp/Ny
     allocate(gMesh)
     call gMesh%InitRect(dx, nx, .true., dy, ny, .true., 20)
-    gMesh%NumExtDirs = 5
 
   end block
 #$else

@@ -76,30 +76,30 @@ contains
   subroutine LBM_Stream_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: extDir
+    integer(ip) :: dir
     integer(ip) :: cellCell
 
     ! ----------------------
     ! For each extended direction do:
     ! ----------------------
-    do extDir = 1, mesh%NumExtDirs - 1
+    do dir = 1, mesh%NumExtDirs - 1
 
       ! ----------------------
       ! Index of the adjacent cell.
       ! ----------------------
-      cellCell = mesh%CellToCell(Flip(extDir), cell)
+      cellCell = mesh%CellToCell(Flip(dir), cell)
 
       ! ----------------------
       ! Stream the distribution function:
       ! ----------------------
-      g(extDir,cell) = f(extDir,cellCell)
+      g(dir,cell) = f(dir,cellCell)
 
     end do
 
     ! ----------------------
     ! Stream the distribution function stationary component:
     ! ----------------------
-    g(extDir,cell) = f(extDir,cell)
+    g(dir,cell) = f(dir,cell)
 
   end subroutine LBM_Stream_Kernel
 end subroutine LBM_Stream
@@ -130,21 +130,21 @@ contains
   subroutine LBM_Macroscopics_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: extDir
+    integer(ip) :: dir
 
     rho(cell) = 0.0_dp; v(:,cell) = 0.0_dp
 
     ! ----------------------
     ! For each extended direction do:
     ! ----------------------
-    do extDir = 1, mesh%NumExtDirs
+    do dir = 1, mesh%NumExtDirs
 
       ! ----------------------
       ! Compute macroscopic variables increment:
       ! ----------------------
-      associate(mf => f(extDir,cell))
+      associate(mf => f(dir,cell))
         rho(cell) = rho(cell) + mf
-        v(:,cell) = v(:,cell) + mf*mesh%dr(:,extDir)
+        v(:,cell) = v(:,cell) + mf*mesh%dr(:,dir)
       end associate
 
     end do
@@ -172,7 +172,9 @@ subroutine LBM_Collision_BGK(mesh, fArr, tau, rhoArr, vArr)
   real(dp) :: tau
 
   real(dp), pointer :: f(:,:), rho(:), v(:,:)
-  real(dp), parameter :: w(*) = [1/6.0_dp, 1/6.0_dp, 1/6.0_dp, 1/6.0_dp, 2/6.0_dp]
+  real(dp), parameter :: w(*) = [ &
+    & 1/9.0_dp, 1/9.0_dp, 1/9.0_dp, 1/9.0_dp, &
+    & 1/36.0_dp, 1/36.0_dp, 1/36.0_dp, 1/36.0_dp, 4/9.0_dp ]
 
   call fArr%Get(f); call rhoArr%Get(rho); call vArr%Get(v)
 
@@ -182,7 +184,7 @@ contains
   subroutine LBM_Collision_BGK_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: extDir
+    integer(ip) :: dir
     real(dp) :: vSqr, fEq
 
     vSqr = dot_product(v(:,cell), v(:,cell))
@@ -190,21 +192,21 @@ contains
     ! ----------------------
     ! For each extended direction do:
     ! ----------------------
-    do extDir = 1, mesh%NumExtDirs
+    do dir = 1, mesh%NumExtDirs
 
       ! ----------------------
       ! Compute equilibrium distribution: 
       ! 𝓕ᵢ ← 𝛒𝑤ᵢ⋅(1 + 3⋅𝒗ᵢ⋅𝒗 + 4.5⋅(𝒗ᵢ⋅𝒗)² - 1.5⋅(𝒗⋅𝒗)²).
       ! ----------------------
-      associate(d => dot_product(v(:,cell), mesh%dr(:,extDir)))
-        fEq = rho(cell)*w(extDir)*(1.0_dp + 3.0_dp*d + 4.5_dp*d**2 - 1.5_dp*vSqr)
+      associate(d => dot_product(v(:,cell), mesh%dr(:,dir)))
+        fEq = rho(cell)*w(dir)*(1.0_dp + 3.0_dp*d + 4.5_dp*d**2 - 1.5_dp*vSqr)
       end associate
 
       ! ----------------------
       ! Update collistion integral:
       ! 𝒇ᵢ ← 𝒇ᵢ + [𝓕ᵢ - 𝒇ᵢ]/𝜏.
       ! ----------------------
-      f(extDir,cell) = f(extDir,cell) + (fEq - f(extDir,cell))/tau 
+      f(dir,cell) = f(dir,cell) + (fEq - f(dir,cell))/tau 
 
     end do
 

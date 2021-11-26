@@ -970,14 +970,19 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     allocate(mesh%dl(1:4))
     mesh%dl(:) = [xDelta, xDelta, yDelta, yDelta]
     mesh%MDIndexBounds = [xNumCells, yNumCells]
-    allocate(mesh%dr(1:2, 1:5))
-    mesh%dr(:,1) = [+1.0_dp+0*mesh%dl(1), 0.0_dp]
-    mesh%dr(:,2) = [-1.0_dp+0*mesh%dl(1), 0.0_dp]
-    mesh%dr(:,3) = [0.0_dp, +1.0_dp+0*mesh%dl(2)]
-    mesh%dr(:,4) = [0.0_dp, -1.0_dp+0*mesh%dl(2)]
-    mesh%dr(:,5) = [0.0_dp, 0.0_dp]
+    allocate(mesh%dr(1:2, 1:9))
+    mesh%dr(:,1) = [+1.0_dp, 0.0_dp]
+    mesh%dr(:,2) = [-1.0_dp, 0.0_dp]
+    mesh%dr(:,3) = [0.0_dp, +1.0_dp]
+    mesh%dr(:,4) = [0.0_dp, -1.0_dp]
+    mesh%dr(:,5) = [+1.0_dp, +1.0_dp]
+    mesh%dr(:,6) = [-1.0_dp, -1.0_dp]
+    mesh%dr(:,7) = [+1.0_dp, -1.0_dp]
+    mesh%dr(:,8) = [-1.0_dp, +1.0_dp]
+    mesh%dr(:,9) = [0.0_dp, 0.0_dp]
+    mesh%NumExtDirs = 9
     mesh%NumCellFaces = 4
-    allocate(mesh%CellToCell(4, mesh%NumAllCells))
+    allocate(mesh%CellToCell(9, mesh%NumAllCells))
     allocate(mesh%mIsCellFacePeriodic(4, mesh%NumAllCells))
     allocate(mesh%CellMDIndex(2, mesh%NumAllCells))
     ! ----------------------
@@ -1034,6 +1039,24 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     end do
     !$omp end parallel do
   end block
+
+  block
+    integer :: iCell, xCell
+    do iCell = 1, mesh%NumCells
+
+      mesh%CellToCell(9,iCell) = iCell
+
+      xCell = mesh%CellToCell(1,iCell)
+      mesh%CellToCell(5,iCell) = mesh%CellToCell(3,xCell)
+      mesh%CellToCell(7,iCell) = mesh%CellToCell(4,xCell)
+
+      xCell = mesh%CellToCell(2,iCell)
+      mesh%CellToCell(6,iCell) = mesh%CellToCell(4,xCell)
+      mesh%CellToCell(8,iCell) = mesh%CellToCell(3,xCell)
+
+    end do
+  end block
+
 end subroutine tMesh_InitRect
 
 end module StormRuler_Mesh

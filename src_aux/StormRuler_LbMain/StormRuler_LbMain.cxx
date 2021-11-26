@@ -53,14 +53,15 @@ int main() {
   stormMesh_t mesh = SR_InitMesh();
 
   stormArray_t f, fHat, p, v, rho;
-  f = stormAllocOnMesh(mesh, { 5 });
+  f = stormAllocOnMesh(mesh, { 9 });
   fHat = stormAllocLike(f);
 
   p = SR_Alloc(mesh, 1, 0);
   v = SR_Alloc(mesh, 1, 1);
   rho = SR_Alloc(mesh, 1, 0);
 
-  stormRandFill(mesh, f, 0.99, 1.01);
+  stormRandFill(mesh, f, 1.0-1.0e-2, 1.0+1.0e-2);
+  //stormFill(mesh, f, 1.0);
   stormSpFuncProd(mesh, f, f, InitF, STORM_NULL);
 
   double total_time = 0.0;
@@ -75,7 +76,7 @@ int main() {
       ////////
 
       stormLbmMacroscopics(mesh, rho, v, {1.0}, f);
-      stormLbmCollisionBGK(mesh, f, 1.0, rho, v);
+      stormLbmCollisionBGK(mesh, f, 0.55, rho, v);
       stormLbmStream(mesh, fHat, f);
 
       stormSwap(f, fHat);

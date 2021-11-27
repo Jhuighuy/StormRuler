@@ -44,7 +44,7 @@
 void InitF(int dim, const stormReal_t* r,
     int size, stormReal_t* f, const stormReal_t* _, void* __) {
 
-  f[0] += 1.0; 
+  //f[3] += 1;
 
 } // Initial_Data
 
@@ -76,7 +76,7 @@ int main() {
       ////////
 
       stormLbmMacroscopics(mesh, rho, v, {1.0}, f);
-      stormLbmCollisionBGK(mesh, f, 0.55, rho, v);
+      stormLbmCollisionBGK(mesh, f, 0.6, rho, v);
       stormLbmStream(mesh, fHat, f);
 
       stormSwap(f, fHat);

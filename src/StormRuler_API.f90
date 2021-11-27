@@ -45,8 +45,6 @@ use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers, only: LinSolve
 use StormRuler_Solvers_Newton, only: Solve_JFNK
 
-use StormRuler_Matrix!, only: ...
-
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &
@@ -66,8 +64,6 @@ use, intrinsic :: iso_c_binding, only: c_char, c_int, &
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-#$let c_typename(T) = {'R': 'real(c_double)'}[T]
 
 #$let KLASSES = ['tMesh', 'tArray', 'tIOList']
 
@@ -223,7 +219,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   call PrintBanner
 
-#$if True
+#$if False
   block
 
     integer(ip), parameter :: nx = 128, ny = 128
@@ -249,13 +245,22 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
       &   PixelToInt([255,   0, 255]) ]
     call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
     
-    allocate(gMesh%dr(1:2, 1:4))
-    
-    gMesh%dl = [Dx,Dx,Dy,Dy]
-    gMesh%dr(:,1) = [gMesh%dl(1), 0.0_dp]
-    gMesh%dr(:,2) = [gMesh%dl(1), 0.0_dp]
-    gMesh%dr(:,3) = [0.0_dp, gMesh%dl(3)]
-    gMesh%dr(:,4) = [0.0_dp, gMesh%dl(3)]
+    gMesh%dl = [Dx, Dx, Dy, Dy, &
+      & sqrt(2.0_dp)*Dx, sqrt(2.0_dp)*Dx, &
+      & sqrt(2.0_dp)*Dy, sqrt(2.0_dp)*Dy, 0.0_dp]
+
+    allocate(gMesh%dr(2, 9))
+    gMesh%dr(:,1) = [+1.0_dp,  0.0_dp]
+    gMesh%dr(:,2) = [-1.0_dp,  0.0_dp]
+    gMesh%dr(:,3) = [ 0.0_dp, +1.0_dp]
+    gMesh%dr(:,4) = [ 0.0_dp, -1.0_dp]
+    gMesh%dr(:,5) = [+1.0_dp, +1.0_dp]
+    gMesh%dr(:,6) = [-1.0_dp, -1.0_dp]
+    gMesh%dr(:,7) = [+1.0_dp, -1.0_dp]
+    gMesh%dr(:,8) = [-1.0_dp, +1.0_dp]
+    gMesh%dr(:,9) = [ 0.0_dp,  0.0_dp]
+
+    call gMesh%GenerateExtraConnectivity()
 
     call gMesh%PrintTo_Neato('test/c2c.dot')
     

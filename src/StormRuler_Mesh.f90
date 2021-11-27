@@ -52,13 +52,16 @@ type :: tMesh
 
   ! ----------------------
   ! Number of faces (edges in 2D) per each cell.
+  ! NumCellFaces = 4 for 2D meshes, NumCellFaces = 6 for 3D meshes.
   ! ----------------------
   integer(ip) :: NumCellFaces
   ! ----------------------
-  ! ???
+  ! Number of the connection per each cell.
+  ! Typically, NumConns = NumCellFaces.
+  ! For LBM simulations, extended connectivity is required, here 
+  ! NumConns = 9 for 2D meshes, NumConns = 19 for 3D meshes (D2Q9 and D3Q19).
   ! ----------------------
-  integer(ip) :: NumExtDirs
-
+  integer(ip) :: NumConns
 
   ! ----------------------
   ! Number of interior cells.
@@ -78,12 +81,12 @@ type :: tMesh
   integer(ip) :: NumAllCells
   ! ----------------------
   ! Cell connectivity table.
-  ! Shape is [1, NumCellFaces]×[1, NumAllCells].
+  ! Shape is [1, NumConns]×[1, NumAllCells].
   ! ----------------------
   integer(ip), allocatable :: CellToCell(:,:)
   ! ----------------------
   ! Logical table for the periodic face connections.
-  ! Shape is [1, NumCellFaces]×[1, NumAllCells].
+  ! Shape is [1, NumConns]×[1, NumAllCells].
   ! ----------------------
   logical, allocatable, private :: mIsCellFacePeriodic(:,:)
 
@@ -118,12 +121,12 @@ type :: tMesh
 
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.
-  ! Shape is [1, NumCellFaces].
+  ! Shape is [1, NumConns].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
   ! Difference between centers of the adjacent cells per face.
-  ! Shape is [1, NumDims]×[1, NumCellFaces].
+  ! Shape is [1, NumDims]×[1, NumConns].
   ! ----------------------
   real(dp), allocatable :: dr(:,:)
 
@@ -158,6 +161,7 @@ contains
   ! Ordering routines. 
   ! ----------------------
   procedure :: ApplyOrdering => ApplyMeshOrdering
+  procedure :: GenerateExtraConnectivity => GenerateMeshExtraConnectivity 
 
   ! ----------------------
   ! Printers.
@@ -326,7 +330,7 @@ pure function GetMeshCellCenterVec(mesh, cell) result(cellCenter)
 
   !! TODO: add initial offset as mesh class field.
   associate(cellIndex => mesh%CellMDIndex(:,cell))
-    cellCenter = [0.0_dp,0.0_dp] + mesh%dl(::2)*(cellIndex - 0.5_dp)
+    cellCenter = [0.0_dp,0.0_dp] + mesh%dl(:2*mesh%NumDims:2)*(cellIndex - 0.5_dp)
   end associate
 
 end function GetMeshCellCenterVec
@@ -381,10 +385,6 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   integer(ip), allocatable :: cache(@:)
   allocate(cache, mold=image); cache(@:) = 0
 
-  !! TODO:
-  allocate(mesh%dl(1:4))
-  mesh%dl(:) = [0.01_dp, 0.01_dp, 0.01_dp, 0.01_dp]
-
   ! ----------------------
   ! Process image data in order to:
   ! 1. Generate initial "Cell MD Index" ⟺ "Cell (Plain Index)" table 
@@ -393,7 +393,7 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   ! ----------------------
   mesh%NumDims = $dim
   mesh%NumCellFaces = ${2*dim}$
-  mesh%NumExtDirs = mesh%NumCellFaces + 1
+  mesh%NumConns = merge(9, 19, mesh%NumDims == 2)
   mesh%MDIndexBounds = shape(image)-2
   mesh%NumBCMs = size(colorToBCM, dim=1)
   allocate(mesh%BCMs(mesh%NumBCMs+1)); mesh%BCMs(:) = 0
@@ -439,9 +439,9 @@ subroutine tMesh_InitFromImage${dim}$D(mesh, image, fluidColor, colorToBCM, numB
   ! 4. Allocate the connectivity tables and fill them with data,
   !    inverting the "Cell MD Index" ⟺ "Cell (Plain Index)" table.
   ! ----------------------
-  associate(nac => mesh%NumAllCells, ncf => mesh%NumCellFaces)
+  associate(nac => mesh%NumAllCells, ncc => mesh%NumConns)
     allocate(mesh%CellMDIndex(mesh%NumDims, nac))
-    allocate(mesh%CellToCell(ncf, nac)); mesh%CellToCell(:,:) = 0
+    allocate(mesh%CellToCell(ncc, nac)); mesh%CellToCell(:,:) = 0
   end associate
   ! ----------------------
 #$do rank = dim, 1, -1
@@ -564,8 +564,8 @@ subroutine ApplyMeshOrdering(mesh, iperm)
   ! ----------------------
   ! Order cell-cell graph rows.
   ! ----------------------
-  cellToCellTemp = mesh%CellToCell(:,1:mesh%NumCells)
-  cellIndexTemp = mesh%CellMDIndex(:,1:mesh%NumCells)
+  cellToCellTemp = mesh%CellToCell(:,:mesh%NumCells)
+  cellIndexTemp = mesh%CellMDIndex(:,:mesh%NumCells)
   do cell = 1, mesh%NumCells
     associate(cellCell => iperm(cell))
 
@@ -576,6 +576,135 @@ subroutine ApplyMeshOrdering(mesh, iperm)
   end do
 
 end subroutine ApplyMeshOrdering
+
+subroutine GenerateMeshExtraConnectivity(mesh)
+  class(tMesh), intent(inout) :: mesh
+
+  integer(ip) :: dim
+  integer(ip) :: bcMark, bcMarkAddr, bcCell, bcCellFace, numExtraBcCells
+  integer(ip) :: cell, cellCell
+
+  numExtraBcCells = 0
+
+  ! ----------------------
+  ! Generate extra connectivity.
+  ! ----------------------
+  do cell = 1, mesh%NumCells
+    if (mesh%NumDims == 2) then
+      
+      ! ----------------------
+      ! D2Q9 mesh:
+      ! ----------------------
+      !  8  3  5
+      !   \ | /
+      ! 2 --9-- 1
+      !   / | \
+      !  6  4  7
+      ! ----------------------
+
+      ! ----------------------
+      ! Find cell "5":
+      ! either 1 -> 3 or 3 -> 1.
+      ! ----------------------
+      associate(cellCellCell => mesh%CellToCell(5,cell))
+        cellCell = mesh%CellToCell(1,cell)
+        cellCellCell = mesh%CellToCell(3,cellCell)
+        if (cellCellCell == 0) then
+          cellCell = mesh%CellToCell(3,cell)
+          cellCellCell = mesh%CellToCell(1,cellCell)
+          if (cellCellCell == 0) then
+            cellCellCell = mesh%NumAllCells + 1
+            mesh%NumAllCells = cellCellCell
+            mesh%BCMToCell = [mesh%BCMToCell, cellCellCell]
+            mesh%BCMToCellFace = [mesh%BCMToCellFace, 6]
+            numExtraBcCells = numExtraBcCells + 1
+          end if
+        end if
+      end associate
+
+      ! ----------------------
+      ! Find cell "6":
+      ! either 2 -> 4 or 4 -> 2.
+      ! ----------------------
+      associate(cellCellCell => mesh%CellToCell(6,cell))
+        cellCell = mesh%CellToCell(2,cell)
+        cellCellCell = mesh%CellToCell(4,cellCell)
+        if (cellCellCell == 0) then
+          cellCell = mesh%CellToCell(4,cell)
+          cellCellCell = mesh%CellToCell(2,cellCell)
+          if (cellCellCell == 0) then
+            cellCellCell = mesh%NumAllCells + 1
+            mesh%NumAllCells = cellCellCell
+            mesh%BCMToCell = [mesh%BCMToCell, cellCellCell]
+            mesh%BCMToCellFace = [mesh%BCMToCellFace, 5]
+            numExtraBcCells = numExtraBcCells + 1
+          end if
+        end if
+      end associate
+
+      ! ----------------------
+      ! Find cell "7":
+      ! either 1 -> 4 or 4 -> 1.
+      ! ----------------------
+      associate(cellCellCell => mesh%CellToCell(7,cell))
+        cellCell = mesh%CellToCell(1,cell)
+        cellCellCell = mesh%CellToCell(4,cellCell)
+        if (cellCellCell == 0) then
+          cellCell = mesh%CellToCell(4,cell)
+          cellCellCell = mesh%CellToCell(1,cellCell)
+          if (cellCellCell == 0) then
+            cellCellCell = mesh%NumAllCells + 1
+            mesh%NumAllCells = cellCellCell
+            mesh%BCMToCell = [mesh%BCMToCell, cellCellCell]
+            mesh%BCMToCellFace = [mesh%BCMToCellFace, 8]
+            numExtraBcCells = numExtraBcCells + 1
+          end if
+        end if
+      end associate
+
+      ! ----------------------
+      ! Find cell "8":
+      ! either 2 -> 3 or 3 -> 2.
+      ! ----------------------
+      associate(cellCellCell => mesh%CellToCell(8,cell))
+        cellCell = mesh%CellToCell(2,cell)
+        cellCellCell = mesh%CellToCell(3,cellCell)
+        if (cellCellCell == 0) then
+          cellCell = mesh%CellToCell(3,cell)
+          cellCellCell = mesh%CellToCell(2,cellCell)
+          if (cellCellCell == 0) then
+            cellCellCell = mesh%NumAllCells + 1
+            mesh%NumAllCells = cellCellCell
+            mesh%BCMToCell = [mesh%BCMToCell, cellCellCell]
+            mesh%BCMToCellFace = [mesh%BCMToCellFace, 7]
+            numExtraBcCells = numExtraBcCells + 1
+          end if
+        end if
+      end associate
+
+      ! ----------------------
+      ! "9" is the easy one.
+      ! ----------------------
+      mesh%CellToCell(9,cell) = cell
+
+    else if (mesh%NumDims == 3) then
+
+      ! ----------------------
+      ! D3Q19 mesh.
+      ! ----------------------
+      error stop 'not implemented'
+
+    end if
+  end do
+
+  if (numExtraBcCells /= 0) then
+
+    !mesh%NumBCMs = mesh%NumBCMs + 1
+    mesh%BCMs = [mesh%BCMs, size(mesh%BCMToCell) + 1]
+
+  end if
+
+end subroutine GenerateMeshExtraConnectivity 
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -980,7 +1109,7 @@ subroutine tMesh_InitRect(mesh, xDelta, xNumCells, xPeriodic &
     mesh%dr(:,7) = [+1.0_dp, -1.0_dp]
     mesh%dr(:,8) = [-1.0_dp, +1.0_dp]
     mesh%dr(:,9) = [0.0_dp, 0.0_dp]
-    mesh%NumExtDirs = 9
+    mesh%NumConns = 9
     mesh%NumCellFaces = 4
     allocate(mesh%CellToCell(9, mesh%NumAllCells))
     allocate(mesh%mIsCellFacePeriodic(4, mesh%NumAllCells))

@@ -150,13 +150,14 @@ Legend:
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
   - [ ] 🧸 BC kernels,
-  - [ ] 🪓 Refactor mesh generation in rectangle/cube,
-  - [ ] 🪓 Refactor mesh generation with image,
+  - [ ] 🪓 Reimplement mesh generation with support for the varous DqMp models.
   - [ ] 🪓 Generate nodes,
   - [ ] 🪓 Generate faces,
   - [ ] 🧸 Redesigned VTK output,
+  - [ ] 🪓 Move VTK output away from mesh.
 
 * Mesh ordering:
+  - [ ] 🦜🧻 Some C/C++ API for mesh loading,
   - [x] 🪓 Cache-friendly cell sorting: Hilbert Sort,
   - [x] 🪓 Cache-friendly cell sorting: METIS,
   - [ ] 🐞 Something looks broken..
@@ -175,6 +176,14 @@ Legend:
   - [ ] 🚬🚬 V-cycle GMG,
   - [ ] 🚬🚬 F-cycle GMG,
   - [ ] 🚬🚬 W-cycle GMG.
+
+* LBM:
+  - [ ] 🪓 Correct streaming operator.
+  - [ ] 🧸 SRT collision operator,
+  - [ ] 🪓 MRT collision operator,
+  - [ ] 🪓 Free boundary LBM boundary conditions,
+  - [ ] 🪓 Bounce-back LBM boundary conditions,
+  - [ ] 🦜 Color gradients, ...
 
 * New differential operators and boundary conditions:
   - [ ] 🧸 Variable weight Laplace operator with 4+ order approx.,
@@ -202,24 +211,36 @@ Legend:
 * Matrix extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
   - [ ] 🧸 CSC matrix class, fast CSR-CSC tranpositions,
-  - [x] 🧸 Extraction with prescribed coloring,
+  - [x] 🧸 CSR Extraction with prescribed coloring,
+  - [ ] 🧸 CSC Extraction with prescribed coloring,
   - [ ] 🦜 Block extraction with prescribed coloring,
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,
   - [ ] 🚬 Some more optimal column coloring algorthms..
 
 * Preconditioning:
+  - [ ] 🦜🧻 Refactor unified and C/C++ API for preconditioning,
+  - [ ] 🦜🧻 Add user-defined preconditioner in C/C++ API,
   - [x] 🧻 Refactor precondtioner from function pointer to class,
+  - [ ] 🦜 `Jacobi` preconditioner,
   - [x] 🪓 `LU_SGS` preconditioner,
-  - [ ] 🚬 `SPAI` preconditioner,
   - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
   - [ ] 🪓 MKL-based `ILUT_MKL` preconditioners,
   - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
+  - [ ] 🚬 Static `SPAI` preconditioner,
+  - [ ] 🚬🚬 Dynamic `SPAI` preconditioner,
+  - [ ] 🚬 'Left' `SPAI` preconditioner,
+  - [ ] 🦜 `AINV` preconditioner,
+  - [ ] 🦜 polynomial preconditioner.
+
+- Direct solvers:
+  - [ ] 🚬 Optimized partial solvers with MKL-comparable performance,
+  - [ ] 🪓 Dense direct solver,
+  - [ ] 🪓 Sparse-approximate direct solver,
   - [x] 🧸 Sequential triangular solvers,
   - [ ] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
-  - [ ] 🧻 Refactor unified and C/C++ API for preconditioning,
-  - [ ] 🧸 Add user-defined preconditioner in C/C++ API.
+  - [ ] 🦜 Built-in direct solver.
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,

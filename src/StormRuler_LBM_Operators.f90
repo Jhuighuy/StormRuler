@@ -59,7 +59,7 @@ contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! LBM streaming phase: 𝒈ᵢ(𝒓 + 𝜏⋅𝒗ᵢ,𝑡 + 𝜏) ← 𝒇ᵢ(𝒓,𝑡). 
-!! Shape of 𝒇, 𝒈 is [1, NumVars]×[1, NumConns]×[1, NumAllCells].
+!! Shape of 𝒇, 𝒈 is [1, NumVars]×[1, NumCellConns]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine LBM_Stream(mesh, gArr, fArr)
   class(tMesh), intent(in) :: mesh
@@ -71,8 +71,9 @@ subroutine LBM_Stream(mesh, gArr, fArr)
   
   call fArr%Get(f); call gArr%Get(g)
 
+#$if False
   block
-    integer(ip) :: cell, cellCell, conn
+    integer(ip) :: cell, cellCell, cellConn
     integer(ip) :: bcMark, bcMarkAddr, bcCell, bcCellFace
 
     if (first) then
@@ -101,32 +102,33 @@ contains
   subroutine LBM_Stream_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: conn
+    integer(ip) :: cellConn
     integer(ip) :: cellCell
 
     ! ----------------------
     ! For each connection do:
     ! ----------------------
-    do conn = 1, mesh%NumConns - 1
+    do cellConn = 1, mesh%NumCellConns - 1
 
       ! ----------------------
       ! Index of the adjacent cell.
       ! ----------------------
-      cellCell = mesh%CellToCell(Flip(conn), cell)
+      cellCell = mesh%CellToCell(Flip(cellConn), cell)
 
       ! ----------------------
       ! Stream the distribution function component:
       ! ----------------------
-      g(conn,cell) = f(conn,cellCell)
+      g(cellConn,cell) = f(cellConn,cellCell)
 
     end do
 
     ! ----------------------
     ! Stream the stationary distribution function component:
     ! ----------------------
-    g(conn,cell) = f(conn,cell)
+    g(cellConn,cell) = f(cellConn,cell)
 
   end subroutine LBM_Stream_Kernel
+#$end if
 end subroutine LBM_Stream
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -134,7 +136,7 @@ end subroutine LBM_Stream
 !! • Density 𝛒: 𝛒(𝒓,𝑡) ← 𝑚⋅∑𝒇ᵢ(𝒓,𝑡), 
 !! • Velocity 𝒗: 𝛒(𝒓,𝑡)𝒗(𝒓,𝑡) ← 𝑚⋅∑𝒗ᵢ⋅𝒇ᵢ(𝒓,𝑡).
 !!
-!! Shape of 𝒇 is [1, NumVars]×[1, NumConns]×[1, NumAllCells].
+!! Shape of 𝒇 is [1, NumVars]×[1, NumCellConns]×[1, NumAllCells].
 !! Shape of 𝑚 is [1, NumVars].
 !! Shape of 𝛒 is [1, NumAllCells].
 !! Shape of 𝒗 is [1, NumDims]×[1, NumAllCells].
@@ -155,21 +157,21 @@ contains
   subroutine LBM_Macroscopics_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: conn
+    integer(ip) :: cellConn
 
     rho(cell) = 0.0_dp; v(:,cell) = 0.0_dp
 
     ! ----------------------
     ! For each connection do:
     ! ----------------------
-    do conn = 1, mesh%NumConns
+    do cellConn = 1, mesh%NumCellConns
 
       ! ----------------------
       ! Compute macroscopic variables increment:
       ! ----------------------
-      associate(mf => f(conn,cell))
+      associate(mf => f(cellConn,cell))
         rho(cell) = rho(cell) + mf
-        v(:,cell) = v(:,cell) + mf*mesh%dr(:,conn)
+        v(:,cell) = v(:,cell) + mf*mesh%dr(:,cellConn)
       end associate
 
     end do
@@ -186,7 +188,7 @@ end subroutine LBM_Macroscopics
 !! Compute LBM collision integral, Bhatnagar Gross and Krook model: 
 !! 𝒇ᵢ ← 𝒇ᵢ + 𝜴ᵢ[𝒇(𝒓,𝑡)], where 𝜴ᵢ[𝒇] = [𝓕ᵢ(𝛒(𝒓,𝑡),𝒗(𝒓,𝑡)) - 𝒇ᵢ(𝒓,𝑡)]/𝜏.
 !!
-!! Shape of 𝒇 is [1, NumVars]×[1, NumConns]×[1, NumAllCells].
+!! Shape of 𝒇 is [1, NumVars]×[1, NumCellConns]×[1, NumAllCells].
 !! Shape of 𝛒 is [1, NumAllCells].
 !! Shape of 𝒗 is [1, NumDims]×[1, NumAllCells].
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -210,7 +212,7 @@ contains
   subroutine LBM_Collision_BGK_Kernel(cell)
     integer(ip), intent(in) :: cell
 
-    integer(ip) :: conn
+    integer(ip) :: cellConn
     real(dp) :: vSqr, fEq
 
     vSqr = dot_product(v(:,cell), v(:,cell))
@@ -218,21 +220,21 @@ contains
     ! ----------------------
     ! For each connection do:
     ! ----------------------
-    do conn = 1, mesh%NumConns
+    do cellConn = 1, mesh%NumCellConns
 
       ! ----------------------
       ! Compute equilibrium distribution: 
       ! 𝓕ᵢ ← 𝛒𝑤ᵢ⋅(1 + 3⋅𝒗ᵢ⋅𝒗 + 4.5⋅(𝒗ᵢ⋅𝒗)² - 1.5⋅(𝒗⋅𝒗)²).
       ! ----------------------
-      associate(d => dot_product(v(:,cell), mesh%dr(:,conn)))
-        fEq = rho(cell)*w(conn)*(1.0_dp + 3.0_dp*d + 4.5_dp*d**2 - 1.5_dp*vSqr)
+      associate(d => dot_product(v(:,cell), mesh%dr(:,cellConn)))
+        fEq = rho(cell)*w(cellConn)*(1.0_dp + 3.0_dp*d + 4.5_dp*d**2 - 1.5_dp*vSqr)
       end associate
 
       ! ----------------------
       ! Update collistion integral:
       ! 𝒇ᵢ ← 𝒇ᵢ + [𝓕ᵢ - 𝒇ᵢ]/𝜏.
       ! ----------------------
-      f(conn,cell) = f(conn,cell) + (fEq - f(conn,cell))/tau 
+      f(cellConn,cell) = f(cellConn,cell) + (fEq - f(cellConn,cell))/tau 
 
     end do
 

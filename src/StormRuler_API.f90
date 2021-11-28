@@ -29,7 +29,7 @@ module StormRuler_API
 use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: PrintBanner, PixelToInt
 
-use StormRuler_Mesh, only: tMesh
+use StormRuler_Mesh, only: tMesh, InitMeshFromImage
 use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
   & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve, Mesh_Ordering_METIS
 
@@ -235,36 +235,21 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToBCM(:)
 
-    allocate(gMesh)
-
-    call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    call Load_PPM('test/Domain-100.ppm', pixels)
 
     colorToBCM = &
       & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
       &   PixelToInt([  0, 255,   0]), PixelToInt([0, 0, 255]), &
       &   PixelToInt([255,   0, 255]) ]
-    call gMesh%InitFromImage2D(pixels, 0, colorToBCM, 2)
+
+    allocate(gMesh)
+    call InitMeshFromImage(gMesh, [Dx,Dy], 'D2Q4', pixels, 0, colorToBCM, 2, .true.)
     
-    gMesh%dl = [Dx, Dx, Dy, Dy, &
-      & sqrt(2.0_dp)*Dx, sqrt(2.0_dp)*Dx, &
-      & sqrt(2.0_dp)*Dy, sqrt(2.0_dp)*Dy, 0.0_dp]
-
-    allocate(gMesh%dr(2, 9))
-    gMesh%dr(:,1) = [+1.0_dp,  0.0_dp]
-    gMesh%dr(:,2) = [-1.0_dp,  0.0_dp]
-    gMesh%dr(:,3) = [ 0.0_dp, +1.0_dp]
-    gMesh%dr(:,4) = [ 0.0_dp, -1.0_dp]
-    gMesh%dr(:,5) = [+1.0_dp, +1.0_dp]
-    gMesh%dr(:,6) = [-1.0_dp, -1.0_dp]
-    gMesh%dr(:,7) = [+1.0_dp, -1.0_dp]
-    gMesh%dr(:,8) = [-1.0_dp, +1.0_dp]
-    gMesh%dr(:,9) = [ 0.0_dp,  0.0_dp]
-
-    call gMesh%GenerateExtraConnectivity()
-
     call gMesh%PrintTo_Neato('test/c2c.dot')
     
     call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
+
+    error stop 228
 
   end block
 #$endif
@@ -737,32 +722,32 @@ end subroutine stormNonlinSolve
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs(meshPtr, uPtr, BCmask, alpha, beta, gamma) &
+subroutine stormApplyBCs(meshPtr, uPtr, markMask, alpha, beta, gamma) &
     & bind(C, name='stormApplyBCs')
   type(c_ptr), intent(in), value :: meshPtr
-  integer(c_int), intent(in), value :: BCmask
+  integer(c_int), intent(in), value :: markMask
   type(c_ptr), intent(in), value :: uPtr
   real(c_double), intent(in), value :: alpha, beta, gamma
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: iBC, firstBC, lastBC
+  integer(ip) :: bcMark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
 
-  if (BCmask /= 0) then
-    firstBC = BCmask; lastBC = BCmask
+  if (markMask /= 0) then
+    firstMark = markMask; lastMark = markMask
   else
-    firstBC = 1; lastBC = mesh%NumBCMs
+    firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do iBC = firstBC, lastBC
+  do bcMark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs(mesh, iBC, u, alpha, beta, gamma)
+      call FDM_ApplyBCs(mesh, bcMark, u, alpha, beta, gamma)
     end block
   end do
 
@@ -770,31 +755,31 @@ end subroutine stormApplyBCs
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, BCmask) &
+subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, markMask) &
     & bind(C, name='stormApplyBCs_SlipWall')
   type(c_ptr), intent(in), value :: meshPtr
-  integer(c_int), intent(in), value :: BCmask
+  integer(c_int), intent(in), value :: markMask
   type(c_ptr), intent(in), value :: uPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: iBC, firstBC, lastBC
+  integer(ip) :: bcMark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
 
-  if (BCmask /= 0) then
-    firstBC = BCmask; lastBC = BCmask
+  if (markMask /= 0) then
+    firstMark = markMask; lastMark = markMask
   else
-    firstBC = 1; lastBC = mesh%NumBCMs
+    firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do iBC = firstBC, lastBC
+  do bcMark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs_SlipWall(mesh, iBC, u)
+      call FDM_ApplyBCs_SlipWall(mesh, bcMark, u)
     end block
   end do
 
@@ -802,31 +787,31 @@ end subroutine stormApplyBCs_SlipWall
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, BCmask) &
+subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask) &
     & bind(C, name='stormApplyBCs_InOutLet')
   type(c_ptr), intent(in), value :: meshPtr
-  integer(c_int), intent(in), value :: BCmask
+  integer(c_int), intent(in), value :: markMask
   type(c_ptr), intent(in), value :: uPtr
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: iBC, firstBC, lastBC
+  integer(ip) :: bcMark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
 
-  if (BCmask /= 0) then
-    firstBC = BCmask; lastBC = BCmask
+  if (markMask /= 0) then
+    firstMark = markMask; lastMark = markMask
   else
-    firstBC = 1; lastBC = mesh%NumBCMs
+    firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do iBC = firstBC, lastBC
+  do bcMark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs_InOutLet(mesh, iBC, u)
+      call FDM_ApplyBCs_InOutLet(mesh, bcMark, u)
     end block
   end do
 

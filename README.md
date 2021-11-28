@@ -150,7 +150,7 @@ Legend:
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
   - [ ] 🧸 BC kernels,
-  - [ ] 🪓 Reimplement mesh generation with support for the varous DqMp models.
+  - [x] 🪓 Reimplement mesh generation with support for the varous DqQp models.
   - [ ] 🪓 Generate nodes,
   - [ ] 🪓 Generate faces,
   - [ ] 🧸 Redesigned VTK output,

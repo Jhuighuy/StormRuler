@@ -43,40 +43,40 @@ implicit none
 
 contains
 
-integer(ip) pure function iPermAt(iCell, iPerm)
-  integer(ip), intent(in) :: iCell
-  integer(ip), intent(in), optional :: iPerm(:)
+integer(ip) pure function ipermAt(cell, iperm)
+  integer(ip), intent(in) :: cell
+  integer(ip), intent(in), optional :: iperm(:)
 
-  if (present(iPerm)) then
-    iPermAt = iPerm(iCell)
+  if (present(iperm)) then
+    ipermAt = iperm(cell)
   else
-    iPermAt = iCell
+    ipermAt = cell
   end if
 
-end function iPermAt
+end function ipermAt
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute mesh ordering quality, lower is better.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-real(dp) function Mesh_Ordering_Quality(mesh, iPerm) result(quality)
+real(dp) function Mesh_Ordering_Quality(mesh, iperm) result(quality)
   class(tMesh), intent(inout) :: mesh
-  integer(ip), intent(in), optional :: iPerm(:)
+  integer(ip), intent(in), optional :: iperm(:)
 
   quality = mesh%RunCellKernel_Sum(Quality_Kernel)
 
 contains
-  real(dp) function Quality_Kernel(iCell) result(q)
-    integer(ip), intent(in) :: iCell
+  real(dp) function Quality_Kernel(cell) result(q)
+    integer(ip), intent(in) :: cell
 
-    integer(ip) :: iCellFace
+    integer(ip) :: cellFace
 
     q = 0.0_dp
 
-    do iCellFace = 1, mesh%NumCellFaces
-      associate(jCell => mesh%CellToCell(iCellFace, iCell))
+    do cellFace = 1, mesh%NumCellFaces
+      associate(cellCell => mesh%CellToCell(cellFace, cell))
 
-        if (jCell <= mesh%NumCells) then
-          q = q + log(abs(iPermAt(iCell, iPerm) - iPermAt(jCell, iPerm)) + 0.0_dp)
+        if (cellCell <= mesh%NumCells) then
+          q = q + log(abs(ipermAt(cell, iperm) - ipermAt(cellCell, iperm)) + 0.0_dp)
         end if
 
       end associate
@@ -88,20 +88,20 @@ end function Mesh_Ordering_Quality
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Dump mesh ordering.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh_Ordering_Dump(mesh, file, iPerm)
+subroutine Mesh_Ordering_Dump(mesh, file, iperm)
   class(tMesh), intent(inout) :: mesh
   character(len=*), intent(in) :: file
-  integer(ip), intent(in), optional :: iPerm(:)
+  integer(ip), intent(in), optional :: iperm(:)
 
   integer(ip) :: unit
-  integer(ip) :: iCell
+  integer(ip) :: cell
 
   open(newunit=unit, file=file, status='replace')
 
-  do iCell = 1, mesh%NumCells
+  do cell = 1, mesh%NumCells
     write(unit, *) &
-      & I2S(mesh%CellMDIndex(1,iPermAt(iCell, iPerm)))//' '// &
-      & I2S(mesh%CellMDIndex(2,iPermAt(iCell, iPerm)))
+      & I2S(mesh%CellIndex(1,ipermAt(cell, iperm)))//' '// &
+      & I2S(mesh%CellIndex(2,ipermAt(cell, iperm)))
   end do
 
   close(unit)
@@ -114,15 +114,15 @@ end subroutine Mesh_Ordering_Dump
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute an identity ordering.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh_Ordering_Identity(mesh, iPerm)
+subroutine Mesh_Ordering_Identity(mesh, iperm)
   class(tMesh), intent(inout) :: mesh
-  integer(ip), intent(inout) :: iPerm(:)
+  integer(ip), intent(inout) :: iperm(:)
 
-  integer(ip) :: iCell
+  integer(ip) :: cell
 
-  !$omp parallel do default(none) shared(mesh, iPerm)
-  do iCell = 1, mesh%NumCells
-    iPerm(iCell) = iCell
+  !$omp parallel do default(none) shared(mesh, iperm)
+  do cell = 1, mesh%NumCells
+    iperm(cell) = cell
   end do
   !$omp end parallel do
 
@@ -135,20 +135,20 @@ end subroutine Mesh_Ordering_Identity
 !! [1] MFEM source code: 
 !!     https://github.com/mfem/mfem/blob/master/mesh/mesh.cpp#L1807
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh_Ordering_HilbertCurve(mesh, iPerm)
+subroutine Mesh_Ordering_HilbertCurve(mesh, iperm)
   class(tMesh), intent(inout) :: mesh
-  integer(ip), intent(inout) :: iPerm(:)
+  integer(ip), intent(inout) :: iperm(:)
 
-  integer(ip), allocatable :: iPermTemp(:)
+  integer(ip), allocatable :: ipermTemp(:)
   logical, allocatable :: matchTemp(:)
 
-  allocate(iPermTemp, mold=iPerm)
-  allocate(matchTemp, mold=(iPerm == iPerm))
+  allocate(ipermTemp, mold=iperm)
+  allocate(matchTemp, mold=(iperm == iperm))
 
   ! ----------------------
   ! Generate identity inverse permutation.
   ! ----------------------
-  call Mesh_Ordering_Identity(mesh, iPerm)
+  call Mesh_Ordering_Identity(mesh, iperm)
 
   ! ----------------------
   ! Generate the ordering!
@@ -160,78 +160,78 @@ subroutine Mesh_Ordering_HilbertCurve(mesh, iPerm)
   end if
 
 contains
-  recursive pure logical function Condition(iCell, centerCoords, dim, sign)
-    integer(ip), intent(in) :: iCell
+  recursive pure logical function Condition(cell, centerCoords, dim, sign)
+    integer(ip), intent(in) :: cell
     real(dp), intent(in) :: centerCoords(:)
     integer(ip), intent(in) :: dim, sign
 
-    Condition = sign*(mesh%CellMDIndex(dim,iPerm(iCell)) - centerCoords(dim)) < 0
+    Condition = sign*(mesh%CellIndex(dim,iperm(cell)) - centerCoords(dim)) < 0
 
   end function Condition
-  recursive integer(ip) function Partition(iCell, iCellEnd, centerCoords, dim, sign)
-    integer(ip), intent(in) :: iCell, iCellEnd
+  recursive integer(ip) function Partition(cell, cellEnd, centerCoords, dim, sign)
+    integer(ip), intent(in) :: cell, cellEnd
     real(dp), intent(in) :: centerCoords(:)
     integer(ip), intent(in) :: dim, sign
 
-    integer(ip) :: jCell, kCell
+    integer(ip) :: cellCell, cellCellCell
 
     ! ----------------------
     ! Precompute the condition.
     ! ----------------------
-    do jCell = iCell, iCellEnd - 1
-      matchTemp(jCell) = Condition(jCell, centerCoords, dim, sign)
+    do cellCell = cell, cellEnd - 1
+      matchTemp(cellCell) = Condition(cellCell, centerCoords, dim, sign)
     end do
 
-    kCell = iCell
+    cellCellCell = cell
 
     ! ----------------------
     ! Copy the matching cells first.
     ! ----------------------
-    do jCell = iCell, iCellEnd - 1
-      if (matchTemp(jCell)) then
-        iPermTemp(kCell) = iPerm(jCell); kCell = kCell + 1
+    do cellCell = cell, cellEnd - 1
+      if (matchTemp(cellCell)) then
+        ipermTemp(cellCellCell) = iperm(cellCell); cellCellCell = cellCellCell + 1
       end if
     end do
 
-    Partition = kCell
+    Partition = cellCellCell
 
     ! ----------------------
     ! Copy the non-matching cells next.
     ! ----------------------
-    do jCell = iCell, iCellEnd - 1
-      if (.not.matchTemp(jCell)) then
-        iPermTemp(kCell) = iPerm(jCell); kCell = kCell + 1
+    do cellCell = cell, cellEnd - 1
+      if (.not.matchTemp(cellCell)) then
+        ipermTemp(cellCellCell) = iperm(cellCell); cellCellCell = cellCellCell + 1
       end if
     end do
 
-    iPerm(iCell:(iCellEnd - 1)) = iPermTemp(iCell:(iCellEnd - 1))
+    iperm(cell:(cellEnd - 1)) = ipermTemp(cell:(cellEnd - 1))
 
   end function Partition
-  recursive subroutine HilbertSort(iCell, iCellEnd, dim1, sign1, sign2, sign3)
-    integer(ip), intent(in) :: iCell, iCellEnd
+  recursive subroutine HilbertSort(cell, cellEnd, dim1, sign1, sign2, sign3)
+    integer(ip), intent(in) :: cell, cellEnd
     integer(ip), intent(in) :: dim1, sign1, sign2
     integer(ip), intent(in), optional :: sign3
 
     real(dp) :: centerCoords(mesh%NumDims)
     integer(ip) :: lowerCoords(mesh%NumDims), upperCoords(mesh%NumDims)
-    integer(ip) :: iCellPiv0
-    integer(ip) :: iCellPiv1, iCellPiv2, iCellPiv3, iCellPiv4
-    integer(ip) :: iCellPiv5, iCellPiv6, iCellPiv7, iCellPiv8
+    integer(ip) :: cellPiv0
+    integer(ip) :: cellPiv1, cellPiv2, cellPiv3, cellPiv4
+    integer(ip) :: cellPiv5, cellPiv6, cellPiv7, cellPiv8
     integer(ip) :: dim2, dim3
 
     ! ----------------------
     ! Check if recursion terminates.
     ! ----------------------
-    if (iCell >= iCellEnd - 1) return
+    if (cell >= cellEnd - 1) return
 
     ! ----------------------
     ! Compute the bounding coordinates.
     ! ----------------------
-    lowerCoords = mesh%CellMDIndex(:,iPerm(iCell))
-    upperCoords = mesh%CellMDIndex(:,iPerm(iCell))
-    do iCellPiv1 = iCell + 1, iCellEnd - 1
-      lowerCoords = min(lowerCoords, mesh%CellMDIndex(:,iPerm(iCellPiv1)))
-      upperCoords = max(upperCoords, mesh%CellMDIndex(:,iPerm(iCellPiv1)))
+    lowerCoords = mesh%CellIndex(:,iperm(cell))
+    upperCoords = mesh%CellIndex(:,iperm(cell))
+    do cellPiv1 = cell + 1, cellEnd - 1
+      lowerCoords = min(lowerCoords, mesh%CellIndex(:,iperm(cellPiv1)))
+      upperCoords = max(upperCoords, mesh%CellIndex(:,iperm(cellPiv1)))
     end do
     centerCoords = 0.5_dp*(lowerCoords + upperCoords)
 
@@ -249,74 +249,74 @@ contains
     ! ----------------------
     if (mesh%NumDims == 2) then
 
-      iCellPiv0 = iCell; iCellPiv4 = iCellEnd
+      cellPiv0 = cell; cellPiv4 = cellEnd
       dim2 = mod(dim1, 2) + 1
 
       ! ----------------------
       ! Partition block into the quadrants.
       ! ----------------------
-      iCellPiv2 = Partition(iCellPiv0, iCellPiv4, centerCoords, dim1, +sign1)
-      iCellPiv1 = Partition(iCellPiv0, iCellPiv2, centerCoords, dim2, +sign2)
-      iCellPiv3 = Partition(iCellPiv2, iCellPiv4, centerCoords, dim2, -sign2)
+      cellPiv2 = Partition(cellPiv0, cellPiv4, centerCoords, dim1, +sign1)
+      cellPiv1 = Partition(cellPiv0, cellPiv2, centerCoords, dim2, +sign2)
+      cellPiv3 = Partition(cellPiv2, cellPiv4, centerCoords, dim2, -sign2)
 
       ! ----------------------
       ! Recursively sort the quadrants.
       ! ----------------------
-      if (iCellPiv1 /= iCellPiv4) then
-        call HilbertSort(iCellPiv0, iCellPiv1, dim2, +sign2, +sign1)
+      if (cellPiv1 /= cellPiv4) then
+        call HilbertSort(cellPiv0, cellPiv1, dim2, +sign2, +sign1)
       end if
-      if (iCellPiv1 /= iCellPiv0.or.iCellPiv2 /= iCellPiv4) then
-        call HilbertSort(iCellPiv1, iCellPiv2, dim1, +sign1, +sign2)
+      if (cellPiv1 /= cellPiv0.or.cellPiv2 /= cellPiv4) then
+        call HilbertSort(cellPiv1, cellPiv2, dim1, +sign1, +sign2)
       end if
-      if (iCellPiv2 /= iCellPiv0.or.iCellPiv3 /= iCellPiv4) then
-        call HilbertSort(iCellPiv2, iCellPiv3, dim1, +sign1, +sign2)
+      if (cellPiv2 /= cellPiv0.or.cellPiv3 /= cellPiv4) then
+        call HilbertSort(cellPiv2, cellPiv3, dim1, +sign1, +sign2)
       end if
-      if (iCellPiv3 /= iCellPiv0) then
-        call HilbertSort(iCellPiv3, iCellPiv4, dim2, -sign2, -sign1)
+      if (cellPiv3 /= cellPiv0) then
+        call HilbertSort(cellPiv3, cellPiv4, dim2, -sign2, -sign1)
       end if
 
     else if (mesh%NumDims == 3) then
 
-      iCellPiv0 = iCell; iCellPiv8 = iCellEnd
+      cellPiv0 = cell; cellPiv8 = cellEnd
       dim2 = mod(dim1, 3) + 1; dim3 = mod(dim1 + 1, 3) + 1
 
       ! ----------------------
       ! Partition block into the octants.
       ! ----------------------
-      iCellPiv4 = Partition(iCellPiv0, iCellPiv8, centerCoords, dim1, +sign1)
-      iCellPiv2 = Partition(iCellPiv0, iCellPiv4, centerCoords, dim2, +sign2)
-      iCellPiv6 = Partition(iCellPiv4, iCellPiv8, centerCoords, dim2, -sign2)
-      iCellPiv1 = Partition(iCellPiv0, iCellPiv2, centerCoords, dim3, +sign3)
-      iCellPiv3 = Partition(iCellPiv2, iCellPiv4, centerCoords, dim3, -sign3)
-      iCellPiv5 = Partition(iCellPiv4, iCellPiv6, centerCoords, dim3, +sign3)
-      iCellPiv7 = Partition(iCellPiv6, iCellPiv8, centerCoords, dim3, -sign3)
+      cellPiv4 = Partition(cellPiv0, cellPiv8, centerCoords, dim1, +sign1)
+      cellPiv2 = Partition(cellPiv0, cellPiv4, centerCoords, dim2, +sign2)
+      cellPiv6 = Partition(cellPiv4, cellPiv8, centerCoords, dim2, -sign2)
+      cellPiv1 = Partition(cellPiv0, cellPiv2, centerCoords, dim3, +sign3)
+      cellPiv3 = Partition(cellPiv2, cellPiv4, centerCoords, dim3, -sign3)
+      cellPiv5 = Partition(cellPiv4, cellPiv6, centerCoords, dim3, +sign3)
+      cellPiv7 = Partition(cellPiv6, cellPiv8, centerCoords, dim3, -sign3)
 
       ! ----------------------
       ! Recursively sort the octants.
       ! ----------------------
-      if (iCellPiv1 /= iCellPiv8) then
-        call HilbertSort(iCellPiv0, iCellPiv1, dim3, +sign3, +sign1, +sign2)
+      if (cellPiv1 /= cellPiv8) then
+        call HilbertSort(cellPiv0, cellPiv1, dim3, +sign3, +sign1, +sign2)
       end if
-      if (iCellPiv1 /= iCellPiv0.or.iCellPiv2 /= iCellPiv8) then
-        call HilbertSort(iCellPiv1, iCellPiv2, dim2, +sign2, +sign3, +sign1)
+      if (cellPiv1 /= cellPiv0.or.cellPiv2 /= cellPiv8) then
+        call HilbertSort(cellPiv1, cellPiv2, dim2, +sign2, +sign3, +sign1)
       end if
-      if (iCellPiv2 /= iCellPiv0.or.iCellPiv3 /= iCellPiv8) then
-        call HilbertSort(iCellPiv2, iCellPiv3, dim2, +sign2, +sign3, +sign1)
+      if (cellPiv2 /= cellPiv0.or.cellPiv3 /= cellPiv8) then
+        call HilbertSort(cellPiv2, cellPiv3, dim2, +sign2, +sign3, +sign1)
       end if
-      if (iCellPiv3 /= iCellPiv0.or.iCellPiv4 /= iCellPiv8) then
-        call HilbertSort(iCellPiv3, iCellPiv4, dim1, +sign1, -sign2, -sign3)
+      if (cellPiv3 /= cellPiv0.or.cellPiv4 /= cellPiv8) then
+        call HilbertSort(cellPiv3, cellPiv4, dim1, +sign1, -sign2, -sign3)
       end if
-      if (iCellPiv4 /= iCellPiv0.or.iCellPiv5 /= iCellPiv8) then
-        call HilbertSort(iCellPiv4, iCellPiv5, dim1, +sign1, -sign2, -sign3)
+      if (cellPiv4 /= cellPiv0.or.cellPiv5 /= cellPiv8) then
+        call HilbertSort(cellPiv4, cellPiv5, dim1, +sign1, -sign2, -sign3)
       end if
-      if (iCellPiv5 /= iCellPiv0.or.iCellPiv6 /= iCellPiv8) then
-        call HilbertSort(iCellPiv5, iCellPiv6, dim2, -sign2, +sign3, -sign1)
+      if (cellPiv5 /= cellPiv0.or.cellPiv6 /= cellPiv8) then
+        call HilbertSort(cellPiv5, cellPiv6, dim2, -sign2, +sign3, -sign1)
       end if
-      if (iCellPiv6 /= iCellPiv0.or.iCellPiv7 /= iCellPiv8) then
-        call HilbertSort(iCellPiv6, iCellPiv7, dim2, -sign2, +sign3, -sign1)
+      if (cellPiv6 /= cellPiv0.or.cellPiv7 /= cellPiv8) then
+        call HilbertSort(cellPiv6, cellPiv7, dim2, -sign2, +sign3, -sign1)
       end if
-      if (iCellPiv7 /= iCellPiv0) then
-        call HilbertSort(iCellPiv7, iCellPiv8, dim3, -sign3, -sign1, +sign2)
+      if (cellPiv7 /= cellPiv0) then
+        call HilbertSort(cellPiv7, cellPiv8, dim3, -sign3, -sign1, +sign2)
       end if
 
     end if
@@ -328,42 +328,42 @@ end subroutine Mesh_Ordering_HilbertCurve
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Compute a 2D/3D mesh ordering with METIS.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mesh_Ordering_METIS(mesh, iPerm)
+subroutine Mesh_Ordering_METIS(mesh, iperm)
   class(tMesh), intent(inout) :: mesh
-  integer(ip), intent(inout) :: iPerm(:)
+  integer(ip), intent(inout) :: iperm(:)
 
   interface
     function cMETIS_NodeND(nvtxs, xadj, adjncy, &
-        & vwgt, options, perm, iPerm) bind(C, name='METIS_NodeND')
+        & vwgt, options, perm, iperm) bind(C, name='METIS_NodeND')
       import :: c_int, c_int32_t
       integer(c_int32_t), intent(in) :: nvtxs, xadj(*), adjncy(*)
       integer(c_int32_t), intent(in), optional :: vwgt(*), options(*)
-      integer(c_int32_t), intent(inout) :: perm(*), iPerm(*)
+      integer(c_int32_t), intent(inout) :: perm(*), iperm(*)
       integer(c_int) :: cMETIS_NodeND
     end function cMETIS_NodeND
   end interface
 
   integer(c_int) :: ierror
-  integer(ip) :: iCell, iCellFace
+  integer(ip) :: cell, cellFace
   integer(ip), allocatable :: perm(:), xadj(:), adjncy(:)
 
-  allocate(perm, mold=iPerm)
+  allocate(perm, mold=iperm)
 
   xadj = [0]
-  do iCell = 1, mesh%NumCells
-    do iCellFace = 1, mesh%NumCellFaces
-      associate(jCell => mesh%CellToCell(iCellFace, iCell))
-        if (jCell <= mesh%NumCells) adjncy = [adjncy, jCell - 1]
+  do cell = 1, mesh%NumCells
+    do cellFace = 1, mesh%NumCellFaces
+      associate(cellCell => mesh%CellToCell(cellFace, cell))
+        if (cellCell <= mesh%NumCells) adjncy = [adjncy, cellCell - 1]
       end associate
     end do
     xadj = [xadj, size(adjncy)]
   end do 
 
   print *, 'METIS'
-  ierror = cMETIS_NodeND(mesh%NumCells, xadj, adjncy, perm=perm, iPerm=iPerm)
+  ierror = cMETIS_NodeND(mesh%NumCells, xadj, adjncy, perm=perm, iperm=iperm)
 
   perm(:) = perm(:) + 1
-  iPerm(:) = iPerm(:) + 1
+  iperm(:) = iperm(:) + 1
   print *, 'ierror=', ierror
 
 end subroutine Mesh_Ordering_METIS

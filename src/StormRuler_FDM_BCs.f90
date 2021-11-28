@@ -51,91 +51,67 @@ contains
 !! boundary conditions: 𝛼𝒖 + 𝛽∂𝒖/∂𝑛 = 𝛾 + 𝑓(𝑟).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 #$do rank = 0, NUM_RANKS-3
-subroutine FDM_ApplyBCs$rank(mesh, iBCM, u, alpha, beta, gamma)!, f)
+subroutine FDM_ApplyBCs$rank(mesh, mark, u, alpha, beta, gamma)!, f)
   class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iBCM
+  integer(ip), intent(in) :: mark
   real(dp), intent(in) :: alpha, beta, gamma
   real(dp), intent(inout) :: u(@:,:)
   !procedure(tSMapFuncR$rank), optional :: f
   
-  integer(ip) :: iBCMPtr
-  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
+  integer(ip) :: cell, bndCell, bndCellConn, gCell
 
-  associate(bcmFirst => mesh%BCMs(iBCM), &
-    &        bcmLast => mesh%BCMs(iBCM+1)-1, &
-    &      bcmToCell => mesh%BCMToCell, &
-    &  bcmToCellFace => mesh%BCMToCellFace, &
-    &     cellToCell => mesh%CellToCell, &
-    &    cellMDIndex => mesh%CellMDIndex, &
-    &        mLambda => (0.5_dp*alpha - beta/mesh%dl), &
-    &     pLambdaInv => 1.0_dp/(0.5_dp*alpha + beta/mesh%dl))
+  associate(mLambda => (0.5_dp*alpha - beta/mesh%dl), &
+    &    pLambdaInv => 1.0_dp/(0.5_dp*alpha + beta/mesh%dl))
 
-    ! ----------------------
-    ! For each BC cell with the specific mark do:
-    ! ----------------------
-    !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
-    do iBCMPtr = bcmFirst, bcmLast; block
-      iBCCell = bcmToCell(iBCMPtr)
-      iBCCellFace = bcmToCellFace(iBCMPtr)
-      iCell = cellToCell(Flip(iBCCellFace), iBCCell)
-
-      ! ----------------------
-      ! Compute the FDM-approximate (second order) boundary conditions.
-      ! ----------------------
-      !if (present(f)) then
-      !  associate(x => 0.5_dp*( cellMDIndex(:,iCell) + &
-      !    &                   cellMDIndex(:,iBCCell) ))
-      !    u(@:,iBCCell) = pLambdaInv(iBCCellFace) * &
-      !      & (gamma + f(x, u(@:,iCell)) - mLambda(iBCCellFace)*u(@:,iCell))
-      !  end associate
-      !else
-        u(@:,iBCCell) = pLambdaInv(iBCCellFace) * &
-          & (gamma - mLambda(iBCCellFace)*u(@:,iCell))
-      !end if
-
+    !$omp parallel do private(cell, bndCell, bndCellConn, gCell)
+    do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
+      bndCellConn = mesh%BndCellConns(bndCell)
+      cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
+  
+      u(@:,bndCell) = pLambdaInv(bndCellConn) * &
+        & (gamma - mLambda(bndCellConn)*u(@:,cell))
+  
       ! ----------------------
       ! Propagate the boundary condition towards the ghost cells.
       ! ----------------------
-      iGCell = cellToCell(iBCCellFace, iBCCell)
-      do while(iGCell /= 0)
-        u(@:,iGCell) = u(@:,iBCCell)
-        iGCell = cellToCell(iBCCellFace, iGCell)
+      gCell = mesh%CellToCell(bndCellConn, bndCell)
+      do while(gCell /= 0)
+        u(@:,gCell) = u(@:,bndCell)
+        gCell = mesh%CellToCell(bndCellConn, gCell)
       end do
-    end block; end do
+  
+    end do
     !$omp end parallel do
 
   end associate
 end subroutine FDM_ApplyBCs$rank
 #$end do
 
-subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
+subroutine FDM_ApplyBCs_SlipWall(mesh, mark, v)
   class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iBCM
+  integer(ip), intent(in) :: mark
   real(dp), intent(inout) :: v(:,:)
 
   integer(ip) :: dim
-  integer(ip) :: iBCMPtr
-  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
+  integer(ip) :: cell, bndCell, bndCellConn, gCell
 
-  !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
-  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+  !$omp parallel do private(cell, bndCell, bndCellConn, gCell)
+  do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
+    bndCellConn = mesh%BndCellConns(bndCell)
+    cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
 
-    iBCCell = mesh%BCMToCell(iBCMPtr)
-    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
-    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+    dim = (bndCellConn - 1)/2 + 1
 
-    dim = (iBCCellFace - 1)/2 + 1
-
-    v(:,iBCCell) = v(:,iCell)  
-    v(dim,iBCCell) = -v(dim,iCell)  
+    v(:,bndCell) = v(:,cell)  
+    v(dim,bndCell) = -v(dim,cell)  
 
     ! ----------------------
     ! Propagate the boundary condition towards the ghost cells.
     ! ----------------------
-    iGCell = mesh%CellToCell(iBCCellFace, iBCCell)
-    do while(iGCell /= 0)
-      v(:,iGCell) = v(:,iBCCell)
-      iGCell = mesh%CellToCell(iBCCellFace, iGCell)
+    gCell = mesh%CellToCell(bndCellConn, bndCell)
+    do while(gCell /= 0)
+      v(:,gCell) = v(:,bndCell)
+      gCell = mesh%CellToCell(bndCellConn, gCell)
     end do
 
   end do
@@ -143,56 +119,51 @@ subroutine FDM_ApplyBCs_SlipWall(mesh, iBCM, v)
 
 end subroutine FDM_ApplyBCs_SlipWall
 
-subroutine FDM_ApplyBCs_InOutLet(mesh, iBCM, v)
+subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v)
   class(tMesh), intent(in) :: mesh
-  integer(ip), intent(in) :: iBCM
+  integer(ip), intent(in) :: mark
   real(dp), intent(inout) :: v(:,:)
 
   integer(ip) :: dim
-  integer(ip) :: iBCMPtr
-  integer(ip) :: iCell, iBCCell, iBCCellFace, iGCell
+  integer(ip) :: cell, bndCell, bndCellConn, gCell
 
   real(dp) :: R, RR, RRR
 
   R = 0.0_dp
 
-  !$omp parallel do  private(iCell, iBCCell, iBCCellFace, iGCell) reduction(max: R)
-  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+  !$omp parallel do  private(cell, bndCell, bndCellConn, gCell) reduction(max: R)
+  do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
+    bndCellConn = mesh%BndCellConns(bndCell)
+    cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
 
-    iBCCell = mesh%BCMToCell(iBCMPtr)
-    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
-    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+    dim = (bndCellConn - 1)/2 + 1
 
-    dim = (iBCCellFace - 1)/2 + 1
-
-    R = max(R, mesh%CellCenter(1, iCell))
+    R = max(R, mesh%CellCenter(1, cell))
 
   end do
   !$omp end parallel do
 
   R = R + 0.5_dp*mesh%dl(1)
 
-  !$omp parallel do private(iCell, iBCCell, iBCCellFace, iGCell)
-  do iBCMPtr = mesh%BCMs(iBCM), mesh%BCMs(iBCM+1)-1
+  !$omp parallel do private(cell, bndCell, bndCellConn, gCell)
+  do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
+    bndCellConn = mesh%BndCellConns(bndCell)
+    cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
 
-    iBCCell = mesh%BCMToCell(iBCMPtr)
-    iBCCellFace = mesh%BCMToCellFace(iBCMPtr)
-    iCell = mesh%CellToCell(Flip(iBCCellFace), iBCCell)
+    RR = mesh%CellCenter(1, cell)
 
-    RR = mesh%CellCenter(1, iCell)
+    RRR = merge(0.1_dp, 10.0_dp, mark == 2)
 
-    RRR = merge(0.1_dp, 10.0_dp, iBCM == 2)
-
-    v(:,iBCCell) = 0.0_dp
-    v(2,iBCCell) = -RRR*( R**2 - RR**2 )
+    v(:,bndCell) = 0.0_dp
+    v(2,bndCell) = -RRR*( R**2 - RR**2 )
 
     ! ----------------------
     ! Propagate the boundary condition towards the ghost cells.
     ! ----------------------
-    iGCell = mesh%CellToCell(iBCCellFace, iBCCell)
-    do while(iGCell /= 0)
-      v(:,iGCell) = v(:,iBCCell)
-      iGCell = mesh%CellToCell(iBCCellFace, iGCell)
+    gCell = mesh%CellToCell(bndCellConn, bndCell)
+    do while(gCell /= 0)
+      v(:,gCell) = v(:,bndCell)
+      gCell = mesh%CellToCell(bndCellConn, gCell)
     end do
 
   end do

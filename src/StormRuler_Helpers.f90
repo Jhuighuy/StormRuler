@@ -34,7 +34,17 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-implicit none  
+implicit none
+
+interface I2S
+  module procedure I2S
+  module procedure IArr2S
+end interface I2S
+
+interface R2S
+  module procedure R2S
+  module procedure RArr2S
+end interface R2S
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -49,8 +59,8 @@ subroutine PrintBanner
   print *, ''
   print *, '//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\\'
   print *, '|      _____ __                       ____        __            |'
-  print *, '|     / ___// /_____  _________ ___  / __ \__  __/ ___  _____   |'
-  print *, '|     \__ \/ __/ __ \/ ___/ __ `__ \/ /_/ / / / / / _ \/ ___/   |'
+  print *, '|     / ___// /_____   ____ ___ ___  / __ \__  __/ ___  _____   |'
+  print *, '|     \__ \/ __/`__ \/ ___/`__ `__ \/ /_/ / / / / / _ \/ ___/   |'
   print *, '|    ___/ / /_/ /_/ / /  / / / / / / _, _/ /_/ / /  __/ /       |'
   print *, '|   /____/\__/\____/_/  /_/ /_/ /_/_/ |_|\__,_/_/\___/_/        |'
   print *, '|                                                               |'
@@ -69,6 +79,16 @@ subroutine ErrorStop(message)
   error stop 1
 
 end subroutine ErrorStop
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Print a warning.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine PrintWarning(warning)
+  character(len=*), intent(in) :: warning
+
+  write(error_unit,*) '[WARN] ', warning
+
+end subroutine PrintWarning
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -183,6 +203,21 @@ subroutine BubbleSort(array)
 
 end subroutine BubbleSort
 
+!! ----------------------------------------------------------------- !!
+!! Insert value into the allocatable array.
+!! ----------------------------------------------------------------- !!
+subroutine InsertTo(array, value)
+  integer(ip), intent(inout), allocatable :: array(:)
+  integer(ip), intent(in) :: value
+
+  if (allocated(array)) then
+    array = [array, value]
+  else
+    array = [value]
+  end if
+
+end subroutine InsertTo
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -260,6 +295,22 @@ pure function I2S(value)
 end function I2S
 
 !! ----------------------------------------------------------------- !!
+!! Convert an integer array to string.
+!! ----------------------------------------------------------------- !!
+pure function IArr2S(array)
+  integer(ip), intent(in) :: array(:)
+  character(len=:), allocatable :: IArr2S
+
+  integer(ip) :: index
+
+  IArr2S = I2S(array(1))
+  do index = 2, size(array)
+    IArr2S = IArr2S//', '//I2S(array(index))
+  end do
+
+end function IArr2S
+
+!! ----------------------------------------------------------------- !!
 !! Convert a real number to string.
 !! ----------------------------------------------------------------- !!
 pure function R2S(value)
@@ -272,6 +323,22 @@ pure function R2S(value)
   R2S = trim(adjustl(buffer))
 
 end function R2S
+
+!! ----------------------------------------------------------------- !!
+!! Convert a real number array to string.
+!! ----------------------------------------------------------------- !!
+pure function RArr2S(array)
+  real(dp), intent(in) :: array(:)
+  character(len=:), allocatable :: RArr2S
+
+  integer(ip) :: index
+
+  RArr2S = R2S(array(1))
+  do index = 2, size(array)
+    RArr2S = RArr2S//', '//R2S(array(index))
+  end do
+
+end function RArr2S
 
 !! ----------------------------------------------------------------- !!
 !! Ternary operator for strings.

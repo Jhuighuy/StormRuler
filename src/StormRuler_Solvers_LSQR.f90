@@ -103,7 +103,7 @@ subroutine Solve_LSQR(mesh, xArr, bArr, MatVec, &
   ! 𝒙 = 𝒙₀ + 𝒛. (*)
   ! Substituting (*) into the equation, we get:
   ! 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
-  ! The last equations can be solved with 𝒚₀ = {0}ᵀ.
+  ! The last equations can be solved with 𝒚₀ = {𝟢}ᵀ.
   ! ----------------------
 
   ! ----------------------
@@ -129,7 +129,7 @@ subroutine Solve_LSQR(mesh, xArr, bArr, MatVec, &
 
   ! ----------------------
   ! 𝜑̅ ← 𝛽, 𝜌̅ ← 𝛼.
-  ! 𝒛 ← {0}ᵀ,
+  ! 𝒛 ← {𝟢}ᵀ,
   ! 𝒘 ← 𝒗,
   ! ----------------------
   phiBar = beta; rhoBar = alpha
@@ -310,9 +310,9 @@ subroutine Solve_LSMR(mesh, xArr, bArr, MatVec, &
 
   ! ----------------------
   ! 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
-  ! 𝜁 ← 1, 𝑐̅𝑠̅ ← 1, 𝑠̅𝑛̅ ← 0,
-  ! 𝒛 ← {0}ᵀ,
-  ! 𝒘 ← 𝒗, 𝒉 ← {0}ᵀ.
+  ! 𝜁 ← 𝟣, 𝑐̅𝑠̅ ← 𝟣, 𝑠̅𝑛̅ ← 𝟢,
+  ! 𝒛 ← {𝟢}ᵀ,
+  ! 𝒘 ← 𝒗, 𝒉 ← {𝟢}ᵀ.
   ! ----------------------
   alphaBar = alpha; psiBar = alpha*beta
   zeta = 1.0_dp; csBar = 1.0_dp; snBar = 0.0_dp

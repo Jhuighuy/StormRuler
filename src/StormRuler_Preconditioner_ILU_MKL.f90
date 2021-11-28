@@ -80,7 +80,7 @@ subroutine InitPreconditioner_ILU0_MKL(pre, mesh, MatVec)
   integer(ip) :: iparam(128), ierror
   real(dp) :: dparam(128)
 
-  iparam(:) = 0; dparam(:) = 0
+  iparam(:) = 0; dparam(:) = 0.0_dp
   iparam(2) = 6; dparam(31) = 1.0e-16_dp 
   allocate(pre%FactorsColCoeffs(size(pre%Mat%ColCoeffs)))
 

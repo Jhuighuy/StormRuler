@@ -193,8 +193,8 @@ subroutine Solve_BiCGStab(mesh, xArr, bArr, MatVec, params, pre)
   
   ! ----------------------
   ! 𝒓̃ ← 𝒓,
-  ! 𝒑 ← {0}ᵀ, 𝒗 ← {0}ᵀ,
-  ! 𝜌 ← 1, 𝛼 ← 1, 𝜔 ← 1. 
+  ! 𝒑 ← {𝟢}ᵀ, 𝒗 ← {𝟢}ᵀ,
+  ! 𝜌 ← 𝟣, 𝛼 ← 𝟣, 𝜔 ← 𝟣.
   ! ----------------------
   call Set(mesh, rTildeArr, rArr)
   call Fill(mesh, pArr, 0.0_dp)

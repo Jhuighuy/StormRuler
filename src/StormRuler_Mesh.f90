@@ -75,7 +75,7 @@ type :: tMesh
   ! (domain-exterior cells, first in the ghost layers).
   ! Cells may be counted multiple times..
   ! ----------------------
-  integer(ip) :: NumBoundaryCells
+  integer(ip) :: NumBndCells
   ! ----------------------
   ! Total number of cells (including interior, boundary and ghost cells).
   ! This value should be used for field allocation.
@@ -376,7 +376,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   integer(ip), allocatable :: connIncr(:,:)
 
   !! TODO: Unified 2D/3D case.
-  !! TODO: Check image for correct boudaries. 
+  !! TODO: Check image for correct boundaries. 
 
   if (numBndLayers > 1.and.(.not.separatedBndCells)) then
     call ErrorStop('Non-separated boundary cells '// &
@@ -409,6 +409,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       allocate(connIncr(2,4))
       connIncr(:,1) = [+1, 0]; connIncr(:,2) = [-1, 0]
       connIncr(:,3) = [ 0,+1]; connIncr(:,4) = [ 0,-1]
+
     case('D2Q5')
       mesh%NumDims = 2
       mesh%NumCellFaces = 4
@@ -417,6 +418,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       connIncr(:,5) = [ 0, 0]
       connIncr(:,1) = [+1, 0]; connIncr(:,2) = [-1, 0]
       connIncr(:,3) = [ 0,+1]; connIncr(:,4) = [ 0,-1]
+
     case('D2Q9')
       mesh%NumDims = 2
       mesh%NumCellFaces = 4
@@ -437,6 +439,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       connIncr(:,3) = [ 0,+1, 0]; connIncr(:,4) = [ 0,-1, 0]
       connIncr(:,5) = [ 0, 0,+1]; connIncr(:,6) = [ 0,-1,-1]
       error stop 'not implemented'
+
     case('D3Q7')
       mesh%NumDims = 3
       mesh%NumCellFaces = 6
@@ -447,6 +450,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       connIncr(:,3) = [ 0,+1, 0]; connIncr(:,4) = [ 0,-1, 0]
       connIncr(:,5) = [ 0, 0,+1]; connIncr(:,6) = [ 0,-1,-1]
       error stop 'not implemented'
+
     case('D3Q19')
       mesh%NumDims = 3
       mesh%NumCellFaces = 6
@@ -463,6 +467,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       connIncr(:,15) = [+1, 0,+1]; connIncr(:,16) = [-1, 0,-1]
       connIncr(:,17) = [+1, 0,-1]; connIncr(:,18) = [-1, 0,+1]
       error stop 'not implemented'
+
     case('D3Q27')
       mesh%NumDims = 3
       mesh%NumCellFaces = 6
@@ -551,9 +556,8 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       & mesh%BndCellAddrs(mark + 1) + mesh%BndCellAddrs(mark)
 
   end do
-  mesh%NumBoundaryCells = &
-    & mesh%BndCellAddrs(mesh%NumBndMarks + 1) - mesh%NumCells - 1
-  mesh%NumAllCells = mesh%NumCells + numBndLayers*mesh%NumBoundaryCells
+  mesh%NumBndCells = mesh%BndCellAddrs(mesh%NumBndMarks + 1) - mesh%NumCells - 1
+  mesh%NumAllCells = mesh%NumCells + numBndLayers*mesh%NumBndCells
 
   ! ----------------------
   ! Fill the interiour cell indices and connectivity,
@@ -563,7 +567,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   allocate(mesh%CellToCell(mesh%NumCellConns,mesh%NumAllCells))
   allocate(mesh%BndCellConns( &
     & mesh%BndCellAddrs(1):(mesh%BndCellAddrs(mesh%NumBndMarks + 1) - 1)))
-  mesh%NumAllCells = mesh%NumCells + mesh%NumBoundaryCells
+  mesh%NumAllCells = mesh%NumCells + mesh%NumBndCells
   do y = 1, mesh%CellIndexBounds(2)
     do x = 1, mesh%CellIndexBounds(1)
       if (image(x,y) /= fluidColor) cycle
@@ -592,7 +596,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
           if (cellCell > mesh%NumCells) then
             bndCell = cellCell
             mesh%CellToCell(Flip(cellConn),bndCell) = cell
-            mesh%BndCellConns(bndCell) = min(mesh%BndCellConns(bndCell), cellConn)
+            !mesh%BndCellConns(bndCell) = min(mesh%BndCellConns(bndCell), cellConn)
           end if
 
         else if (cache(xx,yy) < 0) then
@@ -658,7 +662,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   print *, ' * Stencil:                  '//stencil
   print *, ' * Index bounds:             '//I2S(mesh%CellIndexBounds)
   print *, ' * Number of cells:          '//I2S(mesh%NumCells)
-  print *, ' * Number of boundary cells: '//I2S(mesh%NumBoundaryCells)
+  print *, ' * Number of boundary cells: '//I2S(mesh%NumBndCells)
   print *, ' * Number of all cells:      '//I2S(mesh%NumAllCells)
   print *
 

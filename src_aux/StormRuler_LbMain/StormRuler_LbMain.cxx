@@ -44,7 +44,7 @@
 void InitF(int dim, const stormReal_t* r,
     int size, stormReal_t* f, const stormReal_t* _, void* __) {
 
-  //f[3] += 1;
+  f[0] += 1;
 
 } // Initial_Data
 
@@ -67,7 +67,7 @@ int main() {
   double total_time = 0.0;
 
   for (int time = 0; time <= 0*20+1*200000; ++time) {
-    for (int frac = 0; time != 0 && frac < 1; ++frac) {
+    for (int frac = 0; time != 0 && frac < 500; ++frac) {
 
       struct timespec start, finish;
 

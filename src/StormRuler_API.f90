@@ -235,7 +235,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToBCM(:)
 
-    call Load_PPM('test/Domain-100.ppm', pixels)
+    call Load_PPM('test/Domain-500-Cube.ppm', pixels)
 
     colorToBCM = &
       & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
@@ -243,13 +243,11 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
       &   PixelToInt([255,   0, 255]) ]
 
     allocate(gMesh)
-    call InitMeshFromImage(gMesh, [Dx,Dy], 'D2Q4', pixels, 0, colorToBCM, 2, .true.)
+    call InitMeshFromImage(gMesh, [Dx,Dy], 'D2Q9', pixels, 0, colorToBCM, 1, .false.)
     
     call gMesh%PrintTo_Neato('test/c2c.dot')
     
     call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
-
-    error stop 228
 
   end block
 #$endif
@@ -731,7 +729,7 @@ subroutine stormApplyBCs(meshPtr, uPtr, markMask, alpha, beta, gamma) &
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: bcMark, firstMark, lastMark
+  integer(ip) :: mark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
@@ -742,12 +740,12 @@ subroutine stormApplyBCs(meshPtr, uPtr, markMask, alpha, beta, gamma) &
     firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do bcMark = firstMark, lastMark
+  do mark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs(mesh, bcMark, u, alpha, beta, gamma)
+      call FDM_ApplyBCs(mesh, mark, u, alpha, beta, gamma)
     end block
   end do
 
@@ -763,7 +761,7 @@ subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, markMask) &
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: bcMark, firstMark, lastMark
+  integer(ip) :: mark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
@@ -774,12 +772,12 @@ subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, markMask) &
     firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do bcMark = firstMark, lastMark
+  do mark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs_SlipWall(mesh, bcMark, u)
+      call FDM_ApplyBCs_SlipWall(mesh, mark, u)
     end block
   end do
 
@@ -795,7 +793,7 @@ subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask) &
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
-  integer(ip) :: bcMark, firstMark, lastMark
+  integer(ip) :: mark, firstMark, lastMark
 
   call Unwrap(meshPtr, mesh)
   call Unwrap(uPtr, uArr)
@@ -806,12 +804,12 @@ subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask) &
     firstMark = 1; lastMark = mesh%NumBndMarks
   end if
 
-  do bcMark = firstMark, lastMark
+  do mark = firstMark, lastMark
     block
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs_InOutLet(mesh, bcMark, u)
+      call FDM_ApplyBCs_InOutLet(mesh, mark, u)
     end block
   end do
 

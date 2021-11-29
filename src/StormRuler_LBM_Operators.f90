@@ -71,33 +71,49 @@ subroutine LBM_Stream(mesh, gArr, fArr)
   
   call fArr%Get(f); call gArr%Get(g)
 
-#$if False
+  if (first) then
+    first = .false.
+    f(:,mesh%NumCells+1:) = 1.0
+  end if
+
+  call mesh%RunCellKernel(LBM_Stream_Kernel)
+
   block
-    integer(ip) :: cell, cellCell, cellConn
-    integer(ip) :: bcMark, bcMarkAddr, bcCell, bcCellFace
+    integer(ip) :: mark, cell, bndCell, bndCellConn
 
-    if (first) then
-      first = .false.
-      f(:,mesh%NumCells+1:) = 1.0
-    end if
+    do mark = 1, mesh%NumBndMarks
+      do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
 
-    do bcMark = 1, mesh%NumBCMs + 1
-      do bcMarkAddr = mesh%BCMs(bcMark), mesh%BCMs(bcMark+1)-1
-        bcCell = mesh%BCMToCell(bcMarkAddr)
-        bcCellFace = mesh%BCMToCellFace(bcMarkAddr)
-
-        cell = mesh%CellToCell(Flip(bcCellFace),bcCell)
-        associate(ff => f(:,bcCell))
-          f(:,bcCell) = [ff(2), ff(1), ff(4), ff(3), ff(6), ff(5), ff(8), ff(7), ff(9)] 
-        end associate
+        if (mark == 1) then
+          associate(ff => f(:,bndCell))
+            f(:,bndCell) = [ff(2), ff(1), ff(4), ff(3), ff(6), ff(5), ff(8), ff(7), ff(9)] 
+          end associate
+        else
+          bndCellConn = mesh%BndCellConns(bndCell)
+          cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
+          f(:,bndCell) = f(:,cell)
+        end if
   
+        do bndCellConn = 1, mesh%NumCellConns
+
+          ! ----------------------
+          ! Index of the adjacent cell.
+          ! ----------------------
+          cell = mesh%CellToCell(bndCellConn, bndCell)
+          if (cell == 0) cycle
+    
+          ! ----------------------
+          ! Stream the distribution function component:
+          ! ----------------------
+          g(bndCellConn,cell) = f(bndCellConn,bndCell)
+    
+        end do
+
       end do
     end do
 
   end block
   
-  call mesh%RunCellKernel(LBM_Stream_Kernel)
-
 contains
   subroutine LBM_Stream_Kernel(cell)
     integer(ip), intent(in) :: cell
@@ -108,27 +124,21 @@ contains
     ! ----------------------
     ! For each connection do:
     ! ----------------------
-    do cellConn = 1, mesh%NumCellConns - 1
+    do cellConn = 1, mesh%NumCellConns
 
       ! ----------------------
       ! Index of the adjacent cell.
       ! ----------------------
-      cellCell = mesh%CellToCell(Flip(cellConn), cell)
+      cellCell = mesh%CellToCell(cellConn, cell)
 
       ! ----------------------
       ! Stream the distribution function component:
       ! ----------------------
-      g(cellConn,cell) = f(cellConn,cellCell)
+      g(cellConn,cellCell) = f(cellConn,cell)
 
     end do
 
-    ! ----------------------
-    ! Stream the stationary distribution function component:
-    ! ----------------------
-    g(cellConn,cell) = f(cellConn,cell)
-
   end subroutine LBM_Stream_Kernel
-#$end if
 end subroutine LBM_Stream
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

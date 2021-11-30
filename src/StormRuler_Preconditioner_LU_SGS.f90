@@ -82,6 +82,7 @@ contains
   procedure :: SetMatrix => SetPreconditionerMatrix_LU_SGS
   procedure :: Init => InitPreconditioner_LU_SGS
   procedure :: Apply => ApplyPreconditioner_LU_SGS
+
 end type tPreconditioner_LU_SGS
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

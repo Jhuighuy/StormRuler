@@ -28,7 +28,7 @@ module StormRuler_Preconditioner_ILU_MKL
 #$if HAS_MKL
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: I2S
+use StormRuler_Helpers, only: ErrorStop, I2S
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
@@ -87,7 +87,7 @@ subroutine InitPreconditioner_ILU0_MKL(pre, mesh, MatVec)
   call dcsrilu0(mesh%NumCells, pre%Mat%ColCoeffs, pre%Mat%RowAddrs, &
     & pre%Mat%ColIndices, pre%FactorsColCoeffs, iparam, dparam, ierror)
   if (ierror /= 0) then
-    error stop 'MKL `dcsrilu0` has failed, ierror='//I2S(ierror)
+    call ErrorStop('MKL `dcsrilu0` has failed, ierror='//I2S(ierror))
   end if
 
 end subroutine InitPreconditioner_ILU0_MKL

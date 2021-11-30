@@ -109,14 +109,14 @@ products.
     (`ICHOL`)
   * _(planned)_ Block Incomplete LU preconditioner,
     (`ILU`),
+  * _(planned)_ Approximate Inverse preconditioner
+    (`AINV`),
   * _(planned)_ Block SPAI preconditioner,
     (`SPAI`);
 
 - Matrix-free preconditioners:
   * _(planned)_ Polynomial preconditioner
-    (`Poly`),
-  * _(planned)_ Approximate Inverse preconditioner
-    (`AINV`).
+    (`Poly`).
 
 <!----------------------------------------------------------------->
 ## 🛤Road map
@@ -213,6 +213,12 @@ Legend:
   - [ ] 🧸 CSC matrix class, fast CSR-CSC tranpositions,
   - [x] 🧸 CSR Extraction with prescribed coloring,
   - [ ] 🧸 CSC Extraction with prescribed coloring,
+  - [ ] 🧸 Fill matrix diagonal function.
+  - [ ] 🧸 Extract matrix diagonal function.
+  - [ ] 🧸 Extract matrix row as a sparse vector function.
+  - [ ] 🧸 Sparse-sparse approximate AXPY. 
+  - [ ] 🧸 Matrix symmetrization.
+  - [ ] 🧸 Partial matrix-vector products in DL, DU modes.
   - [ ] 🦜 Block extraction with prescribed coloring,
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,

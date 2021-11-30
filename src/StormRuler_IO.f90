@@ -27,7 +27,7 @@ module StormRuler_IO
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: I2S, RgbToInt, IntToRgb
+use StormRuler_Helpers, only: ErrorStop, I2S, RgbToInt, IntToRgb
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

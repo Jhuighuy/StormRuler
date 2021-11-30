@@ -45,6 +45,7 @@ use StormRuler_Preconditioner, only: tPreconditioner
 
 use StormRuler_Matrix!, only: ...
 use StormRuler_Matrix_Extraction!, only: ...
+use StormRuler_Preconditioner_AINV!, only: ...
 use StormRuler_Preconditioner_LU_SGS!, only: ...
 use StormRuler_Preconditioner_ILU_MKL!, only: ...
 
@@ -125,7 +126,8 @@ contains
     if (preMethod == 'extr') then; block
       type(tMatrixLabeling), save :: labeling
       !type(tPreconditioner_ILU0_MKL) :: prepre
-      type(tPreconditioner_LU_SGS) :: prepre
+      !type(tPreconditioner_LU_SGS) :: prepre
+      type(tPreconditioner_AINV) :: prepre
 
       if (labeling%NumLabels == 0) then
         call InitMatrix(mesh, mat, 1)
@@ -138,6 +140,7 @@ contains
       !call Solve_BiCGStab(mesh, x, f, uMatVec, params)
       call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
 
+      error stop 229
       return
 
     end block; end if

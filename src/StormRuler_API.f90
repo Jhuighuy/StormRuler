@@ -29,7 +29,7 @@ module StormRuler_API
 use StormRuler_Parameters, only: dp, ip, i8
 use StormRuler_Helpers, only: PrintBanner, PixelToInt
 
-use StormRuler_Mesh, only: tMesh, InitMeshFromImage
+use StormRuler_Mesh, only: tMesh, InitMeshStencil, InitMeshFromImage
 use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
   & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve, Mesh_Ordering_METIS
 
@@ -235,7 +235,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToBCM(:)
 
-    call Load_PPM('test/Domain-500-Cube.ppm', pixels)
 
     colorToBCM = &
       & [ PixelToInt([255, 255, 255]), PixelToInt([255, 0, 0]), &
@@ -243,8 +242,15 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
       &   PixelToInt([255,   0, 255]) ]
 
     allocate(gMesh)
-    call InitMeshFromImage(gMesh, [Dx,Dy], 'D2Q9', pixels, 0, colorToBCM, 1, .false.)
+
+    !call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    !call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
+    !call InitMeshFromImage(gMesh, pixels, 0, colorToBCM, 2, .true.)
     
+    call Load_PPM('test/Domain-500-Cube.ppm', pixels)
+    call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q9')
+    call InitMeshFromImage(gMesh, pixels, 0, colorToBCM, 1, .false.)
+
     call gMesh%PrintTo_Neato('test/c2c.dot')
     
     call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')

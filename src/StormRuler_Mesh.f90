@@ -28,7 +28,7 @@ module StormRuler_Mesh
 
 use StormRuler_Parameters, only: dp, ip, i8
 
-use StormRuler_Helpers, only: ErrorStop, PrintWarning, &
+use StormRuler_Helpers, only: ErrorStop, PrintLog, PrintWarning, &
   & Flip, IndexOf, InsertTo, I2S, R2S, IntToPixel
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
 
@@ -52,6 +52,9 @@ type :: tMesh
   ! ----------------------
   integer(ip) :: NumDims
 
+  ! ----------------------
+  ! ----------------------
+  character(len=:), allocatable :: Stencil 
   ! ----------------------
   ! Number of faces (edges in 2D) per each cell.
   ! NumCellFaces = 4 for 2D meshes, NumCellFaces = 6 for 3D meshes.
@@ -124,10 +127,10 @@ type :: tMesh
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
-  ! Difference between centers of the adjacent cells per face.
+  ! Unit difference between centers of the adjacent cells per face.
   ! Shape is [1, NumDims]×[1, NumCellConns].
   ! ----------------------
-  real(dp), allocatable :: dr(:,:)
+  integer(ip), allocatable :: dr(:,:)
 
 contains
 
@@ -358,25 +361,147 @@ end function IsMeshCellConnPeriodic
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize the mesh from image pixels.
+!! Initialize the mesh stencil.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitMeshFromImage(mesh, dl, stencil, image, &
-    & fluidColor, colorToMark, numBndLayers, separatedBndCells)
+subroutine InitMeshStencil(mesh, spacings, stencil)
   class(tMesh), intent(inout) :: mesh
-  real(dp), intent(in) :: dl(:)
+  real(dp), intent(in) :: spacings(:)
+  character(len=*), intent(in) :: stencil
+
+  integer(ip) :: cellConn
+
+  mesh%Stencil = stencil
+  select case(mesh%Stencil)
+
+    case('D1Q2')
+      mesh%NumDims = 1
+      mesh%NumCellFaces = 2
+      mesh%NumCellConns = 2
+      allocate(mesh%dr(1,2))
+      mesh%dr(:,1) = [+1]; mesh%dr(:,2) = [-1]
+
+    case('D1Q3')
+      mesh%NumDims = 1
+      mesh%NumCellFaces = 2
+      mesh%NumCellConns = 3
+      allocate(mesh%dr(1,3))
+      mesh%dr(:,3) = [ 0]
+      mesh%dr(:,1) = [+1]; mesh%dr(:,2) = [-1]
+
+    case('D2Q4')
+      mesh%NumDims = 2
+      mesh%NumCellFaces = 4
+      mesh%NumCellConns = 4
+      allocate(mesh%dr(2,4))
+      mesh%dr(:,1) = [+1, 0]; mesh%dr(:,2) = [-1, 0]
+      mesh%dr(:,3) = [ 0,+1]; mesh%dr(:,4) = [ 0,-1]
+
+    case('D2Q5')
+      mesh%NumDims = 2
+      mesh%NumCellFaces = 4
+      mesh%NumCellConns = 5
+      allocate(mesh%dr(2,5))
+      mesh%dr(:,5) = [ 0, 0]
+      mesh%dr(:,1) = [+1, 0]; mesh%dr(:,2) = [-1, 0]
+      mesh%dr(:,3) = [ 0,+1]; mesh%dr(:,4) = [ 0,-1]
+
+    case('D2Q9')
+      mesh%NumDims = 2
+      mesh%NumCellFaces = 4
+      mesh%NumCellConns = 9
+      allocate(mesh%dr(2,9))
+      mesh%dr(:,9) = [ 0, 0]
+      mesh%dr(:,1) = [+1, 0]; mesh%dr(:,2) = [-1, 0]
+      mesh%dr(:,3) = [ 0,+1]; mesh%dr(:,4) = [ 0,-1]
+      mesh%dr(:,5) = [+1,+1]; mesh%dr(:,6) = [-1,-1]
+      mesh%dr(:,7) = [+1,-1]; mesh%dr(:,8) = [-1,+1]
+
+    case('D3Q6')
+      mesh%NumDims = 3
+      mesh%NumCellFaces = 6
+      mesh%NumCellConns = 6
+      allocate(mesh%dr(3,6))
+      mesh%dr(:,1) = [+1, 0, 0]; mesh%dr(:,2) = [-1, 0, 0]
+      mesh%dr(:,3) = [ 0,+1, 0]; mesh%dr(:,4) = [ 0,-1, 0]
+      mesh%dr(:,5) = [ 0, 0,+1]; mesh%dr(:,6) = [ 0,-1,-1]
+
+    case('D3Q7')
+      mesh%NumDims = 3
+      mesh%NumCellFaces = 6
+      mesh%NumCellConns = 7
+      allocate(mesh%dr(3,7))
+      mesh%dr(:,7) = [ 0, 0, 0]
+      mesh%dr(:,1) = [+1, 0, 0]; mesh%dr(:,2) = [-1, 0, 0]
+      mesh%dr(:,3) = [ 0,+1, 0]; mesh%dr(:,4) = [ 0,-1, 0]
+      mesh%dr(:,5) = [ 0, 0,+1]; mesh%dr(:,6) = [ 0,-1,-1]
+
+    case('D3Q19')
+      mesh%NumDims = 3
+      mesh%NumCellFaces = 6
+      mesh%NumCellConns = 19
+      allocate(mesh%dr(3,19))
+      mesh%dr(:,19) = [ 0, 0, 0]
+      mesh%dr(:, 1) = [+1, 0, 0]; mesh%dr(:, 2) = [-1, 0, 0]
+      mesh%dr(:, 3) = [ 0,+1, 0]; mesh%dr(:, 4) = [ 0,-1, 0]
+      mesh%dr(:, 5) = [ 0, 0,+1]; mesh%dr(:, 6) = [ 0,-1,-1]
+      mesh%dr(:, 7) = [+1,+1, 0]; mesh%dr(:, 8) = [-1,-1, 0]
+      mesh%dr(:, 9) = [+1,-1, 0]; mesh%dr(:,10) = [-1,+1, 0]
+      mesh%dr(:,11) = [ 0,+1,+1]; mesh%dr(:,12) = [ 0,-1,-1]
+      mesh%dr(:,13) = [ 0,+1,-1]; mesh%dr(:,14) = [ 0,-1,+1]
+      mesh%dr(:,15) = [+1, 0,+1]; mesh%dr(:,16) = [-1, 0,-1]
+      mesh%dr(:,17) = [+1, 0,-1]; mesh%dr(:,18) = [-1, 0,+1]
+
+    case('D3Q27')
+      mesh%NumDims = 3
+      mesh%NumCellFaces = 6
+      mesh%NumCellConns = 27
+      allocate(mesh%dr(3,27))
+      mesh%dr(:,27) = [ 0, 0, 0]
+      mesh%dr(:, 1) = [+1, 0, 0]; mesh%dr(:, 2) = [-1, 0, 0]
+      mesh%dr(:, 3) = [ 0,+1, 0]; mesh%dr(:, 4) = [ 0,-1, 0]
+      mesh%dr(:, 5) = [ 0, 0,+1]; mesh%dr(:, 6) = [ 0,-1,-1]
+      mesh%dr(:, 7) = [+1,+1, 0]; mesh%dr(:, 8) = [-1,-1, 0]
+      mesh%dr(:, 9) = [+1,-1, 0]; mesh%dr(:,10) = [-1,+1, 0]
+      mesh%dr(:,11) = [ 0,+1,+1]; mesh%dr(:,12) = [ 0,-1,-1]
+      mesh%dr(:,13) = [ 0,+1,-1]; mesh%dr(:,14) = [ 0,-1,+1]
+      mesh%dr(:,15) = [+1, 0,+1]; mesh%dr(:,16) = [-1, 0,-1]
+      mesh%dr(:,17) = [+1, 0,-1]; mesh%dr(:,18) = [-1, 0,+1]
+      mesh%dr(:,19) = [+1,+1,+1]; mesh%dr(:,20) = [-1,-1,-1]
+      mesh%dr(:,21) = [+1,+1,-1]; mesh%dr(:,22) = [-1,-1,+1]
+      mesh%dr(:,23) = [+1,-1,+1]; mesh%dr(:,24) = [-1,+1,-1]
+      mesh%dr(:,25) = [+1,+1,-1]; mesh%dr(:,26) = [-1,-1,+1]
+
+    case default
+      call ErrorStop('Invalid stencil, expected one of: `D1Q2`, '// &
+        & '`D1Q3`, `D2Q4`, `D2Q5`, `D2Q9`, `D3Q6`, `D3Q7`, `D3Q19`, `D3Q27`.')
+
+  end select
+
+  allocate(mesh%dl(mesh%NumCellConns))
+  do cellConn = 1, mesh%NumCellConns
+    mesh%dl(cellConn) = norm2(spacings(:)*mesh%dr(:,cellConn))
+  end do
+
+end subroutine InitMeshStencil
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Initialize the mesh from image pixels.
+!! ( this function is more suited for FDM computations. )
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
+                           & numBndLayers, separatedBndCells)
+  class(tMesh), intent(inout) :: mesh
   integer(ip), intent(in) :: image(0:,0:)
   integer(ip), intent(in) :: fluidColor, colorToMark(:)
-  character(len=*), intent(in) :: stencil
   integer(ip), intent(in) :: numBndLayers
   logical, intent(in) :: separatedBndCells
 
-  integer(ip) :: x, y, xx, yy, incAddr, boundaryLayer
+  integer(ip) :: x, y, xx, yy, incAddr, bndLayer
   integer(ip) :: cell, cellCell, cellConn, bndCell, bndCellCell, mark
   integer(ip), allocatable :: cache(:,:)
-  integer(ip), allocatable :: connIncr(:,:)
 
   !! TODO: Unified 2D/3D case.
-  !! TODO: Check image for correct boundaries. 
+  !! TODO: Check image for correct boundaries.
 
   if (numBndLayers > 1.and.(.not.separatedBndCells)) then
     call ErrorStop('Non-separated boundary cells '// &
@@ -384,124 +509,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   end if
 
   ! ----------------------
-  ! Set mesh stencil.
-  ! ----------------------
-  select case(stencil)
-    case('D1Q2')
-      mesh%NumDims = 1
-      mesh%NumCellFaces = 2
-      mesh%NumCellConns = 2
-      allocate(connIncr(1,2))
-      connIncr(:,1) = [+1]; connIncr(:,2) = [-1]
-
-    case('D1Q3')
-      mesh%NumDims = 1
-      mesh%NumCellFaces = 2
-      mesh%NumCellConns = 3
-      allocate(connIncr(1,3))
-      connIncr(:,3) = [ 0]
-      connIncr(:,1) = [+1]; connIncr(:,2) = [-1]
-
-    case('D2Q4')
-      mesh%NumDims = 2
-      mesh%NumCellFaces = 4
-      mesh%NumCellConns = 4
-      allocate(connIncr(2,4))
-      connIncr(:,1) = [+1, 0]; connIncr(:,2) = [-1, 0]
-      connIncr(:,3) = [ 0,+1]; connIncr(:,4) = [ 0,-1]
-
-    case('D2Q5')
-      mesh%NumDims = 2
-      mesh%NumCellFaces = 4
-      mesh%NumCellConns = 5
-      allocate(connIncr(2,5))
-      connIncr(:,5) = [ 0, 0]
-      connIncr(:,1) = [+1, 0]; connIncr(:,2) = [-1, 0]
-      connIncr(:,3) = [ 0,+1]; connIncr(:,4) = [ 0,-1]
-
-    case('D2Q9')
-      mesh%NumDims = 2
-      mesh%NumCellFaces = 4
-      mesh%NumCellConns = 9
-      allocate(connIncr(2,9))
-      connIncr(:,9) = [ 0, 0]
-      connIncr(:,1) = [+1, 0]; connIncr(:,2) = [-1, 0]
-      connIncr(:,3) = [ 0,+1]; connIncr(:,4) = [ 0,-1]
-      connIncr(:,5) = [+1,+1]; connIncr(:,6) = [-1,-1]
-      connIncr(:,7) = [+1,-1]; connIncr(:,8) = [-1,+1]
-
-    case('D3Q6')
-      mesh%NumDims = 3
-      mesh%NumCellFaces = 6
-      mesh%NumCellConns = 6
-      allocate(connIncr(3,6))
-      connIncr(:,1) = [+1, 0, 0]; connIncr(:,2) = [-1, 0, 0]
-      connIncr(:,3) = [ 0,+1, 0]; connIncr(:,4) = [ 0,-1, 0]
-      connIncr(:,5) = [ 0, 0,+1]; connIncr(:,6) = [ 0,-1,-1]
-      error stop 'not implemented'
-
-    case('D3Q7')
-      mesh%NumDims = 3
-      mesh%NumCellFaces = 6
-      mesh%NumCellConns = 7
-      allocate(connIncr(3,7))
-      connIncr(:,7) = [ 0, 0, 0]
-      connIncr(:,1) = [+1, 0, 0]; connIncr(:,2) = [-1, 0, 0]
-      connIncr(:,3) = [ 0,+1, 0]; connIncr(:,4) = [ 0,-1, 0]
-      connIncr(:,5) = [ 0, 0,+1]; connIncr(:,6) = [ 0,-1,-1]
-      error stop 'not implemented'
-
-    case('D3Q19')
-      mesh%NumDims = 3
-      mesh%NumCellFaces = 6
-      mesh%NumCellConns = 19
-      allocate(connIncr(3,19))
-      connIncr(:,19) = [ 0, 0, 0]
-      connIncr(:, 1) = [+1, 0, 0]; connIncr(:, 2) = [-1, 0, 0]
-      connIncr(:, 3) = [ 0,+1, 0]; connIncr(:, 4) = [ 0,-1, 0]
-      connIncr(:, 5) = [ 0, 0,+1]; connIncr(:, 6) = [ 0,-1,-1]
-      connIncr(:, 7) = [+1,+1, 0]; connIncr(:, 8) = [-1,-1, 0]
-      connIncr(:, 9) = [+1,-1, 0]; connIncr(:,10) = [-1,+1, 0]
-      connIncr(:,11) = [ 0,+1,+1]; connIncr(:,12) = [ 0,-1,-1]
-      connIncr(:,13) = [ 0,+1,-1]; connIncr(:,14) = [ 0,-1,+1]
-      connIncr(:,15) = [+1, 0,+1]; connIncr(:,16) = [-1, 0,-1]
-      connIncr(:,17) = [+1, 0,-1]; connIncr(:,18) = [-1, 0,+1]
-      error stop 'not implemented'
-
-    case('D3Q27')
-      mesh%NumDims = 3
-      mesh%NumCellFaces = 6
-      mesh%NumCellConns = 27
-      allocate(connIncr(3,27))
-      connIncr(:,27) = [ 0, 0, 0]
-      connIncr(:, 1) = [+1, 0, 0]; connIncr(:, 2) = [-1, 0, 0]
-      connIncr(:, 3) = [ 0,+1, 0]; connIncr(:, 4) = [ 0,-1, 0]
-      connIncr(:, 5) = [ 0, 0,+1]; connIncr(:, 6) = [ 0,-1,-1]
-      connIncr(:, 7) = [+1,+1, 0]; connIncr(:, 8) = [-1,-1, 0]
-      connIncr(:, 9) = [+1,-1, 0]; connIncr(:,10) = [-1,+1, 0]
-      connIncr(:,11) = [ 0,+1,+1]; connIncr(:,12) = [ 0,-1,-1]
-      connIncr(:,13) = [ 0,+1,-1]; connIncr(:,14) = [ 0,-1,+1]
-      connIncr(:,15) = [+1, 0,+1]; connIncr(:,16) = [-1, 0,-1]
-      connIncr(:,17) = [+1, 0,-1]; connIncr(:,18) = [-1, 0,+1]
-      connIncr(:,19) = [+1,+1,+1]; connIncr(:,20) = [-1,-1,-1]
-      connIncr(:,21) = [+1,+1,-1]; connIncr(:,22) = [-1,-1,+1]
-      connIncr(:,23) = [+1,-1,+1]; connIncr(:,24) = [-1,+1,-1]
-      connIncr(:,25) = [+1,+1,-1]; connIncr(:,26) = [-1,-1,+1]
-      error stop 'not implemented'
-
-    case default
-      call ErrorStop('Invalid stencil, expected one of: `D1Q2`, '// &
-        & '`D1Q3`, `D2Q4`, `D2Q5`, `D2Q9`, `D3Q6`, `D3Q7`, `D3Q19`, `D3Q27`.')
-  end select
-  allocate(mesh%dl(mesh%NumCellConns))
-  allocate(mesh%dr(mesh%NumDims,mesh%NumCellConns))
-  do cellConn = 1, mesh%NumCellConns
-    mesh%dr(:,cellConn) = 1.0_dp*connIncr(:,cellConn)
-    mesh%dl(cellConn) = norm2(dl(:)*connIncr(:,cellConn))
-  end do
-
-  ! ----------------------
-  ! Cache cell indices and count the cells.
+  ! Assign interior cell indices, count the boundary cells per mark.
   ! ----------------------
   mesh%NumCells = 0
   mesh%CellIndexBounds = shape(image) - 2
@@ -516,17 +524,16 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
       if (image(x,y) /= fluidColor) cycle
 
       ! ----------------------
-      ! Count and cache the interior cell.
+      ! Assign index to the interior cell.
       ! ----------------------
       mesh%NumCells = mesh%NumCells + 1
       cell = mesh%NumCells; cache(x,y) = cell
 
       ! ----------------------
-      ! Go through the connected pixels 
-      ! and count the BC cells per each mark.
+      ! Count the boundary cells.
       ! ----------------------
       do cellConn = 1, mesh%NumCellConns
-        xx = x + connIncr(1,cellConn); yy = y + connIncr(2,cellConn)
+        xx = x + mesh%dr(1,cellConn); yy = y + mesh%dr(2,cellConn)
         if ((image(xx,yy) /= fluidColor).and. &
             & (separatedBndCells.or.(cache(xx,yy) == 0))) then
 
@@ -534,6 +541,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
           if (mark == 0) then
             call ErrorStop('Unexpected image color at ('//I2S([xx,yy])//')')
           end if
+
           cache(xx,yy) = -mark
           mesh%BndCellAddrs(mark + 1) = mesh%BndCellAddrs(mark + 1) + 1
 
@@ -543,8 +551,7 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   end do
 
   ! ----------------------
-  ! Precompute the boundary cells indices
-  ! and count the total amount of the cells.
+  ! Assign the boundary cells indices and count the total amount of the cells.
   ! ----------------------
   mesh%BndCellAddrs(1) = mesh%NumCells + 1
   do mark = 1, mesh%NumBndMarks
@@ -552,88 +559,88 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
     if (mesh%BndCellAddrs(mark + 1) == 0) then
       call PrintWarning('Unused boundary mark '//I2S(mark)//' detected.')      
     end if
-    mesh%BndCellAddrs(mark + 1) = &
-      & mesh%BndCellAddrs(mark + 1) + mesh%BndCellAddrs(mark)
+
+    mesh%BndCellAddrs(mark + 1) = mesh%BndCellAddrs(mark + 1) + mesh%BndCellAddrs(mark)
 
   end do
   mesh%NumBndCells = mesh%BndCellAddrs(mesh%NumBndMarks + 1) - mesh%NumCells - 1
   mesh%NumAllCells = mesh%NumCells + numBndLayers*mesh%NumBndCells
 
   ! ----------------------
-  ! Fill the interiour cell indices and connectivity,
-  ! generate the boundary cells, fill indices and partially connectivity.
+  ! Fill the cell indices and connectivity.
   ! ----------------------
   allocate(mesh%CellIndex(mesh%NumDims,mesh%NumAllCells))
   allocate(mesh%CellToCell(mesh%NumCellConns,mesh%NumAllCells))
-  allocate(mesh%BndCellConns( &
-    & mesh%BndCellAddrs(1):(mesh%BndCellAddrs(mesh%NumBndMarks + 1) - 1)))
+  associate(lbound => mesh%BndCellAddrs(1), & 
+          & rbound => mesh%BndCellAddrs(mesh%NumBndMarks + 1) - 1)
+    allocate(mesh%BndCellConns(lbound:rbound))
+  end associate
   mesh%NumAllCells = mesh%NumCells + mesh%NumBndCells
   do y = 1, mesh%CellIndexBounds(2)
     do x = 1, mesh%CellIndexBounds(1)
       if (image(x,y) /= fluidColor) cycle
-      cell = cache(x,y)
 
       ! ----------------------
-      ! Fill cell index.
+      ! Fill the cell index.
       ! ----------------------
+      cell = cache(x,y)
       mesh%CellIndex(:,cell) = [x,y]
 
       ! ----------------------
-      ! Fill cell connectivity.
+      ! Fill the cell connectivity.
       ! ----------------------
       mesh%CellToCell(:,cell) = 0
       do cellConn = 1, mesh%NumCellConns
-        xx = x + connIncr(1,cellConn); yy = y + connIncr(2,cellConn)
+        xx = x + mesh%dr(1,cellConn); yy = y + mesh%dr(2,cellConn)
         if (cache(xx,yy) > 0) then
 
           ! ----------------------
-          ! Connect to the existing cell.
-          ! If the case of boundary cell, also connect to
-          ! the current cell.
+          ! Neighbour cell has the assigned index.
           ! ----------------------
           cellCell = cache(xx,yy)
           mesh%CellToCell(cellConn,cell) = cellCell
-          if (cellCell > mesh%NumCells) then
+
+          ! ----------------------
+          ! If the current cell is interior and the neighbour cell is boundary, 
+          ! also connect it to the current one.
+          ! ----------------------
+          if ((cell <= mesh%NumCells).and.(cellCell > mesh%NumCells)) then
             bndCell = cellCell
             mesh%CellToCell(Flip(cellConn),bndCell) = cell
-            !mesh%BndCellConns(bndCell) = min(mesh%BndCellConns(bndCell), cellConn)
           end if
 
         else if (cache(xx,yy) < 0) then
 
           ! ----------------------
-          ! Connect to the non-existing boundary cell.
+          ! Neighbour cell is boundary cell without the assigned index.
           ! ----------------------
           mark = -cache(xx,yy)
           bndCell = mesh%BndCellAddrs(mark)
-          mesh%BndCellConns(mesh%BndCellAddrs(mark)) = cellConn
+          mesh%BndCellConns(bndCell) = cellConn
           mesh%BndCellAddrs(mark) = mesh%BndCellAddrs(mark) + 1
 
           ! ----------------------
-          ! Cache the cell cell to avoid duplicates.
-          ! ----------------------
-          if (.not.separatedBndCells) cache(xx,yy) = bndCell
-
-          ! ----------------------
-          ! Fill the boundary cell index
-          ! and connection to the interior cell.
+          ! Fill the boundary cell index and connection to the interior cell.
           ! ----------------------
           mesh%CellIndex(:,bndCell) = [xx,yy]
           mesh%CellToCell(cellConn,cell) = bndCell
           mesh%CellToCell(Flip(cellConn),bndCell) = cell
 
           ! ----------------------
-          ! Generate boundary layers.
+          ! Assign the cell index to avoid duplicates in non-separated case.
           ! ----------------------
-          do boundaryLayer = 2, numBndLayers
+          if (.not.separatedBndCells) cache(xx,yy) = bndCell
+
+          ! ----------------------
+          ! Optionally generate boundary layers.
+          ! ----------------------
+          do bndLayer = 2, numBndLayers
             mesh%NumAllCells = mesh%NumAllCells + 1
             bndCellCell = mesh%NumAllCells
-
             mesh%CellToCell(cellConn,bndCell) = bndCellCell
             mesh%CellToCell(Flip(cellConn),bndCellCell) = bndCell
-            xx = xx + connIncr(1,cellConn); yy = yy + connIncr(2,cellConn)
+            xx = xx + mesh%dr(1,cellConn); yy = yy + mesh%dr(2,cellConn)
             mesh%CellIndex(:,bndCellCell) = [xx,yy]
-
             bndCell = bndCellCell
           end do
 
@@ -647,24 +654,24 @@ subroutine InitMeshFromImage(mesh, dl, stencil, image, &
   end do
 
   ! ----------------------
-  ! Fix the boundary mark addresses.
+  ! Fix the cells addresses.
   ! ----------------------
   mesh%BndCellAddrs = cshift(mesh%BndCellAddrs, -1)
   mesh%BndCellAddrs(1) = mesh%NumCells + 1
 
   ! ----------------------
-  ! Print statistics.
+  ! Print mesh statistics.
   ! ----------------------
-  print *
-  print *, '-=-=-=-=-=-=-=-'
-  print *, 'Mesh statistics (InitFromImage):'
-  print *, '-=-=-=-=-=-=-=-'
-  print *, ' * Stencil:                  '//stencil
-  print *, ' * Index bounds:             '//I2S(mesh%CellIndexBounds)
-  print *, ' * Number of cells:          '//I2S(mesh%NumCells)
-  print *, ' * Number of boundary cells: '//I2S(mesh%NumBndCells)
-  print *, ' * Number of all cells:      '//I2S(mesh%NumAllCells)
-  print *
+  call PrintLog('')
+  call PrintLog('-=-=-=-=-=-=-=-')
+  call PrintLog('Mesh statistics (InitFromImage):')
+  call PrintLog('-=-=-=-=-=-=-=-')
+  call PrintLog(' * Stencil:                  '//mesh%Stencil)
+  call PrintLog(' * Index bounds:             '//I2S(mesh%CellIndexBounds))
+  call PrintLog(' * Number of cells:          '//I2S(mesh%NumCells))
+  call PrintLog(' * Number of boundary cells: '//I2S(mesh%NumBndCells))
+  call PrintLog(' * Number of all cells:      '//I2S(mesh%NumAllCells))
+  call PrintLog('')
 
 end subroutine InitMeshFromImage
 
@@ -687,7 +694,7 @@ subroutine ApplyMeshOrdering(mesh, iperm)
   ! ----------------------
   do cell = 1, mesh%NumAllCells
     do cellConn = 1, mesh%NumCellFaces
-      associate(cellCell => mesh%CellToCell(cellConn, cell))
+      associate(cellCell => mesh%CellToCell(cellConn,cell))
 
         if (0 < cellCell.and.cellCell <= mesh%NumCells) cellCell = iperm(cellCell)
 
@@ -728,14 +735,14 @@ subroutine PrintMeshToNeato(mesh, file)
 
   integer(ip), parameter :: DPI = 72
 
-  character(len=10), parameter :: SHAPES(*) = &
-    & [ character(len=10) :: 'box', 'polygon', 'egg', 'triangle', &
-    &   'diamond', 'trapezium', 'parallelogram', 'house', 'pentagon', &
-    &   'haxagon', 'septagon', 'octagon', 'star' ]
-  
   character(len=10), parameter :: PALETTE(*) = &
     & [ character(len=10) :: 'red', 'green', 'blue', 'fuchsia', &
     &   'yellow', 'wheat' ]
+
+  character(len=20), parameter :: SHAPES(*) = &
+    & [ character(len=20) :: 'box', 'polygon', 'egg', 'triangle', &
+    &   'diamond', 'trapezium', 'parallelogram', 'house', 'pentagon', &
+    &   'haxagon', 'septagon', 'octagon', 'star' ]
 
   print *
   print *, '-=-=-=-=-=-=-=-'

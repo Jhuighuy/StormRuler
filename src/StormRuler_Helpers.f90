@@ -81,12 +81,22 @@ subroutine ErrorStop(message)
 end subroutine ErrorStop
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Print a log message.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine PrintLog(message)
+  character(len=*), intent(in) :: message
+
+  print *, '[LOG] ', message
+
+end subroutine PrintLog
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Print a warning.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine PrintWarning(warning)
   character(len=*), intent(in) :: warning
 
-  write(error_unit,*) '[WARN] ', warning
+  write(error_unit,*) '[WRN] ', warning
 
 end subroutine PrintWarning
 

@@ -27,7 +27,7 @@ module StormRuler_IO
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip
-use StormRuler_Helpers, only: I2S, PixelToInt, IntToPixel
+use StormRuler_Helpers, only: I2S, RgbToInt, IntToRgb
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -92,7 +92,7 @@ subroutine Load_PPM(file, image)
   integer(ip), allocatable, intent(out) :: image(:,:)
 
   integer(ip) :: unit, offset
-  integer(ip) :: numRows, numColumns
+  integer(ip) :: numRows, numCols
 
   ! ----------------------
   ! Parse PPM header.
@@ -100,15 +100,12 @@ subroutine Load_PPM(file, image)
   block
     character(len=2) :: magic
     integer(ip) :: colorRange
-    open(newunit=unit, file=file, &
-      &  access='stream', form='formatted', status='old')
+    open(newunit=unit, file=file, access='stream', form='formatted', status='old')
     read(unit, '(A2)') magic
-    if (magic/='P6') &
-      error stop 'unexpected PPM magic, "P6" expected'
-    read(unit, *) numRows, numColumns
+    if (magic/='P6') call ErrorStop('unexpected PPM magic, `P6` expected')
+    read(unit, *) numRows, numCols
     read(unit, *) colorRange
-    if (colorRange/=255) &
-      error stop 'unsupported PPM color range value, "255" expected'
+    if (colorRange/=255) call ErrorStop('unsupported PPM color range value, "255" expected')
     inquire(unit, pos=offset)
     close(unit)
   end block
@@ -118,17 +115,16 @@ subroutine Load_PPM(file, image)
   ! ----------------------
   block
     character :: byte, bytes(3)
-    integer(ip) :: iRow, iColumn, iColorChannel
-    allocate(image(0:numRows-1, 0:numColumns-1))
-    open(newunit=unit, file=file, &
-         access='stream', status='old')
+    integer(ip) :: row, col, rgb
+    allocate(image(0:(numRows-1),0:(numCols-1)))
+    open(newunit=unit, file=file, access='stream', status='old')
     read(unit, pos=offset-1) byte
-    do iColumn = numColumns-1, 0, -1
-      do iRow = 0, numRows-1
-        do iColorChannel = 1, 3
-          read(unit) byte; bytes(iColorChannel) = byte
+    do col = numCols - 1, 0, -1
+      do row = 0, numRows - 1
+        do rgb = 1, 3
+          read(unit) byte; bytes(rgb) = byte
         end do
-        image(iRow, iColumn) = PixelToInt(iachar(bytes))
+        image(row,col) = RgbToInt(iachar(bytes))
       end do
     end do
     close(unit)
@@ -144,7 +140,7 @@ subroutine Save_PPM(file, image)
 
   integer(ip) :: unit
   character :: bytes(3)
-  integer(ip) :: iRow, numRows, iColumn, numColumns
+  integer(ip) :: row, numRows, col, numCols
   
   open(newunit=unit, file=file, access='stream', status='replace')
 
@@ -152,17 +148,17 @@ subroutine Save_PPM(file, image)
   ! Write PPM header.
   ! ----------------------
   numRows = size(image, dim=1) 
-  numColumns = size(image, dim=2)
+  numCols = size(image, dim=2)
   write(unit) 'P6'//char(10)
-  write(unit) I2S(numRows)//' '//I2S(numColumns)//char(10)
+  write(unit) I2S(numRows)//' '//I2S(numCols)//char(10)
   write(unit) '255'//char(10)
   
   ! ----------------------
   ! Write PPM image image.
   ! ----------------------
-  do iColumn = 1, numColumns
-    do iRow = 1, numRows
-      bytes(:) = achar( IntToPixel(image(iRow, iColumn)) )
+  do col = 1, numCols
+    do row = 1, numRows
+      bytes(:) = achar(IntToRgb(image(row,col)))
       write(unit) bytes(1)
       write(unit) bytes(2)
       write(unit) bytes(3)
@@ -170,6 +166,7 @@ subroutine Save_PPM(file, image)
   end do
 
   close(unit)
+
 end subroutine Save_PPM
 
 end module StormRuler_IO

@@ -372,27 +372,27 @@ end function MergeString
 !! ----------------------------------------------------------------- !!
 !! Convert RGB pixel to integer.
 !! ----------------------------------------------------------------- !!
-pure function PixelToInt(colorChannels) result(int)
-  integer(ip), intent(in) :: colorChannels(3)
+pure function RgbToInt(rgb) result(int)
+  integer(ip), intent(in) :: rgb(3)
   integer(ip) :: int
   
-  int = ior(iand(255, colorChannels(1)), &
-    &       ior(ishft(iand(255, colorChannels(2)), 8), &
-    &           ishft(iand(255, colorChannels(3)), 16)))
+  int = ior(iand(255, rgb(1)), &
+    &   ior(ishft(iand(255, rgb(2)), 8), &
+    &       ishft(iand(255, rgb(3)), 16)))
 
-end function PixelToInt
+end function RgbToInt
 
 !! ----------------------------------------------------------------- !!
 !! Convert integer(ip) to RGB pixel.
 !! ----------------------------------------------------------------- !!
-pure function IntToPixel(int) result(colorChannels)
+pure function IntToRgb(int) result(rgb)
   integer(ip), intent(in) :: int
-  integer(ip) :: colorChannels(3)
+  integer(ip) :: rgb(3)
 
-  colorChannels(1) = iand(255, int)
-  colorChannels(2) = iand(255, ishft(int, -8))
-  colorChannels(3) = iand(255, ishft(int, -16))
+  rgb(1) = iand(255, int)
+  rgb(2) = iand(255, ishft(int, -8))
+  rgb(3) = iand(255, ishft(int, -16))
 
-end function IntToPixel
+end function IntToRgb
 
 end module StormRuler_Helpers

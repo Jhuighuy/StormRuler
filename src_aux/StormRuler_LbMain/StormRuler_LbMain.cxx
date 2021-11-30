@@ -67,7 +67,7 @@ int main() {
   double total_time = 0.0;
 
   for (int time = 0; time <= 0*20+1*200000; ++time) {
-    for (int frac = 0; time != 0 && frac < 500; ++frac) {
+    for (int frac = 0; time != 0 && frac < 10; ++frac) {
 
       struct timespec start, finish;
 

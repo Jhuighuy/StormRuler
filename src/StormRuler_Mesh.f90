@@ -28,8 +28,9 @@ module StormRuler_Mesh
 
 use StormRuler_Parameters, only: dp, ip, i8
 
-use StormRuler_Helpers, only: ErrorStop, PrintLog, PrintWarning, &
-  & Flip, IndexOf, InsertTo, I2S, R2S, IntToPixel
+use StormRuler_Helpers, only: &
+  & ErrorStop, PrintLog, PrintWarning, &
+  & Flip, IndexOf, InsertTo, I2S, R2S, IntToRgb
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
 
 use, intrinsic :: iso_fortran_env, only: error_unit

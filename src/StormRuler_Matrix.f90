@@ -29,9 +29,10 @@ module StormRuler_Matrix
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Parameters, only: gUseMKL
 
-use StormRuler_Helpers, only: IndexOf, BubbleSort, DenseSolve
+use StormRuler_Helpers, only: IndexOf, BubbleSort, &
+  & InverseCompressMapping, DenseSolve
 
-use StormRuler_Mesh, only: tMesh
+use StormRuler_Mesh, only: tMesh, tKernelFunc
 use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Fill
@@ -83,6 +84,27 @@ contains
   procedure :: IsBlock => IsBlockMatrix
 
 end type tMatrix
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Parallelization information for the triangular solvers.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+type :: tParallelTriangularContext
+
+  ! ----------------------
+  ! Number of levels in the DAG.
+  ! ----------------------
+  integer(ip) :: NumLevels
+
+  integer(ip), allocatable :: LevelAddrs(:)
+
+  integer(ip), allocatable :: LevelRowIndices(:)
+
+end type tParallelTriangularContext
+
+interface SolveTriangular
+  module procedure SolveTriangular
+  module procedure ParallelSolveTriangular
+end interface SolveTriangular
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -306,6 +328,44 @@ end subroutine PartialMatrixVector
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
+!! ----------------------------------------------------------------- !!
+!! (Block-)diagonal solver helper.
+!! ----------------------------------------------------------------- !!
+subroutine SolveDiagHelper(rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), b(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (row == col) then
+      y(row) = b(col)/colCoeffs(rowAddr)
+      return
+    end if
+  end do
+
+end subroutine SolveDiagHelper
+subroutine SolveBlockDiagHelper(size, rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), b(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (row == col) then
+      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), b(:,col))
+      return
+    end if
+  end do
+
+end subroutine SolveBlockDiagHelper
+
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve equation 𝓓𝒚 = 𝒃, where 𝓓 is the (block-)diagonal of 𝓐.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -314,66 +374,163 @@ subroutine SolveDiag(mesh, mat, yArr, bArr)
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(inout) :: bArr, yArr
 
+  integer(ip) :: size
   real(dp), pointer :: b(:,:), y(:,:)
 
+  size = mat%BlockSize()
   call bArr%Get(b); call yArr%Get(y)
 
   !! TODO: Does the MKL implementation for this operation exist?
-
-  !! TODO: optimization in the non-block case.
-  call mesh%RunCellKernel(SolveDiag_Kernel)
+  if (size == 1) then
+    call mesh%RunCellKernel(SolveDiag_Kernel)
+  else
+    call mesh%RunCellKernel(SolveBlockDiag_Kernel)
+  end if
 
 contains
   subroutine SolveDiag_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      col = mat%ColIndices(rowAddr)
-      if (row == col) then
-        y(:,row) = DenseSolve(mat%ColCoeffs(:,:,rowAddr), b(:,col))
-        return
-      end if
-    end do
+    call SolveDiagHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
   end subroutine SolveDiag_Kernel
+  subroutine SolveBlockDiag_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    call SolveBlockDiagHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+
+  end subroutine SolveBlockDiag_Kernel
 end subroutine SolveDiag
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)lower triangular solver helper.
+!! ----------------------------------------------------------------- !!
+subroutine SolveLowerTriangHelper(rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), b(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(row) = 0.0
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (col < row) then
+      y(row) = y(row) + colCoeffs(rowAddr)*y(col)
+    else if (col == row) then
+      y(row) = (b(row) - y(row))/colCoeffs(rowAddr)
+      return
+    end if
+  end do
+
+end subroutine SolveLowerTriangHelper
+subroutine SolveBlockLowerTriangHelper(size, rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), b(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(:,row) = 0.0
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (col < row) then
+      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), y(:,col))
+    else if (col == row) then
+      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
+      return
+    end if
+  end do
+
+end subroutine SolveBlockLowerTriangHelper
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)upper triangular solver helper.
+!! ----------------------------------------------------------------- !!
+subroutine SolveUpperTriangHelper(rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), b(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(row) = 0.0
+
+  do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
+    col = colIndices(rowAddr)
+    if (col > row) then
+      y(row) = y(row) + colCoeffs(rowAddr)*y(col)
+    else if (col == row) then
+      y(row) = (b(row) - y(row))/colCoeffs(rowAddr)
+      return
+    end if
+  end do
+
+end subroutine SolveUpperTriangHelper
+subroutine SolveBlockUpperTriangHelper(size, rowAddrs, colIndices, colCoeffs, y, b, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), b(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(:,row) = 0.0
+
+  do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
+    col = colIndices(rowAddr)
+    if (col > row) then
+      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), y(:,col))
+    else if (col == row) then
+      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
+      return
+    end if
+  end do
+
+end subroutine SolveBlockUpperTriangHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃,
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine SolveTrianular(mesh, part, mat, yArr, bArr)
+subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: yArr
   character, intent(in) :: part
 
-  integer(ip) :: row
+  integer(ip) :: size, row
   real(dp), pointer :: b(:,:), y(:,:)
 
+  size = mat%BlockSize()
   call bArr%Get(b); call yArr%Get(y)
 
 #$if HAS_MKL
   if (gUseMKL) then
     select case(part)
       case('l', 'L')
-        if (mat%IsBlock()) then
-          call mkl_dbsrtrsv('L', 'N', 'N', mesh%NumCells, mat%BlockSize(), &
+        if (size == 1) then
+          call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         else
-          call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
+          call mkl_dbsrtrsv('L', 'N', 'N', mesh%NumCells, size, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         end if
       case('u', 'U')
-        if (mat%IsBlock()) then
-          call mkl_dbsrtrsv('U', 'N', 'N', mesh%NumCells, mat%BlockSize(), &
+        if (size == 1) then
+          call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         else
-          call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
+          call mkl_dbsrtrsv('U', 'N', 'N', mesh%NumCells, size, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         end if
     end select
@@ -381,59 +538,242 @@ subroutine SolveTrianular(mesh, part, mat, yArr, bArr)
   end if
 #$end if
 
-  !! TODO: optimization in the non-block case.
   select case(part)
     case('l', 'L')
-      do row = 1, mesh%NumCells
-        call SolveLowerTrianular_SeqKernel(row)
-      end do
+      if (size == 1) then
+        do row = 1, mesh%NumCells
+          call SolveLowerTriangular_SeqKernel(row)
+        end do
+      else
+        do row = 1, mesh%NumCells
+          call SolveBlockLowerTriangular_SeqKernel(row)
+        end do
+      end if
     case('u', 'U')
-      do row = mesh%NumCells, 1, -1
-        call SolveUpperTrianular_SeqKernel(row)
-      end do
+      if (size == 1) then
+        do row = mesh%NumCells, 1, -1
+          call SolveUpperTriangular_SeqKernel(row)
+        end do
+      else
+        do row = mesh%NumCells, 1, -1
+          call SolveBlockUpperTriangular_SeqKernel(row)
+        end do
+      end if
   end select
 
 contains
-  subroutine SolveLowerTrianular_SeqKernel(row)
+  subroutine SolveLowerTriangular_SeqKernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
+    call SolveLowerTriangHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
-    y(:,row) = 0.0
+  end subroutine SolveLowerTriangular_SeqKernel
+  subroutine SolveBlockLowerTriangular_SeqKernel(row)
+    integer(ip), intent(in) :: row
 
+    call SolveBlockLowerTriangHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+
+  end subroutine SolveBlockLowerTriangular_SeqKernel
+  subroutine SolveUpperTriangular_SeqKernel(row)
+    integer(ip), intent(in) :: row
+
+    call SolveUpperTriangHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+
+  end subroutine SolveUpperTriangular_SeqKernel
+  subroutine SolveBlockUpperTriangular_SeqKernel(row)
+    integer(ip), intent(in) :: row
+
+    call SolveBlockUpperTriangHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+
+  end subroutine SolveBlockUpperTriangular_SeqKernel
+end subroutine SolveTriangular
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Initialize the parallel triangular context.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine InitParallelContext(mesh, part, mat, ctx)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tParallelTriangularContext), intent(inout) :: ctx
+  character, intent(in) :: part
+
+  integer(ip) :: row, width
+  integer(ip), allocatable :: rowLevels(:)
+
+  ctx%NumLevels = 0
+  allocate(rowLevels(mesh%NumCells))
+  rowLevels(:) = 0
+  select case(part)
+    case('l', 'L')
+      do row = 1, mesh%NumCells
+        call InitParallelLowerTriangularContext_SeqKernel(row)
+      end do
+    case('u', 'U')
+      do row = mesh%NumCells, 1, -1
+        call InitParallelUpperTriangularSolver_SeqKernel(row)
+      end do
+  end select
+
+  call InverseCompressMapping(ctx%LevelAddrs, &
+    & ctx%LevelRowIndices, ctx%NumLevels, rowLevels, width)
+  
+  print *, 'num levels: ', ctx%NumLevels, 'width: ', width
+
+contains
+  subroutine InitParallelLowerTriangularContext_SeqKernel(row)
+    integer(ip), intent(in) :: row
+
+    integer(ip) :: rowAddr, col, level
+
+    rowLevels(row) = 0
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
       col = mat%ColIndices(rowAddr)
       if (col < row) then
-        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), y(:,col))
-        !y(1,row) = y(1,row) + mat%ColCoeffs(1,1,rowAddr)*y(1,col)
+        rowLevels(row) = max(rowLevels(row), rowLevels(col))
       else if (col == row) then
-        y(:,row) = DenseSolve(mat%ColCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
-        !y(1,row) = (b(1,row) - y(1,row))/mat%ColCoeffs(1,1,rowAddr)
+        rowLevels(row) = rowLevels(row) + 1
+        ctx%NumLevels = max(ctx%NumLevels, rowLevels(row))
         return
       end if
     end do
 
-  end subroutine SolveLowerTrianular_SeqKernel
-  subroutine SolveUpperTrianular_SeqKernel(row)
+
+  end subroutine InitParallelLowerTriangularContext_SeqKernel
+  subroutine InitParallelUpperTriangularSolver_SeqKernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
+    integer(ip) :: rowAddr, col, level
 
-    y(:,row) = 0.0
-
+    rowLevels(row) = 0
     do rowAddr = mat%RowAddrs(row + 1) - 1, mat%RowAddrs(row), -1
       col = mat%ColIndices(rowAddr)
       if (col > row) then
-        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), y(:,col))
-        !y(1,row) = y(1,row) + mat%ColCoeffs(1,1,rowAddr)*y(1,col)
+        rowLevels(row) = max(rowLevels(row), rowLevels(col))
       else if (col == row) then
-        y(:,row) = DenseSolve(mat%ColCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
-        !y(1,row) = (b(1,row) - y(1,row))/mat%ColCoeffs(1,1,rowAddr)
+        rowLevels(row) = rowLevels(row) + 1
+        ctx%NumLevels = max(ctx%NumLevels, rowLevels(row))
         return
       end if
     end do
 
-  end subroutine SolveUpperTrianular_SeqKernel
-end subroutine SolveTrianular
+  end subroutine InitParallelUpperTriangularSolver_SeqKernel
+end subroutine InitParallelContext
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃,
+!! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
+!! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
+  class(tMesh), intent(in) :: mesh
+  class(tMatrix), intent(in) :: mat
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: yArr
+  class(tParallelTriangularContext), intent(inout) :: ctx
+  character, intent(in) :: part
+
+  integer(ip) :: size
+  real(dp), pointer :: b(:,:), y(:,:)
+
+  !call SolveTriangular(mesh, part, mat, yArr, bArr)
+  !return
+
+  size = mat%BlockSize()
+  call bArr%Get(b); call yArr%Get(y)
+
+  select case(part)
+    case('l', 'L')
+      if (size == 1) then
+        call ParallelSolveLowerTriangular()
+      else
+        call ParallelSolveBlockLowerTriangular()
+      end if
+    case('u', 'U')
+      if (size == 1) then
+        call ParallelSolveUpperTriangular()
+      else
+        call ParallelSolveBlockUpperTriangular()
+      end if
+  end select
+
+contains
+  subroutine ParallelSolveLowerTriangular()
+    integer(ip) :: row, level, levelAddr
+
+    !$omp parallel
+    do level = 1, ctx%NumLevels
+      !$omp do private(row,levelAddr) schedule(static)
+      do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
+
+        row = ctx%LevelRowIndices(levelAddr)
+        call SolveLowerTriangHelper( &
+          & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+
+      end do
+      !$omp end do
+    end do
+    !$omp end parallel
+
+  end subroutine ParallelSolveLowerTriangular
+  subroutine ParallelSolveBlockLowerTriangular()
+    integer(ip) :: row, level, levelAddr
+
+    !$omp parallel
+    do level = 1, ctx%NumLevels
+      !$omp do private(row,levelAddr) schedule(static)
+      do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
+        
+        row = ctx%LevelRowIndices(levelAddr)
+        call SolveBlockLowerTriangHelper(size, &
+          & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+  
+      end do
+      !$omp end do
+    end do
+    !$omp end parallel
+
+  end subroutine ParallelSolveBlockLowerTriangular
+  subroutine ParallelSolveUpperTriangular()
+    integer(ip) :: row, level, levelAddr
+
+    !$omp parallel
+    do level = 1, ctx%NumLevels
+      !$omp do private(row,levelAddr) schedule(static)
+      do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
+  
+        row = ctx%LevelRowIndices(levelAddr)
+        call SolveUpperTriangHelper( &
+          & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+  
+      end do
+      !$omp end do
+    end do
+    !$omp end parallel
+
+  end subroutine ParallelSolveUpperTriangular
+  subroutine ParallelSolveBlockUpperTriangular()
+
+    integer(ip) :: row, level, levelAddr
+
+    !$omp parallel
+    do level = 1, ctx%NumLevels
+      !$omp do private(row,levelAddr) schedule(static)
+      do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
+
+        row = ctx%LevelRowIndices(levelAddr)
+        call SolveBlockUpperTriangHelper(size, &
+          & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
+  
+      end do
+      !$omp end do
+    end do
+    !$omp end parallel
+
+  end subroutine ParallelSolveBlockUpperTriangular
+end subroutine ParallelSolveTriangular
 
 end module StormRuler_Matrix

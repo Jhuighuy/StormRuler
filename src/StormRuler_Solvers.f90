@@ -126,11 +126,11 @@ contains
     if (preMethod == 'extr') then; block
       type(tMatrixLabeling), save :: labeling
       !type(tPreconditioner_ILU0_MKL) :: prepre
-      !type(tPreconditioner_LU_SGS) :: prepre
-      type(tPreconditioner_AINV) :: prepre
+      type(tPreconditioner_LU_SGS), save :: prepre
+      !type(tPreconditioner_AINV) :: prepre
 
       if (labeling%NumLabels == 0) then
-        call InitMatrix(mesh, mat, 1)
+        call InitMatrix(mesh, mat, 2)
         call LabelColumns_Patterned(mesh, mat, labeling)
       end if
       call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
@@ -140,7 +140,7 @@ contains
       !call Solve_BiCGStab(mesh, x, f, uMatVec, params)
       call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
 
-      error stop 229
+      !error stop 229
       return
 
     end block; end if

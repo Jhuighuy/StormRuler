@@ -244,7 +244,7 @@ Legend:
   - [ ] 🪓 Dense direct solver,
   - [ ] 🪓 Sparse-approximate direct solver,
   - [x] 🧸 Sequential triangular solvers,
-  - [ ] 🚬 Parallel DAG-based triangular solvers,
+  - [x] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
   - [ ] 🦜 Built-in direct solver.
 

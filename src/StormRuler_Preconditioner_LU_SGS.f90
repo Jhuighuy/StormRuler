@@ -34,8 +34,8 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
-use StormRuler_Matrix, only: tMatrix, &
-  & PartialMatrixVector, SolveDiag, SolveTrianular
+use StormRuler_Matrix, only: tMatrix, tParallelTriangularContext, &
+  & PartialMatrixVector, SolveDiag, InitParallelContext, SolveTriangular
 use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -77,6 +77,7 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_LU_SGS
   type(tMatrix), pointer, private :: Mat => null()
+  type(tParallelTriangularContext), private :: LowerCtx, UpperCtx
 
 contains
   procedure :: SetMatrix => SetPreconditionerMatrix_LU_SGS
@@ -113,6 +114,11 @@ subroutine InitPreconditioner_LU_SGS(pre, mesh, MatVec)
     error stop 'Matrix for the LU-SGS preconditioner is not set.'
   end if
 
+  if (.not.allocated(pre%LowerCtx%LevelAddrs)) &
+    & call InitParallelContext(mesh, 'L', pre%mat, pre%LowerCtx)
+  if (.not.allocated(pre%UpperCtx%LevelAddrs)) &
+    & call InitParallelContext(mesh, 'U', pre%mat, pre%UpperCtx)
+
 end subroutine InitPreconditioner_LU_SGS
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -139,9 +145,9 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   ! 𝒕 ← 𝓓𝒚,
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
-  call SolveTrianular(mesh, 'L', pre%Mat, yArr, xArr)
+  call SolveTriangular(mesh, 'L', pre%Mat, pre%LowerCtx, yArr, xArr)
   call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-  call SolveTrianular(mesh, 'U', pre%Mat, yArr, tArr)
+  call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)
 
   do k = 2, gMaxIterLU_SGS
     ! ----------------------
@@ -155,9 +161,9 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
     call SolveDiag(mesh, pre%Mat, yArr, tArr)
     call PartialMatrixVector(mesh, 'L', pre%Mat, tArr, yArr)
     call Add(mesh, tArr, tArr, xArr)
-    call SolveTrianular(mesh, 'L', pre%Mat, yArr, tArr)
+    call SolveTriangular(mesh, 'L', pre%Mat, pre%LowerCtx, yArr, tArr)
     call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-    call SolveTrianular(mesh, 'U', pre%Mat, yArr, tArr)
+    call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)
   end do
 
 end subroutine ApplyPreconditioner_LU_SGS

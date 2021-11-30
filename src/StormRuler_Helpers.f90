@@ -232,6 +232,40 @@ end subroutine InsertTo
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
+!! ----------------------------------------------------------------- !!
+subroutine InverseCompressMapping(addrs, indices, num, mapping, width)
+  integer(ip), intent(inout), allocatable :: addrs(:), indices(:)
+  integer(ip), intent(in) :: num, mapping(:)
+  integer(ip), intent(out), optional :: width
+
+  integer(ip) :: i, j
+
+  allocate(addrs(num + 1), indices(size(mapping)))
+
+  addrs(1) = 1; addrs(2:) = 0
+  do i = 1, size(mapping)
+    j = mapping(i)
+    addrs(j + 1) = addrs(j + 1) + 1
+  end do
+  if (present(width)) width = 1
+  do j = 1, num
+    if (present(width)) width = max(width, addrs(j + 1))
+    addrs(j + 1) = addrs(j + 1) + addrs(j)
+  end do
+
+  do i = 1, size(mapping)
+    j = mapping(i)
+    indices(addrs(j)) = i
+    addrs(j) = addrs(j) + 1
+  end do
+  addrs = cshift(addrs, shift=-1); addrs(1) = 1
+
+end subroutine InverseCompressMapping
+
+!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
+!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
 !! Ensure the value is positive.
 !! ----------------------------------------------------------------- !!
 subroutine EnsurePositive(value)

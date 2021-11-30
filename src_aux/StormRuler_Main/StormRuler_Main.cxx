@@ -137,7 +137,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve(mesh, STORM_BiCGStab, "extr", c_hat, rhs, 
+  stormLinSolve(mesh, STORM_BiCGStab, /*STORM_NONE*/"extr", c_hat, rhs, 
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -296,7 +296,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve(mesh, STORM_CG, STORM_NONE, p_hat, rhs,
+  stormLinSolve(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

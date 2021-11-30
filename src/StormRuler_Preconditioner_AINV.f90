@@ -34,7 +34,7 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
 use StormRuler_Matrix, only: tMatrix, &
-  & PartialMatrixVector, SolveDiag, SolveTrianular
+  & PartialMatrixVector, SolveDiag
 use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -67,6 +67,7 @@ use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 !! Due to the fill-in phenomena, matrix 𝓩 needs to be sparsified.
 !! In the current implementation we limit the sparsity pattern of 𝓩 
 !! to the sparsity pattern of the powers of the original matrix 𝓐.
+!! Original implementation in [1] uses the a approach. 
 !!
 !! AINV initialization algorithm:
 !!

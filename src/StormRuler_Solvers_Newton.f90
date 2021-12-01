@@ -141,13 +141,19 @@ end subroutine Solve_Newton
 !!
 !! Expression above may be used as the formula for computing
 !! the (approximate) Jacobian-vector products. Parameter 𝛿 is commonly 
-!! defined as:
+!! defined as [1]:
 !!
 !! 𝛿 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²⋅‖𝒚‖⁺,
 !!
-!! where 𝜀ₘ is the machine roundoff.
+!! where 𝜀ₘ is the machine roundoff, ‖𝒚‖⁺ is the pseudo-inverse to ‖𝒚‖.
+!!
+!! References:
+!! [1] Liu, Wei, Lilun Zhang, Ying Zhong, Yongxian Wang, 
+!!     Yonggang Che, Chuanfu Xu and Xinghua Cheng. 
+!!     “CFD High-order Accurate Scheme JFNK Solver.” 
+!!     Procedia Engineering 61 (2013): 9-15.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_JFNK_1(mesh, MatVec, xArr, bArr, params)
+subroutine Solve_JFNK(mesh, MatVec, xArr, bArr, params)
   class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: xArr
@@ -207,68 +213,6 @@ contains
     call Sub(mesh, zArr, zArr, wArr, delta, delta)
 
   end subroutine ApproxJacobianMatVecWithX
-end subroutine Solve_JFNK_1
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! using the Jacobian free-Newton-Krylov method.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_JFNK(mesh, MatVec, xArr, bArr, params)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: bArr
-  class(tArray), intent(inout) :: xArr
-  class(tConvParams), intent(inout) :: params
-  procedure(tMatVecFunc) :: MatVec
-
-  type(tArray) :: tArr, yArr, zArr
-
-  !! TODO: reimplement me in the optimized manner!
-
-  call AllocArray(tArr, yArr, zArr, mold=xArr)
-
-  call Solve_Newton(mesh, MatVec, ApproxJacMatVec_1, xArr, bArr, params)
-
-contains
-  subroutine ApproxJacMatVec_1(mesh, Jx, xArr, xTildeArr)
-    class(tMesh), intent(in), target :: mesh
-    class(tArray), intent(inout), target :: xArr, xTildeArr, Jx
-
-    real(dp), parameter :: epsilon = 1e-6_dp
-
-    !! TODO: selection of 𝜀 is missing! 
-
-    ! ----------------------
-    ! Consider the first-order jacobian approximation:
-    ! 𝓐(𝒙₀ + 𝜀𝒙) = 𝓐(𝒙₀) + 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + 𝓞(𝜀²),
-    ! 𝓙(𝒙₀)𝒙 ≈ [𝓐(𝒙₀ + 𝜀𝒙) - 𝓐(𝒙₀)]/𝜀 = (∂𝓐(𝒙₀)/∂𝒙)𝒙 + 𝓞(𝜀).
-    ! ----------------------
-
-    ! ----------------------
-    ! 𝒕 ← 𝒙₀ + 𝜀𝒙.
-    ! 𝒚 ← 𝓐(𝒙₀), 𝒛 ← 𝓐(𝒕),
-    ! 𝓙𝒙 ← (1/𝜀)𝒛 - (1/𝜀)𝒚.
-    ! ----------------------
-    call Add(mesh, tArr, xTildeArr, xArr, epsilon)
-    call MatVec(mesh, yArr, xTildeArr); call MatVec(mesh, zArr, tArr)
-    call Sub(mesh, Jx, zArr, yArr, 1.0_dp/epsilon, 1.0_dp/epsilon)
-
-  end subroutine ApproxJacMatVec_1
-!  subroutine ApproxJacMatVec_2(mesh, Jx, xArr, xTildeArr)
-!    class(tMesh), intent(inout), target :: mesh
-!    class(tArray), intent(inout), target :: xArr, xTildeArr, Jx
-!
-!    real(dp), parameter :: epsilon = 1e-6_dp
-!
-!    ! ----------------------
-!    ! Consider the second-order jacobian approximation:
-!    ! 𝓐(𝒙₀ + 𝜀𝒙) = 𝓐(𝒙₀) + 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
-!    ! 𝓐(𝒙₀ - 𝜀𝒙) = 𝓐(𝒙₀) - 𝜀(∂𝓐(𝒙₀)/∂𝒙)𝒙 + ½𝜀²(∂²𝓐(𝒙₀)/∂𝒙²)𝒙² + 𝓞(𝜀³),
-!    ! 𝓙(𝒙₀)𝒙 ≈ [𝓐(𝒙₀ + 𝜀𝒙) - 𝓐(𝒙₀ - 𝜀𝒙)]/(2𝜀) = (∂𝓐(𝒙₀)/∂𝒙)𝒙 + 𝓞(𝜀²).
-!    ! ----------------------
-!
-!    error stop 'unimplemented'
-!
-!  end subroutine ApproxJacMatVec_2
 end subroutine Solve_JFNK
 
 end module StormRuler_Solvers_Newton

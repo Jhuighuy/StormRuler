@@ -81,8 +81,6 @@ products.
     (`GMRES`, for the general linear problems),
   * _(planned)_ Flexible Generalized Minimal Residual method solver
     (`FGMRES`, for the general linear problems),
-  * _(planned)_ Quasi-Minimal Residual solver
-    (`QMR`, for the general linear problems);
   * _(planned)_ Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
 
@@ -202,7 +200,6 @@ Legend:
   - [ ] 💄 Some better residual monitor,
   - [x] 🚬 `GMRES` solver implementation,
   - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
-  - [ ] 🪓 `QMR` solver implementation,
   - [ ] 🪓 `TFQMR` solver implementation.
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🪓 `FGMRES` solver implementation,
@@ -255,5 +252,4 @@ Legend:
   - [x] 🧸 Jacobian-Free Newton-Raphson solver,
   - [x] 🧻 Optimized first order JFNK,
   - [x] 🧸 Select an epsilon in the first order JFNK,
-  - [ ] 🧸 Second order JFNK solver,
   - [ ] 🦜 Nonlinear preconditioning..

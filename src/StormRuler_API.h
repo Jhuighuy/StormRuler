@@ -241,7 +241,6 @@ typedef void(*stormMatVecFunc_t)(stormMesh_t mesh,
 #define STORM_BiCGStab "BiCGStab"
 #define STORM_MINRES   "MINRES"
 #define STORM_GMRES    "GMRES"
-#define STORM_QMR      "QMR"
 #define STORM_TFQMR    "TFQMR"
 #define STORM_LSQR     "LSQR"
 #define STORM_LSMR     "LSMR"

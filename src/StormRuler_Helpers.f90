@@ -290,7 +290,7 @@ subroutine EnsureNonNegative(value)
 end subroutine EnsureNonNegative
 
 !! ----------------------------------------------------------------- !!
-!! Compute pseudo inverse: 𝑎⁺ ← 1/𝑎 𝗶𝗳 𝑎 ≠ 0 𝗲𝗹𝘀𝗲 0.
+!! Compute pseudo-inverse: 𝑎⁺ ← 1/𝑎 𝗶𝗳 𝑎 ≠ 0 𝗲𝗹𝘀𝗲 0.
 !! ----------------------------------------------------------------- !!
 pure real(dp) elemental function SafeInverse(a)
   real(dp), intent(in) :: a
@@ -300,7 +300,7 @@ pure real(dp) elemental function SafeInverse(a)
 end function SafeInverse
 
 !! ----------------------------------------------------------------- !!
-!! Divide with pseudo inverse: 𝑑 ← 𝑏⁺⋅𝑎.
+!! Divide with pseudo-inverse: 𝑑 ← 𝑏⁺⋅𝑎.
 !! ----------------------------------------------------------------- !!
 real(dp) function SafeDivide(a, b)
   real(dp), intent(in) :: a, b

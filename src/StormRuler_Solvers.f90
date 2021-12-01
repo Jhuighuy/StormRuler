@@ -38,7 +38,7 @@ use StormRuler_ConvParams, only: tConvParams
 
 use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
-  & Solve_MINRES, Solve_GMRES, Solve_QMR, Solve_TFQMR
+  & Solve_MINRES, Solve_GMRES, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
 
 use StormRuler_Preconditioner, only: tPreconditioner
@@ -125,8 +125,8 @@ contains
     
     if (preMethod == 'extr') then; block
       type(tMatrixLabeling), save :: labeling
-      !type(tPreconditioner_ILU0_MKL) :: prepre
-      type(tPreconditioner_LU_SGS), save :: prepre
+      type(tPreconditioner_ILU0_MKL) :: prepre
+      !type(tPreconditioner_LU_SGS), save :: prepre
       !type(tPreconditioner_AINV) :: prepre
 
       if (labeling%NumLabels == 0) then
@@ -158,9 +158,6 @@ contains
       case('GMRES')
         params%Name = params%Name//'GMRES)'
         call Solve_GMRES(mesh, x, f, uMatVec, params, precond)
-      case('QMR')
-        params%Name = params%Name//'QMR)'
-        call Solve_QMR(mesh, x, f, uMatVec, params, precond)
       case('TFQMR')
         params%Name = params%Name//'TFQMR)'
         call Solve_TFQMR(mesh, x, f, uMatVec, params, precond)

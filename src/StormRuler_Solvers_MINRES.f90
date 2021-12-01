@@ -51,11 +51,6 @@ interface Solve_GMRES
   module procedure Solve_GMRES
 end interface Solve_GMRES
 
-interface Solve_QMR
-  module procedure Solve_QMR
-  module procedure Solve_SymmQMR
-end interface Solve_QMR
-
 interface Solve_TFQMR
   module procedure Solve_TFQMR
 end interface Solve_TFQMR
@@ -369,49 +364,6 @@ subroutine Solve_GMRES(mesh, xArr, bArr, MatVec, params, pre)
   end do
 
 end subroutine Solve_GMRES
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 
-!! the Quasi-Minimal Residual method (QMR).
-!! 
-!! References:
-!! [1] ???
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_QMR(mesh, xArr, bArr, &
-    & MatVec, ConjMatVec, params, pre, conjPre)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: bArr
-  class(tArray), intent(inout) :: xArr
-  class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: pre, conjPre
-  procedure(tMatVecFunc) :: MatVec, ConjMatVec
-
-  error stop 'QMR solver is not implemented.'
-
-end subroutine Solve_QMR
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
-!! the Quasi-Minimal Residual method (QMR).
-!! 
-!! Using QMR is not recommended in the self-adjoint case,
-!! please consider MINRES instead.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_SymmQMR(mesh, xArr, bArr, MatVec, params, pre)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: bArr
-  class(tArray), intent(inout) :: xArr
-  class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: pre
-  procedure(tMatVecFunc) :: MatVec
-
-  if (present(pre)) then
-    call Solve_QMR(mesh, xArr, bArr, MatVec, MatVec, params, pre, pre)
-  else
-    call Solve_QMR(mesh, xArr, bArr, MatVec, MatVec, params)
-  end if
-
-end subroutine Solve_SymmQMR
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 

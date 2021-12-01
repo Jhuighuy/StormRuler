@@ -126,8 +126,8 @@ contains
 end subroutine Solve_Newton
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! using the first order Jacobian free-Newton-Krylov method (JFNK(1)).
+!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃, using the first
+!! order Jacobian free-Newton-Krylov method (JFNK(1)).
 !!
 !! For the Newton iterations, computing of the Jacobian-vector
 !! products 𝒛 = 𝓙(𝒙)𝒚, where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 is required.
@@ -195,8 +195,8 @@ contains
     ! ----------------------
     ! Compute the Jacobian-vector product:
     ! 𝛿 ← 𝜇⋅‖𝒚‖⁺,
-    ! 𝒕 ← 𝒙 + 𝛿⋅𝒚,
-    ! 𝒛 ← 𝓐(𝒕),
+    ! 𝒔 ← 𝒙 + 𝛿⋅𝒚,
+    ! 𝒛 ← 𝓐(𝒔),
     ! 𝛿 ← 𝛿⁺,
     ! 𝒛 ← 𝛿⋅𝒛 - 𝛿⋅𝒘.
     ! ----------------------

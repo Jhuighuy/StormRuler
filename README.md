@@ -253,7 +253,7 @@ Legend:
   - [ ] 💄 Better API for the exact Newton-Raphson solver, 
   - [ ] 🦜 Relaxed Newton solver,
   - [x] 🧸 Jacobian-Free Newton-Raphson solver,
-  - [ ] 🧻 Optimized first order JFNK,
-  - [ ] 🧸 Select an epsilon in the first order JFNK,
+  - [x] 🧻 Optimized first order JFNK,
+  - [x] 🧸 Select an epsilon in the first order JFNK,
   - [ ] 🧸 Second order JFNK solver,
   - [ ] 🦜 Nonlinear preconditioning..

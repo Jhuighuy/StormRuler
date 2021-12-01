@@ -78,11 +78,6 @@ contains
   ! ----------------------
   procedure :: BlockSize => GetMatrixBlockSize
 
-  ! ----------------------
-  ! Check if matrix is a block matrix.
-  ! ----------------------
-  procedure :: IsBlock => IsBlockMatrix
-
 end type tMatrix
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -188,18 +183,44 @@ pure integer(ip) function GetMatrixBlockSize(mat) result(blockSize)
 
 end function GetMatrixBlockSize
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Check if matrix is block.
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-pure logical function IsBlockMatrix(mat)
-  class(tMatrix), intent(in) :: mat
-
-  IsBlockMatrix = mat%BlockSize() /= 1
-
-end function IsBlockMatrix
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)diagonal matrix-vector product helper.
+!! ----------------------------------------------------------------- !!
+subroutine MatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), x(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    y(row) = y(row) + colCoeffs(rowAddr)*x(col)
+  end do
+
+end subroutine MatrixVectorHelper
+subroutine BlockMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(:,row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), x(:,col))
+  end do
+
+end subroutine BlockMatrixVectorHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Sparse matrix-vector product: 𝒚 ← 𝓐𝒙.
@@ -210,41 +231,173 @@ subroutine MatrixVector(mesh, mat, yArr, xArr)
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
 
+  integer(ip) :: size
   real(dp), pointer :: x(:,:), y(:,:)
 
+  size = mat%BlockSize()
   call xArr%Get(x); call yArr%Get(y)
 
 #$if HAS_MKL
   if (gUseMKL) then
-    if (mat%IsBlock()) then
-      call mkl_dbsrgemv('N', mesh%NumCells, mat%BlockSize(), &
+    if (size == 1) then
+      call mkl_dcsrgemv('N', mesh%NumCells, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
     else
-      call mkl_dcsrgemv('N', mesh%NumCells, &
+      call mkl_dbsrgemv('N', mesh%NumCells, mat%BlockSize(), &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
     end if
     return
   end if
 #$end if
 
-  !! TODO: optimization in the non-block case.
-  call mesh%RunCellKernel(MatrixVector_Kernel)
+  if (size == 1) then
+    call mesh%RunCellKernel(MatrixVector_Kernel)
+  else
+    call mesh%RunCellKernel(BlockMatrixVector_Kernel)
+  end if
 
 contains
   subroutine MatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
-
-    y(:,row) = 0.0_dp
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      col = mat%ColIndices(rowAddr)
-      y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
-    end do
+    call MatrixVectorHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine MatrixVector_Kernel
+  subroutine BlockMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    call BlockMatrixVectorHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
+
+  end subroutine BlockMatrixVector_Kernel
 end subroutine MatrixVector
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)diagonal matrix-vector product helper.
+!! ----------------------------------------------------------------- !!
+subroutine DiagMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), x(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (row == col) then
+      y(row) = colCoeffs(rowAddr)*x(col)
+      return
+    end if
+  end do
+
+end subroutine DiagMatrixVectorHelper
+subroutine BlockDiagMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (row == col) then
+      y(:,row) = matmul(colCoeffs(:,:,rowAddr), x(:,col))
+      return
+    end if
+  end do
+
+end subroutine BlockDiagMatrixVectorHelper
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)lower triangular matrix-vector product helper.
+!! ----------------------------------------------------------------- !!
+subroutine LowerTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), x(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (col < row) then
+      y(row) = y(row) + colCoeffs(rowAddr)*x(col)
+    else
+      return
+    end if
+  end do
+
+end subroutine LowerTriangMatrixVectorHelper
+subroutine BlockLowerTriangMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(:,row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
+    col = colIndices(rowAddr)
+    if (col < row) then
+      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), x(:,col))
+    else
+      return
+    end if
+  end do
+
+end subroutine BlockLowerTriangMatrixVectorHelper
+
+!! ----------------------------------------------------------------- !!
+!! (Block-)upper triangular matrix-vector product helper.
+!! ----------------------------------------------------------------- !!
+subroutine UpperTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(*), x(*)
+  real(dp), intent(inout) :: y(*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
+    col = colIndices(rowAddr)
+    if (col > row) then
+      y(row) = y(row) + colCoeffs(rowAddr)*x(col)
+    else
+      return
+    end if
+  end do
+
+end subroutine UpperTriangMatrixVectorHelper
+subroutine BlockUpperTriangMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+  integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
+  real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
+  real(dp), intent(inout) :: y(size,*)
+  integer(ip), intent(in) :: row
+
+  integer(ip) :: rowAddr, col
+
+  y(:,row) = 0.0_dp
+
+  do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
+    col = colIndices(rowAddr)
+    if (col > row) then
+      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), x(:,col))
+    else
+      return
+    end if
+  end do
+
+end subroutine BlockUpperTriangMatrixVectorHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Sparse partial matrix-vector product: 𝒚 ← 𝓓𝒙, 𝒚 ← 𝓛𝒙 or 𝒚 ← 𝓤𝒙,
@@ -258,71 +411,77 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
   class(tArray), intent(inout) :: yArr
   character, intent(in) :: part
 
+  integer(ip) :: size
   real(dp), pointer :: x(:,:), y(:,:)
 
+  size = mat%BlockSize()
   call xArr%Get(x); call yArr%Get(y)
 
   !! TODO: Does the MKL implementation for these operation exist?
-
-  !! TODO: optimization in the non-block case.
   select case(part)
     case('d', 'D')
-      call mesh%RunCellKernel(DiagMatrixVector_Kernel)
+      if (size == 1) then
+        call mesh%RunCellKernel(DiagMatrixVector_Kernel)
+      else
+        call mesh%RunCellKernel(BlockDiagMatrixVector_Kernel)
+      end if
     case('l', 'L')
-      call mesh%RunCellKernel(LowerMatrixVector_Kernel)
+      if (size == 1) then
+        call mesh%RunCellKernel(LowerTriangularMatrixVector_Kernel)
+      else
+        call mesh%RunCellKernel(BlockLowerTriangularMatrixVector_Kernel)
+      end if
     case('u', 'U')
-      call mesh%RunCellKernel(UpperMatrixVector_Kernel)
+      if (size == 1) then
+        call mesh%RunCellKernel(UpperTriangularMatrixVector_Kernel)
+      else
+        call mesh%RunCellKernel(BlockUpperTriangularMatrixVector_Kernel)
+      end if
   end select
 
 contains
   subroutine DiagMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      col = mat%ColIndices(rowAddr)
-      if (col == row) then
-        y(:,row) = matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
-        return
-      end if
-    end do
+    call DiagMatrixVectorHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine DiagMatrixVector_Kernel
-  subroutine LowerMatrixVector_Kernel(row)
+  subroutine BlockDiagMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
+    call BlockDiagMatrixVectorHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
-    y(:,row) = 0.0_dp
-
-    do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
-      col = mat%ColIndices(rowAddr)
-      if (col < row) then
-        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
-      else
-        return
-      end if
-    end do
-
-  end subroutine LowerMatrixVector_Kernel
-  subroutine UpperMatrixVector_Kernel(row)
+  end subroutine BlockDiagMatrixVector_Kernel
+  subroutine LowerTriangularMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    integer(ip) :: rowAddr, col
+    call LowerTriangMatrixVectorHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
-    y(:,row) = 0.0_dp
+  end subroutine LowerTriangularMatrixVector_Kernel
+  subroutine BlockLowerTriangularMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
 
-    do rowAddr = mat%RowAddrs(row + 1) - 1, mat%RowAddrs(row), -1
-      col = mat%ColIndices(rowAddr)
-      if (col > row) then
-        y(:,row) = y(:,row) + matmul(mat%ColCoeffs(:,:,rowAddr), x(:,col))
-      else
-        return
-      end if
-    end do
+    call BlockLowerTriangMatrixVectorHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
-  end subroutine UpperMatrixVector_Kernel
+  end subroutine BlockLowerTriangularMatrixVector_Kernel
+  subroutine UpperTriangularMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    call UpperTriangMatrixVectorHelper( &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
+
+  end subroutine UpperTriangularMatrixVector_Kernel
+  subroutine BlockUpperTriangularMatrixVector_Kernel(row)
+    integer(ip), intent(in) :: row
+
+    call BlockUpperTriangMatrixVectorHelper(size, &
+      & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
+
+  end subroutine BlockUpperTriangularMatrixVector_Kernel
 end subroutine PartialMatrixVector
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -606,7 +765,6 @@ subroutine InitParallelContext(mesh, part, mat, ctx)
 
   ctx%NumLevels = 0
   allocate(rowLevels(mesh%NumCells))
-  rowLevels(:) = 0
   select case(part)
     case('l', 'L')
       do row = 1, mesh%NumCells
@@ -679,8 +837,8 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   integer(ip) :: size
   real(dp), pointer :: b(:,:), y(:,:)
 
-  !call SolveTriangular(mesh, part, mat, yArr, bArr)
-  !return
+  call SolveTriangular(mesh, part, mat, yArr, bArr)
+  return
 
   size = mat%BlockSize()
   call bArr%Get(b); call yArr%Get(y)

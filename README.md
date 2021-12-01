@@ -240,7 +240,7 @@ Legend:
   - [ ] 🦜 polynomial preconditioner.
 
 - Direct solvers:
-  - [ ] 🚬 Optimized partial solvers with MKL-comparable performance,
+  - [x] 🚬 Optimized partial matrix operations with MKL-comparable performance,
   - [ ] 🪓 Dense direct solver,
   - [ ] 🪓 Sparse-approximate direct solver,
   - [x] 🧸 Sequential triangular solvers,

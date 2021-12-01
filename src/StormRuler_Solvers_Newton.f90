@@ -120,6 +120,82 @@ end subroutine Solve_Newton
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
+!! using the first order Jacobian free-Newton-Krylov method.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+subroutine Solve_JFNK_1(mesh, MatVec, xArr, bArr, params)
+  class(tMesh), intent(in) :: mesh
+  class(tArray), intent(in) :: bArr
+  class(tArray), intent(inout) :: xArr
+  class(tConvParams), intent(inout) :: params
+  procedure(tMatVecFunc) :: MatVec
+
+  type(tArray) :: sArr, tArr, rArr, wArr
+  type(tConvParams) :: jacConvParams 
+
+  call AllocArray(sArr, tArr, rArr, wArr, mold=xArr)
+
+  ! ----------------------
+  ! Newton's method:
+  ! 𝓐(𝒚) ≈ 𝓐(𝒙) + 𝓙(𝒙)(𝒚 - 𝒙) = 𝒃, 
+  ! 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, 𝒚 ← 𝒙.
+  ! Alternative formulation:
+  ! 𝓙(𝒙)𝒕 = 𝒓, 𝒕 = 𝒚 - 𝒙, 𝒓 = 𝒃 - 𝓐(𝒙),
+  ! ----------------------
+
+  do
+    ! ----------------------
+    ! Compute residual:
+    ! 𝒘 ← 𝓐(𝒙),
+    ! 𝒓 ← 𝒃 - 𝒘,
+    ! Check convergence for ‖𝒓‖.
+    ! ----------------------
+    call MatVec(mesh, wArr, xArr)
+    call Sub(mesh, rArr, bArr, wArr)
+    if (params%Check(Norm_2(mesh, rArr))) exit
+
+    ! ----------------------
+    ! Solve the Jacobian equation:
+    ! 𝒕 ← 𝒓,
+    ! 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
+    ! 𝒙 ← 𝒙 + 𝒕.
+    ! ----------------------
+    call Set(mesh, tArr, rArr)
+    !! TODO: equation parameters!
+    call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
+    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, JacobianMatVecWithX, jacConvParams)
+    call Add(mesh, xArr, xArr, tArr)
+
+  end do
+
+contains
+  subroutine JacobianMatVecWithX(mesh, zArr, yArr)
+    class(tMesh), intent(in), target :: mesh
+    class(tArray), intent(inout), target :: yArr, zArr
+
+    real(dp), parameter :: epsilon = 1.0e-6_dp
+
+    ! ----------------------
+    ! Consider the first-order Jacobian approximation:
+    !
+    ! 𝓐(𝒙 + 𝜀𝒚) = 𝓐(𝒙) + 𝜀(∂𝓐(𝒙)/∂𝒙)𝒚 + 𝓞(𝜀²),
+    ! 𝓙(𝒙)𝒚 ≈ [𝓐(𝒙 + 𝜀𝒚) - 𝓐(𝒙)]/𝜀 = (∂𝓐(𝒙)/∂𝒙)𝒚 + 𝓞(𝜀).
+    !
+    ! ----------------------
+
+    ! ----------------------
+    ! 𝒕 ← 𝒙 + 𝜀𝒚,
+    ! 𝒛 ← 𝓐(𝒕),
+    ! 𝒛 ← (1/𝜀)𝒛 - (1/𝜀)𝒘.
+    ! ----------------------
+    call Add(mesh, sArr, xArr, yArr, epsilon)
+    call MatVec(mesh, zArr, sArr)
+    call Sub(mesh, zArr, zArr, wArr, 1.0_dp/epsilon, 1.0_dp/epsilon)
+
+  end subroutine JacobianMatVecWithX
+end subroutine Solve_JFNK_1
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
+!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
 !! using the Jacobian free-Newton-Krylov method.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_JFNK(mesh, MatVec, xArr, bArr, params)

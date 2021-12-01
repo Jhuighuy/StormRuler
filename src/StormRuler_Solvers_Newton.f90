@@ -27,6 +27,7 @@ module StormRuler_Solvers_Newton
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp
+use StormRuler_Helpers, only: SafeInverse, SafeDivide
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray
@@ -56,8 +57,22 @@ end interface Solve_JFNK
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, using the Newton's method.
+!! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃, using the Newton's 
+!! method.
+!!
+!! The classical Newton iterations are based on the following 
+!! on linearization of the 𝓐(𝒙) near 𝒙: 
+!!
+!! 𝓐(𝒙̂) ≈ 𝓐(𝒙) + [∂𝓐(𝒙)/∂𝒙](𝒙̂ - 𝒙) = 𝒃, 
+!!
+!! or, alternatively:
+!!
+!! [∂𝓐(𝒙)/∂𝒙]𝒕 = 𝒓, 𝒕 = 𝒙̂ - 𝒙, 𝒓 = 𝒃 - 𝓐(𝒙)
+!!
+!! where 𝒙 and 𝒙̂ are the current and updated solution vectors.
+!! Therefore, a linear equation has to be solved on each iteration,
+!! linear operator 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 for computing Jacobian-vector 
+!! products is required.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_Newton(mesh, MatVec, JacobianMatVec, xArr, bArr, params)
   class(tMesh), intent(in) :: mesh
@@ -72,14 +87,6 @@ subroutine Solve_Newton(mesh, MatVec, JacobianMatVec, xArr, bArr, params)
 
   call AllocArray(tArr, rArr, mold=xArr)
 
-  ! ----------------------
-  ! Newton's method:
-  ! 𝓐(𝒚) ≈ 𝓐(𝒙) + 𝓙(𝒙)(𝒚 - 𝒙) = 𝒃, 
-  ! 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, 𝒚 ← 𝒙.
-  ! Alternative formulation:
-  ! 𝓙(𝒙)𝒕 = 𝒓, 𝒕 = 𝒚 - 𝒙, 𝒓 = 𝒃 - 𝓐(𝒙),
-  ! ----------------------
-
   do
     ! ----------------------
     ! Compute residual:
@@ -92,7 +99,7 @@ subroutine Solve_Newton(mesh, MatVec, JacobianMatVec, xArr, bArr, params)
     if (params%Check(Norm_2(mesh, rArr))) exit
 
     ! ----------------------
-    ! Solve the Jacobian equation:
+    ! Solve the Jacobian equation (using the current residual as the initial guess):
     ! 𝒕 ← 𝒓,
     ! 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
     ! 𝒙 ← 𝒙 + 𝒕.
@@ -120,7 +127,25 @@ end subroutine Solve_Newton
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃,
-!! using the first order Jacobian free-Newton-Krylov method.
+!! using the first order Jacobian free-Newton-Krylov method (JFNK(1)).
+!!
+!! For the Newton iterations, computing of the Jacobian-vector
+!! products 𝒛 = 𝓙(𝒙)𝒚, where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 is required.
+!! Consider the expansion:
+!!
+!! 𝓐(𝒙 + 𝛿⋅𝒚) = 𝓐(𝒙) + 𝛿⋅[∂𝓐(𝒙)/∂𝒙]𝒚 + 𝓞(𝛿²),
+!!
+!! where 𝛿 is some small number. Therefore,
+!!
+!! 𝓙(𝒙)𝒚 = [𝓐(𝒙 + 𝛿⋅𝒚) - 𝓐(𝒙)]/𝛿 = [∂𝓐(𝒙)/∂𝒙]𝒚 + 𝓞(𝛿).
+!!
+!! Expression above may be used as the formula for computing
+!! the (approximate) Jacobian-vector products. Parameter 𝛿 is commonly 
+!! defined as:
+!!
+!! 𝛿 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²⋅‖𝒚‖⁺,
+!!
+!! where 𝜀ₘ is the machine roundoff.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 subroutine Solve_JFNK_1(mesh, MatVec, xArr, bArr, params)
   class(tMesh), intent(in) :: mesh
@@ -129,18 +154,11 @@ subroutine Solve_JFNK_1(mesh, MatVec, xArr, bArr, params)
   class(tConvParams), intent(inout) :: params
   procedure(tMatVecFunc) :: MatVec
 
+  real(dp) :: delta, mu
   type(tArray) :: sArr, tArr, rArr, wArr
   type(tConvParams) :: jacConvParams 
 
   call AllocArray(sArr, tArr, rArr, wArr, mold=xArr)
-
-  ! ----------------------
-  ! Newton's method:
-  ! 𝓐(𝒚) ≈ 𝓐(𝒙) + 𝓙(𝒙)(𝒚 - 𝒙) = 𝒃, 
-  ! 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙, 𝒚 ← 𝒙.
-  ! Alternative formulation:
-  ! 𝓙(𝒙)𝒕 = 𝒓, 𝒕 = 𝒚 - 𝒙, 𝒓 = 𝒃 - 𝓐(𝒙),
-  ! ----------------------
 
   do
     ! ----------------------
@@ -155,43 +173,40 @@ subroutine Solve_JFNK_1(mesh, MatVec, xArr, bArr, params)
 
     ! ----------------------
     ! Solve the Jacobian equation:
+    ! 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
     ! 𝒕 ← 𝒓,
     ! 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
     ! 𝒙 ← 𝒙 + 𝒕.
     ! ----------------------
+    mu = sqrt(epsilon(mu))*sqrt((1.0_dp + Norm_2(mesh, xArr)))
     call Set(mesh, tArr, rArr)
     !! TODO: equation parameters!
     call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, JacobianMatVecWithX, jacConvParams)
+    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, ApproxJacobianMatVecWithX, jacConvParams)
     call Add(mesh, xArr, xArr, tArr)
 
   end do
 
 contains
-  subroutine JacobianMatVecWithX(mesh, zArr, yArr)
+  subroutine ApproxJacobianMatVecWithX(mesh, zArr, yArr)
     class(tMesh), intent(in), target :: mesh
     class(tArray), intent(inout), target :: yArr, zArr
 
-    real(dp), parameter :: epsilon = 1.0e-6_dp
-
     ! ----------------------
-    ! Consider the first-order Jacobian approximation:
-    !
-    ! 𝓐(𝒙 + 𝜀𝒚) = 𝓐(𝒙) + 𝜀(∂𝓐(𝒙)/∂𝒙)𝒚 + 𝓞(𝜀²),
-    ! 𝓙(𝒙)𝒚 ≈ [𝓐(𝒙 + 𝜀𝒚) - 𝓐(𝒙)]/𝜀 = (∂𝓐(𝒙)/∂𝒙)𝒚 + 𝓞(𝜀).
-    !
-    ! ----------------------
-
-    ! ----------------------
-    ! 𝒕 ← 𝒙 + 𝜀𝒚,
+    ! Compute the Jacobian-vector product:
+    ! 𝛿 ← 𝜇⋅‖𝒚‖⁺,
+    ! 𝒕 ← 𝒙 + 𝛿⋅𝒚,
     ! 𝒛 ← 𝓐(𝒕),
-    ! 𝒛 ← (1/𝜀)𝒛 - (1/𝜀)𝒘.
+    ! 𝛿 ← 𝛿⁺,
+    ! 𝒛 ← 𝛿⋅𝒛 - 𝛿⋅𝒘.
     ! ----------------------
-    call Add(mesh, sArr, xArr, yArr, epsilon)
+    delta = SafeDivide(mu, Norm_2(mesh, yArr))
+    call Add(mesh, sArr, xArr, yArr, delta)
     call MatVec(mesh, zArr, sArr)
-    call Sub(mesh, zArr, zArr, wArr, 1.0_dp/epsilon, 1.0_dp/epsilon)
+    delta = SafeInverse(delta)
+    call Sub(mesh, zArr, zArr, wArr, delta, delta)
 
-  end subroutine JacobianMatVecWithX
+  end subroutine ApproxJacobianMatVecWithX
 end subroutine Solve_JFNK_1
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 

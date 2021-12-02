@@ -97,15 +97,15 @@ end interface
 
 abstract interface
   pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
-    import :: c_int, c_double
-    integer(c_int), intent(in), value :: size
+    import :: c_size_t, c_double
+    integer(c_size_t), intent(in), value :: size
     real(c_double), intent(in) :: x(*)
     real(c_double), intent(inout) :: Fx(*)
     type(*), intent(in) :: env
   end subroutine ctMapFunc
   pure subroutine ctSpMapFunc(dim, r, size, Fx, x, env) bind(C)
-    import :: c_int, c_double
-    integer(c_int), intent(in), value :: dim, size
+    import :: c_size_t, c_double
+    integer(c_size_t), intent(in), value :: dim, size
     real(c_double), intent(in) :: r(*), x(*)
     real(c_double), intent(inout) :: Fx(*)
     type(*), intent(in) :: env
@@ -542,7 +542,7 @@ pure function $Func(x) result(y)
   real(dp) :: y(size(x))
 
   y(:) = x(:)
-  call $cFunc(size(x), y, x, $env)
+  call $cFunc(size(x, kind=c_size_t), y, x, $env)
 
 end function $Func
 #$end macro
@@ -553,7 +553,7 @@ pure function $SpFunc(r, x) result(y)
   real(dp) :: y(size(x))
 
   y(:) = x(:)
-  call $cSpFunc(size(r), r, size(x), y, x, $env)
+  call $cSpFunc(size(r, kind=c_size_t), r, size(x, kind=c_size_t), y, x, $env)
 
 end function $SpFunc
 #$end macro

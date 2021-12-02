@@ -155,15 +155,21 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   do k = 2, gMaxIterLU_SGS
     ! ----------------------
     ! Full LU-SGS iterations:
-    ! 𝒕 ← 𝓤𝒚, 𝒚 ← 𝓓⁻¹𝒕, 𝒕 ← 𝓛𝒚, 𝒕 ← 𝒕 + 𝒙,
-    ! 𝒚 ← (𝓛 + 𝓓)⁻¹𝒕,
-    ! 𝒕 ← 𝓓𝒚,
-    ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
+    ! 𝒕 ← 𝓤𝒚, 
+    ! 𝒚 ← 𝓓⁻¹𝒕, 
+    ! 𝒕 ← 𝓛𝒚, 
+    ! 𝒕 ← 𝒕 + 𝒙,
     ! ----------------------
     call PartialMatrixVector(mesh, 'U', pre%Mat, tArr, yArr)
     call SolveDiag(mesh, pre%Mat, yArr, tArr)
     call PartialMatrixVector(mesh, 'L', pre%Mat, tArr, yArr)
     call Add(mesh, tArr, tArr, xArr)
+
+    ! ----------------------
+    ! 𝒚 ← (𝓛 + 𝓓)⁻¹𝒕,
+    ! 𝒕 ← 𝓓𝒚,
+    ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
+    ! ----------------------
     call SolveTriangular(mesh, 'L', pre%Mat, pre%LowerCtx, yArr, tArr)
     call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
     call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)

@@ -41,20 +41,20 @@
 
 // Detect C++.
 #if defined(__cplusplus)
-#define STORM_CXX17_ 1
+#define STORM_CXX14_ 1
 #else
-#define STORM_CXX17_ 0
+#define STORM_CXX14_ 0
 #endif
 
-#if STORM_C11_ && STORM_CXX17_
+#if STORM_C11_ && STORM_CXX14_
 #error StormRuler API: both C11 or C++17 targets found.
 #endif
 
-#if !STORM_C11_ && !STORM_CXX17_
+#if !STORM_C11_ && !STORM_CXX14_
 #error StormRuler API: neither C11 nor C++17 targets found.
 #endif
 
-#if STORM_CXX17_
+#if STORM_CXX14_
 #include <vector>
 #endif
 
@@ -73,21 +73,21 @@
 // Enable default arguments for C++.
 #if STORM_C11_
 #define _STORM_DEFAULT_(decl, ...) decl
-#elif STORM_CXX17_
+#elif STORM_CXX14_
 #define _STORM_DEFAULT_(decl, ...) decl = __VA_ARGS__
 #endif
 
 #if STORM_C11_
 #define STORM_API extern
 #define STORM_INL static
-#elif STORM_CXX17_
+#elif STORM_CXX14_
 #define STORM_API extern "C"
 #define STORM_INL inline
 #endif
 
 #if STORM_C11_
 #define STORM_NULL NULL
-#elif STORM_CXX17_
+#elif STORM_CXX14_
 #define STORM_NULL nullptr
 #endif
 
@@ -121,7 +121,7 @@ STORM_API stormArray_t SR_Alloc(
 STORM_API stormArray_t stormAllocOnMesh(stormMesh_t mesh,
                                         stormSize_t size,
                                         const stormSize_t* shape);
-#if STORM_CXX17_
+#if STORM_CXX14_
 STORM_INL stormArray_t stormAllocOnMesh(stormMesh_t mesh,
                                         const std::vector<stormSize_t>& shape) {
   return stormAllocOnMesh(mesh, shape.size(), shape.data());
@@ -138,7 +138,7 @@ STORM_INL void stormSwapP(stormOpaque_t* pX, stormOpaque_t* pY) {
   stormOpaque_t z = *pX; *pX = *pY, *pY = z;
 }
 #define stormSwap(x, y) stormSwapP((stormOpaque_t*)&(x), (stormOpaque_t*)&(y))
-#elif STORM_CXX17_
+#elif STORM_CXX14_
 #define stormSwap(x, y) std::swap(x, y)
 #endif
 /// @}
@@ -184,7 +184,7 @@ STORM_API void stormAdd(stormMesh_t mesh,
                         _STORM_DEFAULT_(stormReal_t alpha, 1.0),
                         _STORM_DEFAULT_(stormReal_t  beta, 1.0));
 
-// No need to import these from Fortran.
+// No need to import this from Fortran.
 STORM_INL void stormSub(stormMesh_t mesh,
                         stormArray_t z,
                         stormArray_t y,
@@ -199,8 +199,8 @@ STORM_API void stormMul(stormMesh_t mesh,
                         stormArray_t y,
                         stormArray_t x);
 
-typedef void(*stormMapFunc_t)(stormInt_t size,
-                              stormReal_t* Fx,
+typedef void(*stormMapFunc_t)(stormSize_t size,
+                              stormReal_t* y,
                               const stormReal_t* x,
                               stormOpaque_t env);
 
@@ -215,10 +215,10 @@ STORM_API void stormFuncProd(stormMesh_t mesh,
                              stormMapFunc_t f,
                              _STORM_DEFAULT_(stormOpaque_t env, STORM_NULL));
 
-typedef void(*stormSpMapFunc_t)(stormInt_t dim,
+typedef void(*stormSpMapFunc_t)(stormSize_t dim,
                                 const stormReal_t* r,
-                                stormInt_t size,
-                                stormReal_t* Fx,
+                                stormSize_t size,
+                                stormReal_t* y,
                                 const stormReal_t* x,
                                 stormOpaque_t env);
 
@@ -264,7 +264,7 @@ STORM_API void stormLinSolve(stormMesh_t mesh,
                              _STORM_DEFAULT_(stormMatVecFunc_t conjMatVec, STORM_NULL),
                              _STORM_DEFAULT_(stormOpaque_t conjEnv, STORM_NULL));
 
-#if STORM_CXX17_
+#if STORM_CXX14_
 /// @{
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormLinSolve(stormMesh_t mesh,
@@ -309,7 +309,7 @@ STORM_API void stormNonlinSolve(stormMesh_t mesh,
                                 stormMatVecFunc_t matVec,
                                 _STORM_DEFAULT_(stormOpaque_t env, STORM_NULL));
 
-#if STORM_CXX17_
+#if STORM_CXX14_
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormNonlinSolve(stormMesh_t mesh,
                                 stormString_t method,
@@ -395,7 +395,7 @@ STORM_API void stormLbmMacroscopics(stormMesh_t mesh,
                                     stormSize_t sizeOfM,
                                     const stormReal_t* m,
                                     stormArray_t f);
-#if STORM_CXX17_
+#if STORM_CXX14_
 STORM_INL void stormLbmMacroscopics(stormMesh_t mesh,
                                     stormArray_t rho,
                                     stormArray_t v,

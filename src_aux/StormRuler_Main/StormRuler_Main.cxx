@@ -71,7 +71,7 @@ extern double D1_W_vs_phi[101][2];
 extern double nPart_vs_phi[101][3];
 extern double mol_mass[2];
 
-void dWdC(int size, stormReal_t* Wc, const stormReal_t* c, void* env) {
+void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
   const stormReal_t x = *c;
 
 #if !YURI
@@ -101,7 +101,7 @@ void dWdC(int size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 #endif
 } // dWdC
 
-void Vol(int size, stormReal_t* Ic, const stormReal_t* c, void* env) {
+void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
   x = min(+1.0, max(-1.0, x));
@@ -169,13 +169,13 @@ static double mu_1 = 0.08, mu_2 = 0.08;
 static double rho_1 = 1.0, rho_2 = 1.0;
 #endif
 
-void InvRho(int size, stormReal_t* inv_rho, const stormReal_t* rho, void* env) {
+void InvRho(stormSize_t size, stormReal_t* inv_rho, const stormReal_t* rho, void* env) {
   *inv_rho = 1.0/(*rho);
 } // InvRho
 
 static int II;
 
-void NVsC(int size, stormReal_t* n, const stormReal_t* c, void* env) {
+void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
   x = max(0.0, min(1.0, x));
@@ -326,8 +326,8 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
 
 } // NavierStokes_VaD_Step
 
-void Initial_Data(int dim, const stormReal_t* r,
-    int size, stormReal_t* c, const stormReal_t* _, void* env) {
+void Initial_Data(stormSize_t dim, const stormReal_t* r,
+    stormSize_t size, stormReal_t* c, const stormReal_t* _, void* env) {
 
   static const stormReal_t L = 1.0;
   int in = 0;

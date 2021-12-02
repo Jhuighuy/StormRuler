@@ -41,8 +41,8 @@
 
 //static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
-void InitF(int dim, const stormReal_t* r,
-    int size, stormReal_t* f, const stormReal_t* _, void* __) {
+void InitF(stormSize_t dim, const stormReal_t* r,
+    stormSize_t size, stormReal_t* f, const stormReal_t* _, void* __) {
 
   f[0] += 1;
 

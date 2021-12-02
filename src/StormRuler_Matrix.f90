@@ -314,7 +314,8 @@ end subroutine BlockDiagMatrixVectorHelper
 !! ----------------------------------------------------------------- !!
 !! (Block-)lower triangular matrix-vector product helper.
 !! ----------------------------------------------------------------- !!
-subroutine LowerTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine LowerTriangMatrixVectorHelper( &
+    & rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(*), x(*)
   real(dp), intent(inout) :: y(*)
@@ -334,7 +335,8 @@ subroutine LowerTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, 
   end do
 
 end subroutine LowerTriangMatrixVectorHelper
-subroutine BlockLowerTriangMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine BlockLowerTriangMatrixVectorHelper(size, &
+    & rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
   real(dp), intent(inout) :: y(size,*)

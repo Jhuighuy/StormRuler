@@ -701,60 +701,60 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
     case('l', 'L')
       if (size == 1) then
         do row = 1, mesh%NumCells
-          call SolveLowerTriangular_SeqKernel(row)
+          call SolveLowerTriangular_Kernel(row)
         end do
       else
         do row = 1, mesh%NumCells
-          call SolveBlockLowerTriangular_SeqKernel(row)
+          call SolveBlockLowerTriangular_Kernel(row)
         end do
       end if
     case('u', 'U')
       if (size == 1) then
         do row = mesh%NumCells, 1, -1
-          call SolveUpperTriangular_SeqKernel(row)
+          call SolveUpperTriangular_Kernel(row)
         end do
       else
         do row = mesh%NumCells, 1, -1
-          call SolveBlockUpperTriangular_SeqKernel(row)
+          call SolveBlockUpperTriangular_Kernel(row)
         end do
       end if
   end select
 
 contains
-  subroutine SolveLowerTriangular_SeqKernel(row)
+  subroutine SolveLowerTriangular_Kernel(row)
     integer(ip), intent(in) :: row
 
     call SolveLowerTriangHelper( &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
-  end subroutine SolveLowerTriangular_SeqKernel
-  subroutine SolveBlockLowerTriangular_SeqKernel(row)
+  end subroutine SolveLowerTriangular_Kernel
+  subroutine SolveBlockLowerTriangular_Kernel(row)
     integer(ip), intent(in) :: row
 
     call SolveBlockLowerTriangHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
-  end subroutine SolveBlockLowerTriangular_SeqKernel
-  subroutine SolveUpperTriangular_SeqKernel(row)
+  end subroutine SolveBlockLowerTriangular_Kernel
+  subroutine SolveUpperTriangular_Kernel(row)
     integer(ip), intent(in) :: row
 
     call SolveUpperTriangHelper( &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
-  end subroutine SolveUpperTriangular_SeqKernel
-  subroutine SolveBlockUpperTriangular_SeqKernel(row)
+  end subroutine SolveUpperTriangular_Kernel
+  subroutine SolveBlockUpperTriangular_Kernel(row)
     integer(ip), intent(in) :: row
 
     call SolveBlockUpperTriangHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
 
-  end subroutine SolveBlockUpperTriangular_SeqKernel
+  end subroutine SolveBlockUpperTriangular_Kernel
 end subroutine SolveTriangular
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Initialize the parallel triangular context.
+!! Initialize the parallelization triangular context.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitParallelContext(mesh, part, mat, ctx)
+subroutine InitParallelTriangularContext(mesh, part, mat, ctx)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tParallelTriangularContext), intent(inout) :: ctx
@@ -768,26 +768,28 @@ subroutine InitParallelContext(mesh, part, mat, ctx)
   select case(part)
     case('l', 'L')
       do row = 1, mesh%NumCells
-        call InitParallelLowerTriangularContext_SeqKernel(row)
+        call InitParallelLowerTriangularContext_Kernel(row)
       end do
     case('u', 'U')
       do row = mesh%NumCells, 1, -1
-        call InitParallelUpperTriangularSolver_SeqKernel(row)
+        call InitParallelUpperTriangularContext_Kernel(row)
       end do
   end select
 
   call InverseCompressMapping(ctx%LevelAddrs, &
     & ctx%LevelRowIndices, ctx%NumLevels, rowLevels, width)
-  
+
+  !! TODO: decide if parallelization is worth-it.
   print *, 'num levels: ', ctx%NumLevels, 'width: ', width
 
 contains
-  subroutine InitParallelLowerTriangularContext_SeqKernel(row)
+  subroutine InitParallelLowerTriangularContext_Kernel(row)
     integer(ip), intent(in) :: row
 
     integer(ip) :: rowAddr, col, level
 
     rowLevels(row) = 0
+
     do rowAddr = mat%RowAddrs(row), mat%RowAddrs(row + 1) - 1
       col = mat%ColIndices(rowAddr)
       if (col < row) then
@@ -799,14 +801,14 @@ contains
       end if
     end do
 
-
-  end subroutine InitParallelLowerTriangularContext_SeqKernel
-  subroutine InitParallelUpperTriangularSolver_SeqKernel(row)
+  end subroutine InitParallelLowerTriangularContext_Kernel
+  subroutine InitParallelUpperTriangularContext_Kernel(row)
     integer(ip), intent(in) :: row
 
     integer(ip) :: rowAddr, col, level
 
     rowLevels(row) = 0
+
     do rowAddr = mat%RowAddrs(row + 1) - 1, mat%RowAddrs(row), -1
       col = mat%ColIndices(rowAddr)
       if (col > row) then
@@ -818,11 +820,11 @@ contains
       end if
     end do
 
-  end subroutine InitParallelUpperTriangularSolver_SeqKernel
-end subroutine InitParallelContext
+  end subroutine InitParallelUpperTriangularContext_Kernel
+end subroutine InitParallelTriangularContext
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃,
+!! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃 in parallel,
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -834,9 +836,16 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   class(tParallelTriangularContext), intent(inout) :: ctx
   character, intent(in) :: part
 
+#$if not HAS_OpenMP
+  call SolveTriangular(mesh, part, mat, yArr, bArr)
+  return
+#$end if
+
+#$if HAS_OpenMP
   integer(ip) :: size
   real(dp), pointer :: b(:,:), y(:,:)
 
+  !! TODO: for now we fallback to the sequential solver.
   call SolveTriangular(mesh, part, mat, yArr, bArr)
   return
 
@@ -914,7 +923,6 @@ contains
 
   end subroutine ParallelSolveUpperTriangular
   subroutine ParallelSolveBlockUpperTriangular()
-
     integer(ip) :: row, level, levelAddr
 
     !$omp parallel
@@ -932,6 +940,7 @@ contains
     !$omp end parallel
 
   end subroutine ParallelSolveBlockUpperTriangular
+#$end if
 end subroutine ParallelSolveTriangular
 
 end module StormRuler_Matrix

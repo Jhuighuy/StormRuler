@@ -28,6 +28,8 @@ module StormRuler_Preconditioner_AINV
 
 use StormRuler_Parameters, only: dp, ip
 
+use StormRuler_Helpers, only: ErrorStop
+
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
@@ -128,7 +130,7 @@ subroutine InitPreconditioner_AINV(pre, mesh, MatVec)
   procedure(tMatVecFunc) :: MatVec
 
   if (.not.associated(pre%Mat)) then
-    error stop 'Matrix for the AINV preconditioner is not set.'
+    call ErrorStop('Matrix for the AINV preconditioner is not set.')
   end if
 
 end subroutine InitPreconditioner_AINV
@@ -143,7 +145,7 @@ subroutine ApplyPreconditioner_AINV(pre, mesh, yArr, xArr, MatVec)
   procedure(tMatVecFunc) :: MatVec
 
   if (.not.associated(pre%Mat)) then
-    error stop 'Matrix for the AINV preconditioner is not set.'
+    call ErrorStop('Matrix for the AINV preconditioner is not set.')
   end if
 
   call Set(mesh, yArr, xArr)

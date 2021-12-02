@@ -29,13 +29,16 @@ module StormRuler_Preconditioner_LU_SGS
 use StormRuler_Parameters, only: dp, ip
 use StormRuler_Parameters, only: gMaxIterLU_SGS
 
+use StormRuler_Helpers, only: ErrorStop
+
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
 use StormRuler_Matrix, only: tMatrix, tParallelTriangularContext, &
-  & PartialMatrixVector, SolveDiag, InitParallelContext, SolveTriangular
+  & PartialMatrixVector, SolveDiag, &
+  & InitParallelTriangularContext, SolveTriangular
 use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -111,13 +114,13 @@ subroutine InitPreconditioner_LU_SGS(pre, mesh, MatVec)
   procedure(tMatVecFunc) :: MatVec
 
   if (.not.associated(pre%Mat)) then
-    error stop 'Matrix for the LU-SGS preconditioner is not set.'
+    call ErrorStop('Matrix for the LU-SGS preconditioner is not set.')
   end if
 
   if (.not.allocated(pre%LowerCtx%LevelAddrs)) &
-    & call InitParallelContext(mesh, 'L', pre%mat, pre%LowerCtx)
+    & call InitParallelTriangularContext(mesh, 'L', pre%mat, pre%LowerCtx)
   if (.not.allocated(pre%UpperCtx%LevelAddrs)) &
-    & call InitParallelContext(mesh, 'U', pre%mat, pre%UpperCtx)
+    & call InitParallelTriangularContext(mesh, 'U', pre%mat, pre%UpperCtx)
 
 end subroutine InitPreconditioner_LU_SGS
 
@@ -134,7 +137,7 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
   type(tArray) :: tArr
 
   if (.not.associated(pre%Mat)) then
-    error stop 'Matrix for the LU-SGS preconditioner is not set.'
+    call ErrorStop('Matrix for the LU-SGS preconditioner is not set.')
   end if
 
   call AllocArray(tArr, mold=xArr)

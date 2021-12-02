@@ -127,7 +127,7 @@ end subroutine Solve_Newton
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃, using the first
-!! order Jacobian free-Newton-Krylov method (JFNK(1)).
+!! order Jacobian free-Newton-Krylov method (JFNK).
 !!
 !! For the Newton iterations, computing of the Jacobian-vector
 !! products 𝒛 = 𝓙(𝒙)𝒚, where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 is required.
@@ -143,7 +143,7 @@ end subroutine Solve_Newton
 !! the (approximate) Jacobian-vector products. Parameter 𝛿 is commonly 
 !! defined as [1]:
 !!
-!! 𝛿 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²⋅‖𝒚‖⁺,
+!! 𝛿 = 𝜇⋅‖𝒚‖⁺, 𝜇 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²
 !!
 !! where 𝜀ₘ is the machine roundoff, ‖𝒚‖⁺ is the pseudo-inverse to ‖𝒚‖.
 !!

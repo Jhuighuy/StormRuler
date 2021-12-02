@@ -74,8 +74,6 @@ subroutine LinSolve(mesh, method, preMethod, x, b, MatVec, params)
   class(tConvParams), intent(inout) :: params
   character(len=*), intent(in) :: method, preMethod
 
-  type(tMatrix), target, save :: mat
-
   procedure(tMatVecFunc), pointer :: uMatVec
   type(tArray) :: t, f
   
@@ -124,9 +122,10 @@ contains
     class(tPreconditioner), intent(inout), optional :: precond
     
     if (preMethod == 'extr') then; block
+      type(tMatrix), target, save :: mat
       type(tMatrixLabeling), save :: labeling
-      type(tPreconditioner_ILU0_MKL) :: prepre
-      !type(tPreconditioner_LU_SGS), save :: prepre
+      !type(tPreconditioner_ILU0_MKL) :: prepre
+      type(tPreconditioner_LU_SGS), save :: prepre
       !type(tPreconditioner_AINV) :: prepre
 
       if (labeling%NumLabels == 0) then

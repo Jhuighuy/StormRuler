@@ -387,7 +387,6 @@ int main() {
     for (int frac = 0; time != 0 && frac < 10; ++frac) {
 
       struct timespec start, finish;
-
       clock_gettime(CLOCK_MONOTONIC, &start);
 
       stormReal_t vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);

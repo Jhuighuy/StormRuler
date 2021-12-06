@@ -99,9 +99,9 @@ type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_AINV
   type(tMatrix), private :: ZMat
 
 contains
-  procedure :: SetMatrix => SetPreconditionerMatrix_AINV
-  procedure :: Init => InitPreconditioner_AINV
-  procedure :: Apply => ApplyPreconditioner_AINV
+  procedure, non_overridable :: SetMatrix => SetPreconditionerMatrix_AINV
+  procedure, non_overridable :: Init => InitPreconditioner_AINV
+  procedure, non_overridable :: Apply => ApplyPreconditioner_AINV
 
 end type tPreconditioner_AINV
 

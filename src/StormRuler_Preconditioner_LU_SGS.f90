@@ -83,9 +83,9 @@ type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_LU_SGS
   type(tParallelTriangularContext), private :: LowerCtx, UpperCtx
 
 contains
-  procedure :: SetMatrix => SetPreconditionerMatrix_LU_SGS
-  procedure :: Init => InitPreconditioner_LU_SGS
-  procedure :: Apply => ApplyPreconditioner_LU_SGS
+  procedure, non_overridable :: SetMatrix => SetPreconditionerMatrix_LU_SGS
+  procedure, non_overridable :: Init => InitPreconditioner_LU_SGS
+  procedure, non_overridable :: Apply => ApplyPreconditioner_LU_SGS
 
 end type tPreconditioner_LU_SGS
 

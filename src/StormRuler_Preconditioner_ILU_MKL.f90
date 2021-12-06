@@ -53,9 +53,9 @@ type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_ILU0_MKL
   real(dp), allocatable, private :: FactorsColCoeffs(:)
 
 contains
-  procedure :: SetMatrix => SetPreconditionerMatrix_ILU0_MKL
-  procedure :: Init => InitPreconditioner_ILU0_MKL
-  procedure :: Apply => ApplyPreconditioner_ILU0_MKL
+  procedure, non_overridable :: SetMatrix => SetPreconditionerMatrix_ILU0_MKL
+  procedure, non_overridable :: Init => InitPreconditioner_ILU0_MKL
+  procedure, non_overridable :: Apply => ApplyPreconditioner_ILU0_MKL
   
 end type tPreconditioner_ILU0_MKL
 

@@ -36,6 +36,11 @@ use, intrinsic :: iso_fortran_env, only: error_unit
 
 implicit none
 
+interface L2S
+  module procedure L2S
+  module procedure LArr2S
+end interface L2S
+
 interface I2S
   module procedure I2S
   module procedure IArr2S
@@ -326,6 +331,50 @@ end function DenseSolve
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
+!! Ternary operator for strings.
+!! ----------------------------------------------------------------- !!
+pure function MergeString(trueString, falseString, condition)
+  character(len=*), intent(in) :: trueString, falseString
+  logical, intent(in) :: condition
+  character(len=:), allocatable :: MergeString
+  
+  if (condition) then
+    MergeString = trueString
+  else
+    MergeString = falseString
+  end if
+
+end function MergeString
+
+!! ----------------------------------------------------------------- !!
+!! Convert a logical value to string.
+!! ----------------------------------------------------------------- !!
+pure function L2S(value)
+  logical, intent(in) :: value
+  character(len=:), allocatable :: L2S
+  
+  L2S = MergeString('true', 'false', value)
+
+end function L2S
+pure function LArr2S(array, separator)
+  logical, intent(in) :: array(:)
+  character(len=*), intent(in), optional :: separator
+  character(len=:), allocatable :: LArr2S
+
+  integer(ip) :: index
+
+  LArr2S = L2S(array(1))
+  do index = 2, size(array)
+    if (present(separator)) then
+      LArr2S = LArr2S//separator//L2S(array(index))
+    else
+      LArr2S = LArr2S//', '//L2S(array(index))
+    end if
+  end do
+
+end function LArr2S
+
+!! ----------------------------------------------------------------- !!
 !! Convert an integer to string.
 !! ----------------------------------------------------------------- !!
 pure function I2S(value)
@@ -338,19 +387,20 @@ pure function I2S(value)
   I2S = trim(adjustl(buffer))
 
 end function I2S
-
-!! ----------------------------------------------------------------- !!
-!! Convert an integer array to string.
-!! ----------------------------------------------------------------- !!
-pure function IArr2S(array)
+pure function IArr2S(array, separator)
   integer(ip), intent(in) :: array(:)
+  character(len=*), intent(in), optional :: separator
   character(len=:), allocatable :: IArr2S
 
   integer(ip) :: index
 
   IArr2S = I2S(array(1))
   do index = 2, size(array)
-    IArr2S = IArr2S//', '//I2S(array(index))
+    if (present(separator)) then
+      IArr2S = IArr2S//separator//I2S(array(index))
+    else
+      IArr2S = IArr2S//', '//I2S(array(index))
+    end if
   end do
 
 end function IArr2S
@@ -368,38 +418,23 @@ pure function R2S(value)
   R2S = trim(adjustl(buffer))
 
 end function R2S
-
-!! ----------------------------------------------------------------- !!
-!! Convert a real number array to string.
-!! ----------------------------------------------------------------- !!
-pure function RArr2S(array)
+pure function RArr2S(array, separator)
   real(dp), intent(in) :: array(:)
+  character(len=*), intent(in), optional :: separator
   character(len=:), allocatable :: RArr2S
 
   integer(ip) :: index
 
   RArr2S = R2S(array(1))
   do index = 2, size(array)
-    RArr2S = RArr2S//', '//R2S(array(index))
+    if (present(separator)) then
+      RArr2S = RArr2S//separator//R2S(array(index))
+    else
+      RArr2S = RArr2S//', '//R2S(array(index))
+    end if
   end do
 
 end function RArr2S
-
-!! ----------------------------------------------------------------- !!
-!! Ternary operator for strings.
-!! ----------------------------------------------------------------- !!
-pure function MergeString(trueString, falseString, condition)
-  character(len=*), intent(in) :: trueString, falseString
-  logical, intent(in) :: condition
-  character(len=:), allocatable :: MergeString
-  
-  if (condition) then
-    MergeString = trueString
-  else
-    MergeString = falseString
-  end if
-
-end function MergeString
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

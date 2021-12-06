@@ -35,6 +35,7 @@ use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
 
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
+use StormRuler_IO_Base64, only: tBase64OutputStream
 
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
@@ -218,6 +219,14 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
   class(tMesh), pointer :: gMesh
 
   call PrintBanner
+
+  block
+    type(tBase64OutputStream) :: stream
+
+    call stream%WriteString('Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.')
+    call stream%Close()
+    error stop 229
+  end block
 
 #$if False
   block

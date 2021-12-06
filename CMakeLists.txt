@@ -216,6 +216,10 @@ else()
   endif()
 endif()
 
+# TODO:
+# Find BLAS.
+# Find Lapack.
+
 # Find METIS.
 if(StormRuler_NO_METIS)
   message(STATUS "StormRuler METIS was disabled by user.")
@@ -225,6 +229,18 @@ else()
     message(STATUS "METIS enabled.")
     set(METIS_ENABLED 1)
     target_link_libraries(StormRuler_BASE INTERFACE METIS)
+  endif()
+endif()
+
+# Find ZLIB.
+if(StormRuler_NO_ZLIB)
+  message(STATUS "StormRuler ZLIB was disabled by user.")
+else()
+  find_package(ZLIB)
+  if(ZLIB_FOUND)
+    message(STATUS "ZLIB enabled.")
+    set(ZLIB_ENABLED 1)
+    target_link_libraries(StormRuler_BASE INTERFACE ZLIB::ZLIB)
   endif()
 endif()
 

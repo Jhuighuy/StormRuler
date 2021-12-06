@@ -232,6 +232,7 @@ end subroutine InsertTo
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
+!! Inverse and compress a mapping: 𝜑(𝑖) = 𝑗 into 𝜑⁻¹(𝑗) = {𝑖: 𝜑(𝑖) = 𝑗}. 
 !! ----------------------------------------------------------------- !!
 subroutine InverseCompressMapping(addrs, indices, num, mapping, width)
   integer(ip), intent(inout), allocatable :: addrs(:), indices(:)
@@ -259,7 +260,7 @@ subroutine InverseCompressMapping(addrs, indices, num, mapping, width)
     addrs(j) = addrs(j) + 1
   end do
   addrs = cshift(addrs, shift=-1); addrs(1) = 1
-
+  
 end subroutine InverseCompressMapping
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!

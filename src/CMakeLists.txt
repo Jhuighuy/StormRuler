@@ -57,6 +57,9 @@ endif()
 if(METIS_ENABLED)
   list(APPEND Fortiel_DEFINES "-DHAS_METIS=True")
 endif()
+if(ZLIB_ENABLED)
+  list(APPEND Fortiel_DEFINES "-DHAS_ZLIB=True")
+endif()
 
 # Find Fortiel preprocessor.
 if(NOT "$ENV{StormRuler_Fortiel_PATH}" STREQUAL "")

@@ -99,22 +99,24 @@ products.
     (`SuperLU`);
 
 - 🚨 Matrix-based preconditioners (embedded into the matrix-free environment):
-  * _(planned)_ Block Jacobi preconditioner
+  * _(planned)_ Jacobi preconditioner
     (`Jacobi`),
   * LU Symmetric Gauss-Seidel (LU-SGS) preconditioner
     (`LU-SGS` for any linear problems),
-  * _(planned)_ Block Incomplete Cholesky preconditioner,
+  * _(planned)_ Incomplete Cholesky preconditioner,
     (`ICHOL`)
-  * _(planned)_ Block Incomplete LU preconditioner,
-    (`ILU`),
+  * _(planned)_ Incomplete LU preconditioner,
+    (`ILU0`, `ILUT`),
   * _(planned)_ Approximate Inverse preconditioner
     (`AINV`),
-  * _(planned)_ Block SPAI preconditioner,
+  * _(planned)_ SPAI preconditioner,
     (`SPAI`);
 
 - Matrix-free preconditioners:
   * _(planned)_ Polynomial preconditioner
-    (`Poly`).
+    (`Poly`),
+  * _(planned)_ Krylov preconditioner
+    (`Krylov`),
 
 <!----------------------------------------------------------------->
 ## 🛤Road map
@@ -148,7 +150,7 @@ Legend:
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
   - [ ] 🧸 BC kernels,
-  - [x] 🪓 Reimplement mesh generation with support for the varous DqQp models.
+  - [x] 🪓 Reimplement mesh generation with support for the varous DnQm models.
   - [ ] 🪓 Generate nodes,
   - [ ] 🪓 Generate faces,
   - [ ] 🧸 Redesigned VTK output,
@@ -193,7 +195,7 @@ Legend:
   - [ ] 🪓 Godunov/WENO nonlinear convection operator,
   - [ ] 🪓 Riemann solvers, Euler equations...
 
-* Linear solvers:
+* Linear iterative solvers:
   - [ ] 🧻 Clean-up unified solver to use conjugate MatVec,
   - [ ] 🧻 Convergence parameters in C/C++ API,
   - [ ] 🧻 Non-uniform solver on higher-level,
@@ -202,8 +204,7 @@ Legend:
   - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
   - [ ] 🪓 `TFQMR` solver implementation.
   - [ ] 🪓 `FCG` solver implementation,
-  - [ ] 🪓 `FGMRES` solver implementation,
-  - [ ] 🦜 Direct solvers (`MKL_DSS`, `PARDISO`, `SuperLU`).
+  - [ ] 🪓 `FGMRES` solver implementation.
 
 * Matrix extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
@@ -243,13 +244,14 @@ Legend:
   - [x] 🧸 Sequential triangular solvers,
   - [x] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
-  - [ ] 🦜 Built-in direct solver.
+  - [ ] 🦜 Built-in direct solver,
+  - [ ] 🦜 Direct solvers (`MKL_DSS`, `PARDISO`, `SuperLU`).
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,
   - [ ] 💄 Better API for the exact Newton-Raphson solver, 
   - [ ] 🦜 Relaxed Newton solver,
-  - [x] 🧸 Jacobian-Free Newton-Raphson solver,
+  - [x] 🧸 Jacobian-Free Newton-Krylov solver,
   - [x] 🧻 Optimized first order JFNK,
   - [x] 🧸 Select an epsilon in the first order JFNK,
   - [ ] 🦜 Nonlinear preconditioning..

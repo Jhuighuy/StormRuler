@@ -189,7 +189,7 @@ end function GetMatrixBlockSize
 !! ----------------------------------------------------------------- !!
 !! (Block-)diagonal matrix-vector product helper.
 !! ----------------------------------------------------------------- !!
-subroutine MatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine MatVecHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(*), x(*)
   real(dp), intent(inout) :: y(*)
@@ -204,8 +204,8 @@ subroutine MatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
     y(row) = y(row) + colCoeffs(rowAddr)*x(col)
   end do
 
-end subroutine MatrixVectorHelper
-subroutine BlockMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+end subroutine MatVecHelper
+subroutine BlockMatVecHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
   real(dp), intent(inout) :: y(size,*)
@@ -220,7 +220,7 @@ subroutine BlockMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, 
     y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), x(:,col))
   end do
 
-end subroutine BlockMatrixVectorHelper
+end subroutine BlockMatVecHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Sparse matrix-vector product: 𝒚 ← 𝓐𝒙.
@@ -243,7 +243,7 @@ subroutine MatrixVector(mesh, mat, yArr, xArr)
       call mkl_dcsrgemv('N', mesh%NumCells, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
     else
-      call mkl_dbsrgemv('N', mesh%NumCells, mat%BlockSize(), &
+      call mkl_dbsrgemv('N', mesh%NumCells, size, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
     end if
     return
@@ -260,14 +260,14 @@ contains
   subroutine MatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call MatrixVectorHelper( &
+    call MatVecHelper( &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine MatrixVector_Kernel
   subroutine BlockMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call BlockMatrixVectorHelper(size, &
+    call BlockMatVecHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine BlockMatrixVector_Kernel
@@ -293,7 +293,7 @@ subroutine DiagMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
   end do
 
 end subroutine DiagMatrixVectorHelper
-subroutine BlockDiagMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine BlockDiagMatVecHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
   real(dp), intent(inout) :: y(size,*)
@@ -309,13 +309,12 @@ subroutine BlockDiagMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y,
     end if
   end do
 
-end subroutine BlockDiagMatrixVectorHelper
+end subroutine BlockDiagMatVecHelper
 
 !! ----------------------------------------------------------------- !!
 !! (Block-)lower triangular matrix-vector product helper.
 !! ----------------------------------------------------------------- !!
-subroutine LowerTriangMatrixVectorHelper( &
-    & rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine LowerTriangMatVecHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(*), x(*)
   real(dp), intent(inout) :: y(*)
@@ -334,9 +333,8 @@ subroutine LowerTriangMatrixVectorHelper( &
     end if
   end do
 
-end subroutine LowerTriangMatrixVectorHelper
-subroutine BlockLowerTriangMatrixVectorHelper(size, &
-    & rowAddrs, colIndices, colCoeffs, y, x, row)
+end subroutine LowerTriangMatVecHelper
+subroutine BlockLowerTriangMatVecHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
   real(dp), intent(inout) :: y(size,*)
@@ -355,12 +353,12 @@ subroutine BlockLowerTriangMatrixVectorHelper(size, &
     end if
   end do
 
-end subroutine BlockLowerTriangMatrixVectorHelper
+end subroutine BlockLowerTriangMatVecHelper
 
 !! ----------------------------------------------------------------- !!
 !! (Block-)upper triangular matrix-vector product helper.
 !! ----------------------------------------------------------------- !!
-subroutine UpperTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
+subroutine UpperTriangMatVecHelper(rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(*), x(*)
   real(dp), intent(inout) :: y(*)
@@ -379,8 +377,8 @@ subroutine UpperTriangMatrixVectorHelper(rowAddrs, colIndices, colCoeffs, y, x, 
     end if
   end do
 
-end subroutine UpperTriangMatrixVectorHelper
-subroutine BlockUpperTriangMatrixVectorHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
+end subroutine UpperTriangMatVecHelper
+subroutine BlockUpperTriangMatVecHelper(size, rowAddrs, colIndices, colCoeffs, y, x, row)
   integer(ip), intent(in) :: size, rowAddrs(*), colIndices(*)
   real(dp), intent(in) :: colCoeffs(size,size,*), x(size,*)
   real(dp), intent(inout) :: y(size,*)
@@ -399,7 +397,7 @@ subroutine BlockUpperTriangMatrixVectorHelper(size, rowAddrs, colIndices, colCoe
     end if
   end do
 
-end subroutine BlockUpperTriangMatrixVectorHelper
+end subroutine BlockUpperTriangMatVecHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Sparse partial matrix-vector product: 𝒚 ← 𝓓𝒙, 𝒚 ← 𝓛𝒙 or 𝒚 ← 𝓤𝒙,
@@ -452,35 +450,35 @@ contains
   subroutine BlockDiagMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call BlockDiagMatrixVectorHelper(size, &
+    call BlockDiagMatVecHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine BlockDiagMatrixVector_Kernel
   subroutine LowerTriangularMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call LowerTriangMatrixVectorHelper( &
+    call LowerTriangMatVecHelper( &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine LowerTriangularMatrixVector_Kernel
   subroutine BlockLowerTriangularMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call BlockLowerTriangMatrixVectorHelper(size, &
+    call BlockLowerTriangMatVecHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine BlockLowerTriangularMatrixVector_Kernel
   subroutine UpperTriangularMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call UpperTriangMatrixVectorHelper( &
+    call UpperTriangMatVecHelper( &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine UpperTriangularMatrixVector_Kernel
   subroutine BlockUpperTriangularMatrixVector_Kernel(row)
     integer(ip), intent(in) :: row
 
-    call BlockUpperTriangMatrixVectorHelper(size, &
+    call BlockUpperTriangMatVecHelper(size, &
       & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, x, row)
 
   end subroutine BlockUpperTriangularMatrixVector_Kernel
@@ -895,11 +893,11 @@ contains
     do level = 1, ctx%NumLevels
       !$omp do private(row,levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
-        
+
         row = ctx%LevelRowIndices(levelAddr)
         call SolveBlockLowerTriangHelper(size, &
           & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
-  
+
       end do
       !$omp end do
     end do
@@ -913,11 +911,11 @@ contains
     do level = 1, ctx%NumLevels
       !$omp do private(row,levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
-  
+
         row = ctx%LevelRowIndices(levelAddr)
         call SolveUpperTriangHelper( &
           & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
-  
+
       end do
       !$omp end do
     end do
@@ -935,7 +933,7 @@ contains
         row = ctx%LevelRowIndices(levelAddr)
         call SolveBlockUpperTriangHelper(size, &
           & mat%RowAddrs, mat%ColIndices, mat%ColCoeffs, y, b, row)
-  
+
       end do
       !$omp end do
     end do

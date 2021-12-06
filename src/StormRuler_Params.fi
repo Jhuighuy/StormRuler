@@ -46,3 +46,7 @@
 #$if not defined('HAS_METIS')
 #$let HAS_METIS = False
 #$end if
+
+#$if not defined('HAS_ZLIB')
+#$let HAS_ZLIB = False
+#$end if

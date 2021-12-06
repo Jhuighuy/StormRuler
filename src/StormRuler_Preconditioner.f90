@@ -42,7 +42,6 @@ implicit none
 !! Preconditioner class.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, abstract :: tPreconditioner
-
 contains
   procedure(tInitPreconditionerFunc), deferred :: Init
   procedure(tApplyPreconditionerFunc), deferred :: Apply

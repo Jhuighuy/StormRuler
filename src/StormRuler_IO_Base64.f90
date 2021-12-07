@@ -43,9 +43,9 @@ type, extends(tBinaryOutputStream) :: tBase64OutputStream
   integer(i8), private :: Buffer(3), BuffAddr = 0
 
 contains
-  procedure, non_overridable :: Close => Base64OStreamClose
-  procedure, non_overridable :: Flush => Base64OStreamFlush
+  procedure :: Init => InitBase64OStream
   procedure, non_overridable :: WriteBytes => Base64OStreamWriteBytes
+  procedure, non_overridable :: Finalize => FinalizeBase64OStream
 
 end type tBase64OutputStream
 
@@ -55,25 +55,15 @@ end type tBase64OutputStream
 contains
 
 !! ----------------------------------------------------------------- !!
-!! Flush the Base64 output stream.
+!! Initialize the Base64 output stream.
 !! ----------------------------------------------------------------- !!
-subroutine Base64OStreamFlush(stream)
+subroutine InitBase64OStream(stream, innerStream)
   class(tBase64OutputStream), intent(inout) :: stream
+  class(tOutputStream), intent(inout), target :: innerStream
 
-  call stream%Inner%Flush()
+  stream%Inner => innerStream
 
-end subroutine Base64OStreamFlush
-
-!! ----------------------------------------------------------------- !!
-!! Close the Base64 output stream.
-!! ----------------------------------------------------------------- !!
-subroutine Base64OStreamClose(stream)
-  class(tBase64OutputStream), intent(inout) :: stream
-
-  call Base64OStreamEncodeBufferedAndFlush(stream)
-  call stream%Inner%Close()
-
-end subroutine Base64OStreamClose
+end subroutine InitBase64OStream
 
 !! ----------------------------------------------------------------- !!
 !! Write bytes to the Base64 output stream.
@@ -95,6 +85,17 @@ subroutine Base64OStreamWriteBytes(stream, data)
 end subroutine Base64OStreamWriteBytes
 
 !! ----------------------------------------------------------------- !!
+!! Finalize the Base64 output stream.
+!! ----------------------------------------------------------------- !!
+subroutine FinalizeBase64OStream(stream)
+  class(tBase64OutputStream), intent(inout) :: stream
+
+  call Base64OStreamEncodeBufferedAndFlush(stream)
+  call stream%Inner%Finalize()
+
+end subroutine FinalizeBase64OStream
+
+!! ----------------------------------------------------------------- !!
 !! Encode the buffered triplet with Base64 and flush it.
 !! Implementation was shamelessly stolen from here:
 !! https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594
@@ -114,7 +115,7 @@ subroutine Base64OStreamEncodeBufferedAndFlush(stream)
     & 'w', 'x', 'y', 'z', '0', '1', '2', '3', &
     & '4', '5', '6', '7', '8', '9', '+', '/'  ]
 
-  associate(b => stream%Buffer, s => stream%BuffAddr)
+  associate(b => int(stream%Buffer, kind=ip), s => stream%BuffAddr)
     if (s == 0) return
     x = ishft(iand(b(1), z'03'), 4)
     chars(1:1) = tbl(iand(ishft(b(1), -2), z'3F'))
@@ -135,8 +136,7 @@ subroutine Base64OStreamEncodeBufferedAndFlush(stream)
     s = 0
   end associate
 
-  print *, chars
-  !call stream%Inner%WriteString(chars)
+  call stream%Inner%WriteString(chars)
 
 end subroutine Base64OStreamEncodeBufferedAndFlush
 

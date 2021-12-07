@@ -27,6 +27,7 @@ module StormRuler_API
 #$use 'StormRuler_Params.fi'
 
 use StormRuler_Parameters, only: dp, ip, i8
+
 use StormRuler_Helpers, only: PrintBanner, RgbToInt
 
 use StormRuler_Mesh, only: tMesh, InitMeshStencil, InitMeshFromImage
@@ -34,8 +35,11 @@ use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
   & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve, Mesh_Ordering_METIS
 
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
+
 use StormRuler_IO, only: tIOList => IOList
+use StormRuler_IO_Stream, only: tTextFileOutputStream
 use StormRuler_IO_Base64, only: tBase64OutputStream
+use StormRuler_IO_VTK!, only: ...
 
 use StormRuler_BLAS, only: Norm_2, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
@@ -220,13 +224,18 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   call PrintBanner
 
+#$if False
   block
-    type(tBase64OutputStream) :: stream
+    type(tBase64OutputStream), target :: stream
+    type(tTextFileOutputStream), target :: tfStream
 
+    call tfStream%Init()
+    call stream%Init(tfStream)
     call stream%WriteString('Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.')
-    call stream%Close()
+    call stream%Finalize()
     error stop 229
   end block
+#$end if
 
 #$if False
   block
@@ -262,7 +271,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
     call gMesh%PrintTo_Neato('test/c2c.dot')
     
-    call gMesh%PrintTo_LegacyVTK('test/c2c.vtk')
+    call IO_WriteToUnstructuredVTK(gMesh, 'test/c2c.vtk')
 
   end block
 #$endif
@@ -434,7 +443,7 @@ subroutine cIO_Flush(ioListPtr, meshPtr, filenamePtr) bind(C, name='SR_IO_Flush'
   call Unwrap(meshPtr, mesh)
   call Unwrap(filenamePtr, filename)
 
-  call mesh%PrintTo_LegacyVTK(filename, ioList)
+  call IO_WriteToUnstructuredVTK(mesh, filename, ioList)
   deallocate(ioList)
 
 end subroutine cIO_Flush

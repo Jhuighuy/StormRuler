@@ -356,20 +356,15 @@ pure function L2S(value)
   L2S = MergeString('true', 'false', value)
 
 end function L2S
-pure function LArr2S(array, separator)
+pure function LArr2S(array)
   logical, intent(in) :: array(:)
-  character(len=*), intent(in), optional :: separator
   character(len=:), allocatable :: LArr2S
 
   integer(ip) :: index
 
   LArr2S = L2S(array(1))
   do index = 2, size(array)
-    if (present(separator)) then
-      LArr2S = LArr2S//separator//L2S(array(index))
-    else
-      LArr2S = LArr2S//', '//L2S(array(index))
-    end if
+    LArr2S = LArr2S//' '//L2S(array(index))
   end do
 
 end function LArr2S
@@ -387,20 +382,15 @@ pure function I2S(value)
   I2S = trim(adjustl(buffer))
 
 end function I2S
-pure function IArr2S(array, separator)
+pure function IArr2S(array)
   integer(ip), intent(in) :: array(:)
-  character(len=*), intent(in), optional :: separator
   character(len=:), allocatable :: IArr2S
 
   integer(ip) :: index
 
   IArr2S = I2S(array(1))
   do index = 2, size(array)
-    if (present(separator)) then
-      IArr2S = IArr2S//separator//I2S(array(index))
-    else
-      IArr2S = IArr2S//', '//I2S(array(index))
-    end if
+    IArr2S = IArr2S//' '//I2S(array(index))
   end do
 
 end function IArr2S
@@ -418,20 +408,15 @@ pure function R2S(value)
   R2S = trim(adjustl(buffer))
 
 end function R2S
-pure function RArr2S(array, separator)
+pure function RArr2S(array)
   real(dp), intent(in) :: array(:)
-  character(len=*), intent(in), optional :: separator
   character(len=:), allocatable :: RArr2S
 
   integer(ip) :: index
 
   RArr2S = R2S(array(1))
   do index = 2, size(array)
-    if (present(separator)) then
-      RArr2S = RArr2S//separator//R2S(array(index))
-    else
-      RArr2S = RArr2S//', '//R2S(array(index))
-    end if
+    RArr2S = RArr2S//' '//R2S(array(index))
   end do
 
 end function RArr2S

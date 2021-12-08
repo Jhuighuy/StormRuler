@@ -32,7 +32,8 @@ use StormRuler_Helpers, only: &
 use StormRuler_Mesh, only: tMesh
 
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
-use StormRuler_IO_Encoder, only: tEncoder, tAsciiEncoder, tBinaryEncoder
+use StormRuler_IO_Stream, only: tUnitOutputStream
+use StormRuler_IO_Writer, only: tWriter, tAsciiWriter, tBinaryWriter
 !use StormRuler_IO_Base64, only: tBase64OutputStream
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -109,10 +110,10 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! This is a regular cell, 
         ! generate the VTK triangles around it.
         ! ----------------------
-        call MakeVtkCell(cell, cellCells)
+        call MakeVtkCellsAround(cell, cellCells)
         cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
         if (mesh%IsCellInternal(cellCells(1))) then
-          call MakeVtkCell(cell, cellCells)
+          call MakeVtkCellsAround(cell, cellCells)
         end if
 
       else
@@ -123,7 +124,7 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! ----------------------
         cellCells(2) = mesh%CellToCell(orthCellFaces(1),cellCells(1))
         cellCells(3) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
-        call MakeVtkCell(cell, cellCells)
+        call MakeVtkCellsAround(cell, cellCells)
 
       end if
 
@@ -141,10 +142,10 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! This is a regular cell, 
         ! generate the VTK tetrahedrons around it.
         ! ----------------------
-        call MakeVtkCell(cell, cellCells)
+        call MakeVtkCellsAround(cell, cellCells)
         cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
         if (mesh%IsCellInternal(cellCells(1))) then
-          call MakeVtkCell(cell, cellCells)
+          call MakeVtkCellsAround(cell, cellCells)
         end if
 
       else
@@ -157,7 +158,7 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         cellCells(3) = mesh%CellToCell(orthCellFaces(2),cellCells(1))
         cellCells(4) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
         cellCells(5) = mesh%CellToCell(Flip(orthCellFaces(2)),cellCells(1))
-        call MakeVtkCell(cell, cellCells)
+        call MakeVtkCellsAround(cell, cellCells)
 
       end if
 
@@ -183,7 +184,7 @@ contains
     vtkMesh%VtkCellToNode(:,vtkMesh%NumVtkCells) = vtkCellNodes
 
   end subroutine PushVtkCell
-  subroutine MakeVtkCell(cell, cellCells)
+  subroutine MakeVtkCellsAround(cell, cellCells)
     integer(ip), intent(in) :: cell, cellCells(:)
 
     if (mesh%NumDims == 2) then
@@ -212,7 +213,7 @@ contains
 
     end if
 
-  end subroutine MakeVtkCell
+  end subroutine MakeVtkCellsAround
 end subroutine IO_InitVtkMesh
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -230,7 +231,8 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
   logical, parameter :: binary = .true., singleReals = .true.
 
   class(tVtkMesh), allocatable, save :: vtkMesh
-  class(tEncoder), allocatable :: encoder
+  class(tUnitOutputStream), allocatable :: stream
+  class(tWriter), allocatable :: writer
 
   if ((mesh%NumDims /= 2).and.(mesh%NumDims /= 3)) then
     error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
@@ -248,17 +250,18 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
   call PrintLog('')
 
   ! ----------------------
-  ! Open file, initialize encoder and print the header.
+  ! Open file, initialize stream, writer and print the header.
   ! ----------------------
   open(newunit=unit, file=file, access='stream', status='replace')
+  stream = tUnitOutputStream(unit)
   write(unit) '# vtk DataFile Version 3.0', endl
   write(unit) '# StormRuler unstructured VTK writer.', endl
   if (binary) then
     write(unit) 'BINARY', endl
-    encoder = tBinaryEncoder(endianness='big', singleReals=singleReals)
+    writer = tBinaryWriter(endianness='big', singleReals=singleReals)
   else
     write(unit) 'ASCII', endl
-    encoder = tAsciiEncoder()
+    writer = tAsciiWriter()
   end if
   write(unit) 'DATASET UNSTRUCTURED_GRID', endl
   write(unit) endl
@@ -267,12 +270,14 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
   ! Write VTK points (as centers of the mesh cells).
   ! ----------------------
   write(unit) 'POINTS ', I2S(mesh%NumCells), ' float', endl
+  call stream%BeginWrite()
   do cell = 1, mesh%NumCells
     associate(r => mesh%CellCenter(cell))
-      write(unit) encoder%Encode(r, paddedSize=3)
+      call writer%Write(stream, r, paddedSize=3)
     end associate
   end do
-  write(unit) encoder%Leftover(), endl, endl
+  call stream%EndWrite()
+  write(unit) endl, endl
 
   ! ----------------------
   ! Write VTK cells (as in the VTK mesh).
@@ -280,17 +285,21 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
   write(unit) 'CELLS ', &
     & I2S(vtkMesh%NumVtkCells), ' ', &
     & I2S(vtkMesh%NumVtkCells*(vtkMesh%NumVtkCellNodes + 1)), endl
+  call stream%BeginWrite()
   do vtkCell = 1, vtkMesh%NumVtkCells
-    write(unit) encoder%Encode(vtkMesh%NumVtkCellNodes)
-    write(unit) encoder%Encode(vtkMesh%VtkCellToNode(:,vtkCell) - 1)
+    call writer%Write(stream, vtkMesh%NumVtkCellNodes)
+    call writer%Write(stream, vtkMesh%VtkCellToNode(:,vtkCell) - 1)
   end do
-  write(unit) encoder%Leftover(), endl, endl
+  call stream%EndWrite()
+  write(unit) endl, endl
 
   write(unit) 'CELL_TYPES ', I2S(vtkMesh%NumVtkCells), endl
+  call stream%BeginWrite()
   do vtkCell = 1, vtkMesh%NumVtkCells
-    write(unit) encoder%Encode(int(vtkMesh%VtkCellType, kind=ip))
+    call writer%Write(stream, int(vtkMesh%VtkCellType, kind=ip))
   end do
-  write(unit) encoder%Leftover(), endl, endl
+  call stream%EndWrite()
+  write(unit) endl, endl
 
   ! ----------------------
   ! Write fields.
@@ -306,17 +315,21 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
         class is(IOListItem$0)
           write(unit) 'SCALARS ', item%name, ' float 1', endl
           write(unit) 'LOOKUP_TABLE default', endl
-          write(unit) encoder%Encode(item%values(:mesh%NumCells))
+          call stream%BeginWrite()
+          call writer%Write(stream, item%values(:mesh%NumCells))
+          call stream%EndWrite()
 
         ! ----------------------
         ! Vector field.
         ! ----------------------
         class is(IOListItem$1)
           write(unit) 'VECTORS ', item%name, ' float', endl
-          write(unit) encoder%Encode(item%values(:,:mesh%NumCells), paddedSize=3)
+          call stream%BeginWrite()
+          call writer%Write(stream, item%values(:,:mesh%NumCells), paddedSize=3)
+          call stream%EndWrite()
 
         end select
-      write(unit) encoder%Leftover(), endl, endl
+      write(unit) endl, endl
       item => item%next
     end do
   end if

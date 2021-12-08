@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_API
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Consts, only: bp, ip, dp
 
 use StormRuler_Helpers, only: PrintBanner, RgbToInt
 
@@ -37,8 +35,6 @@ use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
 use StormRuler_IO, only: tIOList => IOList
-use StormRuler_IO_Stream, only: tTextFileOutputStream
-use StormRuler_IO_Base64, only: tBase64OutputStream
 use StormRuler_IO_VTK!, only: ...
 
 use StormRuler_BLAS, only: Norm_2, &

@@ -24,20 +24,12 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Parameters
 
-use, intrinsic :: iso_fortran_env, only: int8, int32
-use, intrinsic :: iso_c_binding
+use StormRuler_Consts, only: ip
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
-
-!! Double persicion kind for real numbers.
-integer, parameter :: dp = c_double
-
-integer, parameter :: ip = int32
-
-integer, parameter :: i8 = int8
 
 logical, parameter :: gUseMKL = .true.
 

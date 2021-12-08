@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FDM_Convection
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gCylCoords, gTruncErrorOrder
 
 use StormRuler_Helpers, only: Flip

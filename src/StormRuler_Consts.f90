@@ -22,65 +22,44 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_FDM_Base_Flux
+module StormRuler_Consts
 
-use StormRuler_Consts, only: dp
+use, intrinsic :: iso_fortran_env, only: &
+  & int8, int16, int32, int64, real32, real64
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-contains
+!! ----------------------------------------------------------------- !!
+!! 8-bit signed integer kind (byte).
+!! ----------------------------------------------------------------- !!
+integer, parameter :: bp = int8
 
 !! ----------------------------------------------------------------- !!
-!! Reconstruct a value of the flux 𝑓 = 𝒂ₙ𝒖.
+!! 16-bit signed integer kind (word).
 !! ----------------------------------------------------------------- !!
-elemental function FR_C2(a_i, u_i, a_r, u_r)
-  real(dp), intent(in) :: u_i, u_r
-  real(dp), intent(in) :: a_i, a_r
-  real(dp) :: FR_C2
-
-  FR_C2 = 0.5_dp*(a_i + a_r)*merge(u_i, u_r, (a_i + a_r) > 0.0_dp)
-  !FR_C2 = 0.25_dp*(a_i + a_r)*(u_i + u_r)
-end function FR_C2
+integer, parameter :: wp = int16
 
 !! ----------------------------------------------------------------- !!
-!! Reconstruct a value of the flux 𝑓 = 𝒂ₙ𝒖.
+!! 32-bit signed integer kind (integer).
 !! ----------------------------------------------------------------- !!
-elemental function FR_C4(a_l, u_l, a_i, u_i, a_r, u_r, a_rr, u_rr)
-  real(dp), intent(in) :: u_l, u_i, u_r, u_rr
-  real(dp), intent(in) :: a_l, a_i, a_r, a_rr
-  real(dp) :: FR_C4
-
-  FR_C4 = FR_C2(a_i, u_i, a_r, u_r) ! TODO
-end function FR_C4
+integer, parameter :: ip = int32
 
 !! ----------------------------------------------------------------- !!
-!! Reconstruct a value of the flux 𝑓 = 𝒂ₙ𝒖.
+!! 64-bit signed integer kind (long).
 !! ----------------------------------------------------------------- !!
-elemental function FR_C6(a_ll, u_ll, a_l, u_l, a_i, u_i, &
-    &                a_r, u_r, a_rr, u_rr, a_rrr, u_rrr)
-  real(dp), intent(in) :: u_ll, u_l, u_i, u_r, u_rr, u_rrr
-  real(dp), intent(in) :: a_ll, a_l, a_i, a_r, a_rr, a_rrr
-  real(dp) :: FR_C6
-
-  FR_C6 = FR_C2(a_i, u_i, a_r, u_r) ! TODO
-end function FR_C6
+integer, parameter :: lp = int64
 
 !! ----------------------------------------------------------------- !!
-!! Reconstruct a value of the flux 𝑓 = 𝒂ₙ𝒖.
+!! Single precision floating point number kind (float).
 !! ----------------------------------------------------------------- !!
-elemental function FR_C8(a_lll, u_lll, a_ll, u_ll, a_l, u_l, a_i, u_i, &
-    &              a_r, u_r, a_rr, u_rr, a_rrr, u_rrr, a_rrrr, u_rrrr)
-  real(dp), intent(in) :: u_lll, u_ll, u_l, u_i, u_r, u_rr, u_rrr, u_rrrr
-  real(dp), intent(in) :: a_lll, a_ll, a_l, a_i, a_r, a_rr, a_rrr, a_rrrr
-  real(dp) :: FR_C8
+integer, parameter :: sp = real32
 
-  FR_C8 = FR_C2(a_i, u_i, a_r, u_r) ! TODO
-end function FR_C8
+!! ----------------------------------------------------------------- !!
+!! Double precision floating point number kind (double).
+!! ----------------------------------------------------------------- !!
+integer, parameter :: dp = real64
 
-end module StormRuler_FDM_Base_Flux
+end module StormRuler_Consts

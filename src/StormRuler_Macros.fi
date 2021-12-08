@@ -35,6 +35,10 @@
 #$let WIN32 = False
 #$end if
 
+#$if not defined('BIG_ENDIAN')
+#$let BIG_ENDIAN = False
+#$end if
+
 #$if not defined('HAS_OpenMP')
 #$let HAS_OpenMP = False
 #$end if

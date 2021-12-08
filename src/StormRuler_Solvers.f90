@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
@@ -47,7 +45,7 @@ use StormRuler_Matrix!, only: ...
 use StormRuler_Matrix_Extraction!, only: ...
 use StormRuler_Preconditioner_AINV!, only: ...
 use StormRuler_Preconditioner_LU_SGS!, only: ...
-use StormRuler_Preconditioner_ILU_MKL!, only: ...
+use StormRuler_Preconditioner_ILU!, only: ...
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

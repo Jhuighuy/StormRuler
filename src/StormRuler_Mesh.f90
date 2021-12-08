@@ -24,15 +24,15 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Mesh
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Consts, only: bp, ip, dp
 
 use StormRuler_Helpers, only: &
   & ErrorStop, PrintLog, PrintWarning, &
   & Flip, IndexOf, InsertTo, I2S, R2S, IntToRgb
 
 use, intrinsic :: iso_fortran_env, only: error_unit
+
+#$use 'StormRuler_Macros.fi'
 
 #$if HAS_OpenMP
 use :: omp_lib
@@ -119,7 +119,7 @@ type :: tMesh
   ! Indices of the boundary cell connections per each mark.
   ! Shape is [BndCellAddrs(1), BndCellAddrs(NumBndMarks + 1) - 1].
   ! ----------------------
-  integer(i8), allocatable :: BndCellConns(:)
+  integer(bp), allocatable :: BndCellConns(:)
 
   ! ----------------------
   ! Distance between centers of the adjacent cells per face.

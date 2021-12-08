@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_LBM_Operators
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
 
 use StormRuler_Helpers, only: Flip
 

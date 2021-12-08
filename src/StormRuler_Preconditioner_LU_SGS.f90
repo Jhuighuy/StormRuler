@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Preconditioner_LU_SGS
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gMaxIterLU_SGS
 
 use StormRuler_Helpers, only: ErrorStop

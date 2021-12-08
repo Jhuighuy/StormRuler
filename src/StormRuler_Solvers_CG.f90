@@ -24,9 +24,8 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers_CG
 
-#$use 'StormRuler_Params.fi'
+use StormRuler_Consts, only: dp
 
-use StormRuler_Parameters, only: dp
 use StormRuler_Helpers, only: SafeDivide
 
 use StormRuler_Mesh, only: tMesh

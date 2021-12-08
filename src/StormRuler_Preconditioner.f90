@@ -24,8 +24,6 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Preconditioner
 
-#$use 'StormRuler_Params.fi'
-
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray
 

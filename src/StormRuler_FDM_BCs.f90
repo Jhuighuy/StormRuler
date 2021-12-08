@@ -24,11 +24,13 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FDM_BCs
 
-#$use 'StormRuler_Params.fi'
+use StormRuler_Consts, only: ip, dp
 
-use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Flip
+
 use StormRuler_Mesh, only: tMesh
+
+#$use 'StormRuler_Macros.fi'
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

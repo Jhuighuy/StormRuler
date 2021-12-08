@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers_Newton
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp
+use StormRuler_Consts, only: dp
 use StormRuler_Helpers, only: SafeInverse, SafeDivide
 
 use StormRuler_Mesh, only: tMesh

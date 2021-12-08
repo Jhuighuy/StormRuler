@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Matrix
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gUseMKL
 
 use StormRuler_Helpers, only: IndexOf, BubbleSort, &
@@ -37,6 +35,8 @@ use StormRuler_Array, only: tArray, AllocArray
 
 use StormRuler_BLAS, only: Fill
 use StormRuler_BLAS, only: tMatVecFunc
+
+#$use 'StormRuler_Macros.fi'
 
 #$if HAS_MKL
 use StormRuler_MKL, only: mkl_dcsrgemv, mkl_dbsrgemv, &

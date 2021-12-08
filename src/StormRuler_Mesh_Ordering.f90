@@ -24,14 +24,15 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Mesh_Ordering
 
-#$use 'StormRuler_Params.fi'
+use StormRuler_Consts, only: ip, dp
 
-use StormRuler_Parameters, only: dp, ip
 use StormRuler_Helpers, only: Swap, I2S
 
 use StormRuler_Mesh, only: tMesh
 
 use, intrinsic :: iso_c_binding, only: c_int, c_int32_t, c_null_ptr
+
+#$use 'StormRuler_Macros.fi'
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

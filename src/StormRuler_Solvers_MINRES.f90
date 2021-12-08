@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers_MINRES
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gMaxIterGMRES
 
 use StormRuler_Mesh, only: tMesh

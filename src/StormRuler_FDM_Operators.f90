@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FDM_Operators
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp, ip, i8
+use StormRuler_Consts, only: bp, ip, dp
 use StormRuler_Parameters, only: gCylCoords, gTruncErrorOrder
 
 use StormRuler_Helpers, only: Flip
@@ -75,7 +73,7 @@ subroutine FDM_Gradient(mesh, vVecArr, lambda, uArr, &
   class(tArray), intent(in) :: uArr
   class(tArray), intent(inout) :: vVecArr
   real(dp), intent(in) :: lambda
-  integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
+  integer(bp), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
   real(dp), pointer :: u(:,:), vVec(:,:,:)
 
@@ -165,7 +163,7 @@ contains
   subroutine FDM_Gradient_Forward_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
-    integer(i8) :: dir
+    integer(bp) :: dir
     integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
@@ -180,7 +178,7 @@ contains
       ! ----------------------
       ! Determine FD direction (default is forward).
       ! ----------------------
-      dir = 1_i8
+      dir = 1_bp
       if (present(dirAll)) dir = dirAll
       if (present(dirFace)) dir = dirFace(iCellFace)
       if (present(dirCellFace)) dir = dirCellFace(iCellFace, iCell)
@@ -188,7 +186,7 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
-      associate(inc => (1_i8-dir)/2_i8)
+      associate(inc => (1_bp-dir)/2_bp)
         associate(rCellFace => iCellFace+inc, &
                 & lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)
@@ -294,7 +292,7 @@ subroutine FDM_Divergence(mesh, vArr, lambda, uVecArr, &
   class(tArray), intent(in) :: uVecArr
   class(tArray), intent(inout) :: vArr
   real(dp), intent(in) :: lambda
-  integer(i8), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
+  integer(bp), intent(in), optional :: dirAll, dirFace(:), dirCellFace(:,:)
 
   real(dp), pointer :: uVec(:,:,:), v(:,:)
 
@@ -403,7 +401,7 @@ contains
   subroutine FDM_Divergence_Backward_Kernel(iCell)
     integer(ip), intent(in) :: iCell
 
-    integer(i8) :: dir
+    integer(bp) :: dir
     integer(ip) :: dim
     integer(ip) :: iCellFace
     integer(ip) :: rCell, rrCell, rrrCell, rrrrCell, rrrrrCell
@@ -418,7 +416,7 @@ contains
       ! ----------------------
       ! Determine FD direction (default is backward).
       ! ----------------------
-      dir = -1_i8
+      dir = -1_bp
       if (present(dirAll)) dir = dirAll
       if (present(dirFace)) dir = dirFace(iCellFace)
       if (present(dirCellFace)) dir = dirCellFace(iCellFace, iCell)
@@ -426,7 +424,7 @@ contains
       ! ----------------------
       ! Find indices of the adjacent cells using the FD direction.
       ! ----------------------
-      associate(inc => (1_i8-dir)/2_i8)
+      associate(inc => (1_bp-dir)/2_bp)
         associate(rCellFace => iCellFace+inc, &
                 & lCellFace => Flip(iCellFace+inc))
           rCell = mesh%CellToCell(rCellFace, iCell)

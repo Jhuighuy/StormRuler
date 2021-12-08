@@ -24,9 +24,7 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Solvers_LSQR
 
-#$use 'StormRuler_Params.fi'
-
-use StormRuler_Parameters, only: dp
+use StormRuler_Consts, only: dp
 
 use StormRuler_Mesh, only: tMesh
 use StormRuler_Array, only: tArray, AllocArray

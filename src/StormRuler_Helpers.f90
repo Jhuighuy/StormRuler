@@ -24,12 +24,10 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Helpers
 
-#$use 'StormRuler_Params.fi'
+use StormRuler_Consts, only: ip, dp
 
-use StormRuler_Parameters, only: dp, ip
-
-use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
 use, intrinsic :: iso_fortran_env, only: error_unit
+use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

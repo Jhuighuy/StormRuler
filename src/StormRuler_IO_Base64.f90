@@ -23,8 +23,7 @@
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_IO_Base64
-
-#$use 'StormRuler_Params.fi'
+#$if False
 
 use StormRuler_Parameters, only: ip, i8
 
@@ -140,4 +139,5 @@ subroutine Base64OStreamEncodeBufferedAndFlush(stream)
 
 end subroutine Base64OStreamEncodeBufferedAndFlush
 
+#$end if
 end module StormRuler_IO_Base64

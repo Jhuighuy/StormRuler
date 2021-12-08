@@ -22,12 +22,14 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_Preconditioner_ILU_MKL
+module StormRuler_Preconditioner_ILU
 
-#$use 'StormRuler_Params.fi'
+#$use 'StormRuler_Macros.fi'
 #$if HAS_MKL
 
-use StormRuler_Parameters, only: dp, ip
+use StormRuler_Consts, only: ip, dp
+use StormRuler_Parameters, only: gUseMKL
+
 use StormRuler_Helpers, only: ErrorStop, I2S
 
 use StormRuler_Mesh, only: tMesh
@@ -118,4 +120,4 @@ end subroutine ApplyPreconditioner_ILU0_MKL
 
 #$end if
 
-end module StormRuler_Preconditioner_ILU_MKL
+end module StormRuler_Preconditioner_ILU

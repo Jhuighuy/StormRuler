@@ -24,9 +24,9 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_FDM_RhieChow
 
-#$use 'StormRuler_Params.fi'
+use StormRuler_Consts, only: ip, dp
+use StormRuler_Parameters, only: gCylCoords
 
-use StormRuler_Parameters, only: dp, ip, i8, gCylCoords
 use StormRuler_Helpers, only: Flip
 
 use StormRuler_Mesh, only: tMesh

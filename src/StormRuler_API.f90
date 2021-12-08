@@ -218,20 +218,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   class(tMesh), pointer :: gMesh
 
-  call PrintBanner
-
-#$if False
-  block
-    type(tBase64OutputStream), target :: stream
-    type(tTextFileOutputStream), target :: tfStream
-
-    call tfStream%Init()
-    call stream%Init(tfStream)
-    call stream%WriteString('Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.')
-    call stream%Finalize()
-    error stop 229
-  end block
-#$end if
+  call PrintBanner()
 
 #$if False
   block

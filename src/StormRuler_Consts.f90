@@ -62,4 +62,9 @@ integer, parameter :: sp = real32
 !! ----------------------------------------------------------------- !!
 integer, parameter :: dp = real64
 
+!! ----------------------------------------------------------------- !!
+!! End of the line marker character.
+!! ----------------------------------------------------------------- !!
+character, parameter :: endl = new_line('A')
+
 end module StormRuler_Consts

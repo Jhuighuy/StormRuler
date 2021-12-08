@@ -34,11 +34,6 @@ use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
 
 implicit none
 
-interface L2S
-  module procedure L2S
-  module procedure LArr2S
-end interface L2S
-
 interface I2S
   module procedure I2S
   module procedure IArr2S
@@ -343,29 +338,6 @@ pure function MergeString(trueString, falseString, condition)
   end if
 
 end function MergeString
-
-!! ----------------------------------------------------------------- !!
-!! Convert a logical value to string.
-!! ----------------------------------------------------------------- !!
-pure function L2S(value)
-  logical, intent(in) :: value
-  character(len=:), allocatable :: L2S
-  
-  L2S = MergeString('true', 'false', value)
-
-end function L2S
-pure function LArr2S(array)
-  logical, intent(in) :: array(:)
-  character(len=:), allocatable :: LArr2S
-
-  integer(ip) :: index
-
-  LArr2S = L2S(array(1))
-  do index = 2, size(array)
-    LArr2S = LArr2S//' '//L2S(array(index))
-  end do
-
-end function LArr2S
 
 !! ----------------------------------------------------------------- !!
 !! Convert an integer to string.

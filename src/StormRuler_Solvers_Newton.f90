@@ -58,8 +58,8 @@ contains
 !! Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃, using the Newton's 
 !! method.
 !!
-!! The classical Newton iterations are based on the following 
-!! on linearization of the 𝓐(𝒙) near 𝒙: 
+!! The classical Newton iterations are based on the linearization 
+!! of 𝓐(𝒙) near 𝒙: 
 !!
 !! 𝓐(𝒙̂) ≈ 𝓐(𝒙) + [∂𝓐(𝒙)/∂𝒙](𝒙̂ - 𝒙) = 𝒃, 
 !!
@@ -141,7 +141,7 @@ end subroutine Solve_Newton
 !! the (approximate) Jacobian-vector products. Parameter 𝛿 is commonly 
 !! defined as [1]:
 !!
-!! 𝛿 = 𝜇⋅‖𝒚‖⁺, 𝜇 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²
+!! 𝛿 = 𝜇⋅‖𝒚‖⁺, 𝜇 = (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)¹ᐟ²,
 !!
 !! where 𝜀ₘ is the machine roundoff, ‖𝒚‖⁺ is the pseudo-inverse to ‖𝒚‖.
 !!

@@ -24,10 +24,10 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_IO_VTK
 
-use StormRuler_Consts, only: bp, ip, dp
+use StormRuler_Consts, only: bp, ip, dp, endl
 
-use StormRuler_Helpers, only: ErrorStop, PrintLog, PrintWarning, & 
-  & Flip, I2S, R2S
+use StormRuler_Helpers, only: &
+  & ErrorStop, PrintLog, PrintWarning, Flip, I2S, R2S
 
 use StormRuler_Mesh, only: tMesh
 
@@ -109,20 +109,10 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! This is a regular cell, 
         ! generate the VTK triangles around it.
         ! ----------------------
-        if (mesh%IsCellInternal(cellCells(2))) then
-          call PushVtkCell([cell,cellCells(1),cellCells(2)])
-        end if
-        if (mesh%IsCellInternal(cellCells(3))) then
-          call PushVtkCell([cell,cellCells(1),cellCells(3)])
-        end if
+        call MakeVtkCell(cell, cellCells)
         cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
         if (mesh%IsCellInternal(cellCells(1))) then
-          if (mesh%IsCellInternal(cellCells(2))) then
-            call PushVtkCell([cell,cellCells(1),cellCells(2)])
-          end if
-          if (mesh%IsCellInternal(cellCells(3))) then
-            call PushVtkCell([cell,cellCells(1),cellCells(3)])
-          end if
+          call MakeVtkCell(cell, cellCells)
         end if
 
       else
@@ -133,12 +123,7 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! ----------------------
         cellCells(2) = mesh%CellToCell(orthCellFaces(1),cellCells(1))
         cellCells(3) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
-        if (mesh%IsCellInternal(cellCells(2))) then
-          call PushVtkCell([cell,cellCells(1),cellCells(2)])
-        end if
-        if (mesh%IsCellInternal(cellCells(3))) then
-          call PushVtkCell([cell,cellCells(1),cellCells(3)])
-        end if
+        call MakeVtkCell(cell, cellCells)
 
       end if
 
@@ -156,8 +141,10 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! This is a regular cell, 
         ! generate the VTK tetrahedrons around it.
         ! ----------------------
-        if (mesh%IsCellInternal(cellCells(2))) then
-          call PushVtkCell([cell,cellCells(1),cellCells(2)])
+        call MakeVtkCell(cell, cellCells)
+        cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
+        if (mesh%IsCellInternal(cellCells(1))) then
+          call MakeVtkCell(cell, cellCells)
         end if
 
       else
@@ -166,6 +153,11 @@ subroutine IO_InitVtkMesh(vtkMesh, mesh)
         ! This is a hanging cell, 
         ! generate the VTK tetrahedrons around the neighbour.
         ! ----------------------
+        cellCells(2) = mesh%CellToCell(orthCellFaces(1),cellCells(1))
+        cellCells(3) = mesh%CellToCell(orthCellFaces(2),cellCells(1))
+        cellCells(4) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
+        cellCells(5) = mesh%CellToCell(Flip(orthCellFaces(2)),cellCells(1))
+        call MakeVtkCell(cell, cellCells)
 
       end if
 
@@ -191,6 +183,36 @@ contains
     vtkMesh%VtkCellToNode(:,vtkMesh%NumVtkCells) = vtkCellNodes
 
   end subroutine PushVtkCell
+  subroutine MakeVtkCell(cell, cellCells)
+    integer(ip), intent(in) :: cell, cellCells(:)
+
+    if (mesh%NumDims == 2) then
+
+      if (mesh%IsCellInternal(cellCells(2))) then
+        call PushVtkCell([cell,cellCells(1),cellCells(2)])
+      end if
+      if (mesh%IsCellInternal(cellCells(3))) then
+        call PushVtkCell([cell,cellCells(1),cellCells(3)])
+      end if
+
+    else if (mesh%NumDims == 3) then
+
+      if (all(mesh%IsCellInternal(cellCells(2:3)))) then
+        call PushVtkCell([cell, cellCells(1), cellCells(2:3)])
+      end if
+      if (all(mesh%IsCellInternal(cellCells(3:4)))) then
+        call PushVtkCell([cell, cellCells(1), cellCells(3:4)])
+      end if
+      if (all(mesh%IsCellInternal(cellCells(4:5)))) then
+        call PushVtkCell([cell, cellCells(1), cellCells(4:5)])
+      end if
+      if (all(mesh%IsCellInternal(cellCells(2:5:3)))) then
+        call PushVtkCell([cell, cellCells(1), cellCells(2:5:3)])
+      end if
+
+    end if
+
+  end subroutine MakeVtkCell
 end subroutine IO_InitVtkMesh
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -206,7 +228,6 @@ subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
   class(IOListItem), pointer :: item
 
   logical, parameter :: binary = .true., singleReals = .true.
-  character, parameter :: endl = new_line('A')
 
   class(tVtkMesh), allocatable, save :: vtkMesh
   class(tEncoder), allocatable :: encoder

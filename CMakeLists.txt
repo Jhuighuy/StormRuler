@@ -41,6 +41,13 @@ add_library(StormRuler_BASE INTERFACE)
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
+# Detect endianness.
+include(TestBigEndian)
+test_big_endian(BIG_ENDIAN)
+if(BIG_ENDIAN)
+  message(STATUS "StormRuler is being compiled on the big endian machine.")
+endif()
+
 # Detect Apple Silicon CPU.
 # Fortran compilers on Apple Silicon are not production-ready yet,
 # so we need to disable some features (for now).

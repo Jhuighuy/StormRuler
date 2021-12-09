@@ -247,14 +247,14 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     call Load_PPM('test/Domain-100-Tube.ppm', pixels)
     call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
     call InitMeshFromImage(gMesh, pixels, 0, colorToMark, 2, .true.)
-    
+
     !call Load_PPM('test/Domain-500-Cube.ppm', pixels)
     !call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q9')
     !call InitMeshFromImage(gMesh, pixels, 0, colorToMark, 1, .false.)
 
     call gMesh%PrintTo_Neato('test/c2c.dot')
-    
-    call IO_WriteToUnstructuredVTK(gMesh, 'test/c2c.vtk')
+
+    call IO_WriteDenseStructuredVTK(gMesh, 'test/c2c.vts')
 
   end block
 #$endif
@@ -377,10 +377,10 @@ end subroutine stormFree
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 function cIO_Begin() result(ioListPtr) bind(C, name='SR_IO_Begin') 
   type(c_ptr) :: ioListPtr
-  class(tIOList), pointer :: ioList
+  class(tIOList), pointer :: io_List
 
-  allocate(ioList)
-  ioListPtr = Wrap(ioList)
+  allocate(io_List)
+  ioListPtr = Wrap(io_List)
 
 end function cIO_Begin
 
@@ -391,12 +391,12 @@ subroutine cIO_Add(ioListPtr, xPtr, namePtr) bind(C, name='SR_IO_Add')
   type(c_ptr), intent(in), value :: xPtr
   character(c_char), intent(in) :: namePtr(*)
 
-  class(tIOList), pointer :: ioList
+  class(tIOList), pointer :: io_List
   class(tArray), pointer :: xArr
   real(dp), pointer :: x(:,:)
   character(len=:), pointer :: name
 
-  call Unwrap(ioListPtr, ioList)
+  call Unwrap(ioListPtr, io_List)
   call Unwrap(namePtr, name)
   call Unwrap(xPtr, xArr)
 
@@ -404,9 +404,9 @@ subroutine cIO_Add(ioListPtr, xPtr, namePtr) bind(C, name='SR_IO_Add')
 
   !! TODO: shape of x?
   if (xArr%mShape(1) == 1) then
-    call ioList%Add(name, x(1,:))
+    call io_List%Add(name, x(1,:))
   else
-    call ioList%Add(name, x)
+    call io_List%Add(name, x)
   end if
 
 end subroutine cIO_Add
@@ -418,16 +418,16 @@ subroutine cIO_Flush(ioListPtr, meshPtr, filenamePtr) bind(C, name='SR_IO_Flush'
   type(c_ptr), intent(in), value :: meshPtr
   character(c_char), intent(in) :: filenamePtr(*)
 
-  class(tIOList), pointer :: ioList
+  class(tIOList), pointer :: io_List
   class(tMesh), pointer :: mesh
   character(len=:), pointer :: filename
 
-  call Unwrap(ioListPtr, ioList, free=.true.)
+  call Unwrap(ioListPtr, io_List, free=.true.)
   call Unwrap(meshPtr, mesh)
   call Unwrap(filenamePtr, filename)
 
-  call IO_WriteToUnstructuredVTK(mesh, filename, ioList)
-  deallocate(ioList)
+  call IO_WriteDenseStructuredVTK(mesh, filename, io_List)
+  deallocate(io_List)
 
 end subroutine cIO_Flush
 

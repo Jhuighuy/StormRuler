@@ -27,318 +27,173 @@ module StormRuler_IO_VTK
 use StormRuler_Consts, only: bp, ip, dp, endl
 
 use StormRuler_Helpers, only: &
-  & ErrorStop, PrintLog, PrintWarning, Flip, I2S, R2S
+  & ErrorStop, PrintLog, PrintWarning, &
+  & MergeString, Flip, I2S, R2S
 
 use StormRuler_Mesh, only: tMesh
 
+use StormRuler_IO_Stream, only: tOutputStream, tUnitOutputStream
+use StormRuler_IO_Stream_Base64, only: tBase64OutputStream
+use StormRuler_IO_Writer, only: tWriter, tTextWriter, tBinaryWriter
+
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
-use StormRuler_IO_Stream, only: tUnitOutputStream
-use StormRuler_IO_Writer, only: tWriter, tAsciiWriter, tBinaryWriter
-!use StormRuler_IO_Base64, only: tBase64OutputStream
+
+#$use 'StormRuler_Macros.fi'
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
 
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! ...
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type :: tVtkMesh
-  ! ----------------------
-  ! Type of the VTK cell.
-  ! ----------------------
-  integer(bp) :: VtkCellType
-
-  ! ----------------------
-  ! Number of the VTK cells.
-  ! ----------------------
-  integer(ip) :: NumVtkCells
-  ! ----------------------
-  ! Number of nodes per VTK cell.
-  ! ----------------------
-  integer(ip) :: NumVtkCellNodes
-
-  ! ----------------------
-  ! VTK cell-VTK node connectivity table. 
-  ! Shape is [1, NumVtkCellNodes]×[1, NumVtkCells].
-  ! ----------------------
-  integer(ip), allocatable :: VtkCellToNode(:,:)
-end type tVtkMesh
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
 
-!! ----------------------------------------------------------------- !!
-!! Initialize VTK mesh.
-!! ----------------------------------------------------------------- !!
-subroutine IO_InitVtkMesh(vtkMesh, mesh)
-  class(tVtkMesh), intent(inout) :: vtkMesh
-  class(tMesh), intent(in) :: mesh
-
-  integer(ip) :: cell, cellCells(4), cellFace, orthCellFaces(2)
-
-  vtkMesh%VtkCellType = merge(5_bp, 10_bp, mesh%NumDims == 2)
-  vtkMesh%NumVtkCells = 0
-  vtkMesh%NumVtkCellNodes = mesh%NumDims + 1
-  allocate(vtkMesh%VtkCellToNode(vtkMesh%NumVtkCellNodes, 4*mesh%NumCells))
-
-  ! ----------------------
-  ! Generate the VTK mesh connectivity.
-  ! ----------------------
-  do cell = 1, mesh%NumCells
-    if (mesh%IsCellRed(cell)) cycle
-
-    ! ----------------------
-    ! Locate the first internal neighbour.
-    ! ----------------------
-    do cellFace = 1, mesh%NumCellFaces
-      cellCells(1) = mesh%CellToCell(cellFace,cell)
-      if (mesh%IsCellInternal(cellCells(1))) exit
-    end do
-
-    if (mesh%NumDims == 2) then
-
-      orthCellFaces(1) = 2*mod((cellFace - 1)/2 + 1, 2) + 1
-      cellCells(2) = mesh%CellToCell(orthCellFaces(1),cell)
-      cellCells(3) = mesh%CellToCell(Flip(orthCellFaces(1)),cell)
-      if (any(mesh%IsCellInternal(cellCells(2:3)))) then
-
-        ! ----------------------
-        ! This is a regular cell, 
-        ! generate the VTK triangles around it.
-        ! ----------------------
-        call MakeVtkCellsAround(cell, cellCells)
-        cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
-        if (mesh%IsCellInternal(cellCells(1))) then
-          call MakeVtkCellsAround(cell, cellCells)
-        end if
-
-      else
-
-        ! ----------------------
-        ! This is a hanging cell, 
-        ! generate the VTK triangles around the neighbour.
-        ! ----------------------
-        cellCells(2) = mesh%CellToCell(orthCellFaces(1),cellCells(1))
-        cellCells(3) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
-        call MakeVtkCellsAround(cell, cellCells)
-
-      end if
-
-    else if (mesh%NumDims == 2) then
-
-      orthCellFaces(1) = 2*mod((cellFace - 1)/2 + 1, 3) + 1
-      orthCellFaces(2) = 2*mod((cellFace - 1)/2 + 2, 3) + 1
-      cellCells(2) = mesh%CellToCell(orthCellFaces(1),cell)
-      cellCells(3) = mesh%CellToCell(orthCellFaces(2),cell)
-      cellCells(4) = mesh%CellToCell(Flip(orthCellFaces(1)),cell)
-      cellCells(5) = mesh%CellToCell(Flip(orthCellFaces(2)),cell)
-      if (any(mesh%IsCellInternal(cellCells(2:5)))) then
-
-        ! ----------------------
-        ! This is a regular cell, 
-        ! generate the VTK tetrahedrons around it.
-        ! ----------------------
-        call MakeVtkCellsAround(cell, cellCells)
-        cellCells(1) = mesh%CellToCell(Flip(cellFace),cell)
-        if (mesh%IsCellInternal(cellCells(1))) then
-          call MakeVtkCellsAround(cell, cellCells)
-        end if
-
-      else
-
-        ! ----------------------
-        ! This is a hanging cell, 
-        ! generate the VTK tetrahedrons around the neighbour.
-        ! ----------------------
-        cellCells(2) = mesh%CellToCell(orthCellFaces(1),cellCells(1))
-        cellCells(3) = mesh%CellToCell(orthCellFaces(2),cellCells(1))
-        cellCells(4) = mesh%CellToCell(Flip(orthCellFaces(1)),cellCells(1))
-        cellCells(5) = mesh%CellToCell(Flip(orthCellFaces(2)),cellCells(1))
-        call MakeVtkCellsAround(cell, cellCells)
-
-      end if
-
-    end if
-
-  end do
-
-  ! ----------------------
-  ! Print the VTK mesh statistics.
-  ! ----------------------
-  call PrintLog('')
-  call PrintLog('-=-=-=-=-=-=-=-')
-  call PrintLog('VTK mesh statistics:')
-  call PrintLog('-=-=-=-=-=-=-=-')
-  call PrintLog(' * Number of VTK cells: '//I2S(vtkMesh%NumVtkCells))
-  call PrintLog('')
-
-contains
-  subroutine PushVtkCell(vtkCellNodes)
-    integer(ip), intent(in) :: vtkCellNodes(:)
-
-    vtkMesh%NumVtkCells = vtkMesh%NumVtkCells + 1
-    vtkMesh%VtkCellToNode(:,vtkMesh%NumVtkCells) = vtkCellNodes
-
-  end subroutine PushVtkCell
-  subroutine MakeVtkCellsAround(cell, cellCells)
-    integer(ip), intent(in) :: cell, cellCells(:)
-
-    if (mesh%NumDims == 2) then
-
-      if (mesh%IsCellInternal(cellCells(2))) then
-        call PushVtkCell([cell,cellCells(1),cellCells(2)])
-      end if
-      if (mesh%IsCellInternal(cellCells(3))) then
-        call PushVtkCell([cell,cellCells(1),cellCells(3)])
-      end if
-
-    else if (mesh%NumDims == 3) then
-
-      if (all(mesh%IsCellInternal(cellCells(2:3)))) then
-        call PushVtkCell([cell, cellCells(1), cellCells(2:3)])
-      end if
-      if (all(mesh%IsCellInternal(cellCells(3:4)))) then
-        call PushVtkCell([cell, cellCells(1), cellCells(3:4)])
-      end if
-      if (all(mesh%IsCellInternal(cellCells(4:5)))) then
-        call PushVtkCell([cell, cellCells(1), cellCells(4:5)])
-      end if
-      if (all(mesh%IsCellInternal(cellCells(2:5:3)))) then
-        call PushVtkCell([cell, cellCells(1), cellCells(2:5:3)])
-      end if
-
-    end if
-
-  end subroutine MakeVtkCellsAround
-end subroutine IO_InitVtkMesh
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Print mesh in Legacy VTK '.vtk' format.
+!! Print mesh in the simple VTK ('.vtk') format.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine IO_WriteToUnstructuredVTK(mesh, file, fields)
+subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   class(tMesh), intent(inout) :: mesh
   type(IOList), intent(in), optional :: fields
   character(len=*), intent(in) :: file
-  
+
   integer(ip) :: unit
-  integer(ip) :: cell, vtkCell
+  integer(ip) :: x, y, cell, numCells
   class(IOListItem), pointer :: item
 
   logical, parameter :: binary = .true., singleReals = .true.
 
-  class(tVtkMesh), allocatable, save :: vtkMesh
-  class(tUnitOutputStream), allocatable :: stream
+  class(tOutputStream), allocatable :: stream
   class(tWriter), allocatable :: writer
 
-  if ((mesh%NumDims /= 2).and.(mesh%NumDims /= 3)) then
-    error stop 'Only 2D/3D meshes can be printed to Legacy VTK'
-  end if
-
-  if (.not.allocated(vtkMesh)) then
-    allocate(vtkMesh)
-    call IO_InitVtkMesh(vtkMesh, mesh)
-  end if
-
-  call PrintLog('')
-  call PrintLog('-=-=-=-=-=-=-=-')
-  call PrintLog('Write to unstructured VTK file: '//file)
-  call PrintLog('-=-=-=-=-=-=-=-')
-  call PrintLog('')
+  call PrintLog('Write to VTS file: '//file)
 
   ! ----------------------
-  ! Open file, initialize stream, writer and print the header.
+  ! Open file, initialize stream and writer.
   ! ----------------------
   open(newunit=unit, file=file, access='stream', status='replace')
   stream = tUnitOutputStream(unit)
-  write(unit) '# vtk DataFile Version 3.0', endl
-  write(unit) '# StormRuler unstructured VTK writer.', endl
   if (binary) then
-    write(unit) 'BINARY', endl
-    writer = tBinaryWriter(endianness='big', singleReals=singleReals)
+    stream = tBase64OutputStream(stream)
+    writer = tBinaryWriter(singleReals=singleReals)
   else
-    write(unit) 'ASCII', endl
-    writer = tAsciiWriter()
+    writer = tTextWriter(separator=endl)
   end if
-  write(unit) 'DATASET UNSTRUCTURED_GRID', endl
-  write(unit) endl
 
   ! ----------------------
-  ! Write VTK points (as centers of the mesh cells).
+  ! Write the header.
   ! ----------------------
-  write(unit) 'POINTS ', I2S(mesh%NumCells), ' float', endl
-  call stream%BeginWrite()
-  do cell = 1, mesh%NumCells
-    associate(r => mesh%CellCenter(cell))
-      call writer%Write(stream, r, paddedSize=3)
-    end associate
-  end do
-  call stream%EndWrite()
-  write(unit) endl, endl
+  write(unit) '<?xml version="1.0"?>', endl
+  write(unit) '<VTKFile type="StructuredGrid" version="0.1" '
+#$if BIG_ENDIAN
+  write(unit) 'byte_order="BigEndian">', endl
+#$else
+  write(unit) 'byte_order="LittleEndian">', endl
+#$end if
 
   ! ----------------------
-  ! Write VTK cells (as in the VTK mesh).
+  ! Write the structured grid.
   ! ----------------------
-  write(unit) 'CELLS ', &
-    & I2S(vtkMesh%NumVtkCells), ' ', &
-    & I2S(vtkMesh%NumVtkCells*(vtkMesh%NumVtkCellNodes + 1)), endl
-  call stream%BeginWrite()
-  do vtkCell = 1, vtkMesh%NumVtkCells
-    call writer%Write(stream, vtkMesh%NumVtkCellNodes)
-    call writer%Write(stream, vtkMesh%VtkCellToNode(:,vtkCell) - 1)
-  end do
-  call stream%EndWrite()
-  write(unit) endl, endl
+  write(unit) '<StructuredGrid WholeExtent="'
+  write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
+  write(unit) '">', endl
+  write(unit) '<Piece Extent="'
+  write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
+  write(unit) '">', endl
 
-  write(unit) 'CELL_TYPES ', I2S(vtkMesh%NumVtkCells), endl
+  write(unit) '<Points>', endl
+  write(unit) '<DataArray '
+  write(unit) 'type="', MergeString('Float32', 'Float64', singleReals), '" '
+  write(unit) 'format="', MergeString('binary', 'ascii', binary), '" '
+  write(unit) 'NumberOfComponents="3">', endl
   call stream%BeginWrite()
-  do vtkCell = 1, vtkMesh%NumVtkCells
-    call writer%Write(stream, int(vtkMesh%VtkCellType, kind=ip))
+  do y = 0, mesh%IndexBounds(2)
+    do x = 0, mesh%IndexBounds(1)
+      call writer%Write(stream, 1.0_dp*[x, y, 1])
+    end do
   end do
   call stream%EndWrite()
-  write(unit) endl, endl
+  write(unit) endl, '</DataArray>', endl
+  write(unit) '</Points>', endl
+
+  ! ----------------------
+  ! Write cell visibility.
+  ! ----------------------
+  write(unit) '<CellData>', endl
+  write(unit) '<DataArray Name="vtkGhostLevels" type="UInt8" '
+  write(unit) 'format="', MergeString('binary', 'ascii', binary), '">', endl
+  call stream%BeginWrite()
+  do y = 1, mesh%IndexBounds(2)
+    do x = 1, mesh%IndexBounds(1)
+      cell = mesh%IndexToCell(x,y)
+      call writer%Write(stream, merge(0_bp, 17_bp, mesh%IsCellInternal(cell)))
+    end do
+  end do
+  call stream%EndWrite()
+  write(unit) endl, '</DataArray>', endl
 
   ! ----------------------
   ! Write fields.
   ! ----------------------
   if (present(fields)) then
-    write(unit) 'POINT_DATA ', I2S(mesh%NumCells), endl
     item => fields%first
     do while(associated(item))
+      write(unit) '<DataArray Name="', item%name, '" '
+      write(unit) 'type="', MergeString('Float32', 'Float64', singleReals), '" '
+      write(unit) 'format="', MergeString('binary', 'ascii', binary), '"'
       select type(item)
         ! ----------------------
         ! Scalar field.
         ! ----------------------
         class is(IOListItem$0)
-          write(unit) 'SCALARS ', item%name, ' float 1', endl
-          write(unit) 'LOOKUP_TABLE default', endl
+          write(unit) '>', endl
           call stream%BeginWrite()
-          call writer%Write(stream, item%values(:mesh%NumCells))
+          do y = 1, mesh%IndexBounds(2)
+            do x = 1, mesh%IndexBounds(1)
+              cell = mesh%IndexToCell(x,y)
+              if (mesh%IsCellInternal(cell)) then
+                call writer%Write(stream, item%values(cell))
+              else
+                call writer%Write(stream, 0.0_dp)
+              end if
+            end do
+          end do
           call stream%EndWrite()
 
         ! ----------------------
         ! Vector field.
         ! ----------------------
         class is(IOListItem$1)
-          write(unit) 'VECTORS ', item%name, ' float', endl
+          write(unit) ' NumberOfComponents="3">', endl
           call stream%BeginWrite()
-          call writer%Write(stream, item%values(:,:mesh%NumCells), paddedSize=3)
+          do y = 1, mesh%IndexBounds(2)
+            do x = 1, mesh%IndexBounds(1)
+              cell = mesh%IndexToCell(x,y)
+              if (mesh%IsCellInternal(cell)) then
+                call writer%Write(stream, item%values(:,cell), paddedSize=3)
+              else
+                call writer%Write(stream, [0.0_dp], paddedSize=3)
+              end if
+            end do
+          end do
           call stream%EndWrite()
 
         end select
-      write(unit) endl, endl
+      write(unit) endl, '</DataArray>', endl
       item => item%next
     end do
   end if
 
   ! ----------------------
-  ! Close file and exit.
+  ! Write footer and close the file.
   ! ----------------------
+  write(unit) '</CellData>', endl
+  write(unit) '</Piece>', endl
+  write(unit) '</StructuredGrid>', endl
+  write(unit) '</VTKFile>', endl
   close(unit)
 
-end subroutine IO_WriteToUnstructuredVTK
+end subroutine IO_WriteDenseStructuredVTK
 
 end module StormRuler_IO_VTK

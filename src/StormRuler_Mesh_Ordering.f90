@@ -101,8 +101,7 @@ subroutine Mesh_Ordering_Dump(mesh, file, iperm)
 
   do cell = 1, mesh%NumCells
     write(unit, *) &
-      & I2S(mesh%CellIndex(1,ipermAt(cell, iperm)))//' '// &
-      & I2S(mesh%CellIndex(2,ipermAt(cell, iperm)))
+      & I2S(mesh%CellToIndex(:,ipermAt(cell, iperm)))
   end do
 
   close(unit)
@@ -166,7 +165,7 @@ contains
     real(dp), intent(in) :: centerCoords(:)
     integer(ip), intent(in) :: dim, sign
 
-    Condition = sign*(mesh%CellIndex(dim,iperm(cell)) - centerCoords(dim)) < 0
+    Condition = sign*(mesh%CellToIndex(dim,iperm(cell)) - centerCoords(dim)) < 0
 
   end function Condition
   recursive integer(ip) function Partition(cell, cellEnd, centerCoords, dim, sign)
@@ -228,11 +227,11 @@ contains
     ! ----------------------
     ! Compute the bounding coordinates.
     ! ----------------------
-    lowerCoords = mesh%CellIndex(:,iperm(cell))
-    upperCoords = mesh%CellIndex(:,iperm(cell))
+    lowerCoords = mesh%CellToIndex(:,iperm(cell))
+    upperCoords = mesh%CellToIndex(:,iperm(cell))
     do cellPiv1 = cell + 1, cellEnd - 1
-      lowerCoords = min(lowerCoords, mesh%CellIndex(:,iperm(cellPiv1)))
-      upperCoords = max(upperCoords, mesh%CellIndex(:,iperm(cellPiv1)))
+      lowerCoords = min(lowerCoords, mesh%CellToIndex(:,iperm(cellPiv1)))
+      upperCoords = max(upperCoords, mesh%CellToIndex(:,iperm(cellPiv1)))
     end do
     centerCoords = 0.5_dp*(lowerCoords + upperCoords)
 

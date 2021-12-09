@@ -32,7 +32,7 @@ use StormRuler_Consts, only: bp, ip
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Abstract output stream.
+!! Abstract byte output stream.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, abstract :: tOutputStream
 contains
@@ -42,9 +42,9 @@ contains
 
 end type tOutputStream
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Write data to the output stream.
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tWriteToStreamFunc(stream, bytes)
     import :: tOutputStream, bp
@@ -57,10 +57,10 @@ end interface
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Unit output stream.
+!! Unit byte output stream.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tOutputStream) :: tUnitOutputStream
-  integer(ip) :: Unit
+  integer(ip) :: Unit = 0
 
 contains
   procedure, non_overridable :: Write => WriteToUnitStream
@@ -72,9 +72,9 @@ end type tUnitOutputStream
 
 contains
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Begin writing data to the output stream.
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine BeginWriteToStream(stream)
   class(tOutputStream), intent(inout) :: stream
 
@@ -82,9 +82,9 @@ subroutine BeginWriteToStream(stream)
 
 end subroutine BeginWriteToStream
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! End writing data to the output stream.
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine EndWriteToStream(stream)
   class(tOutputStream), intent(inout) :: stream
 
@@ -95,9 +95,9 @@ end subroutine EndWriteToStream
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Write bytes to the unit output stream.
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine WriteToUnitStream(stream, bytes)
   class(tUnitOutputStream), intent(inout) :: stream
   integer(bp), intent(in), contiguous, target :: bytes(:)

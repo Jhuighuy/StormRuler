@@ -99,12 +99,18 @@ type :: tMesh
   ! Multidimensional index bounds table.
   ! Shape is [1, NumDims].
   ! ----------------------
-  integer(ip), allocatable :: CellIndexBounds(:)
+  integer(ip), allocatable :: IndexBounds(:)
+  ! ----------------------
+  ! Multidimensional index to cell table.
+  ! Shape is [1, IndexBounds(1)]×…×[1, IndexBounds(NumDims)].
+  !! TODO: 3D case.
+  ! ----------------------
+  integer(ip), allocatable :: IndexToCell(:,:)
   ! ----------------------
   ! Cell multidimensional index table.
   ! Shape is [1, NumDims]×[1, NumAllCells].
   ! ----------------------
-  integer(ip), allocatable :: CellIndex(:,:)
+  integer(ip), allocatable :: CellToIndex(:,:)
 
   ! ----------------------
   ! Number of boundary condition marks.
@@ -325,7 +331,7 @@ elemental logical function IsMeshCellRed(mesh, cell) result(isRed)
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: cell
 
-  associate(cellIndex => mesh%CellIndex(:,cell))
+  associate(cellIndex => mesh%CellToIndex(:,cell))
     isRed = mod(cellIndex(1) - cellIndex(2), 2) == 0!all(mod(cellIndex, 2) == 1)
   end associate
 
@@ -351,7 +357,7 @@ pure function GetMeshCellCenterVec(mesh, cell) result(cellCenter)
   real(dp) :: cellCenter(mesh%NumDims)
 
   !! TODO: add initial offset as mesh class field.
-  associate(cellIndex => mesh%CellIndex(:,cell))
+  associate(cellIndex => mesh%CellToIndex(:,cell))
     cellCenter = [0.0_dp,0.0_dp] + mesh%dl(:2*mesh%NumDims:2)*(cellIndex - 0.5_dp)
   end associate
 
@@ -523,7 +529,6 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
 
   integer(ip) :: x, y, xx, yy, incAddr, bndLayer
   integer(ip) :: cell, cellCell, cellConn, bndCell, bndCellCell, mark
-  integer(ip), allocatable :: cache(:,:)
 
   !! TODO: Unified 2D/3D case.
   !! TODO: Check image for correct boundaries.
@@ -537,22 +542,22 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
   ! Assign interior cell indices, count the boundary cells per mark.
   ! ----------------------
   mesh%NumCells = 0
-  mesh%CellIndexBounds = shape(image) - 2
-  allocate(cache(0:(mesh%CellIndexBounds(1) + 1), &
-               & 0:(mesh%CellIndexBounds(2) + 1))) 
-  cache(:,:) = 0
+  mesh%IndexBounds = shape(image) - 2
+  allocate(mesh%IndexToCell(0:(mesh%IndexBounds(1) + 1), &
+                          & 0:(mesh%IndexBounds(2) + 1))) 
+  mesh%IndexToCell(:,:) = 0
   mesh%NumBndMarks = size(colorToMark)
   allocate(mesh%BndCellAddrs(mesh%NumBndMarks + 1))
   mesh%BndCellAddrs(:) = 0
-  do y = 1, mesh%CellIndexBounds(2)
-    do x = 1, mesh%CellIndexBounds(1)
+  do y = 1, mesh%IndexBounds(2)
+    do x = 1, mesh%IndexBounds(1)
       if (image(x,y) /= fluidColor) cycle
 
       ! ----------------------
       ! Assign index to the interior cell.
       ! ----------------------
       mesh%NumCells = mesh%NumCells + 1
-      cell = mesh%NumCells; cache(x,y) = cell
+      cell = mesh%NumCells; mesh%IndexToCell(x,y) = cell
 
       ! ----------------------
       ! Count the boundary cells.
@@ -560,14 +565,14 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
       do cellConn = 1, mesh%NumCellConns
         xx = x + mesh%dr(1,cellConn); yy = y + mesh%dr(2,cellConn)
         if ((image(xx,yy) /= fluidColor).and. &
-            & (separatedBndCells.or.(cache(xx,yy) == 0))) then
+            & (separatedBndCells.or.(mesh%IndexToCell(xx,yy) == 0))) then
 
           mark = IndexOf(image(xx,yy), colorToMark)
           if (mark == 0) then
             call ErrorStop('Unexpected image color at ('//I2S([xx,yy])//')')
           end if
 
-          cache(xx,yy) = -mark
+          mesh%IndexToCell(xx,yy) = -mark
           mesh%BndCellAddrs(mark + 1) = mesh%BndCellAddrs(mark + 1) + 1
 
         end if
@@ -585,7 +590,8 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
       call PrintWarning('Unused boundary mark '//I2S(mark)//' detected.')      
     end if
 
-    mesh%BndCellAddrs(mark + 1) = mesh%BndCellAddrs(mark + 1) + mesh%BndCellAddrs(mark)
+    mesh%BndCellAddrs(mark + 1) = &
+      & mesh%BndCellAddrs(mark + 1) + mesh%BndCellAddrs(mark)
 
   end do
   mesh%NumBndCells = mesh%BndCellAddrs(mesh%NumBndMarks + 1) - mesh%NumCells - 1
@@ -594,22 +600,22 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
   ! ----------------------
   ! Fill the cell indices and connectivity.
   ! ----------------------
-  allocate(mesh%CellIndex(mesh%NumDims,mesh%NumAllCells))
+  allocate(mesh%CellToIndex(mesh%NumDims,mesh%NumAllCells))
   allocate(mesh%CellToCell(mesh%NumCellConns,mesh%NumAllCells))
   associate(lbound => mesh%BndCellAddrs(1), & 
           & rbound => mesh%BndCellAddrs(mesh%NumBndMarks + 1) - 1)
     allocate(mesh%BndCellConns(lbound:rbound))
   end associate
   mesh%NumAllCells = mesh%NumCells + mesh%NumBndCells
-  do y = 1, mesh%CellIndexBounds(2)
-    do x = 1, mesh%CellIndexBounds(1)
+  do y = 1, mesh%IndexBounds(2)
+    do x = 1, mesh%IndexBounds(1)
       if (image(x,y) /= fluidColor) cycle
 
       ! ----------------------
       ! Fill the cell index.
       ! ----------------------
-      cell = cache(x,y)
-      mesh%CellIndex(:,cell) = [x,y]
+      cell = mesh%IndexToCell(x,y)
+      mesh%CellToIndex(:,cell) = [x,y]
 
       ! ----------------------
       ! Fill the cell connectivity.
@@ -617,12 +623,12 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
       mesh%CellToCell(:,cell) = 0
       do cellConn = 1, mesh%NumCellConns
         xx = x + mesh%dr(1,cellConn); yy = y + mesh%dr(2,cellConn)
-        if (cache(xx,yy) > 0) then
+        if (mesh%IndexToCell(xx,yy) > 0) then
 
           ! ----------------------
           ! Neighbour cell has the assigned index.
           ! ----------------------
-          cellCell = cache(xx,yy)
+          cellCell = mesh%IndexToCell(xx,yy)
           mesh%CellToCell(cellConn,cell) = cellCell
 
           ! ----------------------
@@ -634,12 +640,12 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
             mesh%CellToCell(Flip(cellConn),bndCell) = cell
           end if
 
-        else if (cache(xx,yy) < 0) then
+        else if (mesh%IndexToCell(xx,yy) < 0) then
 
           ! ----------------------
           ! Neighbour cell is boundary cell without the assigned index.
           ! ----------------------
-          mark = -cache(xx,yy)
+          mark = -mesh%IndexToCell(xx,yy)
           bndCell = mesh%BndCellAddrs(mark)
           mesh%BndCellConns(bndCell) = cellConn
           mesh%BndCellAddrs(mark) = mesh%BndCellAddrs(mark) + 1
@@ -647,14 +653,14 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
           ! ----------------------
           ! Fill the boundary cell index and connection to the interior cell.
           ! ----------------------
-          mesh%CellIndex(:,bndCell) = [xx,yy]
+          mesh%CellToIndex(:,bndCell) = [xx,yy]
           mesh%CellToCell(cellConn,cell) = bndCell
           mesh%CellToCell(Flip(cellConn),bndCell) = cell
 
           ! ----------------------
           ! Assign the cell index to avoid duplicates in non-separated case.
           ! ----------------------
-          if (.not.separatedBndCells) cache(xx,yy) = bndCell
+          if (.not.separatedBndCells) mesh%IndexToCell(xx,yy) = bndCell
 
           ! ----------------------
           ! Optionally generate boundary layers.
@@ -665,13 +671,13 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
             mesh%CellToCell(cellConn,bndCell) = bndCellCell
             mesh%CellToCell(Flip(cellConn),bndCellCell) = bndCell
             xx = xx + mesh%dr(1,cellConn); yy = yy + mesh%dr(2,cellConn)
-            mesh%CellIndex(:,bndCellCell) = [xx,yy]
+            mesh%CellToIndex(:,bndCellCell) = [xx,yy]
             bndCell = bndCellCell
           end do
 
         else
 
-          call ErrorStop('Invalid value `0` in cache at ('//I2S([xx,yy])//').')
+          call ErrorStop('Invalid value `0` in mesh%IndexToCell at ('//I2S([xx,yy])//').')
 
         end if
       end do
@@ -692,7 +698,7 @@ subroutine InitMeshFromImage(mesh, image, fluidColor, colorToMark, &
   call PrintLog('Mesh statistics (InitFromImage):')
   call PrintLog('-=-=-=-=-=-=-=-')
   call PrintLog(' * Stencil:                  '//mesh%Stencil)
-  call PrintLog(' * Index bounds:             '//I2S(mesh%CellIndexBounds))
+  call PrintLog(' * Index bounds:             '//I2S(mesh%IndexBounds))
   call PrintLog(' * Number of cells:          '//I2S(mesh%NumCells))
   call PrintLog(' * Number of boundary cells: '//I2S(mesh%NumBndCells))
   call PrintLog(' * Number of all cells:      '//I2S(mesh%NumAllCells))
@@ -731,12 +737,12 @@ subroutine ApplyMeshOrdering(mesh, iperm)
   ! Order cell-cell graph rows.
   ! ----------------------
   cellToCellTemp = mesh%CellToCell(:,:mesh%NumCells)
-  cellIndexTemp = mesh%CellIndex(:,:mesh%NumCells)
+  cellIndexTemp = mesh%CellToIndex(:,:mesh%NumCells)
   do cell = 1, mesh%NumCells
     associate(cellCell => iperm(cell))
 
       mesh%CellToCell(:,cellCell) = cellToCellTemp(:,cell)
-      mesh%CellIndex(:,cellCell) = cellIndexTemp(:,cell)
+      mesh%CellToIndex(:,cellCell) = cellIndexTemp(:,cell)
 
     end associate
   end do
@@ -790,7 +796,7 @@ subroutine PrintMeshToNeato(mesh, file)
   ! Difference node shapes are use for different face
   ! directions of the BC/ghost cells faces.
   do cell = 1, mesh%NumCells
-    associate(cellCoord => DPI*mesh%CellIndex(:,cell))
+    associate(cellCoord => DPI*mesh%CellToIndex(:,cell))
 
       write(unit, "('  ', A, '[label=', A, ' ', 'pos=', A, ']')") &
         & 'C'//I2S(cell), '"C"', & ! ID and label
@@ -804,7 +810,7 @@ subroutine PrintMeshToNeato(mesh, file)
       bndCellConn = mesh%BndCellConns(bndCell)
       gstCell = bndCell
       do while(gstCell /= 0)
-        associate(cellCoord => DPI*mesh%CellIndex(:,gstCell))
+        associate(cellCoord => DPI*mesh%CellToIndex(:,gstCell))
 
           write(unit, "('  ', A, '[label=', A, ' pos=', A, ' shape=', A, ']')") &
             & 'C'//I2S(gstCell), & ! ID

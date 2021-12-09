@@ -41,7 +41,7 @@ use, intrinsic :: iso_c_binding, only: c_size_t, c_long, &
 implicit none
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Abstract data encoded writer.
+!! Abstract data writer.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, abstract :: tWriter
 contains
@@ -49,11 +49,13 @@ contains
     & WriteByte, WriteByteArray, &
     & WriteInteger, WriteIntegerArray, &
     & WriteReal, WriteRealVector, WriteRealVectorArray
-  procedure(tWriteEncodedByteFunc), deferred :: WriteByte
-  procedure(tWriteEncodedIntegerFunc), deferred :: WriteInteger
-  procedure(tWriteEncodeRealFunc), deferred :: WriteReal
-  procedure :: WriteByteArray, WriteIntegerArray
-  procedure :: WriteRealVector, WriteRealVectorArray
+  procedure(tWriteByteToStreamFunc), deferred :: WriteByte
+  procedure(tWriteIntegerToStreamFunc), deferred :: WriteInteger
+  procedure(tWriteRealToStreamFunc), deferred :: WriteReal
+  procedure :: WriteByteArray => WriteByteArrayToStream
+  procedure :: WriteIntegerArray => WriteIntegerArrayToStream
+  procedure :: WriteRealVector => WriteRealVectorToStream
+  procedure :: WriteRealVectorArray => WriteRealVectorArrayToStream
 
 end type tWriter
 
@@ -61,51 +63,57 @@ end type tWriter
 !! Encode and write the data.
 !! ----------------------------------------------------------------- !!
 abstract interface
-  subroutine tWriteEncodedByteFunc(writer, stream, data)
+  subroutine tWriteByteToStreamFunc(writer, stream, data)
     import :: tWriter, tOutputStream, bp
     class(tWriter), intent(inout) :: writer
     class(tOutputStream), intent(inout) :: stream
     integer(bp), intent(in) :: data
-  end subroutine tWriteEncodedByteFunc
-  subroutine tWriteEncodedIntegerFunc(writer, stream, data)
+  end subroutine tWriteByteToStreamFunc
+  subroutine tWriteIntegerToStreamFunc(writer, stream, data)
     import :: tWriter, tOutputStream, ip
     class(tWriter), intent(inout) :: writer
     class(tOutputStream), intent(inout) :: stream
     integer(ip), intent(in) :: data
-  end subroutine tWriteEncodedIntegerFunc
-  subroutine tWriteEncodeRealFunc(writer, stream, data)
+  end subroutine tWriteIntegerToStreamFunc
+  subroutine tWriteRealToStreamFunc(writer, stream, data)
     import :: tWriter, tOutputStream, dp
     class(tWriter), intent(inout) :: writer
     class(tOutputStream), intent(inout) :: stream
     real(dp), intent(in) :: data
-  end subroutine tWriteEncodeRealFunc
+  end subroutine tWriteRealToStreamFunc
 end interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! ASCII encoded writer.
+!! Text encoded writer.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tWriter) :: tAsciiWriter
-contains
-  procedure, non_overridable :: WriteByte => WriteByteAscii
-  procedure, non_overridable :: WriteInteger => WriteIntegerAscii
-  procedure, non_overridable :: WriteReal => WriteRealAscii
+type, extends(tWriter) :: tTextWriter
+  character(len=:), allocatable :: Separator
 
-end type tAsciiWriter
+contains
+  procedure, non_overridable :: WriteByte => WriteTextByteToStream
+  procedure, non_overridable :: WriteInteger => WriteTextIntegerToStream
+  procedure, non_overridable :: WriteReal => WriteTextRealToStream
+
+end type tTextWriter
+
+interface tTextWriter
+  module procedure MakeTextWriter
+end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Binary encoded writer.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tWriter) :: tBinaryWriter
-  logical, private :: SwapEndianness
-  logical, private :: LongIntegers, SingleReals
+  logical, private :: SwapEndian
+  logical, private :: LongInts, SingleReals
 
 contains
-  procedure, non_overridable :: WriteByte => WriteByteBinary
-  procedure, non_overridable :: WriteInteger => WriteIntegerBinary
-  procedure, non_overridable :: WriteReal => WriteRealBinary
+  procedure, non_overridable :: WriteByte => WriteBinaryByteToStream
+  procedure, non_overridable :: WriteInteger => WriteBinaryIntegerToStream
+  procedure, non_overridable :: WriteReal => WriteBinaryRealToStream
 
 end type tBinaryWriter
 
@@ -118,10 +126,10 @@ end interface
 
 contains
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Encode arrays.
-!! ----------------------------------------------------------------- !!
-subroutine WriteByteArray(writer, stream, data)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine WriteByteArrayToStream(writer, stream, data)
   class(tWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(bp), intent(in) :: data(:)
@@ -132,8 +140,8 @@ subroutine WriteByteArray(writer, stream, data)
     call writer%WriteByte(stream, data(index))
   end do
 
-end subroutine WriteByteArray
-subroutine WriteIntegerArray(writer, stream, data)
+end subroutine WriteByteArrayToStream
+subroutine WriteIntegerArrayToStream(writer, stream, data)
   class(tWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(ip), intent(in) :: data(:)
@@ -144,8 +152,8 @@ subroutine WriteIntegerArray(writer, stream, data)
     call writer%WriteInteger(stream, data(index))
   end do
 
-end subroutine WriteIntegerArray
-subroutine WriteRealVector(writer, stream, data, paddedSize)
+end subroutine WriteIntegerArrayToStream
+subroutine WriteRealVectorToStream(writer, stream, data, paddedSize)
   class(tWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   real(dp), intent(in) :: data(:)
@@ -162,8 +170,8 @@ subroutine WriteRealVector(writer, stream, data, paddedSize)
     end do
   end if
 
-end subroutine WriteRealVector
-subroutine WriteRealVectorArray(writer, stream, data, paddedSize)
+end subroutine WriteRealVectorToStream
+subroutine WriteRealVectorArrayToStream(writer, stream, data, paddedSize)
   class(tWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   real(dp), intent(in) :: data(:,:)
@@ -175,74 +183,85 @@ subroutine WriteRealVectorArray(writer, stream, data, paddedSize)
     call writer%WriteRealVector(stream, data(:,index), paddedSize)
   end do
 
-end subroutine WriteRealVectorArray
+end subroutine WriteRealVectorArrayToStream
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! ----------------------------------------------------------------- !!
-!! Encode data as ASCII text.
-!! ----------------------------------------------------------------- !!
-subroutine WriteStringAscii(stream, data)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Create a text writer.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+function MakeTextWriter(separator) result(writer)
+  character(len=*), intent(in), optional :: separator
+  type(tTextWriter) :: writer
+
+  writer%Separator = ' '
+  if (present(separator)) writer%Separator = separator 
+
+end function MakeTextWriter
+
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Encode data as text.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine WriteStringToStream(stream, string)
   class(tOutputStream), intent(inout) :: stream
-  character(len=*), intent(in) :: data
+  character(len=*), intent(in), target :: string
 
   integer(bp), contiguous, pointer :: bytes(:)
   
-  call c_f_pointer(cptr=c_loc(data), &
-    & fptr=bytes, shape=[len(data)*c_sizeof(data(1:1))])
+  call c_f_pointer(cptr=c_loc(string), fptr=bytes, shape=[len(string)])
 
   call stream%Write(bytes)
 
-end subroutine WriteStringAscii
-subroutine WriteByteAscii(writer, stream, data)
-  class(tAsciiWriter), intent(inout) :: writer
+end subroutine WriteStringToStream
+subroutine WriteTextByteToStream(writer, stream, data)
+  class(tTextWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(bp), intent(in) :: data
 
   call writer%WriteInteger(stream, int(data, kind=ip))
 
-end subroutine WriteByteAscii
-subroutine WriteIntegerAscii(writer, stream, data)
-  class(tAsciiWriter), intent(inout) :: writer
+end subroutine WriteTextByteToStream
+subroutine WriteTextIntegerToStream(writer, stream, data)
+  class(tTextWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(ip), intent(in) :: data
 
-  call WriteStringAscii(stream, I2S(data)//' ')
+  call WriteStringToStream(stream, string=I2S(data)//writer%Separator)
 
-end subroutine WriteIntegerAscii
-subroutine WriteRealAscii(writer, stream, data)
-  class(tAsciiWriter), intent(inout) :: writer
+end subroutine WriteTextIntegerToStream
+subroutine WriteTextRealToStream(writer, stream, data)
+  class(tTextWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   real(dp), intent(in) :: data
 
-  call WriteStringAscii(stream, R2S(data)//' ')
+  call WriteStringToStream(stream, string=R2S(data)//writer%Separator)
 
-end subroutine WriteRealAscii
+end subroutine WriteTextRealToStream
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-!! ----------------------------------------------------------------- !!
-!! Create the binary writer.
-!! ----------------------------------------------------------------- !!
-function MakeBinaryWriter(endianness, longIntegers, singleReals) result(writer)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+!! Create a binary writer.
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+function MakeBinaryWriter(endian, longInts, singleReals) result(writer)
+  character(len=*), intent(in), optional :: endian
+  logical, intent(in), optional :: longInts, singleReals
   type(tBinaryWriter) :: writer
-  character(len=*), intent(in), optional :: endianness
-  logical, intent(in), optional :: longIntegers, singleReals
 
   ! ----------------------
   ! Setup the endianness.
   ! ----------------------
-  writer%SwapEndianness = .false.
-  if (present(endianness)) then
-    if (endianness == 'big') then
+  writer%SwapEndian = .false.
+  if (present(endian)) then
+    if (endian == 'big') then
 #$if not BIG_ENDIAN
-      writer%SwapEndianness = .true.
+      writer%SwapEndian = .true.
 #$end if
-    else if (endianness == 'little') then
+    else if (endian == 'little') then
 #$if BIG_ENDIAN
-      writer%SwapEndianness = .true.
+      writer%SwapEndian = .true.
 #$end if
     else
       call ErrorStop('Invalid endianness.')
@@ -252,8 +271,8 @@ function MakeBinaryWriter(endianness, longIntegers, singleReals) result(writer)
   ! ----------------------
   ! Set up the data casts.
   ! ----------------------
-  writer%LongIntegers = .false.
-  if (present(longIntegers)) writer%LongIntegers = longIntegers
+  writer%LongInts = .false.
+  if (present(longInts)) writer%LongInts = longInts
 
   writer%SingleReals = .false.
   if (present(singleReals)) writer%SingleReals = singleReals
@@ -263,7 +282,7 @@ end function MakeBinaryWriter
 !! ----------------------------------------------------------------- !!
 !! Swap endianness of the bytes.
 !! ----------------------------------------------------------------- !!
-subroutine SwapEndianness(bytes)
+subroutine SwapEndian(bytes)
   integer(bp), intent(inout) :: bytes(:)
 
   integer(bp) :: tmp
@@ -275,12 +294,12 @@ subroutine SwapEndianness(bytes)
     bytes(i) = bytes(j); bytes(j) = tmp
   end do
 
-end subroutine SwapEndianness
+end subroutine SwapEndian
 
-!! ----------------------------------------------------------------- !!
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Write data as binary bytes.
-!! ----------------------------------------------------------------- !!
-subroutine WriteBinaryData(writer, stream, data, size)
+!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
+subroutine WriteBinaryDataToStream(writer, stream, data, size)
   class(tBinaryWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   type(*), intent(in), target :: data
@@ -290,46 +309,47 @@ subroutine WriteBinaryData(writer, stream, data, size)
 
   call c_f_pointer(cptr=c_loc(data), fptr=bytes, shape=[size])
 
-  if (writer%SwapEndianness) call SwapEndianness(bytes)
+  !! TODO: inplace swapping is a bad idea.
+  if (writer%SwapEndian) call SwapEndian(bytes)
   call stream%Write(bytes)
-  if (writer%SwapEndianness) call SwapEndianness(bytes)
+  if (writer%SwapEndian) call SwapEndian(bytes)
 
-end subroutine WriteBinaryData
-subroutine WriteByteBinary(writer, stream, data)
+end subroutine WriteBinaryDataToStream
+subroutine WriteBinaryByteToStream(writer, stream, data)
   class(tBinaryWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(bp), intent(in) :: data
 
-  call WriteBinaryData(writer, stream, data, c_sizeof(data))
+  call WriteBinaryDataToStream(writer, stream, data, c_sizeof(data))
 
-end subroutine WriteByteBinary
-subroutine WriteIntegerBinary(writer, stream, data)
+end subroutine WriteBinaryByteToStream
+subroutine WriteBinaryIntegerToStream(writer, stream, data)
   class(tBinaryWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   integer(ip), intent(in) :: data
 
-  if (writer%LongIntegers) then
+  if (writer%LongInts) then
     associate(longData => int(data, kind=lp))
-      call WriteBinaryData(writer, stream, longData, c_sizeof(longData))
+      call WriteBinaryDataToStream(writer, stream, longData, c_sizeof(longData))
     end associate
   else
-    call WriteBinaryData(writer, stream, data, c_sizeof(data))
+    call WriteBinaryDataToStream(writer, stream, data, c_sizeof(data))
   end if
 
-end subroutine WriteIntegerBinary
-subroutine WriteRealBinary(writer, stream, data)
+end subroutine WriteBinaryIntegerToStream
+subroutine WriteBinaryRealToStream(writer, stream, data)
   class(tBinaryWriter), intent(inout) :: writer
   class(tOutputStream), intent(inout) :: stream
   real(dp), intent(in) :: data
 
   if (writer%SingleReals) then
     associate(singleData => real(data, kind=sp))
-      call WriteBinaryData(writer, stream, singleData, c_sizeof(singleData))
+      call WriteBinaryDataToStream(writer, stream, singleData, c_sizeof(singleData))
     end associate
   else
-    call WriteBinaryData(writer, stream, data, c_sizeof(data))
+    call WriteBinaryDataToStream(writer, stream, data, c_sizeof(data))
   end if
 
-end subroutine WriteRealBinary
+end subroutine WriteBinaryRealToStream
 
 end module StormRuler_IO_Writer

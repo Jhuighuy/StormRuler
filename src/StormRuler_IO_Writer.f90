@@ -320,7 +320,7 @@ subroutine WriteBinaryByteToStream(writer, stream, data)
   class(tOutputStream), intent(inout) :: stream
   integer(bp), intent(in) :: data
 
-  call WriteBinaryDataToStream(writer, stream, data, c_sizeof(data))
+  call stream%Write([data])
 
 end subroutine WriteBinaryByteToStream
 subroutine WriteBinaryIntegerToStream(writer, stream, data)

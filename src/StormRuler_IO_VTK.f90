@@ -62,7 +62,7 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   integer(ip) :: x, y, cell, numCells
   class(IOListItem), pointer :: item
 
-  logical, parameter :: binary = .false., singleReals = .true.
+  logical, parameter :: binary = .true., singleReals = .true.
 
   class(tOutputStream), allocatable :: stream
   class(tWriter), allocatable :: writer
@@ -86,7 +86,10 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   ! ----------------------
   write(unit) '<?xml version="1.0"?>', endl
   write(unit) '<VTKFile type="ImageData"'
-  write(unit) ' version="0.1" '!, ' header_type="UInt32"'
+  write(unit) ' version="1.0"'
+  if (binary) then
+    write(unit) ' header_type="UInt32"'
+  end if
 #$if BIG_ENDIAN
   write(unit) ' byte_order="BigEndian">', endl
 #$else
@@ -96,6 +99,7 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   ! ----------------------
   ! Write the structured grid.
   ! ----------------------
+  numCells = mesh%IndexBounds(1)*mesh%IndexBounds(2)
   write(unit) '<ImageData WholeExtent="'
   write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
   write(unit) '" Origin="0 0 0" Spacing="1 1 1">', endl
@@ -110,6 +114,7 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   write(unit) '<DataArray Name="vtkGhostType" type="UInt8"'
   write(unit) ' format="', MergeString('binary', 'ascii', binary), '">', endl
   call stream%BeginWrite()
+  if (binary) call writer%Write(stream, numCells)
   do y = 1, mesh%IndexBounds(2)
     do x = 1, mesh%IndexBounds(1)
       cell = mesh%IndexToCell(x,y)
@@ -135,6 +140,9 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
         class is(IOListItem$0)
           write(unit) '>', endl
           call stream%BeginWrite()
+          if (binary) then
+            call writer%Write(stream, merge(4, 8, singleReals)*numCells)
+          end if
           do y = 1, mesh%IndexBounds(2)
             do x = 1, mesh%IndexBounds(1)
               cell = mesh%IndexToCell(x,y)
@@ -153,6 +161,9 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
         class is(IOListItem$1)
           write(unit) ' NumberOfComponents="3">'
           call stream%BeginWrite()
+          if (binary) then
+            call writer%Write(stream, 3*merge(4, 8, singleReals)*numCells)
+          end if
           do y = 1, mesh%IndexBounds(2)
             do x = 1, mesh%IndexBounds(1)
               cell = mesh%IndexToCell(x,y)

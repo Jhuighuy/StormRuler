@@ -236,7 +236,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToMark(:)
 
-
     colorToMark = &
       & [ RgbToInt([255, 255, 255]), RgbToInt([255, 0, 0]), &
       &   RgbToInt([  0, 255,   0]), RgbToInt([0, 0, 255]), &
@@ -254,7 +253,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
     call gMesh%PrintTo_Neato('test/c2c.dot')
 
-    call IO_WriteVtkImageData(gMesh, 'test/c2c.vts')
+    call IO_WriteVtkImageData(gMesh, 'test/c2c.vti')
 
   end block
 #$endif

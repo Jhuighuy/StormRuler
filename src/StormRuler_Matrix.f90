@@ -873,7 +873,7 @@ contains
 
     !$omp parallel
     do level = 1, ctx%NumLevels
-      !$omp do private(row,levelAddr) schedule(static)
+      !$omp do private(row, levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
 
         row = ctx%LevelRowIndices(levelAddr)
@@ -891,7 +891,7 @@ contains
 
     !$omp parallel
     do level = 1, ctx%NumLevels
-      !$omp do private(row,levelAddr) schedule(static)
+      !$omp do private(row, levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
 
         row = ctx%LevelRowIndices(levelAddr)
@@ -909,7 +909,7 @@ contains
 
     !$omp parallel
     do level = 1, ctx%NumLevels
-      !$omp do private(row,levelAddr) schedule(static)
+      !$omp do private(row, levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
 
         row = ctx%LevelRowIndices(levelAddr)
@@ -927,7 +927,7 @@ contains
 
     !$omp parallel
     do level = 1, ctx%NumLevels
-      !$omp do private(row,levelAddr) schedule(static)
+      !$omp do private(row, levelAddr) schedule(static)
       do levelAddr = ctx%LevelAddrs(level), ctx%LevelAddrs(level + 1) - 1
 
         row = ctx%LevelRowIndices(levelAddr)

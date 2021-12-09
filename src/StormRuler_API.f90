@@ -254,7 +254,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
     call gMesh%PrintTo_Neato('test/c2c.dot')
 
-    call IO_WriteDenseStructuredVTK(gMesh, 'test/c2c.vts')
+    call IO_WriteVtkImageData(gMesh, 'test/c2c.vts')
 
   end block
 #$endif
@@ -426,7 +426,7 @@ subroutine cIO_Flush(ioListPtr, meshPtr, filenamePtr) bind(C, name='SR_IO_Flush'
   call Unwrap(meshPtr, mesh)
   call Unwrap(filenamePtr, filename)
 
-  call IO_WriteDenseStructuredVTK(mesh, filename, io_List)
+  call IO_WriteVtkImageData(mesh, filename, io_List)
   deallocate(io_List)
 
 end subroutine cIO_Flush

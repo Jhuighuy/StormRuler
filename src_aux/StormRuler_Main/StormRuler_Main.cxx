@@ -410,7 +410,7 @@ int main() {
 
     char filename[256];
     printf("time = %f\n", total_time);
-    sprintf(filename, "out/fld-%d.vts", time);
+    sprintf(filename, "out/fld-%d.vti", time);
     stormIOList_t io = SR_IO_Begin();
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, c, "phase");

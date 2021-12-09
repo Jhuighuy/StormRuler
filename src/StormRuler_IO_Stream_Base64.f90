@@ -38,7 +38,7 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tOutputStream) :: tBase64OutputStream
   class(tOutputStream), allocatable, private :: Inner
-  integer(ip), private :: Buffer(3), BufferLength = 0
+  integer(bp), private :: Buffer(3), BufferLength = 0
 
 contains
   procedure, non_overridable :: Write => WriteToBase64Stream
@@ -120,7 +120,7 @@ subroutine EncodeBytesAndWriteToStream(stream)
 
 contains
   integer(bp) function EncodeChar(e)
-    integer(ip), intent(in) :: e
+    integer(bp), intent(in) :: e
 
     character, parameter :: encodeTable(0:63) = &
       [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', & 
@@ -136,32 +136,32 @@ contains
 
   end function EncodeChar
   subroutine EncodeSingle(a)
-    integer(ip), intent(in) :: a
+    integer(bp), intent(in) :: a
 
-    encoded(1) = EncodeChar(iand(ishft(a, -2), z'3F'))
-    encoded(2) = EncodeChar(iand(ishft(a, +4), z'30'))
+    encoded(1) = EncodeChar(iand(ishft(a, -2), 63_bp)) ! 0x3F
+    encoded(2) = EncodeChar(iand(ishft(a, +4), 48_bp)) ! 0x30
     encoded(3:4) = iachar('=')
 
   end subroutine EncodeSingle
   subroutine EncodeDuplet(a, b)
-    integer(ip), intent(in) :: a, b
+    integer(bp), intent(in) :: a, b
 
-    encoded(1) = EncodeChar(    iand(ishft(a, -2), z'3F')  )
-    encoded(2) = EncodeChar(ior(iand(ishft(a, +4), z'30'), &
-                              & iand(ishft(b, -4), z'0F')) )
-    encoded(3) = EncodeChar(    iand(ishft(b, +2), z'3C')  )
+    encoded(1) = EncodeChar(    iand(ishft(a, -2), 63_bp)  ) ! 0x3F
+    encoded(2) = EncodeChar(ior(iand(ishft(a, +4), 48_bp), & ! 0x30
+                              & iand(ishft(b, -4), 15_bp)) ) ! 0x0F
+    encoded(3) = EncodeChar(    iand(ishft(b, +2), 60_bp)  ) ! 0x3C
     encoded(4) = iachar('=')
 
   end subroutine EncodeDuplet
   subroutine EncodeTriplet(a, b, c)
-    integer(ip), intent(in) :: a, b, c
+    integer(bp), intent(in) :: a, b, c
 
-    encoded(1) = EncodeChar(    iand(ishft(a, -2), z'3F')  )
-    encoded(2) = EncodeChar(ior(iand(ishft(a, +4), z'30'), &
-                              & iand(ishft(b, -4), z'0F')) )
-    encoded(3) = EncodeChar(ior(iand(ishft(b, +2), z'3C'), &
-                              & iand(ishft(c, -6), z'03')) )
-    encoded(4) = EncodeChar(    iand(ishft(c,  0), z'3F')  )
+    encoded(1) = EncodeChar(    iand(ishft(a, -2), 63_bp)  ) ! 0x3F
+    encoded(2) = EncodeChar(ior(iand(ishft(a, +4), 48_bp), & ! 0x30
+                              & iand(ishft(b, -4), 15_bp)) ) ! 0x0F
+    encoded(3) = EncodeChar(ior(iand(ishft(b, +2), 60_bp), & ! 0x3C
+                              & iand(ishft(c, -6), 03_bp)) ) ! 0x03 
+    encoded(4) = EncodeChar(    iand(ishft(c,  0), 63_bp)  ) ! 0x3F
 
   end subroutine EncodeTriplet
 end subroutine EncodeBytesAndWriteToStream

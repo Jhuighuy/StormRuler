@@ -51,9 +51,9 @@ implicit none
 contains
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Print mesh in the simple VTK ('.vtk') format.
+!! Write the mesh and fields in the VTK Image Data format ('.vti').
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
+subroutine IO_WriteVtkImageData(mesh, file, fields)
   class(tMesh), intent(inout) :: mesh
   type(IOList), intent(in), optional :: fields
   character(len=*), intent(in) :: file
@@ -62,12 +62,12 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   integer(ip) :: x, y, cell, numCells
   class(IOListItem), pointer :: item
 
-  logical, parameter :: binary = .true., singleReals = .true.
+  logical, parameter :: binary = .false., singleReals = .true.
 
   class(tOutputStream), allocatable :: stream
   class(tWriter), allocatable :: writer
 
-  call PrintLog('Write to VTS file: '//file)
+  call PrintLog('Write to VTI file: '//file)
 
   ! ----------------------
   ! Open file, initialize stream and writer.
@@ -85,8 +85,8 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   ! Write the header.
   ! ----------------------
   write(unit) '<?xml version="1.0"?>', endl
-  write(unit) '<VTKFile type="StructuredGrid"'
-  write(unit) ' version="0.1" '!, ' header_type="UInt64"'
+  write(unit) '<VTKFile type="ImageData"'
+  write(unit) ' version="0.1" '!, ' header_type="UInt32"'
 #$if BIG_ENDIAN
   write(unit) ' byte_order="BigEndian">', endl
 #$else
@@ -96,34 +96,19 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   ! ----------------------
   ! Write the structured grid.
   ! ----------------------
-  write(unit) '<StructuredGrid WholeExtent="'
+  write(unit) '<ImageData WholeExtent="'
   write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
-  write(unit) '">', endl
+  write(unit) '" Origin="0 0 0" Spacing="1 1 1">', endl
   write(unit) '<Piece Extent="'
   write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
   write(unit) '">', endl
-
-  write(unit) '<Points>', endl
-  write(unit) '<DataArray'
-  write(unit) ' type="', MergeString('Float32', 'Float64', singleReals), '"'
-  write(unit) ' format="', MergeString('binary', 'ascii', binary), '"'
-  write(unit) ' NumberOfComponents="3">'
-  call stream%BeginWrite()
-  do y = 0, mesh%IndexBounds(2)
-    do x = 0, mesh%IndexBounds(1)
-      call writer%Write(stream, 1.0_dp*[x, y, 1])
-    end do
-  end do
-  call stream%EndWrite()
-  write(unit) '</DataArray>', endl
-  write(unit) '</Points>', endl
 
   ! ----------------------
   ! Write cell visibility.
   ! ----------------------
   write(unit) '<CellData>', endl
-  write(unit) '<DataArray Name="vtkGhostLevels" type="UInt8"'
-  write(unit) ' format="', MergeString('binary', 'ascii', binary), '">'
+  write(unit) '<DataArray Name="vtkGhostType" type="UInt8"'
+  write(unit) ' format="', MergeString('binary', 'ascii', binary), '">', endl
   call stream%BeginWrite()
   do y = 1, mesh%IndexBounds(2)
     do x = 1, mesh%IndexBounds(1)
@@ -132,7 +117,7 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
     end do
   end do
   call stream%EndWrite()
-  write(unit) '</DataArray>', endl
+  write(unit) endl, '</DataArray>', endl
 
   ! ----------------------
   ! Write fields.
@@ -181,7 +166,7 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
           call stream%EndWrite()
 
         end select
-      write(unit) '</DataArray>', endl
+      write(unit) endl, '</DataArray>', endl
       item => item%next
     end do
   end if
@@ -191,10 +176,10 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   ! ----------------------
   write(unit) '</CellData>', endl
   write(unit) '</Piece>', endl
-  write(unit) '</StructuredGrid>', endl
+  write(unit) '</ImageData>', endl
   write(unit) '</VTKFile>', endl
   close(unit)
 
-end subroutine IO_WriteDenseStructuredVTK
+end subroutine IO_WriteVtkImageData
 
 end module StormRuler_IO_VTK

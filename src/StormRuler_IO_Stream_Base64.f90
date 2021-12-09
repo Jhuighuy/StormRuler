@@ -121,6 +121,7 @@ subroutine EncodeBytesAndWriteToStream(stream)
 contains
   integer(bp) function EncodeChar(e)
     integer(ip), intent(in) :: e
+
     character, parameter :: encodeTable(0:63) = &
       [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', & 
       & 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', &

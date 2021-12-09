@@ -85,11 +85,12 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   ! Write the header.
   ! ----------------------
   write(unit) '<?xml version="1.0"?>', endl
-  write(unit) '<VTKFile type="StructuredGrid" version="0.1" '
+  write(unit) '<VTKFile type="StructuredGrid"'
+  write(unit) ' version="0.1" '!, ' header_type="UInt64"'
 #$if BIG_ENDIAN
-  write(unit) 'byte_order="BigEndian">', endl
+  write(unit) ' byte_order="BigEndian">', endl
 #$else
-  write(unit) 'byte_order="LittleEndian">', endl
+  write(unit) ' byte_order="LittleEndian">', endl
 #$end if
 
   ! ----------------------
@@ -103,10 +104,10 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   write(unit) '">', endl
 
   write(unit) '<Points>', endl
-  write(unit) '<DataArray '
-  write(unit) 'type="', MergeString('Float32', 'Float64', singleReals), '" '
-  write(unit) 'format="', MergeString('binary', 'ascii', binary), '" '
-  write(unit) 'NumberOfComponents="3">', endl
+  write(unit) '<DataArray'
+  write(unit) ' type="', MergeString('Float32', 'Float64', singleReals), '"'
+  write(unit) ' format="', MergeString('binary', 'ascii', binary), '"'
+  write(unit) ' NumberOfComponents="3">'
   call stream%BeginWrite()
   do y = 0, mesh%IndexBounds(2)
     do x = 0, mesh%IndexBounds(1)
@@ -114,15 +115,15 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
     end do
   end do
   call stream%EndWrite()
-  write(unit) endl, '</DataArray>', endl
+  write(unit) '</DataArray>', endl
   write(unit) '</Points>', endl
 
   ! ----------------------
   ! Write cell visibility.
   ! ----------------------
   write(unit) '<CellData>', endl
-  write(unit) '<DataArray Name="vtkGhostLevels" type="UInt8" '
-  write(unit) 'format="', MergeString('binary', 'ascii', binary), '">', endl
+  write(unit) '<DataArray Name="vtkGhostLevels" type="UInt8"'
+  write(unit) ' format="', MergeString('binary', 'ascii', binary), '">'
   call stream%BeginWrite()
   do y = 1, mesh%IndexBounds(2)
     do x = 1, mesh%IndexBounds(1)
@@ -131,7 +132,7 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
     end do
   end do
   call stream%EndWrite()
-  write(unit) endl, '</DataArray>', endl
+  write(unit) '</DataArray>', endl
 
   ! ----------------------
   ! Write fields.
@@ -139,9 +140,9 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
   if (present(fields)) then
     item => fields%first
     do while(associated(item))
-      write(unit) '<DataArray Name="', item%name, '" '
-      write(unit) 'type="', MergeString('Float32', 'Float64', singleReals), '" '
-      write(unit) 'format="', MergeString('binary', 'ascii', binary), '"'
+      write(unit) '<DataArray Name="', item%name, '"'
+      write(unit) ' type="', MergeString('Float32', 'Float64', singleReals), '"'
+      write(unit) ' format="', MergeString('binary', 'ascii', binary), '"'
       select type(item)
         ! ----------------------
         ! Scalar field.
@@ -165,7 +166,7 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
         ! Vector field.
         ! ----------------------
         class is(IOListItem$1)
-          write(unit) ' NumberOfComponents="3">', endl
+          write(unit) ' NumberOfComponents="3">'
           call stream%BeginWrite()
           do y = 1, mesh%IndexBounds(2)
             do x = 1, mesh%IndexBounds(1)
@@ -180,7 +181,7 @@ subroutine IO_WriteDenseStructuredVTK(mesh, file, fields)
           call stream%EndWrite()
 
         end select
-      write(unit) endl, '</DataArray>', endl
+      write(unit) '</DataArray>', endl
       item => item%next
     end do
   end if

@@ -128,12 +128,23 @@ type :: tMesh
   integer(bp), allocatable :: BndCellConns(:)
 
   ! ----------------------
-  ! Distance between centers of the adjacent cells per face.
+  ! Mesh origin.
+  ! Shape is [1, NumDims].
+  ! ----------------------
+  real(dp), allocatable :: Origin(:)
+  ! ----------------------
+  ! Spacing between centers of the adjacent cells.
+  ! Shape is [1, NumDims].
+  ! ----------------------
+  real(dp), allocatable :: Spacing(:)
+
+  ! ----------------------
+  ! Distance between centers of the adjacent cells per connection.
   ! Shape is [1, NumCellConns].
   ! ----------------------
   real(dp), allocatable :: dl(:)
   ! ----------------------
-  ! Unit difference between centers of the adjacent cells per face.
+  ! Unit difference between centers of the adjacent cells per connection.
   ! Shape is [1, NumDims]×[1, NumCellConns].
   ! ----------------------
   integer(ip), allocatable :: dr(:,:)

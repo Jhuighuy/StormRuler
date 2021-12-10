@@ -144,17 +144,11 @@ Legend:
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
 
-* Options system:
-  - [ ] 💄 ???
-
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
   - [ ] 🧸 BC kernels,
-  - [x] 🪓 Reimplement mesh generation with support for the varous DnQm models.
-  - [ ] 🪓 Generate nodes,
-  - [ ] 🪓 Generate faces,
-  - [ ] 🧸 Redesigned VTK output,
-  - [ ] 🪓 Move VTK output away from mesh.
+  - [x] 🪓 Reimplement mesh generation with support for the varous DnQm models,
+  - [ ] 🦜 Unified 2D/3D indexing.
 
 * Mesh ordering:
   - [ ] 🦜🧻 Some C/C++ API for mesh loading,
@@ -164,6 +158,18 @@ Legend:
   - [ ] 🚬 Better cell ordering quality functional, 
   - [ ] 🧸 Functional-based unified API for cell ordering,
   - [ ] 🪓 BC cells sorting and better BCs parallelization.
+
+* IO:
+  - [ ] 🪓 Move Neato output away from mesh,
+  - [x] 🪓 Move VTK output away from mesh,
+  - [ ] 🦜 ZLIB compression,
+  - [x] 🚬 Redesigned VTK output (as `.vti`),
+  - [ ] 🪓 Parallel VTK output (as `.pvti`),
+  - [ ] 🚬 Multiblock VTK output (as `.vtm`),
+  - [ ] 🦜💄 Better image IO.
+
+* Options system:
+  - [ ] 💄 ???
 
 * AMR/cut cell:
   - [ ] 🪓 Block mesh (pre MPI),

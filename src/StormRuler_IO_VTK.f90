@@ -24,6 +24,8 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_IO_VTK
 
+#$use 'StormRuler_Macros.fi'
+
 use StormRuler_Consts, only: bp, ip, dp, endl
 
 use StormRuler_Helpers, only: &
@@ -32,13 +34,14 @@ use StormRuler_Helpers, only: &
 
 use StormRuler_Mesh, only: tMesh
 
+use StormRuler_IO_Writer, only: tWriter, tTextWriter, tBinaryWriter
 use StormRuler_IO_Stream, only: tOutputStream, tUnitOutputStream
 use StormRuler_IO_Stream_Base64, only: tBase64OutputStream
-use StormRuler_IO_Writer, only: tWriter, tTextWriter, tBinaryWriter
+#$if HAS_ZLIB
+use StormRuler_IO_Stream_ZLib, only: tZLibOutputStream
+#$end if
 
 use StormRuler_IO, only: IOList, IOListItem, @{IOListItem$$@|@0, 2}@
-
-#$use 'StormRuler_Macros.fi'
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -59,15 +62,18 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   character(len=*), intent(in) :: file
 
   integer(ip) :: unit
-  integer(ip) :: x, y, cell, numCells
+  integer(ip) :: x, y, cell, numPixels
   class(IOListItem), pointer :: item
 
-  logical, parameter :: binary = .true., singleReals = .true.
+  logical, parameter :: binary = .true., compressed = .true., singleReals = .false.
 
   class(tOutputStream), allocatable :: stream
   class(tWriter), allocatable :: writer
 
   call PrintLog('Write to VTI file: '//file)
+
+  numPixels = mesh%IndexBounds(1)*mesh%IndexBounds(2)
+  if (mesh%NumDims == 3) numPixels = numPixels*mesh%IndexBounds(3)
 
   ! ----------------------
   ! Open file, initialize stream and writer.
@@ -76,6 +82,9 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   stream = tUnitOutputStream(unit)
   if (binary) then
     stream = tBase64OutputStream(stream)
+#$if HAS_ZLIB
+    if (compressed) stream = tZLibOutputStream(stream)
+#$end if
     writer = tBinaryWriter(singleReals=singleReals)
   else
     writer = tTextWriter(separator=endl)
@@ -88,21 +97,28 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   write(unit) '<VTKFile type="ImageData"'
   write(unit) ' version="1.0"'
   if (binary) then
+    !! TODO: 64-bit header type.
     write(unit) ' header_type="UInt32"'
   end if
 #$if BIG_ENDIAN
-  write(unit) ' byte_order="BigEndian">', endl
+  write(unit) ' byte_order="BigEndian"'
 #$else
-  write(unit) ' byte_order="LittleEndian">', endl
+  write(unit) ' byte_order="LittleEndian"'
 #$end if
+#$if HAS_ZLIB
+  if (binary.and.compressed) then
+    write(unit) ' compressor="vtkZLibDataCompressor"'
+  end if
+#$end if
+  write(unit) '>', endl
 
   ! ----------------------
-  ! Write the structured grid.
+  ! Write the mesh header.
   ! ----------------------
-  numCells = mesh%IndexBounds(1)*mesh%IndexBounds(2)
+  !! TODO: write true extents, origin and spacing.
   write(unit) '<ImageData WholeExtent="'
   write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
-  write(unit) '" Origin="0 0 0" Spacing="1 1 1">', endl
+  write(unit) '" Origin="0 0 0" Spacing="1.0e-2 1.0e-2 1.0">', endl
   write(unit) '<Piece Extent="'
   write(unit) '0 ', I2S(mesh%IndexBounds(1)), ' 0 ', I2S(mesh%IndexBounds(2)), ' 0 0'
   write(unit) '">', endl
@@ -114,7 +130,10 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   write(unit) '<DataArray Name="vtkGhostType" type="UInt8"'
   write(unit) ' format="', MergeString('binary', 'ascii', binary), '">', endl
   call stream%BeginWrite()
-  if (binary) call writer%Write(stream, numCells)
+  if (binary.and.(.not.compressed)) then
+    call writer%Write(stream, numPixels)
+  end if
+  !! TODO: 3D case.
   do y = 1, mesh%IndexBounds(2)
     do x = 1, mesh%IndexBounds(1)
       cell = mesh%IndexToCell(x,y)
@@ -140,9 +159,10 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
         class is(IOListItem$0)
           write(unit) '>', endl
           call stream%BeginWrite()
-          if (binary) then
-            call writer%Write(stream, merge(4, 8, singleReals)*numCells)
+          if (binary.and.(.not.compressed)) then
+            call writer%Write(stream, merge(4, 8, singleReals)*numPixels)
           end if
+          !! TODO: 3D case.
           do y = 1, mesh%IndexBounds(2)
             do x = 1, mesh%IndexBounds(1)
               cell = mesh%IndexToCell(x,y)
@@ -161,9 +181,10 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
         class is(IOListItem$1)
           write(unit) ' NumberOfComponents="3">'
           call stream%BeginWrite()
-          if (binary) then
-            call writer%Write(stream, 3*merge(4, 8, singleReals)*numCells)
+          if (binary.and.(.not.compressed)) then
+            call writer%Write(stream, 3*merge(4, 8, singleReals)*numPixels)
           end if
+          !! TODO: 3D case.
           do y = 1, mesh%IndexBounds(2)
             do x = 1, mesh%IndexBounds(1)
               cell = mesh%IndexToCell(x,y)

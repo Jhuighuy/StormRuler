@@ -39,7 +39,7 @@ use StormRuler_BLAS, only: tMatVecFunc
 #$use 'StormRuler_Macros.fi'
 
 #$if HAS_MKL
-use StormRuler_MKL, only: mkl_dcsrgemv, mkl_dbsrgemv, &
+use StormRuler_Libs_MKL, only: mkl_dcsrgemv, mkl_dbsrgemv, &
   & mkl_dcsrtrsv, mkl_dbsrtrsv
 #$end if
 

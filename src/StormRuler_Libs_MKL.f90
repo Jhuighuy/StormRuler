@@ -22,7 +22,7 @@
 !! FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 !! OTHER DEALINGS IN THE SOFTWARE.
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-module StormRuler_MKL
+module StormRuler_Libs_MKL
 
 #$use 'StormRuler_Macros.fi'
 
@@ -35,4 +35,4 @@ implicit none
 include 'mkl.fi'
 #$end if
 
-end module StormRuler_MKL
+end module StormRuler_Libs_MKL

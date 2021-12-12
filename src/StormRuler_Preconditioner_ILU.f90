@@ -24,9 +24,6 @@
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 module StormRuler_Preconditioner_ILU
 
-#$use 'StormRuler_Macros.fi'
-#$if HAS_MKL
-
 use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gUseMKL
 
@@ -40,7 +37,10 @@ use StormRuler_BLAS, only: tMatVecFunc
 use StormRuler_Matrix, only: tMatrix
 use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 
-use StormRuler_MKL, only: dcsrilu0, mkl_dcsrtrsv
+#$use 'StormRuler_Macros.fi'
+#$if HAS_MKL
+use StormRuler_Libs_MKL, only: dcsrilu0, mkl_dcsrtrsv
+#$end if
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -86,11 +86,15 @@ subroutine InitPreconditioner_ILU0_MKL(pre, mesh, MatVec)
   iparam(2) = 6; dparam(31) = 1.0e-16_dp 
   allocate(pre%FactorsColCoeffs(size(pre%Mat%ColCoeffs)))
 
+#$if HAS_MKL
   call dcsrilu0(mesh%NumCells, pre%Mat%ColCoeffs, pre%Mat%RowAddrs, &
     & pre%Mat%ColIndices, pre%FactorsColCoeffs, iparam, dparam, ierror)
   if (ierror /= 0) then
     call ErrorStop('MKL `dcsrilu0` has failed, ierror='//I2S(ierror))
   end if
+#$else
+  error stop 'ILU0_MKL requires MKL for now..'
+#$end if
 
 end subroutine InitPreconditioner_ILU0_MKL
 
@@ -111,13 +115,15 @@ subroutine ApplyPreconditioner_ILU0_MKL(pre, mesh, yArr, xArr, MatVec)
 
   call tArr%Get(t); call xArr%Get(x); call yArr%Get(y)
 
+#$if HAS_MKL
   call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
     & pre%FactorsColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, x, t)
   call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
     & pre%FactorsColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, t, y)
-
-end subroutine ApplyPreconditioner_ILU0_MKL
-
+#$else
+  error stop 'ILU0_MKL requires MKL for now..'
 #$end if
+    
+end subroutine ApplyPreconditioner_ILU0_MKL
 
 end module StormRuler_Preconditioner_ILU

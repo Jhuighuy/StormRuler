@@ -235,7 +235,7 @@ Legend:
   - [ ] 🦜 `Jacobi` preconditioner,
   - [x] 🪓 `LU_SGS` preconditioner,
   - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
-  - [ ] 🪓 MKL-based `ILUT_MKL` preconditioners,
+  - [x] 🪓 MKL-based `ILUT_MKL` preconditioners,
   - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
   - [ ] 🚬 Static `SPAI` preconditioner,
   - [ ] 🚬🚬 Dynamic `SPAI` preconditioner,

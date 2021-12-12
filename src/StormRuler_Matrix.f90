@@ -574,14 +574,14 @@ subroutine SolveLowerTriangHelper(rowAddrs, colIndices, colCoeffs, y, b, row)
 
   integer(ip) :: rowAddr, col
 
-  y(row) = 0.0
+  y(row) = b(row)
 
   do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
     col = colIndices(rowAddr)
     if (col < row) then
-      y(row) = y(row) + colCoeffs(rowAddr)*y(col)
+      y(row) = y(row) - colCoeffs(rowAddr)*y(col)
     else if (col == row) then
-      y(row) = (b(row) - y(row))/colCoeffs(rowAddr)
+      y(row) = y(row)/colCoeffs(rowAddr)
       return
     end if
   end do
@@ -595,14 +595,14 @@ subroutine SolveBlockLowerTriangHelper(size, rowAddrs, colIndices, colCoeffs, y,
 
   integer(ip) :: rowAddr, col
 
-  y(:,row) = 0.0
+  y(:,row) = b(:,row)
 
   do rowAddr = rowAddrs(row), rowAddrs(row + 1) - 1
     col = colIndices(rowAddr)
     if (col < row) then
-      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), y(:,col))
+      y(:,row) = y(:,row) - matmul(colCoeffs(:,:,rowAddr), y(:,col))
     else if (col == row) then
-      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
+      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), y(:,row))
       return
     end if
   end do
@@ -620,14 +620,14 @@ subroutine SolveUpperTriangHelper(rowAddrs, colIndices, colCoeffs, y, b, row)
 
   integer(ip) :: rowAddr, col
 
-  y(row) = 0.0
+  y(row) = b(row)
 
   do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
     col = colIndices(rowAddr)
     if (col > row) then
-      y(row) = y(row) + colCoeffs(rowAddr)*y(col)
+      y(row) = y(row) - colCoeffs(rowAddr)*y(col)
     else if (col == row) then
-      y(row) = (b(row) - y(row))/colCoeffs(rowAddr)
+      y(row) = y(row)/colCoeffs(rowAddr)
       return
     end if
   end do
@@ -641,14 +641,14 @@ subroutine SolveBlockUpperTriangHelper(size, rowAddrs, colIndices, colCoeffs, y,
 
   integer(ip) :: rowAddr, col
 
-  y(:,row) = 0.0
+  y(:,row) = b(:,row)
 
   do rowAddr = rowAddrs(row + 1) - 1, rowAddrs(row), -1
     col = colIndices(rowAddr)
     if (col > row) then
-      y(:,row) = y(:,row) + matmul(colCoeffs(:,:,rowAddr), y(:,col))
+      y(:,row) = y(:,row) - matmul(colCoeffs(:,:,rowAddr), y(:,col))
     else if (col == row) then
-      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), b(:,row) - y(:,row))
+      y(:,row) = DenseSolve(colCoeffs(:,:,rowAddr), y(:,row))
       return
     end if
   end do

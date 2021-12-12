@@ -55,7 +55,7 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tMatrixBasedPreconditioner), abstract :: tBaseIluPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
-  type(tMatrix), private :: LuMat
+  type(tMatrix), private :: IluMat
   type(tParallelTriangularContext), private :: LowerLuCtx, UpperLuCtx
 
 contains
@@ -67,11 +67,11 @@ contains
 end type tBaseIluPreconditioner
 
 abstract interface
-  subroutine tMakeIluMatrixFunc(pre, mesh, luMat, mat)
+  subroutine tMakeIluMatrixFunc(pre, mesh, iluMat, mat)
     import :: tBaseIluPreconditioner, tMesh, tMatrix
     class(tBaseIluPreconditioner), intent(inout) :: pre
     class(tMesh), intent(in) :: mesh
-    class(tMatrix), intent(inout) :: luMat
+    class(tMatrix), intent(inout) :: iluMat
     class(tMatrix), intent(in) :: mat
   end subroutine tMakeIluMatrixFunc
 end interface
@@ -144,7 +144,7 @@ subroutine InitIluPreconditioner(pre, mesh, MatVec)
     call ErrorStop('Matrix for the ILU preconditioner is not set.')
   end if
 
-  call pre%MakeIluMatrix(mesh, pre%LuMat, pre%Mat)
+  call pre%MakeIluMatrix(mesh, pre%IluMat, pre%Mat)
 
 end subroutine InitIluPreconditioner
 
@@ -171,82 +171,54 @@ subroutine ApplyIluPreconditioner(pre, mesh, yArr, xArr, MatVec)
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
   !! TODO: reimplement with built-in triangular solvers.
-#$if HAS_MKL
   block
     real(dp), pointer :: t(:), x(:)
     call tArr%Get(t); call xArr%Get(x)
+#$if HAS_MKL
     call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
-      & pre%LuMat%ColCoeffs, pre%Mat%RowAddrs, pre%Mat%ColIndices, x, t)
-  end block
+      & pre%IluMat%ColCoeffs, pre%IluMat%RowAddrs, pre%IluMat%ColIndices, x, t)
 #$else
-  error stop 'SolveTriangular with unit diagonal is not implemented yet.'
+    error stop 'SolveTriangular with unit diagonal is not implemented yet.'
 #$end if
-  call SolveTriangular(mesh, 'U', pre%LuMat, pre%UpperLuCtx, yArr, tArr)
+  end block
+  call SolveTriangular(mesh, 'U', pre%IluMat, pre%UpperLuCtx, yArr, tArr)
 
 end subroutine ApplyIluPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-#$if HAS_MKL
-!! ----------------------------------------------------------------- !!
-!! Initizize the MKL's ILU preconditioner parameters.
-!! ----------------------------------------------------------------- !!
-subroutine InitMklIluParameters(iparam, dparam)
-  integer(ip), intent(inout) :: iparam(128)
-  real(dp), intent(inout) :: dparam(128)
-
-  iparam(:) = 0; dparam(:) = 0.0_dp
-  iparam(2) = 6 ! output messages on screen.
-
-end subroutine InitMklIluParameters
-subroutine InitMklIlu0Parameters(iparam, dparam)
-  integer(ip), intent(inout) :: iparam(128)
-  real(dp), intent(inout) :: dparam(128)
-
-  call InitMklIluParameters(iparam, dparam)
-  dparam(31) = gDiagAdjustValueILU0 ! diagonal threshold value.
-  dparam(32) = gDiagAdjustValueILU0 ! diagonal adjustment value.
-
-end subroutine InitMklIlu0Parameters
-subroutine InitMklIlutParameters(iparam, dparam)
-  integer(ip), intent(inout) :: iparam(128)
-  real(dp), intent(inout) :: dparam(128)
-
-  call InitMklIluParameters(iparam, dparam)
-  iparam(7) = 1 ! output the error message and continue.
-  dparam(31) = gDiagAdjustValueILUT ! diagonal threshold and adjustment value.
-
-end subroutine InitMklIlutParameters
-#$end if
-
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Make the ILU(0) preconditioner matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine MakeIlu0Matrix(pre, mesh, luMat, mat)
+subroutine MakeIlu0Matrix(pre, mesh, iluMat, mat)
   class(tIlu0Preconditioner), intent(inout) :: pre
   class(tMesh), intent(in) :: mesh
-  class(tMatrix), intent(inout) :: luMat
+  class(tMatrix), intent(inout) :: iluMat
   class(tMatrix), intent(in) :: mat
 
   integer(ip) :: size
 
   size = mat%BlockSize()
-  luMat%RowAddrs => mat%RowAddrs
-  luMat%ColIndices => mat%ColIndices
-  allocate(luMat%ColCoeffs, mold=mat%ColCoeffs)
+  iluMat%RowAddrs => mat%RowAddrs
+  iluMat%ColIndices => mat%ColIndices
+  allocate(iluMat%ColCoeffs, mold=mat%ColCoeffs)
 
 #$if HAS_MKL
   if (gUseMKL.and.(size == 1)) then
     block
-      integer(ip) :: iparam(128), ierror
+      integer(ip) :: iparam(128), errorCode
       real(dp) :: dparam(128)
 
-      call InitMklIlu0Parameters(iparam, dparam)
+      iparam(:) = 0; dparam(:) = 0.0_dp
+      iparam(2) = 6 ! output messages on screen.
+      dparam(31) = gDiagAdjustValueILU0 ! diagonal threshold value.
+      dparam(32) = gDiagAdjustValueILU0 ! diagonal adjustment value.
+
       call dcsrilu0(mesh%NumCells, mat%ColCoeffs, mat%RowAddrs, &
-        & mat%ColIndices, luMat%ColCoeffs, iparam, dparam, ierror)
-      if (ierror /= 0) then
-        call ErrorStop('MKL `dcsrilu0` has failed, ierror='//I2S(ierror))
+        & mat%ColIndices, iluMat%ColCoeffs, iparam, dparam, errorCode)
+      if (errorCode /= 0) then
+        call ErrorStop('MKL `dcsrilu0` has failed, errorCode='//I2S(errorCode))
       end if
 
     end block
@@ -262,35 +234,43 @@ end subroutine MakeIlu0Matrix
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Make the ILUT preconditioner matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine MakeIlutMatrix(pre, mesh, luMat, mat)
+subroutine MakeIlutMatrix(pre, mesh, iluMat, mat)
   class(tIlutPreconditioner), intent(inout) :: pre
   class(tMesh), intent(in) :: mesh
-  class(tMatrix), intent(inout) :: luMat
+  class(tMatrix), intent(inout) :: iluMat
   class(tMatrix), intent(in) :: mat
 
   integer(ip) :: size
 
   size = mat%BlockSize()
-  allocate(luMat%RowAddrs, mold=mat%RowAddrs)
+  allocate(iluMat%RowAddrs, mold=mat%RowAddrs)
   associate(luNnz => (2*gMaxFillILUT + 1)*mesh%NumCells - &
-                   & gMaxFillILUT*(gMaxFillILUT + 1) + 1)
-    allocate(luMat%ColIndices(luNnz))
-    allocate(luMat%ColCoeffs(size, size, luNnz))
+                      & gMaxFillILUT*(gMaxFillILUT + 1) + 1)
+    allocate(iluMat%ColIndices(luNnz))
+    allocate(iluMat%ColCoeffs(size, size, luNnz))
   end associate
+
+  iluMat%RowAddrs(:) = 0
+  iluMat%ColIndices(:) = 0; iluMat%ColCoeffs(:,:,:) = 0.0_dp
 
 #$if HAS_MKL
   if (gUseMKL.and.(size == 1)) then
     block
-      integer(ip) :: iparam(128), ierror
+      integer(ip) :: iparam(128), errorCode
       real(dp) :: dparam(128)
 
-      call InitMklIlutParameters(iparam, dparam)
+      iparam(:) = 0; dparam(:) = 0.0_dp
+      iparam(2) = 6 ! output messages on screen.
+      iparam(7) = 1 ! allow output of errors.
+      iparam(31) = 1 ! adjust the small diagonal entries.
+      dparam(31) = gDiagAdjustValueILUT ! diagonal threshold and adjustment value.
+
       call dcsrilut(mesh%NumCells, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, &
-        & luMat%ColCoeffs, luMat%RowAddrs, luMat%ColIndices, &
-        & gToleranceILUT, gMaxFillILUT, iparam, dparam, ierror)
-      if (ierror /= 0) then
-        call ErrorStop('MKL `dcsrilut` has failed, ierror='//I2S(ierror))
+        & iluMat%ColCoeffs, iluMat%RowAddrs, iluMat%ColIndices, &
+        & gToleranceILUT, gMaxFillILUT, iparam, dparam, errorCode)
+      if (errorCode /= 0) then
+        call ErrorStop('MKL `dcsrilut` has failed, errorCode='//I2S(errorCode))
       end if
 
     end block

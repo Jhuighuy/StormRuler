@@ -123,7 +123,8 @@ contains
       type(tMatrix), target, save :: mat
       type(tMatrixLabeling), save :: labeling
       !type(tIlu0Preconditioner) :: prepre
-      type(tLuSgsPreconditioner), save :: prepre
+      type(tIlutPreconditioner) :: prepre
+      !type(tLuSgsPreconditioner), save :: prepre
       !type(tPreconditioner_AINV) :: prepre
 
       if (labeling%NumLabels == 0) then

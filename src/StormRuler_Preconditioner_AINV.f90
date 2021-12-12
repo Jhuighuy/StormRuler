@@ -91,17 +91,17 @@ use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 !!      Conjugate Gradient Method.” 
 !!     SIAM J. Sci. Comput. 17 (1996): 1135-1149.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_AINV
+type, extends(tMatrixBasedPreconditioner) :: tAinvPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tArray), private :: DMat
   type(tMatrix), private :: ZMat
 
 contains
-  procedure, non_overridable :: SetMatrix => SetPreconditionerMatrix_AINV
-  procedure, non_overridable :: Init => InitPreconditioner_AINV
-  procedure, non_overridable :: Apply => ApplyPreconditioner_AINV
+  procedure, non_overridable :: SetMatrix => SetAinvPreconditionerMatrix
+  procedure, non_overridable :: Init => InitAinvPreconditioner
+  procedure, non_overridable :: Apply => ApplyAinvPreconditioner
 
-end type tPreconditioner_AINV
+end type tAinvPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -111,19 +111,19 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set the AINV preconditioner matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine SetPreconditionerMatrix_AINV(pre, mat)
-  class(tPreconditioner_AINV), intent(inout) :: pre
+subroutine SetAinvPreconditionerMatrix(pre, mat)
+  class(tAinvPreconditioner), intent(inout) :: pre
   class(tMatrix), intent(inout), target :: mat
 
   pre%Mat => mat
 
-end subroutine SetPreconditionerMatrix_AINV
+end subroutine SetAinvPreconditionerMatrix
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Initialize the AINV preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitPreconditioner_AINV(pre, mesh, MatVec)
-  class(tPreconditioner_AINV), intent(inout) :: pre
+subroutine InitAinvPreconditioner(pre, mesh, MatVec)
+  class(tAinvPreconditioner), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   procedure(tMatVecFunc) :: MatVec
 
@@ -131,13 +131,13 @@ subroutine InitPreconditioner_AINV(pre, mesh, MatVec)
     call ErrorStop('Matrix for the AINV preconditioner is not set.')
   end if
 
-end subroutine InitPreconditioner_AINV
+end subroutine InitAinvPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Apply the AINV preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine ApplyPreconditioner_AINV(pre, mesh, yArr, xArr, MatVec)
-  class(tPreconditioner_AINV), intent(inout) :: pre
+subroutine ApplyAinvPreconditioner(pre, mesh, yArr, xArr, MatVec)
+  class(tAinvPreconditioner), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   class(tArray), intent(inout), target :: xArr, yArr
   procedure(tMatVecFunc) :: MatVec
@@ -148,6 +148,6 @@ subroutine ApplyPreconditioner_AINV(pre, mesh, yArr, xArr, MatVec)
 
   call Set(mesh, yArr, xArr)
 
-end subroutine ApplyPreconditioner_AINV
+end subroutine ApplyAinvPreconditioner
 
 end module StormRuler_Preconditioner_AINV

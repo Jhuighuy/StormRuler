@@ -57,19 +57,19 @@ type :: tMatrix
   ! Row nonzeroes addresses.
   ! Shape is [1, NumCells + 1].
   ! ----------------------
-  integer(ip), allocatable :: RowAddrs(:)
+  integer(ip), pointer :: RowAddrs(:)
 
   ! ----------------------
   ! Row nonzeroes column indices.
   ! Shape is [1, RowAddrs(NumCells + 1) - 1].
   ! ----------------------
-  integer(ip), allocatable :: ColIndices(:)
+  integer(ip), pointer :: ColIndices(:)
 
   ! ----------------------
   ! Row nonzeroes column coefficients.
   ! Shape is [1, NumVars]×[1, NumVars]×[1, RowAddrs(NumCells + 1) - 1].
   ! ----------------------
-  real(dp), allocatable :: ColCoeffs(:,:,:)
+  real(dp), pointer :: ColCoeffs(:,:,:)
 
 contains
 

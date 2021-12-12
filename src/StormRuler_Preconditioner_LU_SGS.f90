@@ -70,22 +70,25 @@ implicit none
 !! preconditioning. More than 5 LU-SGS iterations is not recommended 
 !! due to the numerical instability issues.
 !! 
+!! LU-SGS preconditioner preserves symmetry, so it may be used
+!! with the self-adjoint solvers like CG or MINRES. 
+!! 
 !! Like the other triangular matrix-based preconditioners, LU-SGS 
 !! may suffer from poor parallel scaling.
 !! 
 !! References:
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner) :: tPreconditioner_LU_SGS
+type, extends(tMatrixBasedPreconditioner) :: tLuSgsPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tParallelTriangularContext), private :: LowerCtx, UpperCtx
 
 contains
-  procedure, non_overridable :: SetMatrix => SetPreconditionerMatrix_LU_SGS
-  procedure, non_overridable :: Init => InitPreconditioner_LU_SGS
-  procedure, non_overridable :: Apply => ApplyPreconditioner_LU_SGS
+  procedure, non_overridable :: SetMatrix => SetLuSgsPreconditionerMatrix
+  procedure, non_overridable :: Init => InitLuSgsPreconditioner
+  procedure, non_overridable :: Apply => ApplyLuSgsPreconditioner
 
-end type tPreconditioner_LU_SGS
+end type tLuSgsPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -95,19 +98,19 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set the LU-SGS preconditioner matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine SetPreconditionerMatrix_LU_SGS(pre, mat)
-  class(tPreconditioner_LU_SGS), intent(inout) :: pre
+subroutine SetLuSgsPreconditionerMatrix(pre, mat)
+  class(tLuSgsPreconditioner), intent(inout) :: pre
   class(tMatrix), intent(inout), target :: mat
 
   pre%Mat => mat
 
-end subroutine SetPreconditionerMatrix_LU_SGS
+end subroutine SetLuSgsPreconditionerMatrix
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Initialize the LU-SGS preconditioner: 𝓟 ← 𝘪𝘯𝘪𝘵(𝓐).
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine InitPreconditioner_LU_SGS(pre, mesh, MatVec)
-  class(tPreconditioner_LU_SGS), intent(inout) :: pre
+subroutine InitLuSgsPreconditioner(pre, mesh, MatVec)
+  class(tLuSgsPreconditioner), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   procedure(tMatVecFunc) :: MatVec
 
@@ -120,13 +123,13 @@ subroutine InitPreconditioner_LU_SGS(pre, mesh, MatVec)
   if (.not.allocated(pre%UpperCtx%LevelAddrs)) &
     & call InitParallelTriangularContext(mesh, 'U', pre%mat, pre%UpperCtx)
 
-end subroutine InitPreconditioner_LU_SGS
+end subroutine InitLuSgsPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Apply the LU-SGS preconditioner: 𝒚 ← 𝓟(𝓐)𝒙.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
-  class(tPreconditioner_LU_SGS), intent(inout) :: pre
+subroutine ApplyLuSgsPreconditioner(pre, mesh, yArr, xArr, MatVec)
+  class(tLuSgsPreconditioner), intent(inout) :: pre
   class(tMesh), intent(in), target :: mesh
   class(tArray), intent(inout), target :: xArr, yArr
   procedure(tMatVecFunc) :: MatVec
@@ -173,6 +176,6 @@ subroutine ApplyPreconditioner_LU_SGS(pre, mesh, yArr, xArr, MatVec)
     call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)
   end do
 
-end subroutine ApplyPreconditioner_LU_SGS
+end subroutine ApplyLuSgsPreconditioner
 
 end module StormRuler_Preconditioner_LU_SGS

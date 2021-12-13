@@ -239,6 +239,7 @@ subroutine MatrixVector(mesh, mat, yArr, xArr)
 
 #$if HAS_MKL
   if (gUseMKL) then
+
     if (size == 1) then
       call mkl_dcsrgemv('N', mesh%NumCells, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
@@ -246,6 +247,7 @@ subroutine MatrixVector(mesh, mat, yArr, xArr)
       call mkl_dbsrgemv('N', mesh%NumCells, size, &
         & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, x, y)
     end if
+
     return
   end if
 #$end if
@@ -443,6 +445,7 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
         call mesh%RunCellKernel(BlockUpperTriangularMatrixVector_Kernel)
       end if
     case('LD', 'DU')
+      !! TODO: implement me!
       call ErrorStop('LD/DU PartialMatrixVector is not implemented yet')
     case default
       call ErrorStop('Invalid matrix part')
@@ -666,10 +669,10 @@ end subroutine SolveBlockUpperTriangHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve the equation: 
-!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'L', 
-!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'U',
-!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI', 
-!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU',
+!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'LD' or 'DL',
+!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'DU' or 'UD',
+!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI' or 'IL',
+!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU' or 'UI',
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -688,48 +691,32 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
 
 #$if HAS_MKL
   if (gUseMKL) then
-    select case(part)
-      case('LD', 'DL')
-        if (size == 1) then
-          call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        else
-          call mkl_dbsrtrsv('L', 'N', 'N', mesh%NumCells, size, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        end if
-      case('DU', 'UD')
-        if (size == 1) then
-          call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        else
-          call mkl_dbsrtrsv('U', 'N', 'N', mesh%NumCells, size, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        end if
-      case('LI', 'IL')
-        if (size == 1) then
-          call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        else
-          call mkl_dbsrtrsv('L', 'N', 'U', mesh%NumCells, size, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        end if
-      case('IU', 'UI')
-        if (size == 1) then
-          call mkl_dcsrtrsv('U', 'N', 'U', mesh%NumCells, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        else
-          call mkl_dbsrtrsv('U', 'N', 'U', mesh%NumCells, size, &
-            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
-        end if
-      case default
-        call ErrorStop('Invalid matrix part')
-    end select
+    block
+      character :: uplo, unit
+
+      select case(part)
+        case('LD', 'DL'); uplo = 'L'; unit = 'N'
+        case('DU', 'UD'); uplo = 'U'; unit = 'N'
+        case('LI', 'IL'); uplo = 'L'; unit = 'U'
+        case('IU', 'UI'); uplo = 'U'; unit = 'U'
+        case default
+          call ErrorStop('Invalid matrix part')
+      end select
+      if (size == 1) then
+        call mkl_dcsrtrsv(uplo, 'N', unit, mesh%NumCells, &
+          & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+      else
+        call mkl_dbsrtrsv(uplo, 'N', unit, mesh%NumCells, size, &
+          & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+      end if
+
+    end block
     return
   end if
 #$end if
 
   select case(part)
-    case('L')
+    case('LD', 'DL')
       if (size == 1) then
         do row = 1, mesh%NumCells
           call SolveLowerTriangular_Kernel(row)
@@ -739,7 +726,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call SolveBlockLowerTriangular_Kernel(row)
         end do
       end if
-    case('U')
+    case('DU', 'UD')
       if (size == 1) then
         do row = mesh%NumCells, 1, -1
           call SolveUpperTriangular_Kernel(row)
@@ -749,7 +736,8 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call SolveBlockUpperTriangular_Kernel(row)
         end do
       end if
-    case('LI', 'IU')
+    case('LI', 'IL', 'IU', 'UI')
+      !! TODO: implement me!
       call ErrorStop('LI/IU SolveTriangular is not implemented yet')
     case default
       call ErrorStop('Invalid matrix part')
@@ -801,11 +789,11 @@ subroutine InitParallelTriangularContext(mesh, part, mat, ctx)
   ctx%NumLevels = 0
   allocate(rowLevels(mesh%NumCells))
   select case(part)
-    case('L', 'LI')
+    case('LD', 'DL', 'LI', 'IL')
       do row = 1, mesh%NumCells
         call InitParallelLowerTriangularContext_Kernel(row)
       end do
-    case('U', 'IU')
+    case('DU', 'UD', 'IU', 'UI')
       do row = mesh%NumCells, 1, -1
         call InitParallelUpperTriangularContext_Kernel(row)
       end do
@@ -860,10 +848,10 @@ end subroutine InitParallelTriangularContext
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Solve the equation in parallel:
-!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'L', 
-!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'U',
-!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI', 
-!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU',
+!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'LD' or 'DL',
+!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'DU' or 'UD',
+!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI' or 'IL',
+!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU' or 'UI',
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -892,19 +880,20 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   call bArr%Get(b); call yArr%Get(y)
 
   select case(part)
-    case('L')
+    case('LD', 'DL')
       if (size == 1) then
         call ParallelSolveLowerTriangular()
       else
         call ParallelSolveBlockLowerTriangular()
       end if
-    case('U')
+    case('DU', 'UD')
       if (size == 1) then
         call ParallelSolveUpperTriangular()
       else
         call ParallelSolveBlockUpperTriangular()
       end if
     case('LI', 'IU', 'IL', 'UI')
+      !! TODO: implement me!
       call ErrorStop('LI/IU ParallelSolveTriangular is not implemented yet')
     case default
       call ErrorStop('Invalid matrix part')

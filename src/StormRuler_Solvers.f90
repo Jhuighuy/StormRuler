@@ -122,9 +122,9 @@ contains
     if (preMethod == 'extr') then; block
       type(tMatrix), target, save :: mat
       type(tMatrixLabeling), save :: labeling
-      type(tIlu0Preconditioner), save :: prepre
+      !type(tIlu0Preconditioner), save :: prepre
       !type(tIlutPreconditioner), save :: prepre
-      !type(tLuSgsPreconditioner), save :: prepre
+      type(tLuSgsPreconditioner), save :: prepre
       !type(tPreconditioner_AINV), save :: prepre
 
       if (labeling%NumLabels == 0) then

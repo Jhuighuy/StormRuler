@@ -162,7 +162,7 @@ Legend:
 * IO:
   - [ ] 🪓 Move Neato output away from mesh,
   - [x] 🪓 Move VTK output away from mesh,
-  - [ ] 🦜 ZLIB compression,
+  - [x] 🦜 ZLIB compression,
   - [x] 🚬 Redesigned VTK output (as `.vti`),
   - [ ] 🪓 Parallel VTK output (as `.pvti`),
   - [ ] 🚬 Multiblock VTK output (as `.vtm`),
@@ -234,12 +234,14 @@ Legend:
   - [x] 🧻 Refactor precondtioner from function pointer to class,
   - [ ] 🦜 `Jacobi` preconditioner,
   - [x] 🪓 `LU_SGS` preconditioner,
-  - [x] 🪓 MKL-based `ILU0_MKL` preconditioners,
-  - [x] 🪓 MKL-based `ILUT_MKL` preconditioners,
-  - [ ] 🚬 `ILU`/`ICHOL` preconditioners,
-  - [ ] 🚬 Static `SPAI` preconditioner,
-  - [ ] 🚬🚬 Dynamic `SPAI` preconditioner,
+  - [x] 🪓 MKL-based `ILU0` preconditioners,
+  - [x] 🪓 MKL-based `ILUT` preconditioners,
+  - [ ] 🚬 `ILU0`/`IC0` preconditioners,
+  - [ ] 🚬 `ILUT`/`ICT` preconditioners,
+  - [ ] 🚬 `SPAI0` preconditioner,
+  - [ ] 🚬🚬 `SPAI` preconditioner,
   - [ ] 🚬 'Left' `SPAI` preconditioner,
+  - [ ] 🦜 `AINV0` preconditioner,
   - [ ] 🦜 `AINV` preconditioner,
   - [ ] 🦜 polynomial preconditioner.
 
@@ -251,7 +253,7 @@ Legend:
   - [x] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
   - [ ] 🦜 Built-in direct solver,
-  - [ ] 🦜 Direct solvers (`MKL_DSS`, `PARDISO`, `SuperLU`).
+  - [ ] 🦜 Direct solvers (`PARDISO`, `SuperLU`).
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,

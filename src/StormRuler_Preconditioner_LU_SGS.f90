@@ -37,7 +37,7 @@ use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 use StormRuler_Matrix, only: tMatrix, tParallelTriangularContext, &
   & PartialMatrixVector, SolveDiag, &
   & InitParallelTriangularContext, SolveTriangular
-use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
+use StormRuler_Preconditioner, only: tMatrixPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -79,7 +79,7 @@ implicit none
 !! References:
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner) :: tLuSgsPreconditioner
+type, extends(tMatrixPreconditioner) :: tLuSgsPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tParallelTriangularContext), private :: LowerCtx, UpperCtx
 
@@ -118,10 +118,11 @@ subroutine InitLuSgsPreconditioner(pre, mesh, MatVec)
     call ErrorStop('Matrix for the LU-SGS preconditioner is not set.')
   end if
 
+  !! TODO: refactor with an initialization function.
   if (.not.allocated(pre%LowerCtx%LevelAddrs)) &
-    & call InitParallelTriangularContext(mesh, 'L', pre%mat, pre%LowerCtx)
+    & call InitParallelTriangularContext(mesh, 'LD', pre%mat, pre%LowerCtx)
   if (.not.allocated(pre%UpperCtx%LevelAddrs)) &
-    & call InitParallelTriangularContext(mesh, 'U', pre%mat, pre%UpperCtx)
+    & call InitParallelTriangularContext(mesh, 'DU', pre%mat, pre%UpperCtx)
 
 end subroutine InitLuSgsPreconditioner
 
@@ -149,9 +150,9 @@ subroutine ApplyLuSgsPreconditioner(pre, mesh, yArr, xArr, MatVec)
   ! 𝒕 ← 𝓓𝒚,
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
-  call SolveTriangular(mesh, 'L', pre%Mat, pre%LowerCtx, yArr, xArr)
+  call SolveTriangular(mesh, 'LD', pre%Mat, pre%LowerCtx, yArr, xArr)
   call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-  call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)
+  call SolveTriangular(mesh, 'DU', pre%Mat, pre%UpperCtx, yArr, tArr)
 
   do k = 2, gMaxIterLU_SGS
     ! ----------------------
@@ -171,9 +172,9 @@ subroutine ApplyLuSgsPreconditioner(pre, mesh, yArr, xArr, MatVec)
     ! 𝒕 ← 𝓓𝒚,
     ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
     ! ----------------------
-    call SolveTriangular(mesh, 'L', pre%Mat, pre%LowerCtx, yArr, tArr)
+    call SolveTriangular(mesh, 'LD', pre%Mat, pre%LowerCtx, yArr, tArr)
     call PartialMatrixVector(mesh, 'D', pre%Mat, tArr, yArr)
-    call SolveTriangular(mesh, 'U', pre%Mat, pre%UpperCtx, yArr, tArr)
+    call SolveTriangular(mesh, 'DU', pre%Mat, pre%UpperCtx, yArr, tArr)
   end do
 
 end subroutine ApplyLuSgsPreconditioner

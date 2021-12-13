@@ -35,7 +35,7 @@ use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
 use StormRuler_Matrix, only: tMatrix, &
   & PartialMatrixVector, SolveDiag
-use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
+use StormRuler_Preconditioner, only: tMatrixPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -91,7 +91,7 @@ use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 !!      Conjugate Gradient Method.” 
 !!     SIAM J. Sci. Comput. 17 (1996): 1135-1149.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner) :: tAinvPreconditioner
+type, extends(tMatrixPreconditioner) :: tAinvPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tArray), private :: DMat
   type(tMatrix), private :: ZMat

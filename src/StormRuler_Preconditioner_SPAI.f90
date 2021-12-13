@@ -36,7 +36,7 @@ use StormRuler_BLAS, only: tMatVecFunc, Set, Add
 
 use StormRuler_Matrix, only: tMatrix, &
   & PartialMatrixVector, SolveDiag
-use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
+use StormRuler_Preconditioner, only: tMatrixPreconditioner
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -47,7 +47,7 @@ use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
 !! References:
 !! [1] ???
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner) :: tSpaiPreconditioner
+type, extends(tMatrixPreconditioner) :: tSpaiPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tArray), private :: DMat
   type(tMatrix), private :: ZMat

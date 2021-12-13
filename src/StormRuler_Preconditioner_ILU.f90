@@ -38,7 +38,7 @@ use StormRuler_BLAS, only: tMatVecFunc
 use StormRuler_Matrix, only: tMatrix
 use StormRuler_Matrix, only: tMatrix, tParallelTriangularContext, &
   & InitParallelTriangularContext, SolveTriangular
-use StormRuler_Preconditioner, only: tMatrixBasedPreconditioner
+use StormRuler_Preconditioner, only: tMatrixPreconditioner
 
 #$use 'StormRuler_Macros.fi'
 #$if HAS_MKL
@@ -53,10 +53,10 @@ implicit none
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Base class for the incomplete LU preconditioners.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tMatrixBasedPreconditioner), abstract :: tBaseIluPreconditioner
+type, extends(tMatrixPreconditioner), abstract :: tBaseIluPreconditioner
   type(tMatrix), pointer, private :: Mat => null()
   type(tMatrix), private :: IluMat
-  type(tParallelTriangularContext), private :: LowerLuCtx, UpperLuCtx
+  type(tParallelTriangularContext), private :: LowerIluCtx, UpperIluCtx
 
 contains
   procedure(tMakeIluMatrixFunc), deferred :: MakeIluMatrix
@@ -77,14 +77,14 @@ abstract interface
 end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! ILU(0) preconditioner.
+!! Incomplete LU-0 (ILU0) preconditioner.
 !!
-!! ILU(0) preconditioner does not preserve symmetry, so it must
+!! ILU0 preconditioner does not preserve symmetry, so it must
 !! be used with the general solvers like BiCGStab, GMRES or TFQMR. 
 !!
-!! Like the other triangular matrix-based preconditioners, ILU(0)
+!! Like the other triangular matrix-based preconditioners, ILU0
 !! may suffer from poor parallel scaling.
-!! Initialization of the non-block ILU(0) precondtioner may be
+!! Initialization of the point ILU0 precondtioner may be
 !! accelerated with Intel MKL.
 !!
 !! References:
@@ -97,14 +97,14 @@ contains
 end type tIlu0Preconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! ILUT preconditioner.
+!! Incomplete LU-threshold (ILUT) preconditioner.
 !!
 !! ILUT preconditioner does not preserve symmetry, so it must
 !! be used with the general solvers like BiCGStab, GMRES or TFQMR. 
 !!
 !! Like the other triangular matrix-based preconditioners, ILU(0)
 !! may suffer from poor parallel scaling.
-!! Initialization of the ILUT precondtioner may be
+!! Initialization of the point ILUT precondtioner may be
 !! accelerated with Intel MKL.
 !!
 !! References:
@@ -146,6 +146,12 @@ subroutine InitIluPreconditioner(pre, mesh, MatVec)
 
   call pre%MakeIluMatrix(mesh, pre%IluMat, pre%Mat)
 
+  !! TODO: refactor with an initialization function.
+  if (.not.allocated(pre%LowerIluCtx%LevelAddrs)) &
+    & call InitParallelTriangularContext(mesh, 'LD', pre%mat, pre%LowerIluCtx)
+  if (.not.allocated(pre%UpperIluCtx%LevelAddrs)) &
+    & call InitParallelTriangularContext(mesh, 'IU', pre%mat, pre%UpperIluCtx)
+
 end subroutine InitIluPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -170,18 +176,8 @@ subroutine ApplyIluPreconditioner(pre, mesh, yArr, xArr, MatVec)
   ! 𝒕 ← (𝓛 + 𝓘)⁻¹𝒙,
   ! 𝒚 ← (𝓓 + 𝓤)⁻¹𝒕.
   ! ----------------------
-  !! TODO: reimplement with built-in triangular solvers.
-  block
-    real(dp), pointer :: t(:), x(:)
-    call tArr%Get(t); call xArr%Get(x)
-#$if HAS_MKL
-    call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
-      & pre%IluMat%ColCoeffs, pre%IluMat%RowAddrs, pre%IluMat%ColIndices, x, t)
-#$else
-    error stop 'SolveTriangular with unit diagonal is not implemented yet.'
-#$end if
-  end block
-  call SolveTriangular(mesh, 'U', pre%IluMat, pre%UpperLuCtx, yArr, tArr)
+  call SolveTriangular(mesh, 'IL', pre%IluMat, pre%LowerIluCtx, tArr, xArr)
+  call SolveTriangular(mesh, 'DU', pre%IluMat, pre%UpperIluCtx, yArr, tArr)
 
 end subroutine ApplyIluPreconditioner
 
@@ -189,7 +185,7 @@ end subroutine ApplyIluPreconditioner
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Make the ILU(0) preconditioner matrix.
+!! Make the ILU0 preconditioner matrix.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine MakeIlu0Matrix(pre, mesh, iluMat, mat)
   class(tIlu0Preconditioner), intent(inout) :: pre
@@ -215,8 +211,9 @@ subroutine MakeIlu0Matrix(pre, mesh, iluMat, mat)
       dparam(31) = gDiagAdjustValueILU0 ! diagonal threshold value.
       dparam(32) = gDiagAdjustValueILU0 ! diagonal adjustment value.
 
-      call dcsrilu0(mesh%NumCells, mat%ColCoeffs, mat%RowAddrs, &
-        & mat%ColIndices, iluMat%ColCoeffs, iparam, dparam, errorCode)
+      call dcsrilu0(mesh%NumCells, &
+        & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, & 
+        & iluMat%ColCoeffs, iparam, dparam, errorCode)
       if (errorCode /= 0) then
         call ErrorStop('MKL `dcsrilu0` has failed, errorCode='//I2S(errorCode))
       end if
@@ -226,8 +223,8 @@ subroutine MakeIlu0Matrix(pre, mesh, iluMat, mat)
   end if
 #$end if
 
-  !! TODO: implement the ILU(0) preconditioner without MKL.
-  call ErrorStop('ILU(0) preconditioner requires MKL for now.')
+  !! TODO: implement the ILU0 preconditioner without MKL.
+  call ErrorStop('ILU0 preconditioner requires MKL for now.')
 
 end subroutine MakeIlu0Matrix
 
@@ -249,9 +246,6 @@ subroutine MakeIlutMatrix(pre, mesh, iluMat, mat)
     allocate(iluMat%ColIndices(luNnz))
     allocate(iluMat%ColCoeffs(size, size, luNnz))
   end associate
-
-  iluMat%RowAddrs(:) = 0
-  iluMat%ColIndices(:) = 0; iluMat%ColCoeffs(:,:,:) = 0.0_dp
 
 #$if HAS_MKL
   if (gUseMKL.and.(size == 1)) then

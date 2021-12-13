@@ -74,19 +74,19 @@ end interface
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Matrix-based preconditioner class.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-type, extends(tPreconditioner), abstract :: tMatrixBasedPreconditioner
+type, extends(tPreconditioner), abstract :: tMatrixPreconditioner
 contains
   procedure(tSetPreconditionerMatrixFunc), deferred :: SetMatrix
 
-end type tMatrixBasedPreconditioner
+end type tMatrixPreconditioner
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Set matrix for the matrix-based preconditioner.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 abstract interface
   subroutine tSetPreconditionerMatrixFunc(pre, mat)
-    import :: tMatrixBasedPreconditioner, tMatrix
-    class(tMatrixBasedPreconditioner), intent(inout) :: pre
+    import :: tMatrixPreconditioner, tMatrix
+    class(tMatrixPreconditioner), intent(inout) :: pre
     class(tMatrix), intent(inout), target :: mat
   end subroutine tSetPreconditionerMatrixFunc
 end interface

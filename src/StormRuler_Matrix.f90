@@ -27,8 +27,8 @@ module StormRuler_Matrix
 use StormRuler_Consts, only: ip, dp
 use StormRuler_Parameters, only: gUseMKL
 
-use StormRuler_Helpers, only: IndexOf, BubbleSort, &
-  & InverseCompressMapping, DenseSolve
+use StormRuler_Helpers, only: ErrorStop, &
+  & IndexOf, BubbleSort, InverseCompressMapping, DenseSolve
 
 use StormRuler_Mesh, only: tMesh, tKernelFunc
 use StormRuler_Array, only: tArray, AllocArray
@@ -400,7 +400,12 @@ subroutine BlockUpperTriangMatVecHelper(size, rowAddrs, colIndices, colCoeffs, y
 end subroutine BlockUpperTriangMatVecHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Sparse partial matrix-vector product: 𝒚 ← 𝓓𝒙, 𝒚 ← 𝓛𝒙 or 𝒚 ← 𝓤𝒙,
+!! Sparse partial matrix-vector product: 
+!! • 𝒚 ← 𝓓𝒙, if `part` is 'D',
+!! • 𝒚 ← 𝓛𝒙, if `part` is 'L',
+!! • 𝒚 ← 𝓤𝒙, if `part` is 'U',
+!! • 𝒚 ← (𝓛 + 𝓓)𝒙, if `part` is 'LD',
+!! • 𝒚 ← (𝓓 + 𝓤)𝒙, if `part` is 'DU',
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -409,7 +414,7 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(in) :: xArr
   class(tArray), intent(inout) :: yArr
-  character, intent(in) :: part
+  character(len=*), intent(in) :: part
 
   integer(ip) :: size
   real(dp), pointer :: x(:,:), y(:,:)
@@ -419,24 +424,28 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
 
   !! TODO: Does the MKL implementation for these operation exist?
   select case(part)
-    case('d', 'D')
+    case('D')
       if (size == 1) then
         call mesh%RunCellKernel(DiagMatrixVector_Kernel)
       else
         call mesh%RunCellKernel(BlockDiagMatrixVector_Kernel)
       end if
-    case('l', 'L')
+    case('L')
       if (size == 1) then
         call mesh%RunCellKernel(LowerTriangularMatrixVector_Kernel)
       else
         call mesh%RunCellKernel(BlockLowerTriangularMatrixVector_Kernel)
       end if
-    case('u', 'U')
+    case('U')
       if (size == 1) then
         call mesh%RunCellKernel(UpperTriangularMatrixVector_Kernel)
       else
         call mesh%RunCellKernel(BlockUpperTriangularMatrixVector_Kernel)
       end if
+    case('LD', 'DU')
+      call ErrorStop('LD/DU PartialMatrixVector is not implemented yet')
+    case default
+      call ErrorStop('Invalid matrix part')
   end select
 
 contains
@@ -526,7 +535,7 @@ subroutine SolveBlockDiagHelper(size, rowAddrs, colIndices, colCoeffs, y, b, row
 end subroutine SolveBlockDiagHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve equation 𝓓𝒚 = 𝒃, where 𝓓 is the (block-)diagonal of 𝓐.
+!! Solve the equation 𝓓𝒚 = 𝒃, where 𝓓 is the (block-)diagonal of 𝓐.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 subroutine SolveDiag(mesh, mat, yArr, bArr)
   class(tMesh), intent(in) :: mesh
@@ -656,7 +665,11 @@ subroutine SolveBlockUpperTriangHelper(size, rowAddrs, colIndices, colCoeffs, y,
 end subroutine SolveBlockUpperTriangHelper
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃,
+!! Solve the equation: 
+!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'L', 
+!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'U',
+!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI', 
+!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU',
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -665,7 +678,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: yArr
-  character, intent(in) :: part
+  character(len=*), intent(in) :: part
 
   integer(ip) :: size, row
   real(dp), pointer :: b(:,:), y(:,:)
@@ -676,7 +689,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
 #$if HAS_MKL
   if (gUseMKL) then
     select case(part)
-      case('l', 'L')
+      case('LD', 'DL')
         if (size == 1) then
           call mkl_dcsrtrsv('L', 'N', 'N', mesh%NumCells, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
@@ -684,7 +697,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call mkl_dbsrtrsv('L', 'N', 'N', mesh%NumCells, size, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         end if
-      case('u', 'U')
+      case('DU', 'UD')
         if (size == 1) then
           call mkl_dcsrtrsv('U', 'N', 'N', mesh%NumCells, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
@@ -692,13 +705,31 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call mkl_dbsrtrsv('U', 'N', 'N', mesh%NumCells, size, &
             & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
         end if
+      case('LI', 'IL')
+        if (size == 1) then
+          call mkl_dcsrtrsv('L', 'N', 'U', mesh%NumCells, &
+            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+        else
+          call mkl_dbsrtrsv('L', 'N', 'U', mesh%NumCells, size, &
+            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+        end if
+      case('IU', 'UI')
+        if (size == 1) then
+          call mkl_dcsrtrsv('U', 'N', 'U', mesh%NumCells, &
+            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+        else
+          call mkl_dbsrtrsv('U', 'N', 'U', mesh%NumCells, size, &
+            & mat%ColCoeffs, mat%RowAddrs, mat%ColIndices, b, y)
+        end if
+      case default
+        call ErrorStop('Invalid matrix part')
     end select
     return
   end if
 #$end if
 
   select case(part)
-    case('l', 'L')
+    case('L')
       if (size == 1) then
         do row = 1, mesh%NumCells
           call SolveLowerTriangular_Kernel(row)
@@ -708,7 +739,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call SolveBlockLowerTriangular_Kernel(row)
         end do
       end if
-    case('u', 'U')
+    case('U')
       if (size == 1) then
         do row = mesh%NumCells, 1, -1
           call SolveUpperTriangular_Kernel(row)
@@ -718,6 +749,10 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
           call SolveBlockUpperTriangular_Kernel(row)
         end do
       end if
+    case('LI', 'IU')
+      call ErrorStop('LI/IU SolveTriangular is not implemented yet')
+    case default
+      call ErrorStop('Invalid matrix part')
   end select
 
 contains
@@ -758,7 +793,7 @@ subroutine InitParallelTriangularContext(mesh, part, mat, ctx)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tParallelTriangularContext), intent(inout) :: ctx
-  character, intent(in) :: part
+  character(len=*), intent(in) :: part
 
   integer(ip) :: row, width
   integer(ip), allocatable :: rowLevels(:)
@@ -766,11 +801,11 @@ subroutine InitParallelTriangularContext(mesh, part, mat, ctx)
   ctx%NumLevels = 0
   allocate(rowLevels(mesh%NumCells))
   select case(part)
-    case('l', 'L')
+    case('L', 'LI')
       do row = 1, mesh%NumCells
         call InitParallelLowerTriangularContext_Kernel(row)
       end do
-    case('u', 'U')
+    case('U', 'IU')
       do row = mesh%NumCells, 1, -1
         call InitParallelUpperTriangularContext_Kernel(row)
       end do
@@ -824,7 +859,11 @@ contains
 end subroutine InitParallelTriangularContext
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve equation (𝓛 + 𝓓)𝒚 = 𝒃, or (𝓓 + 𝓤)𝒚 = 𝒃 in parallel,
+!! Solve the equation in parallel:
+!! • (𝓛 + 𝓓)𝒚 = 𝒃 if `part` is 'L', 
+!! • (𝓓 + 𝓤)𝒚 = 𝒃 if `part` is 'U',
+!! • (𝓛 + 𝓘)𝒚 = 𝒃 if `part` is 'LI', 
+!! • (𝓘 + 𝓤)𝒚 = 𝒃 if `part` is 'IU',
 !! where 𝓓 is the (block-)diagonal of 𝓐, 𝓛 and 𝓤 are lower and upper 
 !! strict (block-)triangular parts of 𝓐, 𝓐 = 𝓛 + 𝓓 + 𝓤.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
@@ -834,7 +873,7 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: yArr
   class(tParallelTriangularContext), intent(inout) :: ctx
-  character, intent(in) :: part
+  character(len=*), intent(in) :: part
 
 #$if not HAS_OpenMP
   call SolveTriangular(mesh, part, mat, yArr, bArr)
@@ -853,18 +892,22 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   call bArr%Get(b); call yArr%Get(y)
 
   select case(part)
-    case('l', 'L')
+    case('L')
       if (size == 1) then
         call ParallelSolveLowerTriangular()
       else
         call ParallelSolveBlockLowerTriangular()
       end if
-    case('u', 'U')
+    case('U')
       if (size == 1) then
         call ParallelSolveUpperTriangular()
       else
         call ParallelSolveBlockUpperTriangular()
       end if
+    case('LI', 'IU', 'IL', 'UI')
+      call ErrorStop('LI/IU ParallelSolveTriangular is not implemented yet')
+    case default
+      call ErrorStop('Invalid matrix part')
   end select
 
 contains

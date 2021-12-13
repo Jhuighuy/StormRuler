@@ -444,7 +444,7 @@ subroutine PartialMatrixVector(mesh, part, mat, yArr, xArr)
       else
         call mesh%RunCellKernel(BlockUpperTriangularMatrixVector_Kernel)
       end if
-    case('LD', 'DU')
+    case('LD', 'DL', 'DU', 'UD')
       !! TODO: implement me!
       call ErrorStop('LD/DU PartialMatrixVector is not implemented yet')
     case default
@@ -681,7 +681,7 @@ subroutine SolveTriangular(mesh, part, mat, yArr, bArr)
   class(tMatrix), intent(in) :: mat
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: yArr
-  character(len=*), intent(in) :: part
+  character(len=2), intent(in) :: part
 
   integer(ip) :: size, row
   real(dp), pointer :: b(:,:), y(:,:)
@@ -781,7 +781,7 @@ subroutine InitParallelTriangularContext(mesh, part, mat, ctx)
   class(tMesh), intent(in) :: mesh
   class(tMatrix), intent(in) :: mat
   class(tParallelTriangularContext), intent(inout) :: ctx
-  character(len=*), intent(in) :: part
+  character(len=2), intent(in) :: part
 
   integer(ip) :: row, width
   integer(ip), allocatable :: rowLevels(:)
@@ -861,7 +861,7 @@ subroutine ParallelSolveTriangular(mesh, part, mat, ctx, yArr, bArr)
   class(tArray), intent(in) :: bArr
   class(tArray), intent(inout) :: yArr
   class(tParallelTriangularContext), intent(inout) :: ctx
-  character(len=*), intent(in) :: part
+  character(len=2), intent(in) :: part
 
 #$if not HAS_OpenMP
   call SolveTriangular(mesh, part, mat, yArr, bArr)

@@ -2,10 +2,10 @@
 # StormRuler🦜 — A very high order CFD solver
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 **StormRuler** is a very high order multidimensional CFD solver, 
-written in Fortran 2018 and C11.
+written in Fortran 2018 and C++17.
 
 <!----------------------------------------------------------------->
-## 🏗Compiling
+## 🏗 Compiling
 <!----------------------------------------------------------------->
 
 Supported compilers:
@@ -26,7 +26,7 @@ export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacO
 ```
 
 <!----------------------------------------------------------------->
-## 🌀Equations solved
+## 🌀 Equations solved
 <!----------------------------------------------------------------->
 **StormRuler** features support of the various set of the
 partial differential equations, including:
@@ -36,12 +36,12 @@ partial differential equations, including:
 * ...
 
 <!----------------------------------------------------------------->
-## 🌐Numerical methods
+## 🌐 Numerical methods
 <!----------------------------------------------------------------->
 The heart of the **StormRuler** is the ✨Finite Difference Method✨.
 
 <!----------------------------------------------------------------->
-## 🌈Algebraic solvers
+## 🌈 Algebraic solvers
 <!----------------------------------------------------------------->
 In order to implement the high performance implicit schemes,
 several algebraic problems, like systems of linear and nonlinear
@@ -62,17 +62,18 @@ in order to minimize an amount of the extraction matrix-vector
 products.
 
 **StormRuler** contains:
-- 🛸 Matrix-free nonlinear solvers:
-  * Newton-Raphson solver 
+- 🛸 Nonlinear solvers:
+  * Newton solver 
     (`Newton`, for the general nonlinear problems),
   * Jacobian-Free Newton-Krylov solver 
     (`JFNK`, for the general nonlinear problems);
 
-- 🏎 Matrix-free linear iterative solvers:
+- 🏎 Linear iterative solvers:
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
   * _(planned)_ Flexible Conjugate Gradients solver 
-    (`FCG`, for the _definite symmetric_ linear problems with),
+    (`FCG`, for the _definite symmetric_ linear problems
+     with _flexible preconditioning_),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGStab`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
@@ -80,43 +81,40 @@ products.
   * Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
   * _(planned)_ Flexible Generalized Minimal Residual method solver
-    (`FGMRES`, for the general linear problems),
+    (`FGMRES`, for the general linear problems
+     with _flexible preconditioning_),
   * _(planned)_ Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
 
-- 🚜 Matrix-free linear iterative least squares solvers:
+- 🚜 Linear iterative least squares solvers:
   * Least squares-QR solver
     (`LSQR`, for the general linear least squares problems),
   * Least squares-MINRES solver
     (`LSMR`, for the general linear least squares problems);
 
-- 🚂 Linear direct solvers (embedded into the matrix-free environment):
-  * _(planned)_ MKL Direct Sparse Solver 
-    (`DSS_MKL`, from [MKL DSS](https://intel.ly/37N95pe)).
+- 🚂 Linear direct solvers:
   * _(planned)_ PARDISO direct solver
     (`PARDISO`/`PARDISO_MKL`),
   * _(planned)_ SuperLU direct solver
     (`SuperLU`);
 
-- 🚨 Matrix-based preconditioners (embedded into the matrix-free environment):
-  * _(planned)_ Jacobi preconditioner
-    (`Jacobi`),
-  * LU Symmetric Gauss-Seidel (LU-SGS) preconditioner
-    (`LU-SGS` for any linear problems),
-  * _(planned)_ Incomplete Cholesky preconditioner,
-    (`ICHOL`)
-  * _(planned)_ Incomplete LU preconditioner,
-    (`ILU0`, `ILUT`),
+- 🚨 Preconditioners:
+  * _(planned)_ Diagonal preconditioner
+    (`Jacobi`, for any problems),
+  * Symmetric Gauss-Seidel preconditioner
+    (`LU_SGS`, for any linear problems),
+  * _(planned)_ Incomplete Cholesky preconditioner
+    (`IC0`, `ICT`, for _definite symmetric_ problems),
+  * Incomplete LU preconditioner
+    (`ILU0`, `ILUT`, for _unsymmetric_ problems, _currently requires MKL_),
   * _(planned)_ Approximate Inverse preconditioner
-    (`AINV`),
-  * _(planned)_ SPAI preconditioner,
-    (`SPAI`);
-
-- Matrix-free preconditioners:
+    (`AINV0`, `AINV`, for _symmetric_ problems),
+  * _(planned)_ SPAI preconditioner
+    (`SPAI0`, `SPAI`, for _unsymmetric_ problems);
   * _(planned)_ Polynomial preconditioner
-    (`Poly`),
+    (`Poly`, ...),
   * _(planned)_ Krylov preconditioner
-    (`Krylov`),
+    (`Krylov`, ...),
 
 <!----------------------------------------------------------------->
 ## 🛤Road map
@@ -144,6 +142,9 @@ Legend:
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
 
+* Image:
+  - [ ] 🦜💄 Image API.
+
 * Mesh:
   - [ ] 🧸 Move kernel runners away from mesh,
   - [ ] 🧸 BC kernels,
@@ -160,6 +161,7 @@ Legend:
   - [ ] 🪓 BC cells sorting and better BCs parallelization.
 
 * IO:
+  - [ ] 🧻 Refactor IO lists into some more intersting API,
   - [ ] 🪓 Move Neato output away from mesh,
   - [x] 🪓 Move VTK output away from mesh,
   - [x] 🦜 ZLIB compression,

@@ -47,6 +47,14 @@
 #$let HAS_MKL = False
 #$end if
 
+#$if not defined('HAS_BLAS')
+#$let HAS_BLAS = False
+#$end if
+
+#$if not defined('HAS_LAPACK')
+#$let HAS_LAPACK = False
+#$end if
+
 #$if not defined('HAS_METIS')
 #$let HAS_METIS = False
 #$end if

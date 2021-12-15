@@ -223,9 +223,37 @@ else()
   endif()
 endif()
 
-# TODO:
 # Find BLAS.
-# Find Lapack.
+if(StormRuler_NO_BLAS)
+  message(STATUS "StormRuler BLAS was disabled by user.")
+elseif(MKL_ENABLED)
+  # Separate BLAS is not needed in case MKL is used.
+  set(BLAS_ENABLED 1)
+  message(STATUS "BLAS enabled (MKL).")
+else()
+  find_package(BLAS)
+  if(BLAS_FOUND)
+    set(BLAS_ENABLED 1)
+    message(STATUS "BLAS enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE BLAS::BLAS)
+  endif()
+endif()
+
+# Find LAPACK.
+if(StormRuler_NO_LAPACK)
+  message(STATUS "StormRuler LAPACK was disabled by user.")
+elseif(MKL_ENABLED)
+  # Separate LAPACK is not needed in case MKL is used.
+  set(LAPACK_ENABLED 1)
+  message(STATUS "LAPACK enabled (MKL).")
+else()
+  find_package(LAPACK)
+  if(LAPACK_FOUND)
+    set(LAPACK_ENABLED 1)
+    message(STATUS "LAPACK enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
+  endif()
+endif()
 
 # Find METIS.
 if(StormRuler_NO_METIS)

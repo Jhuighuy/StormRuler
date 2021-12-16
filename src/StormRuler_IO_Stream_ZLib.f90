@@ -34,7 +34,7 @@ use StormRuler_Helpers, only: ErrorStop, I2S
 use StormRuler_IO_Writer, only: tBinaryWriter
 use StormRuler_IO_Stream, only: tOutputStream
 
-use, intrinsic :: iso_c_binding, only: c_int8_t, c_int, c_long
+use StormRuler_Libs, only: compress2
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
@@ -45,9 +45,10 @@ implicit none
 !! Output stream that compresses bytes with ZLib.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tOutputStream) :: tZLibOutputStream
-  class(tOutputStream), allocatable, private :: Inner
-  integer(bp), allocatable, private :: Buffer(:) 
-  integer(lp), private :: BufferSize = 0
+  class(tOutputStream), allocatable, private :: InnerStream
+  integer(ip), private :: CompressionLevel
+  integer(bp), allocatable, private :: Bytes(:) 
+  integer(lp), private :: NumBytes
 
 contains
   procedure, non_overridable :: Write => WriteToZLibStream
@@ -67,11 +68,22 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Create a ZLib output stream.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-function MakeZLibOutputStream(innerStream) result(stream)
-  class(tOutputStream), intent(inout), target :: innerStream
+function MakeZLibOutputStream(innerStream, compressionLevel) result(stream)
+  class(tOutputStream), intent(inout), allocatable :: innerStream
+  integer(ip), intent(in), optional :: compressionLevel
   type(tZLibOutputStream) :: stream
 
-  allocate(stream%Inner, source=innerStream)
+  !! BUG: Intel Fortran bug, use `move_alloc` after it is fixed. 
+  !call move_alloc(from=innerStream, to=stream%InnerStream)
+  stream%InnerStream = innerStream; deallocate(innerStream)
+
+  stream%CompressionLevel = 6
+  if (present(compressionLevel)) then
+    stream%CompressionLevel = compressionLevel
+  end if
+
+  stream%NumBytes = 0
+  allocate(stream%Bytes(1024))
 
 end function MakeZLibOutputStream
 
@@ -82,13 +94,18 @@ subroutine WriteToZLibStream(stream, bytes)
   class(tZLibOutputStream), intent(inout) :: stream
   integer(bp), intent(in), contiguous, target :: bytes(:)
 
-  !! TODO: implement appending with preallocation.
-  stream%BufferSize = stream%BufferSize + size(bytes)
-  if (allocated(stream%Buffer)) then
-    stream%Buffer = [stream%Buffer, bytes]
-  else
-    stream%Buffer = bytes
+  integer(lp) :: capacity
+
+  ! ----------------------
+  ! Accumulate bytes into the internal buffer.
+  ! ----------------------
+  capacity = size(stream%Bytes)
+  if (capacity < (stream%NumBytes + size(bytes))) then
+    stream%Bytes = [stream%Bytes, spread(1_bp, 1, capacity)]
   end if
+
+  stream%Bytes((stream%NumBytes + 1):(stream%NumBytes + size(bytes))) = bytes
+  stream%NumBytes = stream%NumBytes + size(bytes)
 
 end subroutine WriteToZLibStream
 
@@ -98,55 +115,48 @@ end subroutine WriteToZLibStream
 subroutine EndWriteToZLibStream(stream)
   class(tZLibOutputStream), intent(inout) :: stream
 
-  interface
-    function ZLibCompress2(dest, destSize, &
-        & source, sourceSize, level) result(result) bind(C, name='compress2')
-      import :: c_int8_t, c_int, c_long
-      integer(c_int8_t), intent(inout) :: dest(*)
-      integer(c_long), intent(inout) :: destSize
-      integer(c_int8_t), intent(in) :: source(*)
-      integer(c_long), intent(in), value :: sourceSize
-      integer(c_int), intent(in), value :: level
-      integer(c_int) :: result
-    end function ZLibCompress2
-  end interface
-
-  integer(ip) :: result
-  integer(lp) :: destBufferSize
-  integer(bp), allocatable :: destBuffer(:)
-  class(tBinaryWriter), allocatable :: writer
+  integer(ip) :: errorCode
+  integer(lp) :: numCompressedBytes
+  integer(bp), allocatable :: bytesCompressed(:)
 
   ! ----------------------
   ! Allocate the destination buffer.
   ! ----------------------
-  destBufferSize = stream%BufferSize + &
-    & (stream%BufferSize + 999)/1000 + 12
-  allocate(destBuffer(destBufferSize))
-  writer = tBinaryWriter()
+  numCompressedBytes = stream%NumBytes + (stream%NumBytes + 999)/1000 + 12
+  allocate(bytesCompressed(numCompressedBytes))
 
   ! ----------------------
   ! Compress the data.
   ! ----------------------
-  result = ZLibCompress2(destBuffer, destBufferSize, &
-    & stream%Buffer, stream%BufferSize, 7_lp)
-  if (result /= 0) then
-    call ErrorStop('ZLib `compress2` has failed, result='//I2S(result))
+  errorCode = compress2(bytesCompressed, numCompressedBytes, &
+    & stream%Bytes(1:stream%NumBytes), stream%NumBytes, &
+    & stream%CompressionLevel)
+  if (errorCode /= 0) then
+    call ErrorStop('ZLib `compress2` has failed, errorCode='//I2S(errorCode))
   end if
 
   ! ----------------------
   ! Write compressed data to the inner stream. 
   ! ----------------------
-  call stream%Inner%BeginWrite()
-  call writer%Write(stream%Inner, int(1, kind=ip))
-  call writer%Write(stream%Inner, int(stream%BufferSize, kind=ip))
-  call writer%Write(stream%Inner, int(stream%BufferSize, kind=ip))
-  call writer%Write(stream%Inner, int(destBufferSize, kind=ip))
-  call stream%Inner%EndWrite()
-  call stream%Inner%BeginWrite()
-  call stream%Inner%Write(destBuffer(1:destBufferSize))
-  call stream%Inner%EndWrite()
-  stream%BufferSize = 0
-  deallocate(stream%Buffer)
+  block
+    !! TODO: header should be written externally somehow.
+    class(tBinaryWriter), allocatable :: writer
+    writer = tBinaryWriter()
+    call stream%InnerStream%BeginWrite()
+    call writer%Write(stream%InnerStream, int(1, kind=ip))
+    call writer%Write(stream%InnerStream, int(stream%NumBytes, kind=ip))
+    call writer%Write(stream%InnerStream, int(stream%NumBytes, kind=ip))
+    call writer%Write(stream%InnerStream, int(numCompressedBytes, kind=ip))
+    call stream%InnerStream%EndWrite()
+  end block
+  call stream%InnerStream%BeginWrite()
+  call stream%InnerStream%Write(bytesCompressed(1:numCompressedBytes))
+  call stream%InnerStream%EndWrite()
+
+  ! ----------------------
+  ! Reset the buffer.
+  ! ----------------------
+  stream%NumBytes = 0
 
 end subroutine EndWriteToZLibStream
 

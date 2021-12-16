@@ -138,6 +138,7 @@ Legend:
 
 * General architecture:
   - [ ] 🦜🐞 Segfaults,
+  - [ ] 🪦 `move_alloc` bug in streams (reported to Intel),
   - [x] 🐞 with `type(c_ptr), value :: env` fixed globally for ifort,
   - [ ] 🚬 GPU support,
   - [ ] 🚬🚬 MPI support.
@@ -164,8 +165,9 @@ Legend:
   - [ ] 🧻 Refactor IO lists into some more intersting API,
   - [ ] 🪓 Move Neato output away from mesh,
   - [x] 🪓 Move VTK output away from mesh,
-  - [x] 🦜 ZLIB compression,
   - [x] 🚬 Redesigned VTK output (as `.vti`),
+  - [x] 🦜 ZLib compression,
+  - [ ] 🧻 Refactor the compression headers,
   - [ ] 🪓 Parallel VTK output (as `.pvti`),
   - [ ] 🚬 Multiblock VTK output (as `.vtm`),
   - [ ] 🦜💄 Better image IO.
@@ -214,7 +216,7 @@ Legend:
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🪓 `FGMRES` solver implementation.
 
-* Matrix extraction:
+* Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
   - [ ] 🧸 CSC matrix class, fast CSR-CSC tranpositions,
   - [x] 🧸 CSR Extraction with prescribed coloring,
@@ -228,6 +230,8 @@ Legend:
   - [ ] 🦜 Block extraction with prescribed coloring,
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,
+  - [ ] 🦜 Diagonal part extraction,
+  - [ ] 🦜 Triangular part extraction,
   - [ ] 🚬 Some more optimal column coloring algorthms..
 
 * Preconditioning:
@@ -238,14 +242,15 @@ Legend:
   - [x] 🪓 `LU_SGS` preconditioner,
   - [x] 🪓 MKL-based `ILU0` preconditioners,
   - [x] 🪓 MKL-based `ILUT` preconditioners,
-  - [ ] 🚬 `ILU0`/`IC0` preconditioners,
-  - [ ] 🚬 `ILUT`/`ICT` preconditioners,
+  - [ ] 🚬 Custom `ILU0`/`IC0` preconditioners,
+  - [ ] 🚬 Custom `ILUT`/`ICT` preconditioners,
   - [ ] 🚬 `SPAI0` preconditioner,
   - [ ] 🚬🚬 `SPAI` preconditioner,
   - [ ] 🚬 'Left' `SPAI` preconditioner,
   - [ ] 🦜 `AINV0` preconditioner,
   - [ ] 🦜 `AINV` preconditioner,
-  - [ ] 🦜 polynomial preconditioner.
+  - [ ] 🦜 polynomial preconditioner,
+  - [ ] 🦜 Krylov preconditioner.
 
 - Direct solvers:
   - [x] 🚬 Optimized partial matrix operations with MKL-comparable performance,

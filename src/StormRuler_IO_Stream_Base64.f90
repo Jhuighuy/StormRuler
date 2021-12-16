@@ -37,7 +37,7 @@ implicit none
 !! Output stream that encodes bytes with Base64.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 type, extends(tOutputStream) :: tBase64OutputStream
-  class(tOutputStream), allocatable, private :: Inner
+  class(tOutputStream), allocatable, private :: InnerStream
   integer(bp), private :: Buffer(3), BufferLength = 0
 
 contains
@@ -59,10 +59,12 @@ contains
 !! Create a Base64 output stream.
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 function MakeBase64OutputStream(innerStream) result(stream)
-  class(tOutputStream), intent(inout), target :: innerStream
+  class(tOutputStream), intent(inout), allocatable :: innerStream
   type(tBase64OutputStream) :: stream
 
-  allocate(stream%Inner, source=innerStream)
+  !! BUG: Intel Fortran bug, use `move_alloc` after it is fixed. 
+  !call move_alloc(from=innerStream, to=stream%InnerStream)
+  stream%InnerStream = innerStream; deallocate(innerStream) 
 
 end function MakeBase64OutputStream
 
@@ -94,7 +96,7 @@ subroutine EndWriteToBase64Stream(stream)
     if (stream%BufferLength > 0) then
       call EncodeBytesAndWriteToStream(stream)
     end if
-  call stream%Inner%EndWrite()
+  call stream%InnerStream%EndWrite()
 
 end subroutine EndWriteToBase64Stream
 
@@ -116,23 +118,18 @@ subroutine EncodeBytesAndWriteToStream(stream)
   end select
 
   stream%BufferLength = 0
-  call stream%Inner%Write(encoded)
+  call stream%InnerStream%Write(encoded)
 
 contains
   integer(bp) function EncodeChar(e)
     integer(bp), intent(in) :: e
 
-    character, parameter :: encodeTable(0:63) = &
-      [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', & 
-      & 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', &
-      & 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', &
-      & 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', &
-      & 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', &
-      & 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', &
-      & 'w', 'x', 'y', 'z', '0', '1', '2', '3', &
-      & '4', '5', '6', '7', '8', '9', '+', '/'  ]
+    character(len=64), parameter :: encodeTable = &
+      & 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'// &
+      & 'abcdefghijklmnopqrstuvwxyz'// &
+      & '0123456789+/'
 
-    EncodeChar = iachar(encodeTable(e), kind=bp)
+    EncodeChar = iachar(encodeTable((e + 1):(e + 1)), kind=bp)
 
   end function EncodeChar
   subroutine EncodeSingle(a)

@@ -56,19 +56,26 @@ contains
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Write the mesh and fields in the VTK Image Data format ('.vti').
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine IO_WriteVtkImageData(mesh, file, fields)
+subroutine IO_WriteVtkImageData(mesh, file, optFields)
   class(tMesh), intent(inout) :: mesh
-  type(IOList), intent(in), optional :: fields
+  class(IOList), intent(in), optional, target :: optFields
   character(len=*), intent(in) :: file
 
   integer(ip) :: unit
   integer(ip) :: x, y, cell, numPixels
+  class(IOList), pointer :: fields
   class(IOListItem), pointer :: item
 
   logical, parameter :: binary = .true., compressed = .true., singleReals = .false.
 
   class(tOutputStream), allocatable :: stream
   class(tWriter), allocatable :: writer
+
+  if (present(optFields)) then
+    fields => optFields
+  else
+    allocate(fields)
+  end if
 
   call PrintLog('Write to VTI file: '//file)
 
@@ -81,11 +88,13 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   open(newunit=unit, file=file, access='stream', status='replace')
   stream = tUnitOutputStream(unit)
   if (binary) then
+    writer = tBinaryWriter(singleReals=singleReals)
     stream = tBase64OutputStream(stream)
 #$if HAS_ZLIB
-    if (compressed) stream = tZLibOutputStream(stream)
+    if (compressed) then
+      stream = tZLibOutputStream(stream)
+    end if
 #$end if
-    writer = tBinaryWriter(singleReals=singleReals)
   else
     writer = tTextWriter(separator=endl)
   end if
@@ -94,12 +103,8 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   ! Write the header.
   ! ----------------------
   write(unit) '<?xml version="1.0"?>', endl
-  write(unit) '<VTKFile type="ImageData"'
-  write(unit) ' version="1.0"'
-  if (binary) then
-    !! TODO: 64-bit header type.
-    write(unit) ' header_type="UInt32"'
-  end if
+  !! TODO: 64-bit header type.
+  write(unit) '<VTKFile type="ImageData" version="1.0" header_type="UInt32"'
 #$if BIG_ENDIAN
   write(unit) ' byte_order="BigEndian"'
 #$else
@@ -146,62 +151,60 @@ subroutine IO_WriteVtkImageData(mesh, file, fields)
   ! ----------------------
   ! Write fields.
   ! ----------------------
-  if (present(fields)) then
-    item => fields%first
-    do while(associated(item))
-      write(unit) '<DataArray Name="', item%name, '"'
-      write(unit) ' type="', MergeString('Float32', 'Float64', singleReals), '"'
-      write(unit) ' format="', MergeString('binary', 'ascii', binary), '"'
-      select type(item)
-        ! ----------------------
-        ! Scalar field.
-        ! ----------------------
-        class is(IOListItem$0)
-          write(unit) '>', endl
-          call stream%BeginWrite()
-          if (binary.and.(.not.compressed)) then
-            call writer%Write(stream, merge(4, 8, singleReals)*numPixels)
-          end if
-          !! TODO: 3D case.
-          do y = 1, mesh%IndexBounds(2)
-            do x = 1, mesh%IndexBounds(1)
-              cell = mesh%IndexToCell(x,y)
-              if (mesh%IsCellInternal(cell)) then
-                call writer%Write(stream, item%values(cell))
-              else
-                call writer%Write(stream, 0.0_dp)
-              end if
-            end do
+  item => fields%first
+  do while(associated(item))
+    write(unit) '<DataArray Name="', item%name, '"'
+    write(unit) ' type="', MergeString('Float32', 'Float64', singleReals), '"'
+    write(unit) ' format="', MergeString('binary', 'ascii', binary), '"'
+    select type(item)
+      ! ----------------------
+      ! Scalar field.
+      ! ----------------------
+      class is(IOListItem$0)
+        write(unit) '>', endl
+        call stream%BeginWrite()
+        if (binary.and.(.not.compressed)) then
+          call writer%Write(stream, merge(4, 8, singleReals)*numPixels)
+        end if
+        !! TODO: 3D case.
+        do y = 1, mesh%IndexBounds(2)
+          do x = 1, mesh%IndexBounds(1)
+            cell = mesh%IndexToCell(x,y)
+            if (mesh%IsCellInternal(cell)) then
+              call writer%Write(stream, item%values(cell))
+            else
+              call writer%Write(stream, 0.0_dp)
+            end if
           end do
-          call stream%EndWrite()
+        end do
+        call stream%EndWrite()
 
-        ! ----------------------
-        ! Vector field.
-        ! ----------------------
-        class is(IOListItem$1)
-          write(unit) ' NumberOfComponents="3">'
-          call stream%BeginWrite()
-          if (binary.and.(.not.compressed)) then
-            call writer%Write(stream, 3*merge(4, 8, singleReals)*numPixels)
-          end if
-          !! TODO: 3D case.
-          do y = 1, mesh%IndexBounds(2)
-            do x = 1, mesh%IndexBounds(1)
-              cell = mesh%IndexToCell(x,y)
-              if (mesh%IsCellInternal(cell)) then
-                call writer%Write(stream, item%values(:,cell), paddedSize=3)
-              else
-                call writer%Write(stream, [0.0_dp], paddedSize=3)
-              end if
-            end do
+      ! ----------------------
+      ! Vector field.
+      ! ----------------------
+      class is(IOListItem$1)
+        write(unit) ' NumberOfComponents="3">'
+        call stream%BeginWrite()
+        if (binary.and.(.not.compressed)) then
+          call writer%Write(stream, 3*merge(4, 8, singleReals)*numPixels)
+        end if
+        !! TODO: 3D case.
+        do y = 1, mesh%IndexBounds(2)
+          do x = 1, mesh%IndexBounds(1)
+            cell = mesh%IndexToCell(x,y)
+            if (mesh%IsCellInternal(cell)) then
+              call writer%Write(stream, item%values(:,cell), paddedSize=3)
+            else
+              call writer%Write(stream, [0.0_dp], paddedSize=3)
+            end if
           end do
-          call stream%EndWrite()
+        end do
+        call stream%EndWrite()
 
-        end select
-      write(unit) endl, '</DataArray>', endl
-      item => item%next
-    end do
-  end if
+      end select
+    write(unit) endl, '</DataArray>', endl
+    item => item%next
+  end do
 
   ! ----------------------
   ! Write footer and close the file.

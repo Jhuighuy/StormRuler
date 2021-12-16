@@ -73,7 +73,7 @@ end subroutine PrintBanner
 subroutine ErrorStop(message)
   character(len=*), intent(in), optional :: message
 
-  if (present(message)) write(error_unit,*) message
+  if (present(message)) write(error_unit,*) '[ERR] ', message
   error stop 1
 
 end subroutine ErrorStop

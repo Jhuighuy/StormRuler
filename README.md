@@ -136,13 +136,6 @@ Legend:
   - [ ] 🐏 Higher-level C++ API,
   - [ ] 🚬🐏 Python API.
 
-* General architecture:
-  - [ ] 🦜🐞 Segfaults,
-  - [ ] 🪦 `move_alloc` bug in streams (reported to Intel),
-  - [x] 🐞 with `type(c_ptr), value :: env` fixed globally for ifort,
-  - [ ] 🚬 GPU support,
-  - [ ] 🚬🚬 MPI support.
-
 * Image:
   - [ ] 🦜💄 Image API.
 
@@ -172,21 +165,6 @@ Legend:
   - [ ] 🚬 Multiblock VTK output (as `.vtm`),
   - [ ] 🦜💄 Better image IO.
 
-* Options system:
-  - [ ] 💄 ???
-
-* AMR/cut cell:
-  - [ ] 🪓 Block mesh (pre MPI),
-  - [ ] 🚬🚬 Non-conforming multilevel mesh,
-  - [ ] 🚬🚬🚬 AMR...
-  - [ ] 🚬🚬🚬 Cut cell methods...
-
-* GMG:
-  - [ ] 🚬 Mesh coarsening and refinement (pre GMG),
-  - [ ] 🚬🚬 V-cycle GMG,
-  - [ ] 🚬🚬 F-cycle GMG,
-  - [ ] 🚬🚬 W-cycle GMG.
-
 * LBM:
   - [ ] 🪓 Correct streaming operator.
   - [ ] 🧸 SRT collision operator,
@@ -213,20 +191,14 @@ Legend:
   - [x] 🚬 `GMRES` solver implementation,
   - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
   - [ ] 🪓 `TFQMR` solver implementation.
+<!--
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🪓 `FGMRES` solver implementation.
+-->
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
-  - [ ] 🧸 CSC matrix class, fast CSR-CSC tranpositions,
   - [x] 🧸 CSR Extraction with prescribed coloring,
-  - [ ] 🧸 CSC Extraction with prescribed coloring,
-  - [ ] 🧸 Fill matrix diagonal function.
-  - [ ] 🧸 Extract matrix diagonal function.
-  - [ ] 🧸 Extract matrix row as a sparse vector function.
-  - [ ] 🧸 Sparse-sparse approximate AXPY. 
-  - [ ] 🧸 Matrix symmetrization.
-  - [ ] 🧸 Partial matrix-vector products in DL, DU modes.
   - [ ] 🦜 Block extraction with prescribed coloring,
   - [x] 🪓 Bandwidth-based column coloring problem,
   - [x] 🪓 Portrait-based column coloring problem,
@@ -238,12 +210,13 @@ Legend:
   - [ ] 🦜🧻 Refactor unified and C/C++ API for preconditioning,
   - [ ] 🦜🧻 Add user-defined preconditioner in C/C++ API,
   - [x] 🧻 Refactor precondtioner from function pointer to class,
-  - [ ] 🦜 `Jacobi` preconditioner,
   - [x] 🪓 `LU_SGS` preconditioner,
   - [x] 🪓 MKL-based `ILU0` preconditioners,
   - [x] 🪓 MKL-based `ILUT` preconditioners,
   - [ ] 🚬 Custom `ILU0`/`IC0` preconditioners,
   - [ ] 🚬 Custom `ILUT`/`ICT` preconditioners,
+<!--
+  - [ ] 🦜 `Jacobi` preconditioner,
   - [ ] 🚬 `SPAI0` preconditioner,
   - [ ] 🚬🚬 `SPAI` preconditioner,
   - [ ] 🚬 'Left' `SPAI` preconditioner,
@@ -251,16 +224,19 @@ Legend:
   - [ ] 🦜 `AINV` preconditioner,
   - [ ] 🦜 polynomial preconditioner,
   - [ ] 🦜 Krylov preconditioner.
+-->
 
 - Direct solvers:
   - [x] 🚬 Optimized partial matrix operations with MKL-comparable performance,
-  - [ ] 🪓 Dense direct solver,
-  - [ ] 🪓 Sparse-approximate direct solver,
   - [x] 🧸 Sequential triangular solvers,
   - [x] 🚬 Parallel DAG-based triangular solvers,
   - [ ] 🚬🚬 Parallel block diagonal extraction-based triangular solvers,
+<!--
+  - [ ] 🪓 Dense direct solver,
+  - [ ] 🪓 Sparse-approximate direct solver,
   - [ ] 🦜 Built-in direct solver,
   - [ ] 🦜 Direct solvers (`PARDISO`, `SuperLU`).
+-->
 
 * Nonlinear solvers:
   - [x] 🧸 Newton-Raphson solver,

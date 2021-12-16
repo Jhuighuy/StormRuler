@@ -57,84 +57,80 @@ if(APPLE)
   message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 
+# Check Fortran compiler.
+if(NOT ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU" OR
+        "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel" OR
+      # "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG" OR
+        "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI"))
+  message(WARNING "Unknown Fortran compiler, correct options may not be set.")
+endif()
+# Check C/C++ compiler.
+if(NOT ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
+        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" OR
+        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" OR
+        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI"))
+  message(WARNING "Unknown C++ compiler, correct options may not be set.")
+endif()
+
 # Warning and diagnostics options (Fortran).
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>:
-      -Wall -Wextra -Wpedantic -Wno-unused-dummy-argument>)
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-fcheck=all>>)
+  list(APPEND Fortran_DEBUG_OPTIONS -fcheck=all)
+  list(APPEND Fortran_OPTIONS -Wall -Wextra -Wpedantic 
+    -Wno-unused-dummy-argument)
 elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>: -warn all,nounused>)
+  list(APPEND Fortran_OPTIONS -warn all,nounused) 
 elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
-    #target_compile_options(StormRuler_BASE INTERFACE
-    #  $<$<COMPILE_LANGUAGE:Fortran>: -warn all,nounused>)
-else()
-  message(WARNING 
-    "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, warning options not set.")
+  #list(APPEND Fortran_OPTIONS ???) 
 endif()
 # Warning and diagnostics options (C/C++).
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>: -Werror -Wall -Wextra 
-       -Wpedantic -Wno-unused-function -Wno-unused-parameter>)
+  list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
+    -Wpedantic -Wno-unused-function -Wno-unused-parameter)
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:-Werror -Wall -Wextra -Wpedantic 
-      -Wno-unused-function -Wno-unused-parameter 
-      -Wno-gnu-zero-variadic-macro-arguments>)
-else()
-  message(WARNING 
-    "Unknown C++ compiler ${CMAKE_CXX_COMPILER_ID}, warning options not set.")
+  list(APPEND CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
+    -Wno-unused-function -Wno-unused-parameter 
+    -Wno-gnu-zero-variadic-macro-arguments)
 endif()
 
 # Optimization options (Fortran).
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -O0>>)
+  list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
   if (NOT APPLE_SILICON)
-    target_compile_options(StormRuler_BASE INTERFACE
-      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+    list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
   endif()
 elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -O0>>)
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+  list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
+  list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
 elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
-    target_compile_options(StormRuler_BASE INTERFACE
-      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:-g -C -O0>>)
-    target_compile_options(StormRuler_BASE INTERFACE
-      $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:-g -O4 -march=native>>)
-else()
-  message(WARNING 
-    "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}, optimization options not set.")
+  list(APPEND Fortran_DEBUG_OPTIONS -g -C -O0)
+  list(APPEND Fortran_RELEASE_OPTIONS -g -O4 -march=native)
 endif()
 # Optimization options (C/C++).
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
+  list(APPEND CXX_DEBUG_OPTIONS -g -O0)
+  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:-g -O0>>)
-  target_compile_options(StormRuler_BASE INTERFACE
-    $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:-g -Ofast -march=native>>)
-else()
-  message(WARNING 
-    "Unknown C++ compiler ${CMAKE_CXX_COMPILER_ID}, warning options not set.")
+  list(APPEND CXX_DEBUG_OPTIONS -g -O0)
+  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
 endif()
 
-# Other options.
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
-  # NAG does not use byte-based kind system by default.
-  target_compile_options(StormRuler_BASE INTERFACE 
-    $<$<COMPILE_LANGUAGE:Fortran>:-kind=byte>)
-endif()
+# Set the Fortran options.
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:Fortran>:${Fortran_OPTIONS}>)
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:${Fortran_DEBUG_OPTIONS}>>)
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:${Fortran_RELEASE_OPTIONS}>>)
+# Set the C/C++ options.
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:C,CXX>:${CXX_OPTIONS}>)
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:${CXX_DEBUG_OPTIONS}>>)
+target_compile_options(StormRuler_BASE INTERFACE
+  $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:${CXX_RELEASE_OPTIONS}>>)
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Libraries.
@@ -284,13 +280,10 @@ endif()
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 message(STATUS "Adding StormRuler shared library.")
-add_subdirectory(
-  "${CMAKE_SOURCE_DIR}/src")
+add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 
 message(STATUS "Adding StormRuler main executable.")
-add_subdirectory(
-  "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
+add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
 
 message(STATUS "Adding StormRuler LBM executable.")
-add_subdirectory(
-  "${CMAKE_SOURCE_DIR}/src_aux/StormRuler_LbMain")
+add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_LbMain")

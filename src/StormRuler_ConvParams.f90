@@ -53,9 +53,7 @@ type :: tConvParams
 
 contains
   procedure :: Init => tConvParams_Init
-  generic :: Check => CheckR, CheckC
-  procedure :: CheckR => tConvParams_Check
-  procedure :: CheckC => tConvParams_CheckC
+  procedure :: Check => tConvParams_Check
 end type tConvParams
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -143,16 +141,5 @@ logical function tConvParams_Check(params, absoluteError, relativeError)
     end if
   end associate
 end function tConvParams_Check
-logical function tConvParams_CheckC(params, absoluteError, relativeError)
-  class(tConvParams), intent(inout) :: params
-  complex(dp), intent(in) :: absoluteError
-  complex(dp), intent(in), optional :: relativeError
-
-  if (present(relativeError)) then
-    tConvParams_CheckC = params%CheckR(abs(absoluteError), abs(relativeError))
-  else
-    tConvParams_CheckC = params%CheckR(abs(absoluteError))
-  end if
-end function tConvParams_CheckC
 
 end module StormRuler_ConvParams

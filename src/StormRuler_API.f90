@@ -37,7 +37,7 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
 use StormRuler_IO_VTK!, only: ...
 
-use StormRuler_BLAS, only: Norm_2, &
+use StormRuler_BLAS, only: Norm_2, Dot, &
   & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
   & Integrate, FuncProd, SpFuncProd
 use StormRuler_BLAS, only: tMatVecFunc
@@ -432,6 +432,41 @@ end subroutine cIO_Flush
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+function stormNorm2(meshPtr, xPtr) result(r) bind(C, name='stormNorm2')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr
+  real(c_double) :: r
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: xArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr)
+
+  r = Norm_2(mesh, xArr)
+
+end function stormNorm2
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+function stormDot(meshPtr, xPtr, yPtr) result(r) bind(C, name='stormDot')
+  type(c_ptr), intent(in), value :: meshPtr
+  type(c_ptr), intent(in), value :: xPtr, yPtr
+  real(c_double) :: r
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: xArr, yArr
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(xPtr, xArr)
+  call Unwrap(yPtr, yArr)
+
+  r = Dot(mesh, xArr, yArr)
+
+end function stormDot
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

@@ -42,10 +42,6 @@ use StormRuler_Preconditioner, only: tPreconditioner
 
 implicit none
 
-interface Solve_CG
-  module procedure Solve_CG
-end interface Solve_CG
-
 interface Solve_BiCGStab
   module procedure Solve_BiCGStab
 end interface Solve_BiCGStab
@@ -54,101 +50,6 @@ end interface Solve_BiCGStab
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Solve a linear self-adjoint definite operator equation: 
-!! [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the 
-!! Conjugate Gradients (CG) method.
-!!
-!! CG may be applied to the consistent singular problems, 
-!! it converges towards..
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_CG(mesh, xArr, bArr, MatVec, params, pre)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: bArr
-  class(tArray), intent(inout) :: xArr
-  class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: pre
-  procedure(tMatVecFunc) :: MatVec
-  
-  real(dp) :: alpha, beta, gamma, delta
-  type(tArray) :: pArr, rArr, tArr, zArr
-  
-  call AllocArray(pArr, rArr, tArr, mold=xArr)
-  if (present(pre)) then
-    call AllocArray(zArr, mold=xArr)
-    call pre%Init(mesh, MatVec)
-  else
-    zArr = rArr
-  end if
-
-  ! ----------------------
-  ! 𝒓 ← 𝓐𝒙,
-  ! 𝒓 ← 𝒃 - 𝒕.
-  ! ----------------------
-  call MatVec(mesh, rArr, xArr)
-  call Sub(mesh, rArr, bArr, rArr)
-
-  ! ----------------------
-  ! 𝛿 ← <𝒓⋅𝒓>,
-  ! Check convergence for √𝛿.
-  ! ----------------------
-  delta = Dot(mesh, rArr, rArr)
-  if (params%Check(sqrt(delta))) return
-  
-  ! ----------------------
-  ! 𝒛 ← 𝓟𝒓,
-  ! 𝒑 ← 𝒛,
-  ! 𝛾 ← <𝒓⋅𝒛>,
-  ! ----------------------
-  if (present(pre)) then
-    call pre%Apply(mesh, zArr, rArr, MatVec)
-  end if
-  call Set(mesh, pArr, zArr)
-  gamma = Dot(mesh, rArr, zArr)
-
-  do
-    ! ----------------------
-    ! 𝒕 ← 𝓐𝒑,
-    ! 𝛼 ← 𝛾/<𝒑⋅𝒕>,
-    ! 𝒙 ← 𝒙 + 𝛼𝒑,
-    ! 𝒓 ← 𝒓 - 𝛼𝒕,
-    ! ----------------------
-    call MatVec(mesh, tArr, pArr)
-    alpha = SafeDivide(gamma, Dot(mesh, pArr, tArr))
-    call Add(mesh, xArr, xArr, pArr, alpha)
-    call Sub(mesh, rArr, rArr, tArr, alpha)
-
-    ! ----------------------
-    ! 𝛼 ← <𝒓⋅𝒓>,
-    ! Check convergence for √𝛼 and √𝛼/√𝛿.
-    ! ----------------------
-    alpha = Dot(mesh, rArr, rArr)
-    if (params%Check(sqrt(alpha), sqrt(alpha/delta))) exit
-
-    ! ----------------------
-    ! 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-    !   𝒛 ← 𝓟𝒓,
-    !   𝛼 ← <𝒓⋅𝒛>,
-    ! 𝗲𝗻𝗱 𝗶𝗳 // otherwise 𝒛 ≡ 𝒓, 𝛼 unchanged.  
-    ! ----------------------
-    if (present(pre)) then
-      call pre%Apply(mesh, zArr, rArr, MatVec)
-      alpha = Dot(mesh, rArr, zArr)
-    end if
-
-    ! ----------------------
-    ! 𝛽 ← 𝛼/𝛾,
-    ! 𝒑 ← 𝒛 + 𝛽𝒑,
-    ! 𝛾 ← 𝛼.
-    ! ----------------------
-    beta = SafeDivide(alpha, gamma)
-    call Add(mesh, pArr, zArr, pArr, beta)
-    gamma = alpha
-
-  end do
-
-end subroutine Solve_CG
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 

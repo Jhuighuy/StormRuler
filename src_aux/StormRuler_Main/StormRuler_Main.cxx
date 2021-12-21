@@ -27,6 +27,7 @@
 #define _GNU_SOURCE 1
 
 #include <StormRuler_API.h>
+#include <StormRuler_Solver_CG.hxx>
 
 #include <math.h>
 #include <stdio.h>
@@ -296,14 +297,14 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-  
+
   stormFree(rhs);
 
   SetBCs_p(mesh, p_hat);

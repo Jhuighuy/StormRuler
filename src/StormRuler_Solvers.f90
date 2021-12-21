@@ -34,7 +34,7 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
-use StormRuler_Solvers_CG, only: Solve_CG, Solve_BiCGStab
+use StormRuler_Solvers_CG, only: Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
@@ -142,9 +142,6 @@ contains
     end block; end if
 
     select case(method)
-      case('CG')
-        params%Name = params%Name//'CG)'
-        call Solve_CG(mesh, x, f, uMatVec, params, precond)
       case('BiCGStab')
         params%Name = params%Name//'BiCGStab)'
         call Solve_BiCGStab(mesh, x, f, uMatVec, params, precond)

@@ -39,6 +39,11 @@ public:
   std::function<void(tArray&, const tArray&)> MatVec;
 };
 
+class stormBaseObject {
+public:
+  virtual ~stormBaseObject() = default;
+};
+
 class stormArray {
 public:
   stormMesh_t Mesh;
@@ -65,6 +70,11 @@ namespace stormUtils {
   void Set(stormArray& z, const stormArray& y) {
     stormSet(z.Mesh, z.Array, y.Array);
   }
+
+  void Fill(stormArray& z, stormReal_t a) {
+    stormFill(z.Mesh, z.Array, a);
+  }
+
   void Add(stormArray& z, const stormArray& y, const stormArray& x, 
           stormReal_t a = 1.0, stormReal_t b = 1.0) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
@@ -93,7 +103,7 @@ namespace stormUtils {
 /// @brief Abstract operator equation 𝓐(𝒙) = 𝒃 solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray, class tOperator>
-class stormSolver {
+class stormSolver : public stormBaseObject {
 public:
 
   /// @brief Solve the operator equation. 
@@ -175,7 +185,7 @@ bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
   // ----------------------
   const stormReal_t initialError = 
     (AbsoluteError = Init(xArr, bArr, anyOp));
-  std::cout << "\t1" << initialError << std::endl;
+  std::cout << "\t1 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
     return true;
   }

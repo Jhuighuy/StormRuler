@@ -34,23 +34,23 @@
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
-/// [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the \
-/// Conjugate Gradients (CG) method.
+///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the \
+///   Conjugate Gradients (CG) method.
 ///
-/// CG may be applied to the consistent singular problems, 
+/// CG may be applied to the consistent singular problems,
 /// it converges towards..
 ///
 /// References:
 /// @verbatim
-/// [1] Hestenes, Magnus R. and Eduard Stiefel. 
-///     “Methods of conjugate gradients for solving linear systems.” 
+/// [1] Hestenes, Magnus R. and Eduard Stiefel.
+///     “Methods of conjugate gradients for solving linear systems.”
 ///     Journal of research of the National Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray, class tOperator>
 class stormCgSolver final : public stormIterativeSolver<tArray, tOperator> {
 private:
-  stormReal_t alpha, beta, gamma, delta;
+  stormReal_t alpha, beta, gamma;
   tArray pArr, rArr, tArr, zArr;
 
 protected:
@@ -63,7 +63,7 @@ protected:
   /// @param preOp Self-adjoint linear preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Preconditioned residual norm, \
-  /// square root of <𝒓⋅𝒛>, where 𝒓 = 𝓐𝒙 - 𝒃 and 𝒛 = [𝓟]𝒓.
+  ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const tOperator& linOp,
@@ -77,7 +77,7 @@ protected:
   /// @param preOp Self-adjoint linear preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Preconditioned residual norm, \
-  /// square root of <𝒓⋅𝒛>, where 𝒓 = 𝓐𝒙 - 𝒃 and 𝒛 = [𝓟]𝒓.
+  ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const tOperator& linOp,
@@ -91,11 +91,11 @@ stormReal_t stormCgSolver<tArray, tOperator>::Init(tArray& xArr,
                                                    const tOperator& linOp,
                                                    const tOperator* preOp) {
   // ----------------------
-  // Allocate the intermediate arrays. 
+  // Allocate the intermediate arrays:
   // ----------------------
   stormUtils::AllocLike(xArr, pArr, rArr, tArr);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(rArr, zArr);
+    stormUtils::AllocLike(xArr, zArr);
   }
 
   // ----------------------
@@ -112,7 +112,7 @@ stormReal_t stormCgSolver<tArray, tOperator>::Init(tArray& xArr,
   //   𝒑 ← 𝒛,
   //   𝛾 ← <𝒓⋅𝒛>,
   // 𝗲𝗹𝘀𝗲:
-  //   𝒑 ← 𝒓, 
+  //   𝒑 ← 𝒓,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
@@ -135,6 +135,7 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
                                                       const tOperator& linOp,
                                                       const tOperator* preOp) {
   // ----------------------
+  // Iterate:
   // 𝒕 ← 𝓐𝒑,
   // 𝛼 ← 𝛾/<𝒑⋅𝒕>,
   // 𝒙 ← 𝒙 + 𝛼𝒑,
@@ -151,7 +152,7 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
   //   𝛼 ← <𝒓⋅𝒛>,
   // 𝗲𝗹𝘀𝗲:
   //   𝛼 ← <𝒓⋅𝒓>.
-  // 𝗲𝗻𝗱 𝗶𝗳  
+  // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zArr, rArr);
@@ -166,7 +167,7 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
   //   𝒑 ← 𝒛 + 𝛽𝒑,
   // 𝗲𝗹𝘀𝗲:
   //   𝒑 ← r + 𝛽𝒑,
-  // 𝗲𝗻𝗱 𝗶𝗳  
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝛾 ← 𝛼.
   // ----------------------
   beta = stormUtils::SafeDivide(alpha, gamma);
@@ -179,6 +180,189 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
+///   the good old Biconjugate Gradients (stabilized) method (BiCGStab).
+///
+/// BiCGStab may be applied to the consistent singular problems,
+/// it converges towards..
+///
+/// References:
+/// @verbatim
+/// [1] van der Vorst, Henk A.
+///     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG
+///      for the Solution of Nonsymmetric Linear Systems.”
+///     SIAM J. Sci. Comput. 13 (1992): 631-644.
+/// @endverbatim
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tArray, class tOperator>
+class stormBiCgStabSolver final : public stormIterativeSolver<tArray, tOperator> {
+private:
+  stormReal_t alpha, beta, rho, omega;
+  tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, wArr, yArr, zArr;
+
+protected:
+
+  /// @brief Initialize the BiCGStab iterative solver.
+  ///
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param linOp Linear operator, 𝓐(𝒙).
+  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
+  ///
+  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
+  stormReal_t Init(tArray& xArr,
+                   const tArray& bArr,
+                   const tOperator& linOp,
+                   const tOperator* preOp) override final;
+
+  /// @brief Iterate the BiCGStab solver.
+  ///
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param linOp Linear operator, 𝓐(𝒙).
+  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
+  ///
+  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
+  stormReal_t Iterate(tArray& xArr,
+                      const tArray& bArr,
+                      const tOperator& linOp,
+                      const tOperator* preOp) override final;
+
+}; // class stormBiCgStabSolver<...>
+
+template<class tArray, class tOperator>
+stormReal_t stormBiCgStabSolver<tArray, tOperator>::Init(tArray& xArr,
+                                                         const tArray& bArr,
+                                                         const tOperator& linOp,
+                                                         const tOperator* preOp) {
+  // ----------------------
+  // Allocate the intermediate arrays:
+  // ----------------------
+  stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, sArr, tArr, vArr);
+  if (preOp != nullptr) {
+    stormUtils::AllocLike(xArr, wArr, yArr, zArr);
+  }
+
+  // ----------------------
+  // 𝒓 ← 𝓐𝒙,
+  // 𝒓 ← 𝒃 - 𝒓,
+  // 𝛿 ← ‖𝒓‖,
+  // ----------------------
+  linOp.MatVec(rArr, xArr);
+  stormUtils::Sub(rArr, bArr, rArr);
+  const stormReal_t delta = stormUtils::Norm2(rArr);
+
+  // ----------------------
+  // 𝒓̃ ← 𝒓,
+  // 𝒑 ← {𝟢}ᵀ, 𝒗 ← {𝟢}ᵀ,
+  // 𝜌 ← 𝟣, 𝛼 ← 𝟣, 𝜔 ← 𝟣.
+  // ----------------------
+  stormUtils::Set(rTildeArr, rArr);
+  stormUtils::Fill(pArr, 0.0);
+  stormUtils::Fill(vArr, 0.0);
+  rho = 1.0, alpha = 1.0, omega = 1.0;
+
+  return delta;
+
+} // stormBiCgStabSolver<...>::Init
+
+template<class tArray, class tOperator>
+stormReal_t stormBiCgStabSolver<tArray, tOperator>::Iterate(tArray& xArr,
+                                                            const tArray& bArr,
+                                                            const tOperator& linOp,
+                                                            const tOperator* preOp) {
+  // ----------------------
+  // Iterate:
+  // 𝜌̂ ← 𝜌,
+  // 𝜌 ← <𝒓̃⋅𝒓>,
+  // 𝛽 ← (𝜌/𝜌̂)⋅(𝛼/𝜔),
+  // ----------------------
+  stormReal_t rhoHat = rho; 
+  rho = stormUtils::Dot(rTildeArr, rArr);
+  beta = stormUtils::SafeDivide(rho, rhoHat)*stormUtils::SafeDivide(alpha, omega);
+
+  // ----------------------
+  // 𝒑 ← 𝒑 - 𝜔𝒗,
+  // 𝒑 ← 𝒓 + 𝛽𝒑,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒚 ← 𝓟𝒑,
+  //   𝒗 ← 𝓐𝒚.
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒗 ← 𝓐𝒑.
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  stormUtils::Sub(pArr, pArr, vArr, omega);
+  stormUtils::Add(pArr, rArr, pArr, beta);
+  if (preOp != nullptr) {
+    preOp->MatVec(yArr, pArr);
+    linOp.MatVec(vArr, yArr);
+  } else {
+    linOp.MatVec(vArr, pArr);
+  }
+
+  // ----------------------
+  // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
+  // 𝒔 ← 𝒓 - 𝛼𝒗,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒛 ← 𝓟𝒔,
+  //   𝒕 ← 𝓐𝒛.
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒕 ← 𝓐𝒔.
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  alpha = stormUtils::SafeDivide(rho, stormUtils::Dot(rTildeArr, vArr));
+  stormUtils::Sub(sArr, rArr, vArr, alpha);
+  if (preOp != nullptr) {
+    preOp->MatVec(zArr, sArr);
+    linOp.MatVec(tArr, zArr);
+  } else {
+    linOp.MatVec(tArr, sArr);
+  }
+
+  // ----------------------
+  // Update the solution:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒘 ← 𝓟𝒕,
+  //   𝜔 ← <𝒘⋅𝒛>/<𝒘⋅𝒘>,
+  //   𝒙 ← 𝒙 + 𝜔𝒛,
+  //   𝒙 ← 𝒙 + 𝛼𝒚,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝜔 ← <𝒕⋅𝒔>/<𝒕⋅𝒕>,
+  //   𝒙 ← 𝒙 + 𝜔𝒔,
+  //   𝒙 ← 𝒙 + 𝛼𝒑,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  if (preOp != nullptr) {
+    preOp->MatVec(wArr, tArr);
+    omega = stormUtils::SafeDivide(
+      stormUtils::Dot(wArr, zArr), stormUtils::Dot(wArr, wArr));
+    stormUtils::Add(xArr, xArr, zArr, omega);
+    stormUtils::Add(xArr, xArr, yArr, alpha);
+  } else {
+    omega = stormUtils::SafeDivide(
+      stormUtils::Dot(tArr, sArr), stormUtils::Dot(tArr, tArr));
+    stormUtils::Add(xArr, xArr, sArr, omega);
+    stormUtils::Add(xArr, xArr, pArr, alpha);
+  }
+
+  // ----------------------
+  // Update residual:
+  // 𝒓 ← 𝒔 - 𝜔𝒕,
+  // 𝛿 ← ‖𝒓‖.
+  // ----------------------
+  stormUtils::Sub(rArr, sArr, tArr, omega);
+  const stormReal_t delta = stormUtils::Norm2(rArr);
+
+  return delta;
+
+} // stormBiCgStabSolver<...>::Iterate
+
+/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+
+#include <cstring>
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormLinSolve2(stormMesh_t mesh,
@@ -194,8 +378,16 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     }
   };
 
-  stormCgSolver<stormArray, stormLinearOperator<stormArray>> cgSolver;
-  cgSolver.Solve(xx, bb, op);
+  stormIterativeSolver<stormArray, stormLinearOperator<stormArray>>* solver;
+  if (strcmp(method, STORM_CG) == 0) {
+    solver = new stormCgSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_BiCGStab) == 0) {
+    solver = new stormBiCgStabSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else {
+    abort();
+  }
+  solver->Solve(xx, bb, op);
+  delete solver;
 
 } // stormLinSolve
 

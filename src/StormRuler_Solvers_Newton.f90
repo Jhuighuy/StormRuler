@@ -105,7 +105,7 @@ subroutine Solve_Newton(mesh, MatVec, JacobianMatVec, xArr, bArr, params)
     call Set(mesh, tArr, rArr)
     !! TODO: equation parameters!
     call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, JacobianMatVecWithX, jacConvParams)
+    call LinSolve(mesh, 'GMRES', '', tArr, rArr, JacobianMatVecWithX, jacConvParams)
     call Add(mesh, xArr, xArr, tArr)
 
   end do
@@ -186,7 +186,7 @@ subroutine Solve_JFNK(mesh, MatVec, xArr, bArr, params)
     call Set(mesh, tArr, rArr)
     !! TODO: equation parameters!
     call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    call LinSolve(mesh, 'BiCGStab', '', tArr, rArr, ApproxJacobianMatVecWithX, jacConvParams)
+    call LinSolve(mesh, 'GMRES', '', tArr, rArr, ApproxJacobianMatVecWithX, jacConvParams)
     call Add(mesh, xArr, xArr, tArr)
 
   end do

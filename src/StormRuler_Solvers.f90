@@ -34,7 +34,6 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
-use StormRuler_Solvers_CG, only: Solve_BiCGStab
 use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_TFQMR
 use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
@@ -118,33 +117,30 @@ contains
   subroutine SelectMethod(precond)
     class(tPreconditioner), intent(inout), optional :: precond
   
-    if (preMethod == 'extr') then; block
-      type(tMatrix), target, save :: mat
-      type(tMatrixLabeling), save :: labeling
-      !type(tIlu0Preconditioner), save :: prepre
-      !type(tIlutPreconditioner), save :: prepre
-      type(tLuSgsPreconditioner), save :: prepre
-
-      if (labeling%NumLabels == 0) then
-        call InitMatrix(mesh, mat, 2)
-        call LabelColumns_Patterned(mesh, mat, labeling)
-      end if
-      call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
-      call prepre%SetMatrix(mat)
-
-      params%Name = params%Name//'EXTR)'
-      !call Solve_BiCGStab(mesh, x, f, uMatVec, params)
-      call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
-
-      !error stop 229
-      return
-
-    end block; end if
+!    if (preMethod == 'extr') then; block
+!      type(tMatrix), target, save :: mat
+!      type(tMatrixLabeling), save :: labeling
+!      !type(tIlu0Preconditioner), save :: prepre
+!      !type(tIlutPreconditioner), save :: prepre
+!      type(tLuSgsPreconditioner), save :: prepre
+!
+!      if (labeling%NumLabels == 0) then
+!        call InitMatrix(mesh, mat, 2)
+!        call LabelColumns_Patterned(mesh, mat, labeling)
+!      end if
+!      call ExtractMatrix(mesh, mat, labeling, uMatVec, mold=x)
+!      call prepre%SetMatrix(mat)
+!
+!      params%Name = params%Name//'EXTR)'
+!      !call Solve_BiCGStab(mesh, x, f, uMatVec, params)
+!      call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
+!
+!      !error stop 229
+!      return
+!
+!    end block; end if
 
     select case(method)
-      case('BiCGStab')
-        params%Name = params%Name//'BiCGStab)'
-        call Solve_BiCGStab(mesh, x, f, uMatVec, params, precond)
       case('MINRES')
         params%Name = params%Name//'MINRES)'
         call Solve_MINRES(mesh, x, f, uMatVec, params, precond)

@@ -38,7 +38,7 @@ project(StormRuler_Lib
 
 # Locate the Fortran and C++ sources.
 file(GLOB Fortran_SOURCES "./*.f90") 
-file(GLOB CXX_SOURCES "./*.c*")
+file(GLOB CXX_SOURCES "./*.h*")
 
 # Build a list of Fortiel options.
 set(Fortiel_DEFINES "")

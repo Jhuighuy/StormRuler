@@ -41,6 +41,38 @@ add_library(StormRuler_BASE INTERFACE)
 ## Compilation options.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
+# Check Fortran compiler.
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  set(REQUIRED_Fortran_COMPILER_VERSION "10.3.0")
+elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+  # TODO: Intel Classic Fortran Compiler ('ifort') or 
+  #       Intel LLVM Fortran Compiler ('ifx')?
+  set(REQUIRED_Fortran_COMPILER_VERSION "20.2.4")
+#elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
+#  set(REQUIRED_Fortran_COMPILER_VERSION "???")
+#elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
+#  set(REQUIRED_Fortran_COMPILER_VERSION "???")
+else()
+  message(FATAL_ERROR "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}.")
+endif()
+if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS REQUIRED_Fortran_COMPILER_VERSION)
+  message(FATAL_ERROR 
+    "Insufficient ${CMAKE_Fortran_COMPILER_ID} Fortran compiler version, \
+    required version ${REQUIRED_Fortran_COMPILER_VERSION} or more recent.")
+endif()
+
+# Check C/C++ compiler.
+# TODO: Check C/C++ compiler version.
+# TODO: Intel Classic C++ Compiler ('icpc') or 
+#       Intel LLVM C++ Compiler ('icpx')?
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "PGI"))
+  message(WARNING "Unknown C++ compiler, correct options may not be set.")
+endif()
+
 # Detect endianness.
 include(TestBigEndian)
 test_big_endian(BIG_ENDIAN)
@@ -57,62 +89,46 @@ if(APPLE)
   message(STATUS "Apple Silicon detected, this is bad..")
 endif()
 
-# Check Fortran compiler.
-if(NOT ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU" OR
-        "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel" OR
-      # "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG" OR
-        "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI"))
-  message(WARNING "Unknown Fortran compiler, correct options may not be set.")
-endif()
-# Check C/C++ compiler.
-if(NOT ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" OR
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" OR
-        "${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI"))
-  message(WARNING "Unknown C++ compiler, correct options may not be set.")
-endif()
-
 # Warning and diagnostics options (Fortran).
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   list(APPEND Fortran_DEBUG_OPTIONS -fcheck=all)
   list(APPEND Fortran_OPTIONS -Wall -Wextra -Wpedantic 
     -Wno-unused-dummy-argument)
-elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
   list(APPEND Fortran_OPTIONS -warn all,nounused) 
-elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
   #list(APPEND Fortran_OPTIONS ???) 
 endif()
 # Warning and diagnostics options (C/C++).
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
-    -Wpedantic -Wno-unused-function -Wno-unused-parameter)
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
-       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    -Wpedantic -Wno-unused-function -Wno-unused-parameter -Wno-comment)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
     -Wno-unused-function -Wno-unused-parameter 
     -Wno-gnu-zero-variadic-macro-arguments)
 endif()
 
 # Optimization options (Fortran).
-if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
   if (NOT APPLE_SILICON)
     list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
   endif()
-elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
   list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
   list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
-elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
   list(APPEND Fortran_DEBUG_OPTIONS -g -C -O0)
   list(APPEND Fortran_RELEASE_OPTIONS -g -O4 -march=native)
 endif()
 # Optimization options (C/C++).
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_DEBUG_OPTIONS -g -O0)
   list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
-       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   list(APPEND CXX_DEBUG_OPTIONS -g -O0)
   list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
 endif()
@@ -165,7 +181,7 @@ else()
   find_package(OpenMP)
   if(OpenMP_Fortran_FOUND)
     # TODO: NAG has linking problems for OpenMP builds.
-    if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+    if(NOT CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
       set(OpenMP_Fortran_ENABLED 1)
     endif()
     if(OpenMP_Fortran_ENABLED)
@@ -177,12 +193,12 @@ else()
     if(OpenMP_Fortran_ENABLED)
       # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
       # Mixing different OpenMP runtimes is generally not a good idea.
-      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+      if(CMAKE_Fortran_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
         set(OpenMP_CXX_ENABLED 1)
       endif()
       # NAG uses system C compiler as a backend,
       # which can should theoretically match used C compiler.
-      if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NAG")
+      if(CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
         set(OpenMP_CXX_ENABLED 1)
       endif()
     endif()
@@ -201,11 +217,11 @@ if(StormRuler_NO_MKL)
 else()
   # Configure OpenMP library to the Fortran compiler native one.
   if(OpenMP_Fortran_ENABLED)
-    if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "INTEL")
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
       set(MKL_THREADING "intel_thread")
-    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
       set(MKL_THREADING "gnu_thread")
-    elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
+    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
       set(MKL_THREADING "pgi_thread")
     endif()
   endif()

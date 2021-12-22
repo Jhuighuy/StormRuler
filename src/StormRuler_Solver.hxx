@@ -37,6 +37,7 @@ template<class tArray>
 class stormLinearOperator {
 public:
   std::function<void(tArray&, const tArray&)> MatVec;
+  std::function<void(tArray&, const tArray&)> ConjMatVec;
 };
 
 class stormBaseObject {
@@ -73,6 +74,10 @@ namespace stormUtils {
 
   void Fill(stormArray& z, stormReal_t a) {
     stormFill(z.Mesh, z.Array, a);
+  }
+
+  void Scale(stormArray& z, const stormArray& y, stormReal_t a) {
+    stormScale(z.Mesh, z.Array, y.Array, a);
   }
 
   void Add(stormArray& z, const stormArray& y, const stormArray& x, 
@@ -173,6 +178,17 @@ protected:
                               const tArray& bArr,
                               const tOperator& anyOp,
                               const tOperator* preOp = nullptr) = 0;
+  
+  /// @brief Finalize the iterations.
+  ///
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param anyOp Equation operator, 𝓐(𝒙).
+  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  virtual void Finalize(tArray& xArr,
+                        const tArray& bArr,
+                        const tOperator& anyOp,
+                        const tOperator* preOp = nullptr) {}
 
 }; // class stormIterativeSolver<...>
 
@@ -187,6 +203,7 @@ bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
     (AbsoluteError = Init(xArr, bArr, anyOp));
   std::cout << "\t1 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
+    Finalize(xArr, bArr, anyOp);
     return true;
   }
 
@@ -200,13 +217,16 @@ bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
       << AbsoluteError << " " << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
+      Finalize(xArr, bArr, anyOp);
       return true;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
+      Finalize(xArr, bArr, anyOp);
       return true;
     }
   }
 
+  Finalize(xArr, bArr, anyOp);
   return false;
 
 } // stormIterativeSolver<...>::Solve

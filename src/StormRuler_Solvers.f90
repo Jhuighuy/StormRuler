@@ -36,7 +36,7 @@ use StormRuler_ConvParams, only: tConvParams
 
 use StormRuler_Solvers_MINRES, only: &
   & Solve_MINRES, Solve_GMRES, Solve_TFQMR
-use StormRuler_Solvers_LSQR, only: Solve_LSQR, Solve_LSMR
+use StormRuler_Solvers_LSQR, only: Solve_LSMR
 
 use StormRuler_Preconditioner, only: tPreconditioner
 
@@ -150,9 +150,6 @@ contains
       case('TFQMR')
         params%Name = params%Name//'TFQMR)'
         call Solve_TFQMR(mesh, x, f, uMatVec, params, precond)
-      case('LSQR')
-        params%Name = params%Name//'LSQR)'
-        call Solve_LSQR(mesh, x, f, uMatVec, params, precond)
       case('LSMR')
         params%Name = params%Name//'LSMR)'
         call Solve_LSMR(mesh, x, f, uMatVec, params, precond)

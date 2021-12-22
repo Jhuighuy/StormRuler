@@ -28,6 +28,39 @@
 
 #include <StormRuler_API.h>
 #include <StormRuler_Solver_CG.hxx>
+#include <StormRuler_Solver_LSQR.hxx>
+
+#include <cstring>
+
+template<typename stormMatVecFuncT_t>
+STORM_INL void stormLinSolve2(stormMesh_t mesh,
+                              stormString_t method,
+                              stormString_t preMethod,
+                              stormArray_t x,
+                              stormArray_t b,
+                              stormMatVecFuncT_t matVec) {
+  stormArray xx = {mesh, x}, bb = {mesh, b};
+  stormLinearOperator<stormArray> op {
+    [&](stormArray& yy, const stormArray& xx) {
+      matVec(yy.Mesh, yy.Array, xx.Array);
+    }
+  };
+
+  stormIterativeSolver<stormArray, stormLinearOperator<stormArray>>* solver;
+  if (strcmp(method, STORM_CG) == 0) {
+    solver = new stormCgSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_BiCGStab) == 0) {
+    solver = new stormBiCgStabSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_LSQR) == 0) {
+    op.ConjMatVec = op.MatVec;
+    solver = new stormLsqrSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else {
+    abort();
+  }
+  solver->Solve(xx, bb, op);
+  delete solver;
+
+} // stormLinSolve
 
 #include <math.h>
 #include <stdio.h>
@@ -297,7 +330,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_LSQR, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

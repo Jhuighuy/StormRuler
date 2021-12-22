@@ -35,9 +35,9 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
 ///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the \
-///   Conjugate Gradients (CG) method.
+///   Conjugate Gradients (@c CG) method.
 ///
-/// CG may be applied to the consistent singular problems,
+/// @c CG may be applied to the consistent singular problems,
 /// it converges towards..
 ///
 /// References:
@@ -55,7 +55,7 @@ private:
 
 protected:
 
-  /// @brief Initialize the CG iterative solver.
+  /// @brief Initialize the @c CG solver.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -69,7 +69,7 @@ protected:
                    const tOperator& linOp,
                    const tOperator* preOp) override final;
 
-  /// @brief Iterate the CG solver.
+  /// @brief Iterate the @c CG solver.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -183,9 +183,9 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
-///   the good old Biconjugate Gradients (stabilized) method (BiCGStab).
+///   the good old Biconjugate Gradients (stabilized) method (@c BiCGStab).
 ///
-/// BiCGStab may be applied to the consistent singular problems,
+/// @c BiCGStab may be applied to the consistent singular problems,
 /// it converges towards..
 ///
 /// References:
@@ -204,7 +204,7 @@ private:
 
 protected:
 
-  /// @brief Initialize the BiCGStab iterative solver.
+  /// @brief Initialize the @c BiCGStab solver.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -217,7 +217,7 @@ protected:
                    const tOperator& linOp,
                    const tOperator* preOp) override final;
 
-  /// @brief Iterate the BiCGStab solver.
+  /// @brief Iterate the @c BiCGStab solver.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -361,34 +361,5 @@ stormReal_t stormBiCgStabSolver<tArray, tOperator>::Iterate(tArray& xArr,
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
-#include <cstring>
-
-template<typename stormMatVecFuncT_t>
-STORM_INL void stormLinSolve2(stormMesh_t mesh,
-                              stormString_t method,
-                              stormString_t preMethod,
-                              stormArray_t x,
-                              stormArray_t b,
-                              stormMatVecFuncT_t matVec) {
-  stormArray xx = {mesh, x}, bb = {mesh, b};
-  stormLinearOperator<stormArray> op {
-    [&](stormArray& yy, const stormArray& xx) {
-      matVec(yy.Mesh, yy.Array, xx.Array);
-    }
-  };
-
-  stormIterativeSolver<stormArray, stormLinearOperator<stormArray>>* solver;
-  if (strcmp(method, STORM_CG) == 0) {
-    solver = new stormCgSolver<stormArray, stormLinearOperator<stormArray>>();
-  } else if (strcmp(method, STORM_BiCGStab) == 0) {
-    solver = new stormBiCgStabSolver<stormArray, stormLinearOperator<stormArray>>();
-  } else {
-    abort();
-  }
-  solver->Solve(xx, bb, op);
-  delete solver;
-
-} // stormLinSolve
 
 #endif // ifndef STORM_RULER_SOLVER_CG_HXX_

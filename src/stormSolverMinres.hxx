@@ -53,8 +53,8 @@
 ///     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormMinresSolver final : public stormIterativeSolver<tArray, tOperator> {
+template<class tArray>
+class stormMinresSolver final : public stormIterativeSolver<tArray> {
 private:
 
 protected:
@@ -70,8 +70,8 @@ protected:
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
-                   const tOperator& linOp,
-                   const tOperator* preOp) override final;
+                   const stormOperator<tArray>& linOp,
+                   const stormOperator<tArray>* preOp) override final;
 
   /// @brief Iterate the @c MINRES solver.
   ///
@@ -84,16 +84,16 @@ protected:
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
-                      const tOperator& linOp,
-                      const tOperator* preOp) override final;
+                      const stormOperator<tArray>& linOp,
+                      const stormOperator<tArray>* preOp) override final;
 
 }; // class stormMinresSolver<...>
 
-template<class tArray, class tOperator>
-stormReal_t stormMinresSolver<tArray, tOperator>::Init(tArray& xArr,
-                                                       const tArray& bArr,
-                                                       const tOperator& linOp,
-                                                       const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
+                                            const tArray& bArr,
+                                            const stormOperator<tArray>& linOp,
+                                            const stormOperator<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -106,11 +106,11 @@ stormReal_t stormMinresSolver<tArray, tOperator>::Init(tArray& xArr,
 
 } // stormMinresSolver<...>::Init
 
-template<class tArray, class tOperator>
-stormReal_t stormMinresSolver<tArray, tOperator>::Iterate(tArray& xArr,
-                                                          const tArray& bArr,
-                                                          const tOperator& linOp,
-                                                          const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
+                                               const tArray& bArr,
+                                               const stormOperator<tArray>& linOp,
+                                               const stormOperator<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -139,8 +139,8 @@ stormReal_t stormMinresSolver<tArray, tOperator>::Iterate(tArray& xArr,
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormGmresSolver final : public stormIterativeSolver<tArray, tOperator> {
+template<class tArray>
+class stormGmresSolver final : public stormIterativeSolver<tArray> {
 private:
 
 protected:
@@ -155,8 +155,8 @@ protected:
   /// @returns Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
-                   const tOperator& linOp,
-                   const tOperator* preOp) override final;
+                   const stormOperator<tArray>& linOp,
+                   const stormOperator<tArray>* preOp) override final;
 
   /// @brief Iterate the @c GMRES solver.
   ///
@@ -168,8 +168,8 @@ protected:
   /// @returns Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
-                      const tOperator& linOp,
-                      const tOperator* preOp) override final;
+                      const stormOperator<tArray>& linOp,
+                      const stormOperator<tArray>* preOp) override final;
 
   /// @brief Finalize the @c GMRES iterations.
   ///
@@ -179,16 +179,16 @@ protected:
   /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
   void Finalize(tArray& xArr,
                 const tArray& bArr,
-                const tOperator& linOp,
-                const tOperator* preOp = nullptr) override final;
+                const stormOperator<tArray>& linOp,
+                const stormOperator<tArray>* preOp = nullptr) override final;
 
 }; // class stormGmresSolver<...>
 
-template<class tArray, class tOperator>
-stormReal_t stormGmresSolver<tArray, tOperator>::Init(tArray& xArr,
-                                                      const tArray& bArr,
-                                                      const tOperator& linOp,
-                                                      const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormGmresSolver<tArray>::Init(tArray& xArr,
+                                           const tArray& bArr,
+                                           const stormOperator<tArray>& linOp,
+                                           const stormOperator<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -201,21 +201,21 @@ stormReal_t stormGmresSolver<tArray, tOperator>::Init(tArray& xArr,
 
 } // stormGmresSolver<...>::Init
 
-template<class tArray, class tOperator>
-stormReal_t stormGmresSolver<tArray, tOperator>::Iterate(tArray& xArr,
-                                                         const tArray& bArr,
-                                                         const tOperator& linOp,
-                                                         const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormGmresSolver<tArray>::Iterate(tArray& xArr,
+                                              const tArray& bArr,
+                                              const stormOperator<tArray>& linOp,
+                                              const stormOperator<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
 } // stormGmresSolver<...>::Iterate
 
-template<class tArray, class tOperator>
-void stormGmresSolver<tArray, tOperator>::Finalize(tArray& xArr,
+template<class tArray>
+void stormGmresSolver<tArray>::Finalize(tArray& xArr,
                                                   const tArray& bArr,
-                                                  const tOperator& linOp,
-                                                  const tOperator* preOp) {
+                                                  const stormOperator<tArray>& linOp,
+                                                  const stormOperator<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -239,8 +239,8 @@ void stormGmresSolver<tArray, tOperator>::Finalize(tArray& xArr,
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormTfqmrSolver final : public stormIterativeSolver<tArray, tOperator> {
+template<class tArray>
+class stormTfqmrSolver final : public stormIterativeSolver<tArray> {
 private:
 
 protected:
@@ -255,8 +255,8 @@ protected:
   /// @returns Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
-                   const tOperator& linOp,
-                   const tOperator* preOp) override final;
+                   const stormOperator<tArray>& linOp,
+                   const stormOperator<tArray>* preOp) override final;
 
   /// @brief Iterate the @c TFQMR solver.
   ///
@@ -268,16 +268,16 @@ protected:
   /// @returns Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
-                      const tOperator& linOp,
-                      const tOperator* preOp) override final;
+                      const stormOperator<tArray>& linOp,
+                      const stormOperator<tArray>* preOp) override final;
 
 }; // class stormTfqmrSolver<...>
 
-template<class tArray, class tOperator>
-stormReal_t stormTfqmrSolver<tArray, tOperator>::Init(tArray& xArr,
-                                                      const tArray& bArr,
-                                                      const tOperator& linOp,
-                                                      const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
+                                           const tArray& bArr,
+                                           const stormOperator<tArray>& linOp,
+                                           const stormOperator<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -290,11 +290,11 @@ stormReal_t stormTfqmrSolver<tArray, tOperator>::Init(tArray& xArr,
 
 } // stormTfqmrSolver<...>::Init
 
-template<class tArray, class tOperator>
-stormReal_t stormTfqmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
-                                                         const tArray& bArr,
-                                                         const tOperator& linOp,
-                                                         const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
+                                              const tArray& bArr,
+                                              const stormOperator<tArray>& linOp,
+                                              const stormOperator<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 

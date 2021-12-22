@@ -47,8 +47,8 @@
 ///     Journal of research of the National Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormCgSolver final : public stormIterativeSolver<tArray, tOperator> {
+template<class tArray>
+class stormCgSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t alpha, beta, gamma;
   tArray pArr, rArr, tArr, zArr;
@@ -66,8 +66,8 @@ protected:
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
-                   const tOperator& linOp,
-                   const tOperator* preOp) override final;
+                   const stormOperator<tArray>& linOp,
+                   const stormOperator<tArray>* preOp) override final;
 
   /// @brief Iterate the @c CG solver.
   ///
@@ -80,16 +80,17 @@ protected:
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
-                      const tOperator& linOp,
-                      const tOperator* preOp) override final;
+                      const stormOperator<tArray>& linOp,
+                      const stormOperator<tArray>* preOp) override final;
 
 }; // class stormCgSolver<...>
 
-template<class tArray, class tOperator>
-stormReal_t stormCgSolver<tArray, tOperator>::Init(tArray& xArr,
-                                                   const tArray& bArr,
-                                                   const tOperator& linOp,
-                                                   const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
+                                        const tArray& bArr,
+                                        const stormOperator<tArray>& linOp,
+                                        const stormOperator<tArray>* preOp) {
+
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -129,11 +130,12 @@ stormReal_t stormCgSolver<tArray, tOperator>::Init(tArray& xArr,
 
 } // stormCgSolver<...>::Init
 
-template<class tArray, class tOperator>
-stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
-                                                      const tArray& bArr,
-                                                      const tOperator& linOp,
-                                                      const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
+                                           const tArray& bArr,
+                                           const stormOperator<tArray>& linOp,
+                                           const stormOperator<tArray>* preOp) {
+
   // ----------------------
   // Iterate:
   // 𝒕 ← 𝓐𝒑,
@@ -196,8 +198,8 @@ stormReal_t stormCgSolver<tArray, tOperator>::Iterate(tArray& xArr,
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormBiCgStabSolver final : public stormIterativeSolver<tArray, tOperator> {
+template<class tArray>
+class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t alpha, beta, rho, omega;
   tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, wArr, yArr, zArr;
@@ -214,8 +216,8 @@ protected:
   /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
-                   const tOperator& linOp,
-                   const tOperator* preOp) override final;
+                   const stormOperator<tArray>& linOp,
+                   const stormOperator<tArray>* preOp) override final;
 
   /// @brief Iterate the @c BiCGStab solver.
   ///
@@ -227,16 +229,17 @@ protected:
   /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
-                      const tOperator& linOp,
-                      const tOperator* preOp) override final;
+                      const stormOperator<tArray>& linOp,
+                      const stormOperator<tArray>* preOp) override final;
 
 }; // class stormBiCgStabSolver<...>
 
-template<class tArray, class tOperator>
-stormReal_t stormBiCgStabSolver<tArray, tOperator>::Init(tArray& xArr,
-                                                         const tArray& bArr,
-                                                         const tOperator& linOp,
-                                                         const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
+                                              const tArray& bArr,
+                                              const stormOperator<tArray>& linOp,
+                                              const stormOperator<tArray>* preOp) {
+
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -268,11 +271,12 @@ stormReal_t stormBiCgStabSolver<tArray, tOperator>::Init(tArray& xArr,
 
 } // stormBiCgStabSolver<...>::Init
 
-template<class tArray, class tOperator>
-stormReal_t stormBiCgStabSolver<tArray, tOperator>::Iterate(tArray& xArr,
-                                                            const tArray& bArr,
-                                                            const tOperator& linOp,
-                                                            const tOperator* preOp) {
+template<class tArray>
+stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
+                                                 const tArray& bArr,
+                                                 const stormOperator<tArray>& linOp,
+                                                 const stormOperator<tArray>* preOp) {
+                                                   
   // ----------------------
   // Iterate:
   // 𝜌̂ ← 𝜌,

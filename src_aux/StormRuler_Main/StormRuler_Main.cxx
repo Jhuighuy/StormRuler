@@ -27,9 +27,9 @@
 #define _GNU_SOURCE 1
 
 #include <StormRuler_API.h>
-#include <StormRuler_Solver_CG.hxx>
-#include <StormRuler_Solver_MINRES.hxx>
-#include <StormRuler_Solver_LSQR.hxx>
+#include <stormSolverCg.hxx>
+#include <stormSolverMinres.hxx>
+#include <stormSolverLsqr.hxx>
 
 #include <cstring>
 
@@ -41,33 +41,31 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
   stormArray xx = {mesh, x}, bb = {mesh, b};
-  stormLinearOperator<stormArray> op {
-    [&](stormArray& yy, const stormArray& xx) {
-      matVec(yy.Mesh, yy.Array, xx.Array);
-    }
-  };
+  std::unique_ptr<stormOperator<stormArray>> op =
+    stormMakeSymmetricOperator<stormArray>(
+      [&](stormArray& yy, const stormArray& xx) {
+        matVec(yy.Mesh, yy.Array, xx.Array);
+      });
 
-  stormIterativeSolver<stormArray, stormLinearOperator<stormArray>>* solver;
+  stormIterativeSolver<stormArray>* solver;
   if (strcmp(method, STORM_CG) == 0) {
-    solver = new stormCgSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormCgSolver<stormArray>();
   } else if (strcmp(method, STORM_BiCGStab) == 0) {
-    solver = new stormBiCgStabSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormBiCgStabSolver<stormArray>();
   } else if (strcmp(method, STORM_MINRES) == 0) {
-    solver = new stormMinresSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormMinresSolver<stormArray>();
   } else if (strcmp(method, STORM_GMRES) == 0) {
-    solver = new stormGmresSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormGmresSolver<stormArray>();
   } else if (strcmp(method, STORM_TFQMR) == 0) {
-    solver = new stormTfqmrSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormTfqmrSolver<stormArray>();
   } else if (strcmp(method, STORM_LSQR) == 0) {
-    op.ConjMatVec = op.MatVec;
-    solver = new stormLsqrSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormLsqrSolver<stormArray>();
   } else if (strcmp(method, STORM_LSMR) == 0) {
-    op.ConjMatVec = op.MatVec;
-    solver = new stormLsmrSolver<stormArray, stormLinearOperator<stormArray>>();
+    solver = new stormLsmrSolver<stormArray>();
   } else {
     abort();
   }
-  solver->Solve(xx, bb, op);
+  solver->Solve(xx, bb, *op);
   delete solver;
 
 } // stormLinSolve
@@ -347,6 +345,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
+  abort();
 
   stormFree(rhs);
 

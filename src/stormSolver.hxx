@@ -22,87 +22,13 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef _STORM_RULER_SOLVER_HXX_
-#define _STORM_RULER_SOLVER_HXX_
+#ifndef _STORM_SOLVER_HXX_
+#define _STORM_SOLVER_HXX_
 
 #include <StormRuler_API.h>
+#include <stormOperator.hxx>
 
 #include <iostream>
-#include <functional>
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
-#define _STORM_NOT_IMPLEMENTED_() do { \
-  std::cerr << "not implemented" << std::endl; exit(1); } while(false)
-
-template<class tArray>
-class stormLinearOperator {
-public:
-  std::function<void(tArray&, const tArray&)> MatVec;
-  std::function<void(tArray&, const tArray&)> ConjMatVec;
-};
-
-class stormBaseObject {
-public:
-  virtual ~stormBaseObject() = default;
-};
-
-class stormArray {
-public:
-  stormMesh_t Mesh;
-  stormArray_t Array;
-  bool Copy = false;
-
-  ~stormArray() {
-    if (Copy) stormFree(Array);
-  }
-};
-
-namespace stormUtils {
-  stormReal_t SafeDivide(stormReal_t x, stormReal_t y) {
-    return (y == 0.0) ? 0.0 : (x/y);
-  }
-
-  stormReal_t Norm2(const stormArray& z) {
-    return stormNorm2(z.Mesh, z.Array);
-  }
-  stormReal_t Dot(const stormArray& z, const stormArray& y) {
-    return stormDot(z.Mesh, z.Array, y.Array);
-  }
-
-  void Set(stormArray& z, const stormArray& y) {
-    stormSet(z.Mesh, z.Array, y.Array);
-  }
-
-  void Fill(stormArray& z, stormReal_t a) {
-    stormFill(z.Mesh, z.Array, a);
-  }
-
-  void Scale(stormArray& z, const stormArray& y, stormReal_t a) {
-    stormScale(z.Mesh, z.Array, y.Array, a);
-  }
-
-  void Add(stormArray& z, const stormArray& y, const stormArray& x, 
-          stormReal_t a = 1.0, stormReal_t b = 1.0) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-  void Sub(stormArray& z, const stormArray& y, const stormArray& x, 
-          stormReal_t a = 1.0, stormReal_t b = 1.0) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-
-  void AllocLike(const stormArray& like, stormArray& z) {
-    z.Mesh = like.Mesh;
-    z.Array = stormAllocLike(like.Array);
-    z.Copy = true;
-  }
-  template<class... tArray>
-  void AllocLike(const stormArray& like, stormArray& z, tArray&... zz) {
-    AllocLike(like, z);
-    AllocLike(like, zz...);
-  }
-}
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
@@ -110,7 +36,7 @@ namespace stormUtils {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation 𝓐(𝒙) = 𝒃 solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
+template<class tInArray, class tOutArray = tInArray>
 class stormSolver : public stormBaseObject {
 public:
 
@@ -121,9 +47,9 @@ public:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   ///
   /// @returns Status of operation.
-  virtual bool Solve(tArray& xArr,
-                     const tArray& bArr,
-                     const tOperator& anyOp) = 0;
+  virtual bool Solve(tInArray& xArr,
+                     const tOutArray& bArr,
+                     const stormOperator<tInArray, tOutArray>& anyOp) = 0;
 
 }; // class stormSolver<...>
 
@@ -133,8 +59,8 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation 𝓟(𝓐(𝒙)) = 𝓟(𝒃) iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormIterativeSolver : public stormSolver<tArray, tOperator> {
+template<class tInArray, class tOutArray = tInArray>
+class stormIterativeSolver : public stormSolver<tInArray, tOutArray> {
 private:
   stormSize_t NumIterations = 0;
   stormSize_t MaxNumIterations = 2000;
@@ -150,9 +76,9 @@ public:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   ///
   /// @returns Status of operation.
-  bool Solve(tArray& xArr,
-             const tArray& bArr,
-             const tOperator& anyOp) override final;
+  bool Solve(tInArray& xArr,
+             const tOutArray& bArr,
+             const stormOperator<tInArray, tOutArray>& anyOp) override final;
 
 protected:
 
@@ -164,10 +90,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm-like value.
-  virtual stormReal_t Init(tArray& xArr,
-                           const tArray& bArr,
-                           const tOperator& anyOp,
-                           const tOperator* preOp = nullptr) = 0;
+  virtual stormReal_t Init(tInArray& xArr,
+                           const tOutArray& bArr,
+                           const stormOperator<tInArray, tOutArray>& anyOp,
+                           const stormOperator<tInArray, tInArray>* preOp = nullptr) = 0;
 
   /// @brief Iterate the solver.
   ///
@@ -177,10 +103,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm-like value.
-  virtual stormReal_t Iterate(tArray& xArr,
-                              const tArray& bArr,
-                              const tOperator& anyOp,
-                              const tOperator* preOp = nullptr) = 0;
+  virtual stormReal_t Iterate(tInArray& xArr,
+                              const tOutArray& bArr,
+                              const stormOperator<tInArray, tOutArray>& anyOp,
+                              const stormOperator<tInArray, tInArray>* preOp = nullptr) = 0;
   
   /// @brief Finalize the iterations.
   ///
@@ -188,17 +114,18 @@ protected:
   /// @param bArr Right-hand-side (block-)array, 𝒃.
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
-  virtual void Finalize(tArray& xArr,
-                        const tArray& bArr,
-                        const tOperator& anyOp,
-                        const tOperator* preOp = nullptr) {}
+  virtual void Finalize(tInArray& xArr,
+                        const tOutArray& bArr,
+                        const stormOperator<tInArray, tOutArray>& anyOp,
+                        const stormOperator<tInArray, tInArray>* preOp = nullptr) {}
 
 }; // class stormIterativeSolver<...>
 
-template<class tArray, class tOperator>
-bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
-                                                    const tArray& bArr,
-                                                    const tOperator& anyOp) {
+template<class tInArray, class tOutArray>
+bool stormIterativeSolver<tInArray, tOutArray>::
+                            Solve(tInArray& xArr,
+                                  const tOutArray& bArr,
+                                  const stormOperator<tInArray, tOutArray>& anyOp) {
   // ----------------------
   // Initialize the solver.
   // ----------------------
@@ -237,4 +164,4 @@ bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
-#endif // ifndef _STORM_RULER_SOLVER_HXX_
+#endif // ifndef _STORM_SOLVER_HXX_

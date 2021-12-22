@@ -134,6 +134,9 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // ----------------------
   // Initialize the solver.
   // ----------------------
+  if (PreOp != nullptr) {
+    PreOp->Build(anyOp);
+  }
   const stormReal_t initialError =
     (AbsoluteError = Init(xArr, bArr, anyOp, PreOp));
   std::cout << "\t1 " << initialError << std::endl;

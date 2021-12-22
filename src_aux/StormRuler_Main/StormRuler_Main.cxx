@@ -31,6 +31,8 @@
 #include <stormSolverMinres.hxx>
 #include <stormSolverLsqr.hxx>
 
+#include <stormPreconditionerPolynomial.hxx>
+
 #include <cstring>
 
 template<typename stormMatVecFuncT_t>
@@ -47,14 +49,13 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  //std::cout <<
-  //  stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
-  //abort();
-
   stormIterativeSolver<stormArray>* solver;
   if (strcmp(method, STORM_CG) == 0) {
+    //std::cout <<
+    //  stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
+    //abort();
     solver = new stormCgSolver<stormArray>();
-    solver->PreOp = new stormIdentityPreconditioner<stormArray>();
+    solver->PreOp = new stormChebyshevPreconditioner<stormArray>();
   } else if (strcmp(method, STORM_BiCGStab) == 0) {
     solver = new stormBiCgStabSolver<stormArray>();
   } else if (strcmp(method, STORM_MINRES) == 0) {
@@ -351,7 +352,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-  abort();
+  //abort();
 
   stormFree(rhs);
 

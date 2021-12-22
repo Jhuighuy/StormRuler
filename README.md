@@ -111,6 +111,8 @@ products.
     (`AINV0`, `AINV`, for _symmetric_ problems),
   * _(planned)_ SPAI preconditioner
     (`SPAI0`, `SPAI`, for _unsymmetric_ problems);
+  * Chebyshev Polynomial preconditioner
+    (`Cheby`, for _definite symmetric_ problems),
   * _(planned)_ Polynomial preconditioner
     (`Poly`, ...),
   * _(planned)_ Krylov preconditioner
@@ -215,6 +217,8 @@ Legend:
   - [x] 🪓 MKL-based `ILUT` preconditioners,
   - [ ] 🚬 Custom `ILU0`/`IC0` preconditioners,
   - [ ] 🚬 Custom `ILUT`/`ICT` preconditioners,
+  - [x] 🧸 Chebyshev polynomial preconditioner,
+  - [ ] 🦜 Some other polynomial preconditioners,
 <!--
   - [ ] 🦜 `Jacobi` preconditioner,
   - [ ] 🚬 `SPAI0` preconditioner,
@@ -222,7 +226,6 @@ Legend:
   - [ ] 🚬 'Left' `SPAI` preconditioner,
   - [ ] 🦜 `AINV0` preconditioner,
   - [ ] 🦜 `AINV` preconditioner,
-  - [ ] 🦜 polynomial preconditioner,
   - [ ] 🦜 Krylov preconditioner.
 -->
 

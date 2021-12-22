@@ -47,6 +47,10 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
+  std::cout <<
+    stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
+  abort();
+
   stormIterativeSolver<stormArray>* solver;
   if (strcmp(method, STORM_CG) == 0) {
     solver = new stormCgSolver<stormArray>();
@@ -338,7 +342,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_LSMR, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

@@ -29,6 +29,7 @@
 #include <stormOperator.hxx>
 
 #include <iostream>
+#include <stdexcept>
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
@@ -40,7 +41,7 @@ template<class tInArray, class tOutArray = tInArray>
 class stormSolver : public stormBaseObject {
 public:
 
-  /// @brief Solve the operator equation. 
+  /// @brief Solve the operator equation.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -69,7 +70,7 @@ private:
 
 public:
 
-  /// @brief Solve the operator equation. 
+  /// @brief Solve the operator equation.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -107,7 +108,7 @@ protected:
                               const tOutArray& bArr,
                               const stormOperator<tInArray, tOutArray>& anyOp,
                               const stormOperator<tInArray, tInArray>* preOp = nullptr) = 0;
-  
+
   /// @brief Finalize the iterations.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
@@ -129,7 +130,7 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // ----------------------
   // Initialize the solver.
   // ----------------------
-  const stormReal_t initialError = 
+  const stormReal_t initialError =
     (AbsoluteError = Init(xArr, bArr, anyOp));
   std::cout << "\t1 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
@@ -140,10 +141,10 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // ----------------------
   // Iterate the solver:
   // ----------------------
-  for (NumIterations = 1; NumIterations < MaxNumIterations; ++NumIterations) {
+  for (NumIterations = 1; NumIterations <= MaxNumIterations; ++NumIterations) {
     AbsoluteError = Iterate(xArr, bArr, anyOp);
     RelativeError = AbsoluteError/initialError;
-    std::cout << "\t" << NumIterations << " " 
+    std::cout << "\t" << NumIterations << " "
       << AbsoluteError << " " << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
@@ -160,6 +161,87 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   return false;
 
 } // stormIterativeSolver<...>::Solve
+
+/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Largest eigenvalue estimator based on the Power Iterations.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tArray>
+class stormPowerIterations final : public stormBaseObject {
+public:
+
+  /// @brief Estimate the largest eigenvalue of \
+  ///   the operator 𝓐 using the Power Iterations method.
+  ///
+  /// @param xArr On input: a non-zero vector that is used as \
+  ///   the initial guess for the Power iterations; on output: \
+  ///   estimate of the eigenvector, corresponding to the largest eigenvalue.
+  /// @param linOp Linear operator, 𝓐(𝒙).
+  /// @param maxIterations Maximum number of the iterations.
+  /// @param relativeTolerance Relative error tolerance \
+  ///   to terminate the iterations before the maximum number is reached.
+  ///
+  /// @returns Estimate the largest eigenvalue of 𝓐.
+  static stormReal_t
+    EstimateLargestEigenvalue(tArray& xArr,
+                              const stormOperator<tArray>& linOp,
+                              stormSize_t maxIterations = 10,
+                              stormReal_t relativeTolerance = 1.0e-8);
+
+}; // class stormPowerIterations<...>
+
+template<class tArray>
+stormReal_t stormPowerIterations<tArray>::
+    EstimateLargestEigenvalue(tArray& xArr,
+                              const stormOperator<tArray>& linOp,
+                              stormSize_t maxIterations,
+                              stormReal_t relativeTolerance) {
+
+  stormReal_t lambda, mu;
+  stormArray yArr;
+
+  stormUtils::AllocLike(xArr, yArr);
+
+  // ----------------------
+  // Initialize the Power Iterations:
+  // 𝜆 ← 𝟣,
+  // 𝜇 ← ‖𝒙‖,
+  // 𝒙 ← 𝒙/𝜇.
+  // ----------------------
+  lambda = 1.0;
+  mu = stormUtils::Norm2(xArr);
+  if (mu == 0.0) {
+    throw std::runtime_error("Zero initial vector.");
+  }
+  stormUtils::Scale(xArr, xArr, 1.0/mu);
+
+  for (stormSize_t iteration = 1; iteration <= maxIterations; ++iteration) {
+
+    // ----------------------
+    // Continue the Power Iterations:
+    // 𝒚 ← 𝓐𝒙,
+    // 𝜆̅ ← 𝜆, 𝜆 ← <𝒙⋅𝒚>,
+    // 𝜇 ← ‖𝒚‖, 𝒙 ← 𝒚/𝜇.
+    // ----------------------
+    linOp.MatVec(yArr, xArr);
+    const stormReal_t lambdaBar = lambda;
+    lambda = stormUtils::Dot(xArr, yArr);
+    mu = stormUtils::Norm2(yArr);
+    stormUtils::Scale(xArr, yArr, 1.0/mu);
+
+    // ----------------------
+    // Check for the convergence:
+    // ----------------------
+    if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
+      break;
+    }
+  }
+
+  return lambda;
+
+} // stormPowerIterations<...>::EstimateLargestEigenvalue
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///

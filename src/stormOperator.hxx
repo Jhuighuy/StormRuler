@@ -149,15 +149,18 @@ public:
   /// @param conjMatVecPtr 𝒙 ← 𝓐*(𝒚) function pointer.
   template<class tMatVecFunc>
   explicit stormFunctionalOperator(tMatVecFunc&& matVecPtr) :
-    MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)) {
+      MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)) {
+    assert(MatVecPtr);
   }
   template<class tMatVecFunc, class tConjMatVecFunc>
   explicit stormFunctionalOperator(tMatVecFunc&& matVecPtr,
                                    tConjMatVecFunc&& conjMatVecPtr) :
-    MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)),
-    ConjMatVecPtr(std::forward<tConjMatVecFunc>(conjMatVecPtr)) {
+      MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)),
+      ConjMatVecPtr(std::forward<tConjMatVecFunc>(conjMatVecPtr)) {
+    assert(MatVecPtr && ConjMatVecPtr);
   }
 
+private:
   void MatVec(tOutArray& yArr,
               const tInArray& xArr) const override final {
     MatVecPtr(yArr, xArr);
@@ -165,6 +168,10 @@ public:
 
   void ConjMatVec(tInArray& xArr,
                   const tOutArray& yArr) const override final {
+    if (!ConjMatVecPtr) {
+      throw std::runtime_error(
+        "`stormFunctionalOperator<...>::ConjMatVec` conjugate product function was not set.");
+    }
     ConjMatVecPtr(xArr, yArr);
   }
 }; // class stormFunctionalOperator<...>
@@ -200,7 +207,7 @@ std::unique_ptr<stormOperator<tInArray, tOutArray>>
 /// ----------------------------------------------------------------- ///
 template<class tArray, class tMatVecFunc>
 std::unique_ptr<stormOperator<tArray>> 
-  stormMakeSymmetricOperator(tMatVecFunc&& matVecPtr) {
+    stormMakeSymmetricOperator(tMatVecFunc&& matVecPtr) {
 
   return std::make_unique<stormFunctionalOperator<tArray>>(
     matVecPtr, std::forward<tMatVecFunc>(matVecPtr));

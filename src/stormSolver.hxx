@@ -187,7 +187,7 @@ public:
   static stormReal_t
     EstimateLargestEigenvalue(tArray& xArr,
                               const stormOperator<tArray>& linOp,
-                              stormSize_t maxIterations = 10,
+                              stormSize_t maxIterations = 20,
                               stormReal_t relativeTolerance = 1.0e-8);
 
 }; // class stormPowerIterations<...>
@@ -199,7 +199,7 @@ stormReal_t stormPowerIterations<tArray>::
                               stormSize_t maxIterations,
                               stormReal_t relativeTolerance) {
 
-  stormReal_t lambda, mu;
+  stormReal_t lambda;
   stormArray yArr;
 
   stormUtils::AllocLike(xArr, yArr);
@@ -207,15 +207,12 @@ stormReal_t stormPowerIterations<tArray>::
   // ----------------------
   // Initialize the Power Iterations:
   // 𝜆 ← 𝟣,
-  // 𝜇 ← ‖𝒙‖,
-  // 𝒙 ← 𝒙/𝜇.
+  // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
+  // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
   lambda = 1.0;
-  mu = stormUtils::Norm2(xArr);
-  if (mu == 0.0) {
-    throw std::runtime_error("Zero initial vector.");
-  }
-  stormUtils::Scale(xArr, xArr, 1.0/mu);
+  stormUtils::RandFill(xArr);
+  stormUtils::Scale(xArr, xArr, 1.0/stormUtils::Norm2(xArr));
 
   for (stormSize_t iteration = 1; iteration <= maxIterations; ++iteration) {
 
@@ -223,16 +220,16 @@ stormReal_t stormPowerIterations<tArray>::
     // Continue the Power Iterations:
     // 𝒚 ← 𝓐𝒙,
     // 𝜆̅ ← 𝜆, 𝜆 ← <𝒙⋅𝒚>,
-    // 𝜇 ← ‖𝒚‖, 𝒙 ← 𝒚/𝜇.
+    // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yArr, xArr);
     const stormReal_t lambdaBar = lambda;
     lambda = stormUtils::Dot(xArr, yArr);
-    mu = stormUtils::Norm2(yArr);
-    stormUtils::Scale(xArr, yArr, 1.0/mu);
+    stormUtils::Scale(xArr, yArr, 1.0/stormUtils::Norm2(yArr));
+    std::cout << iteration << " " << lambda << std::endl;
 
     // ----------------------
-    // Check for the convergence:
+    // Check for the convergence on 𝜆 and 𝜆̅:
     // ----------------------
     if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
       break;

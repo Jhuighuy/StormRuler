@@ -72,6 +72,9 @@ namespace stormUtils {
   void Fill(stormArray& z, stormReal_t a) {
     stormFill(z.Mesh, z.Array, a);
   }
+  void RandFill(stormArray& z) {
+    stormRandFill(z.Mesh, z.Array);
+  }
 
   void Scale(stormArray& z, const stormArray& y, stormReal_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);

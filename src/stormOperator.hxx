@@ -147,9 +147,13 @@ public:
   ///  
   /// @param matVecPtr 𝒚 ← 𝓐(𝒙) function pointer. 
   /// @param conjMatVecPtr 𝒙 ← 𝓐*(𝒚) function pointer.
+  template<class tMatVecFunc>
+  explicit stormFunctionalOperator(tMatVecFunc&& matVecPtr) :
+    MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)) {
+  }
   template<class tMatVecFunc, class tConjMatVecFunc>
   explicit stormFunctionalOperator(tMatVecFunc&& matVecPtr,
-                                   tConjMatVecFunc&& conjMatVecPtr = nullptr) :
+                                   tConjMatVecFunc&& conjMatVecPtr) :
     MatVecPtr(std::forward<tMatVecFunc>(matVecPtr)),
     ConjMatVecPtr(std::forward<tConjMatVecFunc>(conjMatVecPtr)) {
   }
@@ -169,22 +173,20 @@ public:
 /// Make the functional operator.
 /// ----------------------------------------------------------------- ///
 /** @{ */
-template<class tArray, 
-         class tMatVecFunc, class tConjMatVecFunc>
-std::unique_ptr<stormOperator<tArray>> 
-    stormMakeOperator(tMatVecFunc&& matVecPtr,
-                      tConjMatVecFunc&& conjMatVecPtr = nullptr) {
+template<class tInArray, class tOutArray = tInArray, 
+         class tMatVecFunc>
+std::unique_ptr<stormOperator<tInArray, tOutArray>>
+          stormMakeOperator(tMatVecFunc&& matVecPtr) {
 
-  return std::make_unique<stormFunctionalOperator<tArray>>(
-    std::forward<tMatVecFunc>(matVecPtr), 
-    std::forward<tConjMatVecFunc>(conjMatVecPtr));
+  return std::make_unique<stormFunctionalOperator<tInArray, tOutArray>>(
+    std::forward<tMatVecFunc>(matVecPtr));
 
 } // stormMakeOperator<...>
-template<class tInArray, class tOutArray, 
+template<class tInArray, class tOutArray = tInArray, 
          class tMatVecFunc, class tConjMatVecFunc>
 std::unique_ptr<stormOperator<tInArray, tOutArray>>
           stormMakeOperator(tMatVecFunc&& matVecPtr,
-                            tConjMatVecFunc&& conjMatVecPtr = nullptr) {
+                            tConjMatVecFunc&& conjMatVecPtr) {
 
   return std::make_unique<stormFunctionalOperator<tInArray, tOutArray>>(
     std::forward<tMatVecFunc>(matVecPtr), 

@@ -22,10 +22,10 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef _STORM_RULER_SOLVER_MINRES_HXX_
-#define _STORM_RULER_SOLVER_MINRES_HXX_
+#ifndef _STORM_SOLVER_MINRES_HXX_
+#define _STORM_SOLVER_MINRES_HXX_
 
-#include <StormRuler_Solver.hxx>
+#include <stormSolver.hxx>
 
 #include <cmath>
 
@@ -303,4 +303,4 @@ stormReal_t stormTfqmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
-#endif // ifndef _STORM_RULER_SOLVER_MINRES_HXX_
+#endif // ifndef _STORM_SOLVER_MINRES_HXX_

@@ -49,10 +49,6 @@ interface Solve_GMRES
   module procedure Solve_GMRES
 end interface Solve_GMRES
 
-interface Solve_TFQMR
-  module procedure Solve_TFQMR
-end interface Solve_TFQMR
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -362,30 +358,5 @@ subroutine Solve_GMRES(mesh, xArr, bArr, MatVec, params, pre)
   end do
 
 end subroutine Solve_GMRES
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-!! Solve a linear operator equation: 𝓐[𝓟]𝒙 = 𝒃, 𝒙 = [𝓟]𝒚, using 
-!! the Transpose-Free Quasi-Minimal Residual method (TFQMR).
-!! 
-!! References:
-!! [1] Freund, Roland W. 
-!!     “A Transpose-Free Quasi-Minimal Residual Algorithm 
-!!      for Non-Hermitian Linear Systems.” 
-!!     SIAM J. Sci. Comput. 14 (1993): 470-482.
-!! [2] Freund, Roland W. 
-!!     “Transpose-Free Quasi-Minimal Residual Methods 
-!!      for Non-Hermitian Linear Systems.” (1994).
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
-subroutine Solve_TFQMR(mesh, xArr, bArr, MatVec, params, pre)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: bArr
-  class(tArray), intent(inout) :: xArr
-  class(tConvParams), intent(inout) :: params
-  class(tPreconditioner), intent(inout), optional :: pre
-  procedure(tMatVecFunc) :: MatVec
-
-  error stop 'TFQMR solver is not implemented.'
-
-end subroutine Solve_TFQMR
 
 end module StormRuler_Solvers_MINRES

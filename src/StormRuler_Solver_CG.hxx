@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef STORM_RULER_SOLVER_CG_HXX_
-#define STORM_RULER_SOLVER_CG_HXX_
+#ifndef _STORM_RULER_SOLVER_CG_HXX_
+#define _STORM_RULER_SOLVER_CG_HXX_
 
 #include <StormRuler_Solver.hxx>
 
@@ -59,8 +59,8 @@ protected:
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Self-adjoint linear operator, 𝓐(𝒙).
-  /// @param preOp Self-adjoint linear preconditioner operator, 𝓟(𝒙).
+  /// @param linOp Self-adjoint sign definite linear operator, 𝓐(𝒙).
+  /// @param preOp Self-adjoint sign definite linear preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Preconditioned residual norm, \
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
@@ -73,8 +73,8 @@ protected:
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Self-adjoint linear operator, 𝓐(𝒙).
-  /// @param preOp Self-adjoint linear preconditioner operator, 𝓟(𝒙).
+  /// @param linOp Self-adjoint sign definite linear operator, 𝓐(𝒙).
+  /// @param preOp Self-adjoint sign definite linear preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Preconditioned residual norm, \
   ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
@@ -362,4 +362,4 @@ stormReal_t stormBiCgStabSolver<tArray, tOperator>::Iterate(tArray& xArr,
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
-#endif // ifndef STORM_RULER_SOLVER_CG_HXX_
+#endif // ifndef _STORM_RULER_SOLVER_CG_HXX_

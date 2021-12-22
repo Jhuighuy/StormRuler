@@ -28,6 +28,7 @@
 
 #include <StormRuler_API.h>
 #include <StormRuler_Solver_CG.hxx>
+#include <StormRuler_Solver_MINRES.hxx>
 #include <StormRuler_Solver_LSQR.hxx>
 
 #include <cstring>
@@ -51,6 +52,12 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     solver = new stormCgSolver<stormArray, stormLinearOperator<stormArray>>();
   } else if (strcmp(method, STORM_BiCGStab) == 0) {
     solver = new stormBiCgStabSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_MINRES) == 0) {
+    solver = new stormMinresSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_GMRES) == 0) {
+    solver = new stormGmresSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_TFQMR) == 0) {
+    solver = new stormTfqmrSolver<stormArray, stormLinearOperator<stormArray>>();
   } else if (strcmp(method, STORM_LSQR) == 0) {
     op.ConjMatVec = op.MatVec;
     solver = new stormLsqrSolver<stormArray, stormLinearOperator<stormArray>>();

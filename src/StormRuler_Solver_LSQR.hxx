@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef STORM_RULER_SOLVER_LSQR_HXX_
-#define STORM_RULER_SOLVER_LSQR_HXX_
+#ifndef _STORM_RULER_SOLVER_LSQR_HXX_
+#define _STORM_RULER_SOLVER_LSQR_HXX_
 
 #include <StormRuler_Solver.hxx>
 
@@ -41,8 +41,8 @@
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
 ///
-/// The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, 
-/// while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+/// The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically,
+/// while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖
 /// is not guaranteed to decrease.
 ///
 /// @c LSQR is not recommended in the self-adjoint case,
@@ -50,11 +50,11 @@
 ///
 /// References:
 /// @verbatim
-/// [1] Paige, C. and M. Saunders. 
-///     “LSQR: An Algorithm for Sparse Linear Equations and 
+/// [1] Paige, C. and M. Saunders.
+///     “LSQR: An Algorithm for Sparse Linear Equations and
 ///     Sparse Least Squares.” ACM Trans. Math. Softw. 8 (1982): 43-71.
-/// [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
-///     “A preconditioner for the LSQR algorithm.” 
+/// [2] Karimi, S., D. K. Salkuyeh and F. Toutounian.
+///     “A preconditioner for the LSQR algorithm.”
 ///     Journal of applied mathematics & informatics 26 (2008): 213-222.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -96,11 +96,11 @@ protected:
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param anyOp Equation operator, 𝓐(𝒙).
-  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  /// @param linOp Linear operator, 𝓐(𝒙).
+  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
   void Finalize(tArray& xArr,
                 const tArray& bArr,
-                const tOperator& anyOp,
+                const tOperator& linOp,
                 const tOperator* preOp = nullptr) override final;
 
 }; // class stormLsqrSolver<...>
@@ -113,6 +113,7 @@ stormReal_t stormLsqrSolver<tArray, tOperator>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
+  /// @todo Some of these should be allocated like x, others like b.
   stormUtils::AllocLike(xArr, tArr, rArr, uArr, vArr, wArr, zArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, sArr);
@@ -132,8 +133,8 @@ stormReal_t stormLsqrSolver<tArray, tOperator>::Init(tArray& xArr,
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   // ----------------------
@@ -168,13 +169,13 @@ stormReal_t stormLsqrSolver<tArray, tOperator>::Iterate(tArray& xArr,
                                                         const tOperator* preOp) {
   // ----------------------
   // Continue the bidiagonalization:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
   // 𝒕 ← 𝒕 - 𝛼𝒖,
   // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   // 𝒕 ← 𝒕 - 𝛽𝒗,
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
@@ -247,12 +248,12 @@ void stormLsqrSolver<tArray, tOperator>::Finalize(tArray& xArr,
 /// @brief Solve a right preconditioned linear least squares problem \
 ///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSMR method.
 ///
-/// @c LSMR is algebraically equivalent to applying @c MINRES 
-/// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚, 
+/// @c LSMR is algebraically equivalent to applying @c MINRES
+/// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
-/// 
-/// The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+///
+/// The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖
 /// decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖
 /// is not guaranteed to decrease (but decreases on practice).
 ///
@@ -261,11 +262,11 @@ void stormLsqrSolver<tArray, tOperator>::Finalize(tArray& xArr,
 ///
 /// References:
 /// @verbatim
-/// [1] Fong, D. C. and M. Saunders. 
-///     “LSMR: An Iterative Algorithm for Sparse Least-Squares Problems.” 
+/// [1] Fong, D. C. and M. Saunders.
+///     “LSMR: An Iterative Algorithm for Sparse Least-Squares Problems.”
 ///     SIAM J. Sci. Comput. 33 (2011): 2950-2971.
-/// [2] Karimi, S., D. K. Salkuyeh and F. Toutounian. 
-///     “A preconditioner for the LSQR algorithm.” 
+/// [2] Karimi, S., D. K. Salkuyeh and F. Toutounian.
+///     “A preconditioner for the LSQR algorithm.”
 ///     Journal of applied mathematics & informatics 26 (2008): 213-222.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -308,11 +309,11 @@ protected:
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param anyOp Equation operator, 𝓐(𝒙).
-  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  /// @param linOp Linear operator, 𝓐(𝒙).
+  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
   void Finalize(tArray& xArr,
                 const tArray& bArr,
-                const tOperator& anyOp,
+                const tOperator& linOp,
                 const tOperator* preOp = nullptr) override final;
 
 }; // class stormLsmrSolver<...>
@@ -325,6 +326,7 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
+  /// @todo Some of these should be allocated like x, others like b.
   stormUtils::AllocLike(xArr, tArr, rArr, uArr, vArr, wArr, hArr, zArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, sArr);
@@ -344,8 +346,8 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Init(tArray& xArr,
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   // ----------------------
@@ -382,13 +384,13 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
                                                         const tOperator* preOp) {
   // ----------------------
   // Continue the bidiagonalization:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
   // 𝒕 ← 𝒕 - 𝛼𝒖,
   // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   // 𝒕 ← 𝒕 - 𝛽𝒗,
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
@@ -409,7 +411,7 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
   }
   stormUtils::Sub(tArr, tArr, vArr, beta);
   alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
-  
+
   // ----------------------
   // Construct and apply rotations:
   // 𝜌 ← (𝛼̅² + 𝛽²)¹ᐟ²,
@@ -463,4 +465,4 @@ void stormLsmrSolver<tArray, tOperator>::Finalize(tArray& xArr,
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
-#endif // ifndef STORM_RULER_SOLVER_LSQR_HXX_
+#endif // ifndef _STORM_RULER_SOLVER_LSQR_HXX_

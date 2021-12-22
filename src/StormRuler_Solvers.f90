@@ -34,8 +34,7 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
-use StormRuler_Solvers_MINRES, only: &
-  & Solve_MINRES, Solve_GMRES, Solve_TFQMR
+use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
 
 use StormRuler_Preconditioner, only: tPreconditioner
 
@@ -146,9 +145,6 @@ contains
       case('GMRES')
         params%Name = params%Name//'GMRES)'
         call Solve_GMRES(mesh, x, f, uMatVec, params, precond)
-      case('TFQMR')
-        params%Name = params%Name//'TFQMR)'
-        call Solve_TFQMR(mesh, x, f, uMatVec, params, precond)
       case default
         error stop 'invalid method, method='//method
     end select

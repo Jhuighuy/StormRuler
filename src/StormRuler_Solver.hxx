@@ -33,6 +33,9 @@
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
+#define _STORM_NOT_IMPLEMENTED_() do { \
+  std::cerr << "not implemented" << std::endl; exit(1); } while(false)
+
 template<class tArray>
 class stormLinearOperator {
 public:

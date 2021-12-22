@@ -67,7 +67,7 @@ protected:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormOperator<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Iterate the @c CG solver.
   ///
@@ -81,7 +81,7 @@ protected:
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormOperator<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override final;
 
 }; // class stormCgSolver<...>
 
@@ -89,7 +89,7 @@ template<class tArray>
 stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
                                         const tArray& bArr,
                                         const stormOperator<tArray>& linOp,
-                                        const stormOperator<tArray>* preOp) {
+                                        const stormPreconditioner<tArray>* preOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
@@ -134,7 +134,7 @@ template<class tArray>
 stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
                                            const tArray& bArr,
                                            const stormOperator<tArray>& linOp,
-                                           const stormOperator<tArray>* preOp) {
+                                           const stormPreconditioner<tArray>* preOp) {
 
   // ----------------------
   // Iterate:
@@ -217,7 +217,7 @@ protected:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormOperator<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Iterate the @c BiCGStab solver.
   ///
@@ -230,7 +230,7 @@ protected:
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormOperator<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override final;
 
 }; // class stormBiCgStabSolver<...>
 
@@ -238,7 +238,7 @@ template<class tArray>
 stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
                                               const tArray& bArr,
                                               const stormOperator<tArray>& linOp,
-                                              const stormOperator<tArray>* preOp) {
+                                              const stormPreconditioner<tArray>* preOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
@@ -275,8 +275,8 @@ template<class tArray>
 stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
                                                  const tArray& bArr,
                                                  const stormOperator<tArray>& linOp,
-                                                 const stormOperator<tArray>* preOp) {
-                                                   
+                                                 const stormPreconditioner<tArray>* preOp) {
+
   // ----------------------
   // Iterate:
   // 𝜌̂ ← 𝜌,

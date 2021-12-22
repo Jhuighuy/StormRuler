@@ -71,7 +71,7 @@ protected:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormOperator<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Iterate the @c MINRES solver.
   ///
@@ -85,7 +85,7 @@ protected:
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormOperator<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override final;
 
 }; // class stormMinresSolver<...>
 
@@ -93,7 +93,7 @@ template<class tArray>
 stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
                                             const tArray& bArr,
                                             const stormOperator<tArray>& linOp,
-                                            const stormOperator<tArray>* preOp) {
+                                            const stormPreconditioner<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -110,7 +110,7 @@ template<class tArray>
 stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
                                                const tArray& bArr,
                                                const stormOperator<tArray>& linOp,
-                                               const stormOperator<tArray>* preOp) {
+                                               const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -156,7 +156,7 @@ protected:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormOperator<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Iterate the @c GMRES solver.
   ///
@@ -169,7 +169,7 @@ protected:
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormOperator<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Finalize the @c GMRES iterations.
   ///
@@ -180,7 +180,7 @@ protected:
   void Finalize(tArray& xArr,
                 const tArray& bArr,
                 const stormOperator<tArray>& linOp,
-                const stormOperator<tArray>* preOp = nullptr) override final;
+                const stormPreconditioner<tArray>* preOp = nullptr) override final;
 
 }; // class stormGmresSolver<...>
 
@@ -188,7 +188,7 @@ template<class tArray>
 stormReal_t stormGmresSolver<tArray>::Init(tArray& xArr,
                                            const tArray& bArr,
                                            const stormOperator<tArray>& linOp,
-                                           const stormOperator<tArray>* preOp) {
+                                           const stormPreconditioner<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -205,7 +205,7 @@ template<class tArray>
 stormReal_t stormGmresSolver<tArray>::Iterate(tArray& xArr,
                                               const tArray& bArr,
                                               const stormOperator<tArray>& linOp,
-                                              const stormOperator<tArray>* preOp) {
+                                              const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -215,7 +215,7 @@ template<class tArray>
 void stormGmresSolver<tArray>::Finalize(tArray& xArr,
                                                   const tArray& bArr,
                                                   const stormOperator<tArray>& linOp,
-                                                  const stormOperator<tArray>* preOp) {
+                                                  const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -256,7 +256,7 @@ protected:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormOperator<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override final;
 
   /// @brief Iterate the @c TFQMR solver.
   ///
@@ -269,7 +269,7 @@ protected:
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormOperator<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override final;
 
 }; // class stormTfqmrSolver<...>
 
@@ -277,7 +277,7 @@ template<class tArray>
 stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
                                            const tArray& bArr,
                                            const stormOperator<tArray>& linOp,
-                                           const stormOperator<tArray>* preOp) {
+                                           const stormPreconditioner<tArray>* preOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -294,7 +294,7 @@ template<class tArray>
 stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
                                               const tArray& bArr,
                                               const stormOperator<tArray>& linOp,
-                                              const stormOperator<tArray>* preOp) {
+                                              const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 

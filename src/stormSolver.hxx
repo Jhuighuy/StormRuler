@@ -27,6 +27,7 @@
 
 #include <StormRuler_API.h>
 #include <stormOperator.hxx>
+#include <stormPreconditioner.hxx>
 
 #include <iostream>
 #include <stdexcept>
@@ -69,6 +70,9 @@ private:
   stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
 
 public:
+  stormPreconditioner<tInArray>* PreOp = nullptr;
+
+public:
 
   /// @brief Solve the operator equation.
   ///
@@ -94,7 +98,7 @@ protected:
   virtual stormReal_t Init(tInArray& xArr,
                            const tOutArray& bArr,
                            const stormOperator<tInArray, tOutArray>& anyOp,
-                           const stormOperator<tInArray, tInArray>* preOp = nullptr) = 0;
+                           const stormPreconditioner<tInArray>* preOp) = 0;
 
   /// @brief Iterate the solver.
   ///
@@ -107,7 +111,7 @@ protected:
   virtual stormReal_t Iterate(tInArray& xArr,
                               const tOutArray& bArr,
                               const stormOperator<tInArray, tOutArray>& anyOp,
-                              const stormOperator<tInArray, tInArray>* preOp = nullptr) = 0;
+                              const stormPreconditioner<tInArray>* preOp) = 0;
 
   /// @brief Finalize the iterations.
   ///
@@ -118,7 +122,7 @@ protected:
   virtual void Finalize(tInArray& xArr,
                         const tOutArray& bArr,
                         const stormOperator<tInArray, tOutArray>& anyOp,
-                        const stormOperator<tInArray, tInArray>* preOp = nullptr) {}
+                        const stormPreconditioner<tInArray>* preOp) {}
 
 }; // class stormIterativeSolver<...>
 
@@ -131,10 +135,10 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // Initialize the solver.
   // ----------------------
   const stormReal_t initialError =
-    (AbsoluteError = Init(xArr, bArr, anyOp));
+    (AbsoluteError = Init(xArr, bArr, anyOp, PreOp));
   std::cout << "\t1 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-    Finalize(xArr, bArr, anyOp);
+    Finalize(xArr, bArr, anyOp, PreOp);
     return true;
   }
 
@@ -142,22 +146,22 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // Iterate the solver:
   // ----------------------
   for (NumIterations = 1; NumIterations <= MaxNumIterations; ++NumIterations) {
-    AbsoluteError = Iterate(xArr, bArr, anyOp);
+    AbsoluteError = Iterate(xArr, bArr, anyOp, PreOp);
     RelativeError = AbsoluteError/initialError;
     std::cout << "\t" << NumIterations << " "
       << AbsoluteError << " " << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-      Finalize(xArr, bArr, anyOp);
+      Finalize(xArr, bArr, anyOp, PreOp);
       return true;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
-      Finalize(xArr, bArr, anyOp);
+      Finalize(xArr, bArr, anyOp, PreOp);
       return true;
     }
   }
 
-  Finalize(xArr, bArr, anyOp);
+  Finalize(xArr, bArr, anyOp, PreOp);
   return false;
 
 } // stormIterativeSolver<...>::Solve
@@ -173,7 +177,7 @@ class stormPowerIterations final : public stormBaseObject {
 public:
 
   /// @brief Estimate the largest eigenvalue of \
-  ///   the operator 𝓐 using the Power Iterations method.
+  ///   the linear operator 𝓐 using the Power Iterations method.
   ///
   /// @param xArr On input: a non-zero vector that is used as \
   ///   the initial guess for the Power iterations; on output: \
@@ -199,9 +203,7 @@ stormReal_t stormPowerIterations<tArray>::
                               stormSize_t maxIterations,
                               stormReal_t relativeTolerance) {
 
-  stormReal_t lambda;
   stormArray yArr;
-
   stormUtils::AllocLike(xArr, yArr);
 
   // ----------------------
@@ -210,7 +212,7 @@ stormReal_t stormPowerIterations<tArray>::
   // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
-  lambda = 1.0;
+  stormReal_t lambda = 1.0;
   stormUtils::RandFill(xArr);
   stormUtils::Scale(xArr, xArr, 1.0/stormUtils::Norm2(xArr));
 
@@ -226,7 +228,6 @@ stormReal_t stormPowerIterations<tArray>::
     const stormReal_t lambdaBar = lambda;
     lambda = stormUtils::Dot(xArr, yArr);
     stormUtils::Scale(xArr, yArr, 1.0/stormUtils::Norm2(yArr));
-    std::cout << iteration << " " << lambda << std::endl;
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:

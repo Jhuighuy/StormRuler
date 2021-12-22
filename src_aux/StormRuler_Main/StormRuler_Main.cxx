@@ -47,13 +47,14 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::cout <<
-    stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
-  abort();
+  //std::cout <<
+  //  stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
+  //abort();
 
   stormIterativeSolver<stormArray>* solver;
   if (strcmp(method, STORM_CG) == 0) {
     solver = new stormCgSolver<stormArray>();
+    solver->PreOp = new stormIdentityPreconditioner<stormArray>();
   } else if (strcmp(method, STORM_BiCGStab) == 0) {
     solver = new stormBiCgStabSolver<stormArray>();
   } else if (strcmp(method, STORM_MINRES) == 0) {
@@ -70,6 +71,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     abort();
   }
   solver->Solve(xx, bb, *op);
+  delete solver->PreOp;
   delete solver;
 
 } // stormLinSolve

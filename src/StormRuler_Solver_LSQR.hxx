@@ -32,6 +32,116 @@
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
+/// ----------------------------------------------------------------- ///
+/// @brief Base class for solvers, based on \
+///   the Golub-Kahan-Lanczos bidiagonalization procedure.
+///
+/// @see @c LSQR, @c LSMR.
+/// ----------------------------------------------------------------- ///
+template<class tArray, class tOperator>
+class stormGolubKahanSolver : public stormIterativeSolver<tArray, tOperator> {
+protected:
+
+  /// @brief Initialize the bidiagonalization procedure.
+  static void InitBidiagonalization(tArray& sArr,
+                                    tArray& tArr,
+                                    tArray& uArr,
+                                    tArray& vArr,
+                                    stormReal_t& alpha,
+                                    stormReal_t& beta,
+                                    const tArray& bArr,
+                                    const tOperator& linOp,
+                                    const tOperator* preOp);
+
+  /// @brief Continue the bidiagonalization procedure.
+  static void ContinueBidiagonalization(tArray& sArr,
+                                        tArray& tArr,
+                                        tArray& uArr,
+                                        tArray& vArr,
+                                        stormReal_t& alpha,
+                                        stormReal_t& beta,
+                                        const tOperator& linOp,
+                                        const tOperator* preOp);
+
+}; // class stormGolubKahanSolver<...>
+
+template<class tArray, class tOperator>
+void stormGolubKahanSolver<tArray, tOperator>:: \
+                          InitBidiagonalization(tArray& sArr,
+                                                tArray& tArr,
+                                                tArray& uArr,
+                                                tArray& vArr,
+                                                stormReal_t& alpha,
+                                                stormReal_t& beta,
+                                                const tArray& bArr,
+                                                const tOperator& linOp,
+                                                const tOperator* preOp) {
+
+  // ----------------------
+  // Initialize the bidiagonalization procedure:
+  // 𝛽 ← ‖𝒃‖, 𝒖 ← 𝒃/𝛽,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // ----------------------
+  beta = stormUtils::Norm2(bArr); stormUtils::Scale(uArr, bArr, 1.0/beta);
+  if (preOp != nullptr) {
+    linOp.ConjMatVec(sArr, uArr);
+    preOp->ConjMatVec(tArr, sArr);
+  } else {
+    linOp.ConjMatVec(tArr, uArr);
+  }
+  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+
+} // stormGolubKahanSolver<...>::InitBidiagonalization
+
+template<class tArray, class tOperator>
+void stormGolubKahanSolver<tArray, tOperator>:: \
+                      ContinueBidiagonalization(tArray& sArr,
+                                                tArray& tArr,
+                                                tArray& uArr,
+                                                tArray& vArr,
+                                                stormReal_t& alpha,
+                                                stormReal_t& beta,
+                                                const tOperator& linOp,
+                                                const tOperator* preOp) {
+
+  // ----------------------
+  // Continue the bidiagonalization procedure:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒕 ← 𝒕 - 𝛼𝒖,
+  // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒕 ← 𝒕 - 𝛽𝒗,
+  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // ----------------------
+  if (preOp != nullptr) {
+    preOp->MatVec(sArr, vArr);
+    linOp.MatVec(tArr, sArr);
+  } else {
+    linOp.MatVec(tArr, vArr);
+  }
+  stormUtils::Sub(tArr, tArr, uArr, alpha);
+  beta = stormUtils::Norm2(tArr); stormUtils::Scale(uArr, tArr, 1.0/beta);
+  if (preOp != nullptr) {
+    linOp.ConjMatVec(sArr, uArr);
+    preOp->ConjMatVec(tArr, sArr);
+  } else {
+    linOp.ConjMatVec(tArr, uArr);
+  }
+  stormUtils::Sub(tArr, tArr, vArr, beta);
+  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+
+} // stormGolubKahanSolver<...>::ContinueBidiagonalization
+
+/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem \
 ///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSQR method.
@@ -59,7 +169,7 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray, class tOperator>
-class stormLsqrSolver final : public stormIterativeSolver<tArray, tOperator> {
+class stormLsqrSolver final : public stormGolubKahanSolver<tArray, tOperator> {
 private:
   stormReal_t alpha, beta, rho, rhoBar, theta, phi, phiBar, phiTilde, cs, sn;
   tArray sArr, tArr, rArr, uArr, vArr, wArr, zArr;
@@ -120,42 +230,28 @@ stormReal_t stormLsqrSolver<tArray, tOperator>::Init(tArray& xArr,
   }
 
   // ----------------------
-  // Utilize the initial guess.
-  // Consider the decomposition:
-  // 𝒙 = 𝒙₀ + 𝒛. (*)
-  // Substituting (*) into the equation, we get:
-  // 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
-  // The last equations can be solved with 𝒚₀ = {𝟢}ᵀ.
-  // ----------------------
-
-  // ----------------------
-  // Initialize:
+  // Utilize the initial guess 
+  // (solve 𝓐𝒛 = 𝒓 with zero initial guess, where 𝒓 = 𝒃 - 𝓐𝒙):
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormUtils::Sub(rArr, bArr, rArr);
-  beta = stormUtils::Norm2(rArr); stormUtils::Scale(uArr, rArr, 1.0/beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
-  } else {
-    linOp.ConjMatVec(tArr, uArr);
-  }
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  stormUtils::Fill(zArr, 0.0);
+
+  // ----------------------
+  // Initialize the bidiagonalization procedure:
+  // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
+  // ----------------------
+  InitBidiagonalization(
+    sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
 
   // ----------------------
   // 𝜑̅ ← 𝛽, 𝜌̅ ← 𝛼.
-  // 𝒛 ← {𝟢}ᵀ,
   // 𝒘 ← 𝒗,
   // ----------------------
   phiBar = beta; rhoBar = alpha;
-  stormUtils::Fill(zArr, 0.0);
   stormUtils::Set(wArr, vArr);
 
   return phiBar;
@@ -168,34 +264,11 @@ stormReal_t stormLsqrSolver<tArray, tOperator>::Iterate(tArray& xArr,
                                                         const tOperator& linOp,
                                                         const tOperator* preOp) {
   // ----------------------
-  // Continue the bidiagonalization:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒕 ← 𝒕 - 𝛼𝒖,
-  // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒕 ← 𝒕 - 𝛽𝒗,
-  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // Continue the bidiagonalization procedure:
+  // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
-  if (preOp != nullptr) {
-    preOp->MatVec(sArr, vArr);
-    linOp.MatVec(tArr, sArr);
-  } else {
-    linOp.MatVec(tArr, vArr);
-  }
-  stormUtils::Sub(tArr, tArr, uArr, alpha);
-  beta = stormUtils::Norm2(tArr); stormUtils::Scale(uArr, tArr, 1.0/beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
-  } else {
-    linOp.ConjMatVec(tArr, uArr);
-  }
-  stormUtils::Sub(tArr, tArr, vArr, beta);
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  ContinueBidiagonalization(
+    sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
 
   // ----------------------
   // Construct and apply rotation:
@@ -271,7 +344,7 @@ void stormLsqrSolver<tArray, tOperator>::Finalize(tArray& xArr,
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray, class tOperator>
-class stormLsmrSolver final : public stormIterativeSolver<tArray, tOperator> {
+class stormLsmrSolver final : public stormGolubKahanSolver<tArray, tOperator> {
 private:
   stormReal_t alpha, alphaBar, beta, rho, rhoBar, cs, sn, \
     theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar;
@@ -333,44 +406,30 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Init(tArray& xArr,
   }
 
   // ----------------------
-  // Utilize the initial guess.
-  // Consider the decomposition:
-  // 𝒙 = 𝒙₀ + 𝒛. (*)
-  // Substituting (*) into the equation, we get:
-  // 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
-  // The last equations can be solved with 𝒚₀ = {𝟢}ᵀ.
-  // ----------------------
-
-  // ----------------------
-  // Initialize:
+  // Utilize the initial guess 
+  // (solve 𝓐𝒛 = 𝒓 with zero initial guess, where 𝒓 = 𝒃 - 𝓐𝒙):
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormUtils::Sub(rArr, bArr, rArr);
-  beta = stormUtils::Norm2(rArr); stormUtils::Scale(uArr, rArr, 1.0/beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
-  } else {
-    linOp.ConjMatVec(tArr, uArr);
-  }
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  stormUtils::Fill(zArr, 0.0);
+
+  // ----------------------
+  // Initialize the bidiagonalization procedure:
+  // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
+  // ----------------------
+  InitBidiagonalization(
+    sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
 
   // ----------------------
   // 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
   // 𝜁 ← 𝟣, 𝑐̅𝑠̅ ← 𝟣, 𝑠̅𝑛̅ ← 𝟢,
-  // 𝒛 ← {𝟢}ᵀ,
   // 𝒘 ← 𝒗, 𝒉 ← {𝟢}ᵀ.
   // ----------------------
   alphaBar = alpha; psiBar = alpha*beta;
   zeta = 1.0; csBar = 1.0; snBar = 0.0;
-  stormUtils::Fill(zArr, 0.0);
   stormUtils::Set(wArr, vArr); stormUtils::Fill(hArr, 0.0);
 
   return std::abs(psiBar);
@@ -383,34 +442,11 @@ stormReal_t stormLsmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
                                                         const tOperator& linOp,
                                                         const tOperator* preOp) {
   // ----------------------
-  // Continue the bidiagonalization:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒕 ← 𝒕 - 𝛼𝒖,
-  // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔,
-  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒕 ← 𝒕 - 𝛽𝒗,
-  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // Continue the bidiagonalization procedure:
+  // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
-  if (preOp != nullptr) {
-    preOp->MatVec(sArr, vArr);
-    linOp.MatVec(tArr, sArr);
-  } else {
-    linOp.MatVec(tArr, vArr);
-  }
-  stormUtils::Sub(tArr, tArr, uArr, alpha);
-  beta = stormUtils::Norm2(tArr); stormUtils::Scale(uArr, tArr, 1.0/beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
-  } else {
-    linOp.ConjMatVec(tArr, uArr);
-  }
-  stormUtils::Sub(tArr, tArr, vArr, beta);
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  ContinueBidiagonalization(
+    sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
 
   // ----------------------
   // Construct and apply rotations:

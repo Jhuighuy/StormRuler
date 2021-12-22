@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef STORM_RULER_SOLVER_HXX_
-#define STORM_RULER_SOLVER_HXX_
+#ifndef _STORM_RULER_SOLVER_HXX_
+#define _STORM_RULER_SOLVER_HXX_
 
 #include <StormRuler_API.h>
 
@@ -237,4 +237,4 @@ bool stormIterativeSolver<tArray, tOperator>::Solve(tArray& xArr,
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
-#endif // ifndef STORM_RULER_SOLVER_HXX_
+#endif // ifndef _STORM_RULER_SOLVER_HXX_

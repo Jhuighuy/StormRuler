@@ -271,6 +271,11 @@ void stormLsqrSolver<tArray, tOperator>::Finalize(tArray& xArr,
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray, class tOperator>
 class stormLsmrSolver final : public stormIterativeSolver<tArray, tOperator> {
+private:
+  stormReal_t alpha, alphaBar, beta, rho, rhoBar, cs, sn, \
+    theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar;
+  tArray rArr, sArr, tArr, wArr, hArr, uArr, vArr, zArr;
+
 protected:
 
   /// @brief Initialize the @c LSMR solver.
@@ -311,6 +316,149 @@ protected:
                 const tOperator* preOp = nullptr) override final;
 
 }; // class stormLsmrSolver<...>
+
+template<class tArray, class tOperator>
+stormReal_t stormLsmrSolver<tArray, tOperator>::Init(tArray& xArr,
+                                                     const tArray& bArr,
+                                                     const tOperator& linOp,
+                                                     const tOperator* preOp) {
+  // ----------------------
+  // Allocate the intermediate arrays:
+  // ----------------------
+  stormUtils::AllocLike(xArr, tArr, rArr, uArr, vArr, wArr, hArr, zArr);
+  if (preOp != nullptr) {
+    stormUtils::AllocLike(xArr, sArr);
+  }
+
+  // ----------------------
+  // Utilize the initial guess.
+  // Consider the decomposition:
+  // 𝒙 = 𝒙₀ + 𝒛. (*)
+  // Substituting (*) into the equation, we get:
+  // 𝓐[𝓟]𝒚 = 𝒓, where: 𝒛 = [𝓟]𝒚, 𝒓 = 𝒃 - 𝓐𝒙₀.
+  // The last equations can be solved with 𝒚₀ = {𝟢}ᵀ.
+  // ----------------------
+
+  // ----------------------
+  // Initialize:
+  // 𝒓 ← 𝓐𝒙,
+  // 𝒓 ← 𝒃 - 𝒓,
+  // 𝛽 ← ‖𝒓‖, 𝒖 ← 𝒓/𝛽,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // ----------------------
+  linOp.MatVec(rArr, xArr);
+  stormUtils::Sub(rArr, bArr, rArr);
+  beta = stormUtils::Norm2(rArr); stormUtils::Scale(uArr, rArr, 1.0/beta);
+  if (preOp != nullptr) {
+    linOp.ConjMatVec(sArr, uArr);
+    preOp->ConjMatVec(tArr, sArr);
+  } else {
+    linOp.ConjMatVec(tArr, uArr);
+  }
+  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+
+  // ----------------------
+  // 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
+  // 𝜁 ← 𝟣, 𝑐̅𝑠̅ ← 𝟣, 𝑠̅𝑛̅ ← 𝟢,
+  // 𝒛 ← {𝟢}ᵀ,
+  // 𝒘 ← 𝒗, 𝒉 ← {𝟢}ᵀ.
+  // ----------------------
+  alphaBar = alpha; psiBar = alpha*beta;
+  zeta = 1.0; csBar = 1.0; snBar = 0.0;
+  stormUtils::Fill(zArr, 0.0);
+  stormUtils::Set(wArr, vArr); stormUtils::Fill(hArr, 0.0);
+
+  return std::abs(psiBar);
+
+} // stormLsmrSolver<...>::Init
+
+template<class tArray, class tOperator>
+stormReal_t stormLsmrSolver<tArray, tOperator>::Iterate(tArray& xArr,
+                                                        const tArray& bArr,
+                                                        const tOperator& linOp,
+                                                        const tOperator* preOp) {
+  // ----------------------
+  // Continue the bidiagonalization:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲: 
+  //   𝒔 ← 𝓟𝒗, 𝒕 ← 𝓐𝒔,
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐𝒗, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒕 ← 𝒕 - 𝛼𝒖,
+  // 𝛽 ← ‖𝒕‖, 𝒖 ← 𝒕/𝛽,
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒔 ← 𝓐*𝒖, 𝒕 ← 𝓟*𝒔, 
+  // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒕 ← 𝒕 - 𝛽𝒗,
+  // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
+  // ----------------------
+  if (preOp != nullptr) {
+    preOp->MatVec(sArr, vArr);
+    linOp.MatVec(tArr, sArr);
+  } else {
+    linOp.MatVec(tArr, vArr);
+  }
+  stormUtils::Sub(tArr, tArr, uArr, alpha);
+  beta = stormUtils::Norm2(tArr); stormUtils::Scale(uArr, tArr, 1.0/beta);
+  if (preOp != nullptr) {
+    linOp.ConjMatVec(sArr, uArr);
+    preOp->ConjMatVec(tArr, sArr);
+  } else {
+    linOp.ConjMatVec(tArr, uArr);
+  }
+  stormUtils::Sub(tArr, tArr, vArr, beta);
+  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  
+  // ----------------------
+  // Construct and apply rotations:
+  // 𝜌 ← (𝛼̅² + 𝛽²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝛼̅/𝜌, 𝑠𝑛 ← 𝛽/𝜌,
+  // 𝜃 ← 𝑠𝑛⋅𝛼, 𝛼̅ ← 𝑐𝑠⋅𝛼,
+  // 𝜃̅ ← 𝑠̅𝑛̅⋅𝜌, 𝜌̅ ← [(𝑐̅𝑠̅⋅𝜌)² + 𝜃²]¹ᐟ²,
+  // 𝑐̅𝑠̅ ← 𝑐̅𝑠̅⋅𝜌/𝜌̅, 𝑠̅𝑛̅ ← 𝜃/𝜌̅,
+  // 𝜓 ← 𝑐̅𝑠̅⋅𝜓̅, 𝜓̅ ← -𝑠̅𝑛̅⋅𝜓̅.
+  // ----------------------
+  rho = std::hypot(alphaBar, beta);
+  cs = alphaBar/rho; sn = beta/rho;
+  theta = sn*alpha; alphaBar = cs*alpha;
+  thetaBar = snBar*rho; rhoBar = std::hypot(csBar*rho, theta);
+  csBar = csBar*rho/rhoBar; snBar = theta/rhoBar;
+  psi = csBar*psiBar; psiBar = -snBar*psiBar;
+
+  // ----------------------
+  // Update 𝒛-solution:
+  // 𝒉 ← 𝒘 - (𝜃𝜌/𝜁)𝒉, 𝜁 ← 𝜌𝜌̅,
+  // 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉,
+  // 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
+  // ----------------------
+  stormUtils::Sub(hArr, wArr, hArr, thetaBar*rho/zeta); zeta = rho*rhoBar;
+  stormUtils::Add(zArr, zArr, hArr, psi/zeta);
+  stormUtils::Sub(wArr, vArr, wArr, theta/rho);
+
+  return std::abs(psiBar);
+
+} // stormLsmrSolver<...>::Iterate
+
+template<class tArray, class tOperator>
+void stormLsmrSolver<tArray, tOperator>::Finalize(tArray& xArr,
+                                                  const tArray& bArr,
+                                                  const tOperator& linOp,
+                                                  const tOperator* preOp) {
+  // ----------------------
+  // Compute 𝒙-solution:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
+  // 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  if (preOp != nullptr) {
+    preOp->MatVec(tArr, zArr);
+    stormUtils::Add(xArr, xArr, tArr);
+  } else {
+    stormUtils::Add(xArr, xArr, zArr);
+  }
+
+} // stormLsmrSolver<...>::Finalize
 
 /// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///

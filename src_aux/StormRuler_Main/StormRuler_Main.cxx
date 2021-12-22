@@ -54,6 +54,9 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
   } else if (strcmp(method, STORM_LSQR) == 0) {
     op.ConjMatVec = op.MatVec;
     solver = new stormLsqrSolver<stormArray, stormLinearOperator<stormArray>>();
+  } else if (strcmp(method, STORM_LSMR) == 0) {
+    op.ConjMatVec = op.MatVec;
+    solver = new stormLsmrSolver<stormArray, stormLinearOperator<stormArray>>();
   } else {
     abort();
   }
@@ -330,7 +333,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_LSQR, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_LSMR, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

@@ -304,9 +304,9 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
 template<class tInArray, class tOutArray>
 void stormLsqrSolver<tInArray, tOutArray>::
                     Finalize(tInArray& xArr,
-                              const tOutArray& bArr,
-                              const stormOperator<tInArray, tOutArray>& linOp,
-                              const stormPreconditioner<tInArray>* preOp) {
+                             const tOutArray& bArr,
+                             const stormOperator<tInArray, tOutArray>& linOp,
+                             const stormPreconditioner<tInArray>* preOp) {
                                 
   // ----------------------
   // Compute 𝒙-solution:
@@ -494,9 +494,9 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
 template<class tInArray, class tOutArray>
 void stormLsmrSolver<tInArray, tOutArray>::
                     Finalize(tInArray& xArr,
-                              const tOutArray& bArr,
-                              const stormOperator<tInArray, tOutArray>& linOp,
-                              const stormPreconditioner<tInArray>* preOp) {
+                             const tOutArray& bArr,
+                             const stormOperator<tInArray, tOutArray>& linOp,
+                             const stormPreconditioner<tInArray>* preOp) {
 
   // ----------------------
   // Compute 𝒙-solution:

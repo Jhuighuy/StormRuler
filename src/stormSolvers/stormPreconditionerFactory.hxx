@@ -36,36 +36,36 @@
 
 /// Precondtioner types.
 /// @{
-#define STORM_PRE_NONE     ""
-#define STORM_PRE_IDENTITY "ID"
-#define STORM_PRE_JACOBI   "JACOBI"
-#define STORM_PRE_LU_SGS   "LU_SGS"
-#define STORM_PRE_IC0      "IC0"
-#define STORM_PRE_ICT      "ICT"
-#define STORM_PRE_ILU0     "ILU0"
-#define STORM_PRE_ILUT     "ILUT"
-#define STORM_PRE_AINV0    "AINV0"
-#define STORM_PRE_AINV     "AINV"
-#define STORM_PRE_SPAI0    "SPAI0"
-#define STORM_PRE_SPAI     "SPAI"
-#define STORM_PRE_CHEBY    "Cheby"
-#define STORM_PRE_KRYLOV   "Krylov"
+#define STORM_PRE_NONE   ""
+#define STORM_PRE_ID     "ID"
+#define STORM_PRE_JACOBI "JACOBI"
+#define STORM_PRE_LU_SGS "LU_SGS"
+#define STORM_PRE_IC0    "IC0"
+#define STORM_PRE_ICT    "ICT"
+#define STORM_PRE_ILU0   "ILU0"
+#define STORM_PRE_ILUT   "ILUT"
+#define STORM_PRE_AINV0  "AINV0"
+#define STORM_PRE_AINV   "AINV"
+#define STORM_PRE_SPAI0  "SPAI0"
+#define STORM_PRE_SPAI   "SPAI"
+#define STORM_PRE_CHEBY  "Cheby"
+#define STORM_PRE_KRYLOV "Krylov"
 /// @}
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make preconditioner of the specified type.
 /// ----------------------------------------------------------------- ///
-template<class tArray, class... tArgs>
+template<class tArray>
 std::unique_ptr<stormPreconditioner<tArray>>
-    stormMakePreconditioner(stormString_t preType, tArgs&&... args) {
+    stormMakePreconditioner(stormString_t preType) {
 
   if (std::strcmp(preType, STORM_PRE_NONE) == 0) {
 
     return nullptr;
 
-  } else if (std::strcmp(preType, STORM_PRE_IDENTITY) == 0) {
+  } else if (std::strcmp(preType, STORM_PRE_ID) == 0) {
 
-    return std::make_unique<stormIdentityPreconditioner<tArray>>(std::forward<tArgs>(args)...);
+    return std::make_unique<stormIdentityPreconditioner<tArray>>();
 
   } else if (std::strcmp(preType, STORM_PRE_JACOBI) == 0) {
 
@@ -109,7 +109,7 @@ std::unique_ptr<stormPreconditioner<tArray>>
 
   } else if (std::strcmp(preType, STORM_PRE_CHEBY) == 0) {
 
-    return std::make_unique<stormChebyshevPreconditioner<tArray>>(std::forward<tArgs>(args)...);
+    return std::make_unique<stormChebyshevPreconditioner<tArray>>();
 
   } else if (std::strcmp(preType, STORM_PRE_KRYLOV) == 0) {
 

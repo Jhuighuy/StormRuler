@@ -46,9 +46,9 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::unique_ptr<stormSolver<stormArray>> solver = stormMakeSolver<stormArray>(method);
-  ( (stormIterativeSolver<stormArray>*)solver.get() )->PreOp = 
-                  stormMakePreconditioner<stormArray>(preMethod);
+  std::unique_ptr<stormIterativeSolver<stormArray>> solver = 
+    stormMakeIterativeSolver<stormArray>(method);
+  solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
   solver->Solve(xx, bb, *op);
 
 } // stormLinSolve

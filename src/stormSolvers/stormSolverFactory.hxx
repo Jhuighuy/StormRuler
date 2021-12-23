@@ -47,66 +47,72 @@
 #define STORM_KSP_LSMR     "LSMR"
 /// @}
 
+#define _STORM_MAKE_ITERATIVE_SOLVER_(solverType) \
+  if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
+    \
+    return std::make_unique<stormCgSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_BiCGStab) == 0) { \
+    \
+    return std::make_unique<stormBiCgStabSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_MINRES) == 0) { \
+    \
+    return std::make_unique<stormMinresSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
+    \
+    return std::make_unique<stormGmresSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_TFQMR) == 0) { \
+    \
+    return std::make_unique<stormTfqmrSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+    \
+    return std::make_unique<stormLsqrSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) { \
+    \
+    return std::make_unique<stormLsmrSolver<tArray>>(); \
+    \
+  }
+
+#define _STORM_MAKE_RECT_ITERATIVE_SOLVER_(solverType) \
+  if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+    \
+    return std::make_unique<stormLsqrSolver<tInArray, tOutArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) { \
+    \
+    return std::make_unique<stormLsmrSolver<tInArray, tOutArray>>(); \
+    \
+  }
+
 /// ----------------------------------------------------------------- ///
-/// @brief Make solver of the specified type.
+/// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
 /** @{ */
-template<class tArray, class... tArgs>
-std::unique_ptr<stormSolver<tArray>>
-    stormMakeSolver(stormString_t solverType, tArgs&&... args) {
+template<class tArray>
+std::unique_ptr<stormIterativeSolver<tArray>>
+    stormMakeIterativeSolver(stormString_t solverType) {
 
-  if (std::strcmp(solverType, STORM_KSP_CG) == 0) {
+  _STORM_MAKE_ITERATIVE_SOLVER_(solverType);
 
-    return std::make_unique<stormCgSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_BiCGStab) == 0) {
-
-    return std::make_unique<stormBiCgStabSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_MINRES) == 0) {
-
-    return std::make_unique<stormMinresSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) {
-
-    return std::make_unique<stormGmresSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_TFQMR) == 0) {
-
-    return std::make_unique<stormTfqmrSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) {
-
-    return std::make_unique<stormLsqrSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) {
-
-    return std::make_unique<stormLsmrSolver<tArray>>(std::forward<tArgs>(args)...);
-
-  }
-
-  throw std::invalid_argument("Invalid solver type specified.");
+  throw std::invalid_argument("Invalid iterative solver type specified.");
 
 } // stormMakeSolver<...>
-template<class tInArray, class tOutArray, class... tArgs>
+template<class tInArray, class tOutArray>
 std::unique_ptr<stormSolver<tInArray, tOutArray>>
-    stormMakeSolver(stormString_t solverType, tArgs&&... args) {
+    stormMakeIterativeSolver(stormString_t solverType) {
 
   if constexpr (std::is_same_v<tInArray, tOutArray>) {
-
-    return stormMakeSolver<tInArray>(solverType, std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) {
-
-    return std::make_unique<stormLsqrSolver<tInArray, tOutArray>>(std::forward<tArgs>(args)...);
-
-  } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) {
-
-    return std::make_unique<stormLsmrSolver<tInArray, tOutArray>>(std::forward<tArgs>(args)...);
-
+    return stormMakeIterativeSolver<tInArray>(solverType);
   }
 
-  throw std::invalid_argument("Invalid rectangular solver type specified.");
+  _STORM_MAKE_RECT_ITERATIVE_SOLVER_(solverType);
+
+  throw std::invalid_argument("Invalid iterative rectangular solver type specified.");
 
 } // stormMakeSolver<...>
 /** @} */

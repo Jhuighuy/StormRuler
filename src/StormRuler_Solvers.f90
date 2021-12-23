@@ -130,8 +130,8 @@ contains
 !      call prepre%SetMatrix(mat)
 !
 !      params%Name = params%Name//'EXTR)'
-!      !call Solve_BiCGStab(mesh, x, f, uMatVec, params)
-!      call Solve_BiCGStab(mesh, x, f, uMatVec, params, prepre)
+!      !call Solve_GMRES(mesh, x, f, uMatVec, params)
+!      call Solve_GMRES(mesh, x, f, uMatVec, params, prepre)
 !
 !      !error stop 229
 !      return

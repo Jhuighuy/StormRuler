@@ -60,6 +60,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     solver = new stormBiCgStabSolver<stormArray>();
   } else if (strcmp(method, STORM_MINRES) == 0) {
     solver = new stormMinresSolver<stormArray>();
+    solver->PreOp = new stormChebyshevPreconditioner<stormArray>();
   } else if (strcmp(method, STORM_GMRES) == 0) {
     solver = new stormGmresSolver<stormArray>();
   } else if (strcmp(method, STORM_TFQMR) == 0) {
@@ -345,14 +346,14 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_CG, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_MINRES, STORM_NONE/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-  //abort();
+  abort();
 
   stormFree(rhs);
 

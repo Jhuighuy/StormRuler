@@ -39,7 +39,7 @@ namespace stormUtils {
 
     // ----------------------
     // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟. 
+    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
     // ----------------------
     stormReal_t cs, sn, rr;
     rr = std::hypot(a, b);
@@ -59,11 +59,11 @@ namespace stormUtils {
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear self-adjoint indefinite operator equation 
+/// @brief Solve a linear self-adjoint indefinite operator equation \
 ///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the @c MINRES method.
 ///
 /// @c MINRES can be applied to the singular problems, and the self-adjoint
-/// least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚, 
+/// least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚,
 /// although convergeance to minimum norm solution is not guaranteed.
 ///
 /// @note Despite 𝓐 may be indefinite, a positive-definite \
@@ -71,11 +71,11 @@ namespace stormUtils {
 ///
 /// References:
 /// @verbatim
-/// [1] Paige, C. and M. Saunders. 
-///     “Solution of Sparse Indefinite Systems of Linear Equations.” 
+/// [1] Paige, C. and M. Saunders.
+///     “Solution of Sparse Indefinite Systems of Linear Equations.”
 ///     SIAM Journal on Numerical Analysis 12 (1975): 617-629.
 /// [2] Choi, S.-C. T.
-///     “Iterative Methods for Singular Linear Equations and 
+///     “Iterative Methods for Singular Linear Equations and
 ///     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -129,7 +129,7 @@ stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  stormUtils::AllocLike(xArr, pArr, 
+  stormUtils::AllocLike(xArr, pArr,
     wArr, wBarArr, wBarBarArr, zArr, zBarArr, zBarBarArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, qArr, qBarArr);
@@ -206,7 +206,7 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   epsilonBar = epsilon, epsilon = sn*beta, delta = -cs*beta;
   std::tie(cs, sn, gamma) = stormUtils::SymOrtho(gamma, beta);
   tau = cs*phi, phi = sn*phi;
-  
+
   // ----------------------
   // Update solution:
   // 𝒘 ← (𝟣/(𝛽̅𝛾))𝒒̅ - (𝛿̅/𝛾)𝒘̅,
@@ -227,22 +227,22 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
 ///   the monstrous Generalized Minimal Residual method (@c GMRES).
 ///
 /// The classical @c GMRES(𝑚) implementation with restarts
 /// after 𝑚 iterations is used.
 ///
 /// @c GMRES may be applied to the singular problems, and the square
-/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, 
-/// although convergeance to minimum norm solution is not guaranteed 
+/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
+/// although convergeance to minimum norm solution is not guaranteed
 /// (is this true?).
 ///
 /// References:
 /// @verbatim
-/// [1] Saad and M.H. Schultz, 
-///     "GMRES: A generalized minimal residual algorithm for solving 
-///      nonsymmetric linear systems", 
+/// [1] Saad and M.H. Schultz,
+///     "GMRES: A generalized minimal residual algorithm for solving
+///      nonsymmetric linear systems",
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -287,7 +287,7 @@ protected:
   void Finalize(tArray& xArr,
                 const tArray& bArr,
                 const stormOperator<tArray>& linOp,
-                const stormPreconditioner<tArray>* preOp = nullptr) override final;
+                const stormPreconditioner<tArray>* preOp) override final;
 
 }; // class stormGmresSolver<...>
 
@@ -332,17 +332,17 @@ void stormGmresSolver<tArray>::Finalize(tArray& xArr,
 /// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using 
+/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
 ///   the Transpose-Free Quasi-Minimal Residual method (@c TFQMR).
 ///
 /// References:
 /// @verbatim
-/// [1] Freund, Roland W. 
-///     “A Transpose-Free Quasi-Minimal Residual Algorithm 
-///      for Non-Hermitian Linear Systems.” 
+/// [1] Freund, Roland W.
+///     “A Transpose-Free Quasi-Minimal Residual Algorithm
+///      for Non-Hermitian Linear Systems.”
 ///     SIAM J. Sci. Comput. 14 (1993): 470-482.
-/// [2] Freund, Roland W. 
-///     “Transpose-Free Quasi-Minimal Residual Methods 
+/// [2] Freund, Roland W.
+///     “Transpose-Free Quasi-Minimal Residual Methods
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

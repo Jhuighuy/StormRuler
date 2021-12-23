@@ -40,7 +40,7 @@
 /// ----------------------------------------------------------------- ///
 template<class tInArray, class tOutArray = tInArray>
 class stormGolubKahanSolver : public stormIterativeSolver<tInArray, tOutArray> {
-  static_assert(std::is_same_v<tInArray, tOutArray>, 
+  static_assert(std::is_same_v<tInArray, tOutArray>,
             "Non-square case is not implemented yet.");
 
 protected:
@@ -214,7 +214,7 @@ protected:
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,
-                const stormPreconditioner<tInArray>* preOp = nullptr) override final;
+                const stormPreconditioner<tInArray>* preOp) override final;
 
 }; // class stormLsqrSolver<...>
 
@@ -235,7 +235,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   }
 
   // ----------------------
-  // Utilize the initial guess 
+  // Utilize the initial guess
   // (solve 𝓐𝒛 = 𝒓 with zero initial guess, where 𝒓 = 𝒃 - 𝓐𝒙):
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
@@ -307,7 +307,7 @@ void stormLsqrSolver<tInArray, tOutArray>::
                              const tOutArray& bArr,
                              const stormOperator<tInArray, tOutArray>& linOp,
                              const stormPreconditioner<tInArray>* preOp) {
-                                
+
   // ----------------------
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -396,7 +396,7 @@ protected:
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,
-                const stormPreconditioner<tInArray>* preOp = nullptr) override final;
+                const stormPreconditioner<tInArray>* preOp) override final;
 
 }; // class stormLsmrSolver<...>
 
@@ -417,7 +417,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   }
 
   // ----------------------
-  // Utilize the initial guess 
+  // Utilize the initial guess
   // (solve 𝓐𝒛 = 𝒓 with zero initial guess, where 𝒓 = 𝒃 - 𝓐𝒙):
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,

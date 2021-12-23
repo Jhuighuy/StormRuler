@@ -149,6 +149,8 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
 /// @brief Solve a right preconditioned linear least squares problem \
 ///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSQR method.
 ///
+/// Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+///
 /// @c LSQR is algebraically equivalent to applying @c CG
 /// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
@@ -177,40 +179,16 @@ private:
   stormReal_t alpha, beta, rho, rhoBar, theta, phi, phiBar, phiTilde, cs, sn;
   tInArray sArr, tArr, rArr, uArr, vArr, wArr, zArr;
 
-protected:
-
-  /// @brief Initialize the @c LSQR solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tInArray& xArr,
                    const tOutArray& bArr,
                    const stormOperator<tInArray, tOutArray>& linOp,
                    const stormPreconditioner<tInArray>* preOp) override final;
 
-  /// @brief Iterate the @c LSQR solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tInArray& xArr,
                       const tOutArray& bArr,
                       const stormOperator<tInArray, tOutArray>& linOp,
                       const stormPreconditioner<tInArray>* preOp) override final;
 
-  /// @brief Finalize the @c LSQR iterations.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,
@@ -330,6 +308,9 @@ void stormLsqrSolver<tInArray, tOutArray>::
 /// @brief Solve a right preconditioned linear least squares problem \
 ///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSMR method.
 ///
+/// Normal equation residual norm, ‖(𝓐[𝓟])*𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, \
+///   is reported.
+/// 
 /// @c LSMR is algebraically equivalent to applying @c MINRES
 /// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
@@ -359,40 +340,16 @@ private:
     theta, thetaBar, psi, psiBar, psiTilde, zeta, csBar, snBar;
   tInArray rArr, sArr, tArr, wArr, hArr, uArr, vArr, zArr;
 
-protected:
-
-  /// @brief Initialize the @c LSMR solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Normal equation residual norm, ‖(𝓐[𝓟])*𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tInArray& xArr,
                    const tOutArray& bArr,
                    const stormOperator<tInArray, tOutArray>& linOp,
                    const stormPreconditioner<tInArray>* preOp) override final;
 
-  /// @brief Iterate the @c LSMR solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Normal equation residual norm, ‖(𝓐[𝓟])*𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tInArray& xArr,
                       const tOutArray& bArr,
                       const stormOperator<tInArray, tOutArray>& linOp,
                       const stormPreconditioner<tInArray>* preOp) override final;
 
-  /// @brief Finalize the @c LSMR iterations.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,

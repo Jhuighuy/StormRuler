@@ -34,11 +34,14 @@
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
-///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the \
-///   Conjugate Gradients (@c CG) method.
+///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the @c CG \
+///   (Conjugate Gradients).
 ///
 /// @c CG may be applied to the consistent singular problems,
 /// it converges towards..
+///
+/// Preconditioned residual norm, square root of <𝒓⋅𝒛>, \
+///   where 𝒓 = 𝒃 - 𝓐𝒙 and 𝒛 = [𝓟]𝒓, is reported.
 ///
 /// References:
 /// @verbatim
@@ -53,31 +56,11 @@ private:
   stormReal_t alpha, beta, gamma;
   tArray pArr, rArr, tArr, zArr;
 
-protected:
-
-  /// @brief Initialize the @c CG solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Self-adjoint sign definite linear operator, 𝓐(𝒙).
-  /// @param preOp Self-adjoint sign definite linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Preconditioned residual norm, \
-  ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
                    const stormPreconditioner<tArray>* preOp) override final;
 
-  /// @brief Iterate the @c CG solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Self-adjoint sign definite linear operator, 𝓐(𝒙).
-  /// @param preOp Self-adjoint sign definite linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Preconditioned residual norm, \
-  ///   square root of <𝒓⋅𝒛>, where 𝒓 = 𝒃 - 𝓐𝒙  and 𝒛 = [𝓟]𝒓.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
@@ -185,7 +168,9 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
-///   the good old Biconjugate Gradients (stabilized) method (@c BiCGStab).
+///   the good old @c BiCGStab (Biconjugate Gradients Stabilized).
+///
+/// Residual norm is, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
 ///
 /// @c BiCGStab may be applied to the consistent singular problems,
 /// it converges towards..
@@ -204,29 +189,11 @@ private:
   stormReal_t alpha, beta, rho, omega;
   tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, wArr, yArr, zArr;
 
-protected:
-
-  /// @brief Initialize the @c BiCGStab solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
                    const stormPreconditioner<tArray>* preOp) override final;
 
-  /// @brief Iterate the @c BiCGStab solver.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param linOp Linear operator, 𝓐(𝒙).
-  /// @param preOp Linear preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙.
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,

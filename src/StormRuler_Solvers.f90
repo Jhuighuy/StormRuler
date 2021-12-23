@@ -34,7 +34,7 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 
-use StormRuler_Solvers_MINRES, only: Solve_MINRES, Solve_GMRES
+use StormRuler_Solvers_MINRES, only: Solve_GMRES
 
 use StormRuler_Preconditioner, only: tPreconditioner
 
@@ -138,16 +138,8 @@ contains
 !
 !    end block; end if
 
-    select case(method)
-      case('MINRES')
-        params%Name = params%Name//'MINRES)'
-        call Solve_MINRES(mesh, x, f, uMatVec, params, precond)
-      case('GMRES')
-        params%Name = params%Name//'GMRES)'
-        call Solve_GMRES(mesh, x, f, uMatVec, params, precond)
-      case default
-        error stop 'invalid method, method='//method
-    end select
+    params%Name = params%Name//'GMRES)'
+    call Solve_GMRES(mesh, x, f, uMatVec, params, precond)
 
   end subroutine SelectMethod
   subroutine MatVec_Uniformed(mesh, y, x)

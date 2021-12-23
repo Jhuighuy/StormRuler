@@ -48,8 +48,8 @@
 #define STORM_PRE_AINV     "AINV"
 #define STORM_PRE_SPAI0    "SPAI0"
 #define STORM_PRE_SPAI     "SPAI"
-#define STORM_PRE_CHEBY    "CHEBY"
-#define STORM_PRE_KRYLOV   "KRYLOV"
+#define STORM_PRE_CHEBY    "Cheby"
+#define STORM_PRE_KRYLOV   "Krylov"
 /// @}
 
 /// ----------------------------------------------------------------- ///
@@ -99,11 +99,11 @@ std::unique_ptr<stormPreconditioner<tArray>>
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_SPAI) == 0) {
+  } else if (std::strcmp(preType, STORM_PRE_SPAI0) == 0) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_SPAI0) == 0) {
+  } else if (std::strcmp(preType, STORM_PRE_SPAI) == 0) {
 
     _STORM_NOT_IMPLEMENTED_();
 

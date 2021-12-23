@@ -27,9 +27,7 @@
 #define _GNU_SOURCE 1
 
 #include <StormRuler_API.h>
-#include <stormSolvers/stormSolverCg.hxx>
-#include <stormSolvers/stormSolverMinres.hxx>
-#include <stormSolvers/stormSolverLsqr.hxx>
+#include <stormSolvers/stormSolverFactory.hxx>
 
 #include <stormSolvers/stormPreconditionerPolynomial.hxx>
 
@@ -49,32 +47,8 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  stormIterativeSolver<stormArray>* solver;
-  if (strcmp(method, STORM_CG) == 0) {
-    //std::cout <<
-    //  stormPowerIterations<stormArray>::EstimateLargestEigenvalue(xx, *op) << std::endl;
-    //abort();
-    solver = new stormCgSolver<stormArray>();
-    solver->PreOp = new stormChebyshevPreconditioner<stormArray>();
-  } else if (strcmp(method, STORM_BiCGStab) == 0) {
-    solver = new stormBiCgStabSolver<stormArray>();
-  } else if (strcmp(method, STORM_MINRES) == 0) {
-    solver = new stormMinresSolver<stormArray>();
-    solver->PreOp = new stormChebyshevPreconditioner<stormArray>();
-  } else if (strcmp(method, STORM_GMRES) == 0) {
-    solver = new stormGmresSolver<stormArray>();
-  } else if (strcmp(method, STORM_TFQMR) == 0) {
-    solver = new stormTfqmrSolver<stormArray>();
-  } else if (strcmp(method, STORM_LSQR) == 0) {
-    solver = new stormLsqrSolver<stormArray>();
-  } else if (strcmp(method, STORM_LSMR) == 0) {
-    solver = new stormLsmrSolver<stormArray>();
-  } else {
-    abort();
-  }
+  std::unique_ptr<stormSolver<stormArray>> solver = stormMakeSolver<stormArray>(method);
   solver->Solve(xx, bb, *op);
-  delete solver->PreOp;
-  delete solver;
 
 } // stormLinSolve
 

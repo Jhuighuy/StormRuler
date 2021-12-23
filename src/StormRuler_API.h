@@ -244,16 +244,6 @@ typedef void(*stormMatVecFunc_t)(stormMesh_t mesh,
                                  stormOpaque_t env);
 
 /// @{
-#define STORM_CG       "CG"
-#define STORM_BiCGStab "BiCGStab"
-#define STORM_MINRES   "MINRES"
-#define STORM_GMRES    "GMRES"
-#define STORM_TFQMR    "TFQMR"
-#define STORM_LSQR     "LSQR"
-#define STORM_LSMR     "LSMR"
-/// @}
-
-/// @{
 #define STORM_NONE     ""
 #define STORM_JACOBI   "Jacobi"
 #define STORM_LU_SGS   "LU-SGS"

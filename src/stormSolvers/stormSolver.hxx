@@ -70,7 +70,7 @@ private:
   stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
 
 public:
-  stormPreconditioner<tInArray>* PreOp = nullptr;
+  std::unique_ptr<stormPreconditioner<tInArray>> PreOp = nullptr;
 
 public:
 
@@ -138,10 +138,10 @@ bool stormIterativeSolver<tInArray, tOutArray>::
     PreOp->Build(anyOp);
   }
   const stormReal_t initialError =
-    (AbsoluteError = Init(xArr, bArr, anyOp, PreOp));
+    (AbsoluteError = Init(xArr, bArr, anyOp, PreOp.get()));
   std::cout << "\t1 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-    Finalize(xArr, bArr, anyOp, PreOp);
+    Finalize(xArr, bArr, anyOp, PreOp.get());
     return true;
   }
 
@@ -149,22 +149,22 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // Iterate the solver:
   // ----------------------
   for (NumIterations = 1; NumIterations <= MaxNumIterations; ++NumIterations) {
-    AbsoluteError = Iterate(xArr, bArr, anyOp, PreOp);
+    AbsoluteError = Iterate(xArr, bArr, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
     std::cout << "\t" << NumIterations << " "
       << AbsoluteError << " " << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-      Finalize(xArr, bArr, anyOp, PreOp);
+      Finalize(xArr, bArr, anyOp, PreOp.get());
       return true;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
-      Finalize(xArr, bArr, anyOp, PreOp);
+      Finalize(xArr, bArr, anyOp, PreOp.get());
       return true;
     }
   }
 
-  Finalize(xArr, bArr, anyOp, PreOp);
+  Finalize(xArr, bArr, anyOp, PreOp.get());
   return false;
 
 } // stormIterativeSolver<...>::Solve

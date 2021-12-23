@@ -28,8 +28,7 @@
 
 #include <StormRuler_API.h>
 #include <stormSolvers/stormSolverFactory.hxx>
-
-#include <stormSolvers/stormPreconditionerPolynomial.hxx>
+#include <stormSolvers/stormPreconditionerFactory.hxx>
 
 #include <cstring>
 
@@ -48,6 +47,8 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
       });
 
   std::unique_ptr<stormSolver<stormArray>> solver = stormMakeSolver<stormArray>(method);
+  ( (stormIterativeSolver<stormArray>*)solver.get() )->PreOp = 
+                  stormMakePreconditioner<stormArray>(preMethod);
   solver->Solve(xx, bb, *op);
 
 } // stormLinSolve
@@ -161,7 +162,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve2(mesh, STORM_BiCGStab, STORM_NONE/*"extr"*/, c_hat, rhs, 
+  stormLinSolve2(mesh, STORM_KSP_BiCGStab, STORM_PRE_NONE/*"extr"*/, c_hat, rhs, 
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -320,7 +321,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_MINRES, STORM_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, STORM_KSP_MINRES, STORM_PRE_CHEBY/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

@@ -243,14 +243,6 @@ typedef void(*stormMatVecFunc_t)(stormMesh_t mesh,
                                  stormArray_t x,
                                  stormOpaque_t env);
 
-/// @{
-#define STORM_NONE     ""
-#define STORM_JACOBI   "Jacobi"
-#define STORM_LU_SGS   "LU-SGS"
-#define STORM_ILU0     "ILU0"
-#define STORM_ILU0_MKL "ILU0_MKL"
-/// @}
-
 STORM_API void stormLinSolve(stormMesh_t mesh,
                              stormString_t method,
                              stormString_t preMethod,

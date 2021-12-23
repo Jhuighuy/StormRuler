@@ -26,7 +26,7 @@
 #define _STORM_PRECONDITIONER_POLYNOMIAL_
 
 #include <StormRuler_API.h>
-#include <stormOperator.hxx>
+#include <stormSolvers/stormPreconditioner.hxx>
 
 #include <cmath>
 

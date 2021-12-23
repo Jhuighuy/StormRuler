@@ -26,7 +26,7 @@
 #define _STORM_PRECONDITIONER_HXX_
 
 #include <StormRuler_API.h>
-#include <stormOperator.hxx>
+#include <stormSolvers/stormOperator.hxx>
 
 #include <iostream>
 

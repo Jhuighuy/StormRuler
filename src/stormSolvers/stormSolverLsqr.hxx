@@ -25,7 +25,7 @@
 #ifndef _STORM_SOLVER_LSQR_HXX_
 #define _STORM_SOLVER_LSQR_HXX_
 
-#include <stormSolver.hxx>
+#include <stormSolvers/stormSolver.hxx>
 
 #include <cmath>
 

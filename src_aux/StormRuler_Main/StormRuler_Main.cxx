@@ -27,11 +27,11 @@
 #define _GNU_SOURCE 1
 
 #include <StormRuler_API.h>
-#include <stormSolverCg.hxx>
-#include <stormSolverMinres.hxx>
-#include <stormSolverLsqr.hxx>
+#include <stormSolvers/stormSolverCg.hxx>
+#include <stormSolvers/stormSolverMinres.hxx>
+#include <stormSolvers/stormSolverLsqr.hxx>
 
-#include <stormPreconditionerPolynomial.hxx>
+#include <stormSolvers/stormPreconditionerPolynomial.hxx>
 
 #include <cstring>
 

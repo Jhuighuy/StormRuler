@@ -102,7 +102,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     // 𝗲𝗹𝘀𝗲:
     //   𝗶𝗳 𝑘 == 2: 𝛽 ← ½(𝑐⋅𝛼)²,
     //   𝗲𝗹𝘀𝗲: 𝛽 ← (½⋅𝑐⋅𝛼)², 𝗲𝗻𝗱 𝗶𝗳
-    //   𝛼 ← 1/(𝑑 - 𝛽/𝛼),
+    //   𝛼 ← 𝛼/(𝑑⋅𝛼 - 𝛽),
     //   𝒑 ← 𝒓 + 𝛽𝒑.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
@@ -117,7 +117,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
       } else {
         beta = std::pow(0.5*c*alpha, 2);
       }
-      alpha = 1.0/(d - beta/alpha);
+      alpha /= (d*alpha - beta);
       stormUtils::Add(pArr, rArr, pArr, beta);
     }
 

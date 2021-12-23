@@ -249,8 +249,8 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // Initialize the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
   // ----------------------
-  InitBidiagonalization(
-    sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
+  stormGolubKahanSolver<tInArray, tOutArray>::
+    InitBidiagonalization(sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
 
   // ----------------------
   // 𝜑̅ ← 𝛽, 𝜌̅ ← 𝛼.
@@ -274,8 +274,8 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
-  ContinueBidiagonalization(
-    sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
+  stormGolubKahanSolver<tInArray, tOutArray>::
+    ContinueBidiagonalization(sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
 
   // ----------------------
   // Construct and apply rotation:
@@ -285,9 +285,9 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // 𝜑 ← 𝑐𝑠⋅𝜑, 𝜑̅ ← 𝑠𝑛⋅𝜑̅.
   // ----------------------
   rho = std::hypot(rhoBar, beta);
-  cs = rhoBar/rho; sn = beta/rho;
-  theta = sn*alpha; rhoBar = -cs*alpha;
-  phi = cs*phiBar; phiBar = sn*phiBar;
+  cs = rhoBar/rho, sn = beta/rho;
+  theta = sn*alpha, rhoBar = -cs*alpha;
+  phi = cs*phiBar, phiBar = sn*phiBar;
 
   // ----------------------
   // Update 𝒛-solution:
@@ -431,8 +431,8 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // Initialize the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
   // ----------------------
-  InitBidiagonalization(
-    sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
+  stormGolubKahanSolver<tInArray, tOutArray>::
+    InitBidiagonalization(sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
 
   // ----------------------
   // 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
@@ -458,8 +458,8 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
-  ContinueBidiagonalization(
-    sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
+  stormGolubKahanSolver<tInArray, tOutArray>::
+    ContinueBidiagonalization(sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
 
   // ----------------------
   // Construct and apply rotations:
@@ -471,11 +471,11 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // 𝜓 ← 𝑐̅𝑠̅⋅𝜓̅, 𝜓̅ ← -𝑠̅𝑛̅⋅𝜓̅.
   // ----------------------
   rho = std::hypot(alphaBar, beta);
-  cs = alphaBar/rho; sn = beta/rho;
-  theta = sn*alpha; alphaBar = cs*alpha;
-  thetaBar = snBar*rho; rhoBar = std::hypot(csBar*rho, theta);
-  csBar = csBar*rho/rhoBar; snBar = theta/rhoBar;
-  psi = csBar*psiBar; psiBar = -snBar*psiBar;
+  cs = alphaBar/rho, sn = beta/rho;
+  theta = sn*alpha, alphaBar = cs*alpha;
+  thetaBar = snBar*rho, rhoBar = std::hypot(csBar*rho, theta);
+  csBar = csBar*rho/rhoBar, snBar = theta/rhoBar;
+  psi = csBar*psiBar, psiBar = -snBar*psiBar;
 
   // ----------------------
   // Update 𝒛-solution:

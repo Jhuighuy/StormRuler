@@ -44,12 +44,38 @@ public:
 
 class stormArray {
 public:
-  stormMesh_t Mesh;
-  stormArray_t Array;
-  bool Copy = false;
+  stormMesh_t Mesh = nullptr;
+  stormArray_t Array = nullptr;
+  std::shared_ptr<int> RefCounter;
 
+  stormArray() = default;
+  stormArray(stormMesh_t mesh, stormArray_t array): Mesh(mesh), Array(array) {
+    RefCounter = std::make_shared<int>(2);
+  }
+  stormArray(stormArray&& oth): Mesh(oth.Mesh), Array(oth.Array) {
+    RefCounter = std::move(oth.RefCounter);
+    oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
+  }
+  stormArray(const stormArray& oth): Mesh(oth.Mesh), Array(oth.Array) {
+    RefCounter = oth.RefCounter;
+    *RefCounter += 1;
+  }
   ~stormArray() {
-    if (Copy) stormFree(Array);
+    if (RefCounter) {
+      *RefCounter -= 1;
+      if (*RefCounter == 0) stormFree(Array);
+    }
+  }
+
+  stormArray& operator=(stormArray&& oth) {
+    this->~stormArray();
+    new(this) stormArray(std::forward<stormArray>(oth));
+    return *this;
+  }
+  stormArray& operator=(const stormArray& oth) {
+    this->~stormArray();
+    new(this) stormArray(oth);
+    return *this;
   }
 };
 
@@ -92,7 +118,6 @@ namespace stormUtils {
   void AllocLike(const stormArray& like, stormArray& z) {
     z.Mesh = like.Mesh;
     z.Array = stormAllocLike(like.Array);
-    z.Copy = true;
   }
   template<class... tArray>
   void AllocLike(const stormArray& like, stormArray& z, tArray&... zz) {

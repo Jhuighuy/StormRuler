@@ -31,6 +31,9 @@
 #include <stormSolvers/stormSolver.hxx>
 #include <stormSolvers/stormSolverCg.hxx>
 #include <stormSolvers/stormSolverMinres.hxx>
+#include <stormSolvers/stormSolverBiCgStab.hxx>
+#include <stormSolvers/stormSolverGmres.hxx>
+#include <stormSolvers/stormSolverTfqmr.hxx>
 #include <stormSolvers/stormSolverLsqr.hxx>
 
 #include <stormSolvers/stormSolverNewton.hxx>
@@ -38,8 +41,8 @@
 /// Krylov-subspace solver types.
 /// @{
 #define STORM_KSP_CG       "CG"
-#define STORM_KSP_BiCGStab "BiCGStab"
 #define STORM_KSP_MINRES   "MINRES"
+#define STORM_KSP_BiCGStab "BiCGStab"
 #define STORM_KSP_GMRES    "GMRES"
 #define STORM_KSP_TFQMR    "TFQMR"
 #define STORM_KSP_LSQR     "LSQR"

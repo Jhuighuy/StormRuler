@@ -1,4 +1,4 @@
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
 /// Permission is hereby granted, free of charge, to any person
@@ -21,18 +21,15 @@
 /// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-#ifndef _STORM_OPERATOR_
-#define _STORM_OPERATOR_
-
-#include <StormRuler_API.h>
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+#ifndef _STORM_OPERATOR_HXX_
+#define _STORM_OPERATOR_HXX_
 
 #include <memory>
 #include <stdexcept>
 #include <functional>
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+#include <StormRuler_API.h>
 
 #define _STORM_NOT_IMPLEMENTED_() do { \
   std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
@@ -126,9 +123,6 @@ namespace stormUtils {
   }
 }
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -154,9 +148,6 @@ public:
   }
 
 }; // class stormOperator<...>
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
@@ -205,7 +196,7 @@ private:
 }; // class stormFunctionalOperator<...>
 
 /// ----------------------------------------------------------------- ///
-/// Make the functional operator.
+/// @brief Make the functional operator.
 /// ----------------------------------------------------------------- ///
 /** @{ */
 template<class tInArray, class tOutArray = tInArray, 
@@ -231,7 +222,7 @@ std::unique_ptr<stormOperator<tInArray, tOutArray>>
 /** @} */
 
 /// ----------------------------------------------------------------- ///
-/// Make the self-adjoint functional operator.
+/// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
 template<class tArray, class tMatVecFunc>
 std::unique_ptr<stormOperator<tArray>> 
@@ -242,7 +233,4 @@ std::unique_ptr<stormOperator<tArray>>
 
 } // stormMakeSymmetricOperator<...>
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
-#endif // ifndef _STORM_OPERATOR_
+#endif // ifndef _STORM_OPERATOR_HXX_

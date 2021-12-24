@@ -1,4 +1,4 @@
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
 /// Permission is hereby granted, free of charge, to any person
@@ -21,16 +21,13 @@
 /// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 #ifndef _STORM_SOLVER_MINRES_HXX_
 #define _STORM_SOLVER_MINRES_HXX_
 
-#include <stormSolvers/stormSolver.hxx>
-
 #include <cmath>
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+#include <stormSolvers/stormSolver.hxx>
 
 namespace stormUtils {
 
@@ -54,9 +51,6 @@ namespace stormUtils {
   } // SymOrtho
 
 } // namespace stormUtils
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint indefinite operator equation \
@@ -206,9 +200,6 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
 
 } // stormMinresSolver<...>::Iterate
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
 ///   the monstrous Generalized Minimal Residual method (@c GMRES).
@@ -289,9 +280,6 @@ void stormGmresSolver<tArray>::Finalize(tArray& xArr,
 
 } // stormGmresSolver<...>::Finalize
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
 ///   the Transpose-Free Quasi-Minimal Residual method (@c TFQMR).
@@ -351,8 +339,5 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   _STORM_NOT_IMPLEMENTED_();
 
 } // stormTfqmrSolver<...>::Iterate
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 #endif // ifndef _STORM_SOLVER_MINRES_HXX_

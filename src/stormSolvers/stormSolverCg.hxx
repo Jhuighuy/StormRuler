@@ -1,4 +1,4 @@
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
 /// Permission is hereby granted, free of charge, to any person
@@ -21,27 +21,24 @@
 /// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 #ifndef _STORM_SOLVER_CG_HXX_
 #define _STORM_SOLVER_CG_HXX_
 
-#include <stormSolvers/stormSolver.hxx>
-
 #include <cmath>
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+#include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
 ///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the @c CG \
 ///   (Conjugate Gradients).
 ///
-/// @c CG may be applied to the consistent singular problems,
-/// it converges towards..
-///
 /// Preconditioned residual norm, square root of <𝒓⋅𝒛>, \
 ///   where 𝒓 = 𝒃 - 𝓐𝒙 and 𝒛 = [𝓟]𝒓, is reported.
+///
+/// @c CG may be applied to the consistent singular problems,
+/// it converges towards..
 ///
 /// References:
 /// @verbatim
@@ -162,9 +159,6 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   return std::sqrt(gamma);
 
 } // stormCgSolver<...>::Iterate
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
@@ -329,8 +323,5 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   return delta;
 
 } // stormBiCgStabSolver<...>::Iterate
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 #endif // ifndef _STORM_SOLVER_CG_HXX_

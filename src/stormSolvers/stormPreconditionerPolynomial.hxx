@@ -1,4 +1,4 @@
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
 /// Permission is hereby granted, free of charge, to any person
@@ -21,17 +21,14 @@
 /// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 #ifndef _STORM_PRECONDITIONER_POLYNOMIAL_
 #define _STORM_PRECONDITIONER_POLYNOMIAL_
 
-#include <StormRuler_API.h>
-#include <stormSolvers/stormPreconditioner.hxx>
-
 #include <cmath>
 
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+#include <StormRuler_API.h>
+#include <stormSolvers/stormPreconditioner.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract polynomial preconditioner.
@@ -41,9 +38,6 @@
 template<class tArray>
 class stormPolynomialPreconditioner : public stormPreconditioner<tArray> {
 }; // class stormPolynomialPreconditioner<...>
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Chebyshev polynomial preconditioner.
@@ -132,8 +126,5 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
   }
 
 } // stormChebyshevPreconditioner<...>::MatVec
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 #endif // ifndef _STORM_PRECONDITIONER_POLYNOMIAL_

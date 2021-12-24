@@ -1,4 +1,4 @@
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
 /// Permission is hereby granted, free of charge, to any person
@@ -21,20 +21,19 @@
 /// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 #ifndef _STORM_SOLVER_FACTORY_HXX_
 #define _STORM_SOLVER_FACTORY_HXX_
+
+#include <cstring>
+#include <stdexcept>
 
 #include <stormSolvers/stormSolver.hxx>
 #include <stormSolvers/stormSolverCg.hxx>
 #include <stormSolvers/stormSolverMinres.hxx>
 #include <stormSolvers/stormSolverLsqr.hxx>
 
-#include <cstring>
-#include <stdexcept>
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
+#include <stormSolvers/stormSolverNewton.hxx>
 
 /// Krylov-subspace solver types.
 /// @{
@@ -47,7 +46,7 @@
 #define STORM_KSP_LSMR     "LSMR"
 /// @}
 
-#define _STORM_MAKE_ITERATIVE_SOLVER_(solverType) \
+#define _STORM_MAKE_KSP_SOLVER_(solverType) \
   if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
     \
     return std::make_unique<stormCgSolver<tArray>>(); \
@@ -78,7 +77,7 @@
     \
   }
 
-#define _STORM_MAKE_RECT_ITERATIVE_SOLVER_(solverType) \
+#define _STORM_MAKE_RECT_KSP_SOLVER_(solverType) \
   if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
     return std::make_unique<stormLsqrSolver<tInArray, tOutArray>>(); \
@@ -97,7 +96,7 @@ template<class tArray>
 std::unique_ptr<stormIterativeSolver<tArray>>
     stormMakeIterativeSolver(stormString_t solverType) {
 
-  _STORM_MAKE_ITERATIVE_SOLVER_(solverType);
+  _STORM_MAKE_KSP_SOLVER_(solverType);
 
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
@@ -110,14 +109,11 @@ std::unique_ptr<stormSolver<tInArray, tOutArray>>
     return stormMakeIterativeSolver<tInArray>(solverType);
   }
 
-  _STORM_MAKE_RECT_ITERATIVE_SOLVER_(solverType);
+  _STORM_MAKE_RECT_KSP_SOLVER_(solverType);
 
   throw std::invalid_argument("Invalid iterative rectangular solver type specified.");
 
 } // stormMakeSolver<...>
 /** @} */
-
-/// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ///
-/// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ///
 
 #endif // ifndef _STORM_SOLVER_FACTORY_HXX_

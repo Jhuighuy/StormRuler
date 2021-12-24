@@ -176,17 +176,17 @@ private:
   stormReal_t Init(tInArray& xArr,
                    const tOutArray& bArr,
                    const stormOperator<tInArray, tOutArray>& linOp,
-                   const stormPreconditioner<tInArray>* preOp) override final;
+                   const stormPreconditioner<tInArray>* preOp) override;
 
   stormReal_t Iterate(tInArray& xArr,
                       const tOutArray& bArr,
                       const stormOperator<tInArray, tOutArray>& linOp,
-                      const stormPreconditioner<tInArray>* preOp) override final;
+                      const stormPreconditioner<tInArray>* preOp) override;
 
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,
-                const stormPreconditioner<tInArray>* preOp) override final;
+                const stormPreconditioner<tInArray>* preOp) override;
 
 }; // class stormLsqrSolver<...>
 
@@ -334,17 +334,17 @@ private:
   stormReal_t Init(tInArray& xArr,
                    const tOutArray& bArr,
                    const stormOperator<tInArray, tOutArray>& linOp,
-                   const stormPreconditioner<tInArray>* preOp) override final;
+                   const stormPreconditioner<tInArray>* preOp) override;
 
   stormReal_t Iterate(tInArray& xArr,
                       const tOutArray& bArr,
                       const stormOperator<tInArray, tOutArray>& linOp,
-                      const stormPreconditioner<tInArray>* preOp) override final;
+                      const stormPreconditioner<tInArray>* preOp) override;
 
   void Finalize(tInArray& xArr,
                 const tOutArray& bArr,
                 const stormOperator<tInArray, tOutArray>& linOp,
-                const stormPreconditioner<tInArray>* preOp) override final;
+                const stormPreconditioner<tInArray>* preOp) override;
 
 }; // class stormLsmrSolver<...>
 

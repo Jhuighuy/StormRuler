@@ -57,8 +57,8 @@ public:
 template<class tInArray, class tOutArray = tInArray>
 class stormIterativeSolver : public stormSolver<tInArray, tOutArray> {
 public:
-  stormSize_t NumIterations = 0;
-  stormSize_t MaxNumIterations = 2000;
+  stormSize_t Iteration = 0;
+  stormSize_t NumIterations = 2000;
   stormReal_t AbsoluteError = 0.0, RelativeError = 0.0;
   stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
 
@@ -132,7 +132,7 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   }
   const stormReal_t initialError =
     (AbsoluteError = Init(xArr, bArr, anyOp, PreOp.get()));
-  std::cout << "\t1 " << initialError << std::endl;
+  std::cout << "\t0 " << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
     Finalize(xArr, bArr, anyOp, PreOp.get());
     return true;
@@ -141,26 +141,136 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // ----------------------
   // Iterate the solver:
   // ----------------------
-  for (NumIterations = 1; NumIterations <= MaxNumIterations; ++NumIterations) {
+  for (Iteration = 0; Iteration < NumIterations; ++Iteration) {
     AbsoluteError = Iterate(xArr, bArr, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
-    std::cout << "\t" << NumIterations << " "
+    std::cout << "\t" << (Iteration + 1) << " "
       << AbsoluteError << " " << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
       Finalize(xArr, bArr, anyOp, PreOp.get());
+      std::cout << "----------------------" << std::endl;
       return true;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
       Finalize(xArr, bArr, anyOp, PreOp.get());
+      std::cout << "----------------------" << std::endl;
       return true;
     }
   }
 
   Finalize(xArr, bArr, anyOp, PreOp.get());
+  std::cout << "----------------------" << std::endl;
   return false;
 
 } // stormIterativeSolver<...>::Solve
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Abstract restartable iterative solver.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tInArray, class tOutArray = tInArray>
+class stormRestartableSolver : public stormIterativeSolver<tInArray, tOutArray> {
+public:
+  stormSize_t NumRestarts;
+  stormSize_t NumIterationsBeforeRestart = 30;
+
+protected:
+
+  /// @brief Preinitialize the iterative solver \
+  ///   (primarily allocate the intermediate data structures).
+  /// 
+  /// This function is used invoked only once, \
+  ///   in the initialization phase.
+  /// 
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param hasPreOp True if the preconditioned solver is used. 
+  virtual void PreInit(tInArray& xArr,
+                       const tOutArray& bArr, 
+                       bool hasPreOp) = 0;
+
+  /// @brief Reinitialize the iterative solver after the restart.
+  ///
+  /// This function is invoked in the initialization phase \
+  ///   and after the each restart.
+  ///
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param anyOp Equation operator, 𝓐(𝒙).
+  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  ///
+  /// @returns Residual norm-like value.
+  virtual stormReal_t ReInit(tInArray& xArr,
+                             const tOutArray& bArr,
+                             const stormOperator<tInArray, tOutArray>& anyOp,
+                             const stormPreconditioner<tInArray>* preOp) = 0;
+
+  /// @brief Iterate the solver between the restarts.
+  ///
+  /// @param k Current iteration number between the restarts.
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param anyOp Equation operator, 𝓐(𝒙).
+  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  ///
+  /// @returns Residual norm-like value.
+  virtual stormReal_t ReIterate(stormSize_t k,
+                                tInArray& xArr,
+                                const tOutArray& bArr,
+                                const stormOperator<tInArray, tOutArray>& anyOp,
+                                const stormPreconditioner<tInArray>* preOp) = 0;
+
+  /// @brief Finalize the iterations before the restart.
+  ///
+  /// This function is called in order to finalize \
+  ///   the intermediate computation results before the restart happens \
+  ///   or some stopping criterion is met.
+  ///
+  /// @param k Last iteration number.
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param anyOp Equation operator, 𝓐(𝒙).
+  /// @param preOp Preconditioner operator, 𝓟(𝒙).
+  virtual void ReFinalize(stormSize_t k,
+                          tInArray& xArr,
+                          const tOutArray& bArr,
+                          const stormOperator<tInArray, tOutArray>& anyOp,
+                          const stormPreconditioner<tInArray>* preOp) {}
+
+private:
+
+  stormReal_t Init(tInArray& xArr,
+                   const tOutArray& bArr,
+                   const stormOperator<tInArray, tOutArray>& anyOp,
+                   const stormPreconditioner<tInArray>* preOp) override final {
+    NumRestarts = 0;
+    PreInit(xArr, bArr, preOp != nullptr);
+    return ReInit(xArr, bArr, anyOp, preOp);
+  }
+
+  stormReal_t Iterate(tInArray& xArr,
+                      const tOutArray& bArr,
+                      const stormOperator<tInArray, tOutArray>& anyOp,
+                      const stormPreconditioner<tInArray>* preOp) override final {
+    const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
+    const stormReal_t residual = ReIterate(k, xArr, bArr, anyOp, preOp);
+    if (k < NumIterationsBeforeRestart) {
+      return residual;
+    }
+    NumRestarts += 1;
+    ReFinalize(k, xArr, bArr, anyOp, preOp);
+    return ReInit(xArr, bArr, anyOp, preOp);
+  }
+
+  void Finalize(tInArray& xArr,
+                const tOutArray& bArr,
+                const stormOperator<tInArray, tOutArray>& anyOp,
+                const stormPreconditioner<tInArray>* preOp) override final {
+    const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
+    ReFinalize(k, xArr, bArr, anyOp, preOp);
+  }
+
+}; // class stormRestartableSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
@@ -209,7 +319,7 @@ stormReal_t stormPowerIterations<tArray>::
   stormUtils::RandFill(xArr);
   stormUtils::Scale(xArr, xArr, 1.0/stormUtils::Norm2(xArr));
 
-  for (stormSize_t iteration = 1; iteration <= maxIterations; ++iteration) {
+  for (stormSize_t iteration = 0; iteration < maxIterations; ++iteration) {
 
     // ----------------------
     // Continue the Power Iterations:

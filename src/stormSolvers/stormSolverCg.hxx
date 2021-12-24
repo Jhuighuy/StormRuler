@@ -56,12 +56,12 @@ private:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormCgSolver<...>
 
@@ -164,7 +164,7 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
 /// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
 ///   the good old @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
-/// Residual norm is, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+/// Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
 ///
 /// @c BiCGStab may be applied to the consistent singular problems,
 /// it converges towards..
@@ -186,12 +186,12 @@ private:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormBiCgStabSolver<...>
 

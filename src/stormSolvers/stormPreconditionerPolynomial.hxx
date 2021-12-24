@@ -47,20 +47,20 @@ class stormPolynomialPreconditioner : public stormPreconditioner<tArray> {
 template<class tArray>
 class stormChebyshevPreconditioner final : public stormPolynomialPreconditioner<tArray> {
 private:
-  stormSize_t MaxIterations = 10;
+  stormSize_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
   stormReal_t lambdaMin = 1.0, lambdaMax = 800.0;
   const stormOperator<tArray>* linOp;
 
-  void Build(const stormOperator<tArray>& linOp) override final {
+  void Build(const stormOperator<tArray>& linOp) override {
     this->linOp = &linOp;
   }
 
   void MatVec(tArray& yArr,
-              const tArray& xArr) const override final;
+              const tArray& xArr) const override;
 
   void ConjMatVec(tArray& xArr,
-                  const tArray& yArr) const override final {
+                  const tArray& yArr) const override {
     MatVec(xArr, yArr);
   }
 
@@ -86,7 +86,8 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
   const stormReal_t c = 0.5*(lambdaMax - lambdaMin);
   const stormReal_t d = 0.5*(lambdaMax + lambdaMin);
 
-  for (stormSize_t iteration = 1; iteration <= MaxIterations; ++iteration) {
+  stormReal_t alpha;
+  for (stormSize_t iteration = 0; iteration < NumIterations; ++iteration) {
     
     // ----------------------
     // Continue the Chebyshev iterations:
@@ -100,7 +101,6 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     //   𝒑 ← 𝒓 + 𝛽𝒑.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    stormReal_t alpha;
     if (iteration == 1) {
       alpha = 1.0/d;
       stormUtils::Set(pArr, rArr);

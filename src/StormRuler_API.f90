@@ -44,7 +44,6 @@ use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_ConvParams, only: tConvParams
 use StormRuler_Solvers, only: LinSolve
-use StormRuler_Solvers_Newton, only: Solve_JFNK
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet

@@ -75,6 +75,8 @@ private:
 /// @brief Solve a nonlinear operator equation: 𝓐(𝒙) = 𝒃, using the \
 ///   first order @c JFNK (Jacobian free-Newton-Krylov) method.
 ///
+/// Residual norm is, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+///
 /// For the Newton iterations, computing of the Jacobian-vector
 /// products 𝒛 = 𝓙(𝒙)𝒚, where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 is required.
 /// Consider the expansion:
@@ -93,8 +95,6 @@ private:
 ///
 /// where 𝜀ₘ is the machine roundoff, ‖𝒚‖⁺ is the pseudo-inverse to ‖𝒚‖.
 ///
-/// Residual norm is, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
-///
 /// References:
 /// @verbatim
 /// [1] Liu, Wei, Lilun Zhang, Ying Zhong, Yongxian Wang, 
@@ -111,12 +111,12 @@ private:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormJfnkSolver<...>
 
@@ -161,6 +161,7 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
     sqrtOfEpsilon*std::sqrt(1.0 + stormUtils::Norm2(xArr));
   stormUtils::Set(tArr, rArr);
   {
+    /// @todo Refactor me!
     /// @todo equation parameters!
     //call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
     //call LinSolve(mesh, 'GMRES', '', tArr, rArr, ApproxJacobianMatVecWithX, jacConvParams)
@@ -175,14 +176,14 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
         // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
         // 𝒔 ← 𝒙 + 𝛿⋅𝒚,
         // 𝒛 ← 𝓐(𝒔),
-        // 𝛿 ← 𝛿⁺,
-        // 𝒛 ← 𝛿⋅𝒛 - 𝛿⋅𝒘.
+        // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
-        stormReal_t delta = stormUtils::SafeDivide(mu, stormUtils::Norm2(yArr));
+        const stormReal_t delta = 
+          stormUtils::SafeDivide(mu, stormUtils::Norm2(yArr));
         stormUtils::Add(sArr, xArr, yArr, delta);
         linOp.MatVec(zArr, sArr);
-        delta = 1.0/delta; //stormUtils::SafeDivide(1.0, delta);
-        stormUtils::Sub(zArr, zArr, wArr, delta, delta);
+        const stormReal_t deltaInverse = stormUtils::SafeDivide(1.0, delta);
+        stormUtils::Sub(zArr, zArr, wArr, deltaInverse, deltaInverse);
 
       });
     solver->Solve(tArr, rArr, *op);

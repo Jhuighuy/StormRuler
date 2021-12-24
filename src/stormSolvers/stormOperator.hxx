@@ -181,12 +181,12 @@ public:
 
 private:
   void MatVec(tOutArray& yArr,
-              const tInArray& xArr) const override final {
+              const tInArray& xArr) const override {
     MatVecPtr(yArr, xArr);
   }
 
   void ConjMatVec(tInArray& xArr,
-                  const tOutArray& yArr) const override final {
+                  const tOutArray& yArr) const override {
     if (!ConjMatVecPtr) {
       throw std::runtime_error(
         "`stormFunctionalOperator<...>::ConjMatVec` conjugate product function was not set.");

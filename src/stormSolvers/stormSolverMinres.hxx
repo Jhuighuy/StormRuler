@@ -87,12 +87,12 @@ private:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormMinresSolver<...>
 
@@ -223,36 +223,41 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
-class stormGmresSolver final : public stormIterativeSolver<tArray> {
+class stormGmresSolver final : public stormRestartableSolver<tArray> {
 private:
 
-  stormReal_t Init(tArray& xArr,
-                   const tArray& bArr,
-                   const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+  void PreInit(tArray& xArr,
+               const tArray& bArr, 
+               bool hasPreOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      const tArray& bArr,
-                      const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+  stormReal_t ReInit(tArray& xArr,
+                     const tArray& bArr,
+                     const stormOperator<tArray>& linOp,
+                     const stormPreconditioner<tArray>* preOp) override;
 
-  void Finalize(tArray& xArr,
-                const tArray& bArr,
-                const stormOperator<tArray>& linOp,
-                const stormPreconditioner<tArray>* preOp) override final;
+  stormReal_t ReIterate(stormSize_t k,
+                        tArray& xArr,
+                        const tArray& bArr,
+                        const stormOperator<tArray>& linOp,
+                        const stormPreconditioner<tArray>* preOp) override;
+
+  void ReFinalize(stormSize_t k,
+                  tArray& xArr,
+                  const tArray& bArr,
+                  const stormOperator<tArray>& linOp,
+                  const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormGmresSolver<...>
 
 template<class tArray>
-stormReal_t stormGmresSolver<tArray>::Init(tArray& xArr,
-                                           const tArray& bArr,
-                                           const stormOperator<tArray>& linOp,
-                                           const stormPreconditioner<tArray>* preOp) {
+void stormGmresSolver<tArray>::PreInit(tArray& xArr,
+                                       const tArray& bArr, 
+                                       bool hasPreOp) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
   //stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, sArr, tArr, vArr);
-  if (preOp != nullptr) {
+  if (hasPreOp) {
     //stormUtils::AllocLike(xArr, wArr, yArr, zArr);
   }
 
@@ -261,20 +266,32 @@ stormReal_t stormGmresSolver<tArray>::Init(tArray& xArr,
 } // stormGmresSolver<...>::Init
 
 template<class tArray>
-stormReal_t stormGmresSolver<tArray>::Iterate(tArray& xArr,
-                                              const tArray& bArr,
-                                              const stormOperator<tArray>& linOp,
-                                              const stormPreconditioner<tArray>* preOp) {
+stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
+                                             const tArray& bArr,
+                                             const stormOperator<tArray>& linOp,
+                                             const stormPreconditioner<tArray>* preOp) {
+
+  _STORM_NOT_IMPLEMENTED_();
+
+} // stormGmresSolver<...>::ReInit
+
+template<class tArray>
+stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
+                                                tArray& xArr,
+                                                const tArray& bArr,
+                                                const stormOperator<tArray>& linOp,
+                                                const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
 } // stormGmresSolver<...>::Iterate
 
 template<class tArray>
-void stormGmresSolver<tArray>::Finalize(tArray& xArr,
-                                        const tArray& bArr,
-                                        const stormOperator<tArray>& linOp,
-                                        const stormPreconditioner<tArray>* preOp) {
+void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
+                                          tArray& xArr,
+                                          const tArray& bArr,
+                                          const stormOperator<tArray>& linOp,
+                                          const stormPreconditioner<tArray>* preOp) {
 
   _STORM_NOT_IMPLEMENTED_();
 
@@ -304,12 +321,12 @@ private:
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
                    const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override final;
+                   const stormPreconditioner<tArray>* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
                       const tArray& bArr,
                       const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override final;
+                      const stormPreconditioner<tArray>* preOp) override;
 
 }; // class stormTfqmrSolver<...>
 

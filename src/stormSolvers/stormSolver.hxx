@@ -56,7 +56,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tInArray, class tOutArray = tInArray>
 class stormIterativeSolver : public stormSolver<tInArray, tOutArray> {
-private:
+public:
   stormSize_t NumIterations = 0;
   stormSize_t MaxNumIterations = 2000;
   stormReal_t AbsoluteError = 0.0, RelativeError = 0.0;

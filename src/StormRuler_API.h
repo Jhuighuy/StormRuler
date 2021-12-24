@@ -286,32 +286,6 @@ STORM_INL void stormLinSolve(stormMesh_t mesh,
 /// @}
 #endif
 
-/// @{
-#define STORM_NEWTON "Newton"
-#define STORM_JFNK   "JFNK"
-/// @}
-
-STORM_API void stormNonlinSolve(stormMesh_t mesh,
-                                stormString_t method,
-                                stormArray_t x,
-                                stormArray_t b,
-                                stormMatVecFunc_t matVec,
-                                _STORM_DEFAULT_(stormOpaque_t env, STORM_NULL));
-
-#if STORM_CXX14_
-template<typename stormMatVecFuncT_t>
-STORM_INL void stormNonlinSolve(stormMesh_t mesh,
-                                stormString_t method,
-                                stormArray_t x,
-                                stormArray_t b,
-                                stormMatVecFuncT_t matVec) {
-  stormNonlinSolve(mesh, method, x, b,
-    [](stormMesh_t mesh, stormArray_t Ax, stormArray_t x, stormOpaque_t env) {
-      (*static_cast<stormMatVecFuncT_t*>(env))(mesh, Ax, x);
-    }, &matVec);
-} // stormNonlinSolve
-#endif
-
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 

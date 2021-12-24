@@ -46,6 +46,11 @@
 #define STORM_KSP_LSMR     "LSMR"
 /// @}
 
+/// @{
+#define STORM_NEWTON "Newton"
+#define STORM_JFNK   "JFNK"
+/// @}
+
 #define _STORM_MAKE_KSP_SOLVER_(solverType) \
   if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
     \

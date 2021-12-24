@@ -202,7 +202,7 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
-///   the monstrous Generalized Minimal Residual method (@c GMRES).
+///   the monstrous @c GMRES (Generalized Minimal Residual) method.
 ///
 /// The classical @c GMRES(𝑚) implementation with restarts
 /// after 𝑚 iterations is used.
@@ -282,7 +282,7 @@ void stormGmresSolver<tArray>::Finalize(tArray& xArr,
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
-///   the Transpose-Free Quasi-Minimal Residual method (@c TFQMR).
+///   the @c TFQMR (Transpose-Free Quasi-Minimal Residual) method.
 ///
 /// Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
 ///

@@ -40,6 +40,24 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
   stormArray xx = {mesh, x}, bb = {mesh, b};
+  auto symOp = stormMakeSymmetricOperator<stormArray>(
+    [&](stormArray& yy, const stormArray& xx) {
+      matVec(yy.Mesh, yy.Array, xx.Array);
+    });
+
+  auto solver = stormMakeIterativeSolver<stormArray>(method);
+  solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
+  solver->Solve(xx, bb, *symOp);
+
+} // stormLinSolve2<...>
+
+template<typename stormMatVecFuncT_t>
+STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
+                                 stormString_t method,
+                                 stormArray_t x,
+                                 stormArray_t b,
+                                 stormMatVecFuncT_t matVec) {
+  stormArray xx = {mesh, x}, bb = {mesh, b};
   std::unique_ptr<stormOperator<stormArray>> op =
     stormMakeSymmetricOperator<stormArray>(
       [&](stormArray& yy, const stormArray& xx) {
@@ -47,11 +65,12 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
       });
 
   std::unique_ptr<stormIterativeSolver<stormArray>> solver = 
-    stormMakeIterativeSolver<stormArray>(method);
-  solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
+    std::make_unique<stormJfnkSolver<stormArray>>();
+  solver->AbsoluteTolerance = 1.0e-4;
+  solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);
 
-} // stormLinSolve
+} // stormNonLinSolve2<...>
 
 #include <math.h>
 #include <stdio.h>
@@ -289,7 +308,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, rhs, rhs, v);
   
   stormSet(mesh, v_hat, v);
-  stormNonlinSolve(mesh, STORM_JFNK, v_hat, v, 
+  stormNonlinSolve2(mesh, STORM_JFNK, v_hat, v, 
     [&](stormMesh_t mesh, stormArray_t Av, stormArray_t v) {
       SetBCs_v(mesh, v);
 
@@ -328,7 +347,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-  abort();
+  //abort();
 
   stormFree(rhs);
 

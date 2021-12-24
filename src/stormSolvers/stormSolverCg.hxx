@@ -32,7 +32,7 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
 ///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the @c CG \
-///   (Conjugate Gradients).
+///   (Conjugate Gradients) method.
 ///
 /// Preconditioned residual norm, square root of <𝒓⋅𝒛>, \
 ///   where 𝒓 = 𝒃 - 𝓐𝒙 and 𝒛 = [𝓟]𝒓, is reported.
@@ -162,7 +162,7 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
-///   the good old @c BiCGStab (Biconjugate Gradients Stabilized).
+///   the good old @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
 /// Residual norm is, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
 ///

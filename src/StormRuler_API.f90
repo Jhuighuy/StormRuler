@@ -724,35 +724,6 @@ contains
   @WrapMatVecFunc cConjMatVec ConjMatVec conjEnv
 end subroutine stormLinSolve
 
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormNonlinSolve(meshPtr, methodPtr, &
-    & xPtr, bPtr, cMatVecPtr, env) bind(C, name='stormNonlinSolve')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, bPtr
-  character(c_char), intent(in) :: methodPtr(*)
-  type(c_funptr), intent(in), value :: cMatVecPtr
-  type(*), intent(in) :: env
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, bArr
-  procedure(ctMatVecFunc), pointer :: cMatVec
-  type(tConvParams) :: params
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
-
-  call c_f_procpointer(cptr=cMatVecPtr, fptr=cMatVec)
-
-  !! TODO: convergence parameters.
-  !! TODO: select method.
-  call params%Init(1.0D-4, 1.0D-4, 100, 'JFNK')
-  call Solve_JFNK(mesh, MatVec, xArr, bArr, params)
-
-contains
-  @WrapMatVecFunc cMatVec MatVec env
-end subroutine stormNonlinSolve
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 

@@ -28,10 +28,8 @@
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
-///   the good old @c BiCGStab (Biconjugate Gradients Stabilized) method.
-///
-/// Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+/// @brief Solve a linear operator equation with the good old \
+///   @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
 /// @c BiCGStab may be applied to the consistent singular problems,
 /// it converges towards..
@@ -48,7 +46,7 @@ template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t alpha, beta, rho, omega;
-  tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, wArr, yArr, zArr;
+  tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, yArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    const tArray& bArr,
@@ -73,17 +71,17 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, sArr, tArr, vArr);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, wArr, yArr, zArr);
+    stormUtils::AllocLike(xArr, yArr, zArr);
   }
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝛿 ← ‖𝒓‖,
+  // 𝜑 ← ‖𝒓‖,
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormUtils::Sub(rArr, bArr, rArr);
-  const stormReal_t delta = stormUtils::Norm2(rArr);
+  const stormReal_t phi = stormUtils::Norm2(rArr);
 
   // ----------------------
   // 𝒓̃ ← 𝒓,
@@ -95,7 +93,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   stormUtils::Fill(vArr, 0.0);
   rho = 1.0, alpha = 1.0, omega = 1.0;
 
-  return delta;
+  return phi;
 
 } // stormBiCgStabSolver<...>::Init
 
@@ -155,26 +153,21 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution:
+  // 𝜔 ← <𝒕⋅𝒔>/<𝒕⋅𝒕>,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒘 ← 𝓟𝒕,
-  //   𝜔 ← <𝒘⋅𝒛>/<𝒘⋅𝒘>,
   //   𝒙 ← 𝒙 + 𝜔𝒛,
   //   𝒙 ← 𝒙 + 𝛼𝒚,
   // 𝗲𝗹𝘀𝗲:
-  //   𝜔 ← <𝒕⋅𝒔>/<𝒕⋅𝒕>,
   //   𝒙 ← 𝒙 + 𝜔𝒔,
   //   𝒙 ← 𝒙 + 𝛼𝒑,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
+  omega = stormUtils::SafeDivide(
+    stormUtils::Dot(tArr, sArr), stormUtils::Dot(tArr, tArr));
   if (preOp != nullptr) {
-    preOp->MatVec(wArr, tArr);
-    omega = stormUtils::SafeDivide(
-      stormUtils::Dot(wArr, zArr), stormUtils::Dot(wArr, wArr));
     stormUtils::Add(xArr, xArr, zArr, omega);
     stormUtils::Add(xArr, xArr, yArr, alpha);
   } else {
-    omega = stormUtils::SafeDivide(
-      stormUtils::Dot(tArr, sArr), stormUtils::Dot(tArr, tArr));
     stormUtils::Add(xArr, xArr, sArr, omega);
     stormUtils::Add(xArr, xArr, pArr, alpha);
   }
@@ -182,12 +175,12 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Update residual:
   // 𝒓 ← 𝒔 - 𝜔𝒕,
-  // 𝛿 ← ‖𝒓‖.
+  // 𝜑 ← ‖𝒓‖.
   // ----------------------
   stormUtils::Sub(rArr, sArr, tArr, omega);
-  const stormReal_t delta = stormUtils::Norm2(rArr);
+  const stormReal_t phi = stormUtils::Norm2(rArr);
 
-  return delta;
+  return phi;
 
 } // stormBiCgStabSolver<...>::Iterate
 

@@ -32,13 +32,13 @@
 #include <stormSolvers/stormPreconditioner.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Abstract operator equation 𝓐(𝒙) = 𝒃 solver.
+/// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tInArray, class tOutArray = tInArray>
 class stormSolver : public stormBaseObject {
 public:
 
-  /// @brief Solve the operator equation.
+  /// @brief Solve the operator equation 𝓐(𝒙) = 𝒃.
   ///
   /// @param xArr Solution (block-)array, 𝒙.
   /// @param bArr Right-hand-side (block-)array, 𝒃.
@@ -52,7 +52,7 @@ public:
 }; // class stormSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Abstract operator equation 𝓟(𝓐(𝒙)) = 𝓟(𝒃) iterative solver.
+/// @brief Abstract operator equation iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tInArray, class tOutArray = tInArray>
 class stormIterativeSolver : public stormSolver<tInArray, tOutArray> {
@@ -65,19 +65,6 @@ public:
 public:
   std::unique_ptr<stormPreconditioner<tInArray>> PreOp = nullptr;
 
-public:
-
-  /// @brief Solve the operator equation.
-  ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
-  /// @param anyOp Equation operator, 𝓐(𝒙).
-  ///
-  /// @returns Status of operation.
-  bool Solve(tInArray& xArr,
-             const tOutArray& bArr,
-             const stormOperator<tInArray, tOutArray>& anyOp) override final;
-
 protected:
 
   /// @brief Initialize the iterative solver.
@@ -87,7 +74,7 @@ protected:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
-  /// @returns Residual norm-like value.
+  /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
   virtual stormReal_t Init(tInArray& xArr,
                            const tOutArray& bArr,
                            const stormOperator<tInArray, tOutArray>& anyOp,
@@ -100,7 +87,7 @@ protected:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
-  /// @returns Residual norm-like value.
+  /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
   virtual stormReal_t Iterate(tInArray& xArr,
                               const tOutArray& bArr,
                               const stormOperator<tInArray, tOutArray>& anyOp,
@@ -116,6 +103,12 @@ protected:
                         const tOutArray& bArr,
                         const stormOperator<tInArray, tOutArray>& anyOp,
                         const stormPreconditioner<tInArray>* preOp) {}
+
+public:
+
+  bool Solve(tInArray& xArr,
+             const tOutArray& bArr,
+             const stormOperator<tInArray, tOutArray>& anyOp) override final;
 
 }; // class stormIterativeSolver<...>
 

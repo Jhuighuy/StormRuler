@@ -37,8 +37,6 @@ logical, parameter :: gCylCoords = .false.
 
 integer(ip), parameter :: gTruncErrorOrder = 1
 
-integer(ip), parameter :: gMaxIterGMRES = 50
-
 integer(ip), parameter :: gMaxIterLU_SGS = 1
 
 real(dp), parameter :: gDiagAdjustValueILU0 = 1.0e-16_dp

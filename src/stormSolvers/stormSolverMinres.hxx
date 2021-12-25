@@ -54,10 +54,7 @@ namespace stormUtils {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint indefinite operator equation \
-///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, [𝓜ᵀ]𝒚 = 𝒙, [𝓜𝓜ᵀ = 𝓟], using the @c MINRES method.
-///
-/// Preconditioned residual norm, square root of <𝒓⋅𝒛>, \
-///   where 𝒓 = 𝒃 - 𝓐𝒙 and 𝒛 = [𝓟]𝒓, is reported.
+///   with the @c MINRES method.
 ///
 /// @c MINRES can be applied to the singular problems, and the self-adjoint
 /// least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚,

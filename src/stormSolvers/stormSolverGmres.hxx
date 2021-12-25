@@ -31,14 +31,9 @@
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
-///   the monstrous @c GMRES (Generalized Minimal Residual) method.
+/// @brief Solve a linear operator equation with the
+///   monstrous @c GMRES (Generalized Minimal Residual) method.
 ///
-/// Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
-///
-/// The classical GMRES(𝑚) implementation with restarts
-/// after 𝑚 iterations is used.
-/// 
 /// @c GMRES may be applied to the singular problems, and the square
 /// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
 /// although convergeance to minimum norm solution is not guaranteed
@@ -55,10 +50,10 @@
 template<class tArray>
 class stormGmresSolver final : public stormRestartableSolver<tArray> {
 private:
-  tArray rArr, zArr;
-  std::vector<tArray> QArr;
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> H;
+  tArray rArr, zArr;
+  std::vector<tArray> QArr;
 
   void PreInit(tArray& xArr,
                const tArray& bArr, 
@@ -252,16 +247,8 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
 } // stormGmresSolver<...>::ReFinalize
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using \
-///   the yet more monstrous @c FGMRES (Flexible Generalized \
-///   Minimal Residual) method.
-///
-/// Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
-///
-/// @c FGMRES is intended to be used with flexible preconditioners.
-///
-/// The classical FGMRES(𝑚) implementation with restarts
-/// after 𝑚 iterations is used.
+/// @brief Solve a linear operator equation with the yet more 
+///   monstrous @c FGMRES (Flexible Generalized Minimal Residual) method.
 ///
 /// @c FGMRES may be applied to the singular problems, and the square
 /// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,

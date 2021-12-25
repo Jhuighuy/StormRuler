@@ -141,21 +141,20 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem \
-///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSQR method.
-///
-/// Residual norm, ‖𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+///   with the @c LSQR method.
 ///
 /// @c LSQR is algebraically equivalent to applying @c CG
 /// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
 ///
-/// The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically,
-/// while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖
-/// is not guaranteed to decrease.
+/// @note The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, \
+///   while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ \
+///   is not guaranteed to decrease. Please make sure that the right \
+///   stopping criterion is set.
 ///
-/// @c LSQR is not recommended in the self-adjoint case,
-/// please consider @c MINRES instead.
+/// @warning Using @c LSQR is not recommended in the \
+///   self-adjoint case, please consider @c MINRES instead.
 ///
 /// References:
 /// @verbatim
@@ -297,22 +296,20 @@ void stormLsqrSolver<tInArray, tOutArray>::
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem \
-///   ‖𝓐[𝓟]𝒚 - 𝒃‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚, using the @c LSMR method.
+///   using the @c LSMR method.
 ///
-/// Normal equation residual norm, ‖(𝓐[𝓟])*𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, \
-///   is reported.
-/// 
 /// @c LSMR is algebraically equivalent to applying @c MINRES
 /// to the normal equations: (𝓐[𝓟])*𝓐[𝓟]𝒚 = (𝓐[𝓟])*𝒃, 𝒙 = [𝓟]𝒚,
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
 ///
-/// The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖
-/// decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖
-/// is not guaranteed to decrease (but decreases on practice).
+/// @note The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ \
+///   decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖
+///   is not guaranteed to decrease (but decreases on practice). \
+///   Please make sure that the right stopping criterion is set.
 ///
-/// Using @c LSMR is not recommended in the self-adjoint case,
-/// please consider @c MINRES instead.
+/// @warning Using @c LSMR is not recommended in the \
+///   self-adjoint case, please consider @c MINRES instead.
 ///
 /// References:
 /// @verbatim

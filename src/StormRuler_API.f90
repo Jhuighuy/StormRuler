@@ -42,9 +42,6 @@ use StormRuler_BLAS, only: Norm_2, Dot, &
   & Integrate, FuncProd, SpFuncProd
 use StormRuler_BLAS, only: tMatVecFunc
 
-use StormRuler_ConvParams, only: tConvParams
-use StormRuler_Solvers, only: LinSolve
-
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &

@@ -31,11 +31,7 @@
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
-///   [𝓜]𝓐[𝓜ᵀ]𝒚 = [𝓜]𝒃, 𝒙 = [𝓜ᵀ]𝒚, [𝓜𝓜ᵀ = 𝓟], using the @c CG \
-///   (Conjugate Gradients) method.
-///
-/// Preconditioned residual norm, square root of <𝒓⋅𝒛>, \
-///   where 𝒓 = 𝒃 - 𝓐𝒙 and 𝒛 = [𝓟]𝒓, is reported.
+///   equation with the @c CG (Conjugate Gradients) method.
 ///
 /// @c CG may be applied to the consistent singular problems,
 /// it converges towards..
@@ -106,7 +102,7 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
     gamma = stormUtils::Dot(rArr, rArr);
   }
 
-  return std::sqrt(gamma);
+  return (preOp != nullptr) ? stormUtils::Norm2(rArr) : std::sqrt(gamma);
 
 } // stormCgSolver<...>::Init
 
@@ -156,7 +152,7 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   stormUtils::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);
   gamma = alpha;
 
-  return std::sqrt(gamma);
+  return (preOp != nullptr) ? stormUtils::Norm2(rArr) : std::sqrt(gamma);
 
 } // stormCgSolver<...>::Iterate
 

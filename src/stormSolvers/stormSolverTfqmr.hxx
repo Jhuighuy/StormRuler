@@ -28,10 +28,8 @@
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation: [𝓟]𝓐𝒙 = [𝓟]𝒃, using
-///   the @c TFQMR (Transpose-Free Quasi-Minimal Residual) method.
-///
-/// Preconditioned residual norm, ‖[𝓟]𝒓‖, where 𝒓 = 𝒃 - 𝓐𝒙, is reported.
+/// @brief Solve a linear operator equation with the
+///   @c TFQMR (Transpose-Free Quasi-Minimal Residual) method.
 ///
 /// References:
 /// @verbatim

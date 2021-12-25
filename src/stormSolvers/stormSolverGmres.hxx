@@ -25,6 +25,7 @@
 #ifndef _STORM_SOLVER_GMRES_HXX_
 #define _STORM_SOLVER_GMRES_HXX_
 
+#include <numeric>
 #include <algorithm>
 
 #include <stormSolvers/stormSolver.hxx>
@@ -54,7 +55,7 @@
 template<class tArray>
 class stormGmresSolver final : public stormRestartableSolver<tArray> {
 private:
-  tArray rArr;
+  tArray rArr, zArr;
   std::vector<tArray> QArr;
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> H;
@@ -99,7 +100,7 @@ void stormGmresSolver<tArray>::PreInit(tArray& xArr,
     stormUtils::AllocLike(xArr, QArr[i]);
   }
   if (hasPreOp) {
-    //stormUtils::AllocLike(xArr, wArr, yArr, zArr);
+    stormUtils::AllocLike(xArr, zArr);
   }
 
 } // stormGmresSolver<...>::Init
@@ -123,7 +124,7 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
   // ----------------------
   // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
   // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
-  // 𝓠₁ ← 𝒓/𝜑. 
+  // 𝓠₀ ← 𝒓/𝜑. 
   // ----------------------
   std::fill(cs.begin(), cs.end(), 0.0);
   std::fill(sn.begin(), sn.end(), 0.0);
@@ -140,19 +141,28 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
                                                 const tArray& bArr,
                                                 const stormOperator<tArray>& linOp,
                                                 const stormPreconditioner<tArray>* preOp) {
-  std::cout << "ReI " << k << std::endl; 
 
   // ----------------------
-  // Arnoldi iteration:
-  // 𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
-  // 𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
+  // Continue the Arnoldi procedure:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝒛 ← 𝓟𝓠ₖ,
+  //   𝓠ₖ₊₁ ← 𝓐𝒛,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
   //   𝓗ᵢₖ ← <𝓠ₖ₊₁⋅𝓠ᵢ>,
   //   𝓠ₖ₊₁ ← 𝓠ₖ₊₁ - 𝓗ᵢₖ𝓠ᵢ,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 
   // 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
   // ----------------------
-  linOp.MatVec(QArr[k + 1], QArr[k]);
+  if (preOp != nullptr) {
+    preOp->MatVec(zArr, QArr[k]);
+    linOp.MatVec(QArr[k + 1], zArr);
+  } else {
+    linOp.MatVec(QArr[k + 1], QArr[k]);
+  }
   for (stormSize_t i = 0; i <= k; ++i) {
     H[i][k] = stormUtils::Dot(QArr[k + 1], QArr[i]);
     stormUtils::Sub(QArr[k + 1], QArr[k + 1], QArr[i], H[i][k]);
@@ -163,7 +173,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // ----------------------
   // Eliminate the last element in 𝓗
   // and and update the rotation matrix:
-  // 𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 - 𝟣 𝗱𝗼:
+  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝜒 ← 𝒄𝒔ᵢ⋅𝓗ᵢₖ + 𝒔𝒏ᵢ⋅𝓗ᵢ₊₁,ₖ,
   //   𝓗ᵢ₊₁,ₖ ← -𝒔𝒏ᵢ⋅𝓗ᵢₖ + 𝒄𝒔ᵢ⋅𝓗ᵢ₊₁,ₖ 
   //   𝓗ᵢₖ ← 𝜒,
@@ -183,7 +193,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   H[k + 1][k] = 0.0;
 
   // ----------------------
-  // Update the residual norm:
+  // Update the 𝜷-solution and residual norm:
   // 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
   // 𝜑 ← |𝜷ₖ₊₁|,
   // ----------------------
@@ -200,27 +210,43 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
                                           const tArray& bArr,
                                           const stormOperator<tArray>& linOp,
                                           const stormPreconditioner<tArray>* preOp) {
-  std::cout << "ReF " << k << std::endl; 
 
   // ----------------------
   // Compute 𝒙-solution:
-  // 𝜷₁:ₖ ← (𝓗₁:ₖ,₁:ₖ)⁻¹𝜷₁:ₖ, 
-  // 𝗳𝗼𝗿 𝑖 = 1, 𝑘 𝗱𝗼:
-  //   𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ.
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // // Since 𝓗₁:ₖ is upper triangular, 
-  // // operations can be combined:
-  // 𝗳𝗼𝗿 𝑖 = 𝑘, 𝟣, -𝟣 𝗱𝗼:
-  //   𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
-  //   𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ.
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝜷ₖ ← 𝜷ₖ/𝓗ₖₖ,
+  //   𝒛 ← 𝜷ₖ𝓠ₖ,
+  //   𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
+  //     𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
+  //     𝒛 ← 𝒛 + 𝜷ᵢ𝓠ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  //   𝒓 ← 𝓟𝒛,
+  //   𝒙 ← 𝒙 + 𝒛.
+  // 𝗲𝗹𝘀𝗲:
+  //   𝗳𝗼𝗿 𝑖 = 𝑘, 𝟢, -𝟣 𝗱𝗼:
+  //     𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
+  //     𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  for (stormPtrDiff_t i = k; i >= 0; --i) {
-    for (stormSize_t j = i + 1; j <= k; ++j) {
-      beta[i] -= H[i][j]*beta[j];
+  if (preOp != nullptr) {
+    beta[k] /= H[k][k];
+    stormUtils::Scale(zArr, QArr[k], beta[k]);
+    for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
+      beta[i] -= std::inner_product(beta.begin() + i + 1, 
+        beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
+      beta[i] /= H[i][i];
+      stormUtils::Add(zArr, zArr, QArr[i], beta[i]);
     }
-    beta[i] /= H[i][i];
-    stormUtils::Add(xArr, xArr, QArr[i], beta[i]);
+    preOp->MatVec(rArr, zArr);
+    stormUtils::Add(xArr, xArr, rArr);
+  } else {
+    for (stormPtrDiff_t i = k; i >= 0; --i) {
+      beta[i] -= std::inner_product(beta.begin() + i + 1, 
+        beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
+      beta[i] /= H[i][i];
+      stormUtils::Add(xArr, xArr, QArr[i], beta[i]);
+    }
   }
 
 } // stormGmresSolver<...>::ReFinalize

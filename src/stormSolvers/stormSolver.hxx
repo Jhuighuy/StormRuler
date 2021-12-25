@@ -172,7 +172,7 @@ template<class tInArray, class tOutArray = tInArray>
 class stormRestartableSolver : public stormIterativeSolver<tInArray, tOutArray> {
 public:
   stormSize_t NumRestarts;
-  stormSize_t NumIterationsBeforeRestart = 30;
+  stormSize_t NumIterationsBeforeRestart = 50;
 
 protected:
 
@@ -253,13 +253,12 @@ private:
                       const stormOperator<tInArray, tOutArray>& anyOp,
                       const stormPreconditioner<tInArray>* preOp) override final {
     const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
-    const stormReal_t residual = ReIterate(k, xArr, bArr, anyOp, preOp);
-    if (k < NumIterationsBeforeRestart) {
-      return residual;
+    if (k == 0 && this->Iteration != 0) {
+      NumRestarts += 1;
+      ReFinalize(NumIterationsBeforeRestart - 1, xArr, bArr, anyOp, preOp);
+      ReInit(xArr, bArr, anyOp, preOp);
     }
-    NumRestarts += 1;
-    ReFinalize(k, xArr, bArr, anyOp, preOp);
-    return ReInit(xArr, bArr, anyOp, preOp);
+    return ReIterate(k, xArr, bArr, anyOp, preOp);
   }
 
   void Finalize(tInArray& xArr,

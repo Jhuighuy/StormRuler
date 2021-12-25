@@ -181,7 +181,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve2(mesh, STORM_KSP_BiCGStab, STORM_PRE_NONE/*"extr"*/, c_hat, rhs, 
+  stormLinSolve2(mesh, STORM_KSP_GMRES, STORM_PRE_NONE/*"extr"*/, c_hat, rhs, 
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -199,6 +199,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
+  abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -347,7 +348,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-  //abort();
+  abort();
 
   stormFree(rhs);
 

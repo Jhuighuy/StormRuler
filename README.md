@@ -135,17 +135,10 @@ Legend:
 
 * C/C++ API:
   - [x] 🐏 Pure C API,
-  - [ ] 🐏 Higher-level C++ API,
   - [ ] 🚬🐏 Python API.
 
 * Image:
   - [ ] 🦜💄 Image API.
-
-* Mesh:
-  - [ ] 🧸 Move kernel runners away from mesh,
-  - [ ] 🧸 BC kernels,
-  - [x] 🪓 Reimplement mesh generation with support for the varous DnQm models,
-  - [ ] 🦜 Unified 2D/3D indexing.
 
 * Mesh ordering:
   - [ ] 🦜🧻 Some C/C++ API for mesh loading,
@@ -186,17 +179,14 @@ Legend:
   - [ ] 🪓 Riemann solvers, Euler equations...
 
 * Linear iterative solvers:
-  - [ ] 🧻 Clean-up unified solver to use conjugate MatVec,
-  - [ ] 🧻 Convergence parameters in C/C++ API,
-  - [ ] 🧻 Non-uniform solver on higher-level,
   - [ ] 💄 Some better residual monitor,
-  - [x] 🚬 `GMRES` solver implementation,
-  - [ ] 🪓 Preconditioned `GMRES` implementation (right preconditioned?),
-  - [ ] 🪓 `TFQMR` solver implementation.
-<!--
+  - [ ] 🧸 Report true residual in CG,
   - [ ] 🪓 `FCG` solver implementation,
-  - [ ] 🪓 `FGMRES` solver implementation.
--->
+  - [ ] 🧸 Switch from left to right preconditioned `BiCGStab`,
+  - [x] 🚬 `GMRES` solver implementation,
+  - [ ] 🪓 Right preconditioned `GMRES` implementation,
+  - [ ] 🪓 Right preconditioned `FGMRES` implementation,
+  - [ ] 🪓 `TFQMR` solver implementation.
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,
@@ -209,9 +199,6 @@ Legend:
   - [ ] 🚬 Some more optimal column coloring algorthms..
 
 * Preconditioning:
-  - [ ] 🦜🧻 Refactor unified and C/C++ API for preconditioning,
-  - [ ] 🦜🧻 Add user-defined preconditioner in C/C++ API,
-  - [x] 🧻 Refactor precondtioner from function pointer to class,
   - [x] 🪓 `LU_SGS` preconditioner,
   - [x] 🪓 MKL-based `ILU0` preconditioners,
   - [x] 🪓 MKL-based `ILUT` preconditioners,

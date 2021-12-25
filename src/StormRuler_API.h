@@ -26,6 +26,7 @@
 #define STORM_RULER_API_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -94,6 +95,7 @@
 // Basic types.
 typedef int stormInt_t;
 typedef size_t stormSize_t;
+typedef ptrdiff_t stormPtrDiff_t;
 typedef double stormReal_t;
 typedef void* stormOpaque_t;
 typedef const char* stormString_t;

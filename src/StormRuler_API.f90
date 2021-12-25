@@ -669,63 +669,6 @@ end subroutine stormSpFuncProd
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-#$macro WrapMatVecFunc ^(?P<cMatVec>\w+)\s+(?P<MatVec>\w+)\s+(?P<env>\w+)\s*$
-subroutine $MatVec(mesh, yArr, xArr)
-  class(tMesh), intent(in), target :: mesh
-  class(tArray), intent(inout), target :: xArr, yArr
-
-  type(c_ptr) :: meshPtr, xPtr, yPtr
-
-  meshPtr = Wrap(mesh)
-  xPtr = Wrap(xArr); yPtr = Wrap(yArr)
-
-  call $cMatVec(meshPtr, yPtr, xPtr, $env)
-
-  call Free(meshPtr, mold=mesh)
-  call Free(xPtr, mold=xArr); call Free(yPtr, mold=yArr)
-
-end subroutine $MatVec
-#$end macro
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormLinSolve(meshPtr, methodPtr, preMethodPtr, &
-    & xPtr, bPtr, cMatVecPtr, env, cConjMatVecPtr, conjEnv) &
-    & bind(C, name='stormLinSolve')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, bPtr
-  character(c_char), intent(in) :: methodPtr(*), preMethodPtr(*)
-  type(c_funptr), intent(in), value :: cMatVecPtr, cConjMatVecPtr
-  type(*), intent(in) :: env, conjEnv
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, bArr
-  character(len=:), pointer :: method, preMethod
-  procedure(ctMatVecFunc), pointer :: cMatVec, cConjMatVec
-  type(tConvParams) :: params
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(bPtr, bArr)
-  call Unwrap(methodPtr, method); call Unwrap(preMethodPtr, preMethod)
-
-  call c_f_procpointer(cptr=cMatVecPtr, fptr=cMatVec)
-  if (c_associated(cConjMatVecPtr)) then
-    call c_f_procpointer(cptr=cConjMatVecPtr, fptr=cConjMatVec)
-  end if
-
-  !! TODO: convergence parameters.
-  !! TODO: utilize `ConjMatVec` somehow.
-  call params%Init(1.0D-6, 1.0D-6, 2000)
-  call LinSolve(mesh, method, preMethod, xArr, bArr, MatVec, params)
-
-contains
-  @WrapMatVecFunc cMatVec MatVec env
-  @WrapMatVecFunc cConjMatVec ConjMatVec conjEnv
-end subroutine stormLinSolve
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
 !! TODO: some more generic `stormApplyBCs` function
 !!       that includes the specific BCs. 
 

@@ -240,57 +240,6 @@ STORM_API void stormSpFuncProd(stormMesh_t mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-typedef void(*stormMatVecFunc_t)(stormMesh_t mesh,
-                                 stormArray_t Ax,
-                                 stormArray_t x,
-                                 stormOpaque_t env);
-
-STORM_API void stormLinSolve(stormMesh_t mesh,
-                             stormString_t method,
-                             stormString_t preMethod,
-                             stormArray_t x,
-                             stormArray_t b,
-                             stormMatVecFunc_t matVec,
-                             _STORM_DEFAULT_(stormOpaque_t env, STORM_NULL),
-                             _STORM_DEFAULT_(stormMatVecFunc_t conjMatVec, STORM_NULL),
-                             _STORM_DEFAULT_(stormOpaque_t conjEnv, STORM_NULL));
-
-#if STORM_CXX14_
-/// @{
-template<typename stormMatVecFuncT_t>
-STORM_INL void stormLinSolve(stormMesh_t mesh,
-                             stormString_t method,
-                             stormString_t preMethod,
-                             stormArray_t x,
-                             stormArray_t b,
-                             stormMatVecFuncT_t matVec) {
-  stormLinSolve(mesh, method, preMethod, x, b,
-    [](stormMesh_t mesh, stormArray_t Ax, stormArray_t x, stormOpaque_t env) {
-      (*static_cast<stormMatVecFuncT_t*>(env))(mesh, Ax, x);
-    }, &matVec, STORM_NULL, STORM_NULL);
-} // stormLinSolve
-template<typename stormMatVecFuncT1_t, typename stormMatVecFuncT2_t>
-STORM_INL void stormLinSolve(stormMesh_t mesh,
-                             stormString_t method,
-                             stormString_t preMethod,
-                             stormArray_t x,
-                             stormArray_t b,
-                             stormMatVecFuncT1_t matVec,
-                             stormMatVecFuncT2_t conjMatVec) {
-  stormLinSolve(mesh, method, preMethod, x, b,
-    [](stormMesh_t mesh, stormArray_t Ax, stormArray_t x, stormOpaque_t env) {
-      (*static_cast<stormMatVecFuncT1_t*>(env))(mesh, Ax, x);
-    }, &matVec,
-    [](stormMesh_t mesh, stormArray_t Ax, stormArray_t x, stormOpaque_t env) {
-      (*static_cast<stormMatVecFuncT2_t*>(env))(mesh, Ax, x);
-    }, &conjMatVec);
-} // stormLinSolve
-/// @}
-#endif
-
-// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
-
 STORM_API void stormApplyBCs(stormMesh_t mesh,
                              stormArray_t u,
                              stormInt_t iBC,

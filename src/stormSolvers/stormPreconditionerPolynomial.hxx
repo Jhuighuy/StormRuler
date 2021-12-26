@@ -49,7 +49,7 @@ class stormChebyshevPreconditioner final : public stormPolynomialPreconditioner<
 private:
   stormSize_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
-  stormReal_t lambdaMin = 0.1*800.0, lambdaMax = 1.2*800.0;
+  stormReal_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
   const stormOperator<tArray>* linOp;
 
   void Build(const stormOperator<tArray>& linOp) override {

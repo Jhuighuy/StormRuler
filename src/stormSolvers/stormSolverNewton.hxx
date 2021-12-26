@@ -120,6 +120,7 @@ stormReal_t stormJfnkSolver<tArray>::Init(tArray& xArr,
                                           const tArray& bArr,
                                           const stormOperator<tArray>& linOp,
                                           const stormPreconditioner<tArray>* preOp) {
+
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------

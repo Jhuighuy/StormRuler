@@ -34,6 +34,12 @@
 /// @brief Solve a linear operator equation with the
 ///   monstrous @c GMRES (Generalized Minimal Residual) method.
 ///
+/// When @c GMRES is supplied with a preconditioner, optionally the
+/// @c FGMRES (Flexible @c GMRES) variation of the method may be
+/// enabled. This allows usage of the variable (or flexible)
+/// preconditioners with the price of doubleing of the memory 
+/// requirements. 
+///
 /// @c GMRES may be applied to the singular problems, and the square
 /// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
 /// although convergeance to minimum norm solution is not guaranteed
@@ -41,19 +47,24 @@
 ///
 /// References:
 /// @verbatim
-/// [1] Saad and M.H. Schultz,
-///     "GMRES: A generalized minimal residual algorithm for solving
-///      nonsymmetric linear systems",
+/// [1] Saad, Yousef and Martin H. Schultz. 
+///     “GMRES: A generalized minimal residual algorithm for solving 
+///      nonsymmetric linear systems.” 
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
+/// [2] Saad, Yousef. 
+///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.” 
+///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormGmresSolver final : public stormRestartableSolver<tArray> {
+public:
+  bool Flexible = true;
+
 private:
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> H;
-  tArray rArr, zArr;
-  std::vector<tArray> QArr;
+  std::vector<tArray> QArr, ZArr;
 
   void PreInit(tArray& xArr,
                const tArray& bArr, 
@@ -89,13 +100,15 @@ void stormGmresSolver<tArray>::PreInit(tArray& xArr,
   const stormSize_t m = this->NumIterationsBeforeRestart;
   beta.resize(m + 1), cs.resize(m), sn.resize(m);
   H.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
-  stormUtils::AllocLike(xArr, rArr);
   QArr.resize(m + 1);
-  for (stormSize_t i = 0; i <= m; ++i) {
-    stormUtils::AllocLike(xArr, QArr[i]);
+  for (tArray& qArr : QArr) {
+    stormUtils::AllocLike(xArr, qArr);
   }
   if (hasPreOp) {
-    stormUtils::AllocLike(xArr, zArr);
+    ZArr.resize(Flexible ? m : 1);
+    for (tArray& zArr : ZArr) {
+      stormUtils::AllocLike(xArr, zArr);
+    }
   }
 
 } // stormGmresSolver<...>::Init
@@ -108,23 +121,23 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
 
   // ----------------------
   // Initialize:
-  // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒓,
-  // 𝜑 ← ‖𝒓‖,
+  // 𝓠₀ ← 𝓐𝒙,
+  // 𝓠₀ ← 𝒃 - 𝓠₀,
+  // 𝜑 ← ‖𝓠₀‖,
   // ----------------------
-  linOp.MatVec(rArr, xArr);
-  stormUtils::Sub(rArr, bArr, rArr);
-  const stormReal_t phi = stormUtils::Norm2(rArr);
+  linOp.MatVec(QArr[0], xArr);
+  stormUtils::Sub(QArr[0], bArr, QArr[0]);
+  const stormReal_t phi = stormUtils::Norm2(QArr[0]);
 
   // ----------------------
   // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
   // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
-  // 𝓠₀ ← 𝒓/𝜑. 
+  // 𝓠₀ ← 𝓠₀/𝜑. 
   // ----------------------
   std::fill(cs.begin(), cs.end(), 0.0);
   std::fill(sn.begin(), sn.end(), 0.0);
-  beta[0] = phi; std::fill(beta.begin() + 1, beta.end(), 0.0);
-  stormUtils::Scale(QArr[0], rArr, 1.0/phi);
+  beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
+  stormUtils::Scale(QArr[0], QArr[0], 1.0/phi);
 
   return phi;
 
@@ -140,8 +153,9 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // ----------------------
   // Continue the Arnoldi procedure:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝓟𝓠ₖ,
-  //   𝓠ₖ₊₁ ← 𝓐𝒛,
+  //   𝑗 ← 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦 ? 𝑘 : 𝟢,
+  //   𝓩ⱼ ← 𝓟𝓠ₖ,
+  //   𝓠ₖ₊₁ ← 𝓐𝓩ⱼ,
   // 𝗲𝗹𝘀𝗲:
   //   𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
   // 𝗲𝗻𝗱 𝗶𝗳
@@ -153,8 +167,9 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
   // ----------------------
   if (preOp != nullptr) {
-    preOp->MatVec(zArr, QArr[k]);
-    linOp.MatVec(QArr[k + 1], zArr);
+    const stormSize_t j = Flexible ? k : 0;
+    preOp->MatVec(ZArr[j], QArr[k]);
+    linOp.MatVec(QArr[k + 1], ZArr[j]);
   } else {
     linOp.MatVec(QArr[k + 1], QArr[k]);
   }
@@ -207,135 +222,60 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
                                           const stormPreconditioner<tArray>* preOp) {
 
   // ----------------------
+  // Finalize the 𝜷-solution:
+  // 𝜷ₖ ← 𝜷ₖ/𝓗ₖₖ,
+  // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
+  //   𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // ----------------------
+  beta[k] /= H[k][k];
+  for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
+    beta[i] -= std::inner_product(
+      beta.begin() + i + 1, beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
+    beta[i] /= H[i][i];
+  }
+
+  // ----------------------
   // Compute 𝒙-solution:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝜷ₖ ← 𝜷ₖ/𝓗ₖₖ,
-  //   𝒛 ← 𝜷ₖ𝓠ₖ,
-  //   𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //     𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
-  //     𝒛 ← 𝒛 + 𝜷ᵢ𝓠ᵢ,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  //   𝒓 ← 𝓟𝒛,
-  //   𝒙 ← 𝒙 + 𝒛.
-  // 𝗲𝗹𝘀𝗲:
-  //   𝗳𝗼𝗿 𝑖 = 𝑘, 𝟢, -𝟣 𝗱𝗼:
-  //     𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
+  // 𝗶𝗳 𝓟 = 𝗻𝗼𝗻𝗲:
+  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
   //     𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
+  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
+  //     𝒙 ← 𝒙 + 𝜷ᵢ𝓩ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗹𝘀𝗲:
+  //   𝓠₀ ← 𝜷₀𝓠₀,
+  //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
+  //     𝓠₀ ← 𝓠₀ + 𝜷ᵢ𝓠ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  //   𝓩₀ ← 𝓟𝓠₀,
+  //   𝒙 ← 𝒙 + 𝓩₀.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  if (preOp != nullptr) {
-    beta[k] /= H[k][k];
-    stormUtils::Scale(zArr, QArr[k], beta[k]);
-    for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
-      beta[i] -= std::inner_product(beta.begin() + i + 1, 
-        beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
-      beta[i] /= H[i][i];
-      stormUtils::Add(zArr, zArr, QArr[i], beta[i]);
-    }
-    preOp->MatVec(rArr, zArr);
-    stormUtils::Add(xArr, xArr, rArr);
-  } else {
-    for (stormPtrDiff_t i = k; i >= 0; --i) {
-      beta[i] -= std::inner_product(beta.begin() + i + 1, 
-        beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
-      beta[i] /= H[i][i];
+  if (preOp == nullptr) {
+    for (stormSize_t i = 0; i <= k; ++i) {
       stormUtils::Add(xArr, xArr, QArr[i], beta[i]);
     }
+  } else if (Flexible) {
+    for (stormSize_t i = 0; i <= k; ++i) {
+      stormUtils::Add(xArr, xArr, ZArr[i], beta[i]);
+    }
+  } else {
+    /// @todo: This code seems faulty: \
+    ///   when the non-flexible preconditioner is used,
+    ///   both PGMRES and FGMRES should converge identically,
+    ///   but PGMRES takes about 2x more iterations than FGMRES
+    ///   because it breaks after the restart. 
+    stormUtils::Scale(QArr[0], QArr[0], beta[0]);
+    for (stormSize_t i = 1; i <= k; ++i) {
+      stormUtils::Add(QArr[0], QArr[0], QArr[i], beta[i]);
+    }
+    preOp->MatVec(ZArr[0], QArr[0]);
+    stormUtils::Add(xArr, xArr, ZArr[0]);
   }
 
 } // stormGmresSolver<...>::ReFinalize
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the yet more 
-///   monstrous @c FGMRES (Flexible Generalized Minimal Residual) method.
-///
-/// @c FGMRES may be applied to the singular problems, and the square
-/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
-/// although convergeance to minimum norm solution is not guaranteed
-/// (is this true?).
-///
-/// References:
-/// @verbatim
-/// [1] Saad and M.H. Schultz,
-///     "GMRES: A generalized minimal residual algorithm for solving
-///      nonsymmetric linear systems",
-///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormFgmresSolver final : public stormRestartableSolver<tArray> {
-private:
-
-  void PreInit(tArray& xArr,
-               const tArray& bArr, 
-               bool hasPreOp) override;
-
-  stormReal_t ReInit(tArray& xArr,
-                     const tArray& bArr,
-                     const stormOperator<tArray>& linOp,
-                     const stormPreconditioner<tArray>* preOp) override;
-
-  stormReal_t ReIterate(stormSize_t k,
-                        tArray& xArr,
-                        const tArray& bArr,
-                        const stormOperator<tArray>& linOp,
-                        const stormPreconditioner<tArray>* preOp) override;
-
-  void ReFinalize(stormSize_t k,
-                  tArray& xArr,
-                  const tArray& bArr,
-                  const stormOperator<tArray>& linOp,
-                  const stormPreconditioner<tArray>* preOp) override;
-
-}; // class stormFgmresSolver<...>
-
-template<class tArray>
-void stormFgmresSolver<tArray>::PreInit(tArray& xArr,
-                                       const tArray& bArr, 
-                                       bool hasPreOp) {
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
-  //stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, sArr, tArr, vArr);
-  if (hasPreOp) {
-    //stormUtils::AllocLike(xArr, wArr, yArr, zArr);
-  }
-
-  _STORM_NOT_IMPLEMENTED_();
-
-} // stormFgmresSolver<...>::Init
-
-template<class tArray>
-stormReal_t stormFgmresSolver<tArray>::ReInit(tArray& xArr,
-                                              const tArray& bArr,
-                                              const stormOperator<tArray>& linOp,
-                                              const stormPreconditioner<tArray>* preOp) {
-
-  _STORM_NOT_IMPLEMENTED_();
-
-} // stormFgmresSolver<...>::ReInit
-
-template<class tArray>
-stormReal_t stormFgmresSolver<tArray>::ReIterate(stormSize_t k,
-                                                 tArray& xArr,
-                                                 const tArray& bArr,
-                                                 const stormOperator<tArray>& linOp,
-                                                 const stormPreconditioner<tArray>* preOp) {
-
-  _STORM_NOT_IMPLEMENTED_();
-
-} // stormFgmresSolver<...>::ReIterate
-
-template<class tArray>
-void stormFgmresSolver<tArray>::ReFinalize(stormSize_t k,
-                                           tArray& xArr,
-                                           const tArray& bArr,
-                                           const stormOperator<tArray>& linOp,
-                                           const stormPreconditioner<tArray>* preOp) {
-
-  _STORM_NOT_IMPLEMENTED_();
-
-} // stormFgmresSolver<...>::ReFinalize
 
 #endif // ifndef _STORM_SOLVER_GMRES_HXX_

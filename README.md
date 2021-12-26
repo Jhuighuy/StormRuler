@@ -79,10 +79,8 @@ products.
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
   * Generalized Minimal Residual method solver
-    (`GMRES`, for the general linear problems),
-  * _(planned)_ Flexible Generalized Minimal Residual method solver
-    (`FGMRES`, for the general linear problems
-     with _flexible preconditioning_),
+    (`GMRES`, for the general linear problems,
+     with optional support of _flexible preconditioning_),
   * _(planned)_ Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
 
@@ -182,10 +180,11 @@ Legend:
   - [ ] 💄 Some better residual monitor,
   - [ ] 🧸 Report true residual in CG,
   - [ ] 🪓 `FCG` solver implementation,
-  - [ ] 🧸 Switch from left to right preconditioned `BiCGStab`,
+  - [x] 🧸 Switch from left to right preconditioned `BiCGStab`,
   - [x] 🚬 `GMRES` solver implementation,
-  - [ ] 🪓 Right preconditioned `GMRES` implementation,
-  - [ ] 🪓 Right preconditioned `FGMRES` implementation,
+  - [x] 🪓 Right preconditioned `GMRES` implementation,
+  - [x] 🐞 Right preconditioned `GMRES` implementation looks broken,
+  - [x] 🪓 Right preconditioned `FGMRES` implementation,
   - [ ] 🪓 `TFQMR` solver implementation.
 
 * Matrix operations and extraction:

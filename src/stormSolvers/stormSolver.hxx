@@ -25,6 +25,7 @@
 #ifndef _STORM_SOLVER_HXX_
 #define _STORM_SOLVER_HXX_
 
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 
@@ -125,7 +126,8 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   }
   const stormReal_t initialError =
     (AbsoluteError = Init(xArr, bArr, anyOp, PreOp.get()));
-  std::cout << "\t0 " << initialError << std::endl;
+  std::cout << std::fixed << std::scientific << std::setprecision(15);
+  std::cout << "\tI\t" << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
     Finalize(xArr, bArr, anyOp, PreOp.get());
     return true;
@@ -134,27 +136,26 @@ bool stormIterativeSolver<tInArray, tOutArray>::
   // ----------------------
   // Iterate the solver:
   // ----------------------
+  bool converged = false;
   for (Iteration = 0; Iteration < NumIterations; ++Iteration) {
     AbsoluteError = Iterate(xArr, bArr, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
-    std::cout << "\t" << (Iteration + 1) << " "
-      << AbsoluteError << " " << RelativeError << std::endl;
+    std::cout << "\t" << (Iteration + 1) << "\t"
+      << AbsoluteError << "\t" << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-      Finalize(xArr, bArr, anyOp, PreOp.get());
-      std::cout << "----------------------" << std::endl;
-      return true;
+      converged = true;
+      break;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
-      Finalize(xArr, bArr, anyOp, PreOp.get());
-      std::cout << "----------------------" << std::endl;
-      return true;
+      converged = true;
+      break;
     }
   }
 
   Finalize(xArr, bArr, anyOp, PreOp.get());
-  std::cout << "----------------------" << std::endl;
-  return false;
+  std::cout << "\t----------------------" << std::endl;
+  return converged;
 
 } // stormIterativeSolver<...>::Solve
 
@@ -164,7 +165,6 @@ bool stormIterativeSolver<tInArray, tOutArray>::
 template<class tInArray, class tOutArray = tInArray>
 class stormRestartableSolver : public stormIterativeSolver<tInArray, tOutArray> {
 public:
-  stormSize_t NumRestarts;
   stormSize_t NumIterationsBeforeRestart = 50;
 
 protected:
@@ -236,7 +236,6 @@ private:
                    const tOutArray& bArr,
                    const stormOperator<tInArray, tOutArray>& anyOp,
                    const stormPreconditioner<tInArray>* preOp) override final {
-    NumRestarts = 0;
     PreInit(xArr, bArr, preOp != nullptr);
     return ReInit(xArr, bArr, anyOp, preOp);
   }
@@ -247,7 +246,6 @@ private:
                       const stormPreconditioner<tInArray>* preOp) override final {
     const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
     if (k == 0 && this->Iteration != 0) {
-      NumRestarts += 1;
       ReFinalize(NumIterationsBeforeRestart - 1, xArr, bArr, anyOp, preOp);
       ReInit(xArr, bArr, anyOp, preOp);
     }

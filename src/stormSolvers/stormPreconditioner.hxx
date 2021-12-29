@@ -39,7 +39,7 @@ public:
   /// @brief Build the preconditioner.
   ///
   /// @param anyOp Operator to build the preconditioner upon.
-  virtual void Build(const stormOperator<tArray>& anyOp) {}
+  virtual void Build(stormOperator<tArray> const& anyOp) {}
 
 }; // class stormPreconditioner<...>
 
@@ -52,13 +52,13 @@ class stormIdentityPreconditioner final : public stormPreconditioner<tArray> {
 private:
 
   void MatVec(tArray& yArr,
-              const tArray& xArr) const override final {
+              tArray const& xArr) const override final {
     std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
     stormUtils::Set(yArr, xArr);
   }
 
   void ConjMatVec(tArray& xArr,
-                  const tArray& yArr) const override final {
+                  tArray const& yArr) const override final {
     std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
     stormUtils::Set(xArr, yArr);
   }

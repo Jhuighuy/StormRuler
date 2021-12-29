@@ -67,37 +67,37 @@ private:
   std::vector<tArray> QArr, ZArr;
 
   void PreInit(tArray& xArr,
-               const tArray& bArr, 
+               tArray const& bArr, 
                bool hasPreOp) override;
 
   stormReal_t ReInit(tArray& xArr,
-                     const tArray& bArr,
-                     const stormOperator<tArray>& linOp,
-                     const stormPreconditioner<tArray>* preOp) override;
+                     tArray const& bArr,
+                     stormOperator<tArray> const& linOp,
+                     stormPreconditioner<tArray> const* preOp) override;
 
   stormReal_t ReIterate(stormSize_t k,
                         tArray& xArr,
-                        const tArray& bArr,
-                        const stormOperator<tArray>& linOp,
-                        const stormPreconditioner<tArray>* preOp) override;
+                        tArray const& bArr,
+                        stormOperator<tArray> const& linOp,
+                        stormPreconditioner<tArray> const* preOp) override;
 
   void ReFinalize(stormSize_t k,
                   tArray& xArr,
-                  const tArray& bArr,
-                  const stormOperator<tArray>& linOp,
-                  const stormPreconditioner<tArray>* preOp) override;
+                  tArray const& bArr,
+                  stormOperator<tArray> const& linOp,
+                  stormPreconditioner<tArray> const* preOp) override;
 
 }; // class stormGmresSolver<...>
 
 template<class tArray>
 void stormGmresSolver<tArray>::PreInit(tArray& xArr,
-                                       const tArray& bArr, 
+                                       tArray const& bArr, 
                                        bool hasPreOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  const stormSize_t m = this->NumIterationsBeforeRestart;
+  stormSize_t const m = this->NumIterationsBeforeRestart;
   beta.resize(m + 1), cs.resize(m), sn.resize(m);
   H.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
   QArr.resize(m + 1);
@@ -115,9 +115,9 @@ void stormGmresSolver<tArray>::PreInit(tArray& xArr,
 
 template<class tArray>
 stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
-                                             const tArray& bArr,
-                                             const stormOperator<tArray>& linOp,
-                                             const stormPreconditioner<tArray>* preOp) {
+                                             tArray const& bArr,
+                                             stormOperator<tArray> const& linOp,
+                                             stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Initialize:
@@ -127,7 +127,7 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
   // ----------------------
   linOp.MatVec(QArr[0], xArr);
   stormUtils::Sub(QArr[0], bArr, QArr[0]);
-  const stormReal_t phi = stormUtils::Norm2(QArr[0]);
+  stormReal_t const phi = stormUtils::Norm2(QArr[0]);
 
   // ----------------------
   // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
@@ -146,9 +146,9 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
 template<class tArray>
 stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
                                                 tArray& xArr,
-                                                const tArray& bArr,
-                                                const stormOperator<tArray>& linOp,
-                                                const stormPreconditioner<tArray>* preOp) {
+                                                tArray const& bArr,
+                                                stormOperator<tArray> const& linOp,
+                                                stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Continue the Arnoldi procedure:
@@ -167,7 +167,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
   // ----------------------
   if (preOp != nullptr) {
-    const stormSize_t j = Flexible ? k : 0;
+    stormSize_t const j = Flexible ? k : 0;
     preOp->MatVec(ZArr[j], QArr[k]);
     linOp.MatVec(QArr[k + 1], ZArr[j]);
   } else {
@@ -193,7 +193,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // 𝓗ₖ₊₁,ₖ ← 𝟢.
   // ----------------------
   for (stormSize_t i = 0; i < k; ++i) {
-    const stormReal_t chi = cs[i]*H[i][k] + sn[i]*H[i + 1][k];
+    stormReal_t const chi = cs[i]*H[i][k] + sn[i]*H[i + 1][k];
     H[i + 1][k] = -sn[i]*H[i][k] + cs[i]*H[i+1][k];
     H[i][k] = chi;
   }
@@ -208,7 +208,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
   // 𝜑 ← |𝜷ₖ₊₁|,
   // ----------------------
   beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
-  const stormReal_t phi = std::abs(beta[k + 1]);
+  stormReal_t const phi = std::abs(beta[k + 1]);
 
   return phi;
 
@@ -217,9 +217,9 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
 template<class tArray>
 void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
                                           tArray& xArr,
-                                          const tArray& bArr,
-                                          const stormOperator<tArray>& linOp,
-                                          const stormPreconditioner<tArray>* preOp) {
+                                          tArray const& bArr,
+                                          stormOperator<tArray> const& linOp,
+                                          stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Finalize the 𝜷-solution:

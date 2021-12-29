@@ -56,14 +56,14 @@ template<class tArray, class tOperator>
 class stormNewtonSolver : public stormIterativeSolver<tArray, tOperator> {
 private:
   stormReal_t Init(tArray& xArr,
-                   const tArray& bArr,
-                   const tOperator& anyOp,
-                   const tOperator* preOp) override final;
+                   tArray const& bArr,
+                   tOperator const& anyOp,
+                   tOperator const* preOp) override final;
 
   stormReal_t Iterate(tArray& xArr,
-                      const tArray& bArr,
-                      const tOperator& anyOp,
-                      const tOperator* preOp) override final;
+                      tArray const& bArr,
+                      tOperator const& anyOp,
+                      tOperator const* preOp) override final;
 
 }; // class stormNewtonSolver<...>
 #endif
@@ -104,22 +104,22 @@ private:
   tArray sArr, tArr, rArr, wArr;
 
   stormReal_t Init(tArray& xArr,
-                   const tArray& bArr,
-                   const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override;
+                   tArray const& bArr,
+                   stormOperator<tArray> const& linOp,
+                   stormPreconditioner<tArray> const* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
-                      const tArray& bArr,
-                      const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override;
+                      tArray const& bArr,
+                      stormOperator<tArray> const& linOp,
+                      stormPreconditioner<tArray> const* preOp) override;
 
 }; // class stormJfnkSolver<...>
 
 template<class tArray>
 stormReal_t stormJfnkSolver<tArray>::Init(tArray& xArr,
-                                          const tArray& bArr,
-                                          const stormOperator<tArray>& linOp,
-                                          const stormPreconditioner<tArray>* preOp) {
+                                          tArray const& bArr,
+                                          stormOperator<tArray> const& linOp,
+                                          stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
@@ -140,9 +140,9 @@ stormReal_t stormJfnkSolver<tArray>::Init(tArray& xArr,
 
 template<class tArray>
 stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
-                                             const tArray& bArr,
-                                             const stormOperator<tArray>& linOp,
-                                             const stormPreconditioner<tArray>* preOp) {
+                                             tArray const& bArr,
+                                             stormOperator<tArray> const& linOp,
+                                             stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Solve the Jacobian equation:
@@ -151,9 +151,9 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
   // 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
   // 𝒙 ← 𝒙 + 𝒕.
   // ----------------------
-  static const stormReal_t sqrtOfEpsilon = 
+  static stormReal_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
-  const stormReal_t mu = 
+  stormReal_t const mu = 
     sqrtOfEpsilon*std::sqrt(1.0 + stormUtils::Norm2(xArr));
   stormUtils::Set(tArr, rArr);
   {
@@ -165,7 +165,7 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
     auto op = stormMakeOperator<tArray>(
-      [&](stormArray& zArr, const stormArray& yArr) {
+      [&](stormArray& zArr, stormArray const& yArr) {
 
         // ----------------------
         // Compute the Jacobian-vector product:
@@ -174,11 +174,11 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
         // 𝒛 ← 𝓐(𝒔),
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
-        const stormReal_t delta = 
+        stormReal_t const delta = 
           stormUtils::SafeDivide(mu, stormUtils::Norm2(yArr));
         stormUtils::Add(sArr, xArr, yArr, delta);
         linOp.MatVec(zArr, sArr);
-        const stormReal_t deltaInverse = stormUtils::SafeDivide(1.0, delta);
+        stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
         stormUtils::Sub(zArr, zArr, wArr, deltaInverse, deltaInverse);
 
       });

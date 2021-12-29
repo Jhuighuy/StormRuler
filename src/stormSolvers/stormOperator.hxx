@@ -53,7 +53,7 @@ public:
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
   }
-  stormArray(const stormArray& oth): Mesh(oth.Mesh), Array(oth.Array) {
+  stormArray(stormArray const& oth): Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
   }
@@ -69,7 +69,7 @@ public:
     new(this) stormArray(std::forward<stormArray>(oth));
     return *this;
   }
-  stormArray& operator=(const stormArray& oth) {
+  stormArray& operator=(stormArray const& oth) {
     this->~stormArray();
     new(this) stormArray(oth);
     return *this;
@@ -81,14 +81,14 @@ namespace stormUtils {
     return (y == 0.0) ? 0.0 : (x/y);
   }
 
-  stormReal_t Norm2(const stormArray& z) {
+  stormReal_t Norm2(stormArray const& z) {
     return stormNorm2(z.Mesh, z.Array);
   }
-  stormReal_t Dot(const stormArray& z, const stormArray& y) {
+  stormReal_t Dot(stormArray const& z, stormArray const& y) {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
 
-  void Set(stormArray& z, const stormArray& y) {
+  void Set(stormArray& z, stormArray const& y) {
     stormSet(z.Mesh, z.Array, y.Array);
   }
 
@@ -99,25 +99,25 @@ namespace stormUtils {
     stormRandFill(z.Mesh, z.Array);
   }
 
-  void Scale(stormArray& z, const stormArray& y, stormReal_t a) {
+  void Scale(stormArray& z, stormArray const& y, stormReal_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
 
-  void Add(stormArray& z, const stormArray& y, const stormArray& x, 
+  void Add(stormArray& z, stormArray const& y, stormArray const& x, 
           stormReal_t a = 1.0, stormReal_t b = 1.0) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
-  void Sub(stormArray& z, const stormArray& y, const stormArray& x, 
+  void Sub(stormArray& z, stormArray const& y, stormArray const& x, 
           stormReal_t a = 1.0, stormReal_t b = 1.0) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 
-  void AllocLike(const stormArray& like, stormArray& z) {
+  void AllocLike(stormArray const& like, stormArray& z) {
     z.Mesh = like.Mesh;
     z.Array = stormAllocLike(like.Array);
   }
   template<class... tArray>
-  void AllocLike(const stormArray& like, stormArray& z, tArray&... zz) {
+  void AllocLike(stormArray const& like, stormArray& z, tArray&... zz) {
     AllocLike(like, z);
     AllocLike(like, zz...);
   }
@@ -135,14 +135,14 @@ public:
   /// @param yArr Output vector, 𝒚.
   /// @param xArr Input vector, 𝒙.
   virtual void MatVec(tOutArray& yArr,
-                      const tInArray& xArr) const = 0;
+                      tInArray const& xArr) const = 0;
 
   /// @brief Apply the conjugate operator: 𝒙 ← 𝓐*(𝒚).
   ///
   /// @param yArr Output vector, 𝒚.
   /// @param xArr Input vector, 𝒙.
   virtual void ConjMatVec(tInArray& xArr,
-                          const tOutArray& yArr) const {
+                          tOutArray const& yArr) const {
     throw std::runtime_error(
       "`stormOperator<...>::ConjMatVec` was not overriden");
   }
@@ -155,8 +155,8 @@ public:
 template<class tInArray, class tOutArray = tInArray>
 class stormFunctionalOperator final : public stormOperator<tInArray, tOutArray> {
 private:
-  using tMatVecFunc = std::function<void(tOutArray&, const tInArray&)>;
-  using tConjMatVecFunc = std::function<void(tInArray&, const tOutArray&)>;
+  using tMatVecFunc = std::function<void(tOutArray&, tInArray const&)>;
+  using tConjMatVecFunc = std::function<void(tInArray&, tOutArray const&)>;
   tMatVecFunc MatVecPtr;
   tConjMatVecFunc ConjMatVecPtr;
 
@@ -181,12 +181,12 @@ public:
 
 private:
   void MatVec(tOutArray& yArr,
-              const tInArray& xArr) const override {
+              tInArray const& xArr) const override {
     MatVecPtr(yArr, xArr);
   }
 
   void ConjMatVec(tInArray& xArr,
-                  const tOutArray& yArr) const override {
+                  tOutArray const& yArr) const override {
     if (!ConjMatVecPtr) {
       throw std::runtime_error(
         "`stormFunctionalOperator<...>::ConjMatVec` conjugate product function was not set.");

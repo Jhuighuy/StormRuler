@@ -82,22 +82,22 @@ private:
     wArr, wBarArr, wBarBarArr, zArr, zBarArr, zBarBarArr;
 
   stormReal_t Init(tArray& xArr,
-                   const tArray& bArr,
-                   const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override;
+                   tArray const& bArr,
+                   stormOperator<tArray> const& linOp,
+                   stormPreconditioner<tArray> const* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
-                      const tArray& bArr,
-                      const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override;
+                      tArray const& bArr,
+                      stormOperator<tArray> const& linOp,
+                      stormPreconditioner<tArray> const* preOp) override;
 
 }; // class stormMinresSolver<...>
 
 template<class tArray>
 stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
-                                            const tArray& bArr,
-                                            const stormOperator<tArray>& linOp,
-                                            const stormPreconditioner<tArray>* preOp) {
+                                            tArray const& bArr,
+                                            stormOperator<tArray> const& linOp,
+                                            stormPreconditioner<tArray> const* preOp) {
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------
@@ -141,9 +141,9 @@ stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
 
 template<class tArray>
 stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
-                                               const tArray& bArr,
-                                               const stormOperator<tArray>& linOp,
-                                               const stormPreconditioner<tArray>* preOp) {
+                                               tArray const& bArr,
+                                               stormOperator<tArray> const& linOp,
+                                               stormPreconditioner<tArray> const* preOp) {
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------

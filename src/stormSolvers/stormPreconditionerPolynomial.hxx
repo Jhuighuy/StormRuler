@@ -57,10 +57,10 @@ private:
   }
 
   void MatVec(tArray& yArr,
-              const tArray& xArr) const override;
+              tArray const& xArr) const override;
 
   void ConjMatVec(tArray& xArr,
-                  const tArray& yArr) const override {
+                  tArray const& yArr) const override {
     MatVec(xArr, yArr);
   }
 
@@ -68,7 +68,7 @@ private:
 
 template<class tArray>
 void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
-                                                  const tArray& xArr) const {
+                                                  tArray const& xArr) const {
   assert(linOp != nullptr && "Preconditioner was not built!");
                                                     
   tArray pArr, rArr;

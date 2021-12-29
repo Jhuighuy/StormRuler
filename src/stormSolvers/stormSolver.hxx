@@ -47,8 +47,8 @@ public:
   ///
   /// @returns Status of operation.
   virtual bool Solve(tInArray& xArr,
-                     const tOutArray& bArr,
-                     const stormOperator<tInArray, tOutArray>& anyOp) = 0;
+                     tOutArray const& bArr,
+                     stormOperator<tInArray, tOutArray> const& anyOp) = 0;
 
 }; // class stormSolver<...>
 
@@ -77,9 +77,9 @@ protected:
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
   virtual stormReal_t Init(tInArray& xArr,
-                           const tOutArray& bArr,
-                           const stormOperator<tInArray, tOutArray>& anyOp,
-                           const stormPreconditioner<tInArray>* preOp) = 0;
+                           tOutArray const& bArr,
+                           stormOperator<tInArray, tOutArray> const& anyOp,
+                           stormPreconditioner<tInArray> const* preOp) = 0;
 
   /// @brief Iterate the solver.
   ///
@@ -90,9 +90,9 @@ protected:
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
   virtual stormReal_t Iterate(tInArray& xArr,
-                              const tOutArray& bArr,
-                              const stormOperator<tInArray, tOutArray>& anyOp,
-                              const stormPreconditioner<tInArray>* preOp) = 0;
+                              tOutArray const& bArr,
+                              stormOperator<tInArray, tOutArray> const& anyOp,
+                              stormPreconditioner<tInArray> const* preOp) = 0;
 
   /// @brief Finalize the iterations.
   ///
@@ -101,30 +101,30 @@ protected:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void Finalize(tInArray& xArr,
-                        const tOutArray& bArr,
-                        const stormOperator<tInArray, tOutArray>& anyOp,
-                        const stormPreconditioner<tInArray>* preOp) {}
+                        tOutArray const& bArr,
+                        stormOperator<tInArray, tOutArray> const& anyOp,
+                        stormPreconditioner<tInArray> const* preOp) {}
 
 public:
 
   bool Solve(tInArray& xArr,
-             const tOutArray& bArr,
-             const stormOperator<tInArray, tOutArray>& anyOp) override final;
+             tOutArray const& bArr,
+             stormOperator<tInArray, tOutArray> const& anyOp) override final;
 
 }; // class stormIterativeSolver<...>
 
 template<class tInArray, class tOutArray>
 bool stormIterativeSolver<tInArray, tOutArray>::
                             Solve(tInArray& xArr,
-                                  const tOutArray& bArr,
-                                  const stormOperator<tInArray, tOutArray>& anyOp) {
+                                  tOutArray const& bArr,
+                                  stormOperator<tInArray, tOutArray> const& anyOp) {
   // ----------------------
   // Initialize the solver.
   // ----------------------
   if (PreOp != nullptr) {
     PreOp->Build(anyOp);
   }
-  const stormReal_t initialError =
+  stormReal_t const initialError =
     (AbsoluteError = Init(xArr, bArr, anyOp, PreOp.get()));
   std::cout << std::fixed << std::scientific << std::setprecision(15);
   std::cout << "\tI\t" << initialError << std::endl;
@@ -179,7 +179,7 @@ protected:
   /// @param bArr Right-hand-side (block-)array, 𝒃.
   /// @param hasPreOp True if the preconditioned solver is used. 
   virtual void PreInit(tInArray& xArr,
-                       const tOutArray& bArr, 
+                       tOutArray const& bArr, 
                        bool hasPreOp) = 0;
 
   /// @brief Reinitialize the iterative solver after the restart.
@@ -194,9 +194,9 @@ protected:
   ///
   /// @returns Residual norm-like value.
   virtual stormReal_t ReInit(tInArray& xArr,
-                             const tOutArray& bArr,
-                             const stormOperator<tInArray, tOutArray>& anyOp,
-                             const stormPreconditioner<tInArray>* preOp) = 0;
+                             tOutArray const& bArr,
+                             stormOperator<tInArray, tOutArray> const& anyOp,
+                             stormPreconditioner<tInArray> const* preOp) = 0;
 
   /// @brief Iterate the solver between the restarts.
   ///
@@ -209,9 +209,9 @@ protected:
   /// @returns Residual norm-like value.
   virtual stormReal_t ReIterate(stormSize_t k,
                                 tInArray& xArr,
-                                const tOutArray& bArr,
-                                const stormOperator<tInArray, tOutArray>& anyOp,
-                                const stormPreconditioner<tInArray>* preOp) = 0;
+                                tOutArray const& bArr,
+                                stormOperator<tInArray, tOutArray> const& anyOp,
+                                stormPreconditioner<tInArray> const* preOp) = 0;
 
   /// @brief Finalize the iterations before the restart.
   ///
@@ -226,24 +226,24 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void ReFinalize(stormSize_t k,
                           tInArray& xArr,
-                          const tOutArray& bArr,
-                          const stormOperator<tInArray, tOutArray>& anyOp,
-                          const stormPreconditioner<tInArray>* preOp) {}
+                          tOutArray const& bArr,
+                          stormOperator<tInArray, tOutArray> const& anyOp,
+                          stormPreconditioner<tInArray> const* preOp) {}
 
 private:
 
   stormReal_t Init(tInArray& xArr,
-                   const tOutArray& bArr,
-                   const stormOperator<tInArray, tOutArray>& anyOp,
-                   const stormPreconditioner<tInArray>* preOp) override final {
+                   tOutArray const& bArr,
+                   stormOperator<tInArray, tOutArray> const& anyOp,
+                   stormPreconditioner<tInArray> const* preOp) override final {
     PreInit(xArr, bArr, preOp != nullptr);
     return ReInit(xArr, bArr, anyOp, preOp);
   }
 
   stormReal_t Iterate(tInArray& xArr,
-                      const tOutArray& bArr,
-                      const stormOperator<tInArray, tOutArray>& anyOp,
-                      const stormPreconditioner<tInArray>* preOp) override final {
+                      tOutArray const& bArr,
+                      stormOperator<tInArray, tOutArray> const& anyOp,
+                      stormPreconditioner<tInArray> const* preOp) override final {
     const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
     if (k == 0 && this->Iteration != 0) {
       ReFinalize(NumIterationsBeforeRestart - 1, xArr, bArr, anyOp, preOp);
@@ -253,9 +253,9 @@ private:
   }
 
   void Finalize(tInArray& xArr,
-                const tOutArray& bArr,
-                const stormOperator<tInArray, tOutArray>& anyOp,
-                const stormPreconditioner<tInArray>* preOp) override final {
+                tOutArray const& bArr,
+                stormOperator<tInArray, tOutArray> const& anyOp,
+                stormPreconditioner<tInArray> const* preOp) override final {
     const stormSize_t k = this->Iteration % NumIterationsBeforeRestart;
     ReFinalize(k, xArr, bArr, anyOp, preOp);
   }
@@ -283,7 +283,7 @@ public:
   /// @returns Estimate the largest eigenvalue of 𝓐.
   static stormReal_t
     EstimateLargestEigenvalue(tArray& xArr,
-                              const stormOperator<tArray>& linOp,
+                              stormOperator<tArray> const& linOp,
                               stormSize_t maxIterations = 20,
                               stormReal_t relativeTolerance = 1.0e-8);
 
@@ -292,7 +292,7 @@ public:
 template<class tArray>
 stormReal_t stormPowerIterations<tArray>::
     EstimateLargestEigenvalue(tArray& xArr,
-                              const stormOperator<tArray>& linOp,
+                              stormOperator<tArray> const& linOp,
                               stormSize_t maxIterations,
                               stormReal_t relativeTolerance) {
 
@@ -318,7 +318,7 @@ stormReal_t stormPowerIterations<tArray>::
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yArr, xArr);
-    const stormReal_t lambdaBar = lambda;
+    stormReal_t const lambdaBar = lambda;
     lambda = stormUtils::Dot(xArr, yArr);
     stormUtils::Scale(xArr, yArr, 1.0/stormUtils::Norm2(yArr));
 

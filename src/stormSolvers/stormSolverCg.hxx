@@ -50,22 +50,22 @@ private:
   tArray pArr, rArr, tArr, zArr;
 
   stormReal_t Init(tArray& xArr,
-                   const tArray& bArr,
-                   const stormOperator<tArray>& linOp,
-                   const stormPreconditioner<tArray>* preOp) override;
+                   tArray const& bArr,
+                   stormOperator<tArray> const& linOp,
+                   stormPreconditioner<tArray> const* preOp) override;
 
   stormReal_t Iterate(tArray& xArr,
-                      const tArray& bArr,
-                      const stormOperator<tArray>& linOp,
-                      const stormPreconditioner<tArray>* preOp) override;
+                      tArray const& bArr,
+                      stormOperator<tArray> const& linOp,
+                      stormPreconditioner<tArray> const* preOp) override;
 
 }; // class stormCgSolver<...>
 
 template<class tArray>
 stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
-                                        const tArray& bArr,
-                                        const stormOperator<tArray>& linOp,
-                                        const stormPreconditioner<tArray>* preOp) {
+                                        tArray const& bArr,
+                                        stormOperator<tArray> const& linOp,
+                                        stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
@@ -108,9 +108,9 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
 
 template<class tArray>
 stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
-                                           const tArray& bArr,
-                                           const stormOperator<tArray>& linOp,
-                                           const stormPreconditioner<tArray>* preOp) {
+                                           tArray const& bArr,
+                                           stormOperator<tArray> const& linOp,
+                                           stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Iterate:

@@ -132,9 +132,9 @@ stormReal_t stormJfnkSolver<tArray>::Init(tArray& xArr,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   linOp.MatVec(wArr, xArr);
-  stormUtils::Sub(rArr, bArr, wArr);
+  stormBlas::Sub(rArr, bArr, wArr);
 
-  return stormUtils::Norm2(rArr);  
+  return stormBlas::Norm2(rArr);  
 
 } // stormJfnkSolver<...>::Init
 
@@ -154,8 +154,8 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
   static stormReal_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
   stormReal_t const mu = 
-    sqrtOfEpsilon*std::sqrt(1.0 + stormUtils::Norm2(xArr));
-  stormUtils::Set(tArr, rArr);
+    sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xArr));
+  stormBlas::Set(tArr, rArr);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
@@ -175,16 +175,16 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         stormReal_t const delta = 
-          stormUtils::SafeDivide(mu, stormUtils::Norm2(yArr));
-        stormUtils::Add(sArr, xArr, yArr, delta);
+          stormUtils::SafeDivide(mu, stormBlas::Norm2(yArr));
+        stormBlas::Add(sArr, xArr, yArr, delta);
         linOp.MatVec(zArr, sArr);
         stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        stormUtils::Sub(zArr, zArr, wArr, deltaInverse, deltaInverse);
+        stormBlas::Sub(zArr, zArr, wArr, deltaInverse, deltaInverse);
 
       });
     solver->Solve(tArr, rArr, *op);
   }
-  stormUtils::Add(xArr, xArr, tArr);
+  stormBlas::Add(xArr, xArr, tArr);
 
   // ----------------------
   // Compute residual:
@@ -192,9 +192,9 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   linOp.MatVec(wArr, xArr);
-  stormUtils::Sub(rArr, bArr, wArr);
+  stormBlas::Sub(rArr, bArr, wArr);
 
-  return stormUtils::Norm2(rArr);  
+  return stormBlas::Norm2(rArr);  
 
 } // stormJfnkSolver<...>::Iterate
 

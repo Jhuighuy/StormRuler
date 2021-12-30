@@ -29,7 +29,7 @@
 
 #include <stormSolvers/stormSolver.hxx>
 
-namespace stormUtils {
+namespace stormBlas {
 
   /// @brief Generate Givens rotation.
   inline auto SymOrtho(stormReal_t a, stormReal_t b) {
@@ -50,7 +50,7 @@ namespace stormUtils {
 
   } // SymOrtho
 
-} // namespace stormUtils
+} // namespace stormBlas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint indefinite operator equation \
@@ -121,17 +121,17 @@ stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  stormUtils::Fill(wBarArr, 0.0);
-  stormUtils::Fill(wBarBarArr, 0.0);
+  stormBlas::Fill(wBarArr, 0.0);
+  stormBlas::Fill(wBarBarArr, 0.0);
   linOp.MatVec(zBarArr, xArr);
-  stormUtils::Sub(zBarArr, bArr, zBarArr);
-  stormUtils::Fill(zBarBarArr, 0.0);
+  stormBlas::Sub(zBarArr, bArr, zBarArr);
+  stormBlas::Fill(zBarBarArr, 0.0);
   if (preOp != nullptr) {
     preOp->MatVec(qArr, zBarArr);
   } else {
     //qArr = zBarArr
   }
-  betaBar = 1.0; beta = std::sqrt(stormUtils::Dot(qArr, zBarArr));
+  betaBar = 1.0; beta = std::sqrt(stormBlas::Dot(qArr, zBarArr));
   phi = beta; delta = 0.0; epsilon = 0.0;
   cs = -1.0; sn = 0.0;
 
@@ -157,16 +157,16 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
   linOp.MatVec(pArr, qArr);
-  alpha = stormUtils::Dot(qArr, pArr)*std::pow(beta, -2);
-  stormUtils::Sub(zArr, pArr, zBarArr, alpha/beta, 1.0/beta);
-  stormUtils::Sub(zArr, zArr, zBarBarArr, beta/betaBar);
+  alpha = stormBlas::Dot(qArr, pArr)*std::pow(beta, -2);
+  stormBlas::Sub(zArr, pArr, zBarArr, alpha/beta, 1.0/beta);
+  stormBlas::Sub(zArr, zArr, zBarBarArr, beta/betaBar);
   if (preOp != nullptr) {
     std::swap(qBarArr, qArr);
     preOp->MatVec(qArr, zArr);
   } else {
     //qBarArr = qArr; qArr = zArr
   }
-  betaBar = beta, beta = std::sqrt(stormUtils::Dot(qArr, zArr));
+  betaBar = beta, beta = std::sqrt(stormBlas::Dot(qArr, zArr));
   std::swap(zBarBarArr, zBarArr), std::swap(zBarArr, zArr);
 
   // ----------------------
@@ -178,7 +178,7 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   deltaBar = cs*delta + sn*alpha, gamma = sn*delta - cs*alpha;
   epsilonBar = epsilon, epsilon = sn*beta, delta = -cs*beta;
-  std::tie(cs, sn, gamma) = stormUtils::SymOrtho(gamma, beta);
+  std::tie(cs, sn, gamma) = stormBlas::SymOrtho(gamma, beta);
   tau = cs*phi, phi = sn*phi;
 
   // ----------------------
@@ -188,9 +188,9 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  stormUtils::Sub(wArr, qBarArr, wBarArr, deltaBar/gamma, 1.0/(betaBar*gamma));
-  stormUtils::Sub(wArr, wArr, wBarBarArr, epsilonBar/gamma);
-  stormUtils::Add(xArr, xArr, wArr, tau);
+  stormBlas::Sub(wArr, qBarArr, wBarArr, deltaBar/gamma, 1.0/(betaBar*gamma));
+  stormBlas::Sub(wArr, wArr, wBarBarArr, epsilonBar/gamma);
+  stormBlas::Add(xArr, xArr, wArr, tau);
   std::swap(wBarBarArr, wBarArr), std::swap(wBarArr, wArr);
 
   return phi;

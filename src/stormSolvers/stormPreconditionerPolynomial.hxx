@@ -81,8 +81,8 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
   // 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
   // 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   // ----------------------
-  stormUtils::Set(rArr, xArr);
-  stormUtils::Fill(yArr, 0.0);
+  stormBlas::Set(rArr, xArr);
+  stormBlas::Fill(yArr, 0.0);
   const stormReal_t c = 0.5*(lambdaMax - lambdaMin);
   const stormReal_t d = 0.5*(lambdaMax + lambdaMin);
 
@@ -103,7 +103,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     // ----------------------
     if (iteration == 1) {
       alpha = 1.0/d;
-      stormUtils::Set(pArr, rArr);
+      stormBlas::Set(pArr, rArr);
     } else {
       stormReal_t beta;
       if (iteration == 2) {
@@ -112,7 +112,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
         beta = std::pow(0.5*c*alpha, 2);
       }
       alpha /= (d*alpha - beta);
-      stormUtils::Add(pArr, rArr, pArr, beta);
+      stormBlas::Add(pArr, rArr, pArr, beta);
     }
 
     // ----------------------
@@ -120,9 +120,9 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     // 𝒓 ← 𝓐𝒚,
     // 𝒓 ← 𝒙 - 𝒓.
     // ----------------------
-    stormUtils::Add(yArr, yArr, pArr, alpha);
+    stormBlas::Add(yArr, yArr, pArr, alpha);
     linOp->MatVec(rArr, yArr);
-    stormUtils::Sub(rArr, xArr, rArr);
+    stormBlas::Sub(rArr, xArr, rArr);
   }
 
 } // stormChebyshevPreconditioner<...>::MatVec

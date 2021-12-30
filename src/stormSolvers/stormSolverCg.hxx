@@ -81,7 +81,7 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
   // 𝒓 ← 𝒃 - 𝒕.
   // ----------------------
   linOp.MatVec(rArr, xArr);
-  stormUtils::Sub(rArr, bArr, rArr);
+  stormBlas::Sub(rArr, bArr, rArr);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -95,14 +95,14 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zArr, rArr);
-    stormUtils::Set(pArr, zArr);
-    gamma = stormUtils::Dot(rArr, zArr);
+    stormBlas::Set(pArr, zArr);
+    gamma = stormBlas::Dot(rArr, zArr);
   } else {
-    stormUtils::Set(pArr, rArr);
-    gamma = stormUtils::Dot(rArr, rArr);
+    stormBlas::Set(pArr, rArr);
+    gamma = stormBlas::Dot(rArr, rArr);
   }
 
-  return (preOp != nullptr) ? stormUtils::Norm2(rArr) : std::sqrt(gamma);
+  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(gamma);
 
 } // stormCgSolver<...>::Init
 
@@ -120,9 +120,9 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒓 - 𝛼𝒕,
   // ----------------------
   linOp.MatVec(tArr, pArr);
-  alpha = stormUtils::SafeDivide(gamma, stormUtils::Dot(pArr, tArr));
-  stormUtils::Add(xArr, xArr, pArr, alpha);
-  stormUtils::Sub(rArr, rArr, tArr, alpha);
+  alpha = stormUtils::SafeDivide(gamma, stormBlas::Dot(pArr, tArr));
+  stormBlas::Add(xArr, xArr, pArr, alpha);
+  stormBlas::Sub(rArr, rArr, tArr, alpha);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -134,9 +134,9 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zArr, rArr);
-    alpha = stormUtils::Dot(rArr, zArr);
+    alpha = stormBlas::Dot(rArr, zArr);
   } else {
-    alpha = stormUtils::Dot(rArr, rArr);
+    alpha = stormBlas::Dot(rArr, rArr);
   }
 
   // ----------------------
@@ -149,10 +149,10 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // 𝛾 ← 𝛼.
   // ----------------------
   beta = stormUtils::SafeDivide(alpha, gamma);
-  stormUtils::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);
+  stormBlas::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);
   gamma = alpha;
 
-  return (preOp != nullptr) ? stormUtils::Norm2(rArr) : std::sqrt(gamma);
+  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(gamma);
 
 } // stormCgSolver<...>::Iterate
 

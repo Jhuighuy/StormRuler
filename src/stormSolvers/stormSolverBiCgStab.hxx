@@ -80,17 +80,17 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // 𝜑 ← ‖𝒓‖,
   // ----------------------
   linOp.MatVec(rArr, xArr);
-  stormUtils::Sub(rArr, bArr, rArr);
-  const stormReal_t phi = stormUtils::Norm2(rArr);
+  stormBlas::Sub(rArr, bArr, rArr);
+  const stormReal_t phi = stormBlas::Norm2(rArr);
 
   // ----------------------
   // 𝒓̃ ← 𝒓,
   // 𝒑 ← {𝟢}ᵀ, 𝒗 ← {𝟢}ᵀ,
   // 𝜌 ← 𝟣, 𝛼 ← 𝟣, 𝜔 ← 𝟣.
   // ----------------------
-  stormUtils::Set(rTildeArr, rArr);
-  stormUtils::Fill(pArr, 0.0);
-  stormUtils::Fill(vArr, 0.0);
+  stormBlas::Set(rTildeArr, rArr);
+  stormBlas::Fill(pArr, 0.0);
+  stormBlas::Fill(vArr, 0.0);
   rho = 1.0, alpha = 1.0, omega = 1.0;
 
   return phi;
@@ -110,7 +110,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝛽 ← (𝜌/𝜌̂)⋅(𝛼/𝜔),
   // ----------------------
   stormReal_t rhoHat = rho; 
-  rho = stormUtils::Dot(rTildeArr, rArr);
+  rho = stormBlas::Dot(rTildeArr, rArr);
   beta = stormUtils::SafeDivide(rho, rhoHat)*stormUtils::SafeDivide(alpha, omega);
 
   // ----------------------
@@ -123,8 +123,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   //   𝒗 ← 𝓐𝒑.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormUtils::Sub(pArr, pArr, vArr, omega);
-  stormUtils::Add(pArr, rArr, pArr, beta);
+  stormBlas::Sub(pArr, pArr, vArr, omega);
+  stormBlas::Add(pArr, rArr, pArr, beta);
   if (preOp != nullptr) {
     preOp->MatVec(yArr, pArr);
     linOp.MatVec(vArr, yArr);
@@ -142,8 +142,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   //   𝒕 ← 𝓐𝒔.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  alpha = stormUtils::SafeDivide(rho, stormUtils::Dot(rTildeArr, vArr));
-  stormUtils::Sub(sArr, rArr, vArr, alpha);
+  alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
+  stormBlas::Sub(sArr, rArr, vArr, alpha);
   if (preOp != nullptr) {
     preOp->MatVec(zArr, sArr);
     linOp.MatVec(tArr, zArr);
@@ -163,13 +163,13 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   omega = stormUtils::SafeDivide(
-    stormUtils::Dot(tArr, sArr), stormUtils::Dot(tArr, tArr));
+    stormBlas::Dot(tArr, sArr), stormBlas::Dot(tArr, tArr));
   if (preOp != nullptr) {
-    stormUtils::Add(xArr, xArr, zArr, omega);
-    stormUtils::Add(xArr, xArr, yArr, alpha);
+    stormBlas::Add(xArr, xArr, zArr, omega);
+    stormBlas::Add(xArr, xArr, yArr, alpha);
   } else {
-    stormUtils::Add(xArr, xArr, sArr, omega);
-    stormUtils::Add(xArr, xArr, pArr, alpha);
+    stormBlas::Add(xArr, xArr, sArr, omega);
+    stormBlas::Add(xArr, xArr, pArr, alpha);
   }
 
   // ----------------------
@@ -177,8 +177,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒔 - 𝜔𝒕,
   // 𝜑 ← ‖𝒓‖.
   // ----------------------
-  stormUtils::Sub(rArr, sArr, tArr, omega);
-  stormReal_t const phi = stormUtils::Norm2(rArr);
+  stormBlas::Sub(rArr, sArr, tArr, omega);
+  stormReal_t const phi = stormBlas::Norm2(rArr);
 
   return phi;
 

@@ -306,8 +306,8 @@ stormReal_t stormPowerIterations<tArray>::
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
   stormReal_t lambda = 1.0;
-  stormUtils::RandFill(xArr);
-  stormUtils::Scale(xArr, xArr, 1.0/stormUtils::Norm2(xArr));
+  stormBlas::RandFill(xArr);
+  stormBlas::Scale(xArr, xArr, 1.0/stormBlas::Norm2(xArr));
 
   for (stormSize_t iteration = 0; iteration < maxIterations; ++iteration) {
 
@@ -319,8 +319,8 @@ stormReal_t stormPowerIterations<tArray>::
     // ----------------------
     linOp.MatVec(yArr, xArr);
     stormReal_t const lambdaBar = lambda;
-    lambda = stormUtils::Dot(xArr, yArr);
-    stormUtils::Scale(xArr, yArr, 1.0/stormUtils::Norm2(yArr));
+    lambda = stormBlas::Dot(xArr, yArr);
+    stormBlas::Scale(xArr, yArr, 1.0/stormBlas::Norm2(yArr));
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:

@@ -85,14 +85,14 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
   // 𝗲𝗹𝘀𝗲: 𝒕 ← 𝓐*𝒖, 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   // ----------------------
-  beta = stormUtils::Norm2(bArr); stormUtils::Scale(uArr, bArr, 1.0/beta);
+  beta = stormBlas::Norm2(bArr); stormBlas::Scale(uArr, bArr, 1.0/beta);
   if (preOp != nullptr) {
     linOp.ConjMatVec(sArr, uArr);
     preOp->ConjMatVec(tArr, sArr);
   } else {
     linOp.ConjMatVec(tArr, uArr);
   }
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  alpha = stormBlas::Norm2(tArr); stormBlas::Scale(vArr, tArr, 1.0/alpha);
 
 } // stormGolubKahanSolver<...>::InitBidiagonalization
 
@@ -126,16 +126,16 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
   } else {
     linOp.MatVec(tArr, vArr);
   }
-  stormUtils::Sub(tArr, tArr, uArr, alpha);
-  beta = stormUtils::Norm2(tArr); stormUtils::Scale(uArr, tArr, 1.0/beta);
+  stormBlas::Sub(tArr, tArr, uArr, alpha);
+  beta = stormBlas::Norm2(tArr); stormBlas::Scale(uArr, tArr, 1.0/beta);
   if (preOp != nullptr) {
     linOp.ConjMatVec(sArr, uArr);
     preOp->ConjMatVec(tArr, sArr);
   } else {
     linOp.ConjMatVec(tArr, uArr);
   }
-  stormUtils::Sub(tArr, tArr, vArr, beta);
-  alpha = stormUtils::Norm2(tArr); stormUtils::Scale(vArr, tArr, 1.0/alpha);
+  stormBlas::Sub(tArr, tArr, vArr, beta);
+  alpha = stormBlas::Norm2(tArr); stormBlas::Scale(vArr, tArr, 1.0/alpha);
 
 } // stormGolubKahanSolver<...>::ContinueBidiagonalization
 
@@ -213,8 +213,8 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
   linOp.MatVec(rArr, xArr);
-  stormUtils::Sub(rArr, bArr, rArr);
-  stormUtils::Fill(zArr, 0.0);
+  stormBlas::Sub(rArr, bArr, rArr);
+  stormBlas::Fill(zArr, 0.0);
 
   // ----------------------
   // Initialize the bidiagonalization procedure:
@@ -228,7 +228,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // 𝒘 ← 𝒗,
   // ----------------------
   phiBar = beta; rhoBar = alpha;
-  stormUtils::Set(wArr, vArr);
+  stormBlas::Set(wArr, vArr);
 
   return phiBar;
 
@@ -265,8 +265,8 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
   // 𝒛 ← 𝒛 + (𝜑/𝜌)𝒘,
   // 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
   // ----------------------
-  stormUtils::Add(zArr, zArr, wArr, phi/rho);
-  stormUtils::Sub(wArr, vArr, wArr, theta/rho);
+  stormBlas::Add(zArr, zArr, wArr, phi/rho);
+  stormBlas::Sub(wArr, vArr, wArr, theta/rho);
 
   return phiBar;
 
@@ -287,9 +287,9 @@ void stormLsqrSolver<tInArray, tOutArray>::
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(tArr, zArr);
-    stormUtils::Add(xArr, xArr, tArr);
+    stormBlas::Add(xArr, xArr, tArr);
   } else {
-    stormUtils::Add(xArr, xArr, zArr);
+    stormBlas::Add(xArr, xArr, zArr);
   }
 
 } // stormLsqrSolver<...>::Finalize
@@ -369,8 +369,8 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
   linOp.MatVec(rArr, xArr);
-  stormUtils::Sub(rArr, bArr, rArr);
-  stormUtils::Fill(zArr, 0.0);
+  stormBlas::Sub(rArr, bArr, rArr);
+  stormBlas::Fill(zArr, 0.0);
 
   // ----------------------
   // Initialize the bidiagonalization procedure:
@@ -386,7 +386,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // ----------------------
   alphaBar = alpha; psiBar = alpha*beta;
   zeta = 1.0; csBar = 1.0; snBar = 0.0;
-  stormUtils::Set(wArr, vArr); stormUtils::Fill(hArr, 0.0);
+  stormBlas::Set(wArr, vArr); stormBlas::Fill(hArr, 0.0);
 
   return std::abs(psiBar);
 
@@ -428,9 +428,9 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
   // 𝒛 ← 𝒛 + (𝜓/𝜁)𝒉,
   // 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
   // ----------------------
-  stormUtils::Sub(hArr, wArr, hArr, thetaBar*rho/zeta); zeta = rho*rhoBar;
-  stormUtils::Add(zArr, zArr, hArr, psi/zeta);
-  stormUtils::Sub(wArr, vArr, wArr, theta/rho);
+  stormBlas::Sub(hArr, wArr, hArr, thetaBar*rho/zeta); zeta = rho*rhoBar;
+  stormBlas::Add(zArr, zArr, hArr, psi/zeta);
+  stormBlas::Sub(wArr, vArr, wArr, theta/rho);
 
   return std::abs(psiBar);
 
@@ -451,9 +451,9 @@ void stormLsmrSolver<tInArray, tOutArray>::
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(tArr, zArr);
-    stormUtils::Add(xArr, xArr, tArr);
+    stormBlas::Add(xArr, xArr, tArr);
   } else {
-    stormUtils::Add(xArr, xArr, zArr);
+    stormBlas::Add(xArr, xArr, zArr);
   }
 
 } // stormLsmrSolver<...>::Finalize

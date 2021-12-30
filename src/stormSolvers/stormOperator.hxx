@@ -81,6 +81,18 @@ namespace stormUtils {
     return (y == 0.0) ? 0.0 : (x/y);
   }
 
+  void AllocLike(stormArray const& like, stormArray& z) {
+    z.Mesh = like.Mesh;
+    z.Array = stormAllocLike(like.Array);
+  }
+  template<class... tArray>
+  void AllocLike(stormArray const& like, stormArray& z, tArray&... zz) {
+    AllocLike(like, z);
+    AllocLike(like, zz...);
+  }
+}
+
+namespace stormBlas {
   stormReal_t Norm2(stormArray const& z) {
     return stormNorm2(z.Mesh, z.Array);
   }
@@ -110,16 +122,6 @@ namespace stormUtils {
   void Sub(stormArray& z, stormArray const& y, stormArray const& x, 
           stormReal_t a = 1.0, stormReal_t b = 1.0) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-
-  void AllocLike(stormArray const& like, stormArray& z) {
-    z.Mesh = like.Mesh;
-    z.Array = stormAllocLike(like.Array);
-  }
-  template<class... tArray>
-  void AllocLike(stormArray const& like, stormArray& z, tArray&... zz) {
-    AllocLike(like, z);
-    AllocLike(like, zz...);
   }
 }
 

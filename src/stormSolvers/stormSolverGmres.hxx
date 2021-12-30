@@ -126,8 +126,8 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
   // 𝜑 ← ‖𝓠₀‖,
   // ----------------------
   linOp.MatVec(QArr[0], xArr);
-  stormUtils::Sub(QArr[0], bArr, QArr[0]);
-  stormReal_t const phi = stormUtils::Norm2(QArr[0]);
+  stormBlas::Sub(QArr[0], bArr, QArr[0]);
+  stormReal_t const phi = stormBlas::Norm2(QArr[0]);
 
   // ----------------------
   // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
@@ -137,7 +137,7 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
   std::fill(cs.begin(), cs.end(), 0.0);
   std::fill(sn.begin(), sn.end(), 0.0);
   beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
-  stormUtils::Scale(QArr[0], QArr[0], 1.0/phi);
+  stormBlas::Scale(QArr[0], QArr[0], 1.0/phi);
 
   return phi;
 
@@ -174,11 +174,11 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
     linOp.MatVec(QArr[k + 1], QArr[k]);
   }
   for (stormSize_t i = 0; i <= k; ++i) {
-    H[i][k] = stormUtils::Dot(QArr[k + 1], QArr[i]);
-    stormUtils::Sub(QArr[k + 1], QArr[k + 1], QArr[i], H[i][k]);
+    H[i][k] = stormBlas::Dot(QArr[k + 1], QArr[i]);
+    stormBlas::Sub(QArr[k + 1], QArr[k + 1], QArr[i], H[i][k]);
   }
-  H[k + 1][k] = stormUtils::Norm2(QArr[k + 1]); 
-  stormUtils::Scale(QArr[k + 1], QArr[k + 1], 1.0/H[k + 1][k]);
+  H[k + 1][k] = stormBlas::Norm2(QArr[k + 1]); 
+  stormBlas::Scale(QArr[k + 1], QArr[k + 1], 1.0/H[k + 1][k]);
 
   // ----------------------
   // Eliminate the last element in 𝓗
@@ -198,7 +198,7 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
     H[i][k] = chi;
   }
   std::tie(cs[k], sn[k], std::ignore) =
-    stormUtils::SymOrtho(H[k][k], H[k + 1][k]);
+    stormBlas::SymOrtho(H[k][k], H[k + 1][k]);
   H[k][k] = cs[k]*H[k][k] + sn[k]*H[k + 1][k];
   H[k + 1][k] = 0.0;
 
@@ -256,11 +256,11 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
   // ----------------------
   if (preOp == nullptr) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormUtils::Add(xArr, xArr, QArr[i], beta[i]);
+      stormBlas::Add(xArr, xArr, QArr[i], beta[i]);
     }
   } else if (Flexible) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormUtils::Add(xArr, xArr, ZArr[i], beta[i]);
+      stormBlas::Add(xArr, xArr, ZArr[i], beta[i]);
     }
   } else {
     /// @todo: This code seems faulty: \
@@ -268,12 +268,12 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
     ///   both PGMRES and FGMRES should converge identically,
     ///   but PGMRES takes about 2x more iterations than FGMRES
     ///   because it breaks after the restart. 
-    stormUtils::Scale(QArr[0], QArr[0], beta[0]);
+    stormBlas::Scale(QArr[0], QArr[0], beta[0]);
     for (stormSize_t i = 1; i <= k; ++i) {
-      stormUtils::Add(QArr[0], QArr[0], QArr[i], beta[i]);
+      stormBlas::Add(QArr[0], QArr[0], QArr[i], beta[i]);
     }
     preOp->MatVec(ZArr[0], QArr[0]);
-    stormUtils::Add(xArr, xArr, ZArr[0]);
+    stormBlas::Add(xArr, xArr, ZArr[0]);
   }
 
 } // stormGmresSolver<...>::ReFinalize

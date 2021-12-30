@@ -54,13 +54,13 @@ private:
   void MatVec(tArray& yArr,
               tArray const& xArr) const override final {
     std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
-    stormUtils::Set(yArr, xArr);
+    stormBlas::Set(yArr, xArr);
   }
 
   void ConjMatVec(tArray& xArr,
                   tArray const& yArr) const override final {
     std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
-    stormUtils::Set(xArr, yArr);
+    stormBlas::Set(xArr, yArr);
   }
 
 }; // class stormIdentityPreconditioner<...>

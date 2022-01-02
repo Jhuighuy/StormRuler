@@ -81,7 +81,7 @@ products.
   * Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems,
      with optional support of _flexible preconditioning_),
-  * _(planned)_ Transpose-free Quasi-Minimal Residual solver
+  * Transpose-free Quasi-Minimal Residual solver
     (`TFQMR`, for the general linear problems);
 
 - 🚜 Linear iterative least squares solvers:
@@ -178,14 +178,16 @@ Legend:
 
 * Linear iterative solvers:
   - [ ] 💄 Some better residual monitor,
-  - [ ] 🧸 Report true residual in CG,
+  - [x] 🧸 Report true residual in CG,
   - [ ] 🪓 `FCG` solver implementation,
   - [x] 🧸 Switch from left to right preconditioned `BiCGStab`,
   - [x] 🚬 `GMRES` solver implementation,
   - [x] 🪓 Right preconditioned `GMRES` implementation,
-  - [x] 🐞 Right preconditioned `GMRES` implementation looks broken,
+  - [ ] 🐞 Right preconditioned `GMRES` implementation looks broken,
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
-  - [ ] 🪓 `TFQMR` solver implementation.
+  - [x] 🪓 `TFQMR` solver implementation.
+  - [ ] 🧸 `TFQMR` solver implementation with L1.
+  - [ ] 🪓 Right preconditioned `TFQMR` solver.
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,

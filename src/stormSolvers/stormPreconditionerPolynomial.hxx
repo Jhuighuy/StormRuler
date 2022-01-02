@@ -91,7 +91,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     
     // ----------------------
     // Continue the Chebyshev iterations:
-    // 𝗶𝗳 𝑘 == 1:
+    // 𝗶𝗳 𝑘 == 𝟢:
     //   𝛼 ← 1/𝑑,
     //   𝒑 ← 𝒓,
     // 𝗲𝗹𝘀𝗲:
@@ -101,7 +101,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     //   𝒑 ← 𝒓 + 𝛽𝒑.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    if (iteration == 1) {
+    if (iteration == 0) {
       alpha = 1.0/d;
       stormBlas::Set(pArr, rArr);
     } else {

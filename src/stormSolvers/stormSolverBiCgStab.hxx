@@ -45,7 +45,7 @@
 template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 private:
-  stormReal_t alpha, beta, rho, omega;
+  stormReal_t alpha, rho, omega;
   tArray pArr, rArr, rTildeArr, tArr, vArr, yArr, zArr;
 
   stormReal_t Init(tArray& xArr,
@@ -85,13 +85,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
 
   // ----------------------
   // 𝒓̃ ← 𝒓,
-  // 𝒑 ← {𝟢}ᵀ, 𝒗 ← {𝟢}ᵀ,
-  // 𝜌 ← 𝟣, 𝛼 ← 𝟣, 𝜔 ← 𝟣.
   // ----------------------
   stormBlas::Set(rTildeArr, rArr);
-  stormBlas::Fill(pArr, 0.0);
-  stormBlas::Fill(vArr, 0.0);
-  rho = 1.0, alpha = 1.0, omega = 1.0;
 
   return phi;
 
@@ -106,20 +101,30 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Iterate:
   // 𝜌̅ ← 𝜌,
-  // 𝜌 ← <𝒓̃⋅𝒓>,
-  // 𝛽 ← (𝜌/𝜌̅)⋅(𝛼/𝜔).
+  // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   stormReal_t rhoBar = rho; 
   rho = stormBlas::Dot(rTildeArr, rArr);
-  beta = stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
 
   // ----------------------
-  // 𝒑 ← 𝒑 - 𝜔⋅𝒗,
-  // 𝒑 ← 𝒓 + 𝛽⋅𝒑,
+  // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
+  //   𝒑 ← 𝒓,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝛽 ← (𝜌/𝜌̅)⋅(𝛼/𝜔),
+  //   𝒑 ← 𝒑 - 𝜔⋅𝒗,
+  //   𝒑 ← 𝒓 + 𝛽⋅𝒑,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒗, 𝒚 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
   // ----------------------
-  stormBlas::Sub(pArr, pArr, vArr, omega);
-  stormBlas::Add(pArr, rArr, pArr, beta);
+  bool const firstIteration = this->Iteration == 0;
+  if (firstIteration) {
+    stormBlas::Set(pArr, rArr);
+  } else {
+    stormReal_t const beta = 
+      stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
+    stormBlas::Sub(pArr, pArr, vArr, omega);
+    stormBlas::Add(pArr, rArr, pArr, beta);
+  }
   stormUtils::MatVecRightPre(vArr, yArr, pArr, linOp, preOp);
 
   // ----------------------

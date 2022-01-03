@@ -77,18 +77,13 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝜑 ← ‖𝒓‖,
+  // 𝒓̃ ← 𝒓.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
-  const stormReal_t phi = stormBlas::Norm2(rArr);
-
-  // ----------------------
-  // 𝒓̃ ← 𝒓,
-  // ----------------------
   stormBlas::Set(rTildeArr, rArr);
 
-  return phi;
+  return stormBlas::Norm2(rArr);
 
 } // stormBiCgStabSolver<...>::Init
 
@@ -99,7 +94,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
                                                  stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
-  // Iterate:
+  // Continue the iterations:
   // 𝜌̅ ← 𝜌,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
@@ -128,44 +123,32 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   stormUtils::MatVecRightPre(vArr, yArr, pArr, linOp, preOp);
 
   // ----------------------
+  // Update the solution and the residual:
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
-  // 𝒓 ← 𝒓 - 𝛼⋅𝒗,
-  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓].
+  // 𝒙 ← 𝒙 + 𝛼⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒚 : 𝒑),
+  // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
+  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? yArr : pArr, alpha);
   stormBlas::Sub(rArr, rArr, vArr, alpha);
-  stormUtils::MatVecRightPre(tArr, zArr, rArr, linOp, preOp);
+
+  /// @todo Check the residual norm here!
+  //return stormBlas::Norm2(rArr);
 
   // ----------------------
-  // Update the solution:
+  // Update the solution and the residual again:
+  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓],
   // 𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒙 ← 𝒙 + 𝜔⋅𝒛,
-  //   𝒙 ← 𝒙 + 𝛼⋅𝒚,
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒙 ← 𝒙 + 𝜔⋅𝒓,
-  //   𝒙 ← 𝒙 + 𝛼⋅𝒑,
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒙 ← 𝒙 + 𝜔⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓),
+  // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
+  stormUtils::MatVecRightPre(tArr, zArr, rArr, linOp, preOp);
   omega = stormUtils::SafeDivide(
     stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
-  if (preOp != nullptr) {
-    stormBlas::Add(xArr, xArr, zArr, omega);
-    stormBlas::Add(xArr, xArr, yArr, alpha);
-  } else {
-    stormBlas::Add(xArr, xArr, rArr, omega);
-    stormBlas::Add(xArr, xArr, pArr, alpha);
-  }
-
-  // ----------------------
-  // Update residual:
-  // 𝒓 ← 𝒓 - 𝜔⋅𝒕,
-  // 𝜑 ← ‖𝒓‖.
-  // ----------------------
+  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? zArr : rArr, omega);
   stormBlas::Sub(rArr, rArr, tArr, omega);
-  stormReal_t const phi = stormBlas::Norm2(rArr);
 
-  return phi;
+  return stormBlas::Norm2(rArr);
 
 } // stormBiCgStabSolver<...>::Iterate
 

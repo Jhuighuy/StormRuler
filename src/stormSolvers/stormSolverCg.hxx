@@ -140,11 +140,7 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // 𝛽 ← 𝛼/𝛼̅,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒑 ← 𝒛 + 𝛽⋅𝒑.
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   stormReal_t const beta = stormUtils::SafeDivide(alpha, alphaBar);
   stormBlas::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);

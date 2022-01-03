@@ -77,8 +77,14 @@ public:
 };
 
 namespace stormUtils {
+  
   stormReal_t SafeDivide(stormReal_t x, stormReal_t y) {
     return (y == 0.0) ? 0.0 : (x/y);
+  }
+
+  stormReal_t& SafeDivideEquals(stormReal_t& x, stormReal_t y) {
+    x = SafeDivide(x, y);
+    return x;
   }
 
   void AllocLike(stormArray const& like, stormArray& z) {

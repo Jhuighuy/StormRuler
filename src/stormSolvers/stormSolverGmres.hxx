@@ -219,16 +219,16 @@ void stormBaseGmresSolver<Flexible, tArray>::
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 = 𝗻𝗼𝗻𝗲:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ𝓠ᵢ,
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝓠ᵢ,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ𝓩ᵢ,
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝓩ᵢ,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲:
   //   𝓠₀ ← 𝜷₀𝓠₀,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
-  //     𝓠₀ ← 𝓠₀ + 𝜷ᵢ𝓠ᵢ,
+  //     𝓠₀ ← 𝓠₀ + 𝜷ᵢ⋅𝓠ᵢ,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   //   𝓩₀ ← 𝓟𝓠₀,
   //   𝒙 ← 𝒙 + 𝓩₀.
@@ -243,11 +243,6 @@ void stormBaseGmresSolver<Flexible, tArray>::
       stormBlas::Add(xArr, xArr, ZArr[i], beta[i]);
     }
   } else {
-    /// @todo: This code seems faulty: \
-    ///   when the non-flexible preconditioner is used,
-    ///   both PGMRES and FGMRES should converge identically,
-    ///   but PGMRES takes about 2x more iterations than FGMRES
-    ///   because it breaks after the restart. 
     stormBlas::Scale(QArr[0], QArr[0], beta[0]);
     for (stormSize_t i = 1; i <= k; ++i) {
       stormBlas::Add(QArr[0], QArr[0], QArr[i], beta[i]);

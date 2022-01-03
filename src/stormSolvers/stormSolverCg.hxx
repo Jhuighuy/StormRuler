@@ -46,8 +46,8 @@
 template<class tArray>
 class stormCgSolver final : public stormIterativeSolver<tArray> {
 private:
-  stormReal_t alpha, beta, gamma;
-  tArray pArr, rArr, tArr, zArr;
+  stormReal_t alpha;
+  tArray pArr, rArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -70,15 +70,12 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  stormUtils::AllocLike(xArr, pArr, rArr, tArr);
-  if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, zArr);
-  }
+  stormUtils::AllocLike(xArr, pArr, rArr, zArr);
 
   // ----------------------
   // Initialize:
   // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒕.
+  // 𝒓 ← 𝒃 - 𝒓.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
@@ -87,22 +84,22 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝓟𝒓,
   //   𝒑 ← 𝒛,
-  //   𝛾 ← <𝒓⋅𝒛>,
+  //   𝛼 ← <𝒓⋅𝒛>,
   // 𝗲𝗹𝘀𝗲:
   //   𝒑 ← 𝒓,
-  //   𝛾 ← <𝒓⋅𝒓>.
+  //   𝛼 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zArr, rArr);
     stormBlas::Set(pArr, zArr);
-    gamma = stormBlas::Dot(rArr, zArr);
+    alpha = stormBlas::Dot(rArr, zArr);
   } else {
     stormBlas::Set(pArr, rArr);
-    gamma = stormBlas::Dot(rArr, rArr);
+    alpha = stormBlas::Dot(rArr, rArr);
   }
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(gamma);
+  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(alpha);
 
 } // stormCgSolver<...>::Init
 
@@ -114,15 +111,17 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Iterate:
-  // 𝒕 ← 𝓐𝒑,
-  // 𝛼 ← 𝛾/<𝒑⋅𝒕>,
-  // 𝒙 ← 𝒙 + 𝛼𝒑,
-  // 𝒓 ← 𝒓 - 𝛼𝒕,
+  // 𝒛 ← 𝓐𝒑,
+  // 𝛼̅ ← 𝛼,
+  // 𝛼 ← 𝛼/<𝒑⋅𝒛>,
+  // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
+  // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
-  linOp.MatVec(tArr, pArr);
-  alpha = stormUtils::SafeDivide(gamma, stormBlas::Dot(pArr, tArr));
+  linOp.MatVec(zArr, pArr);
+  stormReal_t const alphaBar = alpha;
+  stormUtils::SafeDivideEquals(alpha, stormBlas::Dot(pArr, zArr));
   stormBlas::Add(xArr, xArr, pArr, alpha);
-  stormBlas::Sub(rArr, rArr, tArr, alpha);
+  stormBlas::Sub(rArr, rArr, zArr, alpha);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -140,19 +139,17 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   }
 
   // ----------------------
-  // 𝛽 ← 𝛼/𝛾,
+  // 𝛽 ← 𝛼/𝛼̅,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒑 ← 𝒛 + 𝛽𝒑,
+  //   𝒑 ← 𝒛 + 𝛽⋅𝒑.
   // 𝗲𝗹𝘀𝗲:
-  //   𝒑 ← 𝒓 + 𝛽𝒑,
+  //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝛾 ← 𝛼.
   // ----------------------
-  beta = stormUtils::SafeDivide(alpha, gamma);
+  stormReal_t const beta = stormUtils::SafeDivide(alpha, alphaBar);
   stormBlas::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);
-  gamma = alpha;
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(gamma);
+  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(alpha);
 
 } // stormCgSolver<...>::Iterate
 

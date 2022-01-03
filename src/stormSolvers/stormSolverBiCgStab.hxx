@@ -114,8 +114,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   beta = stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
 
   // ----------------------
-  // 𝒑 ← 𝒑 - 𝜔𝒗,
-  // 𝒑 ← 𝒓 + 𝛽𝒑,
+  // 𝒑 ← 𝒑 - 𝜔⋅𝒗,
+  // 𝒑 ← 𝒓 + 𝛽⋅𝒑,
   // 𝒗, 𝒚 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
   // ----------------------
   stormBlas::Sub(pArr, pArr, vArr, omega);
@@ -124,7 +124,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
-  // 𝒓 ← 𝒓 - 𝛼𝒗,
+  // 𝒓 ← 𝒓 - 𝛼⋅𝒗,
   // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓].
   // ----------------------
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
@@ -135,11 +135,11 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // Update the solution:
   // 𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒙 ← 𝒙 + 𝜔𝒛,
-  //   𝒙 ← 𝒙 + 𝛼𝒚,
+  //   𝒙 ← 𝒙 + 𝜔⋅𝒛,
+  //   𝒙 ← 𝒙 + 𝛼⋅𝒚,
   // 𝗲𝗹𝘀𝗲:
-  //   𝒙 ← 𝒙 + 𝜔𝒓,
-  //   𝒙 ← 𝒙 + 𝛼𝒑,
+  //   𝒙 ← 𝒙 + 𝜔⋅𝒓,
+  //   𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   omega = stormUtils::SafeDivide(
@@ -154,7 +154,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update residual:
-  // 𝒓 ← 𝒓 - 𝜔𝒕,
+  // 𝒓 ← 𝒓 - 𝜔⋅𝒕,
   // 𝜑 ← ‖𝒓‖.
   // ----------------------
   stormBlas::Sub(rArr, rArr, tArr, omega);

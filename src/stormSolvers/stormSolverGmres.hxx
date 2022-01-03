@@ -31,36 +31,10 @@
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the
-///   monstrous @c GMRES (Generalized Minimal Residual) method.
-///
-/// When @c GMRES is supplied with a preconditioner, optionally the
-/// @c FGMRES (Flexible @c GMRES) variation of the method may be
-/// enabled. This allows usage of the variable (or flexible)
-/// preconditioners with the price of doubleing of the memory 
-/// requirements. 
-///
-/// @c GMRES may be applied to the singular problems, and the square
-/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
-/// although convergeance to minimum norm solution is not guaranteed
-/// (is this true?).
-///
-/// References:
-/// @verbatim
-/// [1] Saad, Yousef and Martin H. Schultz. 
-///     “GMRES: A generalized minimal residual algorithm for solving 
-///      nonsymmetric linear systems.” 
-///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
-/// [2] Saad, Yousef. 
-///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.” 
-///     SIAM J. Sci. Comput. 14 (1993): 461-469.
-/// @endverbatim
+/// @brief Base class for @c GMRES and @c FGMRES.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormGmresSolver final : public stormRestartableSolver<tArray> {
-public:
-  bool Flexible = true;
-
+template<bool Flexible, class tArray>
+class stormBaseGmresSolver : public stormRestartableSolver<tArray> {
 private:
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> H;
@@ -87,12 +61,17 @@ private:
                   stormOperator<tArray> const& linOp,
                   stormPreconditioner<tArray> const* preOp) override;
 
-}; // class stormGmresSolver<...>
+protected:
 
-template<class tArray>
-void stormGmresSolver<tArray>::PreInit(tArray& xArr,
-                                       tArray const& bArr, 
-                                       bool hasPreOp) {
+  stormBaseGmresSolver() = default;
+
+}; // class stormBaseGmresSolver<...>
+
+template<bool Flexible, class tArray>
+void stormBaseGmresSolver<Flexible, tArray>::
+                          PreInit(tArray& xArr,
+                                  tArray const& bArr, 
+                                  bool hasPreOp) {
 
   // ----------------------
   // Allocate the intermediate arrays:
@@ -111,13 +90,14 @@ void stormGmresSolver<tArray>::PreInit(tArray& xArr,
     }
   }
 
-} // stormGmresSolver<...>::Init
+} // stormBaseGmresSolver<...>::Init
 
-template<class tArray>
-stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
-                                             tArray const& bArr,
-                                             stormOperator<tArray> const& linOp,
-                                             stormPreconditioner<tArray> const* preOp) {
+template<bool Flexible, class tArray>
+stormReal_t stormBaseGmresSolver<Flexible, tArray>::
+                                  ReInit(tArray& xArr,
+                                         tArray const& bArr,
+                                         stormOperator<tArray> const& linOp,
+                                         stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Initialize:
@@ -141,14 +121,15 @@ stormReal_t stormGmresSolver<tArray>::ReInit(tArray& xArr,
 
   return phi;
 
-} // stormGmresSolver<...>::ReInit
+} // stormBaseGmresSolver<...>::ReInit
 
-template<class tArray>
-stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
-                                                tArray& xArr,
-                                                tArray const& bArr,
-                                                stormOperator<tArray> const& linOp,
-                                                stormPreconditioner<tArray> const* preOp) {
+template<bool Flexible, class tArray>
+stormReal_t stormBaseGmresSolver<Flexible, tArray>::
+                              ReIterate(stormSize_t k,
+                                        tArray& xArr,
+                                        tArray const& bArr,
+                                        stormOperator<tArray> const& linOp,
+                                        stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Continue the Arnoldi procedure:
@@ -212,14 +193,15 @@ stormReal_t stormGmresSolver<tArray>::ReIterate(stormSize_t k,
 
   return phi;
 
-} // stormGmresSolver<...>::ReIterate
+} // stormBaseGmresSolver<...>::ReIterate
 
-template<class tArray>
-void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
-                                          tArray& xArr,
-                                          tArray const& bArr,
-                                          stormOperator<tArray> const& linOp,
-                                          stormPreconditioner<tArray> const* preOp) {
+template<bool Flexible, class tArray>
+void stormBaseGmresSolver<Flexible, tArray>::
+                      ReFinalize(stormSize_t k,
+                                 tArray& xArr,
+                                 tArray const& bArr,
+                                 stormOperator<tArray> const& linOp,
+                                 stormPreconditioner<tArray> const* preOp) {
 
   // ----------------------
   // Finalize the 𝜷-solution:
@@ -258,7 +240,7 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
     for (stormSize_t i = 0; i <= k; ++i) {
       stormBlas::Add(xArr, xArr, QArr[i], beta[i]);
     }
-  } else if (Flexible) {
+  } else if constexpr (Flexible) {
     for (stormSize_t i = 0; i <= k; ++i) {
       stormBlas::Add(xArr, xArr, ZArr[i], beta[i]);
     }
@@ -276,6 +258,54 @@ void stormGmresSolver<tArray>::ReFinalize(stormSize_t k,
     stormBlas::Add(xArr, xArr, ZArr[0]);
   }
 
-} // stormGmresSolver<...>::ReFinalize
+} // stormBaseGmresSolver<...>::ReFinalize
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Solve a linear operator equation with the
+///   monstrous @c GMRES (Generalized Minimal Residual) method.
+///
+/// @c GMRES may be applied to the singular problems, and the square
+/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
+/// although convergeance to minimum norm solution is not guaranteed
+/// (is this true?).
+///
+/// References:
+/// @verbatim
+/// [1] Saad, Yousef and Martin H. Schultz. 
+///     “GMRES: A generalized minimal residual algorithm for solving 
+///      nonsymmetric linear systems.” 
+///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
+/// @endverbatim
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tArray>
+class stormGmresSolver final : public stormBaseGmresSolver<false, tArray> {
+
+}; // class stormGmresSolver<...>
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Solve a linear operator equation, using \
+///   the yet more monstrous @c FGMRES (Flexible Generalized \
+///   Minimal Residual) method.
+///
+/// @c FGMRES allows usage of the variable (or flexible)
+/// preconditioners with the price of doubleing of the memory 
+/// requirements.
+///
+/// @c FGMRES may be applied to the singular problems, and the square
+/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
+/// although convergeance to minimum norm solution is not guaranteed
+/// (is this true?).
+///
+/// References:
+/// @verbatim
+/// [1] Saad, Yousef. 
+///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.” 
+///     SIAM J. Sci. Comput. 14 (1993): 461-469.
+/// @endverbatim
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tArray>
+class stormFgmresSolver final : public stormBaseGmresSolver<true, tArray> {
+
+}; // class stormFgmresSolver<...>
 
 #endif // ifndef _STORM_SOLVER_GMRES_HXX_

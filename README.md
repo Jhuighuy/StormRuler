@@ -189,7 +189,7 @@ Legend:
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
   - [x] 🪓 `TFQMR` solver implementation.
   - [ ] 🧸 `TFQMR` solver implementation with L1.
-  - [x] 🧸 Right preconditioned `TFQMR` solver,
+  - [ ] 🧸 Right preconditioned `TFQMR` solver,
   - [ ] 🧸 Refactor solvers with a new preconditioning helper function.
 
 * Matrix operations and extraction:

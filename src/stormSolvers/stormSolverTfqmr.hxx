@@ -58,6 +58,11 @@ private:
                       stormOperator<tArray> const& linOp,
                       stormPreconditioner<tArray> const* preOp) override;
 
+  void Finalize(tArray& xArr,
+                tArray const& bArr,
+                stormOperator<tArray> const& linOp,
+                stormPreconditioner<tArray> const* preOp) override;
+
 }; // class stormTfqmrSolver<...>
 
 template<class tArray>
@@ -65,10 +70,13 @@ stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
                                            tArray const& bArr,
                                            stormOperator<tArray> const& linOp,
                                            stormPreconditioner<tArray> const* preOp) {
+
+  assert(preOp == nullptr && "Preconditioned TFQMR is not implemented yet");
+
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  stormUtils::AllocLike(xArr, dArr, rTildeArr, uHatArr, vArr, 
+  stormUtils::AllocLike(xArr, dArr, rTildeArr, uHatArr, vArr,
     yArr, yBarArr, sArr, sBarArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, zArr);
@@ -113,7 +121,7 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   // 𝒚 ← 𝒚̅ - 𝛼⋅𝒗,
   // 𝒔, 𝒛 ← 𝓐[𝓟]𝒚, [𝓟𝒚].
   // ----------------------
-  stormReal_t const sigma = 
+  stormReal_t const sigma =
     stormBlas::Dot(rTildeArr, vArr), alpha = rho/sigma;
   std::swap(yBarArr, yArr), std::swap(sBarArr, sArr);
   stormBlas::Sub(yArr, yBarArr, vArr, alpha);
@@ -123,11 +131,11 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
   //   𝒖̂ ← 𝒖̂ - 𝛼⋅𝒔̅,
   //   𝒅 ← 𝒚̅ + (𝜗²⋅𝜂/𝛼)⋅𝒅,
-  //   𝜗 ← ‖𝒖̂‖/𝜏, 
+  //   𝜗 ← ‖𝒖̂‖/𝜏,
   //   𝑐𝑠 ← 𝟣/(𝟣 + 𝜗²)¹ᐟ²,
   //   𝜏 ← 𝜏⋅𝜗⋅𝑐𝑠, 𝜂 ← 𝛼⋅(𝑐𝑠)²,
   //   𝒙 ← 𝒙 + 𝜂⋅𝒅,
-  //   𝗶𝗳 𝑚 = 𝟢: 
+  //   𝗶𝗳 𝑚 = 𝟢:
   //     𝒚̅, 𝒔̅ ← 𝒚, 𝒔.
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
@@ -145,7 +153,7 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   }
 
   // ----------------------
-  // 𝜌̅ ← 𝜌, 
+  // 𝜌̅ ← 𝜌,
   // 𝜌 ← <𝒓̃⋅𝒖̂>, 𝛽 ← 𝜌/𝜌̅,
   // 𝒚 ← 𝒖̂ + 𝛽⋅𝒚̅,
   // 𝒔, 𝒛 ← 𝓐[𝓟]𝒚, [𝓟𝒚],
@@ -170,5 +178,23 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   return phi;
 
 } // stormTfqmrSolver<...>::Iterate
+
+template<class tArray>
+void stormTfqmrSolver<tArray>::Finalize(tArray& xArr,
+                                        tArray const& bArr,
+                                        stormOperator<tArray> const& linOp,
+                                        stormPreconditioner<tArray> const* preOp) {
+
+  // ----------------------
+  // Finalize the 𝒙-solution:
+  // 𝒛 ← 𝒙,
+  // 𝒙 ← [𝓟]𝒛.
+  // ----------------------
+  if (preOp != nullptr) {
+    std::swap(xArr, zArr);
+    preOp->MatVec(xArr, zArr);
+  }
+
+} // stormTfqmrSolver<...>::Finalize
 
 #endif // ifndef _STORM_SOLVER_TFQMR_

@@ -135,8 +135,7 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // Continue the Arnoldi procedure:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝑗 ← 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦 ? 𝑘 : 𝟢,
-  //   𝓩ⱼ ← 𝓟𝓠ₖ,
-  //   𝓠ₖ₊₁ ← 𝓐𝓩ⱼ,
+  //   𝓠ₖ₊₁, 𝓩ⱼ ← 𝓐𝓟𝓠ₖ, 𝓟𝓠ₖ,
   // 𝗲𝗹𝘀𝗲:
   //   𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
   // 𝗲𝗻𝗱 𝗶𝗳
@@ -149,8 +148,7 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // ----------------------
   if (preOp != nullptr) {
     stormSize_t const j = Flexible ? k : 0;
-    preOp->MatVec(ZArr[j], QArr[k]);
-    linOp.MatVec(QArr[k + 1], ZArr[j]);
+    stormUtils::MatVecRightPre(QArr[k + 1], ZArr[j], QArr[k], linOp, preOp);
   } else {
     linOp.MatVec(QArr[k + 1], QArr[k]);
   }

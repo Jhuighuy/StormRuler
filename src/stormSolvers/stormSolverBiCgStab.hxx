@@ -46,7 +46,7 @@ template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t alpha, beta, rho, omega;
-  tArray pArr, rArr, rTildeArr, sArr, tArr, vArr, yArr, zArr;
+  tArray pArr, rArr, rTildeArr, tArr, vArr, yArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -69,7 +69,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, sArr, tArr, vArr);
+  stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, yArr, zArr);
   }
@@ -105,13 +105,13 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Iterate:
-  // 𝜌̂ ← 𝜌,
+  // 𝜌̅ ← 𝜌,
   // 𝜌 ← <𝒓̃⋅𝒓>,
-  // 𝛽 ← (𝜌/𝜌̂)⋅(𝛼/𝜔).
+  // 𝛽 ← (𝜌/𝜌̅)⋅(𝛼/𝜔).
   // ----------------------
-  stormReal_t rhoHat = rho; 
+  stormReal_t rhoBar = rho; 
   rho = stormBlas::Dot(rTildeArr, rArr);
-  beta = stormUtils::SafeDivide(rho, rhoHat)*stormUtils::SafeDivide(alpha, omega);
+  beta = stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
 
   // ----------------------
   // 𝒑 ← 𝒑 - 𝜔𝒗,
@@ -124,40 +124,40 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
-  // 𝒔 ← 𝒓 - 𝛼𝒗,
-  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒔, [𝓟𝒔].
+  // 𝒓 ← 𝒓 - 𝛼𝒗,
+  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓].
   // ----------------------
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
-  stormBlas::Sub(sArr, rArr, vArr, alpha);
-  stormUtils::MatVecRightPre(tArr, zArr, sArr, linOp, preOp);
+  stormBlas::Sub(rArr, rArr, vArr, alpha);
+  stormUtils::MatVecRightPre(tArr, zArr, rArr, linOp, preOp);
 
   // ----------------------
   // Update the solution:
-  // 𝜔 ← <𝒕⋅𝒔>/<𝒕⋅𝒕>,
+  // 𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒙 ← 𝒙 + 𝜔𝒛,
   //   𝒙 ← 𝒙 + 𝛼𝒚,
   // 𝗲𝗹𝘀𝗲:
-  //   𝒙 ← 𝒙 + 𝜔𝒔,
+  //   𝒙 ← 𝒙 + 𝜔𝒓,
   //   𝒙 ← 𝒙 + 𝛼𝒑,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   omega = stormUtils::SafeDivide(
-    stormBlas::Dot(tArr, sArr), stormBlas::Dot(tArr, tArr));
+    stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
   if (preOp != nullptr) {
     stormBlas::Add(xArr, xArr, zArr, omega);
     stormBlas::Add(xArr, xArr, yArr, alpha);
   } else {
-    stormBlas::Add(xArr, xArr, sArr, omega);
+    stormBlas::Add(xArr, xArr, rArr, omega);
     stormBlas::Add(xArr, xArr, pArr, alpha);
   }
 
   // ----------------------
   // Update residual:
-  // 𝒓 ← 𝒔 - 𝜔𝒕,
+  // 𝒓 ← 𝒓 - 𝜔𝒕,
   // 𝜑 ← ‖𝒓‖.
   // ----------------------
-  stormBlas::Sub(rArr, sArr, tArr, omega);
+  stormBlas::Sub(rArr, rArr, tArr, omega);
   stormReal_t const phi = stormBlas::Norm2(rArr);
 
   return phi;

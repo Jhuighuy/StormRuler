@@ -107,7 +107,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // Iterate:
   // 𝜌̂ ← 𝜌,
   // 𝜌 ← <𝒓̃⋅𝒓>,
-  // 𝛽 ← (𝜌/𝜌̂)⋅(𝛼/𝜔),
+  // 𝛽 ← (𝜌/𝜌̂)⋅(𝛼/𝜔).
   // ----------------------
   stormReal_t rhoHat = rho; 
   rho = stormBlas::Dot(rTildeArr, rArr);
@@ -116,40 +116,20 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // 𝒑 ← 𝒑 - 𝜔𝒗,
   // 𝒑 ← 𝒓 + 𝛽𝒑,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒚 ← 𝓟𝒑,
-  //   𝒗 ← 𝓐𝒚.
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒗 ← 𝓐𝒑.
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒗, 𝒚 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
   // ----------------------
   stormBlas::Sub(pArr, pArr, vArr, omega);
   stormBlas::Add(pArr, rArr, pArr, beta);
-  if (preOp != nullptr) {
-    preOp->MatVec(yArr, pArr);
-    linOp.MatVec(vArr, yArr);
-  } else {
-    linOp.MatVec(vArr, pArr);
-  }
+  stormUtils::MatVecRightPre(vArr, yArr, pArr, linOp, preOp);
 
   // ----------------------
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝒔 ← 𝒓 - 𝛼𝒗,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝓟𝒔,
-  //   𝒕 ← 𝓐𝒛.
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒕 ← 𝓐𝒔.
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒔, [𝓟𝒔].
   // ----------------------
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
   stormBlas::Sub(sArr, rArr, vArr, alpha);
-  if (preOp != nullptr) {
-    preOp->MatVec(zArr, sArr);
-    linOp.MatVec(tArr, zArr);
-  } else {
-    linOp.MatVec(tArr, sArr);
-  }
+  stormUtils::MatVecRightPre(tArr, zArr, sArr, linOp, preOp);
 
   // ----------------------
   // Update the solution:

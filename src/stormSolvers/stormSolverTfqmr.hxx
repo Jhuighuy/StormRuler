@@ -46,7 +46,7 @@ template<class tArray>
 class stormTfqmrSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t tau, rho, theta, eta;
-  tArray dArr, rTildeArr, uHatArr, vArr, yArr, yBarArr, zArr, zBarArr;
+  tArray dArr, rTildeArr, uHatArr, vArr, yArr, yBarArr, sArr, sBarArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -69,9 +69,9 @@ stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
   // Allocate the intermediate arrays:
   // ----------------------
   stormUtils::AllocLike(xArr, dArr, rTildeArr, uHatArr, vArr, 
-    yArr, yBarArr, zArr, zBarArr);
+    yArr, yBarArr, sArr, sBarArr);
   if (preOp != nullptr) {
-    //stormUtils::AllocLike(xArr, wArr, yArr, zArr);
+    stormUtils::AllocLike(xArr, zArr);
   }
 
   // ----------------------
@@ -79,8 +79,8 @@ stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
   // 𝒚 ← 𝓐𝒙,
   // 𝒚 ← 𝒃 - 𝒚,
   // 𝒖̂ ← 𝒚,
-  // 𝒛 ← 𝓐𝒚, 
-  // 𝒗 ← 𝒛,
+  // 𝒔 ← 𝓐[𝓟]𝒚, 
+  // 𝒗 ← 𝒔,
   // 𝒅 ← {𝟢}ᵀ,
   // 𝒓̃ ← 𝒖̂,
   // 𝜌 ← <𝒓̃⋅𝒖̂>,
@@ -89,8 +89,8 @@ stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
   linOp.MatVec(yArr, xArr);
   stormBlas::Sub(yArr, bArr, yArr);
   stormBlas::Set(uHatArr, yArr);
-  linOp.MatVec(zArr, yArr);
-  stormBlas::Set(vArr, zArr);
+  stormUtils::MatVecRightPre(sArr, zArr, yArr, linOp, preOp);
+  stormBlas::Set(vArr, sArr);
   stormBlas::Fill(dArr, 0.0);
   stormBlas::Set(rTildeArr, uHatArr);
   rho = stormBlas::Dot(rTildeArr, uHatArr);
@@ -109,38 +109,38 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Continue the iterations:
   // 𝜎 ← <𝒓̃⋅𝒗>, 𝛼 ← 𝜌/𝜎,
-  // 𝒚̅, 𝒛̅ ← 𝒚, 𝒛,
+  // 𝒚̅, 𝒔̅ ← 𝒚, 𝒔,
   // 𝒚 ← 𝒚̅ - 𝛼⋅𝒗,
-  // 𝒛 ← 𝓐𝒚.
+  // 𝒔 ← 𝓐[𝓟]𝒚.
   // ----------------------
   stormReal_t const sigma = 
     stormBlas::Dot(rTildeArr, vArr), alpha = rho/sigma;
-  std::swap(yBarArr, yArr), std::swap(zBarArr, zArr);
+  std::swap(yBarArr, yArr), std::swap(sBarArr, sArr);
   stormBlas::Sub(yArr, yBarArr, vArr, alpha);
-  linOp.MatVec(zArr, yArr);
+  stormUtils::MatVecRightPre(sArr, zArr, yArr, linOp, preOp);
 
   // ----------------------
   // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
-  //   𝒖̂ ← 𝒖̂ - 𝛼⋅𝒛̅,
+  //   𝒖̂ ← 𝒖̂ - 𝛼⋅𝒔̅,
   //   𝒅 ← 𝒚̅ + (𝜗²⋅𝜂/𝛼)⋅𝒅,
   //   𝜗 ← ‖𝒖̂‖/𝜏, 
   //   𝑐𝑠 ← 𝟣/(𝟣 + 𝜗²)¹ᐟ²,
   //   𝜏 ← 𝜏⋅𝜗⋅𝑐𝑠, 𝜂 ← 𝛼⋅(𝑐𝑠)²,
   //   𝒙 ← 𝒙 + 𝜂⋅𝒅,
   //   𝗶𝗳 𝑚 = 𝟢: 
-  //     𝒚̅, 𝒛̅ ← 𝒚, 𝒛.
+  //     𝒚̅, 𝒔̅ ← 𝒚, 𝒔.
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (stormSize_t m = 0; m <= 1; ++m) {
-    stormBlas::Sub(uHatArr, uHatArr, zBarArr, alpha);
+    stormBlas::Sub(uHatArr, uHatArr, sBarArr, alpha);
     stormBlas::Add(dArr, yBarArr, dArr, std::pow(theta, 2)*eta/alpha);
     theta = stormBlas::Norm2(uHatArr)/tau;
     stormReal_t const cs = 1.0/std::hypot(1.0, theta);
     tau *= theta*cs, eta = alpha*std::pow(cs, 2);
     stormBlas::Add(xArr, xArr, dArr, eta);
     if (m == 0) {
-      std::swap(yBarArr, yArr), std::swap(zBarArr, zArr);
+      std::swap(yBarArr, yArr), std::swap(sBarArr, sArr);
     }
   }
 
@@ -148,17 +148,17 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
   // 𝜌̅ ← 𝜌, 
   // 𝜌 ← <𝒓̃⋅𝒖̂>, 𝛽 ← 𝜌/𝜌̅,
   // 𝒚 ← 𝒖̂ + 𝛽⋅𝒚̅,
-  // 𝒛 ← 𝓐𝒚,
-  // 𝒗 ← 𝒛̅ + 𝛽⋅𝒗,
-  // 𝒗 ← 𝒛 + 𝛽⋅𝒗.
+  // 𝒔 ← 𝓐[𝓟]𝒚,
+  // 𝒗 ← 𝒔̅ + 𝛽⋅𝒗,
+  // 𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // ----------------------
   stormReal_t const rhoBar = rho;
   rho = stormBlas::Dot(rTildeArr, uHatArr);
   stormReal_t const beta = rho/rhoBar;
   stormBlas::Add(yArr, uHatArr, yBarArr, beta);
-  linOp.MatVec(zArr, yArr);
-  stormBlas::Add(vArr, zBarArr, vArr, beta);
-  stormBlas::Add(vArr, zArr, vArr, beta);
+  stormUtils::MatVecRightPre(sArr, zArr, yArr, linOp, preOp);
+  stormBlas::Add(vArr, sBarArr, vArr, beta);
+  stormBlas::Add(vArr, sArr, vArr, beta);
 
   // ----------------------
   // Compute the residual upper bound:

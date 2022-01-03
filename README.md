@@ -189,7 +189,7 @@ Legend:
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
   - [x] 🪓 `TFQMR` solver implementation.
   - [ ] 🧸 `TFQMR` solver implementation with L1.
-  - [ ] 🪓 Right preconditioned `TFQMR` solver.
+  - [x] 🧸 Right preconditioned `TFQMR` solver.
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,

@@ -65,4 +65,46 @@ private:
 
 }; // class stormIdentityPreconditioner<...>
 
+namespace stormUtils {
+
+/// ----------------------------------------------------------------- ///
+/// @brief Compute the left preconditioned matrix-vector product.
+/// ----------------------------------------------------------------- ///
+template<class tInArray, class tOutArray>
+void MatVecLeftPre(tOutArray& yArr,
+                    tInArray& zArr,
+                    tInArray const& xArr,
+                    stormOperator<tInArray, tOutArray> const& linOp,
+                    stormPreconditioner<tInArray> const* preOp) {
+
+  if (preOp == nullptr) {
+    linOp.MatVec(yArr, xArr);
+  } else {
+    linOp.MatVec(zArr, xArr);
+    preOp->MatVec(yArr, zArr);
+  }
+
+} // MatVecLeftPre<...>
+
+/// ----------------------------------------------------------------- ///
+/// @brief Compute the right preconditioned matrix-vector product.
+/// ----------------------------------------------------------------- ///
+template<class tInArray, class tOutArray>
+void MatVecRightPre(tOutArray& yArr,
+                    tInArray& zArr,
+                    tInArray const& xArr,
+                    stormOperator<tInArray, tOutArray> const& linOp,
+                    stormPreconditioner<tInArray> const* preOp) {
+
+  if (preOp == nullptr) {
+    linOp.MatVec(yArr, xArr);
+  } else {
+    preOp->MatVec(zArr, xArr);
+    linOp.MatVec(yArr, zArr);
+  }
+
+} // MatVecRightPre<...>
+
+} // namespace stormUtils
+
 #endif // ifndef _STORM_PRECONDITIONER_HXX_

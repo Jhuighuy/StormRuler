@@ -50,11 +50,12 @@ private:
   stormSize_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
   stormReal_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
-  const stormOperator<tArray>* linOp;
+  mutable tArray pArr, rArr;
+  stormOperator<tArray> const* linOp;
 
-  void Build(const stormOperator<tArray>& linOp) override {
-    this->linOp = &linOp;
-  }
+  void Build(tArray const& xArr,
+             tArray const& bArr,
+             stormOperator<tArray> const& linOp) override;
 
   void MatVec(tArray& yArr,
               tArray const& xArr) const override;
@@ -67,12 +68,19 @@ private:
 }; // class stormIdentityPreconditioner<...>
 
 template<class tArray>
+void stormChebyshevPreconditioner<tArray>::Build(tArray const& xArr,
+                                                 tArray const& bArr,
+                                                 stormOperator<tArray> const& linOp) {
+
+  stormUtils::AllocLike(xArr, pArr, rArr);
+  this->linOp = &linOp;
+
+} // stormChebyshevPreconditioner<...>::Build
+
+template<class tArray>
 void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
                                                   tArray const& xArr) const {
   assert(linOp != nullptr && "Preconditioner was not built!");
-                                                    
-  tArray pArr, rArr;
-  stormUtils::AllocLike(xArr, pArr, rArr);
 
   // ----------------------
   // Initialize the Chebyshev iterations:
@@ -91,14 +99,14 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     
     // ----------------------
     // Continue the Chebyshev iterations:
-    // 𝗶𝗳 𝑘 == 𝟢:
+    // 𝗶𝗳 𝑘 = 𝟢:
     //   𝛼 ← 1/𝑑,
     //   𝒑 ← 𝒓,
     // 𝗲𝗹𝘀𝗲:
-    //   𝗶𝗳 𝑘 == 2: 𝛽 ← ½(𝑐⋅𝛼)²,
+    //   𝗶𝗳 𝑘 = 2: 𝛽 ← ½(𝑐⋅𝛼)²,
     //   𝗲𝗹𝘀𝗲: 𝛽 ← (½⋅𝑐⋅𝛼)², 𝗲𝗻𝗱 𝗶𝗳
     //   𝛼 ← 𝛼/(𝑑⋅𝛼 - 𝛽),
-    //   𝒑 ← 𝒓 + 𝛽𝒑.
+    //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
     if (iteration == 0) {
@@ -116,6 +124,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     }
 
     // ----------------------
+    // Update the solution:
     // 𝒚 ← 𝒚 + 𝛼𝒑,
     // 𝒓 ← 𝓐𝒚,
     // 𝒓 ← 𝒙 - 𝒓.

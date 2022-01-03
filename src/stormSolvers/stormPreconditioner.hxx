@@ -38,8 +38,12 @@ public:
 
   /// @brief Build the preconditioner.
   ///
+  /// @param xArr Solution (block-)array, 𝒙.
+  /// @param bArr Right-hand-side (block-)array, 𝒃.
   /// @param anyOp Operator to build the preconditioner upon.
-  virtual void Build(stormOperator<tArray> const& anyOp) {}
+  virtual void Build(tArray const& xArr,
+                     tArray const& bArr,
+                     stormOperator<tArray> const& anyOp) {}
 
 }; // class stormPreconditioner<...>
 

@@ -182,6 +182,8 @@ Legend:
   - [ ] 💄 Some better residual monitor,
   - [x] 🧸 Report true residual in CG,
   - [ ] 🪓 `FCG` solver implementation,
+  - [ ] 🧻 Fix unpreconditioned `MINRES` solver,
+  - [ ] 🧻 `MINRES` uses too many vectors (10), can be implemented with 7.
   - [x] 🧸 Switch from left to right preconditioned `BiCGStab`,
   - [x] 🚬 `GMRES` solver implementation,
   - [x] 🪓 Right preconditioned `GMRES` implementation,
@@ -190,7 +192,8 @@ Legend:
   - [x] 🪓 `TFQMR` solver implementation.
   - [ ] 🧸 `TFQMR` solver implementation with L1.
   - [ ] 🧸 Right preconditioned `TFQMR` solver,
-  - [ ] 🧸 Refactor solvers with a new preconditioning helper function.
+  - [ ] 🧸 Refactor solvers with a new preconditioning helper function,
+  - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators.
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,

@@ -31,24 +31,24 @@
 
 namespace stormBlas {
 
-  /// @brief Generate Givens rotation.
-  inline auto SymOrtho(stormReal_t a, stormReal_t b) {
+/// @brief Generate Givens rotation.
+inline auto SymOrtho(stormReal_t a, stormReal_t b) {
 
-    // ----------------------
-    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-    // ----------------------
-    stormReal_t cs, sn, rr;
-    rr = std::hypot(a, b);
-    if (rr > 0.0) {
-      cs = a/rr; sn = b/rr;
-    } else {
-      cs = 1.0; sn = 0.0;
-    }
+  // ----------------------
+  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+  // ----------------------
+  stormReal_t cs, sn, rr;
+  rr = std::hypot(a, b);
+  if (rr > 0.0) {
+    cs = a/rr; sn = b/rr;
+  } else {
+    cs = 1.0; sn = 0.0;
+  }
 
-    return std::make_tuple(cs, sn, rr);
+  return std::make_tuple(cs, sn, rr);
 
-  } // SymOrtho
+} // SymOrtho
 
 } // namespace stormBlas
 
@@ -182,7 +182,7 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   tau = cs*phi, phi = sn*phi;
 
   // ----------------------
-  // Update solution:
+  // Update the solution:
   // 𝒘 ← (𝟣/(𝛽̅𝛾))𝒒̅ - (𝛿̅/𝛾)𝒘̅,
   // 𝒘 ← 𝒘 - (𝜀̅/𝛾)𝒘̿,
   // 𝒙 ← 𝒙 + 𝜏𝒘,

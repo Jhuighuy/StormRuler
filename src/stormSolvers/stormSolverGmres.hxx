@@ -25,6 +25,9 @@
 #ifndef _STORM_SOLVER_GMRES_HXX_
 #define _STORM_SOLVER_GMRES_HXX_
 
+#include <array>
+#include <vector>
+#include <type_traits>
 #include <numeric>
 #include <algorithm>
 
@@ -37,8 +40,10 @@ template<bool Flexible, class tArray>
 class stormBaseGmresSolver : public stormRestartableSolver<tArray> {
 private:
   std::vector<stormReal_t> beta, cs, sn;
-  std::vector<std::vector<stormReal_t>> H;
-  std::vector<tArray> QArr, ZArr;
+  std::vector<std::vector<stormReal_t>> h;
+  std::vector<tArray> qArr;
+  std::conditional_t<Flexible, 
+    std::vector<tArray>, std::array<tArray, 1>> zArr;
 
   void PreInit(tArray& xArr,
                tArray const& bArr, 
@@ -67,192 +72,6 @@ protected:
 
 }; // class stormBaseGmresSolver<...>
 
-template<bool Flexible, class tArray>
-void stormBaseGmresSolver<Flexible, tArray>::
-                          PreInit(tArray& xArr,
-                                  tArray const& bArr, 
-                                  bool hasPreOp) {
-
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
-  stormSize_t const m = this->NumIterationsBeforeRestart;
-  beta.resize(m + 1), cs.resize(m), sn.resize(m);
-  H.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
-  QArr.resize(m + 1);
-  for (tArray& qArr : QArr) {
-    stormUtils::AllocLike(xArr, qArr);
-  }
-  if (hasPreOp) {
-    ZArr.resize(Flexible ? m : 1);
-    for (tArray& zArr : ZArr) {
-      stormUtils::AllocLike(xArr, zArr);
-    }
-  }
-
-} // stormBaseGmresSolver<...>::Init
-
-template<bool Flexible, class tArray>
-stormReal_t stormBaseGmresSolver<Flexible, tArray>::
-                                  ReInit(tArray& xArr,
-                                         tArray const& bArr,
-                                         stormOperator<tArray> const& linOp,
-                                         stormPreconditioner<tArray> const* preOp) {
-
-  // ----------------------
-  // Initialize:
-  // 𝓠₀ ← 𝓐𝒙,
-  // 𝓠₀ ← 𝒃 - 𝓠₀,
-  // 𝜑 ← ‖𝓠₀‖,
-  // ----------------------
-  linOp.MatVec(QArr[0], xArr);
-  stormBlas::Sub(QArr[0], bArr, QArr[0]);
-  stormReal_t const phi = stormBlas::Norm2(QArr[0]);
-
-  // ----------------------
-  // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
-  // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
-  // 𝓠₀ ← 𝓠₀/𝜑. 
-  // ----------------------
-  std::fill(cs.begin(), cs.end(), 0.0);
-  std::fill(sn.begin(), sn.end(), 0.0);
-  beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
-  stormBlas::Scale(QArr[0], QArr[0], 1.0/phi);
-
-  return phi;
-
-} // stormBaseGmresSolver<...>::ReInit
-
-template<bool Flexible, class tArray>
-stormReal_t stormBaseGmresSolver<Flexible, tArray>::
-                              ReIterate(stormSize_t k,
-                                        tArray& xArr,
-                                        tArray const& bArr,
-                                        stormOperator<tArray> const& linOp,
-                                        stormPreconditioner<tArray> const* preOp) {
-
-  // ----------------------
-  // Continue the Arnoldi procedure:
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝑗 ← 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦 ? 𝑘 : 𝟢,
-  //   𝓠ₖ₊₁, 𝓩ⱼ ← 𝓐𝓟𝓠ₖ, 𝓟𝓠ₖ,
-  // 𝗲𝗹𝘀𝗲:
-  //   𝓠ₖ₊₁ ← 𝓐𝓠ₖ,
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //   𝓗ᵢₖ ← <𝓠ₖ₊₁⋅𝓠ᵢ>,
-  //   𝓠ₖ₊₁ ← 𝓠ₖ₊₁ - 𝓗ᵢₖ𝓠ᵢ,
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝓗ₖ₊₁,ₖ ← ‖𝓠ₖ₊₁‖, 
-  // 𝓠ₖ₊₁ ← 𝓠ₖ₊₁/𝓗ₖ₊₁,ₖ.  
-  // ----------------------
-  if (preOp != nullptr) {
-    stormSize_t const j = Flexible ? k : 0;
-    stormUtils::MatVecRightPre(QArr[k + 1], ZArr[j], QArr[k], linOp, preOp);
-  } else {
-    linOp.MatVec(QArr[k + 1], QArr[k]);
-  }
-  for (stormSize_t i = 0; i <= k; ++i) {
-    H[i][k] = stormBlas::Dot(QArr[k + 1], QArr[i]);
-    stormBlas::Sub(QArr[k + 1], QArr[k + 1], QArr[i], H[i][k]);
-  }
-  H[k + 1][k] = stormBlas::Norm2(QArr[k + 1]); 
-  stormBlas::Scale(QArr[k + 1], QArr[k + 1], 1.0/H[k + 1][k]);
-
-  // ----------------------
-  // Eliminate the last element in 𝓗
-  // and and update the rotation matrix:
-  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
-  //   𝜒 ← 𝒄𝒔ᵢ⋅𝓗ᵢₖ + 𝒔𝒏ᵢ⋅𝓗ᵢ₊₁,ₖ,
-  //   𝓗ᵢ₊₁,ₖ ← -𝒔𝒏ᵢ⋅𝓗ᵢₖ + 𝒄𝒔ᵢ⋅𝓗ᵢ₊₁,ₖ 
-  //   𝓗ᵢₖ ← 𝜒,
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝒄𝒔ₖ, 𝒔𝒏ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝓗ₖₖ, 𝓗ₖ₊₁,ₖ),
-  // 𝓗ₖₖ ← 𝒄𝒔ₖ⋅𝓗ₖₖ + 𝒔𝒏ₖ⋅𝓗ₖ₊₁,ₖ,
-  // 𝓗ₖ₊₁,ₖ ← 𝟢.
-  // ----------------------
-  for (stormSize_t i = 0; i < k; ++i) {
-    stormReal_t const chi = cs[i]*H[i][k] + sn[i]*H[i + 1][k];
-    H[i + 1][k] = -sn[i]*H[i][k] + cs[i]*H[i+1][k];
-    H[i][k] = chi;
-  }
-  std::tie(cs[k], sn[k], std::ignore) =
-    stormBlas::SymOrtho(H[k][k], H[k + 1][k]);
-  H[k][k] = cs[k]*H[k][k] + sn[k]*H[k + 1][k];
-  H[k + 1][k] = 0.0;
-
-  // ----------------------
-  // Update the 𝜷-solution and residual norm:
-  // 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
-  // 𝜑 ← |𝜷ₖ₊₁|,
-  // ----------------------
-  beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
-  stormReal_t const phi = std::abs(beta[k + 1]);
-
-  return phi;
-
-} // stormBaseGmresSolver<...>::ReIterate
-
-template<bool Flexible, class tArray>
-void stormBaseGmresSolver<Flexible, tArray>::
-                      ReFinalize(stormSize_t k,
-                                 tArray& xArr,
-                                 tArray const& bArr,
-                                 stormOperator<tArray> const& linOp,
-                                 stormPreconditioner<tArray> const* preOp) {
-
-  // ----------------------
-  // Finalize the 𝜷-solution:
-  // 𝜷ₖ ← 𝜷ₖ/𝓗ₖₖ,
-  // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //   𝜷ᵢ ← (𝜷ᵢ - <𝓗ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝓗ᵢᵢ,
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // ----------------------
-  beta[k] /= H[k][k];
-  for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
-    beta[i] -= std::inner_product(
-      beta.begin() + i + 1, beta.begin() + k + 1, H[i].begin() + i + 1, 0.0);
-    beta[i] /= H[i][i];
-  }
-
-  // ----------------------
-  // Compute 𝒙-solution:
-  // 𝗶𝗳 𝓟 = 𝗻𝗼𝗻𝗲:
-  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝓠ᵢ,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
-  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝓩ᵢ,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝗲𝗹𝘀𝗲:
-  //   𝓠₀ ← 𝜷₀⋅𝓠₀,
-  //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
-  //     𝓠₀ ← 𝓠₀ + 𝜷ᵢ⋅𝓠ᵢ,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  //   𝓩₀ ← 𝓟𝓠₀,
-  //   𝒙 ← 𝒙 + 𝓩₀.
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  if (preOp == nullptr) {
-    for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xArr, xArr, QArr[i], beta[i]);
-    }
-  } else if constexpr (Flexible) {
-    for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xArr, xArr, ZArr[i], beta[i]);
-    }
-  } else {
-    stormBlas::Scale(QArr[0], QArr[0], beta[0]);
-    for (stormSize_t i = 1; i <= k; ++i) {
-      stormBlas::Add(QArr[0], QArr[0], QArr[i], beta[i]);
-    }
-    preOp->MatVec(ZArr[0], QArr[0]);
-    stormBlas::Add(xArr, xArr, ZArr[0]);
-  }
-
-} // stormBaseGmresSolver<...>::ReFinalize
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the
 ///   monstrous @c GMRES (Generalized Minimal Residual) method.
@@ -264,7 +83,7 @@ void stormBaseGmresSolver<Flexible, tArray>::
 ///
 /// References:
 /// @verbatim
-/// [1] Saad, Yousef and Martin H. Schultz. 
+/// [1] Saad, Yousef and Martin h. Schultz. 
 ///     “GMRES: A generalized minimal residual algorithm for solving 
 ///      nonsymmetric linear systems.” 
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
@@ -300,5 +119,193 @@ template<class tArray>
 class stormFgmresSolver final : public stormBaseGmresSolver<true, tArray> {
 
 }; // class stormFgmresSolver<...>
+
+template<bool Flexible, class tArray>
+void stormBaseGmresSolver<Flexible, tArray>::
+                          PreInit(tArray& xArr,
+                                  tArray const& bArr, 
+                                  bool hasPreOp) {
+
+  // ----------------------
+  // Allocate the intermediate arrays:
+  // ----------------------
+  stormSize_t const m = this->NumIterationsBeforeRestart;
+  beta.resize(m + 1), cs.resize(m), sn.resize(m);
+  h.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
+  qArr.resize(m + 1);
+  for (tArray& qArr : qArr) {
+    stormUtils::AllocLike(xArr, qArr);
+  }
+  if (hasPreOp) {
+    if constexpr (Flexible) {
+      zArr.resize(m);
+    }
+    for (tArray& zArr : zArr) {
+      stormUtils::AllocLike(xArr, zArr);
+    }
+  }
+
+} // stormBaseGmresSolver<...>::Init
+
+template<bool Flexible, class tArray>
+stormReal_t stormBaseGmresSolver<Flexible, tArray>::
+                                  ReInit(tArray& xArr,
+                                         tArray const& bArr,
+                                         stormOperator<tArray> const& linOp,
+                                         stormPreconditioner<tArray> const* preOp) {
+
+  // ----------------------
+  // Initialize:
+  // 𝑞₀ ← 𝓐𝒙,
+  // 𝑞₀ ← 𝒃 - 𝑞₀,
+  // 𝜑 ← ‖𝑞₀‖,
+  // ----------------------
+  linOp.MatVec(qArr[0], xArr);
+  stormBlas::Sub(qArr[0], bArr, qArr[0]);
+  stormReal_t const phi = stormBlas::Norm2(qArr[0]);
+
+  // ----------------------
+  // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
+  // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
+  // 𝑞₀ ← 𝑞₀/𝜑. 
+  // ----------------------
+  std::fill(cs.begin(), cs.end(), 0.0);
+  std::fill(sn.begin(), sn.end(), 0.0);
+  beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
+  stormBlas::Scale(qArr[0], qArr[0], 1.0/phi);
+
+  return phi;
+
+} // stormBaseGmresSolver<...>::ReInit
+
+template<bool Flexible, class tArray>
+stormReal_t stormBaseGmresSolver<Flexible, tArray>::
+                              ReIterate(stormSize_t k,
+                                        tArray& xArr,
+                                        tArray const& bArr,
+                                        stormOperator<tArray> const& linOp,
+                                        stormPreconditioner<tArray> const* preOp) {
+
+  // ----------------------
+  // Continue the Arnoldi procedure:
+  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+  //   𝑗 ← 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦 ? 𝑘 : 𝟢,
+  //   𝑞ₖ₊₁, 𝑧ⱼ ← 𝓐𝓟𝑞ₖ, 𝓟𝑞ₖ,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝑞ₖ₊₁ ← 𝓐𝑞ₖ,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
+  //   𝒉ᵢₖ ← <𝑞ₖ₊₁⋅𝑞ᵢ>,
+  //   𝑞ₖ₊₁ ← 𝑞ₖ₊₁ - 𝒉ᵢₖ⋅𝑞ᵢ,
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝒉ₖ₊₁,ₖ ← ‖𝑞ₖ₊₁‖, 
+  // 𝑞ₖ₊₁ ← 𝑞ₖ₊₁/𝒉ₖ₊₁,ₖ.  
+  // ----------------------
+  if (preOp != nullptr) {
+    stormSize_t const j = Flexible ? k : 0;
+    stormUtils::MatVecRightPre(qArr[k + 1], zArr[j], qArr[k], linOp, preOp);
+  } else {
+    linOp.MatVec(qArr[k + 1], qArr[k]);
+  }
+  for (stormSize_t i = 0; i <= k; ++i) {
+    h[i][k] = stormBlas::Dot(qArr[k + 1], qArr[i]);
+    stormBlas::Sub(qArr[k + 1], qArr[k + 1], qArr[i], h[i][k]);
+  }
+  h[k + 1][k] = stormBlas::Norm2(qArr[k + 1]); 
+  stormBlas::Scale(qArr[k + 1], qArr[k + 1], 1.0/h[k + 1][k]);
+
+  // ----------------------
+  // Eliminate the last element in {𝒉ᵢⱼ}
+  // and and update the rotation matrix:
+  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
+  //   𝜒 ← 𝒄𝒔ᵢ⋅𝒉ᵢₖ + 𝒔𝒏ᵢ⋅𝒉ᵢ₊₁,ₖ,
+  //   𝒉ᵢ₊₁,ₖ ← -𝒔𝒏ᵢ⋅𝒉ᵢₖ + 𝒄𝒔ᵢ⋅𝒉ᵢ₊₁,ₖ 
+  //   𝒉ᵢₖ ← 𝜒,
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝒄𝒔ₖ, 𝒔𝒏ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝒉ₖₖ, 𝒉ₖ₊₁,ₖ),
+  // 𝒉ₖₖ ← 𝒄𝒔ₖ⋅𝒉ₖₖ + 𝒔𝒏ₖ⋅𝒉ₖ₊₁,ₖ,
+  // 𝒉ₖ₊₁,ₖ ← 𝟢.
+  // ----------------------
+  for (stormSize_t i = 0; i < k; ++i) {
+    stormReal_t const chi = cs[i]*h[i][k] + sn[i]*h[i + 1][k];
+    h[i + 1][k] = -sn[i]*h[i][k] + cs[i]*h[i+1][k];
+    h[i][k] = chi;
+  }
+  std::tie(cs[k], sn[k], std::ignore) =
+    stormBlas::SymOrtho(h[k][k], h[k + 1][k]);
+  h[k][k] = cs[k]*h[k][k] + sn[k]*h[k + 1][k];
+  h[k + 1][k] = 0.0;
+
+  // ----------------------
+  // Update the 𝜷-solution and residual norm:
+  // 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
+  // 𝜑 ← |𝜷ₖ₊₁|,
+  // ----------------------
+  beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
+  stormReal_t const phi = std::abs(beta[k + 1]);
+
+  return phi;
+
+} // stormBaseGmresSolver<...>::ReIterate
+
+template<bool Flexible, class tArray>
+void stormBaseGmresSolver<Flexible, tArray>::
+                      ReFinalize(stormSize_t k,
+                                 tArray& xArr,
+                                 tArray const& bArr,
+                                 stormOperator<tArray> const& linOp,
+                                 stormPreconditioner<tArray> const* preOp) {
+
+  // ----------------------
+  // Finalize the 𝜷-solution:
+  // 𝜷ₖ ← 𝜷ₖ/𝒉ₖₖ,
+  // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
+  //   𝜷ᵢ ← (𝜷ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝒉ᵢᵢ,
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // ----------------------
+  beta[k] /= h[k][k];
+  for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
+    beta[i] -= std::inner_product(
+      beta.begin() + i + 1, beta.begin() + k + 1, h[i].begin() + i + 1, 0.0);
+    beta[i] /= h[i][i];
+  }
+
+  // ----------------------
+  // Compute 𝒙-solution:
+  // 𝗶𝗳 𝓟 = 𝗻𝗼𝗻𝗲:
+  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝑞ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
+  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝑧ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗹𝘀𝗲:
+  //   𝑞₀ ← 𝜷₀⋅𝑞₀,
+  //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
+  //     𝑞₀ ← 𝑞₀ + 𝜷ᵢ⋅𝑞ᵢ,
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  //   𝑧₀ ← 𝓟𝑞₀,
+  //   𝒙 ← 𝒙 + 𝑧₀.
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  if (preOp == nullptr) {
+    for (stormSize_t i = 0; i <= k; ++i) {
+      stormBlas::Add(xArr, xArr, qArr[i], beta[i]);
+    }
+  } else if constexpr (Flexible) {
+    for (stormSize_t i = 0; i <= k; ++i) {
+      stormBlas::Add(xArr, xArr, zArr[i], beta[i]);
+    }
+  } else {
+    stormBlas::Scale(qArr[0], qArr[0], beta[0]);
+    for (stormSize_t i = 1; i <= k; ++i) {
+      stormBlas::Add(qArr[0], qArr[0], qArr[i], beta[i]);
+    }
+    preOp->MatVec(zArr[0], qArr[0]);
+    stormBlas::Add(xArr, xArr, zArr[0]);
+  }
+
+} // stormBaseGmresSolver<...>::ReFinalize
 
 #endif // ifndef _STORM_SOLVER_GMRES_HXX_

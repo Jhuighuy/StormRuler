@@ -74,10 +74,12 @@ products.
   * _(planned)_ Flexible Conjugate Gradients solver 
     (`FCG`, for the _definite symmetric_ linear problems
      with _flexible preconditioning_),
-  * Biconjugate Gradients (stabilized) solver
-    (`BiCGStab`, for the general _non-singular_ linear problems),
   * Minimal Residual solver
     (`MINRES`, for the indefinite _symmetric_ linear problems),
+  * Conjugate Gradients Squared solver 
+    (`CGS`, for the general _non-singular_ linear problems),
+  * Biconjugate Gradients (stabilized) solver
+    (`BiCGStab`, for the general _non-singular_ linear problems),
   * Generalized Minimal Residual method solver
     (`GMRES`, for the general linear problems),
   * Flexible Generalized Minimal Residual method solver

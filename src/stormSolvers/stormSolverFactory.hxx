@@ -31,6 +31,7 @@
 #include <stormSolvers/stormSolver.hxx>
 #include <stormSolvers/stormSolverCg.hxx>
 #include <stormSolvers/stormSolverMinres.hxx>
+#include <stormSolvers/stormSolverCgs.hxx>
 #include <stormSolvers/stormSolverBiCgStab.hxx>
 #include <stormSolvers/stormSolverGmres.hxx>
 #include <stormSolvers/stormSolverTfqmr.hxx>
@@ -42,6 +43,7 @@
 /// @{
 #define STORM_KSP_CG       "CG"
 #define STORM_KSP_MINRES   "MINRES"
+#define STORM_KSP_CGS      "CGS"
 #define STORM_KSP_BiCGStab "BiCGStab"
 #define STORM_KSP_GMRES    "GMRES"
 #define STORM_KSP_FGMRES   "FGMRES"
@@ -60,13 +62,17 @@
     \
     return std::make_unique<stormCgSolver<tArray>>(); \
     \
-  } else if (std::strcmp(solverType, STORM_KSP_BiCGStab) == 0) { \
-    \
-    return std::make_unique<stormBiCgStabSolver<tArray>>(); \
-    \
   } else if (std::strcmp(solverType, STORM_KSP_MINRES) == 0) { \
     \
     return std::make_unique<stormMinresSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_CGS) == 0) { \
+    \
+    return std::make_unique<stormCgsSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_BiCGStab) == 0) { \
+    \
+    return std::make_unique<stormBiCgStabSolver<tArray>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \

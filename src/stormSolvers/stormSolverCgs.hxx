@@ -42,7 +42,7 @@ template<class tArray>
 class stormCgsSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t rho;
-  tArray pArr, qArr, rArr, rTildeArr, uArr, vArr, zArr;
+  tArray pArr, qArr, rArr, rTildeArr, uArr, vArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -65,10 +65,7 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
-  stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr, zArr);
-  if (preOp != nullptr) {
-    //stormUtils::AllocLike(xArr, zArr);
-  }
+  stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
@@ -123,21 +120,21 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Update the solution and the residual:
   /// @todo Less vectors can be used..
-  // 𝒗, 𝒛 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
+  // 𝒗, 𝒒 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
   // 𝒗 ← 𝒖 + 𝒒,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒗, 𝒛 ← 𝓐𝓟𝒗, 𝓟𝒗,
-  //   𝒙 ← 𝒙 + 𝛼⋅𝒛,
+  //   𝒗, 𝒖 ← 𝓐𝓟𝒗, 𝓟𝒗,
+  //   𝒙 ← 𝒙 + 𝛼⋅𝒖,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // 𝗲𝗹𝘀𝗲:
-  //   𝒛 ← 𝓐𝒗,
+  //   𝒖 ← 𝓐𝒗,
   //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
-  //   𝒓 ← 𝒓 - 𝛼⋅𝒛.
+  //   𝒓 ← 𝒓 - 𝛼⋅𝒖.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormUtils::MatVecRightPre(vArr, zArr, pArr, linOp, preOp);
+  stormUtils::MatVecRightPre(vArr, qArr, pArr, linOp, preOp);
   stormReal_t const alpha = 
     stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
   stormBlas::Sub(qArr, uArr, vArr, alpha);

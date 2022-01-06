@@ -30,6 +30,23 @@
 #include <stormSolvers/stormOperator.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Preconditioner side.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+enum class stormPreconditionerSide {
+
+  /// Left preconditioned equation is solved, 𝓟(𝓐(𝒙)) = 𝓟(𝒃).
+  Left,
+
+  /// Right preconditioned equation is solved, 𝓐(𝓟(𝒙̃)) = 𝒃, 𝓟(𝒙̃) = 𝒙.
+  Right,
+
+  /// Symmetric preconditioned equation is solved, \
+  ///   𝓜(𝓐(𝓝(𝒙̃))) = 𝓜(𝒃), 𝓝(𝒙̃) = 𝒙, 𝓟 = 𝓝.
+  Symmetric,
+
+}; // enum class stormPreconditionerSide
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract preconditioner operator.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>

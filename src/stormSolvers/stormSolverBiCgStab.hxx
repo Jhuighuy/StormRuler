@@ -31,8 +31,10 @@
 /// @brief Solve a linear operator equation with the good old \
 ///   @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
-/// @c BiCGStab may be applied to the consistent singular problems,
-/// it converges towards..
+/// Both right and left preconditioning is supported, left
+/// preconditioning has slightly higher memory requirements and 
+/// uses an additional preconditioning operator application per 
+/// iteration.
 ///
 /// References:
 /// @verbatim
@@ -44,9 +46,12 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
+public:
+  stormPreconditionerSide PreSide = stormPreconditionerSide::Left;
+
 private:
   stormReal_t alpha, rho, omega;
-  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr;
+  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr, sArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -72,6 +77,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, zArr);
+    if (PreSide == stormPreconditionerSide::Left) {
+      stormUtils::AllocLike(xArr, sArr);
+    }
   }
 
   // ----------------------
@@ -138,13 +146,26 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Update the solution and the residual again:
   // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓],
-  // 𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒔 ← 𝓟𝒕,
+  //   𝜔 ← <𝒔⋅𝒛>/<𝒔⋅𝒔>,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒙 ← 𝒙 + 𝜔⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓),
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
   stormUtils::MatVecRightPre(tArr, zArr, rArr, linOp, preOp);
-  omega = stormUtils::SafeDivide(
-    stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
+  bool const leftPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Left);
+  if (leftPre) {
+    preOp->MatVec(sArr, tArr);
+    omega = stormUtils::SafeDivide(
+      stormBlas::Dot(sArr, zArr), stormBlas::Dot(sArr, sArr));
+  } else {
+    omega = stormUtils::SafeDivide(
+      stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
+  }
   stormBlas::Add(xArr, xArr, (preOp != nullptr) ? zArr : rArr, omega);
   stormBlas::Sub(rArr, rArr, tArr, omega);
 

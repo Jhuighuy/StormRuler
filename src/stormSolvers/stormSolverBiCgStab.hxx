@@ -46,7 +46,7 @@ template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 private:
   stormReal_t alpha, rho, omega;
-  tArray pArr, rArr, rTildeArr, tArr, vArr, yArr, zArr;
+  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -71,7 +71,7 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // ----------------------
   stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, yArr, zArr);
+    stormUtils::AllocLike(xArr, zArr);
   }
 
   // ----------------------
@@ -122,14 +122,14 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution and the residual:
-  // 𝒗, 𝒚 ← 𝓐[𝓟]𝒑, [𝓟𝒑],
+  // 𝒗, 𝒛 ← 𝓐[𝓟]𝒑, [𝓟𝒑],
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
-  // 𝒙 ← 𝒙 + 𝛼⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒚 : 𝒑),
+  // 𝒙 ← 𝒙 + 𝛼⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒑),
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
-  stormUtils::MatVecRightPre(vArr, yArr, pArr, linOp, preOp);
+  stormUtils::MatVecRightPre(vArr, zArr, pArr, linOp, preOp);
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
-  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? yArr : pArr, alpha);
+  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? zArr : pArr, alpha);
   stormBlas::Sub(rArr, rArr, vArr, alpha);
 
   /// @todo Check the residual norm here!

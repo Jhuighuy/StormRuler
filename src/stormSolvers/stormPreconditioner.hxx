@@ -56,13 +56,13 @@ class stormIdentityPreconditioner final : public stormPreconditioner<tArray> {
 private:
 
   void MatVec(tArray& yArr,
-              tArray const& xArr) const override final {
+              tArray const& xArr) const override {
     std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
     stormBlas::Set(yArr, xArr);
   }
 
   void ConjMatVec(tArray& xArr,
-                  tArray const& yArr) const override final {
+                  tArray const& yArr) const override {
     std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
     stormBlas::Set(xArr, yArr);
   }
@@ -82,10 +82,16 @@ void MatVecLeftPre(tOutArray& yArr,
                     stormPreconditioner<tInArray> const* preOp) {
 
   if (preOp == nullptr) {
+
+    _STORM_ASSERT_(&yArr != &xArr);
     linOp.MatVec(yArr, xArr);
+
   } else {
+
+    _STORM_ASSERT_(&zArr != &xArr && &yArr != &zArr);
     linOp.MatVec(zArr, xArr);
     preOp->MatVec(yArr, zArr);
+
   }
 
 } // MatVecLeftPre<...>
@@ -101,10 +107,16 @@ void MatVecRightPre(tOutArray& yArr,
                     stormPreconditioner<tInArray> const* preOp) {
 
   if (preOp == nullptr) {
+
+    _STORM_ASSERT_(&yArr != &xArr);
     linOp.MatVec(yArr, xArr);
+
   } else {
+
+    _STORM_ASSERT_(&zArr != &xArr && &yArr != &zArr);
     preOp->MatVec(zArr, xArr);
     linOp.MatVec(yArr, zArr);
+
   }
 
 } // MatVecRightPre<...>

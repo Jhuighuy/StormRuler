@@ -119,7 +119,6 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution and the residual:
-  /// @todo Less vectors can be used..
   // 𝒗, 𝒒 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
@@ -140,13 +139,13 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   stormBlas::Sub(qArr, uArr, vArr, alpha);
   stormBlas::Add(vArr, uArr, qArr);
   if (preOp != nullptr) {
-    stormUtils::MatVecRightPre(vArr, zArr, vArr, linOp, preOp);
-    stormBlas::Add(xArr, xArr, zArr, alpha);
+    stormUtils::MatVecRightPre(vArr, uArr, vArr, linOp, preOp);
+    stormBlas::Add(xArr, xArr, uArr, alpha);
     stormBlas::Sub(rArr, rArr, vArr, alpha);
   } else {
-    linOp.MatVec(zArr, vArr);
+    linOp.MatVec(uArr, vArr);
     stormBlas::Add(xArr, xArr, vArr, alpha);
-    stormBlas::Sub(rArr, rArr, zArr, alpha);
+    stormBlas::Sub(rArr, rArr, uArr, alpha);
   }
 
   return stormBlas::Norm2(rArr);

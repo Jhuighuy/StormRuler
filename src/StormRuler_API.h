@@ -71,6 +71,8 @@
 #define _STORM_OPAQUE_(type) \
   struct type; typedef struct type* type##_t
 
+#define _STORM_ASSERT_(x) assert(x)
+
 // Enable default arguments for C++.
 #if STORM_C11_
 #define _STORM_DEFAULT_(decl, ...) decl

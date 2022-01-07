@@ -31,11 +31,6 @@
 /// @brief Solve a linear operator equation with the good old \
 ///   @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
-/// Both right and left preconditioning is supported, left
-/// preconditioning has slightly higher memory requirements and 
-/// uses an additional preconditioning operator application per 
-/// iteration.
-///
 /// References:
 /// @verbatim
 /// [1] van der Vorst, Henk A.
@@ -47,11 +42,11 @@
 template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
 public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Left;
+  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
 
 private:
   stormReal_t alpha, rho, omega;
-  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr, sArr;
+  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr;
 
   stormReal_t Init(tArray& xArr,
                    tArray const& bArr,
@@ -71,24 +66,29 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
                                               stormOperator<tArray> const& linOp,
                                               stormPreconditioner<tArray> const* preOp) {
 
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
   stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
   if (preOp != nullptr) {
     stormUtils::AllocLike(xArr, zArr);
-    if (PreSide == stormPreconditionerSide::Left) {
-      stormUtils::AllocLike(xArr, sArr);
-    }
   }
+
+  bool const leftPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Left);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒛 ← 𝒓,
+  //   𝒓 ← 𝓟𝒛,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒓̃ ← 𝒓.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
+  if (leftPre) {
+    std::swap(zArr, rArr);
+    preOp->MatVec(rArr, zArr);
+  }
   stormBlas::Set(rTildeArr, rArr);
 
   return stormBlas::Norm2(rArr);
@@ -100,6 +100,11 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
                                                  tArray const& bArr,
                                                  stormOperator<tArray> const& linOp,
                                                  stormPreconditioner<tArray> const* preOp) {
+
+  bool const leftPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -130,14 +135,30 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution and the residual:
-  // 𝒗, 𝒛 ← 𝓐[𝓟]𝒑, [𝓟𝒑],
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒛 ← 𝓐𝒑,
+  //   𝒗 ← 𝓟𝒛,
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒛 ← 𝓟𝒑,
+  //   𝒗 ← 𝓐𝒛,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒗 ← 𝓐𝒑,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
-  // 𝒙 ← 𝒙 + 𝛼⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒑),
+  // 𝒙 ← 𝒙 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒑),
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
-  stormUtils::MatVecRightPre(vArr, zArr, pArr, linOp, preOp);
+  if (leftPre) {
+    linOp.MatVec(zArr, pArr);
+    preOp->MatVec(vArr, zArr);
+  } else if (rightPre) {
+    preOp->MatVec(zArr, pArr);
+    linOp.MatVec(vArr, zArr);
+  } else {
+    linOp.MatVec(vArr, pArr);
+  }
   alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
-  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? zArr : pArr, alpha);
+  stormBlas::Add(xArr, xArr, rightPre ? zArr : pArr, alpha);
   stormBlas::Sub(rArr, rArr, vArr, alpha);
 
   /// @todo Check the residual norm here!
@@ -145,28 +166,31 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution and the residual again:
-  // 𝒕, 𝒛 ← 𝓐[𝓟]𝒓, [𝓟𝒓],
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒔 ← 𝓟𝒕,
-  //   𝜔 ← <𝒔⋅𝒛>/<𝒔⋅𝒔>,
+  //   𝒛 ← 𝓐𝒓,
+  //   𝒕 ← 𝓟𝒛,
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒛 ← 𝓟𝒓,
+  //   𝒕 ← 𝓐𝒛,
   // 𝗲𝗹𝘀𝗲:
-  //   𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
+  //   𝒕 ← 𝓐𝒓,
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒙 ← 𝒙 + 𝜔⋅(𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓),
+  // 𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
+  // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
-  stormUtils::MatVecRightPre(tArr, zArr, rArr, linOp, preOp);
-  bool const leftPre = (preOp != nullptr) && 
-    (PreSide == stormPreconditionerSide::Left);
   if (leftPre) {
-    preOp->MatVec(sArr, tArr);
-    omega = stormUtils::SafeDivide(
-      stormBlas::Dot(sArr, zArr), stormBlas::Dot(sArr, sArr));
+    linOp.MatVec(zArr, rArr);
+    preOp->MatVec(tArr, zArr);
+  } else if (rightPre) {
+    preOp->MatVec(zArr, rArr);
+    linOp.MatVec(tArr, zArr);
   } else {
-    omega = stormUtils::SafeDivide(
-      stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
+    linOp.MatVec(tArr, rArr);
   }
-  stormBlas::Add(xArr, xArr, (preOp != nullptr) ? zArr : rArr, omega);
+  omega = stormUtils::SafeDivide(
+    stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
+  stormBlas::Add(xArr, xArr, rightPre ? zArr : rArr, omega);
   stormBlas::Sub(rArr, rArr, tArr, omega);
 
   return stormBlas::Norm2(rArr);

@@ -25,8 +25,6 @@
 #ifndef _STORM_SOLVER_CGS_HXX_
 #define _STORM_SOLVER_CGS_HXX_
 
-#include <cmath>
-
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -40,6 +38,9 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormCgsSolver final : public stormIterativeSolver<tArray> {
+public:
+  stormPreconditionerSide PreSide = stormPreconditionerSide::Left;
+
 private:
   stormReal_t rho;
   tArray pArr, qArr, rArr, rTildeArr, uArr, vArr;
@@ -62,18 +63,26 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
                                          stormOperator<tArray> const& linOp,
                                          stormPreconditioner<tArray> const* preOp) {
 
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
   stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr);
+
+  bool const leftPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Left);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒖 ← 𝒓,
+  //   𝒓 ← 𝓟𝒖,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒓̃ ← 𝒓.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
+  if (leftPre) {
+    std::swap(uArr, rArr);
+    preOp->MatVec(rArr, uArr);
+  }
   stormBlas::Set(rTildeArr, rArr);
 
   return stormBlas::Norm2(rArr);
@@ -85,6 +94,11 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
                                             tArray const& bArr,
                                             stormOperator<tArray> const& linOp,
                                             stormPreconditioner<tArray> const* preOp) {
+
+  bool const leftPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -119,12 +133,26 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Update the solution and the residual:
-  // 𝒗, 𝒒 ← 𝓐[𝓟]𝒑, [𝓟𝒑].
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒒 ← 𝓐𝒑,
+  //   𝒗 ← 𝓟𝒒,
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒒 ← 𝓟𝒑,
+  //   𝒗 ← 𝓐𝒒,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒗 ← 𝓐𝒑,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
   // 𝒗 ← 𝒖 + 𝒒,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒗, 𝒖 ← 𝓐𝓟𝒗, 𝓟𝒗,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
+  //   𝒖 ← 𝓐𝒗,
+  //   𝒗 ← 𝓟𝒖,
+  //   𝒓 ← 𝒓 - 𝛼⋅𝒗.
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒖 ← 𝓟𝒗,
+  //   𝒗 ← 𝓐𝒖,
   //   𝒙 ← 𝒙 + 𝛼⋅𝒖,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // 𝗲𝗹𝘀𝗲:
@@ -132,14 +160,27 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒖.
   // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  stormUtils::MatVecRightPre(vArr, qArr, pArr, linOp, preOp);
+  if (leftPre) {
+    linOp.MatVec(qArr, pArr);
+    preOp->MatVec(vArr, qArr);
+  } else if (rightPre) {
+    preOp->MatVec(qArr, pArr);
+    linOp.MatVec(vArr, qArr);
+  } else {
+    linOp.MatVec(vArr, pArr);
+  }
   stormReal_t const alpha = 
     stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
   stormBlas::Sub(qArr, uArr, vArr, alpha);
   stormBlas::Add(vArr, uArr, qArr);
-  if (preOp != nullptr) {
-    stormUtils::MatVecRightPre(vArr, uArr, vArr, linOp, preOp);
+  if (leftPre) {
+    stormBlas::Add(xArr, xArr, vArr, alpha);
+    linOp.MatVec(uArr, vArr);
+    preOp->MatVec(vArr, uArr);
+    stormBlas::Sub(rArr, rArr, vArr, alpha);
+  } else if (rightPre) {
+    preOp->MatVec(uArr, vArr);
+    linOp.MatVec(vArr, uArr);
     stormBlas::Add(xArr, xArr, uArr, alpha);
     stormBlas::Sub(rArr, rArr, vArr, alpha);
   } else {

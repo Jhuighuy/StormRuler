@@ -160,6 +160,7 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒖.
   // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
   if (leftPre) {
     linOp.MatVec(qArr, pArr);
     preOp->MatVec(vArr, qArr);

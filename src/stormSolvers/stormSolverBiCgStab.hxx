@@ -136,11 +136,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Update the solution and the residual:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒛 ← 𝓐𝒑,
-  //   𝒗 ← 𝓟𝒛,
+  //   𝒗 ← 𝓟(𝒛 ← 𝓐𝒑),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒛 ← 𝓟𝒑,
-  //   𝒗 ← 𝓐𝒛,
+  //   𝒗 ← 𝓐(𝒛 ← 𝓟𝒑),
   // 𝗲𝗹𝘀𝗲:
   //   𝒗 ← 𝓐𝒑,
   // 𝗲𝗻𝗱 𝗶𝗳
@@ -149,11 +147,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
   if (leftPre) {
-    linOp.MatVec(zArr, pArr);
-    preOp->MatVec(vArr, zArr);
+    stormBlas::MatVec(vArr, *preOp, zArr, linOp, pArr);
   } else if (rightPre) {
-    preOp->MatVec(zArr, pArr);
-    linOp.MatVec(vArr, zArr);
+    stormBlas::MatVec(vArr, linOp, zArr, *preOp, pArr);
   } else {
     linOp.MatVec(vArr, pArr);
   }
@@ -167,11 +163,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   // Update the solution and the residual again:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒛 ← 𝓐𝒓,
-  //   𝒕 ← 𝓟𝒛,
+  //   𝒕 ← 𝓟(𝒛 ← 𝓐𝒓),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒛 ← 𝓟𝒓,
-  //   𝒕 ← 𝓐𝒛,
+  //   𝒕 ← 𝓐(𝒛 ← 𝓟𝒓),
   // 𝗲𝗹𝘀𝗲:
   //   𝒕 ← 𝓐𝒓,
   // 𝗲𝗻𝗱 𝗶𝗳
@@ -180,11 +174,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
   if (leftPre) {
-    linOp.MatVec(zArr, rArr);
-    preOp->MatVec(tArr, zArr);
+    stormBlas::MatVec(tArr, *preOp, zArr, linOp, rArr);
   } else if (rightPre) {
-    preOp->MatVec(zArr, rArr);
-    linOp.MatVec(tArr, zArr);
+    stormBlas::MatVec(tArr, linOp, zArr, *preOp, rArr);
   } else {
     linOp.MatVec(tArr, rArr);
   }

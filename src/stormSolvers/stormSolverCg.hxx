@@ -67,9 +67,6 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
                                         stormOperator<tArray> const& linOp,
                                         stormPreconditioner<tArray> const* preOp) {
 
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
   stormUtils::AllocLike(xArr, pArr, rArr, zArr);
 
   // ----------------------

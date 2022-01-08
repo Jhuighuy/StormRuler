@@ -157,6 +157,31 @@ public:
 
 }; // class stormOperator<...>
 
+namespace stormBlas {
+
+  template<class tInArray, class tInOutArray, class tOutArray>
+  void MatVec(tOutArray& zArr,
+              stormOperator<tInOutArray, tOutArray> const& linOp1,
+              tInOutArray& yArr,
+              stormOperator<tInArray, tInOutArray> const& linOp2,
+              tInArray const& xArr) {
+
+    linOp2.MatVec(yArr, xArr);
+    linOp1.MatVec(zArr, yArr);
+
+  } // MatVec<...>
+
+  template<class tArray>
+  void ConjMatVec(tArray& yArr,
+                  stormOperator<tArray> const& linOp,
+                  tArray const& xArr) {
+
+    linOp.ConjMatVec(yArr, xArr);
+
+  } // ConjMatVec
+
+} // namespace stormBlas
+
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

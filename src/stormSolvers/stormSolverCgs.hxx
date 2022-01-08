@@ -132,27 +132,37 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   }
 
   // ----------------------
-  // Update the solution and the residual:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒒 ← 𝓐𝒑,
-  //   𝒗 ← 𝓟𝒒,
+  //   𝒗 ← 𝓟(𝒒 ← 𝓐𝒑),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒒 ← 𝓟𝒑,
-  //   𝒗 ← 𝓐𝒒,
+  //   𝒗 ← 𝓐(𝒒 ← 𝓟𝒑),
   // 𝗲𝗹𝘀𝗲:
   //   𝒗 ← 𝓐𝒑,
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
-  // 𝒗 ← 𝒖 + 𝒒,
+  // 𝒗 ← 𝒖 + 𝒒.
+  // ----------------------
+  if (leftPre) {
+    stormBlas::MatVec(vArr, *preOp, qArr, linOp, pArr);
+  } else if (rightPre) {
+    stormBlas::MatVec(vArr, linOp, qArr, *preOp, pArr);
+  } else {
+    linOp.MatVec(vArr, pArr);
+  }
+  stormReal_t const alpha = 
+    stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
+  stormBlas::Sub(qArr, uArr, vArr, alpha);
+  stormBlas::Add(vArr, uArr, qArr);
+
+  // ----------------------
+  // Update the solution and the residual:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
-  //   𝒖 ← 𝓐𝒗,
-  //   𝒗 ← 𝓟𝒖,
+  //   𝒗 ← 𝓟(𝒖 ← 𝓐𝒗),
   //   𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒖 ← 𝓟𝒗,
-  //   𝒗 ← 𝓐𝒖,
+  //   𝒗 ← 𝓐(𝒖 ← 𝓟𝒗),
   //   𝒙 ← 𝒙 + 𝛼⋅𝒖,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // 𝗲𝗹𝘀𝗲:
@@ -162,26 +172,11 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    linOp.MatVec(qArr, pArr);
-    preOp->MatVec(vArr, qArr);
-  } else if (rightPre) {
-    preOp->MatVec(qArr, pArr);
-    linOp.MatVec(vArr, qArr);
-  } else {
-    linOp.MatVec(vArr, pArr);
-  }
-  stormReal_t const alpha = 
-    stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
-  stormBlas::Sub(qArr, uArr, vArr, alpha);
-  stormBlas::Add(vArr, uArr, qArr);
-  if (leftPre) {
     stormBlas::Add(xArr, xArr, vArr, alpha);
-    linOp.MatVec(uArr, vArr);
-    preOp->MatVec(vArr, uArr);
+    stormBlas::MatVec(vArr, *preOp, uArr, linOp, vArr);
     stormBlas::Sub(rArr, rArr, vArr, alpha);
   } else if (rightPre) {
-    preOp->MatVec(uArr, vArr);
-    linOp.MatVec(vArr, uArr);
+    stormBlas::MatVec(vArr, linOp, uArr, *preOp, vArr);
     stormBlas::Add(xArr, xArr, uArr, alpha);
     stormBlas::Sub(rArr, rArr, vArr, alpha);
   } else {

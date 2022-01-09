@@ -80,6 +80,7 @@ void stormChebyshevPreconditioner<tArray>::Build(tArray const& xArr,
 template<class tArray>
 void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
                                                   tArray const& xArr) const {
+
   assert(linOp != nullptr && "Preconditioner was not built!");
 
   // ----------------------

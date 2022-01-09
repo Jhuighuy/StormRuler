@@ -63,9 +63,10 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
                                          stormOperator<tArray> const& linOp,
                                          stormPreconditioner<tArray> const* preOp) {
 
-  stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr);
+  bool const leftPre = 
+    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
 
-  bool const leftPre = (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
+  stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
@@ -94,8 +95,10 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
                                             stormOperator<tArray> const& linOp,
                                             stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const leftPre = 
+    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = 
+    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:

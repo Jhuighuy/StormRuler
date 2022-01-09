@@ -42,8 +42,7 @@ private:
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> h;
   std::vector<tArray> qArr;
-  std::conditional_t<Flexible, 
-    std::vector<tArray>, std::array<tArray, 1>> zArr;
+  std::conditional_t<Flexible, std::vector<tArray>, std::array<tArray, 1>> zArr;
 
   void PreInit(tArray& xArr,
                tArray const& bArr, 
@@ -168,9 +167,8 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // 𝒒₀ ← 𝒃 - 𝒒₀,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛₀ ← 𝒒₀,
-  //   𝒒₀ ← 𝓟𝒛₀,
+  //   𝒒₀ ← 𝓟𝒛₀.
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝜑 ← ‖𝒒₀‖,
   // ----------------------
   linOp.MatVec(qArr[0], xArr);
   stormBlas::Sub(qArr[0], bArr, qArr[0]);
@@ -178,15 +176,16 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
     std::swap(zArr[0], qArr[0]);
     preOp->MatVec(qArr[0], zArr[0]);
   }
-  stormReal_t const phi = stormBlas::Norm2(qArr[0]);
 
   // ----------------------
   // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
+  // 𝜑 ← ‖𝒒₀‖,
   // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
   // 𝒒₀ ← 𝒒₀/𝜑. 
   // ----------------------
   std::fill(cs.begin(), cs.end(), 0.0);
   std::fill(sn.begin(), sn.end(), 0.0);
+  stormReal_t const phi = stormBlas::Norm2(qArr[0]);
   beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
   stormBlas::Scale(qArr[0], qArr[0], 1.0/phi);
 
@@ -270,7 +269,7 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // ----------------------
   // Update the 𝜷-solution and residual norm:
   // 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
-  // 𝜑 ← |𝜷ₖ₊₁|,
+  // 𝜑 ← |𝜷ₖ₊₁|.
   // ----------------------
   beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
   stormReal_t const phi = std::abs(beta[k + 1]);
@@ -300,7 +299,7 @@ void stormBaseGmresSolver<Flexible, tArray>::
   // Finalize the 𝜷-solution:
   // 𝜷ₖ ← 𝜷ₖ/𝒉ₖₖ,
   // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //   𝜷ᵢ ← (𝜷ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝒉ᵢᵢ,
+  //   𝜷ᵢ ← (𝜷ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝒉ᵢᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   beta[k] /= h[k][k];
@@ -314,11 +313,11 @@ void stormBaseGmresSolver<Flexible, tArray>::
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝗻𝗼𝘁 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒒ᵢ,
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒒ᵢ.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒛ᵢ,
+  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒛ᵢ.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲:
   //   𝒒₀ ← 𝜷₀⋅𝒒₀,

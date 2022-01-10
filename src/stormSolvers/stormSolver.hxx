@@ -62,6 +62,7 @@ public:
   stormSize_t NumIterations = 2000;
   stormReal_t AbsoluteError = 0.0, RelativeError = 0.0;
   stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
+  bool VerifySolution = false;
 
 public:
   std::unique_ptr<stormPreconditioner<tInArray>> PreOp = nullptr;
@@ -155,6 +156,20 @@ bool stormIterativeSolver<tInArray, tOutArray>::
 
   Finalize(xArr, bArr, anyOp, PreOp.get());
   std::cout << "\t----------------------" << std::endl;
+
+  if (VerifySolution) {
+    tOutArray rArr;
+    stormUtils::AllocLike(bArr, rArr);
+    anyOp.MatVec(rArr, xArr);
+    stormBlas::Sub(rArr, bArr, rArr);
+    stormReal_t const 
+      trueAbsoluteError = stormBlas::Norm2(rArr),
+      trueRelativeError = trueAbsoluteError/initialError; 
+    std::cout << "\tT\t"
+      << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
+    std::cout << "\t----------------------" << std::endl;
+  }
+
   return converged;
 
 } // stormIterativeSolver<...>::Solve

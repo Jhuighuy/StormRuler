@@ -75,24 +75,24 @@ products.
     (`FCG`, for the _definite symmetric_ linear problems
      with _flexible preconditioning_),
   * Minimal Residual solver
-    (`MINRES`, for the indefinite _symmetric_ linear problems),
+    (`MINRES`, for the _indefinite symmetric_ linear problems),
   * Conjugate Gradients Squared solver 
-    (`CGS`, for the general _non-singular_ linear problems),
+    (`CGS`, for the _general_ linear problems),
   * Biconjugate Gradients (stabilized) solver
-    (`BiCGStab`, for the general _non-singular_ linear problems),
-  * Generalized Minimal Residual method solver
-    (`GMRES`, for the general linear problems),
-  * Flexible Generalized Minimal Residual method solver
-    (`FGMRES`, for the general linear problems
-     with _flexible preconditioning_),
+    (`BiCGStab`, for the _general_ linear problems),
   * Transpose-free Quasi-Minimal Residual solver
-    (`TFQMR`, for the general linear problems);
+    (`TFQMR`, for the _general_ linear problems);
+  * Generalized Minimal Residual method solver
+    (`GMRES`, for the _general_ linear problems),
+  * Flexible Generalized Minimal Residual method solver
+    (`FGMRES`, for the _general_ linear problems
+     with _flexible preconditioning_);
 
 - 🚜 Linear iterative least squares solvers:
   * Least squares-QR solver
-    (`LSQR`, for the general linear least squares problems),
+    (`LSQR`, for the linear _least squares_ problems),
   * Least squares-MINRES solver
-    (`LSMR`, for the general linear least squares problems);
+    (`LSMR`, for the linear _least squares_ problems);
 
 - 🚂 Linear direct solvers:
   * _(planned)_ PARDISO direct solver
@@ -186,16 +186,14 @@ Legend:
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🧻 Fix unpreconditioned `MINRES` solver,
   - [ ] 🧻 `MINRES` uses too many vectors (10), can be implemented with 7.
-  - [x] 🧸 Switch from left to right preconditioned `BiCGStab`,
   - [x] 🚬 `GMRES` solver implementation,
-  - [x] 🪓 Right preconditioned `GMRES` implementation,
-  - [x] 🐞 Right preconditioned `GMRES` implementation looks broken,
+  - [x] 🪓 Preconditioned `GMRES` implementation,
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
+  - [ ] 🧻 Refactor `GMRES` with restarting request based on excecptions,
   - [x] 🪓 `TFQMR` solver implementation.
-  - [ ] 🧸 `TFQMR` solver implementation with L1.
-  - [ ] 🧸 Right preconditioned `TFQMR` solver,
-  - [ ] 🧸 Refactor solvers with a new preconditioning helper function,
-  - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators.
+  - [x] 🪓 Preconditioned `TFQMR` solver,
+  - [ ] 🧸 `TFQMR` solver implementation with L1,
+  - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators,
 
 * Matrix operations and extraction:
   - [x] 🧸 CSR matrix class, CSR matvec,

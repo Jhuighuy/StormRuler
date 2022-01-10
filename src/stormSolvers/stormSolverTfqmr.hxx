@@ -101,8 +101,6 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Right);
 
   stormUtils::AllocLike(xArr, dArr, rTildeArr, uArr, vArr, yArr, sArr);
   if (preOp != nullptr) {
@@ -116,16 +114,9 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛 ← 𝒚,
   //   𝒚 ← 𝓟𝒛,
-  //   𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
-  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒔 ← 𝓐𝒚.
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒖 ← 𝒚,
-  // 𝒗 ← 𝒔,
   // 𝒓̃ ← 𝒖,
-  // 𝜌 ← <𝒓̃⋅𝒖>, 𝜏 ← 𝜌¹ᐟ²,
   // 𝗶𝗳 𝘓𝟣:
   //   𝒅 ← 𝒙.
   // 𝗲𝗹𝘀𝗲:
@@ -137,23 +128,16 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   if (leftPre) {
     std::swap(zArr, yArr);
     preOp->MatVec(yArr, zArr);
-    stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
-  } else if (rightPre) {
-    stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
-  } else {
-    linOp.MatVec(sArr, yArr);
   }
   stormBlas::Set(uArr, yArr);
-  stormBlas::Set(vArr, sArr);
   stormBlas::Set(rTildeArr, uArr);
-  rho = stormBlas::Dot(rTildeArr, uArr), tau = std::sqrt(rho);
   if constexpr (L1) {
     stormBlas::Set(dArr, xArr);
   } else {
     stormBlas::Fill(dArr, 0.0);
   }
 
-  return tau;
+  return stormBlas::Norm2(uArr);
 
 } // stormBaseTfqmrSolver<...>::Init
 
@@ -171,6 +155,64 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
 
   // ----------------------
   // Continue the iterations:
+  // 𝜌̅ ← 𝜌,
+  // 𝜌 ← <𝒓̃⋅𝒖>, 
+  // ----------------------
+  stormReal_t const rhoBar = rho;
+  rho = stormBlas::Dot(rTildeArr, uArr);
+
+  // ----------------------
+  // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
+  //   𝜏 ← 𝜌¹ᐟ²,
+  //   𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //     𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
+  //   𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //     𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
+  //   𝗲𝗹𝘀𝗲:
+  //     𝒔 ← 𝓐𝒚.
+  //   𝗲𝗻𝗱 𝗶𝗳
+  //   𝒗 ← 𝒔,
+  // 𝗲𝗹𝘀𝗲:
+  //   𝛽 ← 𝜌/𝜌̅,
+  //   𝒗 ← 𝒔 + 𝛽⋅𝒗,
+  //   𝒚 ← 𝒖 + 𝛽⋅𝒚,
+  //   𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //     𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
+  //   𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //     𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
+  //   𝗲𝗹𝘀𝗲:
+  //     𝒔 ← 𝓐𝒚,
+  //   𝗲𝗻𝗱 𝗶𝗳
+  //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // ----------------------
+  bool const firstIteration = this->Iteration == 0;
+  if (firstIteration) {
+    tau = std::sqrt(rho);
+    if (leftPre) {
+      stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+    } else if (rightPre) {
+      stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+    } else {
+      linOp.MatVec(sArr, yArr);
+    }
+    stormBlas::Set(vArr, sArr);
+  } else {
+    stormReal_t const beta = rho/rhoBar;
+    stormBlas::Add(vArr, sArr, vArr, beta);
+    stormBlas::Add(yArr, uArr, yArr, beta);
+    if (leftPre) {
+      stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+    } else if (rightPre) {
+      stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+    } else {
+      linOp.MatVec(sArr, yArr);
+    }
+    stormBlas::Add(vArr, sArr, vArr, beta);
+  }
+
+  // ----------------------
+  // Update the solution:
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
   //   𝒖 ← 𝒖 - 𝛼⋅𝒔,
@@ -228,35 +270,8 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   }
 
   // ----------------------
-  // 𝜌̅ ← 𝜌,
-  // 𝜌 ← <𝒓̃⋅𝒖>, 𝛽 ← 𝜌/𝜌̅,
-  // 𝒗 ← 𝒔 + 𝛽⋅𝒗,
-  // 𝒚 ← 𝒖 + 𝛽⋅𝒚,
-  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
-  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
-  //   𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒔 ← 𝓐𝒚,
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒗 ← 𝒔 + 𝛽⋅𝒗.
-  // ----------------------
-  stormReal_t const rhoBar = rho;
-  rho = stormBlas::Dot(rTildeArr, uArr);
-  stormReal_t const beta = rho/rhoBar;
-  stormBlas::Add(vArr, sArr, vArr, beta);
-  stormBlas::Add(yArr, uArr, yArr, beta);
-  if (leftPre) {
-    stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
-  } else if (rightPre) {
-    stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
-  } else {
-    linOp.MatVec(sArr, yArr);
-  }
-  stormBlas::Add(vArr, sArr, vArr, beta);
-
-  // ----------------------
-  // Compute the residual (or it's upper bound):
+  // Compute the residual norm 
+  // (or it's upper bound estimate in the ℒ₂ case):
   // 𝜑 ← 𝜏,
   // 𝗶𝗳 𝗻𝗼𝘁 𝘓𝟣:
   //   𝜑 ← 𝜑⋅(𝟤𝑘 + 𝟥)¹ᐟ².

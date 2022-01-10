@@ -33,7 +33,7 @@
 template<bool L1, class tArray>
 class stormBaseTfqmrSolver : public stormIterativeSolver<tArray> {
 private:
-  stormReal_t tau, rho, theta, eta;
+  stormReal_t tau, rho;
   tArray dArr, rTildeArr, uArr, vArr, yArr, sArr, zArr;
 
   stormReal_t Init(tArray& xArr,
@@ -129,8 +129,7 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝗶𝗳 𝘓𝟣:
   //   𝒅 ← 𝒙.
   // 𝗲𝗹𝘀𝗲:
-  //   𝒅 ← {𝟢}ᵀ,
-  //   𝜗 ← 𝟢, 𝜂 ← 𝟢.
+  //   𝒅 ← {𝟢}ᵀ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   linOp.MatVec(yArr, xArr);
@@ -152,7 +151,6 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
     stormBlas::Set(dArr, xArr);
   } else {
     stormBlas::Fill(dArr, 0.0);
-    theta = 0.0, eta = 0.0;
   }
 
   return tau;
@@ -176,18 +174,17 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
   //   𝒖 ← 𝒖 - 𝛼⋅𝒔,
+  //   𝒅 ← 𝒅 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒚),
+  //   𝜔 ← ‖𝒖‖,
   //   𝗶𝗳 𝘓𝟣:
-  //     𝒅 ← 𝒅 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒚),
-  //     𝜔 ← ‖𝒖‖,
   //     𝗶𝗳 𝜔 < 𝜏:
   //       𝜏 ← 𝜔, 𝒙 ← 𝒅,
   //     𝗲𝗻𝗱 𝗶𝗳
   //   𝗲𝗹𝘀𝗲:
-  //     𝒅 ← (𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒚) + (𝜗²⋅𝜂/𝛼)⋅𝒅,
-  //     𝜗 ← ‖𝒖‖/𝜏,
-  //     𝑐𝑠 ← 𝟣/(𝟣 + 𝜗²)¹ᐟ²,
-  //     𝜏 ← 𝜏⋅𝜗⋅𝑐𝑠, 𝜂 ← 𝛼⋅(𝑐𝑠)²,
-  //     𝒙 ← 𝒙 + 𝜂⋅𝒅,
+  //     𝑐𝑠, 𝑠𝑛 ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝜏, 𝜔),
+  //     𝜏 ← 𝑐𝑠⋅𝜔,
+  //     𝒙 ← 𝒙 + 𝑐𝑠²⋅𝒅,
+  //     𝒅 ← 𝑠𝑛²⋅𝒅,
   //   𝗲𝗻𝗱 𝗶𝗳
   //   𝗶𝗳 𝑚 = 𝟢:
   //     𝒚 ← 𝒚 - 𝛼⋅𝒗,
@@ -205,20 +202,18 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
     stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
   for (stormSize_t m = 0; m <= 1; ++m) {
     stormBlas::Sub(uArr, uArr, sArr, alpha);
+    stormBlas::Add(dArr, dArr, (rightPre ? zArr : yArr), alpha);
+    stormReal_t const omega = stormBlas::Norm2(uArr);
     if constexpr (L1) {
-      stormBlas::Add(dArr, dArr, 
-        (rightPre ? zArr : yArr), alpha);
-      stormReal_t const omega = stormBlas::Norm2(uArr);
       if (omega < tau) {
         tau = omega, stormBlas::Set(xArr, dArr);
       }
     } else {
-      stormBlas::Add(dArr, (rightPre ? zArr : yArr), 
-        dArr, std::pow(theta, 2)*eta/alpha);
-      theta = stormBlas::Norm2(uArr)/tau;
-      stormReal_t const cs = 1.0/std::hypot(1.0, theta);
-      tau *= theta*cs, eta = alpha*std::pow(cs, 2);
-      stormBlas::Add(xArr, xArr, dArr, eta);
+      auto const [cs, sn, _] =
+        stormBlas::SymOrtho(tau, omega);
+      tau = omega*cs;
+      stormBlas::Add(xArr, xArr, dArr, std::pow(cs, 2));
+      stormBlas::Scale(dArr, dArr, std::pow(sn, 2));
     }
     if (m == 0) {
       stormBlas::Sub(yArr, yArr, vArr, alpha);

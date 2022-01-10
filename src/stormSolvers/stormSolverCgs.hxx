@@ -33,7 +33,9 @@
 ///
 /// References:
 /// @verbatim
-/// [1] ???
+/// [1] Sonneveld, Peter. 
+///     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.” 
+///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>

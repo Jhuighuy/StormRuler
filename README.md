@@ -80,8 +80,10 @@ products.
     (`CGS`, for the _general_ linear problems),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGStab`, for the _general_ linear problems),
-  * Transpose-free Quasi-Minimal Residual solver
+  * Transpose-Free Quasi-Minimal Residual solver
     (`TFQMR`, for the _general_ linear problems);
+  * Transpose-Free 1-norm Quasi-Minimal Residual solver
+    (`TFQMR1`, for the _general_ linear problems);
   * Generalized Minimal Residual method solver
     (`GMRES`, for the _general_ linear problems),
   * Flexible Generalized Minimal Residual method solver
@@ -190,9 +192,9 @@ Legend:
   - [x] 🪓 Preconditioned `GMRES` implementation,
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
   - [ ] 🧻 Refactor `GMRES` with restarting request based on excecptions,
-  - [x] 🪓 `TFQMR` solver implementation.
+  - [x] 🪓 `TFQMR` solver implementation,
   - [x] 🪓 Preconditioned `TFQMR` solver,
-  - [ ] 🧸 `TFQMR` solver implementation with L1,
+  - [x] 🧸 `TFQMR1` solver implementation,
   - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators,
 
 * Matrix operations and extraction:

@@ -46,6 +46,7 @@
 #define STORM_KSP_CGS      "CGS"
 #define STORM_KSP_BiCGStab "BiCGStab"
 #define STORM_KSP_TFQMR    "TFQMR"
+#define STORM_KSP_TFQMR1   "TFQMR1"
 #define STORM_KSP_GMRES    "GMRES"
 #define STORM_KSP_FGMRES   "FGMRES"
 #define STORM_KSP_LSQR     "LSQR"
@@ -77,6 +78,10 @@
   } else if (std::strcmp(solverType, STORM_KSP_TFQMR) == 0) { \
     \
     return std::make_unique<stormTfqmrSolver<tArray>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_TFQMR1) == 0) { \
+    \
+    return std::make_unique<stormTfqmr1Solver<tArray>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \

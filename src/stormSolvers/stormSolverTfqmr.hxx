@@ -244,4 +244,179 @@ void stormTfqmrSolver<tArray>::Finalize(tArray& xArr,
 
 } // stormTfqmrSolver<...>::Finalize
 
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Solve a linear operator equation with the
+///   @c TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) method.
+///
+/// References:
+/// @verbatim
+/// [1] H.M Bücker, 
+///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm 
+///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
+/// [1] Freund, Roland W.
+///     “A Transpose-Free Quasi-Minimal Residual Algorithm
+///      for Non-Hermitian Linear Systems.”
+///     SIAM J. Sci. Comput. 14 (1993): 470-482.
+/// @endverbatim
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class tArray>
+class stormTfqmr1Solver final : public stormIterativeSolver<tArray> {
+private:
+  stormReal_t tau, rho;
+  tArray xTildeArr, rTildeArr, uArr, vArr, yArr, sArr, zArr;
+
+  stormReal_t Init(tArray& xArr,
+                   tArray const& bArr,
+                   stormOperator<tArray> const& linOp,
+                   stormPreconditioner<tArray> const* preOp) override;
+
+  stormReal_t Iterate(tArray& xArr,
+                      tArray const& bArr,
+                      stormOperator<tArray> const& linOp,
+                      stormPreconditioner<tArray> const* preOp) override;
+
+}; // class stormTfqmr1Solver<...>
+
+template<class tArray>
+stormReal_t stormTfqmr1Solver<tArray>::Init(tArray& xArr,
+                                            tArray const& bArr,
+                                            stormOperator<tArray> const& linOp,
+                                            stormPreconditioner<tArray> const* preOp) {
+
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
+
+  stormUtils::AllocLike(xArr, xTildeArr, rTildeArr, uArr, vArr, yArr, sArr);
+  if (preOp != nullptr) {
+    stormUtils::AllocLike(xArr, zArr);
+  }
+
+  // ----------------------
+  // Initialize:
+  // 𝒙̃ ← 𝒙,
+  // 𝒚 ← 𝓐𝒙,
+  // 𝒚 ← 𝒃 - 𝒚,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒛 ← 𝒚,
+  //   𝒚 ← 𝓟𝒛,
+  //   𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒔 ← 𝓐𝒚.
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒖 ← 𝒚,
+  // 𝒗 ← 𝒔,
+  // 𝒓̃ ← 𝒖,
+  // 𝜌 ← <𝒓̃⋅𝒖>, 𝜏 ← 𝜌¹ᐟ².
+  // ----------------------
+  stormBlas::Set(xTildeArr, xArr);
+  linOp.MatVec(yArr, xArr);
+  stormBlas::Sub(yArr, bArr, yArr);
+  if (leftPre) {
+    std::swap(zArr, yArr);
+    preOp->MatVec(yArr, zArr);
+    stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+  } else if (rightPre) {
+    stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+  } else {
+    linOp.MatVec(sArr, yArr);
+  }
+  stormBlas::Set(uArr, yArr);
+  stormBlas::Set(vArr, sArr);
+  stormBlas::Set(rTildeArr, uArr);
+  rho = stormBlas::Dot(rTildeArr, uArr), tau = std::sqrt(rho);
+
+  return tau;
+
+} // stormTfqmr1Solver<...>::Init
+
+template<class tArray>
+stormReal_t stormTfqmr1Solver<tArray>::Iterate(tArray& xArr,
+                                              tArray const& bArr,
+                                              stormOperator<tArray> const& linOp,
+                                              stormPreconditioner<tArray> const* preOp) {
+
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
+
+  // ----------------------
+  // Continue the iterations:
+  // 𝜎 ← <𝒓̃⋅𝒗>, 𝛼 ← 𝜌/𝜎,
+  // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
+  //   𝒖 ← 𝒖 - 𝛼⋅𝒔,
+  //   𝜔 ← ‖𝒖‖,
+  //   𝒙̃ ← 𝒙̃ + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒚),
+  //   𝗶𝗳 𝜔 < 𝜏:
+  //     𝜏 ← 𝜔, 𝒙̃ ← 𝒙,
+  //   𝗲𝗻𝗱 𝗶𝗳
+  //   𝗶𝗳 𝑚 = 𝟢:
+  //     𝒚 ← 𝒚 - 𝛼⋅𝒗,
+  //     𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //       𝒔 ← 𝓟(𝒛 ← 𝓐𝒚).
+  //     𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //       𝒔 ← 𝓐(𝒛 ← 𝓟𝒚).
+  //     𝗲𝗹𝘀𝗲:
+  //       𝒔 ← 𝓐𝒚.
+  //     𝗲𝗻𝗱 𝗶𝗳
+  //   𝗲𝗻𝗱 𝗶𝗳
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // ----------------------
+  stormReal_t const sigma =
+    stormBlas::Dot(rTildeArr, vArr), alpha = rho/sigma;
+  for (stormSize_t m = 0; m <= 1; ++m) {
+    stormBlas::Sub(uArr, uArr, sArr, alpha);
+    stormBlas::Add(xTildeArr, xTildeArr, (rightPre ? zArr : yArr), alpha);
+    stormReal_t const omega = stormBlas::Norm2(uArr);
+    if (omega < tau) {
+      tau = omega, stormBlas::Set(xArr, xTildeArr);
+    }
+    if (m == 0) {
+      stormBlas::Sub(yArr, yArr, vArr, alpha);
+      if (leftPre) {
+        stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+      } else if (rightPre) {
+        stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+      } else {
+        linOp.MatVec(sArr, yArr);
+      }
+    }
+  }
+
+  // ----------------------
+  // 𝜌̅ ← 𝜌,
+  // 𝜌 ← <𝒓̃⋅𝒖>, 𝛽 ← 𝜌/𝜌̅,
+  // 𝒗 ← 𝒔 + 𝛽⋅𝒗,
+  // 𝒚 ← 𝒖 + 𝛽⋅𝒚,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
+  // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒔 ← 𝓐(𝒛 ← 𝓟𝒚),
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒔 ← 𝓐𝒚,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒗 ← 𝒔 + 𝛽⋅𝒗.
+  // ----------------------
+  stormReal_t const rhoBar = rho;
+  rho = stormBlas::Dot(rTildeArr, uArr);
+  stormReal_t const beta = rho/rhoBar;
+  stormBlas::Add(vArr, sArr, vArr, beta);
+  stormBlas::Add(yArr, uArr, yArr, beta);
+  if (leftPre) {
+    stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+  } else if (rightPre) {
+    stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+  } else {
+    linOp.MatVec(sArr, yArr);
+  }
+  stormBlas::Add(vArr, sArr, vArr, beta);
+
+  return tau;
+
+} // stormTfqmr1Solver<...>::Iterate
+
 #endif // ifndef _STORM_SOLVER_TFQMR_

@@ -90,8 +90,6 @@ protected:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormGmresSolver final : public stormBaseGmresSolver<false, tArray> {
-public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
 
 }; // class stormGmresSolver<...>
 

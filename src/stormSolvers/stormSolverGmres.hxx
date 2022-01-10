@@ -152,14 +152,8 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
                                          stormOperator<tArray> const& linOp,
                                          stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = [&]() {
-    if constexpr (Flexible) {
-      return false;
-    } else {
-      auto const preSide = static_cast<stormGmresSolver<tArray>*>(this)->PreSide;
-      return (preOp != nullptr) && (preSide == stormPreconditionerSide::Left);
-    }
-  }();
+  bool const leftPre = (preOp != nullptr) && 
+    (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
 
   // ----------------------
   // Initialize:
@@ -201,16 +195,10 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
                                         stormOperator<tArray> const& linOp,
                                         stormPreconditioner<tArray> const* preOp) {
 
-  auto const [leftPre, rightPre] = [&]() {
-    if constexpr (Flexible) {
-      return std::make_pair(false, preOp != nullptr);
-    } else {
-      auto const preSide = static_cast<stormGmresSolver<tArray>*>(this)->PreSide;
-      return std::make_pair(
-        (preOp != nullptr) && (preSide == stormPreconditionerSide::Left),
-        (preOp != nullptr) && (preSide == stormPreconditionerSide::Right));
-    }
-  }();
+  bool const leftPre = (preOp != nullptr) && 
+    (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
   // Continue the Arnoldi procedure:
@@ -286,14 +274,8 @@ void stormBaseGmresSolver<Flexible, tArray>::
                                  stormOperator<tArray> const& linOp,
                                  stormPreconditioner<tArray> const* preOp) {
 
-  bool const rightPre = [&]() {
-    if constexpr (Flexible) {
-      return preOp != nullptr;
-    } else {
-      auto const preSide = static_cast<stormGmresSolver<tArray>*>(this)->PreSide;
-      return (preOp != nullptr) && (preSide == stormPreconditionerSide::Right);
-    }
-  }();
+  bool const rightPre = (preOp != nullptr) && 
+    (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
   // Finalize the 𝜷-solution:

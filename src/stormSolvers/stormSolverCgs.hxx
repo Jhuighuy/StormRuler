@@ -40,9 +40,6 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormCgsSolver final : public stormIterativeSolver<tArray> {
-public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
-
 private:
   stormReal_t rho;
   tArray pArr, qArr, rArr, rTildeArr, uArr, vArr;
@@ -65,8 +62,8 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
                                          stormOperator<tArray> const& linOp,
                                          stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
 
   stormUtils::AllocLike(xArr, pArr, qArr, rArr, rTildeArr, uArr, vArr);
 
@@ -97,10 +94,10 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
                                             stormOperator<tArray> const& linOp,
                                             stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:

@@ -44,9 +44,6 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormTfqmrSolver final : public stormIterativeSolver<tArray> {
-public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Left;
-
 private:
   stormReal_t tau, rho, theta, eta;
   tArray dArr, xTildeArr, rTildeArr, uArr, vArr, yArr, sArr, zArr;
@@ -74,10 +71,10 @@ stormReal_t stormTfqmrSolver<tArray>::Init(tArray& xArr,
                                            stormOperator<tArray> const& linOp,
                                            stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
 
   stormUtils::AllocLike(xArr, dArr, rTildeArr, uArr, vArr, yArr, sArr);
   if (preOp != nullptr) {
@@ -137,10 +134,10 @@ stormReal_t stormTfqmrSolver<tArray>::Iterate(tArray& xArr,
                                               stormOperator<tArray> const& linOp,
                                               stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -230,8 +227,8 @@ void stormTfqmrSolver<tArray>::Finalize(tArray& xArr,
                                         stormOperator<tArray> const& linOp,
                                         stormPreconditioner<tArray> const* preOp) {
 
-  bool const rightPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Finalize the solution:

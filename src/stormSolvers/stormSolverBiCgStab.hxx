@@ -41,9 +41,6 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
 class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
-public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
-
 private:
   stormReal_t alpha, rho, omega;
   tArray pArr, rArr, rTildeArr, tArr, vArr, zArr;
@@ -66,8 +63,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
                                               stormOperator<tArray> const& linOp,
                                               stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
 
   stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
   if (preOp != nullptr) {
@@ -101,10 +98,10 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
                                                  stormOperator<tArray> const& linOp,
                                                  stormPreconditioner<tArray> const* preOp) {
 
-  bool const leftPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = 
-    (preOp != nullptr) && (PreSide == stormPreconditionerSide::Right);
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:

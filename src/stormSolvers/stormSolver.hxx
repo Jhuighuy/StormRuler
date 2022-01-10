@@ -65,6 +65,7 @@ public:
   bool VerifySolution = false;
 
 public:
+  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
   std::unique_ptr<stormPreconditioner<tInArray>> PreOp = nullptr;
 
 protected:

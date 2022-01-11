@@ -37,33 +37,32 @@
 /// @brief Base class for @c GMRES and @c FGMRES.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<bool Flexible, class tArray>
-class stormBaseGmresSolver : public stormRestartableSolver<tArray> {
+class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<tArray> {
 private:
   std::vector<stormReal_t> beta, cs, sn;
   std::vector<std::vector<stormReal_t>> h;
   std::vector<tArray> qArr;
   std::conditional_t<Flexible, std::vector<tArray>, std::array<tArray, 1>> zArr;
 
-  void PreInit(tArray& xArr,
-               tArray const& bArr, 
-               bool hasPreOp) override;
+  void OuterInit(tArray& xArr,
+                 tArray const& bArr,
+                 stormOperator<tArray> const& linOp,
+                 stormPreconditioner<tArray> const* preOp) override;
 
-  stormReal_t ReInit(tArray& xArr,
-                     tArray const& bArr,
-                     stormOperator<tArray> const& linOp,
-                     stormPreconditioner<tArray> const* preOp) override;
-
-  stormReal_t ReIterate(stormSize_t k,
-                        tArray& xArr,
+  stormReal_t InnerInit(tArray& xArr,
                         tArray const& bArr,
                         stormOperator<tArray> const& linOp,
                         stormPreconditioner<tArray> const* preOp) override;
 
-  void ReFinalize(stormSize_t k,
-                  tArray& xArr,
-                  tArray const& bArr,
-                  stormOperator<tArray> const& linOp,
-                  stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t InnerIterate(tArray& xArr,
+                           tArray const& bArr,
+                           stormOperator<tArray> const& linOp,
+                           stormPreconditioner<tArray> const* preOp) override;
+
+  void InnerFinalize(tArray& xArr,
+                     tArray const& bArr,
+                     stormOperator<tArray> const& linOp,
+                     stormPreconditioner<tArray> const* preOp) override;
 
 protected:
 
@@ -121,18 +120,19 @@ class stormFgmresSolver final : public stormBaseGmresSolver<true, tArray> {
 
 template<bool Flexible, class tArray>
 void stormBaseGmresSolver<Flexible, tArray>::
-                          PreInit(tArray& xArr,
-                                  tArray const& bArr, 
-                                  bool hasPreOp) {
+                        OuterInit(tArray& xArr,
+                                  tArray const& bArr,
+                                  stormOperator<tArray> const& linOp,
+                                  stormPreconditioner<tArray> const* preOp) {
 
-  stormSize_t const m = this->NumIterationsBeforeRestart;
+  stormSize_t const m = this->NumInnerIterations;
   beta.resize(m + 1), cs.resize(m), sn.resize(m);
   h.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
   qArr.resize(m + 1);
   for (tArray& qArr : qArr) {
     stormUtils::AllocLike(xArr, qArr);
   }
-  if (hasPreOp) {
+  if (preOp != nullptr) {
     if constexpr (Flexible) {
       zArr.resize(m);
     }
@@ -141,11 +141,11 @@ void stormBaseGmresSolver<Flexible, tArray>::
     }
   }
 
-} // stormBaseGmresSolver<...>::Init
+} // stormBaseGmresSolver<...>::OuterInit
 
 template<bool Flexible, class tArray>
 stormReal_t stormBaseGmresSolver<Flexible, tArray>::
-                                  ReInit(tArray& xArr,
+                               InnerInit(tArray& xArr,
                                          tArray const& bArr,
                                          stormOperator<tArray> const& linOp,
                                          stormPreconditioner<tArray> const* preOp) {
@@ -170,9 +170,9 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   }
 
   // ----------------------
-  // 𝒄𝒔 ← {𝟢}ᵀ, 𝒔𝒏 ← {𝟢}ᵀ,
+  // 𝑐𝑠 ← {𝟢}ᵀ, 𝑠𝑛 ← {𝟢}ᵀ,
   // 𝜑 ← ‖𝒒₀‖,
-  // 𝜷 ← {𝜑,𝟢,…,𝟢}ᵀ,
+  // 𝛽 ← {𝜑,𝟢,…,𝟢}ᵀ,
   // 𝒒₀ ← 𝒒₀/𝜑. 
   // ----------------------
   std::fill(cs.begin(), cs.end(), 0.0);
@@ -183,15 +183,16 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
 
   return phi;
 
-} // stormBaseGmresSolver<...>::ReInit
+} // stormBaseGmresSolver<...>::InnerInit
 
 template<bool Flexible, class tArray>
 stormReal_t stormBaseGmresSolver<Flexible, tArray>::
-                              ReIterate(stormSize_t k,
-                                        tArray& xArr,
-                                        tArray const& bArr,
-                                        stormOperator<tArray> const& linOp,
-                                        stormPreconditioner<tArray> const* preOp) {
+                            InnerIterate(tArray& xArr,
+                                         tArray const& bArr,
+                                         stormOperator<tArray> const& linOp,
+                                         stormPreconditioner<tArray> const* preOp) {
+
+  stormSize_t const k = this->InnerIteration;
 
   bool const leftPre = (preOp != nullptr) && 
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
@@ -234,12 +235,12 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // Eliminate the last element in {𝒉ᵢⱼ}
   // and and update the rotation matrix:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
-  //   𝜒 ← 𝒄𝒔ᵢ⋅𝒉ᵢₖ + 𝒔𝒏ᵢ⋅𝒉ᵢ₊₁,ₖ,
-  //   𝒉ᵢ₊₁,ₖ ← -𝒔𝒏ᵢ⋅𝒉ᵢₖ + 𝒄𝒔ᵢ⋅𝒉ᵢ₊₁,ₖ 
+  //   𝜒 ← 𝑐𝑠ᵢ⋅𝒉ᵢₖ + 𝑠𝑛ᵢ⋅𝒉ᵢ₊₁,ₖ,
+  //   𝒉ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝒉ᵢₖ + 𝑐𝑠ᵢ⋅𝒉ᵢ₊₁,ₖ 
   //   𝒉ᵢₖ ← 𝜒,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝒄𝒔ₖ, 𝒔𝒏ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝒉ₖₖ, 𝒉ₖ₊₁,ₖ),
-  // 𝒉ₖₖ ← 𝒄𝒔ₖ⋅𝒉ₖₖ + 𝒔𝒏ₖ⋅𝒉ₖ₊₁,ₖ,
+  // 𝑐𝑠ₖ, 𝑠𝑛ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝒉ₖₖ, 𝒉ₖ₊₁,ₖ),
+  // 𝒉ₖₖ ← 𝑐𝑠ₖ⋅𝒉ₖₖ + 𝑠𝑛ₖ⋅𝒉ₖ₊₁,ₖ,
   // 𝒉ₖ₊₁,ₖ ← 𝟢.
   // ----------------------
   for (stormSize_t i = 0; i < k; ++i) {
@@ -253,33 +254,34 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   h[k + 1][k] = 0.0;
 
   // ----------------------
-  // Update the 𝜷-solution and residual norm:
-  // 𝜷ₖ₊₁ ← -𝒔𝒏ₖ⋅𝜷ₖ, 𝜷ₖ ← 𝒄𝒔ₖ⋅𝜷ₖ,
-  // 𝜑 ← |𝜷ₖ₊₁|.
+  // Update the 𝛽-solution and residual norm:
+  // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ,
+  // 𝜑 ← |𝛽ₖ₊₁|.
   // ----------------------
   beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
   stormReal_t const phi = std::abs(beta[k + 1]);
 
   return phi;
 
-} // stormBaseGmresSolver<...>::ReIterate
+} // stormBaseGmresSolver<...>::InnerIterate
 
 template<bool Flexible, class tArray>
 void stormBaseGmresSolver<Flexible, tArray>::
-                      ReFinalize(stormSize_t k,
-                                 tArray& xArr,
-                                 tArray const& bArr,
-                                 stormOperator<tArray> const& linOp,
-                                 stormPreconditioner<tArray> const* preOp) {
+                    InnerFinalize(tArray& xArr,
+                                  tArray const& bArr,
+                                  stormOperator<tArray> const& linOp,
+                                  stormPreconditioner<tArray> const* preOp) {
+
+  stormSize_t const k = this->InnerIteration;
 
   bool const rightPre = (preOp != nullptr) && 
     (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
-  // Finalize the 𝜷-solution:
-  // 𝜷ₖ ← 𝜷ₖ/𝒉ₖₖ,
+  // Finalize the 𝛽-solution:
+  // 𝛽ₖ ← 𝛽ₖ/𝒉ₖₖ,
   // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //   𝜷ᵢ ← (𝜷ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝜷ᵢ₊₁:ₖ>)/𝒉ᵢᵢ.
+  //   𝛽ᵢ ← (𝛽ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝛽ᵢ₊₁:ₖ>)/𝒉ᵢᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   beta[k] /= h[k][k];
@@ -293,16 +295,16 @@ void stormBaseGmresSolver<Flexible, tArray>::
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝗻𝗼𝘁 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒒ᵢ.
+  //     𝒙 ← 𝒙 + 𝛽ᵢ⋅𝒒ᵢ.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝒙 ← 𝒙 + 𝜷ᵢ⋅𝒛ᵢ.
+  //     𝒙 ← 𝒙 + 𝛽ᵢ⋅𝒛ᵢ.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲:
-  //   𝒒₀ ← 𝜷₀⋅𝒒₀,
+  //   𝒒₀ ← 𝛽₀⋅𝒒₀,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑘 𝗱𝗼:
-  //     𝒒₀ ← 𝒒₀ + 𝜷ᵢ⋅𝒒ᵢ,
+  //     𝒒₀ ← 𝒒₀ + 𝛽ᵢ⋅𝒒ᵢ,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   //   𝒛₀ ← 𝓟𝒒₀,
   //   𝒙 ← 𝒙 + 𝒛₀.
@@ -325,6 +327,6 @@ void stormBaseGmresSolver<Flexible, tArray>::
     stormBlas::Add(xArr, xArr, zArr[0]);
   }
 
-} // stormBaseGmresSolver<...>::ReFinalize
+} // stormBaseGmresSolver<...>::InnerFinalize
 
 #endif // ifndef _STORM_SOLVER_GMRES_HXX_

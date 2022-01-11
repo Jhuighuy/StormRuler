@@ -235,7 +235,7 @@ private:
 template<class tInArray, class tOutArray = tInArray, 
          class tMatVecFunc>
 std::unique_ptr<stormOperator<tInArray, tOutArray>>
-          stormMakeOperator(tMatVecFunc&& matVecPtr) {
+         stormMakeOperator(tMatVecFunc&& matVecPtr) {
 
   return std::make_unique<stormFunctionalOperator<tInArray, tOutArray>>(
     std::forward<tMatVecFunc>(matVecPtr));
@@ -244,8 +244,8 @@ std::unique_ptr<stormOperator<tInArray, tOutArray>>
 template<class tInArray, class tOutArray = tInArray, 
          class tMatVecFunc, class tConjMatVecFunc>
 std::unique_ptr<stormOperator<tInArray, tOutArray>>
-          stormMakeOperator(tMatVecFunc&& matVecPtr,
-                            tConjMatVecFunc&& conjMatVecPtr) {
+           stormMakeOperator(tMatVecFunc&& matVecPtr,
+                             tConjMatVecFunc&& conjMatVecPtr) {
 
   return std::make_unique<stormFunctionalOperator<tInArray, tOutArray>>(
     std::forward<tMatVecFunc>(matVecPtr), 

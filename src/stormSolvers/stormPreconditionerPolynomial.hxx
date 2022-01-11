@@ -45,7 +45,8 @@ class stormPolynomialPreconditioner : public stormPreconditioner<tArray> {
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
-class stormChebyshevPreconditioner final : public stormPolynomialPreconditioner<tArray> {
+class stormChebyshevPreconditioner final : 
+    public stormPolynomialPreconditioner<tArray> {
 private:
   stormSize_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!

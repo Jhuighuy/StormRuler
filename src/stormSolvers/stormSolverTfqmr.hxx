@@ -141,10 +141,10 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
 
 template<bool L1, class tArray>
 stormReal_t stormBaseTfqmrSolver<L1, tArray>::
-                          Iterate(tArray& xArr,
-                                  tArray const& bArr,
-                                  stormOperator<tArray> const& linOp,
-                                  stormPreconditioner<tArray> const* preOp) {
+                           Iterate(tArray& xArr,
+                                   tArray const& bArr,
+                                   stormOperator<tArray> const& linOp,
+                                   stormPreconditioner<tArray> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);

@@ -80,10 +80,10 @@ products.
     (`CGS`, for the _general_ linear problems),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGStab`, for the _general_ linear problems),
+  * _(planned)_ Biconjugate Gradients (𝐿-stabilized) solver
+    (`BiCGStabL`, for the _general_ linear problems),
   * Transpose-Free Quasi-Minimal Residual solver
-    (`TFQMR`, for the _general_ linear problems);
-  * Transpose-Free 1-norm Quasi-Minimal Residual solver
-    (`TFQMR1`, for the _general_ linear problems);
+    (`TFQMR`, `TFQMR1`, for the _general_ linear problems);
   * Generalized Minimal Residual method solver
     (`GMRES`, for the _general_ linear problems),
   * Flexible Generalized Minimal Residual method solver
@@ -184,17 +184,26 @@ Legend:
 
 * Linear iterative solvers:
   - [ ] 💄 Some better residual monitor,
-  - [x] 🧸 Report true residual in CG,
+  - [x] 🧸 Report true residual in `CG`,
+  - [ ] 🪓 Eigenvalue estimates in `CG`,
   - [ ] 🪓 `FCG` solver implementation,
   - [ ] 🧻 Fix unpreconditioned `MINRES` solver,
   - [ ] 🧻 `MINRES` uses too many vectors (10), can be implemented with 7.
+  - [ ] 🦜 `CGS` solver penaltization,
+  - [ ] 🦜 `CGS` breakdown detection,
+  - [ ] 🦜 `BiCGStab` breakdown detection,
+  - [ ] 🚬 `BiCGStabL` solver implementation,
+  - [x] 🪓 `TFQMR` solver implementation,
+  - [x] 🪓 Preconditioned `TFQMR` solver,
+  - [ ] 🪓 More accurate `TFQMR` residual estimator,
+  - [x] 🪓 `TFQMR1` solver implementation,
+  - [ ] 🦜 `TFQMR`/`TFQMR1` breakdown detection,
   - [x] 🚬 `GMRES` solver implementation,
   - [x] 🪓 Preconditioned `GMRES` implementation,
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
-  - [ ] 🧻 Refactor `GMRES` with restarting request based on excecptions,
-  - [x] 🪓 `TFQMR` solver implementation,
-  - [x] 🪓 Preconditioned `TFQMR` solver,
-  - [x] 🧸 `TFQMR1` solver implementation,
+  - [ ] 🧻 Refactor `GMRES` with restarting request based on exceptions,
+  - [ ] 🦜 `GMRES`/`FGMRES` breakdown detection,
+  - [ ] 🪓 Eigenvalue estimates in `GMRES`,
   - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators,
 
 * Matrix operations and extraction:

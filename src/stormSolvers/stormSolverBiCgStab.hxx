@@ -153,9 +153,6 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   stormBlas::Add(xArr, xArr, rightPre ? zArr : pArr, alpha);
   stormBlas::Sub(rArr, rArr, vArr, alpha);
 
-  /// @todo Check the residual norm here!
-  //return stormBlas::Norm2(rArr);
-
   // ----------------------
   // Update the solution and the residual again:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:

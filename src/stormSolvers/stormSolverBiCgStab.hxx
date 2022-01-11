@@ -78,7 +78,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   //   𝒛 ← 𝒓,
   //   𝒓 ← 𝓟𝒛,
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒓̃ ← 𝒓.
+  // 𝒓̃ ← 𝒓,
+  // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
@@ -87,8 +88,9 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
     preOp->MatVec(rArr, zArr);
   }
   stormBlas::Set(rTildeArr, rArr);
+  rho = stormBlas::Dot(rTildeArr, rArr);
 
-  return stormBlas::Norm2(rArr);
+  return std::sqrt(rho);
 
 } // stormBiCgStabSolver<...>::Init
 
@@ -105,16 +107,11 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Continue the iterations:
-  // 𝜌̅ ← 𝜌,
-  // 𝜌 ← <𝒓̃⋅𝒓>.
-  // ----------------------
-  stormReal_t rhoBar = rho; 
-  rho = stormBlas::Dot(rTildeArr, rArr);
-
-  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝒑 ← 𝒓.
   // 𝗲𝗹𝘀𝗲:
+  //   𝜌̅ ← 𝜌,
+  //   𝜌 ← <𝒓̃⋅𝒓>,
   //   𝛽 ← (𝜌/𝜌̅)⋅(𝛼/𝜔),
   //   𝒑 ← 𝒑 - 𝜔⋅𝒗,
   //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
@@ -124,6 +121,8 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   if (firstIteration) {
     stormBlas::Set(pArr, rArr);
   } else {
+    stormReal_t const rhoBar = rho; 
+    rho = stormBlas::Dot(rTildeArr, rArr);
     stormReal_t const beta = 
       stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
     stormBlas::Sub(pArr, pArr, vArr, omega);

@@ -33,7 +33,7 @@
 template<bool L1, class tArray>
 class stormBaseTfqmrSolver : public stormIterativeSolver<tArray> {
 private:
-  stormReal_t tau, rho;
+  stormReal_t rho, tau;
   tArray dArr, rTildeArr, uArr, vArr, yArr, sArr, zArr;
 
   stormReal_t Init(tArray& xArr,
@@ -81,10 +81,6 @@ class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, tArray> {
 /// [1] H.M Bücker, 
 ///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm 
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
-/// [1] Freund, Roland W.
-///     “A Transpose-Free Quasi-Minimal Residual Algorithm
-///      for Non-Hermitian Linear Systems.”
-///     SIAM J. Sci. Comput. 14 (1993): 470-482.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class tArray>
@@ -109,6 +105,11 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
 
   // ----------------------
   // Initialize:
+  // 𝗶𝗳 𝘓𝟣:
+  //   𝒅 ← 𝒙.
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒅 ← {𝟢}ᵀ.
+  // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒚 ← 𝓐𝒙,
   // 𝒚 ← 𝒃 - 𝒚,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -117,12 +118,13 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝒖 ← 𝒚,
   // 𝒓̃ ← 𝒖,
-  // 𝗶𝗳 𝘓𝟣:
-  //   𝒅 ← 𝒙.
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒅 ← {𝟢}ᵀ.
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
+  if constexpr (L1) {
+    stormBlas::Set(dArr, xArr);
+  } else {
+    stormBlas::Fill(dArr, 0.0);
+  }
   linOp.MatVec(yArr, xArr);
   stormBlas::Sub(yArr, bArr, yArr);
   if (leftPre) {
@@ -131,13 +133,9 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   }
   stormBlas::Set(uArr, yArr);
   stormBlas::Set(rTildeArr, uArr);
-  if constexpr (L1) {
-    stormBlas::Set(dArr, xArr);
-  } else {
-    stormBlas::Fill(dArr, 0.0);
-  }
+  rho = stormBlas::Dot(rTildeArr, uArr), tau = std::sqrt(rho);
 
-  return stormBlas::Norm2(uArr);
+  return tau;
 
 } // stormBaseTfqmrSolver<...>::Init
 
@@ -155,15 +153,7 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
 
   // ----------------------
   // Continue the iterations:
-  // 𝜌̅ ← 𝜌,
-  // 𝜌 ← <𝒓̃⋅𝒖>, 
-  // ----------------------
-  stormReal_t const rhoBar = rho;
-  rho = stormBlas::Dot(rTildeArr, uArr);
-
-  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
-  //   𝜏 ← 𝜌¹ᐟ²,
   //   𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //     𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
   //   𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
@@ -173,6 +163,8 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   //   𝗲𝗻𝗱 𝗶𝗳
   //   𝒗 ← 𝒔,
   // 𝗲𝗹𝘀𝗲:
+  //   𝜌̅ ← 𝜌,
+  //   𝜌 ← <𝒓̃⋅𝒖>, 
   //   𝛽 ← 𝜌/𝜌̅,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗,
   //   𝒚 ← 𝒖 + 𝛽⋅𝒚,
@@ -188,7 +180,6 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    tau = std::sqrt(rho);
     if (leftPre) {
       stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
     } else if (rightPre) {
@@ -198,6 +189,8 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
     }
     stormBlas::Set(vArr, sArr);
   } else {
+    stormReal_t const rhoBar = rho;
+    rho = stormBlas::Dot(rTildeArr, uArr);
     stormReal_t const beta = rho/rhoBar;
     stormBlas::Add(vArr, sArr, vArr, beta);
     stormBlas::Add(yArr, uArr, yArr, beta);
@@ -251,7 +244,7 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
         tau = omega, stormBlas::Set(xArr, dArr);
       }
     } else {
-      auto const [cs, sn, _] =
+      auto const [cs, sn, rr] =
         stormBlas::SymOrtho(tau, omega);
       tau = omega*cs;
       stormBlas::Add(xArr, xArr, dArr, std::pow(cs, 2));
@@ -272,18 +265,18 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // ----------------------
   // Compute the residual norm 
   // (or it's upper bound estimate in the ℒ₂ case):
-  // 𝜑 ← 𝜏,
+  // 𝜏̃ ← 𝜏,
   // 𝗶𝗳 𝗻𝗼𝘁 𝘓𝟣:
-  //   𝜑 ← 𝜑⋅(𝟤𝑘 + 𝟥)¹ᐟ².
+  //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormReal_t phi = tau;
+  stormReal_t tauTilde = tau;
   if constexpr (!L1) {
     stormSize_t const k = this->Iteration;
-    phi *= std::sqrt(2.0*k + 3.0);
+    tauTilde *= std::sqrt(2.0*k + 3.0);
   }
 
-  return phi;
+  return tauTilde;
 
 } // stormBaseTfqmrSolver<...>::Iterate
 

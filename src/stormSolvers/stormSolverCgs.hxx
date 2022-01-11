@@ -74,7 +74,8 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
   //   𝒖 ← 𝒓,
   //   𝒓 ← 𝓟𝒖,
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒓̃ ← 𝒓.
+  // 𝒓̃ ← 𝒓,
+  // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   linOp.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
@@ -83,8 +84,9 @@ stormReal_t stormCgsSolver<tArray>::Init(tArray& xArr,
     preOp->MatVec(rArr, uArr);
   }
   stormBlas::Set(rTildeArr, rArr);
+  rho = stormBlas::Dot(rTildeArr, rArr);
 
-  return stormBlas::Norm2(rArr);
+  return std::sqrt(rho);
 
 } // stormCgsSolver<...>::Init
 
@@ -101,17 +103,12 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
 
   // ----------------------
   // Continue the iterations:
-  // 𝜌̅ ← 𝜌,
-  // 𝜌 ← <𝒓̃⋅𝒓>.
-  // ----------------------
-  stormReal_t rhoBar = rho; 
-  rho = stormBlas::Dot(rTildeArr, rArr);
-
-  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝒖 ← 𝒓,
   //   𝒑 ← 𝒖.
   // 𝗲𝗹𝘀𝗲:
+  //   𝜌̅ ← 𝜌,
+  //   𝜌 ← <𝒓̃⋅𝒓>,
   //   𝛽 ← 𝜌/𝜌̅,
   //   𝒖 ← 𝒓 + 𝛽⋅𝒒,
   //   𝒑 ← 𝒒 + 𝛽⋅𝒑,
@@ -123,6 +120,8 @@ stormReal_t stormCgsSolver<tArray>::Iterate(tArray& xArr,
     stormBlas::Set(uArr, rArr);
     stormBlas::Set(pArr, uArr);
   } else {
+    stormReal_t const rhoBar = rho; 
+    rho = stormBlas::Dot(rTildeArr, rArr);
     stormReal_t const beta = 
       stormUtils::SafeDivide(rho, rhoBar);
     stormBlas::Add(uArr, rArr, qArr, beta);

@@ -78,8 +78,8 @@ protected:
 ///   but it may be slower than the @c BiCG solvers for the \
 ///   well-conditioned moderate sized problems.
 ///
-/// In the self-adjoint operator unpreconditioned case, \
-///   @c GMRES, is algebraically equivalent to @c MINRES method, \
+/// @c GMRES, is algebraically equivalent to @c MINRES method \
+///   in the self-adjoint operator unpreconditioned case, \
 ///   however, the need for restarts may lead to the much slower \
 ///   @c GMRES convergence rate. 
 ///

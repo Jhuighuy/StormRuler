@@ -31,6 +31,12 @@
 /// @brief Solve a linear operator equation with the good old \
 ///   @c BiCGStab (Biconjugate Gradients Stabilized) method.
 ///
+/// @c BiCGStab, like the other @c BiCG type solvers, requires \
+///   two operator multiplications per iteration.
+///
+/// @c BiCGStab typically converges much smoother, than \
+///   @c CGS. @todo Breakdowns?
+///
 /// References:
 /// @verbatim
 /// [1] van der Vorst, Henk A.

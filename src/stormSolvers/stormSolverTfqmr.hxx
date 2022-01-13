@@ -27,9 +27,9 @@
 
 #include <stormSolvers/stormSolver.hxx>
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// ----------------------------------------------------------------- ///
 template<bool L1, class tArray>
 class stormBaseTfqmrSolver : public stormIterativeSolver<tArray> {
 private:
@@ -56,6 +56,17 @@ protected:
 /// @brief Solve a linear operator equation with the
 ///   @c TFQMR (Transpose-Free Quasi-Minimal Residual) method.
 ///
+/// @c TFQMR, like the other @c BiCG type methods, normally \
+///   requires two operator-vector products per iteration. \
+///   But, unlike the other @c BiCG type methods, @c TFQMR does not \
+///   implicitly contain the residual norm estimate, only the rough \
+///   upper bound is avariable, so at the latter iterations an extra \
+///   operator-vector product per iteration may be required for the \
+///   explicit residual estimation.
+///
+/// @c TFQMR typically converges much smoother, than \
+///   @c CGS and @c BiCGStab. @todo Breakdowns?
+///
 /// References:
 /// @verbatim
 /// [1] Freund, Roland W.
@@ -75,6 +86,15 @@ class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, tArray> {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the
 ///   @c TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) method.
+///
+/// @c TFQMR1, like the other @c BiCG type solvers, requires \
+///   two operator-vector products per iteration. Unlike @c TFQMR, \
+///   @c TFQMR1 implicitly contains the residual norm estimate, so no \
+///   extra operator-vector products are required.
+///
+/// @c TFQMR1 typically converges much smoother, than \
+///   @c CGS and @c BiCGStab and is slightly faster than \
+///   @c TFQMR. @todo Breakdowns?
 ///
 /// References:
 /// @verbatim

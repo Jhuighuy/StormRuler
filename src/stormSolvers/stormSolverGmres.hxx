@@ -33,9 +33,9 @@
 
 #include <stormSolvers/stormSolver.hxx>
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES and @c FGMRES.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// ----------------------------------------------------------------- ///
 template<bool Flexible, class tArray>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<tArray> {
 private:
@@ -74,10 +74,18 @@ protected:
 /// @brief Solve a linear operator equation with the
 ///   monstrous @c GMRES (Generalized Minimal Residual) method.
 ///
-/// @c GMRES may be applied to the singular problems, and the square
-/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
-/// although convergeance to minimum norm solution is not guaranteed
-/// (is this true?).
+/// @c GMRES is typically more robust than the @c BiCG type solvers, \
+///   but it may be slower than the @c BiCG solvers for the \
+///   well-conditioned moderate sized problems.
+///
+/// In the self-adjoint operator unpreconditioned case, \
+///   @c GMRES, is algebraically equivalent to @c MINRES method, \
+///   however, the need for restarts may lead to the much slower \
+///   @c GMRES convergence rate. 
+///
+/// @c GMRES may be applied to the singular problems, and the square \
+///   least squares problems, although, similarly to @c MINRES, \
+///   convergeance to minimum norm solution is not guaranteed.
 ///
 /// References:
 /// @verbatim
@@ -97,14 +105,20 @@ class stormGmresSolver final : public stormBaseGmresSolver<false, tArray> {
 ///   the yet more monstrous @c FGMRES (Flexible Generalized \
 ///   Minimal Residual) method.
 ///
-/// @c FGMRES allows usage of the variable (or flexible)
-/// preconditioners with the price of doubleing of the memory 
-/// requirements.
+/// @c FGMRES is typically more robust than the @c BiCG type solvers, \
+///   but it may be slower than the @c BiCG solvers for the \
+///   well-conditioned moderate sized problems.
 ///
-/// @c FGMRES may be applied to the singular problems, and the square
-/// least squares problems: ‖(𝓐[𝓟]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓟]𝒚,
-/// although convergeance to minimum norm solution is not guaranteed
-/// (is this true?).
+/// @c FGMRES does the same amount of operations per iteration \
+///   as @c GMRES, but also allows usage of the variable (or flexible) \
+///   preconditioners with the price of doubleing of the memory \ 
+///   requirements. For the static preconditioners, @c FGMRES requires \
+///   one preconditioner-vector product less than @c GMRES. \
+///   @c FGMRES supports only the right preconditioning.
+///
+/// @c FGMRES may be applied to the singular problems, and the square \
+///   least squares problems, although, similarly to @c MINRES, \
+///   convergeance to minimum norm solution is not guaranteed.
 ///
 /// References:
 /// @verbatim
@@ -236,7 +250,7 @@ stormReal_t stormBaseGmresSolver<Flexible, tArray>::
   // and and update the rotation matrix:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝜒 ← 𝑐𝑠ᵢ⋅𝒉ᵢₖ + 𝑠𝑛ᵢ⋅𝒉ᵢ₊₁,ₖ,
-  //   𝒉ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝒉ᵢₖ + 𝑐𝑠ᵢ⋅𝒉ᵢ₊₁,ₖ 
+  //   𝒉ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝒉ᵢₖ + 𝑐𝑠ᵢ⋅𝒉ᵢ₊₁,ₖ,
   //   𝒉ᵢₖ ← 𝜒,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝑐𝑠ₖ, 𝑠𝑛ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝒉ₖₖ, 𝒉ₖ₊₁,ₖ),

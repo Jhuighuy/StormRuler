@@ -201,7 +201,6 @@ Legend:
   - [x] 🚬 `GMRES` solver implementation,
   - [x] 🪓 Preconditioned `GMRES` implementation,
   - [x] 🪓 Right preconditioned `FGMRES` implementation,
-  - [ ] 🧻 Refactor `GMRES` with restarting request based on exceptions,
   - [ ] 🦜 `GMRES`/`FGMRES` breakdown detection,
   - [ ] 🪓 Eigenvalue estimates in `GMRES`,
   - [ ] 🧻 Refactor `LSQR` and `LSMR` to support the non-square operators,

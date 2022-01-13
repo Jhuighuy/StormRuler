@@ -31,6 +31,11 @@
 /// @brief Solve a non-singular operator equation \
 ///   equation with the @c CGS (Conjugate Gradients Squared) method.
 ///
+/// @c CGS, like the other @c BiCG type solvers, requires \
+///   two operator multiplications per iteration.
+///
+/// @warning @c CGS convergence behavior may be very erratic.
+///
 /// References:
 /// @verbatim
 /// [1] Sonneveld, Peter. 

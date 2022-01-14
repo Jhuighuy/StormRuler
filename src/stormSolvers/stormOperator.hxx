@@ -188,8 +188,8 @@ namespace stormBlas {
 template<class InVector, class OutVector = InVector>
 class stormFunctionalOperator final : public stormOperator<InVector, OutVector> {
 private:
-  std::function<void(OutVector&, InVector const&)> matVecFuncPtr;
-  std::function<void(InVector&, OutVector const&)> conjMatVecFuncPtr;
+  std::function<void(OutVector&, InVector const&)> MatVecFuncPtr;
+  std::function<void(InVector&, OutVector const&)> ConjMatVecFuncPtr;
 
 public:
 
@@ -200,15 +200,15 @@ public:
   /// @{
   template<class MatVecFunc>
   explicit stormFunctionalOperator(MatVecFunc&& matVecFunc) :
-      matVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)) {
+      MatVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)) {
     assert(matVecFunc);
   }
   template<class MatVecFunc, class ConjMatVecFunc>
   explicit stormFunctionalOperator(MatVecFunc&& matVecFunc,
                                    ConjMatVecFunc&& conjMatVecFunc) :
-      matVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)),
-      conjMatVecFuncPtr(std::forward<ConjMatVecFunc>(conjMatVecFunc)) {
-    assert(MatVecPtr && conjMatVecFuncPtr);
+      MatVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)),
+      ConjMatVecFuncPtr(std::forward<ConjMatVecFunc>(conjMatVecFunc)) {
+    assert(MatVecPtr && ConjMatVecFuncPtr);
   }
   /// @}
 
@@ -216,16 +216,16 @@ private:
 
   void MatVec(OutVector& yVec,
               InVector const& xVec) const override {
-    matVecFuncPtr(yVec, xVec);
+    MatVecFuncPtr(yVec, xVec);
   }
 
   void ConjMatVec(InVector& xVec,
                   OutVector const& yVec) const override {
-    if (!conjMatVecFuncPtr) {
+    if (!ConjMatVecFuncPtr) {
       throw std::runtime_error(
         "`stormFunctionalOperator<...>::ConjMatVec` conjugate product function was not set.");
     }
-    conjMatVecFuncPtr(xVec, yVec);
+    ConjMatVecFuncPtr(xVec, yVec);
   }
 
 }; // class stormFunctionalOperator<...>

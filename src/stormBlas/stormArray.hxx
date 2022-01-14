@@ -25,11 +25,46 @@
 #ifndef _STORM_ARRAY_HXX_
 #define _STORM_ARRAY_HXX_
 
-#include <StormRuler_API.h>
+#include <array>
+#include <numeric>
 
-template<class tScalar>
+#include <stormBlas/stormShape.hxx>
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Multiextent array view.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Value, class... Extents>
 class stormArrayView {
+private:
+  Value* Values;
+  stormShape<Extents...> Shape;
+
+public:
+
+  /// @brief Construct an array view.
+  template<class... Indices>
+  constexpr explicit stormArrayView(Value* values, 
+                                    Indices... dynamicExtents) :
+    Values(values), Shape(dynamicExtents...) {
+  }
+
+  /// @brief Access array at index.
+  /// @{
+  template<class... Indices>
+  constexpr Value& operator()(Indices... indices) {
+    return Values[stormShapeOffset(Shape, indices...)];
+  }
+  template<class... Indices>
+  constexpr Value const& operator()(Indices... indices) const {
+    return Values[stormShapeOffset(Shape, indices...)];
+  }
+  /// @}
 
 }; // class stormArrayView<...>
+
+template<class Value>
+using stormVectorView = stormArrayView<Value, stormDynExtent>; 
+template<class Value>
+using stormMatrixView = stormArrayView<Value, stormDynExtent, stormDynExtent>; 
 
 #endif // ifndef _STORM_ARRAY_HXX_

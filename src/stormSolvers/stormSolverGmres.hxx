@@ -32,6 +32,7 @@
 #include <algorithm>
 
 #include <stormSolvers/stormSolver.hxx>
+#include <stormBlas/stormArray.hxx>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES and @c FGMRES.
@@ -39,8 +40,8 @@
 template<bool Flexible, class Vector>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
-  std::vector<stormReal_t> beta, cs, sn;
-  std::vector<std::vector<stormReal_t>> h;
+  std::vector<stormReal_t> betaData, csData, snData;
+  std::vector<stormReal_t> hData;
   std::vector<Vector> qVec;
   std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVec;
 
@@ -140,8 +141,8 @@ void stormBaseGmresSolver<Flexible, Vector>::
                                   stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const m = this->NumInnerIterations;
-  beta.resize(m + 1), cs.resize(m), sn.resize(m);
-  h.assign(m + 1, std::vector<stormReal_t>(m, 0.0));
+  betaData.resize(m + 1), csData.resize(m), snData.resize(m);
+  hData.resize((m + 1)*m);
   qVec.resize(m + 1);
   for (Vector& qVec : qVec) {
     stormUtils::AllocLike(xVec, qVec);
@@ -163,6 +164,9 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
                                          stormPreconditioner<Vector> const* preOp) {
+
+  stormSize_t const m = this->NumInnerIterations;
+  stormVectorView<stormReal_t> beta(betaData.data(), m + 1), cs(csData.data(), m), sn(snData.data(), m);
 
   bool const leftPre = (preOp != nullptr) && 
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
@@ -189,10 +193,10 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   // 𝛽 ← {𝜑,𝟢,…,𝟢}ᵀ,
   // 𝒒₀ ← 𝒒₀/𝜑. 
   // ----------------------
-  std::fill(cs.begin(), cs.end(), 0.0);
-  std::fill(sn.begin(), sn.end(), 0.0);
+  std::fill(csData.begin(), csData.end(), 0.0);
+  std::fill(snData.begin(), snData.end(), 0.0);
   stormReal_t const phi = stormBlas::Norm2(qVec[0]);
-  beta[0] = phi, std::fill(beta.begin() + 1, beta.end(), 0.0);
+  beta(0) = phi, std::fill(betaData.begin() + 1, betaData.end(), 0.0);
   stormBlas::Scale(qVec[0], qVec[0], 1.0/phi);
 
   return phi;
@@ -205,6 +209,10 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
                                          stormPreconditioner<Vector> const* preOp) {
+
+  stormSize_t const m = this->NumInnerIterations;
+  stormVectorView<stormReal_t> beta(betaData.data(), m + 1), cs(csData.data(), m), sn(snData.data(), m);
+  stormMatrixView<stormReal_t> h(hData.data(), m + 1, m);
 
   stormSize_t const k = this->InnerIteration;
 
@@ -239,11 +247,11 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
     linOp.MatVec(qVec[k + 1], qVec[k]);
   }
   for (stormSize_t i = 0; i <= k; ++i) {
-    h[i][k] = stormBlas::Dot(qVec[k + 1], qVec[i]);
-    stormBlas::Sub(qVec[k + 1], qVec[k + 1], qVec[i], h[i][k]);
+    h(i, k) = stormBlas::Dot(qVec[k + 1], qVec[i]);
+    stormBlas::Sub(qVec[k + 1], qVec[k + 1], qVec[i], h(i, k));
   }
-  h[k + 1][k] = stormBlas::Norm2(qVec[k + 1]); 
-  stormBlas::Scale(qVec[k + 1], qVec[k + 1], 1.0/h[k + 1][k]);
+  h(k + 1, k) = stormBlas::Norm2(qVec[k + 1]); 
+  stormBlas::Scale(qVec[k + 1], qVec[k + 1], 1.0/h(k + 1, k));
 
   // ----------------------
   // Eliminate the last element in {𝒉ᵢⱼ}
@@ -258,22 +266,22 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   // 𝒉ₖ₊₁,ₖ ← 𝟢.
   // ----------------------
   for (stormSize_t i = 0; i < k; ++i) {
-    stormReal_t const chi = cs[i]*h[i][k] + sn[i]*h[i + 1][k];
-    h[i + 1][k] = -sn[i]*h[i][k] + cs[i]*h[i+1][k];
-    h[i][k] = chi;
+    stormReal_t const chi = cs(i)*h(i, k) + sn(i)*h(i + 1, k);
+    h(i + 1, k) = -sn(i)*h(i, k) + cs(i)*h(i + 1, k);
+    h(i, k) = chi;
   }
-  std::tie(cs[k], sn[k], std::ignore) =
-    stormBlas::SymOrtho(h[k][k], h[k + 1][k]);
-  h[k][k] = cs[k]*h[k][k] + sn[k]*h[k + 1][k];
-  h[k + 1][k] = 0.0;
+  std::tie(cs(k), sn(k), std::ignore) =
+    stormBlas::SymOrtho(h(k, k), h(k + 1, k));
+  h(k, k) = cs(k)*h(k, k) + sn(k)*h(k + 1, k);
+  h(k + 1, k) = 0.0;
 
   // ----------------------
   // Update the 𝛽-solution and residual norm:
   // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ,
   // 𝜑 ← |𝛽ₖ₊₁|.
   // ----------------------
-  beta[k + 1] = -sn[k]*beta[k], beta[k] *= cs[k];
-  stormReal_t const phi = std::abs(beta[k + 1]);
+  beta(k + 1) = -sn(k)*beta(k), beta(k) *= cs(k);
+  stormReal_t const phi = std::abs(beta(k + 1));
 
   return phi;
 
@@ -285,6 +293,10 @@ void stormBaseGmresSolver<Flexible, Vector>::
                                   Vector const& bVec,
                                   stormOperator<Vector> const& linOp,
                                   stormPreconditioner<Vector> const* preOp) {
+
+  stormSize_t const m = this->NumInnerIterations;
+  stormVectorView<stormReal_t> beta(betaData.data(), m + 1);
+  stormMatrixView<stormReal_t> h(hData.data(), m + 1, m);
 
   stormSize_t const k = this->InnerIteration;
 
@@ -298,11 +310,12 @@ void stormBaseGmresSolver<Flexible, Vector>::
   //   𝛽ᵢ ← (𝛽ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝛽ᵢ₊₁:ₖ>)/𝒉ᵢᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  beta[k] /= h[k][k];
+  beta(k) /= h(k, k);
   for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
-    beta[i] -= std::inner_product(
-      beta.begin() + i + 1, beta.begin() + k + 1, h[i].begin() + i + 1, 0.0);
-    beta[i] /= h[i][i];
+    //beta(i) -= std::inner_product(
+    //  beta.begin() + i + 1, beta.begin() + k + 1, h[i].begin() + i + 1, 0.0);
+    for (stormSize_t j = i + 1; j <= k + 1; ++j) beta(i) -= h(i, j)*beta(j);
+    beta(i) /= h(i, i);
   }
 
   // ----------------------
@@ -326,16 +339,16 @@ void stormBaseGmresSolver<Flexible, Vector>::
   // ----------------------
   if (!rightPre) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, qVec[i], beta[i]);
+      stormBlas::Add(xVec, xVec, qVec[i], beta(i));
     }
   } else if constexpr (Flexible) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, zVec[i], beta[i]);
+      stormBlas::Add(xVec, xVec, zVec[i], beta(i));
     }
   } else {
-    stormBlas::Scale(qVec[0], qVec[0], beta[0]);
+    stormBlas::Scale(qVec[0], qVec[0], beta(0));
     for (stormSize_t i = 1; i <= k; ++i) {
-      stormBlas::Add(qVec[0], qVec[0], qVec[i], beta[i]);
+      stormBlas::Add(qVec[0], qVec[0], qVec[i], beta(i));
     }
     preOp->MatVec(zVec[0], qVec[0]);
     stormBlas::Add(xVec, xVec, zVec[0]);

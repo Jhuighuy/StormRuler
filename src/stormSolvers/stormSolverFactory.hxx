@@ -61,54 +61,54 @@
 #define _STORM_MAKE_KSP_SOLVER_(solverType) \
   if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
     \
-    return std::make_unique<stormCgSolver<tArray>>(); \
+    return std::make_unique<stormCgSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_MINRES) == 0) { \
     \
-    return std::make_unique<stormMinresSolver<tArray>>(); \
+    return std::make_unique<stormMinresSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_CGS) == 0) { \
     \
-    return std::make_unique<stormCgsSolver<tArray>>(); \
+    return std::make_unique<stormCgsSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_BiCGStab) == 0) { \
     \
-    return std::make_unique<stormBiCgStabSolver<tArray>>(); \
+    return std::make_unique<stormBiCgStabSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_TFQMR) == 0) { \
     \
-    return std::make_unique<stormTfqmrSolver<tArray>>(); \
+    return std::make_unique<stormTfqmrSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_TFQMR1) == 0) { \
     \
-    return std::make_unique<stormTfqmr1Solver<tArray>>(); \
+    return std::make_unique<stormTfqmr1Solver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \
-    return std::make_unique<stormGmresSolver<tArray>>(); \
+    return std::make_unique<stormGmresSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_FGMRES) == 0) { \
     \
-    return std::make_unique<stormFgmresSolver<tArray>>(); \
+    return std::make_unique<stormFgmresSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
-    return std::make_unique<stormLsqrSolver<tArray>>(); \
+    return std::make_unique<stormLsqrSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) { \
     \
-    return std::make_unique<stormLsmrSolver<tArray>>(); \
+    return std::make_unique<stormLsmrSolver<Vector>>(); \
     \
   }
 
 #define _STORM_MAKE_RECT_KSP_SOLVER_(solverType) \
   if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
-    return std::make_unique<stormLsqrSolver<tInArray, tOutArray>>(); \
+    return std::make_unique<stormLsqrSolver<InVector, OutVector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_LSMR) == 0) { \
     \
-    return std::make_unique<stormLsmrSolver<tInArray, tOutArray>>(); \
+    return std::make_unique<stormLsmrSolver<InVector, OutVector>>(); \
     \
   }
 
@@ -116,8 +116,8 @@
 /// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
 /** @{ */
-template<class tArray>
-std::unique_ptr<stormIterativeSolver<tArray>>
+template<class Vector>
+std::unique_ptr<stormIterativeSolver<Vector>>
     stormMakeIterativeSolver(stormString_t solverType) {
 
   _STORM_MAKE_KSP_SOLVER_(solverType);
@@ -125,12 +125,12 @@ std::unique_ptr<stormIterativeSolver<tArray>>
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
 } // stormMakeSolver<...>
-template<class tInArray, class tOutArray>
-std::unique_ptr<stormSolver<tInArray, tOutArray>>
+template<class InVector, class OutVector>
+std::unique_ptr<stormSolver<InVector, OutVector>>
     stormMakeIterativeSolver(stormString_t solverType) {
 
-  if constexpr (std::is_same_v<tInArray, tOutArray>) {
-    return stormMakeIterativeSolver<tInArray>(solverType);
+  if constexpr (std::is_same_v<InVector, OutVector>) {
+    return stormMakeIterativeSolver<InVector>(solverType);
   }
 
   _STORM_MAKE_RECT_KSP_SOLVER_(solverType);

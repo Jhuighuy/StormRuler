@@ -43,39 +43,39 @@
 ///     Journal of research of the National Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormCgSolver final : public stormIterativeSolver<tArray> {
+template<class Vector>
+class stormCgSolver final : public stormIterativeSolver<Vector> {
 private:
   stormReal_t alpha;
-  tArray pArr, rArr, zArr;
+  Vector pVec, rVec, zVec;
 
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
-                   stormOperator<tArray> const& linOp,
-                   stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
+                   stormOperator<Vector> const& linOp,
+                   stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
-                      stormOperator<tArray> const& linOp,
-                      stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
+                      stormOperator<Vector> const& linOp,
+                      stormPreconditioner<Vector> const* preOp) override;
 
 }; // class stormCgSolver<...>
 
-template<class tArray>
-stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
-                                        tArray const& bArr,
-                                        stormOperator<tArray> const& linOp,
-                                        stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormCgSolver<Vector>::Init(Vector& xVec,
+                                        Vector const& bVec,
+                                        stormOperator<Vector> const& linOp,
+                                        stormPreconditioner<Vector> const* preOp) {
 
-  stormUtils::AllocLike(xArr, pArr, rArr, zArr);
+  stormUtils::AllocLike(xVec, pVec, rVec, zVec);
 
   // ----------------------
   // Initialize:
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓.
   // ----------------------
-  linOp.MatVec(rArr, xArr);
-  stormBlas::Sub(rArr, bArr, rArr);
+  linOp.MatVec(rVec, xVec);
+  stormBlas::Sub(rVec, bVec, rVec);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -88,23 +88,23 @@ stormReal_t stormCgSolver<tArray>::Init(tArray& xArr,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
-    preOp->MatVec(zArr, rArr);
-    stormBlas::Set(pArr, zArr);
-    alpha = stormBlas::Dot(rArr, zArr);
+    preOp->MatVec(zVec, rVec);
+    stormBlas::Set(pVec, zVec);
+    alpha = stormBlas::Dot(rVec, zVec);
   } else {
-    stormBlas::Set(pArr, rArr);
-    alpha = stormBlas::Dot(rArr, rArr);
+    stormBlas::Set(pVec, rVec);
+    alpha = stormBlas::Dot(rVec, rVec);
   }
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(alpha);
+  return (preOp != nullptr) ? stormBlas::Norm2(rVec) : std::sqrt(alpha);
 
 } // stormCgSolver<...>::Init
 
-template<class tArray>
-stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
-                                           tArray const& bArr,
-                                           stormOperator<tArray> const& linOp,
-                                           stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
+                                           Vector const& bVec,
+                                           stormOperator<Vector> const& linOp,
+                                           stormPreconditioner<Vector> const* preOp) {
 
   // ----------------------
   // Iterate:
@@ -114,11 +114,11 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
-  linOp.MatVec(zArr, pArr);
+  linOp.MatVec(zVec, pVec);
   stormReal_t const alphaBar = alpha;
-  stormUtils::SafeDivideEquals(alpha, stormBlas::Dot(pArr, zArr));
-  stormBlas::Add(xArr, xArr, pArr, alpha);
-  stormBlas::Sub(rArr, rArr, zArr, alpha);
+  stormUtils::SafeDivideEquals(alpha, stormBlas::Dot(pVec, zVec));
+  stormBlas::Add(xVec, xVec, pVec, alpha);
+  stormBlas::Sub(rVec, rVec, zVec, alpha);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -129,10 +129,10 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
-    preOp->MatVec(zArr, rArr);
-    alpha = stormBlas::Dot(rArr, zArr);
+    preOp->MatVec(zVec, rVec);
+    alpha = stormBlas::Dot(rVec, zVec);
   } else {
-    alpha = stormBlas::Dot(rArr, rArr);
+    alpha = stormBlas::Dot(rVec, rVec);
   }
 
   // ----------------------
@@ -140,9 +140,9 @@ stormReal_t stormCgSolver<tArray>::Iterate(tArray& xArr,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   stormReal_t const beta = stormUtils::SafeDivide(alpha, alphaBar);
-  stormBlas::Add(pArr, (preOp != nullptr ? zArr : rArr), pArr, beta);
+  stormBlas::Add(pVec, (preOp != nullptr ? zVec : rVec), pVec, beta);
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rArr) : std::sqrt(alpha);
+  return (preOp != nullptr) ? stormBlas::Norm2(rVec) : std::sqrt(alpha);
 
 } // stormCgSolver<...>::Iterate
 

@@ -35,8 +35,8 @@
 /// 
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormPolynomialPreconditioner : public stormPreconditioner<tArray> {
+template<class Vector>
+class stormPolynomialPreconditioner : public stormPreconditioner<Vector> {
 }; // class stormPolynomialPreconditioner<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -44,43 +44,43 @@ class stormPolynomialPreconditioner : public stormPreconditioner<tArray> {
 /// 
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
+template<class Vector>
 class stormChebyshevPreconditioner final : 
-    public stormPolynomialPreconditioner<tArray> {
+    public stormPolynomialPreconditioner<Vector> {
 private:
   stormSize_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
   stormReal_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
-  mutable tArray pArr, rArr;
-  stormOperator<tArray> const* linOp;
+  mutable Vector pVec, rVec;
+  stormOperator<Vector> const* linOp;
 
-  void Build(tArray const& xArr,
-             tArray const& bArr,
-             stormOperator<tArray> const& linOp) override;
+  void Build(Vector const& xVec,
+             Vector const& bVec,
+             stormOperator<Vector> const& linOp) override;
 
-  void MatVec(tArray& yArr,
-              tArray const& xArr) const override;
+  void MatVec(Vector& yVec,
+              Vector const& xVec) const override;
 
-  void ConjMatVec(tArray& xArr,
-                  tArray const& yArr) const override {
-    MatVec(xArr, yArr);
+  void ConjMatVec(Vector& xVec,
+                  Vector const& yVec) const override {
+    MatVec(xVec, yVec);
   }
 
 }; // class stormIdentityPreconditioner<...>
 
-template<class tArray>
-void stormChebyshevPreconditioner<tArray>::Build(tArray const& xArr,
-                                                 tArray const& bArr,
-                                                 stormOperator<tArray> const& linOp) {
+template<class Vector>
+void stormChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
+                                                 Vector const& bVec,
+                                                 stormOperator<Vector> const& linOp) {
 
-  stormUtils::AllocLike(xArr, pArr, rArr);
+  stormUtils::AllocLike(xVec, pVec, rVec);
   this->linOp = &linOp;
 
 } // stormChebyshevPreconditioner<...>::Build
 
-template<class tArray>
-void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
-                                                  tArray const& xArr) const {
+template<class Vector>
+void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
+                                                  Vector const& xVec) const {
 
   assert(linOp != nullptr && "Preconditioner was not built!");
 
@@ -91,8 +91,8 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
   // 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
   // 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   // ----------------------
-  stormBlas::Set(rArr, xArr);
-  stormBlas::Fill(yArr, 0.0);
+  stormBlas::Set(rVec, xVec);
+  stormBlas::Fill(yVec, 0.0);
   const stormReal_t c = 0.5*(lambdaMax - lambdaMin);
   const stormReal_t d = 0.5*(lambdaMax + lambdaMin);
 
@@ -113,7 +113,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     // ----------------------
     if (iteration == 0) {
       alpha = 1.0/d;
-      stormBlas::Set(pArr, rArr);
+      stormBlas::Set(pVec, rVec);
     } else {
       stormReal_t beta;
       if (iteration == 2) {
@@ -122,7 +122,7 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
         beta = std::pow(0.5*c*alpha, 2);
       }
       alpha /= (d*alpha - beta);
-      stormBlas::Add(pArr, rArr, pArr, beta);
+      stormBlas::Add(pVec, rVec, pVec, beta);
     }
 
     // ----------------------
@@ -131,9 +131,9 @@ void stormChebyshevPreconditioner<tArray>::MatVec(tArray& yArr,
     // 𝒓 ← 𝓐𝒚,
     // 𝒓 ← 𝒙 - 𝒓.
     // ----------------------
-    stormBlas::Add(yArr, yArr, pArr, alpha);
-    linOp->MatVec(rArr, yArr);
-    stormBlas::Sub(rArr, xArr, rArr);
+    stormBlas::Add(yVec, yVec, pVec, alpha);
+    linOp->MatVec(rVec, yVec);
+    stormBlas::Sub(rVec, xVec, rVec);
   }
 
 } // stormChebyshevPreconditioner<...>::MatVec

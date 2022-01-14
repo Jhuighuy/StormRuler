@@ -52,16 +52,16 @@
 /// [1] ???
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray, class tOperator>
-class stormNewtonSolver : public stormIterativeSolver<tArray, tOperator> {
+template<class Vector, class tOperator>
+class stormNewtonSolver : public stormIterativeSolver<Vector, tOperator> {
 private:
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
                    tOperator const& anyOp,
                    tOperator const* preOp) override final;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
                       tOperator const& anyOp,
                       tOperator const* preOp) override final;
 
@@ -98,51 +98,48 @@ private:
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormJfnkSolver final : public stormIterativeSolver<tArray> {
+template<class Vector>
+class stormJfnkSolver final : public stormIterativeSolver<Vector> {
 private:
-  tArray sArr, tArr, rArr, wArr;
+  Vector sVec, tVec, rVec, wVec;
 
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
-                   stormOperator<tArray> const& linOp,
-                   stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
+                   stormOperator<Vector> const& linOp,
+                   stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
-                      stormOperator<tArray> const& linOp,
-                      stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
+                      stormOperator<Vector> const& linOp,
+                      stormPreconditioner<Vector> const* preOp) override;
 
 }; // class stormJfnkSolver<...>
 
-template<class tArray>
-stormReal_t stormJfnkSolver<tArray>::Init(tArray& xArr,
-                                          tArray const& bArr,
-                                          stormOperator<tArray> const& linOp,
-                                          stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormJfnkSolver<Vector>::Init(Vector& xVec,
+                                          Vector const& bVec,
+                                          stormOperator<Vector> const& linOp,
+                                          stormPreconditioner<Vector> const* preOp) {
 
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
-  stormUtils::AllocLike(xArr, sArr, tArr, rArr, wArr);
+  stormUtils::AllocLike(xVec, sVec, tVec, rVec, wVec);
 
   // ----------------------
   // Compute residual:
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  linOp.MatVec(wArr, xArr);
-  stormBlas::Sub(rArr, bArr, wArr);
+  linOp.MatVec(wVec, xVec);
+  stormBlas::Sub(rVec, bVec, wVec);
 
-  return stormBlas::Norm2(rArr);  
+  return stormBlas::Norm2(rVec);  
 
 } // stormJfnkSolver<...>::Init
 
-template<class tArray>
-stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
-                                             tArray const& bArr,
-                                             stormOperator<tArray> const& linOp,
-                                             stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
+                                             Vector const& bVec,
+                                             stormOperator<Vector> const& linOp,
+                                             stormPreconditioner<Vector> const* preOp) {
 
   // ----------------------
   // Solve the Jacobian equation:
@@ -154,18 +151,18 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
   static stormReal_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
   stormReal_t const mu = 
-    sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xArr));
-  stormBlas::Set(tArr, rArr);
+    sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
+  stormBlas::Set(tVec, rVec);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
     //call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    //call LinSolve(mesh, 'GMRES', '', tArr, rArr, ApproxJacobianMatVecWithX, jacConvParams)
-    auto solver = std::make_unique<stormBiCgStabSolver<tArray>>();
+    //call LinSolve(mesh, 'GMRES', '', tVec, rVec, ApproxJacobianMatVecWithX, jacConvParams)
+    auto solver = std::make_unique<stormBiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
-    auto op = stormMakeOperator<tArray>(
-      [&](stormArray& zArr, stormArray const& yArr) {
+    auto op = stormMakeOperator<Vector>(
+      [&](stormArray& zVec, stormArray const& yVec) {
 
         // ----------------------
         // Compute the Jacobian-vector product:
@@ -175,26 +172,26 @@ stormReal_t stormJfnkSolver<tArray>::Iterate(tArray& xArr,
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         stormReal_t const delta = 
-          stormUtils::SafeDivide(mu, stormBlas::Norm2(yArr));
-        stormBlas::Add(sArr, xArr, yArr, delta);
-        linOp.MatVec(zArr, sArr);
+          stormUtils::SafeDivide(mu, stormBlas::Norm2(yVec));
+        stormBlas::Add(sVec, xVec, yVec, delta);
+        linOp.MatVec(zVec, sVec);
         stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        stormBlas::Sub(zArr, zArr, wArr, deltaInverse, deltaInverse);
+        stormBlas::Sub(zVec, zVec, wVec, deltaInverse, deltaInverse);
 
       });
-    solver->Solve(tArr, rArr, *op);
+    solver->Solve(tVec, rVec, *op);
   }
-  stormBlas::Add(xArr, xArr, tArr);
+  stormBlas::Add(xVec, xVec, tVec);
 
   // ----------------------
   // Compute residual:
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  linOp.MatVec(wArr, xArr);
-  stormBlas::Sub(rArr, bArr, wArr);
+  linOp.MatVec(wVec, xVec);
+  stormBlas::Sub(rVec, bVec, wVec);
 
-  return stormBlas::Norm2(rArr);  
+  return stormBlas::Norm2(rVec);  
 
 } // stormJfnkSolver<...>::Iterate
 

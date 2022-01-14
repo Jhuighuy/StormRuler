@@ -30,21 +30,21 @@
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
-template<bool L1, class tArray>
-class stormBaseTfqmrSolver : public stormIterativeSolver<tArray> {
+template<bool L1, class Vector>
+class stormBaseTfqmrSolver : public stormIterativeSolver<Vector> {
 private:
   stormReal_t rho, tau;
-  tArray dArr, rTildeArr, uArr, vArr, yArr, sArr, zArr;
+  Vector dVec, rTildeVec, uVec, vVec, yVec, sVec, zVec;
 
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
-                   stormOperator<tArray> const& linOp,
-                   stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
+                   stormOperator<Vector> const& linOp,
+                   stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
-                      stormOperator<tArray> const& linOp,
-                      stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
+                      stormOperator<Vector> const& linOp,
+                      stormPreconditioner<Vector> const* preOp) override;
 
 protected:
 
@@ -78,8 +78,8 @@ protected:
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, tArray> {
+template<class Vector>
+class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, Vector> {
 
 }; // class stormTfqmrSolver<...>
 
@@ -103,24 +103,24 @@ class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, tArray> {
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormTfqmr1Solver final : public stormBaseTfqmrSolver<true, tArray> {
+template<class Vector>
+class stormTfqmr1Solver final : public stormBaseTfqmrSolver<true, Vector> {
 
 }; // class stormTfqmr1Solver<...>
 
-template<bool L1, class tArray>
-stormReal_t stormBaseTfqmrSolver<L1, tArray>::
-                              Init(tArray& xArr,
-                                   tArray const& bArr,
-                                   stormOperator<tArray> const& linOp,
-                                   stormPreconditioner<tArray> const* preOp) {
+template<bool L1, class Vector>
+stormReal_t stormBaseTfqmrSolver<L1, Vector>::
+                              Init(Vector& xVec,
+                                   Vector const& bVec,
+                                   stormOperator<Vector> const& linOp,
+                                   stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xArr, dArr, rTildeArr, uArr, vArr, yArr, sArr);
+  stormUtils::AllocLike(xVec, dVec, rTildeVec, uVec, vVec, yVec, sVec);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, zArr);
+    stormUtils::AllocLike(xVec, zVec);
   }
 
   // ----------------------
@@ -141,30 +141,30 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    stormBlas::Set(dArr, xArr);
+    stormBlas::Set(dVec, xVec);
   } else {
-    stormBlas::Fill(dArr, 0.0);
+    stormBlas::Fill(dVec, 0.0);
   }
-  linOp.MatVec(yArr, xArr);
-  stormBlas::Sub(yArr, bArr, yArr);
+  linOp.MatVec(yVec, xVec);
+  stormBlas::Sub(yVec, bVec, yVec);
   if (leftPre) {
-    std::swap(zArr, yArr);
-    preOp->MatVec(yArr, zArr);
+    std::swap(zVec, yVec);
+    preOp->MatVec(yVec, zVec);
   }
-  stormBlas::Set(uArr, yArr);
-  stormBlas::Set(rTildeArr, uArr);
-  rho = stormBlas::Dot(rTildeArr, uArr), tau = std::sqrt(rho);
+  stormBlas::Set(uVec, yVec);
+  stormBlas::Set(rTildeVec, uVec);
+  rho = stormBlas::Dot(rTildeVec, uVec), tau = std::sqrt(rho);
 
   return tau;
 
 } // stormBaseTfqmrSolver<...>::Init
 
-template<bool L1, class tArray>
-stormReal_t stormBaseTfqmrSolver<L1, tArray>::
-                           Iterate(tArray& xArr,
-                                   tArray const& bArr,
-                                   stormOperator<tArray> const& linOp,
-                                   stormPreconditioner<tArray> const* preOp) {
+template<bool L1, class Vector>
+stormReal_t stormBaseTfqmrSolver<L1, Vector>::
+                           Iterate(Vector& xVec,
+                                   Vector const& bVec,
+                                   stormOperator<Vector> const& linOp,
+                                   stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
@@ -201,27 +201,27 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     if (leftPre) {
-      stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+      stormBlas::MatVec(sVec, *preOp, zVec, linOp, yVec);
     } else if (rightPre) {
-      stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+      stormBlas::MatVec(sVec, linOp, zVec, *preOp, yVec);
     } else {
-      linOp.MatVec(sArr, yArr);
+      linOp.MatVec(sVec, yVec);
     }
-    stormBlas::Set(vArr, sArr);
+    stormBlas::Set(vVec, sVec);
   } else {
     stormReal_t const rhoBar = rho;
-    rho = stormBlas::Dot(rTildeArr, uArr);
+    rho = stormBlas::Dot(rTildeVec, uVec);
     stormReal_t const beta = rho/rhoBar;
-    stormBlas::Add(vArr, sArr, vArr, beta);
-    stormBlas::Add(yArr, uArr, yArr, beta);
+    stormBlas::Add(vVec, sVec, vVec, beta);
+    stormBlas::Add(yVec, uVec, yVec, beta);
     if (leftPre) {
-      stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+      stormBlas::MatVec(sVec, *preOp, zVec, linOp, yVec);
     } else if (rightPre) {
-      stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+      stormBlas::MatVec(sVec, linOp, zVec, *preOp, yVec);
     } else {
-      linOp.MatVec(sArr, yArr);
+      linOp.MatVec(sVec, yVec);
     }
-    stormBlas::Add(vArr, sArr, vArr, beta);
+    stormBlas::Add(vVec, sVec, vVec, beta);
   }
 
   // ----------------------
@@ -254,30 +254,30 @@ stormReal_t stormBaseTfqmrSolver<L1, tArray>::
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   stormReal_t const alpha =
-    stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
+    stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeVec, vVec));
   for (stormSize_t m = 0; m <= 1; ++m) {
-    stormBlas::Sub(uArr, uArr, sArr, alpha);
-    stormBlas::Add(dArr, dArr, rightPre ? zArr : yArr, alpha);
-    stormReal_t const omega = stormBlas::Norm2(uArr);
+    stormBlas::Sub(uVec, uVec, sVec, alpha);
+    stormBlas::Add(dVec, dVec, rightPre ? zVec : yVec, alpha);
+    stormReal_t const omega = stormBlas::Norm2(uVec);
     if constexpr (L1) {
       if (omega < tau) {
-        tau = omega, stormBlas::Set(xArr, dArr);
+        tau = omega, stormBlas::Set(xVec, dVec);
       }
     } else {
       auto const [cs, sn, rr] =
         stormBlas::SymOrtho(tau, omega);
       tau = omega*cs;
-      stormBlas::Add(xArr, xArr, dArr, std::pow(cs, 2));
-      stormBlas::Scale(dArr, dArr, std::pow(sn, 2));
+      stormBlas::Add(xVec, xVec, dVec, std::pow(cs, 2));
+      stormBlas::Scale(dVec, dVec, std::pow(sn, 2));
     }
     if (m == 0) {
-      stormBlas::Sub(yArr, yArr, vArr, alpha);
+      stormBlas::Sub(yVec, yVec, vVec, alpha);
       if (leftPre) {
-        stormBlas::MatVec(sArr, *preOp, zArr, linOp, yArr);
+        stormBlas::MatVec(sVec, *preOp, zVec, linOp, yVec);
       } else if (rightPre) {
-        stormBlas::MatVec(sArr, linOp, zArr, *preOp, yArr);
+        stormBlas::MatVec(sVec, linOp, zVec, *preOp, yVec);
       } else {
-        linOp.MatVec(sArr, yArr);
+        linOp.MatVec(sVec, yVec);
       }
     }
   }

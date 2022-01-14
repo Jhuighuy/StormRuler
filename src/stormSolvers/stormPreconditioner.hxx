@@ -34,14 +34,23 @@
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 enum class stormPreconditionerSide {
 
-  /// Left preconditioned equation is solved, 𝓟(𝓐(𝒙)) = 𝓟(𝒃).
+  /// @brief Left preconditioned equation is solved, 𝓟𝓐𝒙 = 𝓟𝒃.
+  ///
+  /// When the left preconditioning is used, iterative solver tracks \
+  ///   convergence by the left preconditioned residual norm, ‖𝓟(𝒃 - 𝓐𝒙)‖.
   Left,
 
-  /// Right preconditioned equation is solved, 𝓐(𝓟(𝒙̃)) = 𝒃, 𝓟(𝒙̃) = 𝒙.
+  /// Right preconditioned equation is solved, 𝓐𝓟𝒙̃ = 𝒃, 𝓟𝒙̃ = 𝒙.
+  ///
+  /// When the right preconditioning is used, iterative solver tracks \
+  ///   convergence by the unpreconditioned residual norm, ‖𝒃 - 𝓐𝒙‖.
   Right,
 
   /// Symmetric preconditioned equation is solved, \
-  ///   𝓜(𝓐(𝓝(𝒙̃))) = 𝓜(𝒃), 𝓝(𝒙̃) = 𝒙, 𝓟 = 𝓝.
+  ///   𝓜𝓐𝓝𝒙̃ = 𝓜𝒃, 𝓝𝒙̃ = 𝒙, 𝓟 = 𝓜𝓝.
+  ///
+  /// When the symmetric preconditioning is used, iterative solver tracks \
+  ///   convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
   Symmetric,
 
 }; // enum class stormPreconditionerSide
@@ -49,18 +58,18 @@ enum class stormPreconditionerSide {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract preconditioner operator.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormPreconditioner : public stormOperator<tArray> {
+template<class Vector>
+class stormPreconditioner : public stormOperator<Vector> {
 public:
 
   /// @brief Build the preconditioner.
   ///
-  /// @param xArr Solution (block-)array, 𝒙.
-  /// @param bArr Right-hand-side (block-)array, 𝒃.
+  /// @param xVec Solution vector, 𝒙.
+  /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Operator to build the preconditioner upon.
-  virtual void Build(tArray const& xArr,
-                     tArray const& bArr,
-                     stormOperator<tArray> const& anyOp) {}
+  virtual void Build(Vector const& xVec,
+                     Vector const& bVec,
+                     stormOperator<Vector> const& anyOp) {}
 
 }; // class stormPreconditioner<...>
 
@@ -68,20 +77,20 @@ public:
 /// @brief Identity preconditioner, \
 ///   intended to be used for debugging only.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormIdentityPreconditioner final : public stormPreconditioner<tArray> {
+template<class Vector>
+class stormIdentityPreconditioner final : public stormPreconditioner<Vector> {
 private:
 
-  void MatVec(tArray& yArr,
-              tArray const& xArr) const override {
+  void MatVec(Vector& yVec,
+              Vector const& xVec) const override {
     std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
-    stormBlas::Set(yArr, xArr);
+    stormBlas::Set(yVec, xVec);
   }
 
-  void ConjMatVec(tArray& xArr,
-                  tArray const& yArr) const override {
+  void ConjMatVec(Vector& xVec,
+                  Vector const& yVec) const override {
     std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
-    stormBlas::Set(xArr, yArr);
+    stormBlas::Set(xVec, yVec);
   }
 
 }; // class stormIdentityPreconditioner<...>

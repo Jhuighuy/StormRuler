@@ -45,36 +45,36 @@
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormBiCgStabSolver final : public stormIterativeSolver<tArray> {
+template<class Vector>
+class stormBiCgStabSolver final : public stormIterativeSolver<Vector> {
 private:
   stormReal_t alpha, rho, omega;
-  tArray pArr, rArr, rTildeArr, tArr, vArr, zArr;
+  Vector pVec, rVec, rTildeVec, tVec, vVec, zVec;
 
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
-                   stormOperator<tArray> const& linOp,
-                   stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
+                   stormOperator<Vector> const& linOp,
+                   stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
-                      stormOperator<tArray> const& linOp,
-                      stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
+                      stormOperator<Vector> const& linOp,
+                      stormPreconditioner<Vector> const* preOp) override;
 
 }; // class stormBiCgStabSolver<...>
 
-template<class tArray>
-stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
-                                              tArray const& bArr,
-                                              stormOperator<tArray> const& linOp,
-                                              stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormBiCgStabSolver<Vector>::Init(Vector& xVec,
+                                              Vector const& bVec,
+                                              stormOperator<Vector> const& linOp,
+                                              stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xArr, pArr, rArr, rTildeArr, tArr, vArr);
+  stormUtils::AllocLike(xVec, pVec, rVec, rTildeVec, tVec, vVec);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, zArr);
+    stormUtils::AllocLike(xVec, zVec);
   }
 
   // ----------------------
@@ -87,24 +87,24 @@ stormReal_t stormBiCgStabSolver<tArray>::Init(tArray& xArr,
   // 𝒓̃ ← 𝒓,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
-  linOp.MatVec(rArr, xArr);
-  stormBlas::Sub(rArr, bArr, rArr);
+  linOp.MatVec(rVec, xVec);
+  stormBlas::Sub(rVec, bVec, rVec);
   if (leftPre) {
-    std::swap(zArr, rArr);
-    preOp->MatVec(rArr, zArr);
+    std::swap(zVec, rVec);
+    preOp->MatVec(rVec, zVec);
   }
-  stormBlas::Set(rTildeArr, rArr);
-  rho = stormBlas::Dot(rTildeArr, rArr);
+  stormBlas::Set(rTildeVec, rVec);
+  rho = stormBlas::Dot(rTildeVec, rVec);
 
   return std::sqrt(rho);
 
 } // stormBiCgStabSolver<...>::Init
 
-template<class tArray>
-stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
-                                                 tArray const& bArr,
-                                                 stormOperator<tArray> const& linOp,
-                                                 stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
+                                                 Vector const& bVec,
+                                                 stormOperator<Vector> const& linOp,
+                                                 stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
@@ -125,14 +125,14 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(pArr, rArr);
+    stormBlas::Set(pVec, rVec);
   } else {
     stormReal_t const rhoBar = rho; 
-    rho = stormBlas::Dot(rTildeArr, rArr);
+    rho = stormBlas::Dot(rTildeVec, rVec);
     stormReal_t const beta = 
       stormUtils::SafeDivide(rho, rhoBar)*stormUtils::SafeDivide(alpha, omega);
-    stormBlas::Sub(pArr, pArr, vArr, omega);
-    stormBlas::Add(pArr, rArr, pArr, beta);
+    stormBlas::Sub(pVec, pVec, vVec, omega);
+    stormBlas::Add(pVec, rVec, pVec, beta);
   }
 
   // ----------------------
@@ -149,15 +149,15 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(vArr, *preOp, zArr, linOp, pArr);
+    stormBlas::MatVec(vVec, *preOp, zVec, linOp, pVec);
   } else if (rightPre) {
-    stormBlas::MatVec(vArr, linOp, zArr, *preOp, pArr);
+    stormBlas::MatVec(vVec, linOp, zVec, *preOp, pVec);
   } else {
-    linOp.MatVec(vArr, pArr);
+    linOp.MatVec(vVec, pVec);
   }
-  alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeArr, vArr));
-  stormBlas::Add(xArr, xArr, rightPre ? zArr : pArr, alpha);
-  stormBlas::Sub(rArr, rArr, vArr, alpha);
+  alpha = stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeVec, vVec));
+  stormBlas::Add(xVec, xVec, rightPre ? zVec : pVec, alpha);
+  stormBlas::Sub(rVec, rVec, vVec, alpha);
 
   // ----------------------
   // Update the solution and the residual again:
@@ -173,18 +173,18 @@ stormReal_t stormBiCgStabSolver<tArray>::Iterate(tArray& xArr,
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(tArr, *preOp, zArr, linOp, rArr);
+    stormBlas::MatVec(tVec, *preOp, zVec, linOp, rVec);
   } else if (rightPre) {
-    stormBlas::MatVec(tArr, linOp, zArr, *preOp, rArr);
+    stormBlas::MatVec(tVec, linOp, zVec, *preOp, rVec);
   } else {
-    linOp.MatVec(tArr, rArr);
+    linOp.MatVec(tVec, rVec);
   }
   omega = stormUtils::SafeDivide(
-    stormBlas::Dot(tArr, rArr), stormBlas::Dot(tArr, tArr));
-  stormBlas::Add(xArr, xArr, rightPre ? zArr : rArr, omega);
-  stormBlas::Sub(rArr, rArr, tArr, omega);
+    stormBlas::Dot(tVec, rVec), stormBlas::Dot(tVec, tVec));
+  stormBlas::Add(xVec, xVec, rightPre ? zVec : rVec, omega);
+  stormBlas::Sub(rVec, rVec, tVec, omega);
 
-  return stormBlas::Norm2(rArr);
+  return stormBlas::Norm2(rVec);
 
 } // stormBiCgStabSolver<...>::Iterate
 

@@ -52,8 +52,8 @@
 /// ----------------------------------------------------------------- ///
 /// @brief Make preconditioner of the specified type.
 /// ----------------------------------------------------------------- ///
-template<class tArray>
-std::unique_ptr<stormPreconditioner<tArray>>
+template<class Vector>
+std::unique_ptr<stormPreconditioner<Vector>>
     stormMakePreconditioner(stormString_t preType) {
 
   if (std::strcmp(preType, STORM_PRE_NONE) == 0) {
@@ -62,7 +62,7 @@ std::unique_ptr<stormPreconditioner<tArray>>
 
   } else if (std::strcmp(preType, STORM_PRE_ID) == 0) {
 
-    return std::make_unique<stormIdentityPreconditioner<tArray>>();
+    return std::make_unique<stormIdentityPreconditioner<Vector>>();
 
   } else if (std::strcmp(preType, STORM_PRE_JACOBI) == 0) {
 
@@ -106,7 +106,7 @@ std::unique_ptr<stormPreconditioner<tArray>>
 
   } else if (std::strcmp(preType, STORM_PRE_CHEBY) == 0) {
 
-    return std::make_unique<stormChebyshevPreconditioner<tArray>>();
+    return std::make_unique<stormChebyshevPreconditioner<Vector>>();
 
   } else if (std::strcmp(preType, STORM_PRE_KRYLOV) == 0) {
 

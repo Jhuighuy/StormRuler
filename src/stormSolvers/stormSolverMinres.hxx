@@ -31,24 +31,24 @@
 
 namespace stormBlas {
 
-/// @brief Generate Givens rotation.
-inline auto SymOrtho(stormReal_t a, stormReal_t b) {
+  /// @brief Generate Givens rotation.
+  inline auto SymOrtho(stormReal_t a, stormReal_t b) {
 
-  // ----------------------
-  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-  // ----------------------
-  stormReal_t cs, sn, rr;
-  rr = std::hypot(a, b);
-  if (rr > 0.0) {
-    cs = a/rr; sn = b/rr;
-  } else {
-    cs = 1.0; sn = 0.0;
-  }
+    // ----------------------
+    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+    // ----------------------
+    stormReal_t cs, sn, rr;
+    rr = std::hypot(a, b);
+    if (rr > 0.0) {
+      cs = a/rr; sn = b/rr;
+    } else {
+      cs = 1.0; sn = 0.0;
+    }
 
-  return std::make_tuple(cs, sn, rr);
+    return std::make_tuple(cs, sn, rr);
 
-} // SymOrtho
+  } // SymOrtho
 
 } // namespace stormBlas
 
@@ -56,9 +56,9 @@ inline auto SymOrtho(stormReal_t a, stormReal_t b) {
 /// @brief Solve a linear self-adjoint indefinite operator equation \
 ///   with the @c MINRES method.
 ///
-/// @c MINRES can be applied to the singular problems, and the self-adjoint
-/// least squares problems: ‖[𝓜](𝓐[𝓜ᵀ]𝒚 - 𝒃)‖₂ → 𝘮𝘪𝘯, 𝒙 = [𝓜ᵀ]𝒚,
-/// although convergeance to minimum norm solution is not guaranteed.
+/// @c MINRES can be applied to the singular problems, and the \
+///   self-adjoint least squares problems, although convergeance to \
+///   minimum norm solution is not guaranteed.
 ///
 /// @note Despite 𝓐 may be indefinite, a positive-definite \
 ///   preconditioner 𝓟 is explicitly required.
@@ -73,40 +73,38 @@ inline auto SymOrtho(stormReal_t a, stormReal_t b) {
 ///     Least-Squares Problems” PhD thesis, ICME, Stanford University.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormMinresSolver final : public stormIterativeSolver<tArray> {
+template<class Vector>
+class stormMinresSolver final : public stormIterativeSolver<Vector> {
 private:
   stormReal_t alpha, beta, betaBar, gamma, delta, deltaBar,
     epsilon, epsilonBar, tau, phi, phiTilde, cs, sn;
-  tArray pArr, qArr, qBarArr,
-    wArr, wBarArr, wBarBarArr, zArr, zBarArr, zBarBarArr;
+  Vector pVec, qVec, qBarVec,
+    wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec;
 
-  stormReal_t Init(tArray& xArr,
-                   tArray const& bArr,
-                   stormOperator<tArray> const& linOp,
-                   stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Init(Vector& xVec,
+                   Vector const& bVec,
+                   stormOperator<Vector> const& linOp,
+                   stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(tArray& xArr,
-                      tArray const& bArr,
-                      stormOperator<tArray> const& linOp,
-                      stormPreconditioner<tArray> const* preOp) override;
+  stormReal_t Iterate(Vector& xVec,
+                      Vector const& bVec,
+                      stormOperator<Vector> const& linOp,
+                      stormPreconditioner<Vector> const* preOp) override;
 
 }; // class stormMinresSolver<...>
 
-template<class tArray>
-stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
-                                            tArray const& bArr,
-                                            stormOperator<tArray> const& linOp,
-                                            stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormMinresSolver<Vector>::Init(Vector& xVec,
+                                            Vector const& bVec,
+                                            stormOperator<Vector> const& linOp,
+                                            stormPreconditioner<Vector> const* preOp) {
+
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
-  // ----------------------
-  // Allocate the intermediate arrays:
-  // ----------------------
-  stormUtils::AllocLike(xArr, pArr,
-    wArr, wBarArr, wBarBarArr, zArr, zBarArr, zBarBarArr);
+  stormUtils::AllocLike(xVec, pVec,
+    wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xArr, qArr, qBarArr);
+    stormUtils::AllocLike(xVec, qVec, qBarVec);
   }
 
   // ----------------------
@@ -121,17 +119,17 @@ stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  stormBlas::Fill(wBarArr, 0.0);
-  stormBlas::Fill(wBarBarArr, 0.0);
-  linOp.MatVec(zBarArr, xArr);
-  stormBlas::Sub(zBarArr, bArr, zBarArr);
-  stormBlas::Fill(zBarBarArr, 0.0);
+  stormBlas::Fill(wBarVec, 0.0);
+  stormBlas::Fill(wBarBarVec, 0.0);
+  linOp.MatVec(zBarVec, xVec);
+  stormBlas::Sub(zBarVec, bVec, zBarVec);
+  stormBlas::Fill(zBarBarVec, 0.0);
   if (preOp != nullptr) {
-    preOp->MatVec(qArr, zBarArr);
+    preOp->MatVec(qVec, zBarVec);
   } else {
-    //qArr = zBarArr
+    //qVec = zBarVec
   }
-  betaBar = 1.0; beta = std::sqrt(stormBlas::Dot(qArr, zBarArr));
+  betaBar = 1.0; beta = std::sqrt(stormBlas::Dot(qVec, zBarVec));
   phi = beta; delta = 0.0; epsilon = 0.0;
   cs = -1.0; sn = 0.0;
 
@@ -139,35 +137,36 @@ stormReal_t stormMinresSolver<tArray>::Init(tArray& xArr,
 
 } // stormMinresSolver<...>::Init
 
-template<class tArray>
-stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
-                                               tArray const& bArr,
-                                               stormOperator<tArray> const& linOp,
-                                               stormPreconditioner<tArray> const* preOp) {
+template<class Vector>
+stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
+                                               Vector const& bVec,
+                                               stormOperator<Vector> const& linOp,
+                                               stormPreconditioner<Vector> const* preOp) {
+
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------
   // Continue the Lanczos process:
   // 𝒑 ← 𝓐𝒒,
   // 𝛼 ← <𝒒⋅𝒑>/𝛽²,
-  // 𝒛 ← (𝟣/𝛽)𝒑 - (𝛼/𝛽)𝒛̅,
-  // 𝒛 ← 𝒛 - (𝛽/𝛽̅)𝒛̿,
+  // 𝒛 ← (𝟣/𝛽)⋅𝒑 - (𝛼/𝛽)⋅𝒛̅,
+  // 𝒛 ← 𝒛 - (𝛽/𝛽̅)⋅𝒛̿,
   // 𝒒̅ ← 𝒒, 𝒒 ← [𝓟]𝒛,
-  // 𝛽̅ ← 𝛽, 𝛽 ← √<𝒒⋅𝒛>,
+  // 𝛽̅ ← 𝛽, 𝛽 ← <𝒒⋅𝒛>¹ᐟ²,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
-  linOp.MatVec(pArr, qArr);
-  alpha = stormBlas::Dot(qArr, pArr)*std::pow(beta, -2);
-  stormBlas::Sub(zArr, pArr, zBarArr, alpha/beta, 1.0/beta);
-  stormBlas::Sub(zArr, zArr, zBarBarArr, beta/betaBar);
+  linOp.MatVec(pVec, qVec);
+  alpha = stormBlas::Dot(qVec, pVec)*std::pow(beta, -2);
+  stormBlas::Sub(zVec, pVec, zBarVec, alpha/beta, 1.0/beta);
+  stormBlas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
   if (preOp != nullptr) {
-    std::swap(qBarArr, qArr);
-    preOp->MatVec(qArr, zArr);
+    std::swap(qBarVec, qVec);
+    preOp->MatVec(qVec, zVec);
   } else {
-    //qBarArr = qArr; qArr = zArr
+    //qBarVec = qVec; qVec = zVec
   }
-  betaBar = beta, beta = std::sqrt(stormBlas::Dot(qArr, zArr));
-  std::swap(zBarBarArr, zBarArr), std::swap(zBarArr, zArr);
+  betaBar = beta, beta = std::sqrt(stormBlas::Dot(qVec, zVec));
+  std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, zVec);
 
   // ----------------------
   // Construct and apply rotations:
@@ -188,10 +187,10 @@ stormReal_t stormMinresSolver<tArray>::Iterate(tArray& xArr,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  stormBlas::Sub(wArr, qBarArr, wBarArr, deltaBar/gamma, 1.0/(betaBar*gamma));
-  stormBlas::Sub(wArr, wArr, wBarBarArr, epsilonBar/gamma);
-  stormBlas::Add(xArr, xArr, wArr, tau);
-  std::swap(wBarBarArr, wBarArr), std::swap(wBarArr, wArr);
+  stormBlas::Sub(wVec, qBarVec, wBarVec, deltaBar/gamma, 1.0/(betaBar*gamma));
+  stormBlas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
+  stormBlas::Add(xVec, xVec, wVec, tau);
+  std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
 
   return phi;
 

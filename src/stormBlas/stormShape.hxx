@@ -64,10 +64,14 @@ public:
   static_assert(StaticExtent > 0, 
     "Static extent of a shape object must be greater than zero.");
 
-  /// @brief Construct a shape object.
+  /// @brief Construct an empty shape.
+  constexpr stormShape() = default;
+
+  /// @brief Construct a shape object with \
+  ///   the specified dynamic extents.
   template<class... Indices>
   constexpr explicit stormShape(Indices... restDynamicExtents) :
-    stormShape<RestExtents...>{restDynamicExtents...} {
+      stormShape<RestExtents...>{restDynamicExtents...} {
   }
 
   /// @brief Front extent of the shape object.
@@ -75,8 +79,8 @@ public:
     return StaticExtent;
   }
 
-  /// @brief Maximum value of the front extent of the shape object.
-  constexpr stormSize_t MaxFrontExtent() const noexcept {
+  /// @brief Maximum value of the front extent of the shape object type.
+  static constexpr stormSize_t MaxFrontExtent() noexcept {
     return StaticExtent;
   }
 
@@ -89,27 +93,30 @@ template<stormSize_t MaxDynamicExtent, class... RestExtents>
 class stormShape<stormDynExtent<MaxDynamicExtent>, RestExtents...> : 
     public stormShape<RestExtents...> {
 private:
-  stormSize_t DynamicExtent = 0;
+  stormSize_t FrontDynamicExtent_ = 0;
 
 public:
-  /// @brief Construct a shape object.
-  /// @{
-  constexpr explicit stormShape() = default;
+
+  /// @brief Construct an empty shape.
+  constexpr stormShape() = default;
+
+  /// @brief Construct a shape object with \
+  ///   the specified dynamic extents.
   template<class... Indices>
-  constexpr explicit stormShape(stormSize_t dynamicExtent,
+  constexpr explicit stormShape(stormSize_t frontDynamicExtent,
                                 Indices... restDynamicExtents) :
-    stormShape<RestExtents...>{restDynamicExtents...}, 
-    DynamicExtent{dynamicExtent} {
+      stormShape<RestExtents...>{restDynamicExtents...}, 
+      FrontDynamicExtent_{frontDynamicExtent} {
+    stormAssert(FrontDynamicExtent_ <= MaxDynamicExtent);
   }
-  /// @}
 
   /// @brief Front extent of the shape object.
   constexpr stormSize_t FrontExtent() const noexcept {
-    return DynamicExtent;
+    return FrontDynamicExtent_;
   }
 
-  /// @brief Maximum value of the front extent of the shape object.
-  constexpr stormSize_t MaxFrontExtent() const noexcept {
+  /// @brief Maximum value of the front extent of the shape object type.
+  static constexpr stormSize_t MaxFrontExtent() noexcept {
     return MaxDynamicExtent;
   }
 

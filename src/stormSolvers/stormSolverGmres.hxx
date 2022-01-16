@@ -28,7 +28,6 @@
 #include <array>
 #include <vector>
 #include <type_traits>
-#include <numeric>
 #include <algorithm>
 
 #include <stormSolvers/stormSolver.hxx>
@@ -41,11 +40,10 @@
 template<bool Flexible, class Vector>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
-  std::vector<stormReal_t> betaData, csData, snData;
+  stormVector<stormReal_t> beta_, cs_, sn_;
+  stormMatrix<stormReal_t> H_;
   std::vector<Vector> qVec_;
   std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVec_;
-  stormVectorView<stormReal_t> beta_, cs_, sn_;
-  stormMatrix<stormReal_t> h_;
 
   void OuterInit(Vector& xVec,
                  Vector const& bVec,
@@ -92,7 +90,7 @@ protected:
 ///
 /// References:
 /// @verbatim
-/// [1] Saad, Yousef and Martin h_. Schultz. 
+/// [1] Saad, Yousef and Martin H_. Schultz. 
 ///     “GMRES: A generalized minimal residual algorithm for solving 
 ///      nonsymmetric linear systems.” 
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
@@ -143,8 +141,8 @@ void stormBaseGmresSolver<Flexible, Vector>::
                                   stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const m = this->NumInnerIterations;
-  betaData.resize(m + 1), csData.resize(m), snData.resize(m);
-  h_.Assign(m + 1, m);
+
+  beta_.Assign(m + 1), cs_.Assign(m), sn_.Assign(m), H_.Assign(m + 1, m);
   qVec_.resize(m + 1);
   for (Vector& qVec_ : qVec_) {
     stormUtils::AllocLike(xVec, qVec_);
@@ -157,10 +155,6 @@ void stormBaseGmresSolver<Flexible, Vector>::
       stormUtils::AllocLike(xVec, zVec_);
     }
   }
-
-  beta_.Assign(betaData.data(), m + 1); 
-  cs_.Assign(csData.data(), m); 
-  sn_.Assign(snData.data(), m);
 
 } // stormBaseGmresSolver<...>::OuterInit
 
@@ -191,18 +185,13 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   }
 
   // ----------------------
-  // 𝑐𝑠 ← {𝟢}ᵀ, 𝑠𝑛 ← {𝟢}ᵀ,
-  // 𝜑 ← ‖𝒒₀‖,
-  // 𝛽 ← {𝜑,𝟢,…,𝟢}ᵀ,
-  // 𝒒₀ ← 𝒒₀/𝜑. 
+  // 𝛽₀ ← ‖𝒒₀‖,
+  // 𝒒₀ ← 𝒒₀/𝛽₀. 
   // ----------------------
-  std::fill(csData.begin(), csData.end(), 0.0);
-  std::fill(snData.begin(), snData.end(), 0.0);
-  stormReal_t const phi = stormBlas::Norm2(qVec_[0]);
-  beta_(0) = phi, std::fill(betaData.begin() + 1, betaData.end(), 0.0);
-  stormBlas::Scale(qVec_[0], qVec_[0], 1.0/phi);
+  beta_(0) = stormBlas::Norm2(qVec_[0]);
+  stormBlas::Scale(qVec_[0], qVec_[0], 1.0/beta_(0));
 
-  return phi;
+  return beta_(0);
 
 } // stormBaseGmresSolver<...>::InnerInit
 
@@ -231,11 +220,11 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   //   𝒒ₖ₊₁ ← 𝓐𝒒ₖ,
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //   𝒉ᵢₖ ← <𝒒ₖ₊₁⋅𝒒ᵢ>,
-  //   𝒒ₖ₊₁ ← 𝒒ₖ₊₁ - 𝒉ᵢₖ⋅𝒒ᵢ,
+  //   𝐻ᵢₖ ← <𝒒ₖ₊₁⋅𝒒ᵢ>,
+  //   𝒒ₖ₊₁ ← 𝒒ₖ₊₁ - 𝐻ᵢₖ⋅𝒒ᵢ,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝒉ₖ₊₁,ₖ ← ‖𝒒ₖ₊₁‖, 
-  // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝒉ₖ₊₁,ₖ.  
+  // 𝐻ₖ₊₁,ₖ ← ‖𝒒ₖ₊₁‖, 
+  // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.  
   // ----------------------
   if (leftPre) {
     stormBlas::MatVec(qVec_[k + 1], *preOp, zVec_[0], linOp, qVec_[k]);
@@ -246,43 +235,41 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
     linOp.MatVec(qVec_[k + 1], qVec_[k]);
   }
   for (stormSize_t i = 0; i <= k; ++i) {
-    h_(i, k) = stormBlas::Dot(qVec_[k + 1], qVec_[i]);
-    stormBlas::Sub(qVec_[k + 1], qVec_[k + 1], qVec_[i], h_(i, k));
+    H_(i, k) = stormBlas::Dot(qVec_[k + 1], qVec_[i]);
+    stormBlas::Sub(qVec_[k + 1], qVec_[k + 1], qVec_[i], H_(i, k));
   }
-  h_(k + 1, k) = stormBlas::Norm2(qVec_[k + 1]); 
-  stormBlas::Scale(qVec_[k + 1], qVec_[k + 1], 1.0/h_(k + 1, k));
+  H_(k + 1, k) = stormBlas::Norm2(qVec_[k + 1]); 
+  stormBlas::Scale(qVec_[k + 1], qVec_[k + 1], 1.0/H_(k + 1, k));
 
   // ----------------------
-  // Eliminate the last element in {𝒉ᵢⱼ}
+  // Eliminate the last element in {𝐻ᵢⱼ}
   // and and update the rotation matrix:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
-  //   𝜒 ← 𝑐𝑠ᵢ⋅𝒉ᵢₖ + 𝑠𝑛ᵢ⋅𝒉ᵢ₊₁,ₖ,
-  //   𝒉ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝒉ᵢₖ + 𝑐𝑠ᵢ⋅𝒉ᵢ₊₁,ₖ,
-  //   𝒉ᵢₖ ← 𝜒,
+  //   𝜒 ← 𝑐𝑠ᵢ⋅𝐻ᵢₖ + 𝑠𝑛ᵢ⋅𝐻ᵢ₊₁,ₖ,
+  //   𝐻ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝐻ᵢₖ + 𝑐𝑠ᵢ⋅𝐻ᵢ₊₁,ₖ,
+  //   𝐻ᵢₖ ← 𝜒,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝑐𝑠ₖ, 𝑠𝑛ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝒉ₖₖ, 𝒉ₖ₊₁,ₖ),
-  // 𝒉ₖₖ ← 𝑐𝑠ₖ⋅𝒉ₖₖ + 𝑠𝑛ₖ⋅𝒉ₖ₊₁,ₖ,
-  // 𝒉ₖ₊₁,ₖ ← 𝟢.
+  // 𝑐𝑠ₖ, 𝑠𝑛ₖ ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝐻ₖₖ, 𝐻ₖ₊₁,ₖ),
+  // 𝐻ₖₖ ← 𝑐𝑠ₖ⋅𝐻ₖₖ + 𝑠𝑛ₖ⋅𝐻ₖ₊₁,ₖ,
+  // 𝐻ₖ₊₁,ₖ ← 𝟢.
   // ----------------------
   for (stormSize_t i = 0; i < k; ++i) {
-    stormReal_t const chi = cs_(i)*h_(i, k) + sn_(i)*h_(i + 1, k);
-    h_(i + 1, k) = -sn_(i)*h_(i, k) + cs_(i)*h_(i + 1, k);
-    h_(i, k) = chi;
+    stormReal_t const chi = cs_(i)*H_(i, k) + sn_(i)*H_(i + 1, k);
+    H_(i + 1, k) = -sn_(i)*H_(i, k) + cs_(i)*H_(i + 1, k);
+    H_(i, k) = chi;
   }
   std::tie(cs_(k), sn_(k), std::ignore) =
-    stormBlas::SymOrtho(h_(k, k), h_(k + 1, k));
-  h_(k, k) = cs_(k)*h_(k, k) + sn_(k)*h_(k + 1, k);
-  h_(k + 1, k) = 0.0;
+    stormBlas::SymOrtho(H_(k, k), H_(k + 1, k));
+  H_(k, k) = cs_(k)*H_(k, k) + sn_(k)*H_(k + 1, k);
+  H_(k + 1, k) = 0.0;
 
   // ----------------------
   // Update the 𝛽-solution and residual norm:
-  // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ,
-  // 𝜑 ← |𝛽ₖ₊₁|.
+  // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ.
   // ----------------------
   beta_(k + 1) = -sn_(k)*beta_(k), beta_(k) *= cs_(k);
-  stormReal_t const phi = std::abs(beta_(k + 1));
 
-  return phi;
+  return std::abs(beta_(k + 1));
 
 } // stormBaseGmresSolver<...>::InnerIterate
 
@@ -300,17 +287,20 @@ void stormBaseGmresSolver<Flexible, Vector>::
 
   // ----------------------
   // Finalize the 𝛽-solution:
-  // 𝛽ₖ ← 𝛽ₖ/𝒉ₖₖ,
+  // 𝛽ₖ ← 𝛽ₖ/𝐻ₖₖ,
   // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //   𝛽ᵢ ← (𝛽ᵢ - <𝒉ᵢ,ᵢ₊₁:ₖ⋅𝛽ᵢ₊₁:ₖ>)/𝒉ᵢᵢ.
+  //   𝛽ᵢ ← (𝛽ᵢ - <𝐻ᵢ,ᵢ₊₁:ₖ⋅𝛽ᵢ₊₁:ₖ>)/𝐻ᵢᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  beta_(k) /= h_(k, k);
+  /// @todo This should be replaced with a BLAS call that \
+  ///   solves an equation with the upper-triangular part of 𝐻:
+  ///   𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
+  beta_(k) /= H_(k, k);
   for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
-    //beta_(i) -= std::inner_product(
-    //  beta_.begin() + i + 1, beta_.begin() + k + 1, h_[i].begin() + i + 1, 0.0);
-    for (stormSize_t j = i + 1; j <= k + 1; ++j) beta_(i) -= h_(i, j)*beta_(j);
-    beta_(i) /= h_(i, i);
+    for (stormSize_t j = i + 1; j <= k + 1; ++j) {
+      beta_(i) -= H_(i, j)*beta_(j);
+    }
+    beta_(i) /= H_(i, i);
   }
 
   // ----------------------

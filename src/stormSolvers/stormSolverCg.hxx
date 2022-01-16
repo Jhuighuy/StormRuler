@@ -46,8 +46,8 @@
 template<class Vector>
 class stormCgSolver final : public stormIterativeSolver<Vector> {
 private:
-  stormReal_t alpha;
-  Vector pVec, rVec, zVec;
+  stormReal_t alpha_;
+  Vector pVec_, rVec_, zVec_;
 
   stormReal_t Init(Vector& xVec,
                    Vector const& bVec,
@@ -67,15 +67,15 @@ stormReal_t stormCgSolver<Vector>::Init(Vector& xVec,
                                         stormOperator<Vector> const& linOp,
                                         stormPreconditioner<Vector> const* preOp) {
 
-  stormUtils::AllocLike(xVec, pVec, rVec, zVec);
+  stormUtils::AllocLike(xVec, pVec_, rVec_, zVec_);
 
   // ----------------------
   // Initialize:
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓.
   // ----------------------
-  linOp.MatVec(rVec, xVec);
-  stormBlas::Sub(rVec, bVec, rVec);
+  linOp.MatVec(rVec_, xVec);
+  stormBlas::Sub(rVec_, bVec, rVec_);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -88,15 +88,15 @@ stormReal_t stormCgSolver<Vector>::Init(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
-    preOp->MatVec(zVec, rVec);
-    stormBlas::Set(pVec, zVec);
-    alpha = stormBlas::Dot(rVec, zVec);
+    preOp->MatVec(zVec_, rVec_);
+    stormBlas::Set(pVec_, zVec_);
+    alpha_ = stormBlas::Dot(rVec_, zVec_);
   } else {
-    stormBlas::Set(pVec, rVec);
-    alpha = stormBlas::Dot(rVec, rVec);
+    stormBlas::Set(pVec_, rVec_);
+    alpha_ = stormBlas::Dot(rVec_, rVec_);
   }
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rVec) : std::sqrt(alpha);
+  return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
 
 } // stormCgSolver<...>::Init
 
@@ -114,11 +114,11 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
-  linOp.MatVec(zVec, pVec);
-  stormReal_t const alphaBar = alpha;
-  stormUtils::SafeDivideEquals(alpha, stormBlas::Dot(pVec, zVec));
-  stormBlas::Add(xVec, xVec, pVec, alpha);
-  stormBlas::Sub(rVec, rVec, zVec, alpha);
+  linOp.MatVec(zVec_, pVec_);
+  stormReal_t const alphaBar = alpha_;
+  stormUtils::SafeDivideEquals(alpha_, stormBlas::Dot(pVec_, zVec_));
+  stormBlas::Add(xVec, xVec, pVec_, alpha_);
+  stormBlas::Sub(rVec_, rVec_, zVec_, alpha_);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -129,20 +129,20 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
-    preOp->MatVec(zVec, rVec);
-    alpha = stormBlas::Dot(rVec, zVec);
+    preOp->MatVec(zVec_, rVec_);
+    alpha_ = stormBlas::Dot(rVec_, zVec_);
   } else {
-    alpha = stormBlas::Dot(rVec, rVec);
+    alpha_ = stormBlas::Dot(rVec_, rVec_);
   }
 
   // ----------------------
   // 𝛽 ← 𝛼/𝛼̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  stormReal_t const beta = stormUtils::SafeDivide(alpha, alphaBar);
-  stormBlas::Add(pVec, (preOp != nullptr ? zVec : rVec), pVec, beta);
+  stormReal_t const beta = stormUtils::SafeDivide(alpha_, alphaBar);
+  stormBlas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rVec) : std::sqrt(alpha);
+  return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
 
 } // stormCgSolver<...>::Iterate
 

@@ -101,7 +101,7 @@ private:
 template<class Vector>
 class stormJfnkSolver final : public stormIterativeSolver<Vector> {
 private:
-  Vector sVec, tVec, rVec, wVec;
+  Vector sVec_, tVec_, rVec_, wVec_;
 
   stormReal_t Init(Vector& xVec,
                    Vector const& bVec,
@@ -121,17 +121,17 @@ stormReal_t stormJfnkSolver<Vector>::Init(Vector& xVec,
                                           stormOperator<Vector> const& linOp,
                                           stormPreconditioner<Vector> const* preOp) {
 
-  stormUtils::AllocLike(xVec, sVec, tVec, rVec, wVec);
+  stormUtils::AllocLike(xVec, sVec_, tVec_, rVec_, wVec_);
 
   // ----------------------
   // Compute residual:
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  linOp.MatVec(wVec, xVec);
-  stormBlas::Sub(rVec, bVec, wVec);
+  linOp.MatVec(wVec_, xVec);
+  stormBlas::Sub(rVec_, bVec, wVec_);
 
-  return stormBlas::Norm2(rVec);  
+  return stormBlas::Norm2(rVec_);  
 
 } // stormJfnkSolver<...>::Init
 
@@ -152,12 +152,12 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
   stormReal_t const mu = 
     sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
-  stormBlas::Set(tVec, rVec);
+  stormBlas::Set(tVec_, rVec_);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
     //call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
-    //call LinSolve(mesh, 'GMRES', '', tVec, rVec, ApproxJacobianMatVecWithX, jacConvParams)
+    //call LinSolve(mesh, 'GMRES', '', tVec_, rVec_, ApproxJacobianMatVecWithX, jacConvParams)
     auto solver = std::make_unique<stormBiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
@@ -173,25 +173,25 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
         // ----------------------
         stormReal_t const delta = 
           stormUtils::SafeDivide(mu, stormBlas::Norm2(yVec));
-        stormBlas::Add(sVec, xVec, yVec, delta);
-        linOp.MatVec(zVec, sVec);
+        stormBlas::Add(sVec_, xVec, yVec, delta);
+        linOp.MatVec(zVec, sVec_);
         stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        stormBlas::Sub(zVec, zVec, wVec, deltaInverse, deltaInverse);
+        stormBlas::Sub(zVec, zVec, wVec_, deltaInverse, deltaInverse);
 
       });
-    solver->Solve(tVec, rVec, *op);
+    solver->Solve(tVec_, rVec_, *op);
   }
-  stormBlas::Add(xVec, xVec, tVec);
+  stormBlas::Add(xVec, xVec, tVec_);
 
   // ----------------------
   // Compute residual:
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  linOp.MatVec(wVec, xVec);
-  stormBlas::Sub(rVec, bVec, wVec);
+  linOp.MatVec(wVec_, xVec);
+  stormBlas::Sub(rVec_, bVec, wVec_);
 
-  return stormBlas::Norm2(rVec);  
+  return stormBlas::Norm2(rVec_);  
 
 } // stormJfnkSolver<...>::Iterate
 

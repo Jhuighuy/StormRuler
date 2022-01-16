@@ -46,8 +46,8 @@
 template<class Vector>
 class stormCgsSolver final : public stormIterativeSolver<Vector> {
 private:
-  stormReal_t rho;
-  Vector pVec, qVec, rVec, rTildeVec, uVec, vVec;
+  stormReal_t rho_;
+  Vector pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_;
 
   stormReal_t Init(Vector& xVec,
                    Vector const& bVec,
@@ -70,7 +70,7 @@ stormReal_t stormCgsSolver<Vector>::Init(Vector& xVec,
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xVec, pVec, qVec, rVec, rTildeVec, uVec, vVec);
+  stormUtils::AllocLike(xVec, pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
@@ -82,16 +82,16 @@ stormReal_t stormCgsSolver<Vector>::Init(Vector& xVec,
   // 𝒓̃ ← 𝒓,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
-  linOp.MatVec(rVec, xVec);
-  stormBlas::Sub(rVec, bVec, rVec);
+  linOp.MatVec(rVec_, xVec);
+  stormBlas::Sub(rVec_, bVec, rVec_);
   if (leftPre) {
-    std::swap(uVec, rVec);
-    preOp->MatVec(rVec, uVec);
+    std::swap(uVec_, rVec_);
+    preOp->MatVec(rVec_, uVec_);
   }
-  stormBlas::Set(rTildeVec, rVec);
-  rho = stormBlas::Dot(rTildeVec, rVec);
+  stormBlas::Set(rTildeVec_, rVec_);
+  rho_ = stormBlas::Dot(rTildeVec_, rVec_);
 
-  return std::sqrt(rho);
+  return std::sqrt(rho_);
 
 } // stormCgsSolver<...>::Init
 
@@ -122,16 +122,16 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(uVec, rVec);
-    stormBlas::Set(pVec, uVec);
+    stormBlas::Set(uVec_, rVec_);
+    stormBlas::Set(pVec_, uVec_);
   } else {
-    stormReal_t const rhoBar = rho; 
-    rho = stormBlas::Dot(rTildeVec, rVec);
+    stormReal_t const rhoBar = rho_; 
+    rho_ = stormBlas::Dot(rTildeVec_, rVec_);
     stormReal_t const beta = 
-      stormUtils::SafeDivide(rho, rhoBar);
-    stormBlas::Add(uVec, rVec, qVec, beta);
-    stormBlas::Add(pVec, qVec, pVec, beta);
-    stormBlas::Add(pVec, uVec, pVec, beta);
+      stormUtils::SafeDivide(rho_, rhoBar);
+    stormBlas::Add(uVec_, rVec_, qVec_, beta);
+    stormBlas::Add(pVec_, qVec_, pVec_, beta);
+    stormBlas::Add(pVec_, uVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -147,16 +147,16 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
   // 𝒗 ← 𝒖 + 𝒒.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(vVec, *preOp, qVec, linOp, pVec);
+    stormBlas::MatVec(vVec_, *preOp, qVec_, linOp, pVec_);
   } else if (rightPre) {
-    stormBlas::MatVec(vVec, linOp, qVec, *preOp, pVec);
+    stormBlas::MatVec(vVec_, linOp, qVec_, *preOp, pVec_);
   } else {
-    linOp.MatVec(vVec, pVec);
+    linOp.MatVec(vVec_, pVec_);
   }
   stormReal_t const alpha = 
-    stormUtils::SafeDivide(rho, stormBlas::Dot(rTildeVec, vVec));
-  stormBlas::Sub(qVec, uVec, vVec, alpha);
-  stormBlas::Add(vVec, uVec, qVec);
+    stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
+  stormBlas::Sub(qVec_, uVec_, vVec_, alpha);
+  stormBlas::Add(vVec_, uVec_, qVec_);
 
   // ----------------------
   // Update the solution and the residual:
@@ -175,20 +175,20 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    stormBlas::Add(xVec, xVec, vVec, alpha);
-    stormBlas::MatVec(vVec, *preOp, uVec, linOp, vVec);
-    stormBlas::Sub(rVec, rVec, vVec, alpha);
+    stormBlas::Add(xVec, xVec, vVec_, alpha);
+    stormBlas::MatVec(vVec_, *preOp, uVec_, linOp, vVec_);
+    stormBlas::Sub(rVec_, rVec_, vVec_, alpha);
   } else if (rightPre) {
-    stormBlas::MatVec(vVec, linOp, uVec, *preOp, vVec);
-    stormBlas::Add(xVec, xVec, uVec, alpha);
-    stormBlas::Sub(rVec, rVec, vVec, alpha);
+    stormBlas::MatVec(vVec_, linOp, uVec_, *preOp, vVec_);
+    stormBlas::Add(xVec, xVec, uVec_, alpha);
+    stormBlas::Sub(rVec_, rVec_, vVec_, alpha);
   } else {
-    linOp.MatVec(uVec, vVec);
-    stormBlas::Add(xVec, xVec, vVec, alpha);
-    stormBlas::Sub(rVec, rVec, uVec, alpha);
+    linOp.MatVec(uVec_, vVec_);
+    stormBlas::Add(xVec, xVec, vVec_, alpha);
+    stormBlas::Sub(rVec_, rVec_, uVec_, alpha);
   }
 
-  return stormBlas::Norm2(rVec);
+  return stormBlas::Norm2(rVec_);
 
 } // stormCgsSolver<...>::Iterate
 

@@ -36,16 +36,26 @@
 template<class Value, class... Extents>
 class stormArrayView {
 private:
-  Value* Values;
+  Value* Values = nullptr;
   stormShape<Extents...> Shape;
 
 public:
 
   /// @brief Construct an array view.
+  /// @{
+  constexpr explicit stormArrayView() = default; 
   template<class... Indices>
   constexpr explicit stormArrayView(Value* values, 
                                     Indices... dynamicExtents) :
     Values(values), Shape(dynamicExtents...) {
+  }
+  /// @}
+
+  template<class... Indices>
+  constexpr void Assign(Value* values, 
+                        Indices... dynamicExtents) {
+    Values = values;
+    Shape = stormShape<Extents...>(dynamicExtents...);
   }
 
   /// @brief Access array at index.
@@ -63,8 +73,8 @@ public:
 }; // class stormArrayView<...>
 
 template<class Value>
-using stormVectorView = stormArrayView<Value, stormDynExtent>; 
+using stormVectorView = stormArrayView<Value, stormDynExtent<>>; 
 template<class Value>
-using stormMatrixView = stormArrayView<Value, stormDynExtent, stormDynExtent>; 
+using stormMatrixView = stormArrayView<Value, stormDynExtent<>, stormDynExtent<>>; 
 
 #endif // ifndef _STORM_ARRAY_HXX_

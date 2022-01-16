@@ -91,8 +91,8 @@ namespace stormUtils {
     z.Mesh = like.Mesh;
     z.Array = stormAllocLike(like.Array);
   }
-  template<class... tArray>
-  void AllocLike(stormArray const& like, stormArray& z, tArray&... zz) {
+  template<class... Vector>
+  void AllocLike(stormArray const& like, stormArray& z, Vector&... zz) {
     AllocLike(like, z);
     AllocLike(like, zz...);
   }
@@ -138,14 +138,14 @@ template<class InVector, class OutVector = InVector>
 class stormOperator : public stormBaseObject {
 public:
 
-  /// @brief Apply the operator: 𝒚 ← 𝓐(𝒙).
+  /// @brief Compute an operator-vector product, 𝒚 ← 𝓐(𝒙).
   ///
   /// @param yVec Output vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
   virtual void MatVec(OutVector& yVec,
                       InVector const& xVec) const = 0;
 
-  /// @brief Apply the conjugate operator: 𝒙 ← 𝓐*(𝒚).
+  /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   ///
   /// @param yVec Output vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
@@ -171,10 +171,10 @@ namespace stormBlas {
 
   } // MatVec<...>
 
-  template<class tArray>
-  void ConjMatVec(tArray& yVec,
-                  stormOperator<tArray> const& linOp,
-                  tArray const& xVec) {
+  template<class Vector>
+  void ConjMatVec(Vector& yVec,
+                  stormOperator<Vector> const& linOp,
+                  Vector const& xVec) {
 
     linOp.ConjMatVec(yVec, xVec);
 
@@ -188,27 +188,27 @@ namespace stormBlas {
 template<class InVector, class OutVector = InVector>
 class stormFunctionalOperator final : public stormOperator<InVector, OutVector> {
 private:
-  std::function<void(OutVector&, InVector const&)> MatVecFuncPtr;
-  std::function<void(InVector&, OutVector const&)> ConjMatVecFuncPtr;
+  std::function<void(OutVector&, InVector const&)> MatVecFunc;
+  std::function<void(InVector&, OutVector const&)> ConjMatVecFunc;
 
 public:
 
   /// @brief Construct the functional operator.
   ///  
-  /// @param matVecFunc 𝒚 ← 𝓐(𝒙) function pointer. 
-  /// @param conjMatVecFunc 𝒙 ← 𝓐*(𝒚) function pointer.
+  /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
+  /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   /// @{
   template<class MatVecFunc>
   explicit stormFunctionalOperator(MatVecFunc&& matVecFunc) :
-      MatVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)) {
-    assert(matVecFunc);
+      MatVecFunc{std::forward<MatVecFunc>(matVecFunc)} {
+    stormAssert(MatVecFunc);
   }
   template<class MatVecFunc, class ConjMatVecFunc>
   explicit stormFunctionalOperator(MatVecFunc&& matVecFunc,
                                    ConjMatVecFunc&& conjMatVecFunc) :
-      MatVecFuncPtr(std::forward<MatVecFunc>(matVecFunc)),
-      ConjMatVecFuncPtr(std::forward<ConjMatVecFunc>(conjMatVecFunc)) {
-    assert(MatVecPtr && ConjMatVecFuncPtr);
+      MatVecFunc{std::forward<MatVecFunc>(matVecFunc)},
+      ConjMatVecFunc{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
+    stormAssert(MatVecFunc && ConjMatVecFunc);
   }
   /// @}
 
@@ -216,28 +216,30 @@ private:
 
   void MatVec(OutVector& yVec,
               InVector const& xVec) const override {
-    MatVecFuncPtr(yVec, xVec);
+    MatVecFunc(yVec, xVec);
   }
 
   void ConjMatVec(InVector& xVec,
                   OutVector const& yVec) const override {
-    if (!ConjMatVecFuncPtr) {
+    if (!ConjMatVecFunc) {
       throw std::runtime_error(
         "`stormFunctionalOperator<...>::ConjMatVec` conjugate product function was not set.");
     }
-    ConjMatVecFuncPtr(xVec, yVec);
+    ConjMatVecFunc(xVec, yVec);
   }
 
 }; // class stormFunctionalOperator<...>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make the functional operator.
+///  
+/// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
+/// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
-/** @{ */
+/// @{
 template<class InVector, class OutVector = InVector, 
          class MatVecFunc>
-std::unique_ptr<stormOperator<InVector, OutVector>>
-         stormMakeOperator(MatVecFunc&& matVecFunc) {
+auto stormMakeOperator(MatVecFunc&& matVecFunc) {
 
   return std::make_unique<stormFunctionalOperator<InVector, OutVector>>(
     std::forward<MatVecFunc>(matVecFunc));
@@ -245,25 +247,23 @@ std::unique_ptr<stormOperator<InVector, OutVector>>
 } // stormMakeOperator<...>
 template<class InVector, class OutVector = InVector, 
          class MatVecFunc, class ConjMatVecFunc>
-std::unique_ptr<stormOperator<InVector, OutVector>>
-           stormMakeOperator(MatVecFunc&& matVecFunc,
-                             ConjMatVecFunc&& conjMatVecFunc) {
+auto stormMakeOperator(MatVecFunc&& matVecFunc,
+                       ConjMatVecFunc&& conjMatVecFunc) {
 
   return std::make_unique<stormFunctionalOperator<InVector, OutVector>>(
     std::forward<MatVecFunc>(matVecFunc), 
     std::forward<ConjMatVecFunc>(conjMatVecFunc));
 
 } // stormMakeOperator<...>
-/** @} */
+/// @}
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<class tArray, class MatVecFunc>
-std::unique_ptr<stormOperator<tArray>> 
-    stormMakeSymmetricOperator(MatVecFunc&& matVecFunc) {
+template<class Vector, class MatVecFunc>
+auto stormMakeSymmetricOperator(MatVecFunc&& matVecFunc) {
 
-  return std::make_unique<stormFunctionalOperator<tArray>>(
+  return std::make_unique<stormFunctionalOperator<Vector>>(
     matVecFunc, std::forward<MatVecFunc>(matVecFunc));
 
 } // stormMakeSymmetricOperator<...>

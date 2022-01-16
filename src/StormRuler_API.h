@@ -71,7 +71,7 @@
 #define _STORM_OPAQUE_(type) \
   struct type; typedef struct type* type##_t
 
-#define _STORM_ASSERT_(x) assert(x)
+#define stormAssert(x) assert(x)
 
 // Enable default arguments for C++.
 #if STORM_C11_
@@ -101,6 +101,8 @@ typedef ptrdiff_t stormPtrDiff_t;
 typedef double stormReal_t;
 typedef void* stormOpaque_t;
 typedef const char* stormString_t;
+
+#define STORM_SIZE_MAX SIZE_MAX
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //

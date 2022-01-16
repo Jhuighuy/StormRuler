@@ -33,6 +33,7 @@
 
 #include <stormSolvers/stormSolver.hxx>
 #include <stormBlas/stormArray.hxx>
+#include <stormBlas/stormTensor.hxx>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES and @c FGMRES.
@@ -41,9 +42,10 @@ template<bool Flexible, class Vector>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
   std::vector<stormReal_t> betaData, csData, snData;
-  std::vector<stormReal_t> hData;
   std::vector<Vector> qVec;
   std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVec;
+  stormVectorView<stormReal_t> beta, cs, sn;
+  stormMatrix<stormReal_t> h;
 
   void OuterInit(Vector& xVec,
                  Vector const& bVec,
@@ -113,7 +115,7 @@ class stormGmresSolver final : public stormBaseGmresSolver<false, Vector> {
 /// @c FGMRES does the same amount of operations per iteration \
 ///   as @c GMRES, but also allows usage of the variable (or flexible) \
 ///   preconditioners with the price of doubleing of the memory \
-///   requirements. For the static preconditioners, @c FGMRES requires \
+///   usage. For the static preconditioners, @c FGMRES requires \
 ///   one preconditioner-vector product less than @c GMRES. \
 ///   @c FGMRES supports only the right preconditioning.
 ///
@@ -142,7 +144,7 @@ void stormBaseGmresSolver<Flexible, Vector>::
 
   stormSize_t const m = this->NumInnerIterations;
   betaData.resize(m + 1), csData.resize(m), snData.resize(m);
-  hData.resize((m + 1)*m);
+  h.Assign(m + 1, m);
   qVec.resize(m + 1);
   for (Vector& qVec : qVec) {
     stormUtils::AllocLike(xVec, qVec);
@@ -156,6 +158,10 @@ void stormBaseGmresSolver<Flexible, Vector>::
     }
   }
 
+  beta.Assign(betaData.data(), m + 1); 
+  cs.Assign(csData.data(), m); 
+  sn.Assign(snData.data(), m);
+
 } // stormBaseGmresSolver<...>::OuterInit
 
 template<bool Flexible, class Vector>
@@ -164,9 +170,6 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
                                          stormPreconditioner<Vector> const* preOp) {
-
-  stormSize_t const m = this->NumInnerIterations;
-  stormVectorView<stormReal_t> beta(betaData.data(), m + 1), cs(csData.data(), m), sn(snData.data(), m);
 
   bool const leftPre = (preOp != nullptr) && 
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
@@ -209,10 +212,6 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
                                          stormPreconditioner<Vector> const* preOp) {
-
-  stormSize_t const m = this->NumInnerIterations;
-  stormVectorView<stormReal_t> beta(betaData.data(), m + 1), cs(csData.data(), m), sn(snData.data(), m);
-  stormMatrixView<stormReal_t> h(hData.data(), m + 1, m);
 
   stormSize_t const k = this->InnerIteration;
 
@@ -293,10 +292,6 @@ void stormBaseGmresSolver<Flexible, Vector>::
                                   Vector const& bVec,
                                   stormOperator<Vector> const& linOp,
                                   stormPreconditioner<Vector> const* preOp) {
-
-  stormSize_t const m = this->NumInnerIterations;
-  stormVectorView<stormReal_t> beta(betaData.data(), m + 1);
-  stormMatrixView<stormReal_t> h(hData.data(), m + 1, m);
 
   stormSize_t const k = this->InnerIteration;
 

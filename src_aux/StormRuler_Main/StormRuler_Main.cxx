@@ -27,6 +27,7 @@
 #define _GNU_SOURCE 1
 
 #include <StormRuler_API.h>
+#include <stormBlas/stormTensor.hxx>
 #include <stormSolvers/stormSolverFactory.hxx>
 #include <stormSolvers/stormPreconditionerFactory.hxx>
 
@@ -78,11 +79,13 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #include <string.h>
 #include <time.h>
 
+#include <fstream>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 0
+#define YURI 1
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
@@ -111,46 +114,63 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
-extern double D1_W_vs_phi[101][2];
-extern double nPart_vs_phi[101][3];
-extern double mol_mass[2];
+stormSize_t slice = 0;
+stormVector<double> phi_set;
+stormMatrix<double> D1_W_vs_phi_sandwitch;
+stormTensor3R<double> nPart_vs_phi_sandwitch;
+static double const mol_mass[2] = {0.0440098, 0.1422853};
+
+template<class Tensor>
+void ReadTensor(Tensor& tensor, std::string path) {
+  path = "/home/jhuighuy/Downloads/decane_droplet/" + path;
+  std::ifstream ifstream(path);
+  std::for_each_n(tensor.Data(), tensor.Size(), [&](auto& value) {
+    ifstream >> value;
+  });
+}
 
 void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
   const stormReal_t x = *c;
 
 #if !YURI
+
   // [-1,+1] CH.
   //*Wc = (x < -1.0) ? 2.0*(1.0+x) : ( (x > 1.0) ? (2.0*(x-1.0)) : x*(x*x - 1.0) );
   // [0,1] CH.
   *Wc = (x < -1.0) ? 2.0*x : ( (x > 1.0) ? (2.0*(x-1.0)) : 2.0*x*(x - 1.0)*(2.0*x - 1.0) );
+
 #else
 
+  auto const D1_W_vs_phi = [&](auto i) { return D1_W_vs_phi_sandwitch(slice, i); };
+
   // [0,1] MCH.
-  const double h = 0.01;
+  const double h = 1.0/(phi_set.Size() - 1.0);
   if (x < 0.0) {
-    *Wc = ( D1_W_vs_phi[0][1] + x*(D1_W_vs_phi[1][1] - D1_W_vs_phi[0][1])/h )/32.0;
+    *Wc = ( D1_W_vs_phi(0) + x*(D1_W_vs_phi(1) - D1_W_vs_phi(0))/h )/32.0;
     return;
   }
   if (x > 1.0) {
-    *Wc = ( D1_W_vs_phi[100][1] - (x - 1.0)*(D1_W_vs_phi[99][1] - D1_W_vs_phi[100][1])/h )/32.0;
+    *Wc = ( D1_W_vs_phi(100) + (x - 1.0)*(D1_W_vs_phi(100) - D1_W_vs_phi(99))/h )/32.0;
     return;
   }
   const int il = floor(x/h);
   const int ir = ceil(x/h);
   if (il == ir) {
-    *Wc = ( D1_W_vs_phi[il][1] )/32.0;  
+    *Wc = ( D1_W_vs_phi(il) )/32.0;  
   }
-  *Wc = ( D1_W_vs_phi[il][1] + (x - h*il)*(D1_W_vs_phi[ir][1] - D1_W_vs_phi[il][1])/h )/32.0;
+  *Wc = ( D1_W_vs_phi(il) + (x - h*il)*(D1_W_vs_phi(ir) - D1_W_vs_phi(il))/h )/32.0;
   return;
+
 #endif
 } // dWdC
 
 void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
-  x = min(+1.0, max(-1.0, x));
-  x = 0.5*(x + 1.0);
-  *Ic = round(x);
+  //x = min(+1.0, max(-1.0, x));
+  //x = 0.5*(x + 1.0);
+  //*Ic = round(x);
+  *Ic = 1.0 - x;
 }
 
 static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
@@ -181,7 +201,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve2(mesh, STORM_KSP_TFQMR, STORM_PRE_CHEBY/*"extr"*/, c_hat, rhs,
+  stormLinSolve2(mesh, STORM_KSP_GMRES, STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -199,7 +219,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -223,23 +243,25 @@ static int II;
 void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
+  auto const nPart_vs_phi = [&](auto i, auto j) { return nPart_vs_phi_sandwitch(slice, i, j); };
+
   x = max(0.0, min(1.0, x));
 
   const int i = II;
   double dd;
   const double h = 0.01;
   if (x < 0.0) {
-    dd = ( nPart_vs_phi[0][i] + x*(nPart_vs_phi[1][i] - nPart_vs_phi[0][i])/h );
+    dd = ( nPart_vs_phi(0, i) + x*(nPart_vs_phi(1, i) - nPart_vs_phi(0, i))/h );
   }
   else if (x > 1.0) {
-    dd = ( nPart_vs_phi[100][i] - (x - 1.0)*(nPart_vs_phi[99][i] - nPart_vs_phi[100][i])/h );
+    dd = ( nPart_vs_phi(100, i) + (x - 1.0)*(nPart_vs_phi(100, i) - nPart_vs_phi(99, i))/h );
   } else {
     const int il = floor(x/0.01);
     const int ir = ceil(x/0.01);
     if (il == ir) {
-      dd = ( nPart_vs_phi[il][i] );  
+      dd = ( nPart_vs_phi(il, i) );  
     } else {
-      dd = ( nPart_vs_phi[il][i] + (x - il*h)*(nPart_vs_phi[ir][i] - nPart_vs_phi[il][i])/h );
+      dd = ( nPart_vs_phi(il, i) + (x - il*h)*(nPart_vs_phi(ir, i) - nPart_vs_phi(il, i))/h );
     }
   }
   *n = dd; 
@@ -278,8 +300,8 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // Compute 𝜌, 𝜇, 1/𝜌.
   //
 #if YURI
-  II = 1; stormFuncProd(mesh, n1, c, NVsC, STORM_NULL);
-  II = 2; stormFuncProd(mesh, n2, c, NVsC, STORM_NULL);
+  II = 0; stormFuncProd(mesh, n1, c, NVsC, STORM_NULL);
+  II = 1; stormFuncProd(mesh, n2, c, NVsC, STORM_NULL);
   stormAdd(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
   stormFill(mesh, rho, 0.5*(rho_1 + rho_2));
@@ -388,6 +410,13 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
 } // Initial_Data
 
 int main() {
+
+  phi_set.Assign(101);
+  ReadTensor(phi_set, "phi.csv");
+  D1_W_vs_phi_sandwitch.Assign(1000, 101);
+  ReadTensor(D1_W_vs_phi_sandwitch, "D1_W_vs_phi.csv");
+  nPart_vs_phi_sandwitch.Assign(1000, 101, 2);
+  ReadTensor(nPart_vs_phi_sandwitch, "n_part_vs_phi_sandwich.csv");
 
   //FILE* dWdCF = fopen("dWdC.txt", "w");
   //for (double x = -0.1; x <= 1.1; x += 0.0001) {

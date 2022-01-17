@@ -174,6 +174,10 @@ if(GIT_FOUND)
   endif()
 endif()
 
+## Find SYCL.
+#find_package(IntelDPCPP REQUIRED)
+#message(STATUS "SYCL (Intel DC++) enabled.")
+
 # Find OpenMP.
 if(StormRuler_NO_OpenMP)
   message(STATUS "StormRuler OpenMP was disabled by user.")

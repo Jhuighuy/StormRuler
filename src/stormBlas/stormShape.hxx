@@ -105,7 +105,7 @@ public:
   template<class... Indices>
   constexpr explicit stormShape(stormSize_t frontDynamicExtent,
                                 Indices... restDynamicExtents) :
-      stormShape<RestExtents...>{restDynamicExtents...}, 
+      stormShape<RestExtents...>(restDynamicExtents...), 
       FrontDynamicExtent_{frontDynamicExtent} {
     stormAssert(FrontDynamicExtent_ <= MaxDynamicExtent);
   }

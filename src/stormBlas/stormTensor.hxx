@@ -167,6 +167,11 @@ public:
   }
   /// @}
 
+  /// @brief Size of the tensor.
+  stormSize_t Size() const noexcept {
+    return stormShapeSize(this->Shape());
+  }
+
   /// @brief Access tensor at index.
   /// @{
   template<class... Indices>
@@ -186,13 +191,50 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormVector = 
-  stormTensor<Value, stormShape<stormDynExtent<>>>; 
+  stormTensor<Value, 
+    stormShape<stormDynExtent<>>>; 
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense matrix with dynamic storage.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormMatrix = 
-  stormTensor<Value, stormShape<stormDynExtent<>, stormDynExtent<>>>;
+  stormTensor<Value, 
+    stormShape<
+      stormDynExtent<>, 
+      stormDynExtent<>>>;
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Dense rank 2 tensor with dynamic storage.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Value>
+using stormTensor2R = 
+  stormTensor<Value, 
+    stormShape<
+      stormDynExtent<>, 
+      stormDynExtent<>>>;
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Dense rank 3 tensor with dynamic storage.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Value>
+using stormTensor3R = 
+  stormTensor<Value, 
+    stormShape<
+      stormDynExtent<>, 
+      stormDynExtent<>, 
+      stormDynExtent<>>>;
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Dense rank 4 tensor with dynamic storage.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Value>
+using stormTensor4R = 
+  stormTensor<Value, 
+    stormShape<
+      stormDynExtent<>, 
+      stormDynExtent<>, 
+      stormDynExtent<>, 
+      stormDynExtent<>>>;
 
 #endif // ifndef _STORM_TENSOR_HXX_

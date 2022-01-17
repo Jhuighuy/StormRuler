@@ -31,7 +31,6 @@
 #include <algorithm>
 
 #include <stormSolvers/stormSolver.hxx>
-#include <stormBlas/stormArray.hxx>
 #include <stormBlas/stormTensor.hxx>
 
 /// ----------------------------------------------------------------- ///

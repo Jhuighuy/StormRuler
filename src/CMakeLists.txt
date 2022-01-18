@@ -110,10 +110,10 @@ add_library(StormRuler SHARED ${Fortran_SOURCES}
 # Link with the base target.
 target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
 
-# Require C++17.
+# Require C++20.
 set_target_properties(
   StormRuler PROPERTIES 
-  CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
+  CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
 # Let Fortran linker work.
 set_target_properties(

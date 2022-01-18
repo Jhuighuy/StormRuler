@@ -32,83 +32,14 @@
 
 #include <stormBlas/stormShape.hxx>
 
-/// ----------------------------------------------------------------- ///
-/// @brief Storage class.
-/// ----------------------------------------------------------------- ///
-enum class stormStorageClass {
-
-  /// @brief The data is stored inside of the object.
-  Static, 
-
-  /// @brief The data is stored on the heap, \
-  ///   only the pointer to it is stored.
-  Dynamic,
-
-}; // enum class stormStorageClass
-
-/// ----------------------------------------------------------------- ///
-/// @brief Base class for the dense tensors.
-/// ----------------------------------------------------------------- ///
-template<class Value, class ShapeType, stormStorageClass StorageClass>
-class stormBaseTensor;
-
-/// ----------------------------------------------------------------- ///
-/// @brief Base class for the dense tensors with static storage.
-/// ----------------------------------------------------------------- ///
-template<class Value, class ShapeType>
-class stormBaseTensor<Value, ShapeType, stormStorageClass::Static> {
-private:
-  using DataStorage = 
-    std::array<Value, stormShapeMaxSize(std::declval<ShapeType>())>;
-  std::conditional_t<std::is_empty_v<ShapeType>,
-    std::tuple<DataStorage>, 
-    std::tuple<DataStorage, ShapeType>> CompressedStorage_;
-
-protected:
-  
-  stormBaseTensor() = default;
-
-  ~stormBaseTensor() = default;
-
-  void BaseAssign(ShapeType const& shape) {
-    if constexpr (!std::is_empty_v<ShapeType>) {
-      std::get<1>(CompressedStorage_) = shape;
-    }
-  }
-
-public:
-
-  /// @brief Get tensor data pointer.
-  /// @{
-  Value* Data() noexcept {
-    return std::get<0>(CompressedStorage_).data();
-  }
-  Value const* Data() const noexcept {
-    return std::get<0>(CompressedStorage_).data();
-  }
-  /// @}
-
-  /// @brief Get tensor shape.
-  ShapeType const& Shape() const noexcept {
-    if constexpr (std::is_empty_v<ShapeType>) {
-      return static_cast<ShapeType const&>(*this);
-    } else {
-      return std::get<1>(CompressedStorage_);
-    }
-  }
-
-}; // class stormBaseTensor<..., stormStorageClass::Static>
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Base class for the dense tensors with dynamic storage.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value, class ShapeType>
-class stormBaseTensor<Value, ShapeType, stormStorageClass::Dynamic> {
+class stormBaseTensor {
 private:
   using DataStorage = std::unique_ptr<Value[]>; 
-  std::conditional_t<std::is_empty_v<ShapeType>,
-    std::tuple<DataStorage>, 
-    std::tuple<DataStorage, ShapeType>> CompressedStorage_;
+  std::tuple<DataStorage, ShapeType> CompressedStorage_;
 
 protected:
   
@@ -117,22 +48,16 @@ protected:
   ~stormBaseTensor() = default;
 
   void BaseAssign(ShapeType const& shape) {
-    if constexpr (!std::is_empty_v<ShapeType>) {
-      std::get<1>(CompressedStorage_) = shape;
-    }
+    std::get<1>(CompressedStorage_) = shape;
     std::get<0>(CompressedStorage_) = 
-      std::make_unique<Value[]>(stormShapeSize(Shape()));
+      std::make_unique<Value[]>(Shape().Size());
   }
 
 public:
 
   /// @brief Get tensor shape.
   ShapeType const& Shape() const noexcept {
-    if constexpr (std::is_empty_v<ShapeType>) {
-      return static_cast<ShapeType const&>(*this);
-    } else {
-      return std::get<1>(CompressedStorage_);
-    }
+    return std::get<1>(CompressedStorage_);
   }
 
   /// @brief Get tensor data pointer.
@@ -150,9 +75,8 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense tensor.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Value, class Shape, 
-  stormStorageClass StorageClass = stormStorageClass::Dynamic>
-class stormTensor final : public stormBaseTensor<Value, Shape, StorageClass> {
+template<class Value, class Shape>
+class stormTensor final : public stormBaseTensor<Value, Shape> {
 public:
 
   /// @brief Assign a shape to the tensor object \
@@ -169,18 +93,18 @@ public:
 
   /// @brief Size of the tensor.
   stormSize_t Size() const noexcept {
-    return stormShapeSize(this->Shape());
+    return this->Shape().Size();
   }
 
   /// @brief Access tensor at index.
   /// @{
   template<class... Indices>
   Value& operator()(Indices... indices) noexcept {
-    return this->Data()[stormShapeOffset(this->Shape(), indices...)];
+    return this->Data()[this->Shape()(indices...)];
   }
   template<class... Indices>
   Value const& operator()(Indices... indices) const noexcept {
-    return this->Data()[stormShapeOffset(this->Shape(), indices...)];
+    return this->Data()[this->Shape()(indices...)];
   }
   /// @}
 
@@ -192,7 +116,7 @@ public:
 template<class Value>
 using stormVector = 
   stormTensor<Value, 
-    stormShape<stormDynExtent<>>>; 
+    stormShape<stormDynamicExtent>>; 
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense matrix with dynamic storage.
@@ -201,8 +125,8 @@ template<class Value>
 using stormMatrix = 
   stormTensor<Value, 
     stormShape<
-      stormDynExtent<>, 
-      stormDynExtent<>>>;
+      stormDynamicExtent, 
+      stormDynamicExtent>>;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 2 tensor with dynamic storage.
@@ -211,8 +135,8 @@ template<class Value>
 using stormTensor2R = 
   stormTensor<Value, 
     stormShape<
-      stormDynExtent<>, 
-      stormDynExtent<>>>;
+      stormDynamicExtent, 
+      stormDynamicExtent>>;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 3 tensor with dynamic storage.
@@ -221,9 +145,9 @@ template<class Value>
 using stormTensor3R = 
   stormTensor<Value, 
     stormShape<
-      stormDynExtent<>, 
-      stormDynExtent<>, 
-      stormDynExtent<>>>;
+      stormDynamicExtent, 
+      stormDynamicExtent, 
+      stormDynamicExtent>>;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 4 tensor with dynamic storage.
@@ -232,9 +156,9 @@ template<class Value>
 using stormTensor4R = 
   stormTensor<Value, 
     stormShape<
-      stormDynExtent<>, 
-      stormDynExtent<>, 
-      stormDynExtent<>, 
-      stormDynExtent<>>>;
+      stormDynamicExtent, 
+      stormDynamicExtent, 
+      stormDynamicExtent, 
+      stormDynamicExtent>>;
 
 #endif // ifndef _STORM_TENSOR_HXX_

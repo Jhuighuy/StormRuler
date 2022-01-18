@@ -126,7 +126,7 @@ std::unique_ptr<stormIterativeSolver<Vector>>
 
 } // stormMakeSolver<...>
 template<class InVector, class OutVector>
-std::unique_ptr<stormSolver<InVector, OutVector>>
+std::unique_ptr<stormIterativeSolver<InVector, OutVector>>
     stormMakeIterativeSolver(stormString_t solverType) {
 
   if constexpr (std::is_same_v<InVector, OutVector>) {

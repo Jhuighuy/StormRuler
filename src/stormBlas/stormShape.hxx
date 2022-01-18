@@ -28,165 +28,78 @@
 #include <StormRuler_API.h>
 
 /// ----------------------------------------------------------------- ///
-/// @brief Static array extent tag.
+/// @brief Dynamic extent specifier.
 /// ----------------------------------------------------------------- ///
-template<stormSize_t>
-struct stormExtent;
-
-/// ----------------------------------------------------------------- ///
-/// @brief Dynamic array extent tag.
-/// ----------------------------------------------------------------- ///
-template<stormSize_t = STORM_SIZE_MAX>
-struct stormDynExtent;
+static constexpr stormSize_t stormDynamicExtent = STORM_SIZE_MAX;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Multiextent shape object, \
-///   with a support for both static and dynamic storage classes.
+/// @brief Multidimensional shape object, \
+///   with a support for both static and dynamic extents.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class... Extents>
-class stormShape;
+template<stormSize_t... Extents>
+class stormShape {};
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Zero rank shape object.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<>
-class stormShape<> {
-
-}; // stormShape<>
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Multiextent shape object, with a static leading extent.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<stormSize_t StaticExtent, class... RestExtents>
-class stormShape<stormExtent<StaticExtent>, RestExtents...> : 
-    public stormShape<RestExtents...> {
-public:
-  static_assert(StaticExtent > 0, 
-    "Static extent of a shape object must be greater than zero.");
-
-  /// @brief Construct an empty shape.
-  constexpr stormShape() = default;
-
-  /// @brief Construct a shape object with \
-  ///   the specified dynamic extents.
-  template<class... Indices>
-  constexpr explicit stormShape(Indices... restDynamicExtents) :
-      stormShape<RestExtents...>{restDynamicExtents...} {
-  }
-
-  /// @brief Front extent of the shape object.
-  constexpr stormSize_t FrontExtent() const noexcept {
-    return StaticExtent;
-  }
-
-  /// @brief Maximum value of the front extent of the shape object type.
-  static constexpr stormSize_t MaxFrontExtent() noexcept {
-    return StaticExtent;
-  }
-
-}; // stormShape<stormExtent<...>, ...>
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Multiextent shape object, with a dynamic leading extent.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<stormSize_t MaxDynamicExtent, class... RestExtents>
-class stormShape<stormDynExtent<MaxDynamicExtent>, RestExtents...> : 
-    public stormShape<RestExtents...> {
+template<stormSize_t Extent, stormSize_t... RestExtents>
+class stormShape<Extent, RestExtents...> {
 private:
-  stormSize_t FrontDynamicExtent_ = 0;
+
+  template<stormSize_t... OtherExtents>
+  friend class stormShape;
+
+  [[no_unique_address]] stormShape<RestExtents...> Base_;
+  [[no_unique_address]] std::conditional_t<
+    Extent == stormDynamicExtent, 
+    stormSize_t, std::integral_constant<stormSize_t, Extent>> Extent_;
 
 public:
 
-  /// @brief Construct an empty shape.
+  /// @brief Construct a shape object with \
+  ///   zero dynamic extents.
   constexpr stormShape() = default;
 
   /// @brief Construct a shape object with \
   ///   the specified dynamic extents.
-  template<class... Indices>
+  /// @{
+  template<class... SizeTypes>
+    requires (Extent != stormDynamicExtent)
+  constexpr explicit stormShape(SizeTypes... dynamicExtents) :
+      Base_(dynamicExtents...), Extent_{} {
+  }
+  template<class... SizeTypes>
+    requires (Extent == stormDynamicExtent)
   constexpr explicit stormShape(stormSize_t frontDynamicExtent,
-                                Indices... restDynamicExtents) :
-      stormShape<RestExtents...>(restDynamicExtents...), 
-      FrontDynamicExtent_{frontDynamicExtent} {
-    stormAssert(FrontDynamicExtent_ <= MaxDynamicExtent);
+                                SizeTypes... restDynamicExtents) :
+      Base_(restDynamicExtents...), Extent_{frontDynamicExtent} {
+  }
+  /// @}
+
+  /// @brief Rank of the shape object.
+  static constexpr stormSize_t Rank() noexcept {
+    return sizeof...(RestExtents) + 1;
   }
 
-  /// @brief Front extent of the shape object.
-  constexpr stormSize_t FrontExtent() const noexcept {
-    return FrontDynamicExtent_;
+  /// @brief Size of the shape object.
+  constexpr stormSize_t Size() const noexcept {
+    if constexpr (Rank() == 1) {
+      return Extent_;
+    } else {
+      return Extent_*Base_.Size();
+    }
   }
 
-  /// @brief Maximum value of the front extent of the shape object type.
-  static constexpr stormSize_t MaxFrontExtent() noexcept {
-    return MaxDynamicExtent;
+  /// @brief Offset of the shaped data at the specified index.
+  template<class... SizeTypes>
+    requires ((sizeof...(SizeTypes) + 1) == Rank())
+  constexpr stormSize_t operator()(stormSize_t frontIndex,
+                                   SizeTypes... restIndices) const noexcept {
+    stormAssert(frontIndex < Extent_);
+    if constexpr (Rank() == 1) {
+      return frontIndex;
+    } else {
+      return frontIndex*Base_.Extent_ + Base_(restIndices...);
+    }
   }
 
-}; // stormShape<stormDynExtent, ...>
-
-/// ----------------------------------------------------------------- ///
-/// @brief Rank of the shape object.
-/// ----------------------------------------------------------------- ///
-template<class... Extents>
-constexpr stormSize_t stormShapeRank(
-    stormShape<Extents...> const&) noexcept {
-
-  return sizeof...(Extents);
-
-} // stormShapeRank<...>
-
-/// ----------------------------------------------------------------- ///
-/// @brief Size of the shape object.
-/// ----------------------------------------------------------------- ///
-template<class FrontExtent, class... RestExtents>
-constexpr stormSize_t stormShapeSize(
-    stormShape<FrontExtent, RestExtents...> const& shape) noexcept {
-
-  if constexpr (sizeof...(RestExtents) == 0) {
-    return shape.FrontExtent();
-  } else {
-    auto const& baseShape = 
-      static_cast<stormShape<RestExtents...> const&>(shape);
-    return shape.FrontExtent() == STORM_SIZE_MAX ? 
-      STORM_SIZE_MAX : shape.FrontExtent()*stormShapeSize(baseShape);
-  }
-
-} // stormShapeSize<...>
-
-/// ----------------------------------------------------------------- ///
-/// @brief Maximum size of the shape object.
-/// ----------------------------------------------------------------- ///
-template<class FrontExtent, class... RestExtents>
-constexpr stormSize_t stormShapeMaxSize(
-    stormShape<FrontExtent, RestExtents...> const& shape) noexcept {
-
-  if constexpr (sizeof...(RestExtents) == 0) {
-    return shape.MaxFrontExtent();
-  } else {
-    auto const& baseShape = 
-      static_cast<stormShape<RestExtents...> const&>(shape);
-    return shape.MaxFrontExtent()*stormShapeMaxSize(baseShape);
-  }
-
-} // stormShapeMaxSize<...>
-
-/// ----------------------------------------------------------------- ///
-/// @brief Offset of the shaped data at the specified index.
-/// ----------------------------------------------------------------- ///
-template<class FrontExtent, class... RestExtents, class... RestIndices>
-constexpr stormSize_t stormShapeOffset(
-    stormShape<FrontExtent, RestExtents...> const& shape,
-    stormSize_t frontIndex,
-    RestIndices... restIndices) noexcept {
-
-  stormAssert(frontIndex < shape.FrontExtent());
-  if constexpr (sizeof...(RestExtents) == 0) {
-    return frontIndex;
-  } else {
-    auto const& baseShape = 
-      static_cast<stormShape<RestExtents...> const&>(shape);
-    return baseShape.FrontExtent()*frontIndex + 
-      stormShapeOffset(baseShape, restIndices...);
-  }
-
-} // stormShapeOffset<...>
+}; // class stormShape<...>
 
 #endif // ifndef _STORM_SHAPE_HXX_

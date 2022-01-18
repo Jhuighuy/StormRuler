@@ -58,6 +58,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
                                  stormArray_t x,
                                  stormArray_t b,
                                  stormMatVecFuncT_t matVec) {
+
   stormArray xx = {mesh, x}, bb = {mesh, b};
   std::unique_ptr<stormOperator<stormArray>> op =
     stormMakeSymmetricOperator<stormArray>(
@@ -141,27 +142,29 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 
 #else
 
-  auto const D1_W_vs_phi = [&](auto i) { return D1_W_vs_phi_sandwitch(slice, i); };
+  auto const D1_W_vs_phi = [&](auto i) { return D1_W_vs_phi_sandwitch(slice, i)/32.0; };
 
   // [0,1] MCH.
   const double h = 1.0/(phi_set.Size() - 1.0);
   if (x < 0.0) {
-    *Wc = ( D1_W_vs_phi(0) + x*(D1_W_vs_phi(1) - D1_W_vs_phi(0))/h )/32.0;
+    *Wc = ( D1_W_vs_phi(0) + x*(D1_W_vs_phi(1) - D1_W_vs_phi(0))/h );
     return;
   }
   if (x > 1.0) {
-    *Wc = ( D1_W_vs_phi(100) + (x - 1.0)*(D1_W_vs_phi(100) - D1_W_vs_phi(99))/h )/32.0;
+    *Wc = ( D1_W_vs_phi(100) + (x - 1.0)*(D1_W_vs_phi(100) - D1_W_vs_phi(99))/h );
     return;
   }
   const int il = floor(x/h);
   const int ir = ceil(x/h);
   if (il == ir) {
-    *Wc = ( D1_W_vs_phi(il) )/32.0;  
+    *Wc = ( D1_W_vs_phi(il) );  
   }
-  *Wc = ( D1_W_vs_phi(il) + (x - h*il)*(D1_W_vs_phi(ir) - D1_W_vs_phi(il))/h )/32.0;
+
+  *Wc = ( D1_W_vs_phi(il) + (x - h*il)*(D1_W_vs_phi(ir) - D1_W_vs_phi(il))/h );
   return;
 
 #endif
+
 } // dWdC
 
 void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
@@ -171,6 +174,7 @@ void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
   //x = 0.5*(x + 1.0);
   //*Ic = round(x);
   *Ic = 1.0 - x;
+
 }
 
 static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
@@ -264,9 +268,10 @@ void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
       dd = ( nPart_vs_phi(il, i) + (x - il*h)*(nPart_vs_phi(ir, i) - nPart_vs_phi(il, i))/h );
     }
   }
-  *n = dd; 
 
+  *n = dd; 
   return;
+
 } // NVsC
 
 static void NavierStokes_VaD_Step(stormMesh_t mesh,
@@ -407,9 +412,12 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
   if (in) {
     *c = 1.0;
   }
+
 } // Initial_Data
 
 int main() {
+
+  static_assert(sizeof(stormShape<1, 2, 3>{}) == 1);
 
   phi_set.Assign(101);
   ReadTensor(phi_set, "phi.csv");

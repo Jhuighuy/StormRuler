@@ -159,12 +159,12 @@ bool stormIterativeSolver<InVector, OutVector>::
   std::cout << "\t----------------------" << std::endl;
 
   if (VerifySolution) {
-    OutVector rArr;
-    stormUtils::AllocLike(bVec, rArr);
-    anyOp.MatVec(rArr, xVec);
-    stormBlas::Sub(rArr, bVec, rArr);
+    OutVector rVec;
+    rVec.Assign(bVec, false);
+    anyOp.MatVec(rVec, xVec);
+    stormBlas::Sub(rVec, bVec, rVec);
     stormReal_t const 
-      trueAbsoluteError = stormBlas::Norm2(rArr),
+      trueAbsoluteError = stormBlas::Norm2(rVec),
       trueRelativeError = trueAbsoluteError/initialError; 
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
@@ -327,7 +327,7 @@ stormReal_t stormPowerIterations<tArray>::
                               stormReal_t relativeTolerance) {
 
   stormArray yVec;
-  stormUtils::AllocLike(xVec, yVec);
+  yVec.Assign(xVec, false);
 
   // ----------------------
   // Initialize the Power Iterations:

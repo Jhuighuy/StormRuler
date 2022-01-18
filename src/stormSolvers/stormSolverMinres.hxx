@@ -101,10 +101,17 @@ stormReal_t stormMinresSolver<Vector>::Init(Vector& xVec,
 
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
-  stormUtils::AllocLike(xVec, pVec,
-    wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec);
+
+  pVec.Assign(xVec, false);
+  wVec.Assign(xVec, false); 
+  wBarVec.Assign(xVec, false); 
+  wBarBarVec.Assign(xVec, false); 
+  zVec.Assign(xVec, false); 
+  zBarVec.Assign(xVec, false); 
+  zBarBarVec.Assign(xVec, false); 
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xVec, qVec, qBarVec);
+    qVec.Assign(xVec, false); 
+    qBarVec.Assign(xVec, false); 
   }
 
   // ----------------------

@@ -35,7 +35,7 @@
 #include <stormSolvers/stormSolverBiCgStab.hxx>
 #include <stormSolvers/stormSolverTfqmr.hxx>
 #include <stormSolvers/stormSolverGmres.hxx>
-#include <stormSolvers/stormSolverLsqr.hxx>
+//#include <stormSolvers/stormSolverLsqr.hxx>
 
 #include <stormSolvers/stormSolverNewton.hxx>
 
@@ -91,7 +91,7 @@
     \
     return std::make_unique<stormFgmresSolver<Vector>>(); \
     \
-  } else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+  } /*else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
     return std::make_unique<stormLsqrSolver<Vector>>(); \
     \
@@ -99,10 +99,10 @@
     \
     return std::make_unique<stormLsmrSolver<Vector>>(); \
     \
-  }
+  } */
 
 #define _STORM_MAKE_RECT_KSP_SOLVER_(solverType) \
-  if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+  /*if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
     return std::make_unique<stormLsqrSolver<InVector, OutVector>>(); \
     \
@@ -110,7 +110,7 @@
     \
     return std::make_unique<stormLsmrSolver<InVector, OutVector>>(); \
     \
-  }
+  }*/
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.

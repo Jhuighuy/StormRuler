@@ -72,9 +72,13 @@ stormReal_t stormBiCgStabSolver<Vector>::Init(Vector& xVec,
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xVec, pVec_, rVec_, rTildeVec_, tVec_, vVec_);
+  pVec_.Assign(xVec, false);
+  rVec_.Assign(xVec, false); 
+  rTildeVec_.Assign(xVec, false);
+  tVec_.Assign(xVec, false); 
+  vVec_.Assign(xVec, false);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xVec, zVec_);
+    zVec_.Assign(xVec, false);
   }
 
   // ----------------------

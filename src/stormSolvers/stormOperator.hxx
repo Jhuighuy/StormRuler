@@ -64,6 +64,13 @@ public:
     }
   }
 
+  void Assign(stormArray const& like, bool copy = true) {
+    this->~stormArray();
+    Mesh = like.Mesh;
+    Array = stormAllocLike(like.Array);
+    if (copy) stormSet(Mesh, Array, like.Array);
+  }
+
   stormArray& operator=(stormArray&& oth) {
     this->~stormArray();
     new(this) stormArray(std::forward<stormArray>(oth));
@@ -87,15 +94,6 @@ namespace stormUtils {
     return x;
   }
 
-  void AllocLike(stormArray const& like, stormArray& z) {
-    z.Mesh = like.Mesh;
-    z.Array = stormAllocLike(like.Array);
-  }
-  template<class... Vector>
-  void AllocLike(stormArray const& like, stormArray& z, Vector&... zz) {
-    AllocLike(like, z);
-    AllocLike(like, zz...);
-  }
 }
 
 namespace stormBlas {

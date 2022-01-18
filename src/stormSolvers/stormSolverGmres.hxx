@@ -41,8 +41,8 @@ class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
   stormVector<stormReal_t> beta_, cs_, sn_;
   stormMatrix<stormReal_t> H_;
-  std::vector<Vector> qVec_;
-  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVec_;
+  std::vector<Vector> qVecs_;
+  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVecs_;
 
   void OuterInit(Vector& xVec,
                  Vector const& bVec,
@@ -142,16 +142,16 @@ void stormBaseGmresSolver<Flexible, Vector>::
   stormSize_t const m = this->NumInnerIterations;
 
   beta_.Assign(m + 1), cs_.Assign(m), sn_.Assign(m), H_.Assign(m + 1, m);
-  qVec_.resize(m + 1);
-  for (Vector& qVec_ : qVec_) {
-    stormUtils::AllocLike(xVec, qVec_);
+  qVecs_.resize(m + 1);
+  for (Vector& qVec : qVecs_) {
+    qVec.Assign(xVec, false);
   }
   if (preOp != nullptr) {
     if constexpr (Flexible) {
-      zVec_.resize(m);
+      zVecs_.resize(m);
     }
-    for (Vector& zVec_ : zVec_) {
-      stormUtils::AllocLike(xVec, zVec_);
+    for (Vector& zVec : zVecs_) {
+      zVec.Assign(xVec, false);
     }
   }
 
@@ -176,19 +176,19 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   //   𝒒₀ ← 𝓟𝒛₀.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  linOp.MatVec(qVec_[0], xVec);
-  stormBlas::Sub(qVec_[0], bVec, qVec_[0]);
+  linOp.MatVec(qVecs_[0], xVec);
+  stormBlas::Sub(qVecs_[0], bVec, qVecs_[0]);
   if (leftPre) {
-    std::swap(zVec_[0], qVec_[0]);
-    preOp->MatVec(qVec_[0], zVec_[0]);
+    std::swap(zVecs_[0], qVecs_[0]);
+    preOp->MatVec(qVecs_[0], zVecs_[0]);
   }
 
   // ----------------------
   // 𝛽₀ ← ‖𝒒₀‖,
   // 𝒒₀ ← 𝒒₀/𝛽₀. 
   // ----------------------
-  beta_(0) = stormBlas::Norm2(qVec_[0]);
-  stormBlas::Scale(qVec_[0], qVec_[0], 1.0/beta_(0));
+  beta_(0) = stormBlas::Norm2(qVecs_[0]);
+  stormBlas::Scale(qVecs_[0], qVecs_[0], 1.0/beta_(0));
 
   return beta_(0);
 
@@ -226,19 +226,19 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
   // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.  
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(qVec_[k + 1], *preOp, zVec_[0], linOp, qVec_[k]);
+    stormBlas::MatVec(qVecs_[k + 1], *preOp, zVecs_[0], linOp, qVecs_[k]);
   } else if (rightPre) {
     stormSize_t const j = Flexible ? k : 0;
-    stormBlas::MatVec(qVec_[k + 1], linOp, zVec_[j], *preOp, qVec_[k]);
+    stormBlas::MatVec(qVecs_[k + 1], linOp, zVecs_[j], *preOp, qVecs_[k]);
   } else {
-    linOp.MatVec(qVec_[k + 1], qVec_[k]);
+    linOp.MatVec(qVecs_[k + 1], qVecs_[k]);
   }
   for (stormSize_t i = 0; i <= k; ++i) {
-    H_(i, k) = stormBlas::Dot(qVec_[k + 1], qVec_[i]);
-    stormBlas::Sub(qVec_[k + 1], qVec_[k + 1], qVec_[i], H_(i, k));
+    H_(i, k) = stormBlas::Dot(qVecs_[k + 1], qVecs_[i]);
+    stormBlas::Sub(qVecs_[k + 1], qVecs_[k + 1], qVecs_[i], H_(i, k));
   }
-  H_(k + 1, k) = stormBlas::Norm2(qVec_[k + 1]); 
-  stormBlas::Scale(qVec_[k + 1], qVec_[k + 1], 1.0/H_(k + 1, k));
+  H_(k + 1, k) = stormBlas::Norm2(qVecs_[k + 1]); 
+  stormBlas::Scale(qVecs_[k + 1], qVecs_[k + 1], 1.0/H_(k + 1, k));
 
   // ----------------------
   // Eliminate the last element in {𝐻ᵢⱼ}
@@ -323,19 +323,19 @@ void stormBaseGmresSolver<Flexible, Vector>::
   // ----------------------
   if (!rightPre) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, qVec_[i], beta_(i));
+      stormBlas::Add(xVec, xVec, qVecs_[i], beta_(i));
     }
   } else if constexpr (Flexible) {
     for (stormSize_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, zVec_[i], beta_(i));
+      stormBlas::Add(xVec, xVec, zVecs_[i], beta_(i));
     }
   } else {
-    stormBlas::Scale(qVec_[0], qVec_[0], beta_(0));
+    stormBlas::Scale(qVecs_[0], qVecs_[0], beta_(0));
     for (stormSize_t i = 1; i <= k; ++i) {
-      stormBlas::Add(qVec_[0], qVec_[0], qVec_[i], beta_(i));
+      stormBlas::Add(qVecs_[0], qVecs_[0], qVecs_[i], beta_(i));
     }
-    preOp->MatVec(zVec_[0], qVec_[0]);
-    stormBlas::Add(xVec, xVec, zVec_[0]);
+    preOp->MatVec(zVecs_[0], qVecs_[0]);
+    stormBlas::Add(xVec, xVec, zVecs_[0]);
   }
 
 } // stormBaseGmresSolver<...>::InnerFinalize

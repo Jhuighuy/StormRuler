@@ -73,7 +73,8 @@ void stormChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
                                                  Vector const& bVec,
                                                  stormOperator<Vector> const& linOp) {
 
-  stormUtils::AllocLike(xVec, pVec, rVec);
+  pVec.Assign(xVec, false);
+  rVec.Assign(xVec, false);
   this->linOp = &linOp;
 
 } // stormChebyshevPreconditioner<...>::Build

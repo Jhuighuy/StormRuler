@@ -118,9 +118,14 @@ stormReal_t stormBaseTfqmrSolver<L1, Vector>::
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xVec, dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_);
+  dVec_.Assign(xVec, false);
+  rTildeVec_.Assign(xVec, false);
+  uVec_.Assign(xVec, false);
+  vVec_.Assign(xVec, false);
+  yVec_.Assign(xVec, false);
+  sVec_.Assign(xVec, false);
   if (preOp != nullptr) {
-    stormUtils::AllocLike(xVec, zVec_);
+    zVec_.Assign(xVec, false);
   }
 
   // ----------------------

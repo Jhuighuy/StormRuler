@@ -67,7 +67,9 @@ stormReal_t stormCgSolver<Vector>::Init(Vector& xVec,
                                         stormOperator<Vector> const& linOp,
                                         stormPreconditioner<Vector> const* preOp) {
 
-  stormUtils::AllocLike(xVec, pVec_, rVec_, zVec_);
+  pVec_.Assign(xVec, false);
+  rVec_.Assign(xVec, false);
+  zVec_.Assign(xVec, false);
 
   // ----------------------
   // Initialize:

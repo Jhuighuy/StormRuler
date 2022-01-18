@@ -70,7 +70,12 @@ stormReal_t stormCgsSolver<Vector>::Init(Vector& xVec,
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);
 
-  stormUtils::AllocLike(xVec, pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_);
+  pVec_.Assign(xVec, false);
+  qVec_.Assign(xVec, false); 
+  rVec_.Assign(xVec, false); 
+  rTildeVec_.Assign(xVec, false);
+  uVec_.Assign(xVec, false); 
+  vVec_.Assign(xVec, false);
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,

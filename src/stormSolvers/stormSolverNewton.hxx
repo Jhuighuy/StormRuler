@@ -121,7 +121,10 @@ stormReal_t stormJfnkSolver<Vector>::Init(Vector& xVec,
                                           stormOperator<Vector> const& linOp,
                                           stormPreconditioner<Vector> const* preOp) {
 
-  stormUtils::AllocLike(xVec, sVec_, tVec_, rVec_, wVec_);
+  sVec_.Assign(xVec, false);
+  tVec_.Assign(xVec, false);
+  rVec_.Assign(xVec, false);
+  wVec_.Assign(xVec, false);
 
   // ----------------------
   // Compute residual:

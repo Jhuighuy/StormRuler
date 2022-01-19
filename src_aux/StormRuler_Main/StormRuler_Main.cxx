@@ -86,7 +86,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 1
+#define YURI 0
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
@@ -115,6 +115,7 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
+#if YURI
 stormSize_t slice = 983, num_slices = 1000;
 stormVector<double> phi_set;
 stormVector<double> alpha_sandwich;
@@ -132,6 +133,7 @@ void ReadTensor(Tensor& tensor, std::string path) {
     ifstream >> value;
   });
 }
+#endif
 
 void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
   const stormReal_t x = *c;
@@ -209,7 +211,13 @@ static void CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve2(mesh, STORM_KSP_BiCGStab, STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
+  stormLinSolve2(mesh,
+#if YURI
+      STORM_KSP_BiCGStab,
+#else 
+      STORM_KSP_GMRES,
+#endif
+      STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -227,7 +235,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    //abort();
+    abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -250,8 +258,8 @@ void InvRho(stormSize_t size, stormReal_t* inv_rho, const stormReal_t* rho, void
   *inv_rho = 1.0/(*rho);
 } // InvRho
 
+#if YURI
 static int II;
-
 void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
@@ -281,6 +289,7 @@ void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   return;
 
 } // NVsC
+#endif
 
 static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormArray_t p, stormArray_t v,
@@ -457,6 +466,7 @@ int main() {
 
   static_assert(sizeof(stormShape<1, 2, 3>{}) == 1);
 
+#if YURI
   phi_set.Assign(101);
   ReadTensor(phi_set, "phi.csv");
   alpha_sandwich.Assign(num_slices);
@@ -470,6 +480,7 @@ int main() {
   N2_max = N_part_sandwich(0, 1);
   N2_min = N_part_sandwich(num_slices - 1, 1);
   N2_cur = N_part_sandwich(slice, 1);
+#endif
 
   //FILE* dWdCF = fopen("dWdC.txt", "w");
   //for (double x = -0.1; x <= 1.1; x += 0.0001) {
@@ -480,7 +491,9 @@ int main() {
   //fclose(dWdCF);
   //return 1;
 
+#if YURI
   FILE* volFile = fopen("vol.txt", "w");
+#endif
 
   stormMesh_t mesh = SR_InitMesh();
 
@@ -533,7 +546,9 @@ int main() {
       elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
       total_time += elapsed;
 
+#if YURI
       fprintf(volFile, "%f\n", V_hat), fflush(volFile);
+#endif
 
       stormSwap(c, c_hat);
       stormSwap(p, p_hat);
@@ -556,6 +571,8 @@ int main() {
     SR_IO_Flush(io, mesh, filename);
   }
 
+#if YURI
   fclose(volFile);
+#endif
   return 0;
 }

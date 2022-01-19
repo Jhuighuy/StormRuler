@@ -166,10 +166,10 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
 
 template<class Vector, bool L1>
 stormReal_t stormBaseTfqmrSolver<Vector, L1>::
-                           Iterate(Vector& xVec,
-                                   Vector const& bVec,
-                                   stormOperator<Vector> const& linOp,
-                                   stormPreconditioner<Vector> const* preOp) {
+                            Iterate(Vector& xVec,
+                                    Vector const& bVec,
+                                    stormOperator<Vector> const& linOp,
+                                    stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (this->PreSide == stormPreconditionerSide::Left);

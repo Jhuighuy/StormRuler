@@ -36,7 +36,7 @@
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES and @c FGMRES.
 /// ----------------------------------------------------------------- ///
-template<class Vector, bool Flexible>
+template<class Vector, bool Flexible, bool Loose = false>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
   stormVector<stormReal_t> beta_, cs_, sn_;
@@ -132,12 +132,12 @@ class stormFgmresSolver final : public stormBaseGmresSolver<Vector, true> {
 
 }; // class stormFgmresSolver<...>
 
-template<class Vector, bool Flexible>
-void stormBaseGmresSolver<Vector, Flexible>::
-                        OuterInit(Vector& xVec,
-                                  Vector const& bVec,
-                                  stormOperator<Vector> const& linOp,
-                                  stormPreconditioner<Vector> const* preOp) {
+template<class Vector, bool Flexible, bool Loose>
+void stormBaseGmresSolver<Vector, Flexible, Loose>::
+                                OuterInit(Vector& xVec,
+                                          Vector const& bVec,
+                                          stormOperator<Vector> const& linOp,
+                                          stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const m = this->NumInnerIterations;
 
@@ -157,12 +157,12 @@ void stormBaseGmresSolver<Vector, Flexible>::
 
 } // stormBaseGmresSolver<...>::OuterInit
 
-template<class Vector, bool Flexible>
-stormReal_t stormBaseGmresSolver<Vector, Flexible>::
-                               InnerInit(Vector& xVec,
-                                         Vector const& bVec,
-                                         stormOperator<Vector> const& linOp,
-                                         stormPreconditioner<Vector> const* preOp) {
+template<class Vector, bool Flexible, bool Loose>
+stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
+                                      InnerInit(Vector& xVec,
+                                                Vector const& bVec,
+                                                stormOperator<Vector> const& linOp,
+                                                stormPreconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
@@ -194,12 +194,12 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible>::
 
 } // stormBaseGmresSolver<...>::InnerInit
 
-template<class Vector, bool Flexible>
-stormReal_t stormBaseGmresSolver<Vector, Flexible>::
-                            InnerIterate(Vector& xVec,
-                                         Vector const& bVec,
-                                         stormOperator<Vector> const& linOp,
-                                         stormPreconditioner<Vector> const* preOp) {
+template<class Vector, bool Flexible, bool Loose>
+stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
+                                    InnerIterate(Vector& xVec,
+                                                 Vector const& bVec,
+                                                 stormOperator<Vector> const& linOp,
+                                                 stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const k = this->InnerIteration;
 
@@ -272,12 +272,12 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible>::
 
 } // stormBaseGmresSolver<...>::InnerIterate
 
-template<class Vector, bool Flexible>
-void stormBaseGmresSolver<Vector, Flexible>::
-                    InnerFinalize(Vector& xVec,
-                                  Vector const& bVec,
-                                  stormOperator<Vector> const& linOp,
-                                  stormPreconditioner<Vector> const* preOp) {
+template<class Vector, bool Flexible, bool Loose>
+void stormBaseGmresSolver<Vector, Flexible, Loose>::
+                            InnerFinalize(Vector& xVec,
+                                          Vector const& bVec,
+                                          stormOperator<Vector> const& linOp,
+                                          stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const k = this->InnerIteration;
 

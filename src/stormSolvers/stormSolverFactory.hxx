@@ -41,16 +41,21 @@
 
 /// Krylov-subspace solver types.
 /// @{
-#define STORM_KSP_CG       "CG"
-#define STORM_KSP_MINRES   "MINRES"
-#define STORM_KSP_CGS      "CGS"
-#define STORM_KSP_BiCGStab "BiCGStab"
-#define STORM_KSP_TFQMR    "TFQMR"
-#define STORM_KSP_TFQMR1   "TFQMR1"
-#define STORM_KSP_GMRES    "GMRES"
-#define STORM_KSP_FGMRES   "FGMRES"
-#define STORM_KSP_LSQR     "LSQR"
-#define STORM_KSP_LSMR     "LSMR"
+#define STORM_KSP_CG         "CG"
+#define STORM_KSP_FCG        "FCG"          /// @todo Implement me!
+#define STORM_KSP_MINRES     "MINRES"
+#define STORM_KSP_CGS        "CGS"
+#define STORM_KSP_BiCGStab   "BiCGStab"
+#define STORM_KSP_BiCGStab_l "BiCGStab(l)"  /// @todo Implement me!
+#define STORM_KSP_TFQMR      "TFQMR"
+#define STORM_KSP_TFQMR_1    "TFQMR(1)"
+#define STORM_KSP_GMRES      "GMRES"
+#define STORM_KSP_FGMRES     "FGMRES"
+#define STORM_KSP_LGMRES     "LGMRES"       /// @todo Implement me!
+#define STORM_KSP_LFGMRES    "LFGMRES"      /// @todo Implement me!
+#define STORM_KSP_IDR_s      "IDR(s)"       /// @todo Implement me!
+#define STORM_KSP_LSQR       "LSQR"
+#define STORM_KSP_LSMR       "LSMR"
 /// @}
 
 /// @{

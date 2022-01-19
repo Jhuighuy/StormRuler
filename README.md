@@ -80,15 +80,19 @@ products.
     (`CGS`, for the _general_ linear problems),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGStab`, for the _general_ linear problems),
-  * _(planned)_ Biconjugate Gradients (𝐿-stabilized) solver
-    (`BiCGStabL`, for the _general_ linear problems),
+  * _(planned)_ Biconjugate Gradients (𝑙-stabilized) solver
+    (`BiCGStab(l)`, for the _general_ linear problems),
   * Transpose-Free Quasi-Minimal Residual solver
-    (`TFQMR`, `TFQMR1`, for the _general_ linear problems);
-  * Generalized Minimal Residual method solver
+    (`TFQMR`/`TFQMR(1)`, for the _general_ linear problems),
+  * Generalized Minimal Residual solver
     (`GMRES`, for the _general_ linear problems),
-  * Flexible Generalized Minimal Residual method solver
+  * Flexible Generalized Minimal Residual solver
     (`FGMRES`, for the _general_ linear problems
-     with _flexible preconditioning_);
+     with _flexible preconditioning_),
+  * _(planned)_ Loose (Flexible) Generalized Minimal Residual solver,
+    (`LGMRES`/`LFGMRES`, for the _general_ linear problems),
+  * _(planned)_ Induced 𝑠-Dimension Reduction solver
+    (`IDR(s)`, for the _general_ linear problems);
 
 - 🚜 Linear iterative least squares solvers:
   * Least squares-QR solver

@@ -30,7 +30,7 @@
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
-template<bool L1, class Vector>
+template<class Vector, bool L1>
 class stormBaseTfqmrSolver : public stormIterativeSolver<Vector> {
 private:
   stormReal_t rho_, tau_;
@@ -79,7 +79,7 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, Vector> {
+class stormTfqmrSolver final : public stormBaseTfqmrSolver<Vector, false> {
 
 }; // class stormTfqmrSolver<...>
 
@@ -104,12 +104,12 @@ class stormTfqmrSolver final : public stormBaseTfqmrSolver<false, Vector> {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormTfqmr1Solver final : public stormBaseTfqmrSolver<true, Vector> {
+class stormTfqmr1Solver final : public stormBaseTfqmrSolver<Vector, true> {
 
 }; // class stormTfqmr1Solver<...>
 
-template<bool L1, class Vector>
-stormReal_t stormBaseTfqmrSolver<L1, Vector>::
+template<class Vector, bool L1>
+stormReal_t stormBaseTfqmrSolver<Vector, L1>::
                               Init(Vector& xVec,
                                    Vector const& bVec,
                                    stormOperator<Vector> const& linOp,
@@ -164,8 +164,8 @@ stormReal_t stormBaseTfqmrSolver<L1, Vector>::
 
 } // stormBaseTfqmrSolver<...>::Init
 
-template<bool L1, class Vector>
-stormReal_t stormBaseTfqmrSolver<L1, Vector>::
+template<class Vector, bool L1>
+stormReal_t stormBaseTfqmrSolver<Vector, L1>::
                            Iterate(Vector& xVec,
                                    Vector const& bVec,
                                    stormOperator<Vector> const& linOp,

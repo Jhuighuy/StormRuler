@@ -36,7 +36,7 @@
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES and @c FGMRES.
 /// ----------------------------------------------------------------- ///
-template<bool Flexible, class Vector>
+template<class Vector, bool Flexible>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
 private:
   stormVector<stormReal_t> beta_, cs_, sn_;
@@ -96,7 +96,7 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormGmresSolver final : public stormBaseGmresSolver<false, Vector> {
+class stormGmresSolver final : public stormBaseGmresSolver<Vector, false> {
 
 }; // class stormGmresSolver<...>
 
@@ -128,12 +128,12 @@ class stormGmresSolver final : public stormBaseGmresSolver<false, Vector> {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormFgmresSolver final : public stormBaseGmresSolver<true, Vector> {
+class stormFgmresSolver final : public stormBaseGmresSolver<Vector, true> {
 
 }; // class stormFgmresSolver<...>
 
-template<bool Flexible, class Vector>
-void stormBaseGmresSolver<Flexible, Vector>::
+template<class Vector, bool Flexible>
+void stormBaseGmresSolver<Vector, Flexible>::
                         OuterInit(Vector& xVec,
                                   Vector const& bVec,
                                   stormOperator<Vector> const& linOp,
@@ -157,8 +157,8 @@ void stormBaseGmresSolver<Flexible, Vector>::
 
 } // stormBaseGmresSolver<...>::OuterInit
 
-template<bool Flexible, class Vector>
-stormReal_t stormBaseGmresSolver<Flexible, Vector>::
+template<class Vector, bool Flexible>
+stormReal_t stormBaseGmresSolver<Vector, Flexible>::
                                InnerInit(Vector& xVec,
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
@@ -194,8 +194,8 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
 
 } // stormBaseGmresSolver<...>::InnerInit
 
-template<bool Flexible, class Vector>
-stormReal_t stormBaseGmresSolver<Flexible, Vector>::
+template<class Vector, bool Flexible>
+stormReal_t stormBaseGmresSolver<Vector, Flexible>::
                             InnerIterate(Vector& xVec,
                                          Vector const& bVec,
                                          stormOperator<Vector> const& linOp,
@@ -272,8 +272,8 @@ stormReal_t stormBaseGmresSolver<Flexible, Vector>::
 
 } // stormBaseGmresSolver<...>::InnerIterate
 
-template<bool Flexible, class Vector>
-void stormBaseGmresSolver<Flexible, Vector>::
+template<class Vector, bool Flexible>
+void stormBaseGmresSolver<Vector, Flexible>::
                     InnerFinalize(Vector& xVec,
                                   Vector const& bVec,
                                   stormOperator<Vector> const& linOp,

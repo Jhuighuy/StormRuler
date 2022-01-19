@@ -33,44 +33,82 @@
 #include <stormBlas/stormShape.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Base class for the dense tensors with dynamic storage.
+/// @brief Dense tensor with parametrized storage.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Value, class ShapeType>
+template<class ValueType, 
+         class ShapeType,
+         class StorageType = std::unique_ptr<ValueType[]>>
 class stormBaseTensor {
 private:
-  using DataStorage = std::unique_ptr<Value[]>; 
-  std::tuple<DataStorage, ShapeType> CompressedStorage_;
-
-protected:
-  
-  stormBaseTensor() = default;
-
-  ~stormBaseTensor() = default;
-
-  void BaseAssign(ShapeType const& shape) {
-    std::get<1>(CompressedStorage_) = shape;
-    std::get<0>(CompressedStorage_) = 
-      std::make_unique<Value[]>(Shape().Size());
-  }
+  StorageType Storage_;
+  [[no_unique_address]] ShapeType Shape_;
 
 public:
 
-  /// @brief Get tensor shape.
-  ShapeType const& Shape() const noexcept {
-    return std::get<1>(CompressedStorage_);
-  }
+  /// @brief Construct a tensor with \
+  ///   unassigned storage and zero dynamic extents. 
+  stormBaseTensor() = default;
 
-  /// @brief Get tensor data pointer.
+  /// @brief Destroy the tensor.
+  ~stormBaseTensor() = default;
+
+  /// @brief Assign a shape to the tensor object \
+  ///   and allocate the storage (if the storage class is dynamic).
   /// @{
-  Value* Data() noexcept {
-    return std::get<0>(CompressedStorage_).get();
+  void Assign(ShapeType const& shape) 
+      /*requires stormIsOwnedStorage<StorageType> && 
+               stormIsDynamicStorage<StorageType>*/ {
+    Shape_ = shape;
+    Storage_ = std::make_unique<ValueType[]>(Shape_.Size());
+    //Storage_.Allocate(Shape_.Size());
   }
-  Value const* Data() const noexcept {
-    return std::get<0>(CompressedStorage_).get();
+  template<class... Indices>
+  void Assign(Indices... dynamicExtents) 
+      /*requires stormIsOwnedStorage<StorageType> && 
+               stormIsDynamicStorage<StorageType>*/ {
+    Assign(ShapeType(dynamicExtents...));
   }
   /// @}
 
-}; // class stormBaseTensor<..., stormStorageClass::Dynamic>
+  /// @brief Get tensor data pointer.
+  /// @{
+  constexpr ValueType* Data() noexcept {
+    return Storage_.get();
+    //return Storage_.Data();
+  }
+  constexpr ValueType const* Data() const noexcept {
+    return Storage_.get();
+    //return Storage_.Data();
+  }
+  /// @}
+
+  /// @brief Get tensor shape.
+  constexpr ShapeType const& Shape() const noexcept {
+    return Shape_;
+  }
+
+  /// @brief Size of the tensor.
+  constexpr stormSize_t Size() const noexcept {
+    return Shape_.Size();
+  }
+
+  /// @brief Access tensor at index.
+  /// @{
+  template<class... IndexTypes>
+    requires (sizeof...(IndexTypes) == ShapeType::Rank())
+  constexpr ValueType& operator()(
+      IndexTypes... indices) noexcept {
+    return Storage_[Shape_(indices...)];
+  }
+  template<class... IndexTypes>
+    requires (sizeof...(IndexTypes) == ShapeType::Rank())
+  constexpr ValueType const& operator()(
+      IndexTypes... indices) const noexcept {
+    return Storage_[Shape_(indices...)];
+  }
+  /// @}
+
+}; // class stormBaseTensor<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense tensor.
@@ -78,35 +116,6 @@ public:
 template<class Value, class Shape>
 class stormTensor final : public stormBaseTensor<Value, Shape> {
 public:
-
-  /// @brief Assign a shape to the tensor object \
-  ///   and allocate the storage (if the storage class is dynamic).
-  /// @{
-  void Assign(Shape const& shape) {
-    this->BaseAssign(shape);
-  }
-  template<class... Indices>
-  void Assign(Indices... dynamicExtents) {
-    this->BaseAssign(Shape(dynamicExtents...));
-  }
-  /// @}
-
-  /// @brief Size of the tensor.
-  stormSize_t Size() const noexcept {
-    return this->Shape().Size();
-  }
-
-  /// @brief Access tensor at index.
-  /// @{
-  template<class... Indices>
-  Value& operator()(Indices... indices) noexcept {
-    return this->Data()[this->Shape()(indices...)];
-  }
-  template<class... Indices>
-  Value const& operator()(Indices... indices) const noexcept {
-    return this->Data()[this->Shape()(indices...)];
-  }
-  /// @}
 
 }; // class stormTensor
 

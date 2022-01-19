@@ -115,10 +115,13 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
-stormSize_t slice = 0;
+stormSize_t slice = 983, num_slices = 1000;
 stormVector<double> phi_set;
-stormMatrix<double> D1_W_vs_phi_sandwitch;
-stormTensor3R<double> nPart_vs_phi_sandwitch;
+stormVector<double> alpha_sandwich;
+stormMatrix<double> D1_W_vs_phi_sandwich;
+stormTensor2R<double> N_part_sandwich;
+stormTensor3R<double> n_part_vs_phi_sandwich;
+double N2_min, N2_max, N2_cur;
 static double const mol_mass[2] = {0.0440098, 0.1422853};
 
 template<class Tensor>
@@ -142,7 +145,7 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 
 #else
 
-  auto const D1_W_vs_phi = [&](auto i) { return D1_W_vs_phi_sandwitch(slice, i)/32.0; };
+  auto const D1_W_vs_phi = [&](auto i) { return D1_W_vs_phi_sandwich(slice, i) / 32.0; };
 
   // [0,1] MCH.
   const double h = 1.0/(phi_set.Size() - 1.0);
@@ -170,16 +173,17 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
-  //x = min(+1.0, max(-1.0, x));
-  //x = 0.5*(x + 1.0);
-  //*Ic = round(x);
-  *Ic = 1.0 - x;
+  *Ic = x;
 
-}
+} // Vol
 
-static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
+static void CahnHilliard_Step(stormMesh_t mesh,
     stormArray_t c, stormArray_t v,
-    stormArray_t c_hat, stormArray_t w_hat) {
+    stormArray_t c_hat, stormArray_t w_hat
+#if YURI
+    , double& V, double& V_hat
+#endif
+    ) {
 
   // 
   // Compute a single time step of the
@@ -205,7 +209,7 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormDivGrad(mesh, rhs, tau, w_hat);
 
   stormSet(mesh, c_hat, c);
-  stormLinSolve2(mesh, STORM_KSP_GMRES, STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
+  stormLinSolve2(mesh, STORM_KSP_BiCGStab, STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -230,7 +234,11 @@ static stormReal_t CahnHilliard_Step(stormMesh_t mesh,
   stormFuncProd(mesh, w_hat, c_hat, dWdC, STORM_NULL);
   stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
-  return stormIntegrate(mesh, c_hat, Vol, STORM_NULL);
+#if YURI
+  V = V_hat;
+  V_hat = stormIntegrate(mesh, c_hat, Vol, STORM_NULL);
+#endif
+
 } // CahnHilliard_Step
 
 static double mu_1 = 0.08, mu_2 = 0.08;
@@ -247,7 +255,7 @@ static int II;
 void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
-  auto const nPart_vs_phi = [&](auto i, auto j) { return nPart_vs_phi_sandwitch(slice, i, j); };
+  auto const nPart_vs_phi = [&](auto i, auto j) { return n_part_vs_phi_sandwich(slice, i, j); };
 
   x = max(0.0, min(1.0, x));
 
@@ -279,7 +287,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormArray_t c, stormArray_t w,
   stormArray_t p_hat, stormArray_t v_hat, stormArray_t d, stormArray_t rho
 #if YURI
-  , stormArray_t n1, stormArray_t n2
+  , stormArray_t n1, stormArray_t n2, double V, double V_hat
 #endif
 ) {
 
@@ -300,6 +308,36 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // 𝑝̂ - 𝜏∇⋅(∇𝑝̂/𝜌) = 𝑝 - ∇⋅𝒗,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
   //
+
+#if YURI
+  static bool first = true;
+  if (first) {
+    first = false;
+    std::ofstream slice_info;
+    double alpha = alpha_sandwich(slice);
+    slice_info.open("slices.txt");
+    slice_info << "Starting from slice " << slice << std::endl;
+    slice_info << "N2_cur = " << N2_cur << " N2_min/max = " << N2_min << " " << N2_max << std::endl;
+    slice_info << "V_hat = " << V_hat << " alpha = " << alpha << std::endl; 
+    slice_info << std::endl;
+  }
+  //double alpha_dot = (V_hat - V)/tau;
+  double A = 0.0133*0.25;
+  N2_cur = N2_cur + tau*n_part_vs_phi_sandwich(slice, 100, 1)*A;
+  auto new_slice = (stormSize_t)std::round((N2_cur - N2_min)/(N2_max - N2_min)*(num_slices - 1));
+  new_slice = num_slices - new_slice - 1;
+  if (new_slice != slice) {
+    std::ofstream slice_info;
+    double alpha = alpha_sandwich(new_slice);
+    slice_info.open("slices.txt", std::ios_base::app);
+    slice_info << "Change from slice " << slice << " to " << new_slice << std::endl;
+    slice_info << "N2_cur = " << N2_cur << " N2_min/max = " << N2_min << " " << N2_max << std::endl;
+    slice_info << "V_hat = " << V_hat << " alpha = " << alpha << std::endl;
+    slice_info << "n_part_vs_phi_sandwich(slice, 100, 2) = " << n_part_vs_phi_sandwich(slice, 100, 1) << std::endl;
+    slice_info << std::endl;
+  }
+  slice = new_slice;
+#endif
 
   //
   // Compute 𝜌, 𝜇, 1/𝜌.
@@ -421,10 +459,17 @@ int main() {
 
   phi_set.Assign(101);
   ReadTensor(phi_set, "phi.csv");
-  D1_W_vs_phi_sandwitch.Assign(1000, 101);
-  ReadTensor(D1_W_vs_phi_sandwitch, "D1_W_vs_phi.csv");
-  nPart_vs_phi_sandwitch.Assign(1000, 101, 2);
-  ReadTensor(nPart_vs_phi_sandwitch, "n_part_vs_phi_sandwich.csv");
+  alpha_sandwich.Assign(num_slices);
+  ReadTensor(alpha_sandwich, "alpha_sandwich.csv");
+  D1_W_vs_phi_sandwich.Assign(num_slices, 101);
+  ReadTensor(D1_W_vs_phi_sandwich, "D1_W_vs_phi.csv");
+  N_part_sandwich.Assign(num_slices, 2);
+  ReadTensor(N_part_sandwich, "N_part_sandwich.csv");
+  n_part_vs_phi_sandwich.Assign(num_slices, 101, 2);
+  ReadTensor(n_part_vs_phi_sandwich, "n_part_vs_phi_sandwich.csv");
+  N2_max = N_part_sandwich(0, 1);
+  N2_min = N_part_sandwich(num_slices - 1, 1);
+  N2_cur = N_part_sandwich(slice, 1);
 
   //FILE* dWdCF = fopen("dWdC.txt", "w");
   //for (double x = -0.1; x <= 1.1; x += 0.0001) {
@@ -453,6 +498,7 @@ int main() {
   stormArray_t n1, n2;
   n1 = stormAllocLike(c);
   n2 = stormAllocLike(c);
+  double V, V_hat;
 #endif
 
   //stormFill(mesh, c, 1.0);
@@ -471,19 +517,23 @@ int main() {
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
 
-      stormReal_t vol = CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
+      CahnHilliard_Step(mesh, c, v, c_hat, w_hat
+#if YURI
+        , V, V_hat
+#endif
+        );
       NavierStokes_VaD_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, d, rho
 #if YURI
-        , n1, n2
+        , n1, n2, V, V_hat
 #endif
-      );
+        );
 
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
       elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
       total_time += elapsed;
 
-      fprintf(volFile, "%f\n", vol), fflush(volFile);
+      fprintf(volFile, "%f\n", V_hat), fflush(volFile);
 
       stormSwap(c, c_hat);
       stormSwap(p, p_hat);

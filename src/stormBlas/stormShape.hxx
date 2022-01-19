@@ -46,10 +46,11 @@ private:
   template<stormSize_t... OtherExtents>
   friend class stormShape;
 
-  [[no_unique_address]] stormShape<RestExtents...> Base_;
+  [[no_unique_address]] stormShape<RestExtents...> Base_ = {};
   [[no_unique_address]] std::conditional_t<
     Extent == stormDynamicExtent, 
-    stormSize_t, std::integral_constant<stormSize_t, Extent>> Extent_;
+    stormSize_t, 
+    std::integral_constant<stormSize_t, Extent>> Extent_ = {};
 
 public:
 

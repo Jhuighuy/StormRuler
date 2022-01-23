@@ -34,6 +34,7 @@
 #include <stormSolvers/stormSolverCgs.hxx>
 #include <stormSolvers/stormSolverBiCgStab.hxx>
 #include <stormSolvers/stormSolverTfqmr.hxx>
+#include <stormSolvers/stormSolverIdrs.hxx>
 #include <stormSolvers/stormSolverGmres.hxx>
 //#include <stormSolvers/stormSolverLsqr.hxx>
 
@@ -44,16 +45,20 @@
 #define STORM_KSP_CG         "CG"
 #define STORM_KSP_FCG        "FCG"          /// @todo Implement me!
 #define STORM_KSP_MINRES     "MINRES"
+#define STORM_KSP_SBiCG      "SBiCG"        /// @todo Implement me!
+#define STORM_KSP_SQMR       "SQMR"         /// @todo Implement me!
+#define STORM_KSP_BiCG       "BiCG"         /// @todo Implement me!
+#define STORM_KSP_QMR        "QMR"          /// @todo Implement me!
 #define STORM_KSP_CGS        "CGS"
 #define STORM_KSP_BiCGStab   "BiCGStab"
 #define STORM_KSP_BiCGStab_l "BiCGStab(l)"  /// @todo Implement me!
 #define STORM_KSP_TFQMR      "TFQMR"
 #define STORM_KSP_TFQMR_1    "TFQMR(1)"
+#define STORM_KSP_IDR_s      "IDR(s)"
 #define STORM_KSP_GMRES      "GMRES"
 #define STORM_KSP_FGMRES     "FGMRES"
 #define STORM_KSP_LGMRES     "LGMRES"       /// @todo Implement me!
 #define STORM_KSP_LFGMRES    "LFGMRES"      /// @todo Implement me!
-#define STORM_KSP_IDR_s      "IDR(s)"       /// @todo Implement me!
 #define STORM_KSP_LSQR       "LSQR"
 #define STORM_KSP_LSMR       "LSMR"
 /// @}
@@ -84,9 +89,13 @@
     \
     return std::make_unique<stormTfqmrSolver<Vector>>(); \
     \
-  } else if (std::strcmp(solverType, STORM_KSP_TFQMR1) == 0) { \
+  } else if (std::strcmp(solverType, STORM_KSP_TFQMR_1) == 0) { \
     \
     return std::make_unique<stormTfqmr1Solver<Vector>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_IDR_s) == 0) { \
+    \
+    return std::make_unique<stormIdrsSolver<Vector>>(); \
     \
   } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \

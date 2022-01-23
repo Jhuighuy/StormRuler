@@ -34,7 +34,8 @@
 #include <stormBlas/stormTensor.hxx>
 
 /// ----------------------------------------------------------------- ///
-/// @brief Base class for @c GMRES and @c FGMRES.
+/// @brief Base class for @c GMRES, @c FGMRES, \
+///   @c LGMRES and @c LFGMRES.
 /// ----------------------------------------------------------------- ///
 template<class Vector, bool Flexible, bool Loose = false>
 class stormBaseGmresSolver : public stormInnerOuterIterativeSolver<Vector> {
@@ -42,7 +43,8 @@ private:
   stormVector<stormReal_t> beta_, cs_, sn_;
   stormMatrix<stormReal_t> H_;
   std::vector<Vector> qVecs_;
-  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>> zVecs_;
+  std::conditional_t<Flexible,
+    std::vector<Vector>, std::array<Vector, 1>> zVecs_;
 
   void OuterInit(Vector& xVec,
                  Vector const& bVec,
@@ -81,7 +83,7 @@ protected:
 /// @c GMRES is algebraically equivalent to @c MINRES method \
 ///   in the self-adjoint operator unpreconditioned case, \
 ///   however, the need for restarts may lead to the much slower \
-///   @c GMRES convergence rate. 
+///   @c GMRES convergence rate.
 ///
 /// @c GMRES may be applied to the singular problems, and the square \
 ///   least squares problems, although, similarly to @c MINRES, \
@@ -89,9 +91,9 @@ protected:
 ///
 /// References:
 /// @verbatim
-/// [1] Saad, Yousef and Martin H_. Schultz. 
-///     “GMRES: A generalized minimal residual algorithm for solving 
-///      nonsymmetric linear systems.” 
+/// [1] Saad, Yousef and Martin H_. Schultz.
+///     “GMRES: A generalized minimal residual algorithm for solving
+///      nonsymmetric linear systems.”
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -122,8 +124,8 @@ class stormGmresSolver final : public stormBaseGmresSolver<Vector, false> {
 ///
 /// References:
 /// @verbatim
-/// [1] Saad, Yousef. 
-///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.” 
+/// [1] Saad, Yousef.
+///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -141,11 +143,15 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   stormSize_t const m = this->NumInnerIterations;
 
-  beta_.Assign(m + 1), cs_.Assign(m), sn_.Assign(m), H_.Assign(m + 1, m);
+  beta_.Assign(m + 1);
+  cs_.Assign(m), sn_.Assign(m);
+  H_.Assign(m + 1, m);
+
   qVecs_.resize(m + 1);
   for (Vector& qVec : qVecs_) {
     qVec.Assign(xVec, false);
   }
+
   if (preOp != nullptr) {
     if constexpr (Flexible) {
       zVecs_.resize(m);
@@ -164,7 +170,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
                                                 stormOperator<Vector> const& linOp,
                                                 stormPreconditioner<Vector> const* preOp) {
 
-  bool const leftPre = (preOp != nullptr) && 
+  bool const leftPre = (preOp != nullptr) &&
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
 
   // ----------------------
@@ -185,7 +191,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   // ----------------------
   // 𝛽₀ ← ‖𝒒₀‖,
-  // 𝒒₀ ← 𝒒₀/𝛽₀. 
+  // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
   beta_(0) = stormBlas::Norm2(qVecs_[0]);
   stormBlas::Scale(qVecs_[0], qVecs_[0], 1.0/beta_(0));
@@ -203,18 +209,18 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   stormSize_t const k = this->InnerIteration;
 
-  bool const leftPre = (preOp != nullptr) && 
+  bool const leftPre = (preOp != nullptr) &&
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) && 
+  bool const rightPre = (preOp != nullptr) &&
     (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
   // Continue the Arnoldi procedure:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
-  //   𝒒ₖ₊₁ ← 𝓟(𝒛₀ ← 𝓐𝑞ₖ),
+  //   𝒒ₖ₊₁ ← 𝓟(𝒛₀ ← 𝓐𝒒ₖ),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
   //   𝑗 ← 𝘍𝘭𝘦𝘹𝘪𝘣𝘭𝘦 ? 𝑘 : 𝟢,
-  //   𝒒ₖ₊₁ ← 𝓐(𝒛ⱼ ← 𝓟𝑞ₖ),
+  //   𝒒ₖ₊₁ ← 𝓐(𝒛ⱼ ← 𝓟𝒒ₖ),
   // 𝗲𝗹𝘀𝗲:
   //   𝒒ₖ₊₁ ← 𝓐𝒒ₖ,
   // 𝗲𝗻𝗱 𝗶𝗳
@@ -222,9 +228,10 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
   //   𝐻ᵢₖ ← <𝒒ₖ₊₁⋅𝒒ᵢ>,
   //   𝒒ₖ₊₁ ← 𝒒ₖ₊₁ - 𝐻ᵢₖ⋅𝒒ᵢ,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝐻ₖ₊₁,ₖ ← ‖𝒒ₖ₊₁‖, 
-  // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.  
+  // 𝐻ₖ₊₁,ₖ ← ‖𝒒ₖ₊₁‖,
+  // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
   // ----------------------
+  /// @todo Transpose the Hessenberg matrix for better efficiency! 
   if (leftPre) {
     stormBlas::MatVec(qVecs_[k + 1], *preOp, zVecs_[0], linOp, qVecs_[k]);
   } else if (rightPre) {
@@ -237,7 +244,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
     H_(i, k) = stormBlas::Dot(qVecs_[k + 1], qVecs_[i]);
     stormBlas::Sub(qVecs_[k + 1], qVecs_[k + 1], qVecs_[i], H_(i, k));
   }
-  H_(k + 1, k) = stormBlas::Norm2(qVecs_[k + 1]); 
+  H_(k + 1, k) = stormBlas::Norm2(qVecs_[k + 1]);
   stormBlas::Scale(qVecs_[k + 1], qVecs_[k + 1], 1.0/H_(k + 1, k));
 
   // ----------------------
@@ -281,7 +288,7 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   stormSize_t const k = this->InnerIteration;
 
-  bool const rightPre = (preOp != nullptr) && 
+  bool const rightPre = (preOp != nullptr) &&
     (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
@@ -292,7 +299,7 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   /// @todo This should be replaced with a BLAS call that \
-  ///   solves an equation with the upper-triangular part of 𝐻:
+  ///   solves an equation with the upper-triangular part of 𝐻: \
   ///   𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
   beta_(k) /= H_(k, k);
   for (stormPtrDiff_t i = k - 1; i >= 0; --i) {

@@ -217,10 +217,12 @@ static void CahnHilliard_Step(stormMesh_t mesh,
   stormLinSolve2(mesh,
 #if YURI
       STORM_KSP_BiCGStab,
-#else 
+      STORM_PRE_NONE/*"extr"*/, 
+#else
       STORM_KSP_IDR_s,
+      STORM_PRE_NONE/*"extr"*/, 
 #endif
-      STORM_PRE_NONE/*"extr"*/, c_hat, rhs,
+    c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
       SetBCs_c(mesh, c);
       SetBCs_v(mesh, v);
@@ -238,7 +240,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);

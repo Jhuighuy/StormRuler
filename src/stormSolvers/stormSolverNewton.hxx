@@ -179,7 +179,7 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
         stormBlas::Add(sVec_, xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
         stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        stormBlas::Sub(zVec, zVec, wVec_, deltaInverse, deltaInverse);
+        stormBlas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
 
       });
     solver->Solve(tVec_, rVec_, *op);

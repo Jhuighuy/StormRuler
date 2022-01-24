@@ -101,7 +101,6 @@ stormReal_t stormMinresSolver<Vector>::Init(Vector& xVec,
 
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
-
   pVec.Assign(xVec, false);
   wVec.Assign(xVec, false); 
   wBarVec.Assign(xVec, false); 
@@ -164,7 +163,7 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   linOp.MatVec(pVec, qVec);
   alpha = stormBlas::Dot(qVec, pVec)*std::pow(beta, -2);
-  stormBlas::Sub(zVec, pVec, zBarVec, alpha/beta, 1.0/beta);
+  stormBlas::Sub(zVec, pVec, 1.0/beta, zBarVec, alpha/beta);
   stormBlas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
   if (preOp != nullptr) {
     std::swap(qBarVec, qVec);
@@ -194,7 +193,7 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  stormBlas::Sub(wVec, qBarVec, wBarVec, deltaBar/gamma, 1.0/(betaBar*gamma));
+  stormBlas::Sub(wVec, qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
   stormBlas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
   stormBlas::Add(xVec, xVec, wVec, tau);
   std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);

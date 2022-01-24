@@ -119,12 +119,45 @@ namespace stormBlas {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
 
-  void Add(stormArray& z, stormArray const& y, stormArray const& x, 
-          stormReal_t a = 1.0, stormReal_t b = 1.0) {
+  void Add(stormArray& z, 
+           stormArray const& y, 
+           stormArray const& x) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array);
+  }
+  void Add(stormArray& z, 
+           stormArray const& y, 
+           stormArray const& x, stormReal_t a) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
+  }
+  void Add(stormArray& z, 
+           stormArray const& y, stormReal_t b,
+           stormArray const& x, stormReal_t a) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
+  [[deprecated]]
+  void Add(stormArray& z, stormArray const& y, stormArray const& x, 
+          stormReal_t a, stormReal_t b) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
+  }
+
+  void Sub(stormArray& z, 
+           stormArray const& y, 
+           stormArray const& x) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array);
+  }
+  void Sub(stormArray& z, 
+           stormArray const& y, 
+           stormArray const& x, stormReal_t a) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
+  }
+  void Sub(stormArray& z, 
+           stormArray const& y, stormReal_t b, 
+           stormArray const& x, stormReal_t a) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
+  }
+  [[deprecated]]
   void Sub(stormArray& z, stormArray const& y, stormArray const& x, 
-          stormReal_t a = 1.0, stormReal_t b = 1.0) {
+          stormReal_t a, stormReal_t b) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 }

@@ -30,8 +30,20 @@
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a non-singular operator equation \
+/// @brief Solve a non-singular linear operator equation \
 ///   equation with the @c IDR(s) (Induced Dimension Reduction) method.
+///
+/// References:
+/// @verbatim
+/// [1] Peter Sonneveld, Martin B. van Gijzen. 
+///     “IDR(s): A Family of Simple and Fast Algorithms for Solving 
+///      Large Nonsymmetric Systems of Linear Equations.” 
+///     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
+/// [2] Martin B. van Gijzen, Peter Sonneveld. 
+///     “Algorithm 913: An elegant IDR(s) variant that efficiently 
+///      exploits biorthogonality properties.” 
+///     ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
+/// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
 class stormIdrsSolver final : public stormInnerOuterIterativeSolver<Vector> {
@@ -40,7 +52,7 @@ private:
   stormVector<stormReal_t> phi_, gamma_;
   stormMatrix<stormReal_t> mu_;
   Vector rVec_, vVec_, tVec_;
-  std::vector<Vector> pVecs_, gVecs_, uVecs_;
+  std::vector<Vector> pVecs_, uVecs_, gVecs_;
 
   void OuterInit(Vector& xVec,
                  Vector const& bVec,
@@ -57,6 +69,12 @@ private:
                            stormOperator<Vector> const& linOp,
                            stormPreconditioner<Vector> const* preOp) override;
 
+public:
+
+  stormIdrsSolver() {
+    this->NumInnerIterations = 2;
+  }
+
 }; // class stormIdrsSolver<...>
 
 template<class Vector>
@@ -65,7 +83,10 @@ void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
                                                stormOperator<Vector> const& linOp,
                                                stormPreconditioner<Vector> const* preOp) {
 
-  stormSize_t const s = (this->NumInnerIterations = 4);
+  stormSize_t const s = this->NumInnerIterations;
+
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
 
   phi_.Assign(s);
   gamma_.Assign(s);
@@ -78,23 +99,29 @@ void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
   for (Vector& pVec : pVecs_) {
     pVec.Assign(xVec, false);
   }
-  gVecs_.resize(s);
-  for (Vector& gVec : gVecs_) {
-    gVec.Assign(xVec, false);
-  }
   uVecs_.resize(s);
   for (Vector& uVec : uVecs_) {
     uVec.Assign(xVec, false);
+  }
+  gVecs_.resize(s);
+  for (Vector& gVec : gVecs_) {
+    gVec.Assign(xVec, false);
   }
 
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝜑₀ ← <𝒓⋅𝒓>.
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒗 ← 𝒓,
+  //   𝒓 ← 𝓟𝒗.
+  // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   linOp.MatVec(rVec_, xVec);
   stormBlas::Sub(rVec_, bVec, rVec_);
-  phi_(0) = stormBlas::Dot(rVec_, rVec_);
+  if (leftPre) {
+    std::swap(vVec_, rVec_);
+    preOp->MatVec(rVec_, vVec_);
+  }
 
 } // stormIdrsSolver<...>::OuterInit
 
@@ -110,16 +137,17 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   // Build shadow space and initialize 𝜑:
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝜔 ← 𝟣,
+  //   𝜑₀ ← <𝒓⋅𝒓>,
   //   𝒑₀ ← 𝒓,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑠 - 𝟣 𝗱𝗼:
   //     𝜑ᵢ ← 𝟢,
   //     𝒑ᵢ ← random, 
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
-  //     𝗳𝗼𝗿 𝑘 = 𝟢, 𝑖 - 𝟣 𝗱𝗼:
-  //       𝜇ᵢₖ ← 𝟢,
-  //       𝛼 ← <𝒑ᵢ⋅𝒑ₖ>,
-  //       𝒑ₖ ← 𝒑ₖ - 𝛼⋅𝒑ᵢ,
+  //     𝗳𝗼𝗿 𝑗 = 𝟢, 𝑖 - 𝟣 𝗱𝗼:
+  //       𝜇ᵢⱼ ← 𝟢,
+  //       𝛼 ← <𝒑ᵢ⋅𝒑ⱼ>,
+  //       𝒑ᵢ ← 𝒑ᵢ - 𝛼⋅𝒑ⱼ,
   //     𝗲𝗻𝗱 𝗳𝗼𝗿
   //     𝜇ᵢᵢ ← 𝟣,
   //     𝛼 ← ‖𝒑ᵢ‖,
@@ -134,6 +162,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     omega_ = 1.0;
+    phi_(0) = stormBlas::Dot(rVec_, rVec_);
     stormBlas::Set(pVecs_[0], rVec_);
     for (stormSize_t i = 1; i < s; ++i) {
       phi_(i) = 0.0;
@@ -141,22 +170,22 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
     }
     for (stormSize_t i = 0; i < s; ++i) {
       stormReal_t alpha;
-      for (stormSize_t k = 0; k < i; ++k) {
-        mu_(i, k) = 0.0;
-        alpha = stormBlas::Dot(pVecs_[i], pVecs_[k]);
-        stormBlas::Sub(pVecs_[i], pVecs_[i], pVecs_[k], alpha);
+      for (stormSize_t j = 0; j < i; ++j) {
+        mu_(i, j) = 0.0;
+        alpha = stormBlas::Dot(pVecs_[i], pVecs_[j]);
+        stormBlas::Sub(pVecs_[i], pVecs_[i], pVecs_[j], alpha);
       }
       mu_(i, i) = 1.0;
       alpha = stormBlas::Norm2(pVecs_[i]);
       stormBlas::Scale(pVecs_[i], pVecs_[i], 1.0/alpha);
     }
+    return std::sqrt(phi_(0));
   } else {
-    for (stormSize_t k = 0; k < s; ++k) {
-      phi_(k) = stormBlas::Dot(pVecs_[k], rVec_);
+    for (stormSize_t i = 0; i < s; ++i) {
+      phi_(i) = stormBlas::Dot(pVecs_[i], rVec_);
     }
+    return std::numeric_limits<stormReal_t>::max();
   }
-
-  return std::sqrt(phi_(0));
 
 } // stormIdrsSolver<...>::InnerInit
 
@@ -169,9 +198,14 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   stormSize_t const s = this->NumInnerIterations;
   stormSize_t const k = this->InnerIteration;
 
+  bool const leftPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Left);
+  bool const rightPre = (preOp != nullptr) && 
+    (this->PreSide == stormPreconditionerSide::Right);
+
   // ----------------------
-  // Compute 𝛄: 
-  // 𝛄ₖ:ₛ₋₁ ← (𝜇ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹𝞿ₖ:ₛ₋₁.
+  // Compute 𝛾: 
+  // {𝛾}ₖ:ₛ₋₁ ← ({𝜇}ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹{𝜑}ₖ:ₛ₋₁.
   // ----------------------
   for (stormSize_t i = k; i < s; ++i) {
     gamma_(i) = phi_(i);
@@ -184,50 +218,64 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   }
 
   // ----------------------
-  // 𝒗 ← 𝒓,
-  // 𝗳𝗼𝗿 𝑖 = 𝑘, 𝑠 - 𝟣 𝗱𝗼:
-  //   𝒗 ← 𝒗 - 𝛾ᵢ⋅𝒈ᵢ,
+  // Compute new 𝒈ₖ and 𝒖ₖ:
+  // 𝒗 ← 𝒓 - 𝛾ₖ⋅𝒈ₖ,
+  // 𝗳𝗼𝗿 𝑖 = 𝑘 + 𝟣, 𝑠 - 𝟣 𝗱𝗼:
+  //   𝒗 ← 𝒗 - 𝛾ᵢ⋅𝒈ᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //   𝒕 ← 𝒗,
+  //   𝒗 ← 𝓟𝒕,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝒖ₖ ← 𝜔⋅𝒗 + 𝛾ₖ⋅𝒖ₖ,
+  // 𝗳𝗼𝗿 𝑖 = 𝑘 + 𝟣, 𝑠 - 𝟣 𝗱𝗼:
+  //   𝒖ₖ ← 𝒖ₖ + 𝛾ᵢ⋅𝒖ᵢ.
+  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒈ₖ ← 𝓟(𝒕 ← 𝓐𝒖ₖ),
+  // 𝗲𝗹𝘀𝗲:
+  //   𝒈ₖ ← 𝓐𝒖ₖ,
+  // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Set(vVec_, rVec_);
-  for (stormSize_t i = k; i < s; ++i) {
+  stormBlas::Sub(vVec_, rVec_, gVecs_[k], gamma_(k));
+  for (stormSize_t i = k + 1; i < s; ++i) {
     stormBlas::Sub(vVec_, vVec_, gVecs_[i], gamma_(i));
   }
-
-  // ----------------------
-  // 𝒗 ← 𝓟𝒗,
-  // 𝒖ₖ ← 𝛾ₖ⋅𝒖ₖ,
-  // 𝗳𝗼𝗿 𝑖 = 𝑘 + 𝟣, 𝑠 - 𝟣 𝗱𝗼:
-  //   𝒖ₖ ← 𝒖ₖ + 𝛾ᵢ⋅𝒖ᵢ,
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝒖ₖ ← 𝒖ₖ + 𝜔⋅𝒗,
-  // ----------------------
-  /// @todo Apply preconditioning!
-  stormBlas::Scale(uVecs_[k], uVecs_[k], gamma_(k));
+  if (rightPre) {
+    std::swap(tVec_, vVec_);
+    preOp->MatVec(vVec_, tVec_);
+  }
+  stormBlas::Add(uVecs_[k], uVecs_[k], gamma_(k), vVec_, omega_);
   for (stormSize_t i = k + 1; i < s; ++i) {
     stormBlas::Add(uVecs_[k], uVecs_[k], uVecs_[i], gamma_(i));
   }
-  stormBlas::Add(uVecs_[k], uVecs_[k], vVec_, omega_);
+  if (leftPre) {
+    stormBlas::MatVec(gVecs_[k], *preOp, tVec_, linOp, uVecs_[k]);
+  } else {
+    linOp.MatVec(gVecs_[k], uVecs_[k]);
+  }
 
   // ----------------------
-  // Bi-orthogonalize the 𝓤 and 𝓖.
-  // 𝒈ₖ ← 𝓐𝒖ₖ,
+  // Bi-orthogonalize the new vectors:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝛼 ← <𝒑ᵢ⋅𝒈ₖ>/𝜇ᵢᵢ,
-  //   𝒈ₖ ← 𝒈ₖ - 𝛼⋅𝒈ᵢ,
   //   𝒖ₖ ← 𝒖ₖ - 𝛼⋅𝒖ᵢ,
+  //   𝒈ₖ ← 𝒈ₖ - 𝛼⋅𝒈ᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // ----------------------
+  for (stormSize_t i = 0; i < k; ++i) {
+    stormReal_t const alpha = 
+      stormBlas::Dot(pVecs_[i], gVecs_[k])/mu_(i, i);
+    stormBlas::Sub(uVecs_[k], uVecs_[k], uVecs_[i], alpha);
+    stormBlas::Sub(gVecs_[k], gVecs_[k], gVecs_[i], alpha);
+  }
+
+  // ----------------------
+  // Compute the new column of 𝜇: 
   // 𝗳𝗼𝗿 𝑖 = 𝑘, 𝑠 - 𝟣 𝗱𝗼:
   //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  linOp.MatVec(gVecs_[k], uVecs_[k]);
-  for (stormSize_t i = 0; i < k; ++i) {
-    stormReal_t const alpha = 
-      stormBlas::Dot(pVecs_[i], gVecs_[k])/mu_(i, i);
-    stormBlas::Sub(gVecs_[k], gVecs_[k], gVecs_[i], alpha);
-    stormBlas::Sub(uVecs_[k], uVecs_[k], uVecs_[i], alpha);
-  }
   for (stormSize_t i = k; i < s; ++i) {
     mu_(i, k) = stormBlas::Dot(pVecs_[i], gVecs_[k]);
   }
@@ -235,49 +283,50 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   // Update the solution and the residual:
   // 𝛽 ← 𝜑ₖ/𝜇ₖₖ,
-  // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ,
-  // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ.
+  // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
+  // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
   stormReal_t const beta = phi_(k)/mu_(k, k);
-  stormBlas::Sub(rVec_, rVec_, gVecs_[k], beta);
   stormBlas::Add(xVec, xVec, uVecs_[k], beta);
+  stormBlas::Sub(rVec_, rVec_, gVecs_[k], beta);
 
   // ----------------------
-  // Update 𝞿:
-  // 𝗶𝗳 𝑘 < 𝑠 - 𝟣:
-  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
-  //     𝜑ᵢ ← 𝟢,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  //   𝗳𝗼𝗿 𝑖 = 𝑘 + 𝟣, 𝑠 - 𝟣 𝗱𝗼:
-  //     𝜑ᵢ ← 𝜑ᵢ - 𝛽⋅𝜇ᵢₖ,
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  // 𝗲𝗻𝗱 𝗶𝗳
+  // Update 𝜑:
+  // 𝜑ₖ ← 𝟢,
+  // 𝜑ₖ₊₁:ₛ₋₁ ← 𝜑ₖ₊₁:ₛ₋₁ - 𝛽⋅𝜇ₖ₊₁:ₛ₋₁,ₖ.
   // ----------------------
-  if (k < s - 1) {
-    for (stormSize_t i = 0; i <= k; ++i) {
-      phi_(i) = 0.0;
-    }
-    for (stormSize_t i = k + 1; i < s; ++i) {
-      phi_(i) -= beta*mu_(i, k);
-    }
+  phi_(k) = 0.0;
+  for (stormSize_t i = k + 1; i < s; ++i) {
+    phi_(i) -= beta*mu_(i, k);
   }
 
   // ----------------------
   // Enter the next 𝓖 subspace:
   // 𝗶𝗳 𝑘 = 𝑠 - 𝟣:
-  //   𝒕 ← 𝓐(𝒗 ← 𝓟𝒓),
+  //   𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //     𝒕 ← 𝓟(𝒗 ← 𝓐𝒓),
+  //   𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
+  //     𝒕 ← 𝓐(𝒗 ← 𝓟𝒓),
+  //   𝗲𝗹𝘀𝗲:
+  //     𝒕 ← 𝓐𝒓,
+  //   𝗲𝗻𝗱 𝗶𝗳
   //   𝜔 ← <𝒕⋅𝒓>/<𝒕⋅𝒕>,
-  //   𝒓 ← 𝒓 - 𝜔⋅𝒕,
-  //   𝒙 ← 𝒙 + 𝜔⋅𝒗.
+  //   𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒗 : 𝒓),
+  //   𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (k == s - 1) {
-    stormBlas::Set(vVec_, rVec_);
-    linOp.MatVec(tVec_, vVec_);
+    if (leftPre) {
+      stormBlas::MatVec(tVec_, *preOp, vVec_, linOp, rVec_);
+    } else if (rightPre) {
+      stormBlas::MatVec(tVec_, linOp, vVec_, *preOp, rVec_);
+    } else {
+      linOp.MatVec(tVec_, rVec_);
+    }
     omega_ = stormUtils::SafeDivide(
       stormBlas::Dot(tVec_, rVec_), stormBlas::Dot(tVec_, tVec_));
+    stormBlas::Add(xVec, xVec, rightPre ? vVec_ : rVec_, omega_);
     stormBlas::Sub(rVec_, rVec_, tVec_, omega_);
-    stormBlas::Add(xVec, xVec, vVec_, omega_);
   }
 
   return stormBlas::Norm2(rVec_);

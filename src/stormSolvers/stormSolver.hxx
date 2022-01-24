@@ -142,8 +142,6 @@ bool stormIterativeSolver<InVector, OutVector>::
   for (Iteration = 0; Iteration < NumIterations; ++Iteration) {
     AbsoluteError = Iterate(xVec, bVec, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
-    std::cout << "\t" << (Iteration + 1) << "\t"
-      << AbsoluteError << "\t" << RelativeError << std::endl;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
       converged = true;
@@ -152,6 +150,11 @@ bool stormIterativeSolver<InVector, OutVector>::
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
       converged = true;
       break;
+    }
+
+    if (Iteration % 1 == 0 || converged) {
+      std::cout << "\t" << (Iteration + 1) << "\t"
+        << AbsoluteError << "\t" << RelativeError << std::endl;
     }
   }
 

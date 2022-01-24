@@ -240,7 +240,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    //abort();
+    abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);

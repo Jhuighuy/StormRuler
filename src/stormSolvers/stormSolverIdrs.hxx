@@ -72,7 +72,7 @@ private:
 public:
 
   stormIdrsSolver() {
-    this->NumInnerIterations = 2;
+    this->NumInnerIterations = 4;
   }
 
 }; // class stormIdrsSolver<...>
@@ -136,22 +136,17 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   // ----------------------
   // Build shadow space and initialize 𝜑:
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
-  //   𝜔 ← 𝟣,
-  //   𝜑₀ ← <𝒓⋅𝒓>,
-  //   𝒑₀ ← 𝒓,
+  //   𝜔 ← 𝜇₀₀ ← 𝟣,
+  //   𝜑₀ ← ‖𝒓‖,
+  //   𝒑₀ ← 𝒓/𝜑₀,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑠 - 𝟣 𝗱𝗼:
-  //     𝜑ᵢ ← 𝟢,
+  //     𝜇ᵢᵢ ← 𝟣, 𝜑ᵢ ← 𝟢,
   //     𝒑ᵢ ← random, 
-  //   𝗲𝗻𝗱 𝗳𝗼𝗿
-  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
   //     𝗳𝗼𝗿 𝑗 = 𝟢, 𝑖 - 𝟣 𝗱𝗼:
   //       𝜇ᵢⱼ ← 𝟢,
-  //       𝛼 ← <𝒑ᵢ⋅𝒑ⱼ>,
-  //       𝒑ᵢ ← 𝒑ᵢ - 𝛼⋅𝒑ⱼ,
+  //       𝒑ᵢ ← 𝒑ᵢ - <𝒑ᵢ⋅𝒑ⱼ>⋅𝒑ⱼ,
   //     𝗲𝗻𝗱 𝗳𝗼𝗿
-  //     𝜇ᵢᵢ ← 𝟣,
-  //     𝛼 ← ‖𝒑ᵢ‖,
-  //     𝒑ᵢ ← 𝒑ᵢ/𝛼.
+  //     𝒑ᵢ ← 𝒑ᵢ/‖𝒑ᵢ‖.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗹𝘀𝗲:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
@@ -161,31 +156,27 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    omega_ = 1.0;
-    phi_(0) = stormBlas::Dot(rVec_, rVec_);
-    stormBlas::Set(pVecs_[0], rVec_);
+    omega_ = mu_(0, 0) = 1.0;
+    phi_(0) = stormBlas::Norm2(rVec_);
+    stormBlas::Scale(pVecs_[0], rVec_, 1.0/phi_(0));
     for (stormSize_t i = 1; i < s; ++i) {
-      phi_(i) = 0.0;
+      mu_(i, i) = 1.0, phi_(i) = 0.0;
       stormBlas::RandFill(pVecs_[i]);
-    }
-    for (stormSize_t i = 0; i < s; ++i) {
-      stormReal_t alpha;
       for (stormSize_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
-        alpha = stormBlas::Dot(pVecs_[i], pVecs_[j]);
-        stormBlas::Sub(pVecs_[i], pVecs_[i], pVecs_[j], alpha);
+        stormBlas::Sub(pVecs_[i], pVecs_[i], 
+          pVecs_[j], stormBlas::Dot(pVecs_[i], pVecs_[j]));
       }
-      mu_(i, i) = 1.0;
-      alpha = stormBlas::Norm2(pVecs_[i]);
-      stormBlas::Scale(pVecs_[i], pVecs_[i], 1.0/alpha);
+      stormBlas::Scale(pVecs_[i], 
+        pVecs_[i], 1.0/stormBlas::Norm2(pVecs_[i]));
     }
-    return std::sqrt(phi_(0));
   } else {
     for (stormSize_t i = 0; i < s; ++i) {
       phi_(i) = stormBlas::Dot(pVecs_[i], rVec_);
     }
-    return std::numeric_limits<stormReal_t>::max();
   }
+
+  return phi_(0);
 
 } // stormIdrsSolver<...>::InnerInit
 

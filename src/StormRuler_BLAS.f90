@@ -147,11 +147,15 @@ real(dp) function Dot(mesh, xArr, yArr)
   class(tMesh), intent(in) :: mesh
   class(tArray), intent(in) :: xArr, yArr
 
-  real(dp), pointer :: x(:,:), y(:,:)
-
-  call xArr%Get(x); call yArr%Get(y)
+  real(dp), pointer :: x(:,:), y(:,:), xx(:), yy(:)
   
-  Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
+  if (xArr%Rank() == 1) then
+    call xArr%Get(xx); call yArr%Get(yy)
+    Dot = mesh%RunCellKernel_Sum(Dot_Kernel_1)
+  else
+    call xArr%Get(x); call yArr%Get(y)
+    Dot = mesh%RunCellKernel_Sum(Dot_Kernel)
+  end if
 
 contains
   real(dp) function Dot_Kernel(cell)
@@ -164,6 +168,15 @@ contains
     if (gCylCoords) Dot_Kernel = Dot_Kernel*mesh%CellCenter(1,cell)
     
   end function Dot_Kernel
+  real(dp) function Dot_Kernel_1(cell)
+    integer(ip), intent(in) :: cell
+
+    ! ----------------------
+    ! 𝑑 ← 𝑑 + 𝒙ᵢ𝒚ᵢ. 
+    ! ----------------------
+    Dot_Kernel_1 = xx(cell)*yy(cell)
+    
+  end function Dot_Kernel_1
 end function Dot
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!

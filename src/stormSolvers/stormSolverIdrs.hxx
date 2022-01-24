@@ -36,7 +36,7 @@
 template<class Vector>
 class stormIdrsSolver final : public stormInnerOuterIterativeSolver<Vector> {
 private:
-  stormReal_t psi_, omega_;
+  stormReal_t omega_;
   stormVector<stormReal_t> phi_, gamma_;
   stormMatrix<stormReal_t> mu_;
   Vector rVec_, vVec_, tVec_;
@@ -90,11 +90,11 @@ void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
   // ----------------------
   // 𝒓 ← 𝓐𝒙,
   // 𝒓 ← 𝒃 - 𝒓,
-  // 𝜓 ← ‖𝒓‖,
+  // 𝜑₀ ← <𝒓⋅𝒓>.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
   stormBlas::Sub(rVec_, bVec, rVec_);
-  psi_ = stormBlas::Norm2(rVec_);
+  phi_(0) = stormBlas::Dot(rVec_, rVec_);
 
 } // stormIdrsSolver<...>::OuterInit
 
@@ -107,11 +107,12 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   stormSize_t const s = this->NumInnerIterations;
 
   // ----------------------
-  // Build shadow space:
+  // Build shadow space and initialize 𝜑:
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝜔 ← 𝟣,
   //   𝒑₀ ← 𝒓,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑠 - 𝟣 𝗱𝗼:
+  //     𝜑ᵢ ← 𝟢,
   //     𝒑ᵢ ← random, 
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
@@ -122,7 +123,11 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   //     𝗲𝗻𝗱 𝗳𝗼𝗿
   //     𝜇ᵢᵢ ← 𝟣,
   //     𝛼 ← ‖𝒑ᵢ‖,
-  //     𝒑ᵢ ← 𝒑ᵢ/𝛼,
+  //     𝒑ᵢ ← 𝒑ᵢ/𝛼.
+  //   𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝗲𝗹𝘀𝗲:
+  //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
+  //     𝜑ᵢ ← <𝒑ᵢ⋅𝒓>.
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
@@ -131,6 +136,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
     omega_ = 1.0;
     stormBlas::Set(pVecs_[0], rVec_);
     for (stormSize_t i = 1; i < s; ++i) {
+      phi_(i) = 0.0;
       stormBlas::RandFill(pVecs_[i]);
     }
     for (stormSize_t i = 0; i < s; ++i) {
@@ -144,19 +150,13 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
       alpha = stormBlas::Norm2(pVecs_[i]);
       stormBlas::Scale(pVecs_[i], pVecs_[i], 1.0/alpha);
     }
+  } else {
+    for (stormSize_t k = 0; k < s; ++k) {
+      phi_(k) = stormBlas::Dot(pVecs_[k], rVec_);
+    }
   }
 
-  // ----------------------
-  // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑠 - 𝟣 𝗱𝗼:
-  //   𝜑ᵢ ← <𝒑ᵢ⋅𝒓>.
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
-  // ----------------------
-  /// @todo Merge with the upper step. 
-  for (stormSize_t k = 0; k < s; ++k) {
-    phi_(k) = stormBlas::Dot(pVecs_[k], rVec_);
-  }
-
-  return psi_;
+  return std::sqrt(phi_(0));
 
 } // stormIdrsSolver<...>::InnerInit
 
@@ -170,13 +170,14 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   stormSize_t const k = this->InnerIteration;
 
   // ----------------------
-  // 𝛄 ← 𝑀⁻¹𝞿.
+  // Compute 𝛄: 
+  // 𝛄ₖ:ₛ₋₁ ← (𝜇ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹𝞿ₖ:ₛ₋₁.
   // ----------------------
-  for (stormSize_t i = 0; i < s; ++i) {
+  for (stormSize_t i = k; i < s; ++i) {
     gamma_(i) = phi_(i);
   }
-  for (stormSize_t i = 0; i < s; ++i) {
-    for (stormSize_t j = 0; j < i; ++j) {
+  for (stormSize_t i = k; i < s; ++i) {
+    for (stormSize_t j = k; j < i; ++j) {
       gamma_(i) -= gamma_(j)*mu_(i, j);
     }
     gamma_(i) /= mu_(i, i);
@@ -209,6 +210,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   stormBlas::Add(uVecs_[k], uVecs_[k], vVec_, omega_);
 
   // ----------------------
+  // Bi-orthogonalize the 𝓤 and 𝓖.
   // 𝒈ₖ ← 𝓐𝒖ₖ,
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝛼 ← <𝒑ᵢ⋅𝒈ₖ>/𝜇ᵢᵢ,
@@ -216,7 +218,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒖ₖ ← 𝒖ₖ - 𝛼⋅𝒖ᵢ,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗳𝗼𝗿 𝑖 = 𝑘, 𝑠 - 𝟣 𝗱𝗼:
-  //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>,
+  //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   linOp.MatVec(gVecs_[k], uVecs_[k]);
@@ -234,7 +236,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // Update the solution and the residual:
   // 𝛽 ← 𝜑ₖ/𝜇ₖₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ,
-  // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
+  // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ.
   // ----------------------
   stormReal_t const beta = phi_(k)/mu_(k, k);
   stormBlas::Sub(rVec_, rVec_, gVecs_[k], beta);

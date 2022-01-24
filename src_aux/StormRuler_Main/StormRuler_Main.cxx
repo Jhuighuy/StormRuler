@@ -41,14 +41,17 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
   stormArray xx = {mesh, x}, bb = {mesh, b};
+  stormSize_t numMatVecs = 0;
   auto symOp = stormMakeSymmetricOperator<stormArray>(
     [&](stormArray& yy, const stormArray& xx) {
+      numMatVecs += 1;
       matVec(yy.Mesh, yy.Array, xx.Array);
     });
 
   auto solver = stormMakeIterativeSolver<stormArray>(method);
   solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
   solver->Solve(xx, bb, *symOp);
+  std::cout << "num matvecs = " << numMatVecs << std::endl;
 
 } // stormLinSolve2<...>
 

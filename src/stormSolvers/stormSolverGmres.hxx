@@ -231,7 +231,6 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
   // 𝐻ₖ₊₁,ₖ ← ‖𝒒ₖ₊₁‖,
   // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
   // ----------------------
-  /// @todo Transpose the Hessenberg matrix for better efficiency! 
   if (leftPre) {
     stormBlas::MatVec(qVecs_[k + 1], *preOp, zVecs_[0], linOp, qVecs_[k]);
   } else if (rightPre) {

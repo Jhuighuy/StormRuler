@@ -80,7 +80,7 @@ products.
     (`CGS`, for the _general_ linear problems),
   * Biconjugate Gradients (stabilized) solver
     (`BiCGStab`, for the _general_ linear problems),
-  * _(planned)_ Biconjugate Gradients (𝑙-stabilized) solver
+  * _(planned)_ Biconjugate Gradients (stabilized) solver
     (`BiCGStab(l)`, for the _general_ linear problems),
   * Transpose-Free Quasi-Minimal Residual solver
     (`TFQMR`/`TFQMR(1)`, for the _general_ linear problems),

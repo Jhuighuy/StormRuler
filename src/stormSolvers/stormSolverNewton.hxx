@@ -127,7 +127,6 @@ stormReal_t stormJfnkSolver<Vector>::Init(Vector& xVec,
   wVec_.Assign(xVec, false);
 
   // ----------------------
-  // Compute residual:
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
@@ -148,8 +147,7 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
   // Solve the Jacobian equation:
   // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
   // 𝒕 ← 𝒓,
-  // 𝒕 ← 𝓙(𝒙)⁻¹𝒓,
-  // 𝒙 ← 𝒙 + 𝒕.
+  // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
   // ----------------------
   static stormReal_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
@@ -184,13 +182,14 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
       });
     solver->Solve(tVec_, rVec_, *op);
   }
-  stormBlas::Add(xVec, xVec, tVec_);
 
   // ----------------------
-  // Compute residual:
+  // Update the solution and the residual:
+  // 𝒙 ← 𝒙 + 𝒕,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
+  stormBlas::Add(xVec, xVec, tVec_);
   linOp.MatVec(wVec_, xVec);
   stormBlas::Sub(rVec_, bVec, wVec_);
 

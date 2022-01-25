@@ -29,7 +29,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <stormSolvers/stormOperator.hxx>
+#include <stormBlas/stormOperator.hxx>
 #include <stormSolvers/stormPreconditioner.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

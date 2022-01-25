@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-#include <stormSolvers/stormOperator.hxx>
+#include <stormBlas/stormOperator.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Preconditioner side.

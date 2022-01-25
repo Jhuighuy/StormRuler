@@ -174,13 +174,14 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
 
   // ----------------------
-  // Initialize:
   // 𝒒₀ ← 𝓐𝒙,
   // 𝒒₀ ← 𝒃 - 𝒒₀,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛₀ ← 𝒒₀,
-  //   𝒒₀ ← 𝓟𝒛₀.
+  //   𝒒₀ ← 𝓟𝒛₀,
   // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝛽₀ ← ‖𝒒₀‖,
+  // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
   linOp.MatVec(qVecs_[0], xVec);
   stormBlas::Sub(qVecs_[0], bVec, qVecs_[0]);
@@ -188,11 +189,6 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
     std::swap(zVecs_[0], qVecs_[0]);
     preOp->MatVec(qVecs_[0], zVecs_[0]);
   }
-
-  // ----------------------
-  // 𝛽₀ ← ‖𝒒₀‖,
-  // 𝒒₀ ← 𝒒₀/𝛽₀.
-  // ----------------------
   beta_(0) = stormBlas::Norm2(qVecs_[0]);
   stormBlas::Scale(qVecs_[0], qVecs_[0], 1.0/beta_(0));
 
@@ -215,7 +211,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
     (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 
   // ----------------------
-  // Continue the Arnoldi procedure:
+  // Compute the new 𝒒ₖ₊₁ vector:
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒒ₖ₊₁ ← 𝓟(𝒛₀ ← 𝓐𝒒ₖ),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
@@ -247,7 +243,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
   stormBlas::Scale(qVecs_[k + 1], qVecs_[k + 1], 1.0/H_(k + 1, k));
 
   // ----------------------
-  // Eliminate the last element in {𝐻ᵢⱼ}
+  // Eliminate the last element in 𝐻
   // and and update the rotation matrix:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝜒 ← 𝑐𝑠ᵢ⋅𝐻ᵢₖ + 𝑠𝑛ᵢ⋅𝐻ᵢ₊₁,ₖ,
@@ -292,17 +288,10 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   // ----------------------
   // Finalize the 𝛽-solution:
-  // 𝛽ₖ ← 𝛽ₖ/𝐻ₖₖ,
-  // 𝗳𝗼𝗿 𝑖 = 𝑘 - 𝟣, 𝟢, -𝟣 𝗱𝗼:
-  //   𝛽ᵢ ← (𝛽ᵢ - <𝐻ᵢ,ᵢ₊₁:ₖ⋅𝛽ᵢ₊₁:ₖ>)/𝐻ᵢᵢ.
-  // 𝗲𝗻𝗱 𝗳𝗼𝗿
+  // 𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
   // ----------------------
-  /// @todo This should be replaced with a BLAS call that \
-  ///   solves an equation with the upper-triangular part of 𝐻: \
-  ///   𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
-  beta_(k) /= H_(k, k);
-  for (stormPtrDiff_t i = k - 1; i >= 0; --i) {
-    for (stormSize_t j = i + 1; j <= k + 1; ++j) {
+  for (stormSize_t i = k; i != STORM_SIZE_MAX; --i) {
+    for (stormSize_t j = i + 1; j <= k; ++j) {
       beta_(i) -= H_(i, j)*beta_(j);
     }
     beta_(i) /= H_(i, i);

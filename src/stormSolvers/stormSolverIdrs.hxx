@@ -40,8 +40,8 @@
 ///      Large Nonsymmetric Systems of Linear Equations.”
 ///     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
 /// [2] Martin B. van Gijzen, Peter Sonneveld.
-///     “Algorithm 913: An elegant IDR(s) variant that efficiently
-///      exploits biorthogonality properties.”
+///     “Algorithm 913: An Elegant IDR(s) Variant that Efficiently
+///      Exploits Biorthogonality Properties.”
 ///     ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -248,7 +248,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   }
 
   // ----------------------
-  // Bi-orthogonalize the new 𝒈ₖ and 𝒖ₖ vectors:
+  // Biorthogonalize the new 𝒈ₖ and 𝒖ₖ vectors:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝛼 ← <𝒑ᵢ⋅𝒈ₖ>/𝜇ᵢᵢ,
   //   𝒖ₖ ← 𝒖ₖ - 𝛼⋅𝒖ᵢ,

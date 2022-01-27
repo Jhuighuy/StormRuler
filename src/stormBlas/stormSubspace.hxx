@@ -47,15 +47,14 @@ public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
-  void Assign(Vector const& like, 
-              bool copy) requires(Extent != stormDynamicExtent) {
+  void Assign(Vector const& like, bool copy) 
+      requires(Extent != stormDynamicExtent) {
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
     }
   }
-  void Assign(stormSize_t size, 
-              Vector const& like, 
-              bool copy) requires(Extent == stormDynamicExtent) {
+  void Assign(stormSize_t size, Vector const& like, bool copy) 
+      requires(Extent == stormDynamicExtent) {
     Vectors_.resize(size);
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);

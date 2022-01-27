@@ -220,7 +220,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       STORM_PRE_NONE/*"extr"*/, 
 #else
       STORM_KSP_BiCGStabL,
-      STORM_PRE_NONE/*"extr"*/,
+      STORM_PRE_CHEBY/*"extr"*/,
 #endif
     c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {

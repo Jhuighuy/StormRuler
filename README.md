@@ -194,7 +194,7 @@ Legend:
   - [ ] 🦜 `CGS` solver penaltization,
   - [ ] 🦜 `CGS` breakdown detection,
   - [ ] 🦜 `BiCGStab` breakdown detection,
-  - [ ] 🚬 `BiCGStabL` solver implementation,
+  - [x] 🚬 `BiCGStabL` solver implementation,
   - [x] 🪓 `TFQMR` solver implementation,
   - [x] 🪓 Preconditioned `TFQMR` solver,
   - [ ] 🪓 More accurate `TFQMR` residual estimator,

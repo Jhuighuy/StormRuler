@@ -29,8 +29,6 @@ use StormRuler_Consts, only: bp, ip, dp
 use StormRuler_Helpers, only: PrintBanner, RgbToInt
 
 use StormRuler_Mesh, only: tMesh, InitMeshStencil, InitMeshFromImage
-use StormRuler_Mesh_Ordering, only: Mesh_Ordering_Quality, &
-  & Mesh_Ordering_Dump, Mesh_Ordering_HilbertCurve, Mesh_Ordering_METIS
 
 use StormRuler_Array, only: tArray, AllocArray, FreeArray
 
@@ -249,30 +247,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
   end block
 #$endif
-
-#$if False
-  block
-    integer(ip), allocatable :: iperm(:)
-
-    allocate(iperm(gMesh%NumCells))
-
-    call Mesh_Ordering_Dump(gMesh, 'test/MO-O.txt')
-    print *, 'quality(i) = ', Mesh_Ordering_Quality(gMesh)
-
-    call Mesh_Ordering_HilbertCurve(gMesh, iperm)
-    call Mesh_Ordering_Dump(gMesh, 'test/MO-H.txt', iperm)
-    print *, 'quality(h) = ', Mesh_Ordering_Quality(gMesh, iperm)
-
-#$if HAS_METIS
-    call Mesh_Ordering_METIS(gMesh, iperm)
-    call Mesh_Ordering_Dump(gMesh, 'test/MO-M.txt', iperm)
-    print *, 'quality(m) = ', Mesh_Ordering_Quality(gMesh, iperm)
-#$end if
-
-    call gMesh%ApplyOrdering(iperm)
-
-  end block
-#$end if
 
   meshPtr = Wrap(gMesh)
 

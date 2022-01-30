@@ -25,6 +25,8 @@
 #ifndef _STORM_SOLVER_CGS_HXX_
 #define _STORM_SOLVER_CGS_HXX_
 
+#include <cmath>
+
 #include <stormSolvers/stormSolver.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

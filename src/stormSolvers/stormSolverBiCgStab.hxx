@@ -41,7 +41,7 @@
 ///
 /// References:
 /// @verbatim
-/// [1] van der Vorst, Henk A.
+/// [1] Henk A. van der Vorst.
 ///     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG
 ///      for the Solution of Nonsymmetric Linear Systems.”
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
@@ -197,6 +197,17 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the \
 ///   @c BiCGStab(l) (Biconjugate Gradients Stabilized) method.
+///
+/// @c BiCGStab(l), like the other @c BiCG type solvers, requires \
+///   two operator multiplications per iteration.
+///
+/// References:
+/// @verbatim
+/// [1] Gerard L. G. Sleijpen and Diederik R. Fokkema. 
+///     “BiCGStab(l) for Linear Equations involving 
+///      Unsymmetric Matrices with Complex Spectrum.” 
+///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
+/// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
 class stormBiCGStabLSolver final : public stormInnerOuterIterativeSolver<Vector> {
@@ -336,7 +347,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   } else {
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
-  alpha_ = rho_/stormBlas::Dot(rTildeVec_, uVecs_(j + 1));
+  alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, uVecs_(j + 1)));
   for (stormSize_t i = 0; i <= j; ++i) {
     stormBlas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
   }
@@ -371,11 +382,13 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     // ----------------------
     for (stormSize_t j = 1; j <= l; ++j) {
       for (stormSize_t i = 1; i < j; ++i) {
-        tau_(i, j) = stormBlas::Dot(rVecs_(i), rVecs_(j))/sigma_(i);
+        tau_(i, j) = 
+          stormUtils::SafeDivide(stormBlas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
         stormBlas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
       }
       sigma_(j) = stormBlas::Dot(rVecs_(j), rVecs_(j));
-      gammaBar_(j) = stormBlas::Dot(rVecs_(0), rVecs_(j))/sigma_(j);
+      gammaBar_(j) = 
+        stormUtils::SafeDivide(stormBlas::Dot(rVecs_(0), rVecs_(j)), sigma_(j));
     }
 
     // ----------------------

@@ -248,7 +248,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   for (stormSize_t i = 0; i < k; ++i) {
     stormReal_t const alpha =
-      stormBlas::Dot(pVecs_(i), gVecs_(k))/mu_(i, i);
+      stormUtils::SafeDivide(stormBlas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
     stormBlas::Sub(uVecs_(k), uVecs_(k), uVecs_(i), alpha);
     stormBlas::Sub(gVecs_(k), gVecs_(k), gVecs_(i), alpha);
   }
@@ -269,7 +269,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  stormReal_t const beta = phi_(k)/mu_(k, k);
+  stormReal_t const beta = 
+    stormUtils::SafeDivide(phi_(k), mu_(k, k));
   stormBlas::Add(xVec, xVec, uVecs_(k), beta);
   stormBlas::Sub(rVec_, rVec_, gVecs_(k), beta);
 

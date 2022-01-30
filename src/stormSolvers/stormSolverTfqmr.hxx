@@ -25,6 +25,8 @@
 #ifndef _STORM_SOLVER_TFQMR_
 #define _STORM_SOLVER_TFQMR_
 
+#include <cmath>
+
 #include <stormSolvers/stormSolver.hxx>
 
 /// ----------------------------------------------------------------- ///
@@ -216,7 +218,8 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, uVec_);
-    stormReal_t const beta = rho_/rhoBar;
+    stormReal_t const beta = 
+      stormUtils::SafeDivide(rho_, rhoBar);
     stormBlas::Add(vVec_, sVec_, vVec_, beta);
     stormBlas::Add(yVec_, uVec_, yVec_, beta);
     if (leftPre) {

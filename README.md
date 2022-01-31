@@ -69,6 +69,8 @@ products.
     (`JFNK`, for the general nonlinear problems);
 
 - 🏎 Linear iterative solvers:
+  * _(planned)_ Richardson iteration solver
+    (`Richardson`, for the _general_ linear problems);
   * Conjugate Gradients solver 
     (`CG`, for the _definite symmetric_ linear problems),
   * _(planned)_ Flexible Conjugate Gradients solver 

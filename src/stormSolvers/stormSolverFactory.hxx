@@ -29,6 +29,7 @@
 #include <stdexcept>
 
 #include <stormSolvers/stormSolver.hxx>
+#include <stormSolvers/stormSolverRichardson.hxx>
 #include <stormSolvers/stormSolverCg.hxx>
 #include <stormSolvers/stormSolverMinres.hxx>
 #include <stormSolvers/stormSolverCgs.hxx>
@@ -42,13 +43,10 @@
 
 /// Krylov-subspace solver types.
 /// @{
+#define STORM_KSP_RICHARDSON "Richardson"   /// @todo Implement me!
 #define STORM_KSP_CG         "CG"
 #define STORM_KSP_FCG        "FCG"          /// @todo Implement me!
 #define STORM_KSP_MINRES     "MINRES"
-#define STORM_KSP_SBiCG      "SBiCG"        /// @todo Implement me!
-#define STORM_KSP_SQMR       "SQMR"         /// @todo Implement me!
-#define STORM_KSP_BiCG       "BiCG"         /// @todo Implement me!
-#define STORM_KSP_QMR        "QMR"          /// @todo Implement me!
 #define STORM_KSP_CGS        "CGS"
 #define STORM_KSP_BiCGStab   "BiCGStab"
 #define STORM_KSP_BiCGStabL  "BiCGStab(l)"
@@ -101,7 +99,7 @@
     \
     return std::make_unique<stormIdrsSolver<Vector>>(); \
     \
-  } /*else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
+  } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \
     return std::make_unique<stormGmresSolver<Vector>>(); \
     \
@@ -109,7 +107,7 @@
     \
     return std::make_unique<stormFgmresSolver<Vector>>(); \
     \
-  }*/ /*else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+  } /*else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
     return std::make_unique<stormLsqrSolver<Vector>>(); \
     \

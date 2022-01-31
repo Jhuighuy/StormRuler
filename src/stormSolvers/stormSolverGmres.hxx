@@ -41,15 +41,15 @@ private:
   stormSubspace<Vector> qVecs_;
   stormSubspace<Vector, Flexible ? stormDynamicExtent : 1> zVecs_;
 
-  void OuterInit(Vector const& xVec,
-                 Vector const& bVec,
-                 stormOperator<Vector> const& linOp,
-                 stormPreconditioner<Vector> const* preOp) override;
-
-  stormReal_t InnerInit(Vector const& xVec,
+  stormReal_t OuterInit(Vector const& xVec,
                         Vector const& bVec,
                         stormOperator<Vector> const& linOp,
                         stormPreconditioner<Vector> const* preOp) override;
+
+  void InnerInit(Vector const& xVec,
+                 Vector const& bVec,
+                 stormOperator<Vector> const& linOp,
+                 stormPreconditioner<Vector> const* preOp) override;
 
   stormReal_t InnerIterate(Vector& xVec,
                            Vector const& bVec,
@@ -130,11 +130,11 @@ class stormFgmresSolver final : public stormBaseGmresSolver<Vector, true> {
 }; // class stormFgmresSolver<...>
 
 template<class Vector, bool Flexible, bool Loose>
-void stormBaseGmresSolver<Vector, Flexible, Loose>::
-                                OuterInit(Vector const& xVec,
-                                          Vector const& bVec,
-                                          stormOperator<Vector> const& linOp,
-                                          stormPreconditioner<Vector> const* preOp) {
+stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
+                                  OuterInit(Vector const& xVec,
+                                            Vector const& bVec,
+                                            stormOperator<Vector> const& linOp,
+                                            stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const m = this->NumInnerIterations;
 
@@ -151,15 +151,8 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
     }
   }
 
-} // stormBaseGmresSolver<...>::OuterInit
-
-template<class Vector, bool Flexible, bool Loose>
-stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
-                                      InnerInit(Vector const& xVec,
-                                                Vector const& bVec,
-                                                stormOperator<Vector> const& linOp,
-                                                stormPreconditioner<Vector> const* preOp) {
-
+  /// @todo Refactor without duplication a code from \
+  ///   InnerInit method.
   bool const leftPre = (preOp != nullptr) &&
     (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
 
@@ -184,6 +177,37 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
 
   return beta_(0);
 
+} // stormBaseGmresSolver<...>::OuterInit
+
+template<class Vector, bool Flexible, bool Loose>
+void stormBaseGmresSolver<Vector, Flexible, Loose>::
+                          InnerInit(Vector const& xVec,
+                                    Vector const& bVec,
+                                    stormOperator<Vector> const& linOp,
+                                    stormPreconditioner<Vector> const* preOp) {
+
+  bool const leftPre = (preOp != nullptr) &&
+    (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
+
+  // ----------------------
+  // 𝒒₀ ← 𝓐𝒙,
+  // 𝒒₀ ← 𝒃 - 𝒒₀,
+  // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
+  //   𝒛₀ ← 𝒒₀,
+  //   𝒒₀ ← 𝓟𝒛₀,
+  // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝛽₀ ← ‖𝒒₀‖,
+  // 𝒒₀ ← 𝒒₀/𝛽₀.
+  // ----------------------
+  linOp.MatVec(qVecs_(0), xVec);
+  stormBlas::Sub(qVecs_(0), bVec, qVecs_(0));
+  if (leftPre) {
+    std::swap(zVecs_(0), qVecs_(0));
+    preOp->MatVec(qVecs_(0), zVecs_(0));
+  }
+  beta_(0) = stormBlas::Norm2(qVecs_(0));
+  stormBlas::Scale(qVecs_(0), qVecs_(0), 1.0/beta_(0));
+
 } // stormBaseGmresSolver<...>::InnerInit
 
 template<class Vector, bool Flexible, bool Loose>
@@ -196,7 +220,7 @@ stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
   stormSize_t const k = this->InnerIteration;
 
   bool const leftPre = (preOp != nullptr) &&
-    (!Flexible) && (this->PreSide == stormPreconditionerSide::Left);
+    (!Flexible && (this->PreSide == stormPreconditionerSide::Left));
   bool const rightPre = (preOp != nullptr) &&
     (Flexible || (this->PreSide == stormPreconditionerSide::Right));
 

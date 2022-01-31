@@ -49,7 +49,7 @@ private:
   stormReal_t alpha_;
   Vector pVec_, rVec_, zVec_;
 
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    stormOperator<Vector> const& linOp,
                    stormPreconditioner<Vector> const* preOp) override;
@@ -62,7 +62,7 @@ private:
 }; // class stormCgSolver<...>
 
 template<class Vector>
-stormReal_t stormCgSolver<Vector>::Init(Vector& xVec,
+stormReal_t stormCgSolver<Vector>::Init(Vector const& xVec,
                                         Vector const& bVec,
                                         stormOperator<Vector> const& linOp,
                                         stormPreconditioner<Vector> const* preOp) {

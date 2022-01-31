@@ -101,7 +101,7 @@
     \
     return std::make_unique<stormIdrsSolver<Vector>>(); \
     \
-  } else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
+  } /*else if (std::strcmp(solverType, STORM_KSP_GMRES) == 0) { \
     \
     return std::make_unique<stormGmresSolver<Vector>>(); \
     \
@@ -109,7 +109,7 @@
     \
     return std::make_unique<stormFgmresSolver<Vector>>(); \
     \
-  } /*else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
+  }*/ /*else if (std::strcmp(solverType, STORM_KSP_LSQR) == 0) { \
     \
     return std::make_unique<stormLsqrSolver<Vector>>(); \
     \

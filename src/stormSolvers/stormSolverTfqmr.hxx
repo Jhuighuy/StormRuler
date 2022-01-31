@@ -38,7 +38,7 @@ private:
   stormReal_t rho_, tau_;
   Vector dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_, zVec_;
 
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    stormOperator<Vector> const& linOp,
                    stormPreconditioner<Vector> const* preOp) override;
@@ -112,7 +112,7 @@ class stormTfqmr1Solver final : public stormBaseTfqmrSolver<Vector, true> {
 
 template<class Vector, bool L1>
 stormReal_t stormBaseTfqmrSolver<Vector, L1>::
-                              Init(Vector& xVec,
+                              Init(Vector const& xVec,
                                    Vector const& bVec,
                                    stormOperator<Vector> const& linOp,
                                    stormPreconditioner<Vector> const* preOp) {

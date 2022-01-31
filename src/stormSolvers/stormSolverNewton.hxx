@@ -55,7 +55,7 @@
 template<class Vector, class tOperator>
 class stormNewtonSolver : public stormIterativeSolver<Vector, tOperator> {
 private:
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    tOperator const& anyOp,
                    tOperator const* preOp) override final;
@@ -103,7 +103,7 @@ class stormJfnkSolver final : public stormIterativeSolver<Vector> {
 private:
   Vector sVec_, tVec_, rVec_, wVec_;
 
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    stormOperator<Vector> const& linOp,
                    stormPreconditioner<Vector> const* preOp) override;
@@ -116,7 +116,7 @@ private:
 }; // class stormJfnkSolver<...>
 
 template<class Vector>
-stormReal_t stormJfnkSolver<Vector>::Init(Vector& xVec,
+stormReal_t stormJfnkSolver<Vector>::Init(Vector const& xVec,
                                           Vector const& bVec,
                                           stormOperator<Vector> const& linOp,
                                           stormPreconditioner<Vector> const* preOp) {

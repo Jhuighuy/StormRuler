@@ -25,6 +25,8 @@
 #ifndef _STORM_SOLVER_BICGSTAB_
 #define _STORM_SOLVER_BICGSTAB_
 
+#include <cmath>
+
 #include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
@@ -53,7 +55,7 @@ private:
   stormReal_t alpha_, rho_, omega_;
   Vector pVec_, rVec_, rTildeVec_, tVec_, vVec_, zVec_;
 
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    stormOperator<Vector> const& linOp,
                    stormPreconditioner<Vector> const* preOp) override;
@@ -66,7 +68,7 @@ private:
 }; // class stormBiCgStabSolver<...>
 
 template<class Vector>
-stormReal_t stormBiCgStabSolver<Vector>::Init(Vector& xVec,
+stormReal_t stormBiCgStabSolver<Vector>::Init(Vector const& xVec,
                                               Vector const& bVec,
                                               stormOperator<Vector> const& linOp,
                                               stormPreconditioner<Vector> const* preOp) {
@@ -218,12 +220,7 @@ private:
   Vector rTildeVec_, zVec_;
   stormSubspace<Vector> rVecs_, uVecs_;
 
-  void OuterInit(Vector& xVec,
-                 Vector const& bVec,
-                 stormOperator<Vector> const& linOp,
-                 stormPreconditioner<Vector> const* preOp) override;
-
-  stormReal_t InnerInit(Vector& xVec,
+  stormReal_t OuterInit(Vector const& xVec,
                         Vector const& bVec,
                         stormOperator<Vector> const& linOp,
                         stormPreconditioner<Vector> const* preOp) override;
@@ -242,8 +239,8 @@ public:
 }; // class stormBiCGStabLSolver<...>
 
 template<class Vector>
-void stormBiCGStabLSolver<Vector>::
-                OuterInit(Vector& xVec,
+stormReal_t stormBiCGStabLSolver<Vector>::
+                OuterInit(Vector const& xVec,
                           Vector const& bVec,
                           stormOperator<Vector> const& linOp,
                           stormPreconditioner<Vector> const* preOp) {
@@ -285,18 +282,9 @@ void stormBiCGStabLSolver<Vector>::
   stormBlas::Set(rTildeVec_, rVecs_(0));
   rho_ = stormBlas::Dot(rTildeVec_, rVecs_(0));
 
-} // stormBiCGStabLSolver<...>::OuterInit
-
-template<class Vector>
-stormReal_t stormBiCGStabLSolver<Vector>::
-                      InnerInit(Vector& xVec,
-                                Vector const& bVec,
-                                stormOperator<Vector> const& linOp,
-                                stormPreconditioner<Vector> const* preOp) {
-
   return std::sqrt(rho_);
 
-} // stormBiCGStabLSolver<...>::InnerInit
+} // stormBiCGStabLSolver<...>::OuterInit
 
 template<class Vector>
 stormReal_t stormBiCGStabLSolver<Vector>::

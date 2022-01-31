@@ -81,7 +81,7 @@ private:
   Vector pVec, qVec, qBarVec,
     wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec;
 
-  stormReal_t Init(Vector& xVec,
+  stormReal_t Init(Vector const& xVec,
                    Vector const& bVec,
                    stormOperator<Vector> const& linOp,
                    stormPreconditioner<Vector> const* preOp) override;
@@ -94,7 +94,7 @@ private:
 }; // class stormMinresSolver<...>
 
 template<class Vector>
-stormReal_t stormMinresSolver<Vector>::Init(Vector& xVec,
+stormReal_t stormMinresSolver<Vector>::Init(Vector const& xVec,
                                             Vector const& bVec,
                                             stormOperator<Vector> const& linOp,
                                             stormPreconditioner<Vector> const* preOp) {

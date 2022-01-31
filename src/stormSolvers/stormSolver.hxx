@@ -72,13 +72,13 @@ protected:
 
   /// @brief Initialize the iterative solver.
   ///
-  /// @param xVec Solution vector, 𝒙.
+  /// @param xVec Initial guess for the solution vector, 𝒙.
   /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
-  /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual stormReal_t Init(InVector& xVec,
+  /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
+  virtual stormReal_t Init(InVector const& xVec,
                            OutVector const& bVec,
                            stormOperator<InVector, OutVector> const& anyOp,
                            stormPreconditioner<InVector> const* preOp) = 0;
@@ -195,14 +195,16 @@ protected:
   /// This function is used invoked only once, \
   ///   in the initialization phase.
   /// 
-  /// @param xVec Solution vector, 𝒙.
+  /// @param xVec Initial guess for the solution vector, 𝒙.
   /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
-  virtual void OuterInit(InVector& xVec,
-                         OutVector const& bVec,
-                         stormOperator<InVector, OutVector> const& anyOp,
-                         stormPreconditioner<InVector> const* preOp) = 0;
+  /// 
+  /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
+  virtual stormReal_t OuterInit(InVector const& xVec,
+                                OutVector const& bVec,
+                                stormOperator<InVector, OutVector> const& anyOp,
+                                stormPreconditioner<InVector> const* preOp) = 0;
 
   /// @brief Initialize the inner iterations.
   ///
@@ -212,12 +214,10 @@ protected:
   /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
-  ///
-  /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
-  virtual stormReal_t InnerInit(InVector& xVec,
-                                OutVector const& bVec,
-                                stormOperator<InVector, OutVector> const& anyOp,
-                                stormPreconditioner<InVector> const* preOp) = 0;
+  virtual void InnerInit(InVector const& xVec,
+                         OutVector const& bVec,
+                         stormOperator<InVector, OutVector> const& anyOp,
+                         stormPreconditioner<InVector> const* preOp) {}
 
   /// @brief Perform the inner iteration.
   ///
@@ -263,12 +263,11 @@ protected:
 
 private:
 
-  stormReal_t Init(InVector& xVec,
+  stormReal_t Init(InVector const& xVec,
                    OutVector const& bVec,
                    stormOperator<InVector, OutVector> const& anyOp,
                    stormPreconditioner<InVector> const* preOp) override final {
-    OuterInit(xVec, bVec, anyOp, preOp);
-    return InnerInit(xVec, bVec, anyOp, preOp);
+    return OuterInit(xVec, bVec, anyOp, preOp);
   }
 
   stormReal_t Iterate(InVector& xVec,
@@ -276,20 +275,23 @@ private:
                       stormOperator<InVector, OutVector> const& anyOp,
                       stormPreconditioner<InVector> const* preOp) override final {
     InnerIteration = this->Iteration % NumInnerIterations;
-    if (InnerIteration == 0 && this->Iteration != 0) {
-      InnerIteration = NumInnerIterations - 1;
-      InnerFinalize(xVec, bVec, anyOp, preOp);
-      InnerIteration = 0;
+    if (InnerIteration == 0) {
       InnerInit(xVec, bVec, anyOp, preOp);
     }
-    return InnerIterate(xVec, bVec, anyOp, preOp);
+    stormReal_t const residualNorm = InnerIterate(xVec, bVec, anyOp, preOp);
+    if (InnerIteration == NumInnerIterations - 1) {
+      InnerFinalize(xVec, bVec, anyOp, preOp);
+    }
+    return residualNorm;
   }
 
   void Finalize(InVector& xVec,
                 OutVector const& bVec,
                 stormOperator<InVector, OutVector> const& anyOp,
                 stormPreconditioner<InVector> const* preOp) override final {
-    InnerFinalize(xVec, bVec, anyOp, preOp);
+    if (InnerIteration != NumInnerIterations - 1) {
+      InnerFinalize(xVec, bVec, anyOp, preOp);
+    }
     OuterFinalize(xVec, bVec, anyOp, preOp);
   }
 

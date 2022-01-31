@@ -41,12 +41,12 @@ private:
   stormSubspace<Vector> qVecs_;
   stormSubspace<Vector, Flexible ? stormDynamicExtent : 1> zVecs_;
 
-  void OuterInit(Vector& xVec,
+  void OuterInit(Vector const& xVec,
                  Vector const& bVec,
                  stormOperator<Vector> const& linOp,
                  stormPreconditioner<Vector> const* preOp) override;
 
-  stormReal_t InnerInit(Vector& xVec,
+  stormReal_t InnerInit(Vector const& xVec,
                         Vector const& bVec,
                         stormOperator<Vector> const& linOp,
                         stormPreconditioner<Vector> const* preOp) override;
@@ -131,7 +131,7 @@ class stormFgmresSolver final : public stormBaseGmresSolver<Vector, true> {
 
 template<class Vector, bool Flexible, bool Loose>
 void stormBaseGmresSolver<Vector, Flexible, Loose>::
-                                OuterInit(Vector& xVec,
+                                OuterInit(Vector const& xVec,
                                           Vector const& bVec,
                                           stormOperator<Vector> const& linOp,
                                           stormPreconditioner<Vector> const* preOp) {
@@ -155,7 +155,7 @@ void stormBaseGmresSolver<Vector, Flexible, Loose>::
 
 template<class Vector, bool Flexible, bool Loose>
 stormReal_t stormBaseGmresSolver<Vector, Flexible, Loose>::
-                                      InnerInit(Vector& xVec,
+                                      InnerInit(Vector const& xVec,
                                                 Vector const& bVec,
                                                 stormOperator<Vector> const& linOp,
                                                 stormPreconditioner<Vector> const* preOp) {

@@ -54,15 +54,15 @@ private:
   Vector rVec_, vVec_, zVec_;
   stormSubspace<Vector> pVecs_, uVecs_, gVecs_;
 
-  void OuterInit(Vector& xVec,
-                 Vector const& bVec,
-                 stormOperator<Vector> const& linOp,
-                 stormPreconditioner<Vector> const* preOp) override;
-
-  stormReal_t InnerInit(Vector& xVec,
+  stormReal_t OuterInit(Vector const& xVec,
                         Vector const& bVec,
                         stormOperator<Vector> const& linOp,
                         stormPreconditioner<Vector> const* preOp) override;
+
+  void InnerInit(Vector const& xVec,
+                 Vector const& bVec,
+                 stormOperator<Vector> const& linOp,
+                 stormPreconditioner<Vector> const* preOp) override;
 
   stormReal_t InnerIterate(Vector& xVec,
                            Vector const& bVec,
@@ -78,7 +78,7 @@ public:
 }; // class stormIdrsSolver<...>
 
 template<class Vector>
-void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
+stormReal_t stormIdrsSolver<Vector>::OuterInit(Vector const& xVec,
                                                Vector const& bVec,
                                                stormOperator<Vector> const& linOp,
                                                stormPreconditioner<Vector> const* preOp) {
@@ -109,6 +109,7 @@ void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
   //   𝒛 ← 𝒓,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
+  // 𝜑₀ ← ‖𝒓‖.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
   stormBlas::Sub(rVec_, bVec, rVec_);
@@ -116,14 +117,17 @@ void stormIdrsSolver<Vector>::OuterInit(Vector& xVec,
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
+  phi_(0) = stormBlas::Norm2(rVec_);
+
+  return phi_(0);
 
 } // stormIdrsSolver<...>::OuterInit
 
 template<class Vector>
-stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
-                                               Vector const& bVec,
-                                               stormOperator<Vector> const& linOp,
-                                               stormPreconditioner<Vector> const* preOp) {
+void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
+                                        Vector const& bVec,
+                                        stormOperator<Vector> const& linOp,
+                                        stormPreconditioner<Vector> const* preOp) {
 
   stormSize_t const s = this->NumInnerIterations;
 
@@ -131,7 +135,6 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   // Build shadow space and initialize 𝜑:
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝜔 ← 𝜇₀₀ ← 𝟣,
-  //   𝜑₀ ← ‖𝒓‖,
   //   𝒑₀ ← 𝒓/𝜑₀,
   //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑠 - 𝟣 𝗱𝗼:
   //     𝜇ᵢᵢ ← 𝟣, 𝜑ᵢ ← 𝟢,
@@ -151,7 +154,6 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    phi_(0) = stormBlas::Norm2(rVec_);
     stormBlas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
     for (stormSize_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
@@ -169,8 +171,6 @@ stormReal_t stormIdrsSolver<Vector>::InnerInit(Vector& xVec,
       phi_(i) = stormBlas::Dot(pVecs_(i), rVec_);
     }
   }
-
-  return phi_(0);
 
 } // stormIdrsSolver<...>::InnerInit
 

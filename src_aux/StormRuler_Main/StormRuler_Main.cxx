@@ -89,7 +89,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 0
+#define YURI 1
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
@@ -219,7 +219,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       STORM_KSP_BiCGStab,
       STORM_PRE_NONE/*"extr"*/, 
 #else
-      STORM_KSP_GMRES,
+      STORM_KSP_CGS,
       STORM_PRE_NONE/*"extr"*/,
 #endif
     c_hat, rhs,
@@ -240,7 +240,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -336,7 +336,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
     slice_info << std::endl;
   }
   //double alpha_dot = (V_hat - V)/tau;
-  double A = 0.0133*0.25;
+  double A = 0.0133*0.75;
   N2_cur = N2_cur + tau*n_part_vs_phi_sandwich(slice, 100, 1)*A;
   auto new_slice = (stormSize_t)std::round((N2_cur - N2_min)/(N2_max - N2_min)*(num_slices - 1));
   new_slice = num_slices - new_slice - 1;
@@ -477,7 +477,7 @@ int main() {
   alpha_sandwich.Assign(num_slices);
   ReadTensor(alpha_sandwich, "alpha_sandwich.csv");
   D1_W_vs_phi_sandwich.Assign(num_slices, 101);
-  ReadTensor(D1_W_vs_phi_sandwich, "D1_W_vs_phi.csv");
+  ReadTensor(D1_W_vs_phi_sandwich, "D1_W_vs_phi_sandwich.csv");
   N_part_sandwich.Assign(num_slices, 2);
   ReadTensor(N_part_sandwich, "N_part_sandwich.csv");
   n_part_vs_phi_sandwich.Assign(num_slices, 101, 2);

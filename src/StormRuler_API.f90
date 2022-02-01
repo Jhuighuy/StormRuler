@@ -335,6 +335,22 @@ subroutine stormFree(xPtr) bind(C, name='stormFree')
 
 end subroutine stormFree
 
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormArrayUnwrap(xPtr, dataPtr, sizePtr) bind(C, name='stormArrayUnwrap')
+  type(c_ptr), intent(in), value :: xPtr
+  type(c_ptr), intent(out) :: dataPtr 
+  integer(c_size_t), intent(out) :: sizePtr
+
+  class(tArray), pointer :: xArr
+
+  call Unwrap(xPtr, xArr)
+
+  dataPtr = c_loc(xArr%mData)
+  sizePtr = product(xArr%mShape)
+
+end subroutine stormArrayUnwrap
+
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 

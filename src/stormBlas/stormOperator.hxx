@@ -44,18 +44,25 @@ public:
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
   std::shared_ptr<int> RefCounter;
+private:
+  stormReal_t* Data_ = nullptr;
+  stormSize_t Size_ = 0;
 
+public:
   stormArray() = default;
   stormArray(stormMesh_t mesh, stormArray_t array): Mesh(mesh), Array(array) {
     RefCounter = std::make_shared<int>(2);
+    stormArrayUnwrap(Array, &Data_, &Size_);
   }
   stormArray(stormArray&& oth): Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
+    Data_ = oth.Data_, Size_ = oth.Size_;
   }
   stormArray(stormArray const& oth): Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
+    Data_ = oth.Data_, Size_ = oth.Size_;
   }
   ~stormArray() {
     if (RefCounter) {
@@ -64,10 +71,23 @@ public:
     }
   }
 
+  stormSize_t Size() const noexcept {
+    return Size_;
+  }
+  stormReal_t& operator()(stormSize_t index) {
+    stormAssert(index < Size_);
+    return Data_[index];
+  }
+  stormReal_t const& operator()(stormSize_t index) const {
+    stormAssert(index < Size_);
+    return Data_[index];
+  }
+
   void Assign(stormArray const& like, bool copy = true) {
     this->~stormArray();
     Mesh = like.Mesh;
     Array = stormAllocLike(like.Array);
+    stormArrayUnwrap(Array, &Data_, &Size_);
     if (copy) stormSet(Mesh, Array, like.Array);
   }
 

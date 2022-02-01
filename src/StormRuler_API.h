@@ -138,6 +138,10 @@ STORM_API stormArray_t stormAllocLike(stormArray_t array);
 
 STORM_API void stormFree(stormArray_t x);
 
+STORM_API void stormArrayUnwrap(stormArray_t x, 
+                                stormReal_t** data, 
+                                stormSize_t* size);
+
 /// @{
 #if STORM_C11_
 STORM_INL void stormSwapP(stormOpaque_t* pX, stormOpaque_t* pY) {

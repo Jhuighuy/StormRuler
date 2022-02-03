@@ -40,7 +40,8 @@
 /// @verbatim
 /// [1] Hestenes, Magnus R. and Eduard Stiefel.
 ///     “Methods of conjugate gradients for solving linear systems.”
-///     Journal of research of the National Bureau of Standards 49 (1952): 409-435.
+///     Journal of research of the National 
+///     Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>

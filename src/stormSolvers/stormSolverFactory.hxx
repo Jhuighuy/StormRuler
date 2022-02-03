@@ -43,7 +43,7 @@
 
 /// Krylov-subspace solver types.
 /// @{
-#define STORM_KSP_RICHARDSON "Richardson"   /// @todo Implement me!
+#define STORM_KSP_Richardson "Richardson"   /// @todo Implement me!
 #define STORM_KSP_CG         "CG"
 #define STORM_KSP_FCG        "FCG"          /// @todo Implement me!
 #define STORM_KSP_MINRES     "MINRES"
@@ -67,7 +67,11 @@
 /// @}
 
 #define _STORM_MAKE_KSP_SOLVER_(solverType) \
-  if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
+  if (std::strcmp(solverType, STORM_KSP_Richardson) == 0) { \
+    \
+    return std::make_unique<stormRichardsonSolver<Vector>>(); \
+    \
+  } else if (std::strcmp(solverType, STORM_KSP_CG) == 0) { \
     \
     return std::make_unique<stormCgSolver<Vector>>(); \
     \

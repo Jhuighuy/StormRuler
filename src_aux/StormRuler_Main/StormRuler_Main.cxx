@@ -28,6 +28,7 @@
 
 #include <StormRuler_API.h>
 #include <stormBlas/stormTensor.hxx>
+#include <stormBlas/stormMatrixExtraction.hxx>
 #include <stormSolvers/stormSolverFactory.hxx>
 #include <stormSolvers/stormPreconditionerFactory.hxx>
 
@@ -50,6 +51,19 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
 
   auto solver = stormMakeIterativeSolver<stormArray>(method);
   solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
+#if 0
+  stormSparseRowMatrix<stormReal_t> matrix;
+  do_the_thing(matrix, xx, *symOp);
+  auto matOp = stormMakeSymmetricOperator<stormArray>(
+    [&](stormArray& yy, const stormArray& xx) {
+      numMatVecs += 1;
+      matrix.mat_vec(yy, xx);
+    });
+
+  solver->Solve(xx, bb, *matOp /* *symOp */);
+  std::cout << "num matvecs = " << numMatVecs << std::endl;
+#endif
+
   solver->Solve(xx, bb, *symOp);
   std::cout << "num matvecs = " << numMatVecs << std::endl;
 
@@ -240,7 +254,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    //abort();
+    abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -336,8 +350,9 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
     slice_info << std::endl;
   }
   //double alpha_dot = (V_hat - V)/tau;
-  double A = 0.0133*0.75;
+  double A = 0.0133*0.0001;
   N2_cur = N2_cur + tau*n_part_vs_phi_sandwich(slice, 100, 1)*A;
+  N2_cur = max(min(N2_cur, N2_max), N2_min);
   auto new_slice = (stormSize_t)std::round((N2_cur - N2_min)/(N2_max - N2_min)*(num_slices - 1));
   new_slice = num_slices - new_slice - 1;
   if (new_slice != slice) {

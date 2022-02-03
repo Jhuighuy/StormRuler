@@ -347,7 +347,7 @@ subroutine stormArrayUnwrap(xPtr, dataPtr, sizePtr) bind(C, name='stormArrayUnwr
   call Unwrap(xPtr, xArr)
 
   dataPtr = c_loc(xArr%mData)
-  sizePtr = product(xArr%mShape)
+  sizePtr = 14674*product(xArr%mShape(:xArr%Rank() - 1))
 
 end subroutine stormArrayUnwrap
 

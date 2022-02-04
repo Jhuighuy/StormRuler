@@ -25,7 +25,7 @@
 #ifndef _STORM_PRECONDITIONER_FACTORY_
 #define _STORM_PRECONDITIONER_FACTORY_
 
-#include <cstring>
+#include <string_view>
 #include <stdexcept>
 
 #include <stormSolvers/stormPreconditioner.hxx>
@@ -54,61 +54,61 @@
 /// ----------------------------------------------------------------- ///
 template<class Vector>
 std::unique_ptr<stormPreconditioner<Vector>>
-    stormMakePreconditioner(stormString_t preType) {
+    stormMakePreconditioner(std::string_view const& preType) {
 
-  if (std::strcmp(preType, STORM_PRE_NONE) == 0) {
+  if (preType == STORM_PRE_NONE) {
 
     return nullptr;
 
-  } else if (std::strcmp(preType, STORM_PRE_ID) == 0) {
+  } else if (preType == STORM_PRE_ID) {
 
     return std::make_unique<stormIdentityPreconditioner<Vector>>();
 
-  } else if (std::strcmp(preType, STORM_PRE_JACOBI) == 0) {
+  } else if (preType == STORM_PRE_JACOBI) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_LU_SGS) == 0) {
+  } else if (preType == STORM_PRE_LU_SGS) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_IC0) == 0) {
+  } else if (preType == STORM_PRE_IC0) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_ICT) == 0) {
+  } else if (preType == STORM_PRE_ICT) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_ILU0) == 0) {
+  } else if (preType == STORM_PRE_ILU0) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_ILUT) == 0) {
+  } else if (preType == STORM_PRE_ILUT) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_AINV0) == 0) {
+  } else if (preType == STORM_PRE_AINV0) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_AINV) == 0) {
+  } else if (preType == STORM_PRE_AINV) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_SPAI0) == 0) {
+  } else if (preType == STORM_PRE_SPAI0) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_SPAI) == 0) {
+  } else if (preType == STORM_PRE_SPAI) {
 
     _STORM_NOT_IMPLEMENTED_();
 
-  } else if (std::strcmp(preType, STORM_PRE_CHEBY) == 0) {
+  } else if (preType == STORM_PRE_CHEBY) {
 
     return std::make_unique<stormChebyshevPreconditioner<Vector>>();
 
-  } else if (std::strcmp(preType, STORM_PRE_KRYLOV) == 0) {
+  } else if (preType == STORM_PRE_KRYLOV) {
 
     _STORM_NOT_IMPLEMENTED_();
 

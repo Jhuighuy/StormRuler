@@ -139,17 +139,15 @@ bool stormIterativeSolver<InVector, OutVector>::
   // Iterate the solver:
   // ----------------------
   bool converged = false;
-  for (Iteration = 0; Iteration < NumIterations; ++Iteration) {
+  for (Iteration = 0; !converged && (Iteration < NumIterations); ++Iteration) {
     AbsoluteError = Iterate(xVec, bVec, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
 
     if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
       converged = true;
-      break;
     }
     if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
       converged = true;
-      break;
     }
 
     if (Iteration % 1 == 0 || converged) {
@@ -166,9 +164,9 @@ bool stormIterativeSolver<InVector, OutVector>::
     rVec.Assign(bVec, false);
     anyOp.MatVec(rVec, xVec);
     stormBlas::Sub(rVec, bVec, rVec);
-    stormReal_t const 
+    stormReal_t const
       trueAbsoluteError = stormBlas::Norm2(rVec),
-      trueRelativeError = trueAbsoluteError/initialError; 
+      trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
     std::cout << "\t----------------------" << std::endl;
@@ -182,7 +180,7 @@ bool stormIterativeSolver<InVector, OutVector>::
 /// @brief Abstract inner-outer iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class InVector, class OutVector = InVector>
-class stormInnerOuterIterativeSolver : 
+class stormInnerOuterIterativeSolver :
     public stormIterativeSolver<InVector, OutVector> {
 public:
   stormSize_t InnerIteration = 0;
@@ -191,15 +189,15 @@ public:
 protected:
 
   /// @brief Initialize the outer iterations.
-  /// 
+  ///
   /// This function is used invoked only once, \
   ///   in the initialization phase.
-  /// 
+  ///
   /// @param xVec Initial guess for the solution vector, 𝒙.
   /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
-  /// 
+  ///
   /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
   virtual stormReal_t OuterInit(InVector const& xVec,
                                 OutVector const& bVec,
@@ -226,7 +224,7 @@ protected:
   /// @param anyOp Equation operator, 𝓐(𝒙).
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
-  /// @returns Residual norm, ‖𝒃 - 𝓐𝒙‖.
+  /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
   virtual stormReal_t InnerIterate(InVector& xVec,
                                    OutVector const& bVec,
                                    stormOperator<InVector, OutVector> const& anyOp,
@@ -246,7 +244,6 @@ protected:
                              stormOperator<InVector, OutVector> const& anyOp,
                              stormPreconditioner<InVector> const* preOp) {}
 
-  
   /// @brief Finalize the outer iterations.
   ///
   /// This function is used invoked only once, \

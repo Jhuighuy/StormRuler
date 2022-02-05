@@ -134,7 +134,7 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // ----------------------
     stormBlas::Add(yVec, yVec, pVec, alpha);
     linOp->MatVec(rVec, yVec);
-    stormBlas::Sub(rVec, xVec, rVec);
+    rVec.Sub(xVec, rVec);
   }
 
 } // stormChebyshevPreconditioner<...>::MatVec

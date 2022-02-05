@@ -79,13 +79,13 @@ stormReal_t stormRichardsonSolver<Vector>::
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  rVec_.Sub(bVec, rVec_);
   if (preOp != nullptr) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 
-  return stormBlas::Norm2(rVec_);
+  return rVec_.Norm2();
 
 } // stormRichardsonSolver<...>::Init
 
@@ -110,13 +110,13 @@ stormReal_t stormRichardsonSolver<Vector>::
   // ----------------------
   stormBlas::Add(xVec, xVec, rVec_, omega);
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  rVec_.Sub(bVec, rVec_);
   if (preOp != nullptr) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 
-  return stormBlas::Norm2(rVec_);
+  return rVec_.Norm2();
 
 } // stormRichardsonSolver<...>::Iterate
 

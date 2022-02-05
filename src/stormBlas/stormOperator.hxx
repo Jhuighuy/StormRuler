@@ -103,6 +103,10 @@ public:
     if (copy) stormSet(Mesh, Array, like.Array);
   }
 
+  stormReal_t Norm2() const {
+    return stormNorm2(Mesh, Array);
+  }
+
   void Fill(stormReal_t a) {
     stormFill(Mesh, Array, a);
   }
@@ -117,6 +121,18 @@ public:
     stormScale(Mesh, Array, y.Array, a);
   }
   
+  void Sub(stormArray const& y, 
+           stormArray const& x) {
+    stormSub(Mesh, Array, y.Array, x.Array);
+  }
+  void Sub(stormArray const& y, 
+           stormArray const& x, stormReal_t a) {
+    stormSub(Mesh, Array, y.Array, x.Array, a);
+  }
+  void Sub(stormArray const& y, stormReal_t b, 
+           stormArray const& x, stormReal_t a) {
+    stormSub(Mesh, Array, y.Array, x.Array, a, b);
+  }
 };
 
 namespace stormUtils {
@@ -133,14 +149,15 @@ namespace stormUtils {
 }
 
 namespace stormBlas {
-  stormReal_t Norm2(stormArray const& z) {
-    return stormNorm2(z.Mesh, z.Array);
-  }
+
   stormReal_t Dot(stormArray const& z, stormArray const& y) {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
-
 #if 0
+  stormReal_t Norm2(stormArray const& z) {
+    return stormNorm2(z.Mesh, z.Array);
+  }
+
   void Set(stormArray& z, stormArray const& y) {
     stormSet(z.Mesh, z.Array, y.Array);
   }
@@ -173,6 +190,7 @@ namespace stormBlas {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 
+#if 0
   void Sub(stormArray& z, 
            stormArray const& y, 
            stormArray const& x) {
@@ -188,6 +206,7 @@ namespace stormBlas {
            stormArray const& x, stormReal_t a) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
+#endif
 }
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

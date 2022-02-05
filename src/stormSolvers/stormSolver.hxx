@@ -163,9 +163,9 @@ bool stormIterativeSolver<InVector, OutVector>::
     OutVector rVec;
     rVec.Assign(bVec, false);
     anyOp.MatVec(rVec, xVec);
-    stormBlas::Sub(rVec, bVec, rVec);
+    rVec.Sub(bVec, rVec);
     stormReal_t const
-      trueAbsoluteError = stormBlas::Norm2(rVec),
+      trueAbsoluteError = rVec.Norm2(),
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
@@ -339,7 +339,7 @@ stormReal_t stormPowerIterations<tArray>::
   // ----------------------
   stormReal_t lambda = 1.0;
   xVec.RandFill();
-  xVec.Scale(1.0/stormBlas::Norm2(xVec));
+  xVec.Scale(1.0/xVec.Norm2());
 
   for (stormSize_t iteration = 0; iteration < maxIterations; ++iteration) {
 
@@ -352,7 +352,7 @@ stormReal_t stormPowerIterations<tArray>::
     linOp.MatVec(yVec, xVec);
     stormReal_t const lambdaBar = lambda;
     lambda = stormBlas::Dot(xVec, yVec);
-    xVec.Scale(yVec, 1.0/stormBlas::Norm2(yVec));
+    xVec.Scale(yVec, 1.0/yVec.Norm2());
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:

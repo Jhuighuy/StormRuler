@@ -92,10 +92,10 @@ stormReal_t stormCgSolver<Vector>::Init(Vector const& xVec,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    stormBlas::Set(pVec_, zVec_);
+    pVec_.Assign(zVec_);
     alpha_ = stormBlas::Dot(rVec_, zVec_);
   } else {
-    stormBlas::Set(pVec_, rVec_);
+    pVec_.Assign(rVec_);
     alpha_ = stormBlas::Dot(rVec_, rVec_);
   }
 

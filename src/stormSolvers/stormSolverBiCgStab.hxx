@@ -101,7 +101,7 @@ stormReal_t stormBiCgStabSolver<Vector>::Init(Vector const& xVec,
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  stormBlas::Set(rTildeVec_, rVec_);
+  rTildeVec_.Assign(rVec_);
   rho_ = stormBlas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
@@ -133,7 +133,7 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(pVec_, rVec_);
+    pVec_.Assign(rVec_);
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);
@@ -272,14 +272,14 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   // 𝒓̃ ← 𝒓₀,
   // 𝜌 ← <𝒓̃⋅𝒓₀>.
   // ----------------------
-  stormBlas::Fill(uVecs_(0), 0.0);
+  uVecs_(0).Fill(0.0);
   linOp.MatVec(rVecs_(0), xVec);
   stormBlas::Sub(rVecs_(0), bVec, rVecs_(0));
   if (preOp != nullptr) {
     std::swap(zVec_, rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);
   }
-  stormBlas::Set(rTildeVec_, rVecs_(0));
+  rTildeVec_.Assign(rVecs_(0));
   rho_ = stormBlas::Dot(rTildeVec_, rVecs_(0));
 
   return std::sqrt(rho_);
@@ -320,7 +320,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(uVecs_(0), rVecs_(0));
+    uVecs_(0).Assign(rVecs_(0));
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVecs_(j));

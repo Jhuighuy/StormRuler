@@ -125,11 +125,11 @@ stormReal_t stormMinresSolver<Vector>::Init(Vector const& xVec,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  stormBlas::Fill(wBarVec, 0.0);
-  stormBlas::Fill(wBarBarVec, 0.0);
+  wBarVec.Fill(0.0);
+  wBarBarVec.Fill(0.0);
   linOp.MatVec(zBarVec, xVec);
   stormBlas::Sub(zBarVec, bVec, zBarVec);
-  stormBlas::Fill(zBarBarVec, 0.0);
+  zBarBarVec.Fill(0.0);
   if (preOp != nullptr) {
     preOp->MatVec(qVec, zBarVec);
   } else {

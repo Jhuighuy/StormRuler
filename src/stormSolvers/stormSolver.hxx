@@ -62,7 +62,7 @@ public:
   stormSize_t NumIterations = 2000;
   stormReal_t AbsoluteError = 0.0, RelativeError = 0.0;
   stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
-  bool VerifySolution = false;
+  bool VerifySolution = true;
 
 public:
   stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
@@ -338,8 +338,8 @@ stormReal_t stormPowerIterations<tArray>::
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
   stormReal_t lambda = 1.0;
-  stormBlas::RandFill(xVec);
-  stormBlas::Scale(xVec, xVec, 1.0/stormBlas::Norm2(xVec));
+  xVec.RandFill();
+  xVec.Scale(1.0/stormBlas::Norm2(xVec));
 
   for (stormSize_t iteration = 0; iteration < maxIterations; ++iteration) {
 
@@ -352,7 +352,7 @@ stormReal_t stormPowerIterations<tArray>::
     linOp.MatVec(yVec, xVec);
     stormReal_t const lambdaBar = lambda;
     lambda = stormBlas::Dot(xVec, yVec);
-    stormBlas::Scale(xVec, yVec, 1.0/stormBlas::Norm2(yVec));
+    xVec.Scale(yVec, 1.0/stormBlas::Norm2(yVec));
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:

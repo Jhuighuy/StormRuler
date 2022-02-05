@@ -95,7 +95,7 @@ stormReal_t stormCgsSolver<Vector>::Init(Vector const& xVec,
     std::swap(uVec_, rVec_);
     preOp->MatVec(rVec_, uVec_);
   }
-  stormBlas::Set(rTildeVec_, rVec_);
+  rTildeVec_.Assign(rVec_);
   rho_ = stormBlas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
@@ -129,8 +129,8 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(uVec_, rVec_);
-    stormBlas::Set(pVec_, uVec_);
+    uVec_.Assign(rVec_);
+    pVec_.Assign(uVec_);
   } else {
     stormReal_t const rhoBar = rho_; 
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);

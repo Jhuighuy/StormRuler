@@ -148,9 +148,9 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    stormBlas::Set(dVec_, xVec);
+    dVec_.Assign(xVec);
   } else {
-    stormBlas::Fill(dVec_, 0.0);
+    dVec_.Fill(0.0);
   }
   linOp.MatVec(yVec_, xVec);
   stormBlas::Sub(yVec_, bVec, yVec_);
@@ -158,8 +158,8 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
     std::swap(zVec_, yVec_);
     preOp->MatVec(yVec_, zVec_);
   }
-  stormBlas::Set(uVec_, yVec_);
-  stormBlas::Set(rTildeVec_, uVec_);
+  uVec_.Assign(yVec_);
+  rTildeVec_.Assign(uVec_);
   rho_ = stormBlas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
 
   return tau_;
@@ -214,7 +214,7 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    stormBlas::Set(vVec_, sVec_);
+    vVec_.Assign(sVec_);
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, uVec_);
@@ -269,14 +269,14 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
     stormReal_t const omega = stormBlas::Norm2(uVec_);
     if constexpr (L1) {
       if (omega < tau_) {
-        tau_ = omega, stormBlas::Set(xVec, dVec_);
+        tau_ = omega, xVec.Assign(dVec_);
       }
     } else {
       auto const [cs, sn, rr] =
         stormBlas::SymOrtho(tau_, omega);
       tau_ = omega*cs;
       stormBlas::Add(xVec, xVec, dVec_, std::pow(cs, 2));
-      stormBlas::Scale(dVec_, dVec_, std::pow(sn, 2));
+      dVec_.Scale(std::pow(sn, 2));
     }
     if (m == 0) {
       stormBlas::Sub(yVec_, yVec_, vVec_, alpha);

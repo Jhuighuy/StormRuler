@@ -133,7 +133,7 @@ void do_the_thing(stormSparseRowMatrix<stormReal_t>& mMat,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (stormSize_t k = 0; k < m; ++k) {
-    stormBlas::Fill(pVec_, 0.0);
+    pVec_.Fill(0.0);
     for (stormSize_t i = k; i < n; i += m) {
       pVec_(i) = 1.0;
     }

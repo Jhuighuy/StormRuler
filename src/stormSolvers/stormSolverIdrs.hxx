@@ -154,17 +154,16 @@ void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    stormBlas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
+    pVecs_(0).Scale(rVec_, 1.0/phi_(0));
     for (stormSize_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      stormBlas::RandFill(pVecs_(i));
+      pVecs_(i).RandFill();
       for (stormSize_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
         stormBlas::Sub(pVecs_(i), pVecs_(i),
           pVecs_(j), stormBlas::Dot(pVecs_(i), pVecs_(j)));
       }
-      stormBlas::Scale(pVecs_(i),
-        pVecs_(i), 1.0/stormBlas::Norm2(pVecs_(i)));
+      pVecs_(i).Scale(1.0/stormBlas::Norm2(pVecs_(i)));
     }
   } else {
     for (stormSize_t i = 0; i < s; ++i) {

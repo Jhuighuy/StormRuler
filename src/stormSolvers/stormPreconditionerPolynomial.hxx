@@ -92,8 +92,8 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
   // 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   // ----------------------
-  stormBlas::Set(rVec, xVec);
-  stormBlas::Fill(yVec, 0.0);
+  rVec.Assign(xVec);
+  yVec.Fill(0.0);
   const stormReal_t c = 0.5*(lambdaMax - lambdaMin);
   const stormReal_t d = 0.5*(lambdaMax + lambdaMin);
 
@@ -114,7 +114,7 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // ----------------------
     if (iteration == 0) {
       alpha = 1.0/d;
-      stormBlas::Set(pVec, rVec);
+      pVec.Assign(rVec);
     } else {
       stormReal_t beta;
       if (iteration == 2) {

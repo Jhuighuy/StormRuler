@@ -83,14 +83,6 @@ public:
     return Data_[index];
   }
 
-  void Assign(stormArray const& like, bool copy = true) {
-    this->~stormArray();
-    Mesh = like.Mesh;
-    Array = stormAllocLike(like.Array);
-    stormArrayUnwrap(Array, &Data_, &Size_);
-    if (copy) stormSet(Mesh, Array, like.Array);
-  }
-
   stormArray& operator=(stormArray&& oth) {
     this->~stormArray();
     new(this) stormArray(std::forward<stormArray>(oth));
@@ -101,6 +93,30 @@ public:
     new(this) stormArray(oth);
     return *this;
   }
+
+  void Assign(stormArray const& like, bool copy = true) {
+    if (Array == nullptr) {
+      Mesh = like.Mesh;
+      Array = stormAllocLike(like.Array);
+      stormArrayUnwrap(Array, &Data_, &Size_);
+    }
+    if (copy) stormSet(Mesh, Array, like.Array);
+  }
+
+  void Fill(stormReal_t a) {
+    stormFill(Mesh, Array, a);
+  }
+  void RandFill() {
+    stormRandFill(Mesh, Array);
+  }
+
+  void Scale(stormReal_t a) {
+    stormScale(Mesh, Array, Array, a);
+  }
+  void Scale(stormArray const& y, stormReal_t a) {
+    stormScale(Mesh, Array, y.Array, a);
+  }
+  
 };
 
 namespace stormUtils {
@@ -124,6 +140,7 @@ namespace stormBlas {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
 
+#if 0
   void Set(stormArray& z, stormArray const& y) {
     stormSet(z.Mesh, z.Array, y.Array);
   }
@@ -138,6 +155,7 @@ namespace stormBlas {
   void Scale(stormArray& z, stormArray const& y, stormReal_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
+#endif
 
   void Add(stormArray& z, 
            stormArray const& y, 
@@ -154,11 +172,6 @@ namespace stormBlas {
            stormArray const& x, stormReal_t a) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
-  [[deprecated]]
-  void Add(stormArray& z, stormArray const& y, stormArray const& x, 
-          stormReal_t a, stormReal_t b) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
 
   void Sub(stormArray& z, 
            stormArray const& y, 
@@ -173,11 +186,6 @@ namespace stormBlas {
   void Sub(stormArray& z, 
            stormArray const& y, stormReal_t b, 
            stormArray const& x, stormReal_t a) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-  [[deprecated]]
-  void Sub(stormArray& z, stormArray const& y, stormArray const& x, 
-          stormReal_t a, stormReal_t b) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 }

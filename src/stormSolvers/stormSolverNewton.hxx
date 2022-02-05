@@ -153,7 +153,7 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
   stormReal_t const mu = 
     sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
-  stormBlas::Set(tVec_, rVec_);
+  tVec_.Assign(rVec_);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!

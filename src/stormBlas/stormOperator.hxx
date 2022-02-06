@@ -120,7 +120,32 @@ public:
   void Scale(stormArray const& y, stormReal_t a) {
     stormScale(Mesh, Array, y.Array, a);
   }
-  
+
+  void Add(stormArray const& y) {
+    stormAdd(Mesh, Array, Array, y.Array);
+  }
+  void Add(stormArray const& y, stormReal_t b) {
+    stormAdd(Mesh, Array, Array, y.Array, b);
+  }
+  void Add(stormArray const& y, 
+           stormArray const& x) {
+    stormAdd(Mesh, Array, y.Array, x.Array);
+  }
+  void Add(stormArray const& y, 
+           stormArray const& x, stormReal_t a) {
+    stormAdd(Mesh, Array, y.Array, x.Array, a);
+  }
+  void Add(stormArray const& y, stormReal_t b, 
+           stormArray const& x, stormReal_t a) {
+    stormAdd(Mesh, Array, y.Array, x.Array, a, b);
+  }
+
+  void Sub(stormArray const& y) {
+    stormSub(Mesh, Array, Array, y.Array);
+  }
+  void Sub(stormArray const& y, stormReal_t b) {
+    stormSub(Mesh, Array, Array, y.Array, b);
+  }
   void Sub(stormArray const& y, 
            stormArray const& x) {
     stormSub(Mesh, Array, y.Array, x.Array);
@@ -172,7 +197,6 @@ namespace stormBlas {
   void Scale(stormArray& z, stormArray const& y, stormReal_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
-#endif
 
   void Add(stormArray& z, 
            stormArray const& y, 
@@ -190,7 +214,6 @@ namespace stormBlas {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 
-#if 0
   void Sub(stormArray& z, 
            stormArray const& y, 
            stormArray const& x) {

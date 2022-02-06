@@ -123,7 +123,7 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
         beta = std::pow(0.5*c*alpha, 2);
       }
       alpha /= (d*alpha - beta);
-      stormBlas::Add(pVec, rVec, pVec, beta);
+      pVec.Add(rVec, pVec, beta);
     }
 
     // ----------------------
@@ -132,7 +132,7 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // 𝒓 ← 𝓐𝒚,
     // 𝒓 ← 𝒙 - 𝒓.
     // ----------------------
-    stormBlas::Add(yVec, yVec, pVec, alpha);
+    yVec.Add(pVec, alpha);
     linOp->MatVec(rVec, yVec);
     rVec.Sub(xVec, rVec);
   }

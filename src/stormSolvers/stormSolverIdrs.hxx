@@ -160,7 +160,7 @@ void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
       pVecs_(i).RandFill();
       for (stormSize_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
-        pVecs_(i).Sub(pVecs_(i), pVecs_(j), stormBlas::Dot(pVecs_(i), pVecs_(j)));
+        pVecs_(i).Sub(pVecs_(j), stormBlas::Dot(pVecs_(i), pVecs_(j)));
       }
       pVecs_(i).Scale(1.0/pVecs_(i).Norm2());
     }
@@ -220,15 +220,15 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   vVec_.Sub(rVec_, gVecs_(k), gamma_(k));
   for (stormSize_t i = k + 1; i < s; ++i) {
-    vVec_.Sub(vVec_, gVecs_(i), gamma_(i));
+    vVec_.Sub(gVecs_(i), gamma_(i));
   }
   if (rightPre) {
     std::swap(zVec_, vVec_);
     preOp->MatVec(vVec_, zVec_);
   }
-  stormBlas::Add(uVecs_(k), uVecs_(k), gamma_(k), vVec_, omega_);
+  uVecs_(k).Add(uVecs_(k), gamma_(k), vVec_, omega_);
   for (stormSize_t i = k + 1; i < s; ++i) {
-    stormBlas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
+    uVecs_(k).Add(uVecs_(i), gamma_(i));
   }
   if (leftPre) {
     stormBlas::MatVec(gVecs_(k), *preOp, zVec_, linOp, uVecs_(k));
@@ -247,8 +247,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   for (stormSize_t i = 0; i < k; ++i) {
     stormReal_t const alpha =
       stormUtils::SafeDivide(stormBlas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
-    uVecs_(k).Sub(uVecs_(k), uVecs_(i), alpha);
-    gVecs_(k).Sub(gVecs_(k), gVecs_(i), alpha);
+    uVecs_(k).Sub(uVecs_(i), alpha);
+    gVecs_(k).Sub(gVecs_(i), alpha);
   }
 
   // ----------------------
@@ -269,8 +269,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   stormReal_t const beta = 
     stormUtils::SafeDivide(phi_(k), mu_(k, k));
-  stormBlas::Add(xVec, xVec, uVecs_(k), beta);
-  rVec_.Sub(rVec_, gVecs_(k), beta);
+  xVec.Add(uVecs_(k), beta);
+  rVec_.Sub(gVecs_(k), beta);
 
   // ----------------------
   // Update 𝜑:
@@ -303,8 +303,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
     }
     omega_ = stormUtils::SafeDivide(
       stormBlas::Dot(vVec_, rVec_), stormBlas::Dot(vVec_, vVec_));
-    stormBlas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
-    rVec_.Sub(rVec_, vVec_, omega_);
+    xVec.Add(rightPre ? zVec_ : rVec_, omega_);
+    rVec_.Sub(vVec_, omega_);
   }
 
   return rVec_.Norm2();

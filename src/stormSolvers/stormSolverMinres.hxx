@@ -195,7 +195,7 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   wVec.Sub(qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
   wVec.Sub(wVec, wBarBarVec, epsilonBar/gamma);
-  stormBlas::Add(xVec, xVec, wVec, tau);
+  xVec.Add(wVec, tau);
   std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
 
   return phi;

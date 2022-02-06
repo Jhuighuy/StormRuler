@@ -108,7 +108,7 @@ stormReal_t stormRichardsonSolver<Vector>::
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Add(xVec, xVec, rVec_, omega);
+  xVec.Add(rVec_, omega);
   linOp.MatVec(rVec_, xVec);
   rVec_.Sub(bVec, rVec_);
   if (preOp != nullptr) {

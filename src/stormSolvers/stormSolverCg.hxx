@@ -120,8 +120,8 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   linOp.MatVec(zVec_, pVec_);
   stormReal_t const alphaBar = alpha_;
   stormUtils::SafeDivideEquals(alpha_, stormBlas::Dot(pVec_, zVec_));
-  stormBlas::Add(xVec, xVec, pVec_, alpha_);
-  rVec_.Sub(rVec_, zVec_, alpha_);
+  xVec.Add(pVec_, alpha_);
+  rVec_.Sub(zVec_, alpha_);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -143,7 +143,7 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   stormReal_t const beta = stormUtils::SafeDivide(alpha_, alphaBar);
-  stormBlas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
+  pVec_.Add(preOp != nullptr ? zVec_ : rVec_, pVec_, beta);
 
   return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(alpha_);
 

@@ -139,8 +139,8 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);
     stormReal_t const beta =
       stormUtils::SafeDivide(rho_, rhoBar)*stormUtils::SafeDivide(alpha_, omega_);
-    pVec_.Sub(pVec_, vVec_, omega_);
-    stormBlas::Add(pVec_, rVec_, pVec_, beta);
+    pVec_.Sub(vVec_, omega_);
+    pVec_.Add(rVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -164,8 +164,8 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
     linOp.MatVec(vVec_, pVec_);
   }
   alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
-  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : pVec_, alpha_);
-  rVec_.Sub(rVec_, vVec_, alpha_);
+  xVec.Add(rightPre ? zVec_ : pVec_, alpha_);
+  rVec_.Sub(vVec_, alpha_);
 
   // ----------------------
   // Update the solution and the residual again:
@@ -189,8 +189,8 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
   }
   omega_ = stormUtils::SafeDivide(
     stormBlas::Dot(tVec_, rVec_), stormBlas::Dot(tVec_, tVec_));
-  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
-  rVec_.Sub(rVec_, tVec_, omega_);
+  xVec.Add(rightPre ? zVec_ : rVec_, omega_);
+  rVec_.Sub(tVec_, omega_);
 
   return rVec_.Norm2();
 
@@ -337,7 +337,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   }
   alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, uVecs_(j + 1)));
   for (stormSize_t i = 0; i <= j; ++i) {
-    rVecs_(i).Sub(rVecs_(i), uVecs_(i + 1), alpha_);
+    rVecs_(i).Sub(uVecs_(i + 1), alpha_);
   }
 
   // ----------------------
@@ -349,7 +349,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   //   𝒓ⱼ₊₁ ← 𝓐𝒓ⱼ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Add(xVec, xVec, uVecs_(0), alpha_);
+  xVec.Add(uVecs_(0), alpha_);
   if (preOp != nullptr) {
     stormBlas::MatVec(rVecs_(j + 1), *preOp, zVec_, linOp, rVecs_(j));
   } else {
@@ -372,7 +372,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
       for (stormSize_t i = 1; i < j; ++i) {
         tau_(i, j) = 
           stormUtils::SafeDivide(stormBlas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
-        rVecs_(j).Sub(rVecs_(j), rVecs_(i), tau_(i, j));
+        rVecs_(j).Sub(rVecs_(i), tau_(i, j));
       }
       sigma_(j) = stormBlas::Dot(rVecs_(j), rVecs_(j));
       gammaBar_(j) = 
@@ -419,13 +419,13 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     //   𝒖₀ ← 𝒖₀ - 𝛾ⱼ⋅𝒖ⱼ.
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    stormBlas::Add(xVec, xVec, rVecs_(0), gamma_(1));
-    rVecs_(0).Sub(rVecs_(0), rVecs_(l), gammaBar_(l));
-    uVecs_(0).Sub(uVecs_(0), uVecs_(l), gamma_(l));
+    xVec.Add(rVecs_(0), gamma_(1));
+    rVecs_(0).Sub(rVecs_(l), gammaBar_(l));
+    uVecs_(0).Sub(uVecs_(l), gamma_(l));
     for (stormSize_t j = 1; j < l; ++j) {
-      stormBlas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
-      rVecs_(0).Sub(rVecs_(0), rVecs_(j), gammaBar_(j));
-      uVecs_(0).Sub(uVecs_(0), uVecs_(j), gamma_(j));
+      xVec.Add(rVecs_(j), gammaBarBar_(j));
+      rVecs_(0).Sub(rVecs_(j), gammaBar_(j));
+      uVecs_(0).Sub(uVecs_(j), gamma_(j));
     }
   }
 

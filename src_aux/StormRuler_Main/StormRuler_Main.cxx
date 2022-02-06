@@ -128,12 +128,14 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
 static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
+#if !YURI
   stormApplyBCs_InOutLet(mesh, v, 2);
+#endif
   stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
 #if YURI
-stormSize_t slice = 983, num_slices = 1000;
+stormSize_t slice = 983 + 1, num_slices = 1000;
 stormVector<double> phi_set;
 stormVector<double> alpha_sandwich;
 stormMatrix<double> D1_W_vs_phi_sandwich;
@@ -233,7 +235,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       STORM_KSP_BiCGStab,
       STORM_PRE_NONE/*"extr"*/, 
 #else
-      STORM_KSP_CGS,
+      STORM_KSP_IDRs,
       STORM_PRE_NONE/*"extr"*/,
 #endif
     c_hat, rhs,
@@ -254,7 +256,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -345,12 +347,11 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
     double alpha = alpha_sandwich(slice);
     slice_info.open("slices.txt");
     slice_info << "Starting from slice " << slice << std::endl;
-    slice_info << "N2_cur = " << N2_cur << " N2_min/max = " << N2_min << " " << N2_max << std::endl;
     slice_info << "V_hat = " << V_hat << " alpha = " << alpha << std::endl; 
     slice_info << std::endl;
   }
   //double alpha_dot = (V_hat - V)/tau;
-  double A = 0.0133*0.0001;
+  double A = 0.0133/4.55;
   N2_cur = N2_cur + tau*n_part_vs_phi_sandwich(slice, 100, 1)*A;
   N2_cur = max(min(N2_cur, N2_max), N2_min);
   auto new_slice = (stormSize_t)std::round((N2_cur - N2_min)/(N2_max - N2_min)*(num_slices - 1));
@@ -360,9 +361,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
     double alpha = alpha_sandwich(new_slice);
     slice_info.open("slices.txt", std::ios_base::app);
     slice_info << "Change from slice " << slice << " to " << new_slice << std::endl;
-    slice_info << "N2_cur = " << N2_cur << " N2_min/max = " << N2_min << " " << N2_max << std::endl;
     slice_info << "V_hat = " << V_hat << " alpha = " << alpha << std::endl;
-    slice_info << "n_part_vs_phi_sandwich(slice, 100, 2) = " << n_part_vs_phi_sandwich(slice, 100, 1) << std::endl;
     slice_info << std::endl;
   }
   slice = new_slice;
@@ -483,8 +482,6 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
 } // Initial_Data
 
 int main() {
-
-  static_assert(sizeof(stormShape<1, 2, 3>{}) == 1);
 
 #if YURI
   phi_set.Assign(101);

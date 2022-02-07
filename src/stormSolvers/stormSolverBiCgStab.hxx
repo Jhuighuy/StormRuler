@@ -27,9 +27,12 @@
 
 #include <cmath>
 
+#include <stormBase.hxx>
 #include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the good old \
@@ -50,31 +53,31 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormBiCgStabSolver final : public stormIterativeSolver<Vector> {
+class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
-  stormReal_t alpha_, rho_, omega_;
+  Real_t alpha_, rho_, omega_;
   Vector pVec_, rVec_, rTildeVec_, tVec_, vVec_, zVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormBiCgStabSolver<...>
+}; // class BiCgStabSolver<...>
 
 template<class Vector>
-stormReal_t stormBiCgStabSolver<Vector>::Init(Vector const& xVec,
-                                              Vector const& bVec,
-                                              stormOperator<Vector> const& linOp,
-                                              stormPreconditioner<Vector> const* preOp) {
+Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
+                                    Vector const& bVec,
+                                    Operator<Vector> const& linOp,
+                                    Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
 
   pVec_.Assign(xVec, false);
   rVec_.Assign(xVec, false);
@@ -106,18 +109,18 @@ stormReal_t stormBiCgStabSolver<Vector>::Init(Vector const& xVec,
 
   return std::sqrt(rho_);
 
-} // stormBiCgStabSolver<...>::Init
+} // BiCgStabSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
-                                                 Vector const& bVec,
-                                                 stormOperator<Vector> const& linOp,
-                                                 stormPreconditioner<Vector> const* preOp) {
+Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
+                                       Vector const& bVec,
+                                       Operator<Vector> const& linOp,
+                                       Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
   bool const rightPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Right);
+    (this->PreSide == PreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -135,9 +138,9 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
   if (firstIteration) {
     stormBlas::Set(pVec_, rVec_);
   } else {
-    stormReal_t const rhoBar = rho_;
+    Real_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);
-    stormReal_t const beta =
+    Real_t const beta =
       stormUtils::SafeDivide(rho_, rhoBar)*stormUtils::SafeDivide(alpha_, omega_);
     stormBlas::Sub(pVec_, pVec_, vVec_, omega_);
     stormBlas::Add(pVec_, rVec_, pVec_, beta);
@@ -194,7 +197,7 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
 
   return stormBlas::Norm2(rVec_);
 
-} // stormBiCgStabSolver<...>::Iterate
+} // BiCgStabSolver<...>::Iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the \
@@ -212,40 +215,39 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormBiCGStabLSolver final : public stormInnerOuterIterativeSolver<Vector> {
+class BiCGStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
-  stormReal_t alpha_, rho_, omega_;
-  stormVector<stormReal_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
-  stormMatrix<stormReal_t> tau_;
+  Real_t alpha_, rho_, omega_;
+  stormVector<Real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
+  stormMatrix<Real_t> tau_;
   Vector rTildeVec_, zVec_;
   stormSubspace<Vector> rVecs_, uVecs_;
 
-  stormReal_t OuterInit(Vector const& xVec,
-                        Vector const& bVec,
-                        stormOperator<Vector> const& linOp,
-                        stormPreconditioner<Vector> const* preOp) override;
+  Real_t OuterInit(Vector const& xVec,
+                   Vector const& bVec,
+                   Operator<Vector> const& linOp,
+                   Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t InnerIterate(Vector& xVec,
-                           Vector const& bVec,
-                           stormOperator<Vector> const& linOp,
-                           stormPreconditioner<Vector> const* preOp) override;
+  Real_t InnerIterate(Vector& xVec,
+                      Vector const& bVec,
+                      Operator<Vector> const& linOp,
+                      Preconditioner<Vector> const* preOp) override;
 
 public:
 
-  stormBiCGStabLSolver() {
+  BiCGStabLSolver() {
     this->NumInnerIterations = 2;
   }
 
-}; // class stormBiCGStabLSolver<...>
+}; // class BiCGStabLSolver<...>
 
 template<class Vector>
-stormReal_t stormBiCGStabLSolver<Vector>::
-                OuterInit(Vector const& xVec,
-                          Vector const& bVec,
-                          stormOperator<Vector> const& linOp,
-                          stormPreconditioner<Vector> const* preOp) {
+Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
+                                          Vector const& bVec,
+                                          Operator<Vector> const& linOp,
+                                          Preconditioner<Vector> const* preOp) {
 
-  stormSize_t const l = this->NumInnerIterations;
+  Size_t const l = this->NumInnerIterations;
 
   gamma_.Assign(l + 1);
   gammaBar_.Assign(l + 1);
@@ -284,17 +286,16 @@ stormReal_t stormBiCGStabLSolver<Vector>::
 
   return std::sqrt(rho_);
 
-} // stormBiCGStabLSolver<...>::OuterInit
+} // BiCGStabLSolver<...>::OuterInit
 
 template<class Vector>
-stormReal_t stormBiCGStabLSolver<Vector>::
-                    InnerIterate(Vector& xVec,
-                                 Vector const& bVec,
-                                 stormOperator<Vector> const& linOp,
-                                 stormPreconditioner<Vector> const* preOp) {
+Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
+                                             Vector const& bVec,
+                                             Operator<Vector> const& linOp,
+                                             Preconditioner<Vector> const* preOp) {
 
-  stormSize_t const l = this->NumInnerIterations;
-  stormSize_t const j = this->InnerIteration;
+  Size_t const l = this->NumInnerIterations;
+  Size_t const j = this->InnerIteration;
 
   // ----------------------
   // BiCG part:
@@ -322,11 +323,11 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   if (firstIteration) {
     stormBlas::Set(uVecs_(0), rVecs_(0));
   } else {
-    stormReal_t const rhoBar = rho_;
+    Real_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVecs_(j));
-    stormReal_t const beta =
+    Real_t const beta =
       alpha_*stormUtils::SafeDivide(rho_, rhoBar);
-    for (stormSize_t i = 0; i <= j; ++i) {
+    for (Size_t i = 0; i <= j; ++i) {
       stormBlas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
     }
   }
@@ -336,7 +337,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
   alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, uVecs_(j + 1)));
-  for (stormSize_t i = 0; i <= j; ++i) {
+  for (Size_t i = 0; i <= j; ++i) {
     stormBlas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
   }
 
@@ -368,8 +369,8 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     //   𝛾̅ⱼ ← <𝒓₀⋅𝒓ⱼ>/𝜎ⱼ,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    for (stormSize_t j = 1; j <= l; ++j) {
-      for (stormSize_t i = 1; i < j; ++i) {
+    for (Size_t j = 1; j <= l; ++j) {
+      for (Size_t i = 1; i < j; ++i) {
         tau_(i, j) = 
           stormUtils::SafeDivide(stormBlas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
         stormBlas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
@@ -395,15 +396,15 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     omega_ = gamma_(l) = gammaBar_(l), rho_ *= -omega_;
-    for (stormSize_t j = l - 1; j != 0; --j) {
+    for (Size_t j = l - 1; j != 0; --j) {
       gamma_(j) = gammaBar_(j);
-      for (stormSize_t i = j + 1; i <= l; ++i) {
+      for (Size_t i = j + 1; i <= l; ++i) {
         gamma_(j) -= tau_(j, i)*gamma_(i);
       }
     }
-    for (stormSize_t j = 1; j < l; ++j) {
+    for (Size_t j = 1; j < l; ++j) {
       gammaBarBar_(j) = gamma_(j + 1);
-      for (stormSize_t i = j + 1; i < l; ++i) {
+      for (Size_t i = j + 1; i < l; ++i) {
         gammaBarBar_(j) += tau_(j, i)*gamma_(i + 1);
       }
     }
@@ -422,7 +423,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     stormBlas::Add(xVec, xVec, rVecs_(0), gamma_(1));
     stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(l), gammaBar_(l));
     stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(l), gamma_(l));
-    for (stormSize_t j = 1; j < l; ++j) {
+    for (Size_t j = 1; j < l; ++j) {
       stormBlas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
       stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(j), gammaBar_(j));
       stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(j), gamma_(j));
@@ -431,6 +432,8 @@ stormReal_t stormBiCGStabLSolver<Vector>::
 
   return stormBlas::Norm2(rVecs_(0));
 
-} // stormBiCGStabLSolver<...>::InnerIterate
+} // BiCGStabLSolver<...>::InnerIterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_BICGSTAB_

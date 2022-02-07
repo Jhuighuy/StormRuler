@@ -27,7 +27,10 @@
 
 #include <cmath>
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
@@ -45,28 +48,28 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormCgSolver final : public stormIterativeSolver<Vector> {
+class CgSolver final : public IterativeSolver<Vector> {
 private:
-  stormReal_t alpha_;
+  Real_t alpha_;
   Vector pVec_, rVec_, zVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormCgSolver<...>
+}; // class CgSolver<...>
 
 template<class Vector>
-stormReal_t stormCgSolver<Vector>::Init(Vector const& xVec,
-                                        Vector const& bVec,
-                                        stormOperator<Vector> const& linOp,
-                                        stormPreconditioner<Vector> const* preOp) {
+Real_t CgSolver<Vector>::Init(Vector const& xVec,
+                              Vector const& bVec,
+                              Operator<Vector> const& linOp,
+                              Preconditioner<Vector> const* preOp) {
 
   pVec_.Assign(xVec, false);
   rVec_.Assign(xVec, false);
@@ -101,13 +104,13 @@ stormReal_t stormCgSolver<Vector>::Init(Vector const& xVec,
 
   return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
 
-} // stormCgSolver<...>::Init
+} // CgSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
-                                           Vector const& bVec,
-                                           stormOperator<Vector> const& linOp,
-                                           stormPreconditioner<Vector> const* preOp) {
+Real_t CgSolver<Vector>::Iterate(Vector& xVec,
+                                 Vector const& bVec,
+                                 Operator<Vector> const& linOp,
+                                 Preconditioner<Vector> const* preOp) {
 
   // ----------------------
   // Iterate:
@@ -118,7 +121,7 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
-  stormReal_t const alphaBar = alpha_;
+  Real_t const alphaBar = alpha_;
   stormUtils::SafeDivideEquals(alpha_, stormBlas::Dot(pVec_, zVec_));
   stormBlas::Add(xVec, xVec, pVec_, alpha_);
   stormBlas::Sub(rVec_, rVec_, zVec_, alpha_);
@@ -142,11 +145,13 @@ stormReal_t stormCgSolver<Vector>::Iterate(Vector& xVec,
   // 𝛽 ← 𝛼/𝛼̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  stormReal_t const beta = stormUtils::SafeDivide(alpha_, alphaBar);
+  Real_t const beta = stormUtils::SafeDivide(alpha_, alphaBar);
   stormBlas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
 
   return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
 
-} // stormCgSolver<...>::Iterate
+} // CgSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_CG_HXX_

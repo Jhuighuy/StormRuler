@@ -27,7 +27,10 @@
 
 #include <limits>
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 #if 0
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -52,20 +55,20 @@
 /// [1] ???
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector, class tOperator>
-class stormNewtonSolver : public stormIterativeSolver<Vector, tOperator> {
+template<class Vector>
+class NewtonSolver : public IterativeSolver<Vector, tOperator> {
 private:
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   tOperator const& anyOp,
-                   tOperator const* preOp) override final;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& anyOp,
+              Preconditioner<Vector> const* preOp) override final;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      tOperator const& anyOp,
-                      tOperator const* preOp) override final;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& anyOp,
+                 Preconditioner<Vector> const* preOp) override final;
 
-}; // class stormNewtonSolver<...>
+}; // class NewtonSolver<...>
 #endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -99,27 +102,27 @@ private:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormJfnkSolver final : public stormIterativeSolver<Vector> {
+class JfnkSolver final : public IterativeSolver<Vector> {
 private:
   Vector sVec_, tVec_, rVec_, wVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormJfnkSolver<...>
+}; // class JfnkSolver<...>
 
 template<class Vector>
-stormReal_t stormJfnkSolver<Vector>::Init(Vector const& xVec,
-                                          Vector const& bVec,
-                                          stormOperator<Vector> const& linOp,
-                                          stormPreconditioner<Vector> const* preOp) {
+Real_t JfnkSolver<Vector>::Init(Vector const& xVec,
+                                Vector const& bVec,
+                                Operator<Vector> const& linOp,
+                                Preconditioner<Vector> const* preOp) {
 
   sVec_.Assign(xVec, false);
   tVec_.Assign(xVec, false);
@@ -135,13 +138,13 @@ stormReal_t stormJfnkSolver<Vector>::Init(Vector const& xVec,
 
   return stormBlas::Norm2(rVec_);  
 
-} // stormJfnkSolver<...>::Init
+} // JfnkSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
-                                             Vector const& bVec,
-                                             stormOperator<Vector> const& linOp,
-                                             stormPreconditioner<Vector> const* preOp) {
+Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
+                                   Vector const& bVec,
+                                   Operator<Vector> const& linOp,
+                                   Preconditioner<Vector> const* preOp) {
 
   // ----------------------
   // Solve the Jacobian equation:
@@ -149,9 +152,9 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
   // 𝒕 ← 𝒓,
   // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
   // ----------------------
-  static stormReal_t const sqrtOfEpsilon = 
-    std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
-  stormReal_t const mu = 
+  static Real_t const sqrtOfEpsilon = 
+    std::sqrt(std::numeric_limits<Real_t>::epsilon());
+  Real_t const mu = 
     sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
   stormBlas::Set(tVec_, rVec_);
   {
@@ -159,11 +162,11 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
     /// @todo equation parameters!
     //call jacConvParams%Init(1e-8_dp, 1e-8_dp, 2000, 'Newton')
     //call LinSolve(mesh, 'GMRES', '', tVec_, rVec_, ApproxJacobianMatVecWithX, jacConvParams)
-    auto solver = std::make_unique<stormBiCgStabSolver<Vector>>();
+    auto solver = std::make_unique<BiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
     auto op = stormMakeOperator<Vector>(
-      [&](stormArray& zVec, stormArray const& yVec) {
+      [&](Vector& zVec, Vector const& yVec) {
 
         // ----------------------
         // Compute the Jacobian-vector product:
@@ -172,11 +175,11 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
         // 𝒛 ← 𝓐(𝒔),
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
-        stormReal_t const delta = 
+        Real_t const delta = 
           stormUtils::SafeDivide(mu, stormBlas::Norm2(yVec));
         stormBlas::Add(sVec_, xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
-        stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
+        Real_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
         stormBlas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
 
       });
@@ -195,6 +198,8 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
 
   return stormBlas::Norm2(rVec_);  
 
-} // stormJfnkSolver<...>::Iterate
+} // JfnkSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_NEWTON_HXX_

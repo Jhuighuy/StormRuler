@@ -29,14 +29,24 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <stormBase.hxx>
 #include <stormBlas/stormOperator.hxx>
 #include <stormSolvers/stormPreconditioner.hxx>
+
+_STORM_NAMESPACE_BEGIN_
+
+template<class InVector, class OutVector = InVector>
+using Operator = stormOperator<InVector, OutVector>;
+
+using PreconditionerSide = stormPreconditionerSide;
+template<class Vector>
+using Preconditioner = stormPreconditioner<Vector>;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class InVector, class OutVector = InVector>
-class stormSolver : public stormBaseObject {
+class Solver : public stormBaseObject {
 public:
 
   /// @brief Solve the operator equation 𝓐(𝒙) = 𝒃.
@@ -48,25 +58,25 @@ public:
   /// @returns Status of operation.
   virtual bool Solve(InVector& xVec,
                      OutVector const& bVec,
-                     stormOperator<InVector, OutVector> const& anyOp) = 0;
+                     Operator<InVector, OutVector> const& anyOp) = 0;
 
-}; // class stormSolver<...>
+}; // class Solver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class InVector, class OutVector = InVector>
-class stormIterativeSolver : public stormSolver<InVector, OutVector> {
+class IterativeSolver : public Solver<InVector, OutVector> {
 public:
-  stormSize_t Iteration = 0;
-  stormSize_t NumIterations = 2000;
-  stormReal_t AbsoluteError = 0.0, RelativeError = 0.0;
-  stormReal_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
+  Size_t Iteration = 0;
+  Size_t NumIterations = 2000;
+  Real_t AbsoluteError = 0.0, RelativeError = 0.0;
+  Real_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
   bool VerifySolution = false;
 
 public:
-  stormPreconditionerSide PreSide = stormPreconditionerSide::Right;
-  std::unique_ptr<stormPreconditioner<InVector>> PreOp = nullptr;
+  PreconditionerSide PreSide = PreconditionerSide::Right;
+  std::unique_ptr<Preconditioner<InVector>> PreOp = nullptr;
 
 protected:
 
@@ -78,10 +88,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual stormReal_t Init(InVector const& xVec,
-                           OutVector const& bVec,
-                           stormOperator<InVector, OutVector> const& anyOp,
-                           stormPreconditioner<InVector> const* preOp) = 0;
+  virtual Real_t Init(InVector const& xVec,
+                      OutVector const& bVec,
+                      Operator<InVector, OutVector> const& anyOp,
+                      stormPreconditioner<InVector> const* preOp) = 0;
 
   /// @brief Iterate the solver.
   ///
@@ -91,10 +101,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual stormReal_t Iterate(InVector& xVec,
-                              OutVector const& bVec,
-                              stormOperator<InVector, OutVector> const& anyOp,
-                              stormPreconditioner<InVector> const* preOp) = 0;
+  virtual Real_t Iterate(InVector& xVec,
+                         OutVector const& bVec,
+                         Operator<InVector, OutVector> const& anyOp,
+                         Preconditioner<InVector> const* preOp) = 0;
 
   /// @brief Finalize the iterations.
   ///
@@ -104,29 +114,30 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void Finalize(InVector& xVec,
                         OutVector const& bVec,
-                        stormOperator<InVector, OutVector> const& anyOp,
-                        stormPreconditioner<InVector> const* preOp) {}
+                        Operator<InVector, OutVector> const& anyOp,
+                        Preconditioner<InVector> const* preOp) {}
 
 public:
 
   bool Solve(InVector& xVec,
              OutVector const& bVec,
-             stormOperator<InVector, OutVector> const& anyOp) override final;
+             Operator<InVector, OutVector> const& anyOp) override final;
 
-}; // class stormIterativeSolver<...>
+}; // class IterativeSolver<...>
 
 template<class InVector, class OutVector>
-bool stormIterativeSolver<InVector, OutVector>::
-                            Solve(InVector& xVec,
-                                  OutVector const& bVec,
-                                  stormOperator<InVector, OutVector> const& anyOp) {
+bool IterativeSolver<InVector, OutVector>::
+                        Solve(InVector& xVec,
+                              OutVector const& bVec,
+                              Operator<InVector, OutVector> const& anyOp) {
+
   // ----------------------
   // Initialize the solver.
   // ----------------------
   if (PreOp != nullptr) {
     PreOp->Build(xVec, bVec, anyOp);
   }
-  stormReal_t const initialError =
+  Real_t const initialError =
     (AbsoluteError = Init(xVec, bVec, anyOp, PreOp.get()));
   std::cout << std::fixed << std::scientific << std::setprecision(15);
   std::cout << "\tI\t" << initialError << std::endl;
@@ -164,7 +175,7 @@ bool stormIterativeSolver<InVector, OutVector>::
     rVec.Assign(bVec, false);
     anyOp.MatVec(rVec, xVec);
     stormBlas::Sub(rVec, bVec, rVec);
-    stormReal_t const
+    Real_t const
       trueAbsoluteError = stormBlas::Norm2(rVec),
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
@@ -174,17 +185,16 @@ bool stormIterativeSolver<InVector, OutVector>::
 
   return converged;
 
-} // stormIterativeSolver<...>::Solve
+} // IterativeSolver<...>::Solve
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class InVector, class OutVector = InVector>
-class stormInnerOuterIterativeSolver :
-    public stormIterativeSolver<InVector, OutVector> {
+class InnerOuterIterativeSolver : public IterativeSolver<InVector, OutVector> {
 public:
-  stormSize_t InnerIteration = 0;
-  stormSize_t NumInnerIterations = 50;
+  Size_t InnerIteration = 0;
+  Size_t NumInnerIterations = 50;
 
 protected:
 
@@ -199,10 +209,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual stormReal_t OuterInit(InVector const& xVec,
-                                OutVector const& bVec,
-                                stormOperator<InVector, OutVector> const& anyOp,
-                                stormPreconditioner<InVector> const* preOp) = 0;
+  virtual Real_t OuterInit(InVector const& xVec,
+                           OutVector const& bVec,
+                           Operator<InVector, OutVector> const& anyOp,
+                           Preconditioner<InVector> const* preOp) = 0;
 
   /// @brief Initialize the inner iterations.
   ///
@@ -214,8 +224,8 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void InnerInit(InVector const& xVec,
                          OutVector const& bVec,
-                         stormOperator<InVector, OutVector> const& anyOp,
-                         stormPreconditioner<InVector> const* preOp) {}
+                         Operator<InVector, OutVector> const& anyOp,
+                         Preconditioner<InVector> const* preOp) {}
 
   /// @brief Perform the inner iteration.
   ///
@@ -225,10 +235,10 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual stormReal_t InnerIterate(InVector& xVec,
-                                   OutVector const& bVec,
-                                   stormOperator<InVector, OutVector> const& anyOp,
-                                   stormPreconditioner<InVector> const* preOp) = 0;
+  virtual Real_t InnerIterate(InVector& xVec,
+                              OutVector const& bVec,
+                              Operator<InVector, OutVector> const& anyOp,
+                              Preconditioner<InVector> const* preOp) = 0;
 
   /// @brief Finalize the inner iterations.
   ///
@@ -241,8 +251,8 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void InnerFinalize(InVector& xVec,
                              OutVector const& bVec,
-                             stormOperator<InVector, OutVector> const& anyOp,
-                             stormPreconditioner<InVector> const* preOp) {}
+                             Operator<InVector, OutVector> const& anyOp,
+                             Preconditioner<InVector> const* preOp) {}
 
   /// @brief Finalize the outer iterations.
   ///
@@ -255,27 +265,27 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   virtual void OuterFinalize(InVector& xVec,
                              OutVector const& bVec,
-                             stormOperator<InVector, OutVector> const& anyOp,
-                             stormPreconditioner<InVector> const* preOp) {}
+                             Operator<InVector, OutVector> const& anyOp,
+                             Preconditioner<InVector> const* preOp) {}
 
 private:
 
-  stormReal_t Init(InVector const& xVec,
-                   OutVector const& bVec,
-                   stormOperator<InVector, OutVector> const& anyOp,
-                   stormPreconditioner<InVector> const* preOp) override final {
+  Real_t Init(InVector const& xVec,
+              OutVector const& bVec,
+              Operator<InVector, OutVector> const& anyOp,
+              Preconditioner<InVector> const* preOp) override final {
     return OuterInit(xVec, bVec, anyOp, preOp);
   }
 
-  stormReal_t Iterate(InVector& xVec,
-                      OutVector const& bVec,
-                      stormOperator<InVector, OutVector> const& anyOp,
-                      stormPreconditioner<InVector> const* preOp) override final {
+  Real_t Iterate(InVector& xVec,
+                 OutVector const& bVec,
+                 Operator<InVector, OutVector> const& anyOp,
+                 Preconditioner<InVector> const* preOp) override final {
     InnerIteration = this->Iteration % NumInnerIterations;
     if (InnerIteration == 0) {
       InnerInit(xVec, bVec, anyOp, preOp);
     }
-    stormReal_t const residualNorm = InnerIterate(xVec, bVec, anyOp, preOp);
+    Real_t const residualNorm = InnerIterate(xVec, bVec, anyOp, preOp);
     if (InnerIteration == NumInnerIterations - 1) {
       InnerFinalize(xVec, bVec, anyOp, preOp);
     }
@@ -284,15 +294,17 @@ private:
 
   void Finalize(InVector& xVec,
                 OutVector const& bVec,
-                stormOperator<InVector, OutVector> const& anyOp,
-                stormPreconditioner<InVector> const* preOp) override final {
+                Operator<InVector, OutVector> const& anyOp,
+                Preconditioner<InVector> const* preOp) override final {
     if (InnerIteration != NumInnerIterations - 1) {
       InnerFinalize(xVec, bVec, anyOp, preOp);
     }
     OuterFinalize(xVec, bVec, anyOp, preOp);
   }
 
-}; // class stormInnerOuterIterativeSolver<...>
+}; // class InnerOuterIterativeSolver<...>
+
+_STORM_NAMESPACE_END_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.

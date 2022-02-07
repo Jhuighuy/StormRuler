@@ -27,32 +27,35 @@
 
 #include <cmath>
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
 template<class Vector, bool L1>
-class stormBaseTfqmrSolver : public stormIterativeSolver<Vector> {
+class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
-  stormReal_t rho_, tau_;
+  Real_t rho_, tau_;
   Vector dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_, zVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
 protected:
 
-  stormBaseTfqmrSolver() = default;
+  BaseTfqmrSolver() = default;
 
-}; // class stormBaseTfqmrSolver<...>
+}; // class BaseTfqmrSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the
@@ -81,9 +84,9 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormTfqmrSolver final : public stormBaseTfqmrSolver<Vector, false> {
+class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
 
-}; // class stormTfqmrSolver<...>
+}; // class TfqmrSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the
@@ -106,19 +109,18 @@ class stormTfqmrSolver final : public stormBaseTfqmrSolver<Vector, false> {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormTfqmr1Solver final : public stormBaseTfqmrSolver<Vector, true> {
+class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {
 
-}; // class stormTfqmr1Solver<...>
+}; // class Tfqmr1Solver<...>
 
 template<class Vector, bool L1>
-stormReal_t stormBaseTfqmrSolver<Vector, L1>::
-                              Init(Vector const& xVec,
-                                   Vector const& bVec,
-                                   stormOperator<Vector> const& linOp,
-                                   stormPreconditioner<Vector> const* preOp) {
+Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
+                                         Vector const& bVec,
+                                         Operator<Vector> const& linOp,
+                                         Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
 
   dVec_.Assign(xVec, false);
   rTildeVec_.Assign(xVec, false);
@@ -164,19 +166,18 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
 
   return tau_;
 
-} // stormBaseTfqmrSolver<...>::Init
+} // BaseTfqmrSolver<...>::Init
 
 template<class Vector, bool L1>
-stormReal_t stormBaseTfqmrSolver<Vector, L1>::
-                            Iterate(Vector& xVec,
-                                    Vector const& bVec,
-                                    stormOperator<Vector> const& linOp,
-                                    stormPreconditioner<Vector> const* preOp) {
+Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
+                                            Vector const& bVec,
+                                            Operator<Vector> const& linOp,
+                                            Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
   bool const rightPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Right);
+    (this->PreSide == PreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -216,9 +217,9 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
     }
     stormBlas::Set(vVec_, sVec_);
   } else {
-    stormReal_t const rhoBar = rho_;
+    Real_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, uVec_);
-    stormReal_t const beta = 
+    Real_t const beta = 
       stormUtils::SafeDivide(rho_, rhoBar);
     stormBlas::Add(vVec_, sVec_, vVec_, beta);
     stormBlas::Add(yVec_, uVec_, yVec_, beta);
@@ -261,12 +262,12 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  stormReal_t const alpha =
+  Real_t const alpha =
     stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
-  for (stormSize_t m = 0; m <= 1; ++m) {
+  for (Size_t m = 0; m <= 1; ++m) {
     stormBlas::Sub(uVec_, uVec_, sVec_, alpha);
     stormBlas::Add(dVec_, dVec_, rightPre ? zVec_ : yVec_, alpha);
-    stormReal_t const omega = stormBlas::Norm2(uVec_);
+    Real_t const omega = stormBlas::Norm2(uVec_);
     if constexpr (L1) {
       if (omega < tau_) {
         tau_ = omega, stormBlas::Set(xVec, dVec_);
@@ -298,14 +299,16 @@ stormReal_t stormBaseTfqmrSolver<Vector, L1>::
   //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormReal_t tauTilde = tau_;
+  Real_t tauTilde = tau_;
   if constexpr (!L1) {
-    stormSize_t const k = this->Iteration;
+    Size_t const k = this->Iteration;
     tauTilde *= std::sqrt(2.0*k + 3.0);
   }
 
   return tauTilde;
 
-} // stormBaseTfqmrSolver<...>::Iterate
+} // BaseTfqmrSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_TFQMR_

@@ -27,18 +27,20 @@
 
 #include <cmath>
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
 namespace stormBlas {
 
   /// @brief Generate Givens rotation.
-  inline auto SymOrtho(stormReal_t a, stormReal_t b) {
+  template<class Real>
+  inline auto SymOrtho(Real a, Real b) {
 
     // ----------------------
     // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
     // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
     // ----------------------
-    stormReal_t cs, sn, rr;
+    Real cs, sn, rr;
     rr = std::hypot(a, b);
     if (rr > 0.0) {
       cs = a/rr; sn = b/rr;
@@ -51,6 +53,8 @@ namespace stormBlas {
   } // SymOrtho
 
 } // namespace stormBlas
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint indefinite operator equation \
@@ -74,30 +78,30 @@ namespace stormBlas {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormMinresSolver final : public stormIterativeSolver<Vector> {
+class MinresSolver final : public IterativeSolver<Vector> {
 private:
-  stormReal_t alpha, beta, betaBar, gamma, delta, deltaBar,
+  Real_t alpha, beta, betaBar, gamma, delta, deltaBar,
     epsilon, epsilonBar, tau, phi, phiTilde, cs, sn;
   Vector pVec, qVec, qBarVec,
     wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormMinresSolver<...>
+}; // class MinresSolver<...>
 
 template<class Vector>
-stormReal_t stormMinresSolver<Vector>::Init(Vector const& xVec,
-                                            Vector const& bVec,
-                                            stormOperator<Vector> const& linOp,
-                                            stormPreconditioner<Vector> const* preOp) {
+Real_t MinresSolver<Vector>::Init(Vector const& xVec,
+                                  Vector const& bVec,
+                                  Operator<Vector> const& linOp,
+                                  Preconditioner<Vector> const* preOp) {
 
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
@@ -141,13 +145,13 @@ stormReal_t stormMinresSolver<Vector>::Init(Vector const& xVec,
 
   return phi;
 
-} // stormMinresSolver<...>::Init
+} // MinresSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
-                                               Vector const& bVec,
-                                               stormOperator<Vector> const& linOp,
-                                               stormPreconditioner<Vector> const* preOp) {
+Real_t MinresSolver<Vector>::Iterate(Vector& xVec,
+                                     Vector const& bVec,
+                                     Operator<Vector> const& linOp,
+                                     Preconditioner<Vector> const* preOp) {
 
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
@@ -200,6 +204,8 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
 
   return phi;
 
-} // stormMinresSolver<...>::Iterate
+} // MinresSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_MINRES_HXX_

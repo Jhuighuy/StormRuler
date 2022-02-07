@@ -49,7 +49,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
       matVec(yy.Mesh, yy.Array, xx.Array);
     });
 
-  auto solver = stormMakeIterativeSolver<stormArray>(method);
+  auto solver = storm::MakeIterativeSolver<stormArray>(method);
   solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
 #if 0
   stormSparseRowMatrix<stormReal_t> matrix;
@@ -83,8 +83,8 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::unique_ptr<stormIterativeSolver<stormArray>> solver = 
-    std::make_unique<stormJfnkSolver<stormArray>>();
+  std::unique_ptr<storm::IterativeSolver<stormArray>> solver = 
+    std::make_unique<storm::JfnkSolver<stormArray>>();
   solver->AbsoluteTolerance = 1.0e-4;
   solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);
@@ -103,7 +103,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #define M_PI 3.14159265358979323846
 #endif
 
-#define YURI 1
+#define YURI 0
 
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )

@@ -25,7 +25,10 @@
 #ifndef _STORM_SOLVERS_RICHARDSON_HXX_
 #define _STORM_SOLVERS_RICHARDSON_HXX_
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular operator equation \
@@ -37,32 +40,30 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormRichardsonSolver final : public stormIterativeSolver<Vector> {
+class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
-
-  stormReal_t RelaxationFactor = 1.0e-4;
+  Real_t RelaxationFactor = 1.0e-4;
 
 private:
   Vector rVec_, zVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormRichardsonSolver<...>
+}; // class RichardsonSolver<...>
 
 template<class Vector>
-stormReal_t stormRichardsonSolver<Vector>::
-                      Init(Vector const& xVec,
-                           Vector const& bVec,
-                           stormOperator<Vector> const& linOp,
-                           stormPreconditioner<Vector> const* preOp) {
+Real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
+                                      Vector const& bVec,
+                                      Operator<Vector> const& linOp,
+                                      Preconditioner<Vector> const* preOp) {
 
   rVec_.Assign(xVec, false);
   if (preOp != nullptr) {
@@ -87,16 +88,15 @@ stormReal_t stormRichardsonSolver<Vector>::
 
   return stormBlas::Norm2(rVec_);
 
-} // stormRichardsonSolver<...>::Init
+} // RichardsonSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormRichardsonSolver<Vector>::
-                        Iterate(Vector& xVec,
-                                Vector const& bVec,
-                                stormOperator<Vector> const& linOp,
-                                stormPreconditioner<Vector> const* preOp) {
+Real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
+                                         Vector const& bVec,
+                                         Operator<Vector> const& linOp,
+                                         Preconditioner<Vector> const* preOp) {
 
-  stormReal_t const& omega = RelaxationFactor;
+  Real_t const& omega = RelaxationFactor;
 
   // ----------------------
   // Update the solution and the residual:
@@ -118,6 +118,8 @@ stormReal_t stormRichardsonSolver<Vector>::
 
   return stormBlas::Norm2(rVec_);
 
-} // stormRichardsonSolver<...>::Iterate
+} // RichardsonSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVERS_RICHARDSON_HXX_

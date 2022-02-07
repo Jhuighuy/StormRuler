@@ -27,7 +27,10 @@
 
 #include <cmath>
 
+#include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular operator equation \
@@ -46,31 +49,31 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormCgsSolver final : public stormIterativeSolver<Vector> {
+class CgsSolver final : public IterativeSolver<Vector> {
 private:
-  stormReal_t rho_;
+  Real_t rho_;
   Vector pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_;
 
-  stormReal_t Init(Vector const& xVec,
-                   Vector const& bVec,
-                   stormOperator<Vector> const& linOp,
-                   stormPreconditioner<Vector> const* preOp) override;
+  Real_t Init(Vector const& xVec,
+              Vector const& bVec,
+              Operator<Vector> const& linOp,
+              Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t Iterate(Vector& xVec,
-                      Vector const& bVec,
-                      stormOperator<Vector> const& linOp,
-                      stormPreconditioner<Vector> const* preOp) override;
+  Real_t Iterate(Vector& xVec,
+                 Vector const& bVec,
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-}; // class stormCgsSolver<...>
+}; // class CgsSolver<...>
 
 template<class Vector>
-stormReal_t stormCgsSolver<Vector>::Init(Vector const& xVec,
-                                         Vector const& bVec,
-                                         stormOperator<Vector> const& linOp,
-                                         stormPreconditioner<Vector> const* preOp) {
+Real_t CgsSolver<Vector>::Init(Vector const& xVec,
+                               Vector const& bVec,
+                               Operator<Vector> const& linOp,
+                               Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
 
   pVec_.Assign(xVec, false);
   qVec_.Assign(xVec, false); 
@@ -100,18 +103,18 @@ stormReal_t stormCgsSolver<Vector>::Init(Vector const& xVec,
 
   return std::sqrt(rho_);
 
-} // stormCgsSolver<...>::Init
+} // CgsSolver<...>::Init
 
 template<class Vector>
-stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
-                                            Vector const& bVec,
-                                            stormOperator<Vector> const& linOp,
-                                            stormPreconditioner<Vector> const* preOp) {
+Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
+                                  Vector const& bVec,
+                                  Operator<Vector> const& linOp,
+                                  Preconditioner<Vector> const* preOp) {
 
   bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
   bool const rightPre = (preOp != nullptr) && 
-    (this->PreSide == stormPreconditionerSide::Right);
+    (this->PreSide == PreconditionerSide::Right);
 
   // ----------------------
   // Continue the iterations:
@@ -132,9 +135,9 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
     stormBlas::Set(uVec_, rVec_);
     stormBlas::Set(pVec_, uVec_);
   } else {
-    stormReal_t const rhoBar = rho_; 
+    Real_t const rhoBar = rho_; 
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);
-    stormReal_t const beta = 
+    Real_t const beta = 
       stormUtils::SafeDivide(rho_, rhoBar);
     stormBlas::Add(uVec_, rVec_, qVec_, beta);
     stormBlas::Add(pVec_, qVec_, pVec_, beta);
@@ -160,7 +163,7 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
-  stormReal_t const alpha = 
+  Real_t const alpha = 
     stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
   stormBlas::Sub(qVec_, uVec_, vVec_, alpha);
   stormBlas::Add(vVec_, uVec_, qVec_);
@@ -197,6 +200,8 @@ stormReal_t stormCgsSolver<Vector>::Iterate(Vector& xVec,
 
   return stormBlas::Norm2(rVec_);
 
-} // stormCgsSolver<...>::Iterate
+} // CgsSolver<...>::Iterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_CGS_HXX_

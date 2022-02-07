@@ -25,9 +25,12 @@
 #ifndef _STORM_SOLVER_IDRs_HXX_
 #define _STORM_SOLVER_IDRs_HXX_
 
+#include <stormBase.hxx>
 #include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular linear operator equation \
@@ -46,47 +49,47 @@
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormIdrsSolver final : public stormInnerOuterIterativeSolver<Vector> {
+class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
-  stormReal_t omega_;
-  stormVector<stormReal_t> phi_, gamma_;
-  stormMatrix<stormReal_t> mu_;
+  Real_t omega_;
+  stormVector<Real_t> phi_, gamma_;
+  stormMatrix<Real_t> mu_;
   Vector rVec_, vVec_, zVec_;
   stormSubspace<Vector> pVecs_, uVecs_, gVecs_;
 
-  stormReal_t OuterInit(Vector const& xVec,
-                        Vector const& bVec,
-                        stormOperator<Vector> const& linOp,
-                        stormPreconditioner<Vector> const* preOp) override;
+  Real_t OuterInit(Vector const& xVec,
+                   Vector const& bVec,
+                   Operator<Vector> const& linOp,
+                   Preconditioner<Vector> const* preOp) override;
 
   void InnerInit(Vector const& xVec,
                  Vector const& bVec,
-                 stormOperator<Vector> const& linOp,
-                 stormPreconditioner<Vector> const* preOp) override;
+                 Operator<Vector> const& linOp,
+                 Preconditioner<Vector> const* preOp) override;
 
-  stormReal_t InnerIterate(Vector& xVec,
-                           Vector const& bVec,
-                           stormOperator<Vector> const& linOp,
-                           stormPreconditioner<Vector> const* preOp) override;
+  Real_t InnerIterate(Vector& xVec,
+                      Vector const& bVec,
+                      Operator<Vector> const& linOp,
+                      Preconditioner<Vector> const* preOp) override;
 
 public:
 
-  stormIdrsSolver() {
+  IdrsSolver() {
     this->NumInnerIterations = 4;
   }
 
-}; // class stormIdrsSolver<...>
+}; // class IdrsSolver<...>
 
 template<class Vector>
-stormReal_t stormIdrsSolver<Vector>::OuterInit(Vector const& xVec,
-                                               Vector const& bVec,
-                                               stormOperator<Vector> const& linOp,
-                                               stormPreconditioner<Vector> const* preOp) {
+Real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
+                                     Vector const& bVec,
+                                     Operator<Vector> const& linOp,
+                                     Preconditioner<Vector> const* preOp) {
 
-  stormSize_t const s = this->NumInnerIterations;
+  Size_t const s = this->NumInnerIterations;
 
   bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
 
   phi_.Assign(s);
   gamma_.Assign(s);
@@ -121,15 +124,15 @@ stormReal_t stormIdrsSolver<Vector>::OuterInit(Vector const& xVec,
 
   return phi_(0);
 
-} // stormIdrsSolver<...>::OuterInit
+} // IdrsSolver<...>::OuterInit
 
 template<class Vector>
-void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
-                                        Vector const& bVec,
-                                        stormOperator<Vector> const& linOp,
-                                        stormPreconditioner<Vector> const* preOp) {
+void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
+                                   Vector const& bVec,
+                                   Operator<Vector> const& linOp,
+                                   Preconditioner<Vector> const* preOp) {
 
-  stormSize_t const s = this->NumInnerIterations;
+  Size_t const s = this->NumInnerIterations;
 
   // ----------------------
   // Build shadow space and initialize 𝜑:
@@ -155,10 +158,10 @@ void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
     stormBlas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
-    for (stormSize_t i = 1; i < s; ++i) {
+    for (Size_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
       stormBlas::RandFill(pVecs_(i));
-      for (stormSize_t j = 0; j < i; ++j) {
+      for (Size_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
         stormBlas::Sub(pVecs_(i), pVecs_(i),
           pVecs_(j), stormBlas::Dot(pVecs_(i), pVecs_(j)));
@@ -167,34 +170,34 @@ void stormIdrsSolver<Vector>::InnerInit(Vector const& xVec,
         pVecs_(i), 1.0/stormBlas::Norm2(pVecs_(i)));
     }
   } else {
-    for (stormSize_t i = 0; i < s; ++i) {
+    for (Size_t i = 0; i < s; ++i) {
       phi_(i) = stormBlas::Dot(pVecs_(i), rVec_);
     }
   }
 
-} // stormIdrsSolver<...>::InnerInit
+} // IdrsSolver<...>::InnerInit
 
 template<class Vector>
-stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
-                                                  Vector const& bVec,
-                                                  stormOperator<Vector> const& linOp,
-                                                  stormPreconditioner<Vector> const* preOp) {
+Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
+                                        Vector const& bVec,
+                                        Operator<Vector> const& linOp,
+                                        Preconditioner<Vector> const* preOp) {
 
-  stormSize_t const s = this->NumInnerIterations;
-  stormSize_t const k = this->InnerIteration;
+  Size_t const s = this->NumInnerIterations;
+  Size_t const k = this->InnerIteration;
 
   bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Left);
+    (this->PreSide == PreconditionerSide::Left);
   bool const rightPre = (preOp != nullptr) &&
-    (this->PreSide == stormPreconditionerSide::Right);
+    (this->PreSide == PreconditionerSide::Right);
 
   // ----------------------
   // Compute 𝛾:
   // 𝛾ₖ:ₛ₋₁ ← (𝜇ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹⋅𝜑ₖ:ₛ₋₁.
   // ----------------------
-  for (stormSize_t i = k; i < s; ++i) {
+  for (Size_t i = k; i < s; ++i) {
     gamma_(i) = phi_(i);
-    for (stormSize_t j = k; j < i; ++j) {
+    for (Size_t j = k; j < i; ++j) {
       gamma_(i) -= mu_(i, j)*gamma_(j);
     }
     gamma_(i) /= mu_(i, i);
@@ -221,7 +224,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   stormBlas::Sub(vVec_, rVec_, gVecs_(k), gamma_(k));
-  for (stormSize_t i = k + 1; i < s; ++i) {
+  for (Size_t i = k + 1; i < s; ++i) {
     stormBlas::Sub(vVec_, vVec_, gVecs_(i), gamma_(i));
   }
   if (rightPre) {
@@ -229,7 +232,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
     preOp->MatVec(vVec_, zVec_);
   }
   stormBlas::Add(uVecs_(k), uVecs_(k), gamma_(k), vVec_, omega_);
-  for (stormSize_t i = k + 1; i < s; ++i) {
+  for (Size_t i = k + 1; i < s; ++i) {
     stormBlas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
   }
   if (leftPre) {
@@ -246,8 +249,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒈ₖ ← 𝒈ₖ - 𝛼⋅𝒈ᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (stormSize_t i = 0; i < k; ++i) {
-    stormReal_t const alpha =
+  for (Size_t i = 0; i < k; ++i) {
+    Real_t const alpha =
       stormUtils::SafeDivide(stormBlas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
     stormBlas::Sub(uVecs_(k), uVecs_(k), uVecs_(i), alpha);
     stormBlas::Sub(gVecs_(k), gVecs_(k), gVecs_(i), alpha);
@@ -259,7 +262,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (stormSize_t i = k; i < s; ++i) {
+  for (Size_t i = k; i < s; ++i) {
     mu_(i, k) = stormBlas::Dot(pVecs_(i), gVecs_(k));
   }
 
@@ -269,7 +272,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  stormReal_t const beta = 
+  Real_t const beta = 
     stormUtils::SafeDivide(phi_(k), mu_(k, k));
   stormBlas::Add(xVec, xVec, uVecs_(k), beta);
   stormBlas::Sub(rVec_, rVec_, gVecs_(k), beta);
@@ -278,7 +281,7 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // Update 𝜑:
   // 𝜑ₖ₊₁:ₛ₋₁ ← 𝜑ₖ₊₁:ₛ₋₁ - 𝛽⋅𝜇ₖ₊₁:ₛ₋₁,ₖ.
   // ----------------------
-  for (stormSize_t i = k + 1; i < s; ++i) {
+  for (Size_t i = k + 1; i < s; ++i) {
     phi_(i) -= beta*mu_(i, k);
   }
 
@@ -311,6 +314,8 @@ stormReal_t stormIdrsSolver<Vector>::InnerIterate(Vector& xVec,
 
   return stormBlas::Norm2(rVec_);
 
-} // stormIdrsSolver<...>::InnerIterate
+} // IdrsSolver<...>::InnerIterate
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_IDRs_HXX_

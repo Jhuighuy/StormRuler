@@ -106,16 +106,14 @@ Real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
   gVecs_.Assign(s, xVec, false);
 
   // ----------------------
-  // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒓,
+  // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛 ← 𝒓,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝜑₀ ← ‖𝒓‖.
   // ----------------------
-  linOp.MatVec(rVec_, xVec);
-  Blas::Sub(rVec_, bVec, rVec_);
+  linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);

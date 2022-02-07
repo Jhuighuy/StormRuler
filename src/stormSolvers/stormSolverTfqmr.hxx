@@ -139,8 +139,7 @@ Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   // 𝗲𝗹𝘀𝗲:
   //   𝒅 ← {𝟢}ᵀ,
   // 𝗲𝗻𝗱 𝗶𝗳
-  // 𝒚 ← 𝓐𝒙,
-  // 𝒚 ← 𝒃 - 𝒚,
+  // 𝒚 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛 ← 𝒚,
   //   𝒚 ← 𝓟𝒛,
@@ -154,8 +153,7 @@ Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   } else {
     Blas::Fill(dVec_, 0.0);
   }
-  linOp.MatVec(yVec_, xVec);
-  Blas::Sub(yVec_, bVec, yVec_);
+  linOp.Residual(yVec_, bVec, xVec);
   if (leftPre) {
     std::swap(zVec_, yVec_);
     preOp->MatVec(yVec_, zVec_);

@@ -147,12 +147,10 @@ bool IterativeSolver<InVector, OutVector>::
     AbsoluteError = Iterate(xVec, bVec, anyOp, PreOp.get());
     RelativeError = AbsoluteError/initialError;
 
-    if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
-      converged = true;
-    }
-    if (RelativeTolerance > 0.0 && RelativeError < RelativeTolerance) {
-      converged = true;
-    }
+    converged |=
+      (AbsoluteTolerance > 0.0) && (AbsoluteError < AbsoluteTolerance);
+    converged |=
+      (RelativeTolerance > 0.0) && (RelativeError < RelativeTolerance);
 
     if (Iteration % 1 == 0 || converged) {
       std::cout << "\t" << (Iteration + 1) << "\t"
@@ -166,8 +164,7 @@ bool IterativeSolver<InVector, OutVector>::
   if (VerifySolution) {
     OutVector rVec;
     rVec.Assign(bVec, false);
-    anyOp.MatVec(rVec, xVec);
-    Blas::Sub(rVec, bVec, rVec);
+    anyOp.Residual(rVec, bVec, xVec);
     Real_t const
       trueAbsoluteError = Blas::Norm2(rVec),
       trueRelativeError = trueAbsoluteError/initialError;

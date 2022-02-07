@@ -160,8 +160,7 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
     (!Flexible) && (this->PreSide == PreconditionerSide::Left);
 
   // ----------------------
-  // 𝒒₀ ← 𝓐𝒙,
-  // 𝒒₀ ← 𝒃 - 𝒒₀,
+  // 𝒒₀ ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛₀ ← 𝒒₀,
   //   𝒒₀ ← 𝓟𝒛₀,
@@ -169,8 +168,7 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝛽₀ ← ‖𝒒₀‖,
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
-  linOp.MatVec(qVecs_(0), xVec);
-  Blas::Sub(qVecs_(0), bVec, qVecs_(0));
+  linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
     std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
@@ -193,8 +191,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
     (!Flexible) && (this->PreSide == PreconditionerSide::Left);
 
   // ----------------------
-  // 𝒒₀ ← 𝓐𝒙,
-  // 𝒒₀ ← 𝒃 - 𝒒₀,
+  // 𝒒₀ ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛₀ ← 𝒒₀,
   //   𝒒₀ ← 𝓟𝒛₀,
@@ -202,8 +199,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝛽₀ ← ‖𝒒₀‖,
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
-  linOp.MatVec(qVecs_(0), xVec);
-  Blas::Sub(qVecs_(0), bVec, qVecs_(0));
+  linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
     std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));

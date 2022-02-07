@@ -202,6 +202,18 @@ public:
     MatVec(zVec, yVec);
   }
 
+  /// @brief Compute a residual, 𝒓 ← 𝒃 - 𝓐(𝒙).
+  ///
+  /// @param rVec Residual vector, 𝒓.
+  /// @param bVec Input vector, 𝒃.
+  /// @param xVec Input vector, 𝒙.
+  void Residual(OutVector& rVec,
+                OutVector const& bVec,
+                InVector const& xVec) const {
+    MatVec(rVec, xVec);
+    Blas::Sub(rVec, bVec, rVec);
+  }
+
   /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   ///
   /// @param xVec Output vector, 𝒙.

@@ -83,8 +83,7 @@ Real_t CgsSolver<Vector>::Init(Vector const& xVec,
   vVec_.Assign(xVec, false);
 
   // ----------------------
-  // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒓,
+  // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒖 ← 𝒓,
   //   𝒓 ← 𝓟𝒖,
@@ -92,8 +91,7 @@ Real_t CgsSolver<Vector>::Init(Vector const& xVec,
   // 𝒓̃ ← 𝒓,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
-  linOp.MatVec(rVec_, xVec);
-  Blas::Sub(rVec_, bVec, rVec_);
+  linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
     std::swap(uVec_, rVec_);
     preOp->MatVec(rVec_, uVec_);

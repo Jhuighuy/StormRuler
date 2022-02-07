@@ -89,8 +89,7 @@ Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
   }
 
   // ----------------------
-  // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒓,
+  // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒛 ← 𝒓,
   //   𝒓 ← 𝓟𝒛,
@@ -98,8 +97,7 @@ Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
   // 𝒓̃ ← 𝒓,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
-  linOp.MatVec(rVec_, xVec);
-  Blas::Sub(rVec_, bVec, rVec_);
+  linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
@@ -264,8 +262,7 @@ Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
 
   // ----------------------
   // 𝒖₀ ← {𝟢}ᵀ,
-  // 𝒓₀ ← 𝓐𝒙,
-  // 𝒓₀ ← 𝒃 - 𝒓₀,
+  // 𝒓₀ ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝒓₀,
   //   𝒓₀ ← 𝓟𝒛,
@@ -274,8 +271,7 @@ Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓₀>.
   // ----------------------
   Blas::Fill(uVecs_(0), 0.0);
-  linOp.MatVec(rVecs_(0), xVec);
-  Blas::Sub(rVecs_(0), bVec, rVecs_(0));
+  linOp.Residual(rVecs_(0), bVec, xVec);
   if (preOp != nullptr) {
     std::swap(zVec_, rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);

@@ -30,7 +30,9 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-namespace stormBlas {
+_STORM_NAMESPACE_BEGIN_
+
+namespace Blas {
 
   /// @brief Generate Givens rotation.
   template<class Real>
@@ -52,9 +54,7 @@ namespace stormBlas {
 
   } // SymOrtho
 
-} // namespace stormBlas
-
-_STORM_NAMESPACE_BEGIN_
+} // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint indefinite operator equation \
@@ -129,17 +129,17 @@ Real_t MinresSolver<Vector>::Init(Vector const& xVec,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  stormBlas::Fill(wBarVec, 0.0);
-  stormBlas::Fill(wBarBarVec, 0.0);
+  Blas::Fill(wBarVec, 0.0);
+  Blas::Fill(wBarBarVec, 0.0);
   linOp.MatVec(zBarVec, xVec);
-  stormBlas::Sub(zBarVec, bVec, zBarVec);
-  stormBlas::Fill(zBarBarVec, 0.0);
+  Blas::Sub(zBarVec, bVec, zBarVec);
+  Blas::Fill(zBarBarVec, 0.0);
   if (preOp != nullptr) {
     preOp->MatVec(qVec, zBarVec);
   } else {
     //qVec = zBarVec
   }
-  betaBar = 1.0; beta = std::sqrt(stormBlas::Dot(qVec, zBarVec));
+  betaBar = 1.0; beta = std::sqrt(Blas::Dot(qVec, zBarVec));
   phi = beta; delta = 0.0; epsilon = 0.0;
   cs = -1.0; sn = 0.0;
 
@@ -166,16 +166,16 @@ Real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
   linOp.MatVec(pVec, qVec);
-  alpha = stormBlas::Dot(qVec, pVec)*std::pow(beta, -2);
-  stormBlas::Sub(zVec, pVec, 1.0/beta, zBarVec, alpha/beta);
-  stormBlas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
+  alpha = Blas::Dot(qVec, pVec)*std::pow(beta, -2);
+  Blas::Sub(zVec, pVec, 1.0/beta, zBarVec, alpha/beta);
+  Blas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
   if (preOp != nullptr) {
     std::swap(qBarVec, qVec);
     preOp->MatVec(qVec, zVec);
   } else {
     //qBarVec = qVec; qVec = zVec
   }
-  betaBar = beta, beta = std::sqrt(stormBlas::Dot(qVec, zVec));
+  betaBar = beta, beta = std::sqrt(Blas::Dot(qVec, zVec));
   std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, zVec);
 
   // ----------------------
@@ -187,7 +187,7 @@ Real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   deltaBar = cs*delta + sn*alpha, gamma = sn*delta - cs*alpha;
   epsilonBar = epsilon, epsilon = sn*beta, delta = -cs*beta;
-  std::tie(cs, sn, gamma) = stormBlas::SymOrtho(gamma, beta);
+  std::tie(cs, sn, gamma) = Blas::SymOrtho(gamma, beta);
   tau = cs*phi, phi = sn*phi;
 
   // ----------------------
@@ -197,9 +197,9 @@ Real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  stormBlas::Sub(wVec, qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
-  stormBlas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
-  stormBlas::Add(xVec, xVec, wVec, tau);
+  Blas::Sub(wVec, qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
+  Blas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
+  Blas::Add(xVec, xVec, wVec, tau);
   std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
 
   return phi;

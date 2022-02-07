@@ -81,7 +81,7 @@ Real_t CgSolver<Vector>::Init(Vector const& xVec,
   // 𝒓 ← 𝒃 - 𝒓.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  Blas::Sub(rVec_, bVec, rVec_);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -95,14 +95,14 @@ Real_t CgSolver<Vector>::Init(Vector const& xVec,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    stormBlas::Set(pVec_, zVec_);
-    alpha_ = stormBlas::Dot(rVec_, zVec_);
+    Blas::Set(pVec_, zVec_);
+    alpha_ = Blas::Dot(rVec_, zVec_);
   } else {
-    stormBlas::Set(pVec_, rVec_);
-    alpha_ = stormBlas::Dot(rVec_, rVec_);
+    Blas::Set(pVec_, rVec_);
+    alpha_ = Blas::Dot(rVec_, rVec_);
   }
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
+  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(alpha_);
 
 } // CgSolver<...>::Init
 
@@ -122,9 +122,9 @@ Real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
   Real_t const alphaBar = alpha_;
-  stormUtils::SafeDivideEquals(alpha_, stormBlas::Dot(pVec_, zVec_));
-  stormBlas::Add(xVec, xVec, pVec_, alpha_);
-  stormBlas::Sub(rVec_, rVec_, zVec_, alpha_);
+  Utils::SafeDivideEquals(alpha_, Blas::Dot(pVec_, zVec_));
+  Blas::Add(xVec, xVec, pVec_, alpha_);
+  Blas::Sub(rVec_, rVec_, zVec_, alpha_);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -136,19 +136,19 @@ Real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    alpha_ = stormBlas::Dot(rVec_, zVec_);
+    alpha_ = Blas::Dot(rVec_, zVec_);
   } else {
-    alpha_ = stormBlas::Dot(rVec_, rVec_);
+    alpha_ = Blas::Dot(rVec_, rVec_);
   }
 
   // ----------------------
   // 𝛽 ← 𝛼/𝛼̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  Real_t const beta = stormUtils::SafeDivide(alpha_, alphaBar);
-  stormBlas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
+  Real_t const beta = Utils::SafeDivide(alpha_, alphaBar);
+  Blas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
 
-  return (preOp != nullptr) ? stormBlas::Norm2(rVec_) : std::sqrt(alpha_);
+  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(alpha_);
 
 } // CgSolver<...>::Iterate
 

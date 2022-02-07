@@ -115,12 +115,12 @@ Real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
   // 𝜑₀ ← ‖𝒓‖.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  Blas::Sub(rVec_, bVec, rVec_);
   if (leftPre) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  phi_(0) = stormBlas::Norm2(rVec_);
+  phi_(0) = Blas::Norm2(rVec_);
 
   return phi_(0);
 
@@ -157,21 +157,21 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    stormBlas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
+    Blas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
     for (Size_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      stormBlas::RandFill(pVecs_(i));
+      Blas::RandFill(pVecs_(i));
       for (Size_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
-        stormBlas::Sub(pVecs_(i), pVecs_(i),
-          pVecs_(j), stormBlas::Dot(pVecs_(i), pVecs_(j)));
+        Blas::Sub(pVecs_(i), pVecs_(i),
+          pVecs_(j), Blas::Dot(pVecs_(i), pVecs_(j)));
       }
-      stormBlas::Scale(pVecs_(i),
-        pVecs_(i), 1.0/stormBlas::Norm2(pVecs_(i)));
+      Blas::Scale(pVecs_(i),
+        pVecs_(i), 1.0/Blas::Norm2(pVecs_(i)));
     }
   } else {
     for (Size_t i = 0; i < s; ++i) {
-      phi_(i) = stormBlas::Dot(pVecs_(i), rVec_);
+      phi_(i) = Blas::Dot(pVecs_(i), rVec_);
     }
   }
 
@@ -223,20 +223,20 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒈ₖ ← 𝓐𝒖ₖ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Sub(vVec_, rVec_, gVecs_(k), gamma_(k));
+  Blas::Sub(vVec_, rVec_, gVecs_(k), gamma_(k));
   for (Size_t i = k + 1; i < s; ++i) {
-    stormBlas::Sub(vVec_, vVec_, gVecs_(i), gamma_(i));
+    Blas::Sub(vVec_, vVec_, gVecs_(i), gamma_(i));
   }
   if (rightPre) {
     std::swap(zVec_, vVec_);
     preOp->MatVec(vVec_, zVec_);
   }
-  stormBlas::Add(uVecs_(k), uVecs_(k), gamma_(k), vVec_, omega_);
+  Blas::Add(uVecs_(k), uVecs_(k), gamma_(k), vVec_, omega_);
   for (Size_t i = k + 1; i < s; ++i) {
-    stormBlas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
+    Blas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
   }
   if (leftPre) {
-    stormBlas::MatVec(gVecs_(k), *preOp, zVec_, linOp, uVecs_(k));
+    Blas::MatVec(gVecs_(k), *preOp, zVec_, linOp, uVecs_(k));
   } else {
     linOp.MatVec(gVecs_(k), uVecs_(k));
   }
@@ -251,9 +251,9 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   for (Size_t i = 0; i < k; ++i) {
     Real_t const alpha =
-      stormUtils::SafeDivide(stormBlas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
-    stormBlas::Sub(uVecs_(k), uVecs_(k), uVecs_(i), alpha);
-    stormBlas::Sub(gVecs_(k), gVecs_(k), gVecs_(i), alpha);
+      Utils::SafeDivide(Blas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
+    Blas::Sub(uVecs_(k), uVecs_(k), uVecs_(i), alpha);
+    Blas::Sub(gVecs_(k), gVecs_(k), gVecs_(i), alpha);
   }
 
   // ----------------------
@@ -263,7 +263,7 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (Size_t i = k; i < s; ++i) {
-    mu_(i, k) = stormBlas::Dot(pVecs_(i), gVecs_(k));
+    mu_(i, k) = Blas::Dot(pVecs_(i), gVecs_(k));
   }
 
   // ----------------------
@@ -273,9 +273,9 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
   Real_t const beta = 
-    stormUtils::SafeDivide(phi_(k), mu_(k, k));
-  stormBlas::Add(xVec, xVec, uVecs_(k), beta);
-  stormBlas::Sub(rVec_, rVec_, gVecs_(k), beta);
+    Utils::SafeDivide(phi_(k), mu_(k, k));
+  Blas::Add(xVec, xVec, uVecs_(k), beta);
+  Blas::Sub(rVec_, rVec_, gVecs_(k), beta);
 
   // ----------------------
   // Update 𝜑:
@@ -300,19 +300,19 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
     // 𝒓 ← 𝒓 - 𝜔⋅𝒗.
     // ----------------------
     if (leftPre) {
-      stormBlas::MatVec(vVec_, *preOp, zVec_, linOp, rVec_);
+      Blas::MatVec(vVec_, *preOp, zVec_, linOp, rVec_);
     } else if (rightPre) {
-      stormBlas::MatVec(vVec_, linOp, zVec_, *preOp, rVec_);
+      Blas::MatVec(vVec_, linOp, zVec_, *preOp, rVec_);
     } else {
       linOp.MatVec(vVec_, rVec_);
     }
-    omega_ = stormUtils::SafeDivide(
-      stormBlas::Dot(vVec_, rVec_), stormBlas::Dot(vVec_, vVec_));
-    stormBlas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
-    stormBlas::Sub(rVec_, rVec_, vVec_, omega_);
+    omega_ = Utils::SafeDivide(
+      Blas::Dot(vVec_, rVec_), Blas::Dot(vVec_, vVec_));
+    Blas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
+    Blas::Sub(rVec_, rVec_, vVec_, omega_);
   }
 
-  return stormBlas::Norm2(rVec_);
+  return Blas::Norm2(rVec_);
 
 } // IdrsSolver<...>::InnerIterate
 

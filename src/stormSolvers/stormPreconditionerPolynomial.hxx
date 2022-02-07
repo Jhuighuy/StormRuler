@@ -95,10 +95,10 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
   // 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
   // ----------------------
-  stormBlas::Set(rVec, xVec);
-  stormBlas::Fill(yVec, 0.0);
-  const Real_t c = 0.5*(lambdaMax - lambdaMin);
-  const Real_t d = 0.5*(lambdaMax + lambdaMin);
+  Blas::Set(rVec, xVec);
+  Blas::Fill(yVec, 0.0);
+  Real_t const c = 0.5*(lambdaMax - lambdaMin);
+  Real_t const d = 0.5*(lambdaMax + lambdaMin);
 
   Real_t alpha;
   for (Size_t iteration = 0; iteration < NumIterations; ++iteration) {
@@ -117,7 +117,7 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // ----------------------
     if (iteration == 0) {
       alpha = 1.0/d;
-      stormBlas::Set(pVec, rVec);
+      Blas::Set(pVec, rVec);
     } else {
       Real_t beta;
       if (iteration == 2) {
@@ -126,7 +126,7 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
         beta = std::pow(0.5*c*alpha, 2);
       }
       alpha /= (d*alpha - beta);
-      stormBlas::Add(pVec, rVec, pVec, beta);
+      Blas::Add(pVec, rVec, pVec, beta);
     }
 
     // ----------------------
@@ -135,9 +135,9 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // 𝒓 ← 𝓐𝒚,
     // 𝒓 ← 𝒙 - 𝒓.
     // ----------------------
-    stormBlas::Add(yVec, yVec, pVec, alpha);
+    Blas::Add(yVec, yVec, pVec, alpha);
     linOp->MatVec(rVec, yVec);
-    stormBlas::Sub(rVec, xVec, rVec);
+    Blas::Sub(rVec, xVec, rVec);
   }
 
 } // ChebyshevPreconditioner<...>::MatVec

@@ -28,7 +28,7 @@
 
 #include <StormRuler_API.h>
 #include <stormBlas/stormTensor.hxx>
-#include <stormBlas/stormMatrixExtraction.hxx>
+//#include <stormBlas/stormMatrixExtraction.hxx>
 #include <stormSolvers/stormSolverFactory.hxx>
 #include <stormSolvers/stormPreconditionerFactory.hxx>
 
@@ -41,16 +41,16 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               stormArray_t x,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
-  stormArray xx = {mesh, x}, bb = {mesh, b};
+  storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   stormSize_t numMatVecs = 0;
-  auto symOp = stormMakeSymmetricOperator<stormArray>(
-    [&](stormArray& yy, const stormArray& xx) {
+  auto symOp = storm::MakeSymmetricOperator<storm::stormArray>(
+    [&](storm::stormArray& yy, const storm::stormArray& xx) {
       numMatVecs += 1;
       matVec(yy.Mesh, yy.Array, xx.Array);
     });
 
-  auto solver = storm::MakeIterativeSolver<stormArray>(method);
-  solver->PreOp = storm::MakePreconditioner<stormArray>(preMethod);
+  auto solver = storm::MakeIterativeSolver<storm::stormArray>(method);
+  solver->PreOp = storm::MakePreconditioner<storm::stormArray>(preMethod);
 #if 0
   stormSparseRowMatrix<stormReal_t> matrix;
   do_the_thing(matrix, xx, *symOp);
@@ -76,15 +76,14 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
                                  stormArray_t b,
                                  stormMatVecFuncT_t matVec) {
 
-  stormArray xx = {mesh, x}, bb = {mesh, b};
-  std::unique_ptr<stormOperator<stormArray>> op =
-    stormMakeSymmetricOperator<stormArray>(
-      [&](stormArray& yy, const stormArray& xx) {
+  storm::stormArray xx = {mesh, x}, bb = {mesh, b};
+  auto op = storm::MakeSymmetricOperator<storm::stormArray>(
+      [&](storm::stormArray& yy, const storm::stormArray& xx) {
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::unique_ptr<storm::IterativeSolver<stormArray>> solver = 
-    std::make_unique<storm::JfnkSolver<stormArray>>();
+  std::unique_ptr<storm::IterativeSolver<storm::stormArray>> solver = 
+    std::make_unique<storm::JfnkSolver<storm::stormArray>>();
   solver->AbsoluteTolerance = 1.0e-4;
   solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);

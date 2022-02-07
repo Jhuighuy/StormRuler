@@ -134,9 +134,9 @@ Real_t JfnkSolver<Vector>::Init(Vector const& xVec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   linOp.MatVec(wVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, wVec_);
+  Blas::Sub(rVec_, bVec, wVec_);
 
-  return stormBlas::Norm2(rVec_);  
+  return Blas::Norm2(rVec_);  
 
 } // JfnkSolver<...>::Init
 
@@ -155,8 +155,8 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
   static Real_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<Real_t>::epsilon());
   Real_t const mu = 
-    sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
-  stormBlas::Set(tVec_, rVec_);
+    sqrtOfEpsilon*std::sqrt(1.0 + Blas::Norm2(xVec));
+  Blas::Set(tVec_, rVec_);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
@@ -165,7 +165,7 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
-    auto op = stormMakeOperator<Vector>(
+    auto op = MakeOperator<Vector>(
       [&](Vector& zVec, Vector const& yVec) {
 
         // ----------------------
@@ -176,11 +176,11 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         Real_t const delta = 
-          stormUtils::SafeDivide(mu, stormBlas::Norm2(yVec));
-        stormBlas::Add(sVec_, xVec, yVec, delta);
+          Utils::SafeDivide(mu, Blas::Norm2(yVec));
+        Blas::Add(sVec_, xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
-        Real_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        stormBlas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
+        Real_t const deltaInverse = Utils::SafeDivide(1.0, delta);
+        Blas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
 
       });
     solver->Solve(tVec_, rVec_, *op);
@@ -192,11 +192,11 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  stormBlas::Add(xVec, xVec, tVec_);
+  Blas::Add(xVec, xVec, tVec_);
   linOp.MatVec(wVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, wVec_);
+  Blas::Sub(rVec_, bVec, wVec_);
 
-  return stormBlas::Norm2(rVec_);  
+  return Blas::Norm2(rVec_);  
 
 } // JfnkSolver<...>::Iterate
 

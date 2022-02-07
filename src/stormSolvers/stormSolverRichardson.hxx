@@ -80,13 +80,13 @@ Real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  Blas::Sub(rVec_, bVec, rVec_);
   if (preOp != nullptr) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 
-  return stormBlas::Norm2(rVec_);
+  return Blas::Norm2(rVec_);
 
 } // RichardsonSolver<...>::Init
 
@@ -108,15 +108,15 @@ Real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Add(xVec, xVec, rVec_, omega);
+  Blas::Add(xVec, xVec, rVec_, omega);
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  Blas::Sub(rVec_, bVec, rVec_);
   if (preOp != nullptr) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 
-  return stormBlas::Norm2(rVec_);
+  return Blas::Norm2(rVec_);
 
 } // RichardsonSolver<...>::Iterate
 

@@ -32,9 +32,6 @@
 
 _STORM_NAMESPACE_BEGIN_
 
-template<class InVector, class OutVector = InVector>
-using Operator = stormOperator<InVector, OutVector>;
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Preconditioner side.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -90,13 +87,13 @@ private:
   void MatVec(Vector& yVec,
               Vector const& xVec) const override {
     std::cout << "`IdentityPreconditioner<...>::MatVec`!" << std::endl;
-    stormBlas::Set(yVec, xVec);
+    Blas::Set(yVec, xVec);
   }
 
   void ConjMatVec(Vector& xVec,
                   Vector const& yVec) const override {
     std::cout << "`IdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
-    stormBlas::Set(xVec, yVec);
+    Blas::Set(xVec, yVec);
   }
 
 }; // class IdentityPreconditioner<...>

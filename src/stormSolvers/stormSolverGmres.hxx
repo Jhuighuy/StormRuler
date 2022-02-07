@@ -170,13 +170,13 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
   linOp.MatVec(qVecs_(0), xVec);
-  stormBlas::Sub(qVecs_(0), bVec, qVecs_(0));
+  Blas::Sub(qVecs_(0), bVec, qVecs_(0));
   if (leftPre) {
     std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
-  beta_(0) = stormBlas::Norm2(qVecs_(0));
-  stormBlas::Scale(qVecs_(0), qVecs_(0), 1.0/beta_(0));
+  beta_(0) = Blas::Norm2(qVecs_(0));
+  Blas::Scale(qVecs_(0), qVecs_(0), 1.0/beta_(0));
 
   return beta_(0);
 
@@ -203,13 +203,13 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
   linOp.MatVec(qVecs_(0), xVec);
-  stormBlas::Sub(qVecs_(0), bVec, qVecs_(0));
+  Blas::Sub(qVecs_(0), bVec, qVecs_(0));
   if (leftPre) {
     std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
-  beta_(0) = stormBlas::Norm2(qVecs_(0));
-  stormBlas::Scale(qVecs_(0), qVecs_(0), 1.0/beta_(0));
+  beta_(0) = Blas::Norm2(qVecs_(0));
+  Blas::Scale(qVecs_(0), qVecs_(0), 1.0/beta_(0));
 
 } // BaseGmresSolver<...>::InnerInit
 
@@ -245,19 +245,19 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(qVecs_(k + 1), *preOp, zVecs_(0), linOp, qVecs_(k));
+    Blas::MatVec(qVecs_(k + 1), *preOp, zVecs_(0), linOp, qVecs_(k));
   } else if (rightPre) {
     Size_t const j = Flexible ? k : 0;
-    stormBlas::MatVec(qVecs_(k + 1), linOp, zVecs_(j), *preOp, qVecs_(k));
+    Blas::MatVec(qVecs_(k + 1), linOp, zVecs_(j), *preOp, qVecs_(k));
   } else {
     linOp.MatVec(qVecs_(k + 1), qVecs_(k));
   }
   for (Size_t i = 0; i <= k; ++i) {
-    H_(i, k) = stormBlas::Dot(qVecs_(k + 1), qVecs_(i));
-    stormBlas::Sub(qVecs_(k + 1), qVecs_(k + 1), qVecs_(i), H_(i, k));
+    H_(i, k) = Blas::Dot(qVecs_(k + 1), qVecs_(i));
+    Blas::Sub(qVecs_(k + 1), qVecs_(k + 1), qVecs_(i), H_(i, k));
   }
-  H_(k + 1, k) = stormBlas::Norm2(qVecs_(k + 1));
-  stormBlas::Scale(qVecs_(k + 1), qVecs_(k + 1), 1.0/H_(k + 1, k));
+  H_(k + 1, k) = Blas::Norm2(qVecs_(k + 1));
+  Blas::Scale(qVecs_(k + 1), qVecs_(k + 1), 1.0/H_(k + 1, k));
 
   // ----------------------
   // Eliminate the last element in 𝐻
@@ -277,7 +277,7 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
     H_(i, k) = chi;
   }
   std::tie(cs_(k), sn_(k), std::ignore) =
-    stormBlas::SymOrtho(H_(k, k), H_(k + 1, k));
+    Blas::SymOrtho(H_(k, k), H_(k + 1, k));
   H_(k, k) = cs_(k)*H_(k, k) + sn_(k)*H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 
@@ -335,19 +335,19 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
   // ----------------------
   if (!rightPre) {
     for (Size_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, qVecs_(i), beta_(i));
+      Blas::Add(xVec, xVec, qVecs_(i), beta_(i));
     }
   } else if constexpr (Flexible) {
     for (Size_t i = 0; i <= k; ++i) {
-      stormBlas::Add(xVec, xVec, zVecs_(i), beta_(i));
+      Blas::Add(xVec, xVec, zVecs_(i), beta_(i));
     }
   } else {
-    stormBlas::Scale(qVecs_(0), qVecs_(0), beta_(0));
+    Blas::Scale(qVecs_(0), qVecs_(0), beta_(0));
     for (Size_t i = 1; i <= k; ++i) {
-      stormBlas::Add(qVecs_(0), qVecs_(0), qVecs_(i), beta_(i));
+      Blas::Add(qVecs_(0), qVecs_(0), qVecs_(i), beta_(i));
     }
     preOp->MatVec(zVecs_(0), qVecs_(0));
-    stormBlas::Add(xVec, xVec, zVecs_(0));
+    Blas::Add(xVec, xVec, zVecs_(0));
   }
 
 } // BaseGmresSolver<...>::InnerFinalize

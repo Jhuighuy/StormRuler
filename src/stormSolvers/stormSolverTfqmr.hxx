@@ -150,19 +150,19 @@ Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    stormBlas::Set(dVec_, xVec);
+    Blas::Set(dVec_, xVec);
   } else {
-    stormBlas::Fill(dVec_, 0.0);
+    Blas::Fill(dVec_, 0.0);
   }
   linOp.MatVec(yVec_, xVec);
-  stormBlas::Sub(yVec_, bVec, yVec_);
+  Blas::Sub(yVec_, bVec, yVec_);
   if (leftPre) {
     std::swap(zVec_, yVec_);
     preOp->MatVec(yVec_, zVec_);
   }
-  stormBlas::Set(uVec_, yVec_);
-  stormBlas::Set(rTildeVec_, uVec_);
-  rho_ = stormBlas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
+  Blas::Set(uVec_, yVec_);
+  Blas::Set(rTildeVec_, uVec_);
+  rho_ = Blas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
 
   return tau_;
 
@@ -209,28 +209,27 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     if (leftPre) {
-      stormBlas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+      Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
     } else if (rightPre) {
-      stormBlas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+      Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    stormBlas::Set(vVec_, sVec_);
+    Blas::Set(vVec_, sVec_);
   } else {
     Real_t const rhoBar = rho_;
-    rho_ = stormBlas::Dot(rTildeVec_, uVec_);
-    Real_t const beta = 
-      stormUtils::SafeDivide(rho_, rhoBar);
-    stormBlas::Add(vVec_, sVec_, vVec_, beta);
-    stormBlas::Add(yVec_, uVec_, yVec_, beta);
+    rho_ = Blas::Dot(rTildeVec_, uVec_);
+    Real_t const beta = Utils::SafeDivide(rho_, rhoBar);
+    Blas::Add(vVec_, sVec_, vVec_, beta);
+    Blas::Add(yVec_, uVec_, yVec_, beta);
     if (leftPre) {
-      stormBlas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+      Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
     } else if (rightPre) {
-      stormBlas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+      Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    stormBlas::Add(vVec_, sVec_, vVec_, beta);
+    Blas::Add(vVec_, sVec_, vVec_, beta);
   }
 
   // ----------------------
@@ -263,28 +262,28 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   Real_t const alpha =
-    stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
+    Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
   for (Size_t m = 0; m <= 1; ++m) {
-    stormBlas::Sub(uVec_, uVec_, sVec_, alpha);
-    stormBlas::Add(dVec_, dVec_, rightPre ? zVec_ : yVec_, alpha);
-    Real_t const omega = stormBlas::Norm2(uVec_);
+    Blas::Sub(uVec_, uVec_, sVec_, alpha);
+    Blas::Add(dVec_, dVec_, rightPre ? zVec_ : yVec_, alpha);
+    Real_t const omega = Blas::Norm2(uVec_);
     if constexpr (L1) {
       if (omega < tau_) {
-        tau_ = omega, stormBlas::Set(xVec, dVec_);
+        tau_ = omega, Blas::Set(xVec, dVec_);
       }
     } else {
       auto const [cs, sn, rr] =
-        stormBlas::SymOrtho(tau_, omega);
+        Blas::SymOrtho(tau_, omega);
       tau_ = omega*cs;
-      stormBlas::Add(xVec, xVec, dVec_, std::pow(cs, 2));
-      stormBlas::Scale(dVec_, dVec_, std::pow(sn, 2));
+      Blas::Add(xVec, xVec, dVec_, std::pow(cs, 2));
+      Blas::Scale(dVec_, dVec_, std::pow(sn, 2));
     }
     if (m == 0) {
-      stormBlas::Sub(yVec_, yVec_, vVec_, alpha);
+      Blas::Sub(yVec_, yVec_, vVec_, alpha);
       if (leftPre) {
-        stormBlas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+        Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
       } else if (rightPre) {
-        stormBlas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+        Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
       } else {
         linOp.MatVec(sVec_, yVec_);
       }

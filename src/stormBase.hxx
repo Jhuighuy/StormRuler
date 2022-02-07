@@ -26,9 +26,13 @@
 #define _STORM_BASE_HXX_
 
 #include <cstddef>
+#include <StormRuler_API.h>
 
 #define _STORM_NAMESPACE_BEGIN_ namespace storm {
 #define _STORM_NAMESPACE_END_ } // namespace storm
+
+#define _STORM_NOT_IMPLEMENTED_() do { \
+  std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
 
 _STORM_NAMESPACE_BEGIN_
 

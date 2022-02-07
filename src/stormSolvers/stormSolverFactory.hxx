@@ -115,12 +115,12 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
     if (solverType == STORM_KSP_FGMRES) {
       return std::make_unique<FgmresSolver<InVector>>();
     }
-    //if (solverType == STORM_KSP_LGMRES) {
-    //  return std::make_unique<LgmresSolver<InVector>>();
-    //}
-    //if (solverType == STORM_KSP_LFGMRES) {
-    //  return std::make_unique<LfgmresSolver<InVector>>();
-    //}
+  //if (solverType == STORM_KSP_LGMRES) {
+  //  return std::make_unique<LgmresSolver<InVector>>();
+  //}
+  //if (solverType == STORM_KSP_LFGMRES) {
+  //  return std::make_unique<LfgmresSolver<InVector>>();
+  //}
   }
 
   // ----------------------

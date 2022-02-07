@@ -39,7 +39,7 @@ _STORM_NAMESPACE_BEGIN_
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class InVector, class OutVector = InVector>
-class Solver : public stormBaseObject {
+class Solver : public BaseObject {
 public:
 
   /// @brief Solve the operator equation 𝓐(𝒙) = 𝒃.
@@ -120,9 +120,9 @@ public:
 
 template<class InVector, class OutVector>
 bool IterativeSolver<InVector, OutVector>::
-                        Solve(InVector& xVec,
-                              OutVector const& bVec,
-                              Operator<InVector, OutVector> const& anyOp) {
+                          Solve(InVector& xVec,
+                                OutVector const& bVec,
+                                Operator<InVector, OutVector> const& anyOp) {
 
   // ----------------------
   // Initialize the solver.
@@ -167,9 +167,9 @@ bool IterativeSolver<InVector, OutVector>::
     OutVector rVec;
     rVec.Assign(bVec, false);
     anyOp.MatVec(rVec, xVec);
-    stormBlas::Sub(rVec, bVec, rVec);
+    Blas::Sub(rVec, bVec, rVec);
     Real_t const
-      trueAbsoluteError = stormBlas::Norm2(rVec),
+      trueAbsoluteError = Blas::Norm2(rVec),
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
@@ -297,13 +297,11 @@ private:
 
 }; // class InnerOuterIterativeSolver<...>
 
-_STORM_NAMESPACE_END_
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class tArray>
-class stormPowerIterations final : public stormBaseObject {
+template<class Array>
+class PowerIterations final : public BaseObject {
 public:
 
   /// @brief Estimate the largest eigenvalue of \
@@ -318,22 +316,22 @@ public:
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
-  static stormReal_t
-    EstimateLargestEigenvalue(tArray& xVec,
-                              stormOperator<tArray> const& linOp,
-                              stormSize_t maxIterations = 20,
-                              stormReal_t relativeTolerance = 1.0e-8);
+  static Real_t
+    EstimateLargestEigenvalue(Array& xVec,
+                              Operator<Array> const& linOp,
+                              Size_t maxIterations = 20,
+                              Real_t relativeTolerance = 1.0e-8);
 
-}; // class stormPowerIterations<...>
+}; // class PowerIterations<...>
 
-template<class tArray>
-stormReal_t stormPowerIterations<tArray>::
-    EstimateLargestEigenvalue(tArray& xVec,
-                              stormOperator<tArray> const& linOp,
-                              stormSize_t maxIterations,
-                              stormReal_t relativeTolerance) {
+template<class Array>
+Real_t PowerIterations<Array>::
+    EstimateLargestEigenvalue(Array& xVec,
+                              Operator<Array> const& linOp,
+                              Size_t maxIterations,
+                              Real_t relativeTolerance) {
 
-  stormArray yVec;
+  Array yVec;
   yVec.Assign(xVec, false);
 
   // ----------------------
@@ -342,11 +340,11 @@ stormReal_t stormPowerIterations<tArray>::
   // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
-  stormReal_t lambda = 1.0;
-  stormBlas::RandFill(xVec);
-  stormBlas::Scale(xVec, xVec, 1.0/stormBlas::Norm2(xVec));
+  Real_t lambda = 1.0;
+  Blas::RandFill(xVec);
+  Blas::Scale(xVec, xVec, 1.0/Blas::Norm2(xVec));
 
-  for (stormSize_t iteration = 0; iteration < maxIterations; ++iteration) {
+  for (Size_t iteration = 0; iteration < maxIterations; ++iteration) {
 
     // ----------------------
     // Continue the Power Iterations:
@@ -355,9 +353,9 @@ stormReal_t stormPowerIterations<tArray>::
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yVec, xVec);
-    stormReal_t const lambdaBar = lambda;
-    lambda = stormBlas::Dot(xVec, yVec);
-    stormBlas::Scale(xVec, yVec, 1.0/stormBlas::Norm2(yVec));
+    Real_t const lambdaBar = lambda;
+    lambda = Blas::Dot(xVec, yVec);
+    Blas::Scale(xVec, yVec, 1.0/Blas::Norm2(yVec));
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:
@@ -369,6 +367,8 @@ stormReal_t stormPowerIterations<tArray>::
 
   return lambda;
 
-} // stormPowerIterations<...>::EstimateLargestEigenvalue
+} // PowerIterations<...>::EstimateLargestEigenvalue
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_SOLVER_HXX_

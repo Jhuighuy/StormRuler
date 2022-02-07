@@ -99,13 +99,13 @@ Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  stormBlas::Sub(rVec_, bVec, rVec_);
+  Blas::Sub(rVec_, bVec, rVec_);
   if (leftPre) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  stormBlas::Set(rTildeVec_, rVec_);
-  rho_ = stormBlas::Dot(rTildeVec_, rVec_);
+  Blas::Set(rTildeVec_, rVec_);
+  rho_ = Blas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
 
@@ -136,14 +136,14 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(pVec_, rVec_);
+    Blas::Set(pVec_, rVec_);
   } else {
     Real_t const rhoBar = rho_;
-    rho_ = stormBlas::Dot(rTildeVec_, rVec_);
+    rho_ = Blas::Dot(rTildeVec_, rVec_);
     Real_t const beta =
-      stormUtils::SafeDivide(rho_, rhoBar)*stormUtils::SafeDivide(alpha_, omega_);
-    stormBlas::Sub(pVec_, pVec_, vVec_, omega_);
-    stormBlas::Add(pVec_, rVec_, pVec_, beta);
+      Utils::SafeDivide(rho_, rhoBar)*Utils::SafeDivide(alpha_, omega_);
+    Blas::Sub(pVec_, pVec_, vVec_, omega_);
+    Blas::Add(pVec_, rVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -160,15 +160,15 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(vVec_, *preOp, zVec_, linOp, pVec_);
+    Blas::MatVec(vVec_, *preOp, zVec_, linOp, pVec_);
   } else if (rightPre) {
-    stormBlas::MatVec(vVec_, linOp, zVec_, *preOp, pVec_);
+    Blas::MatVec(vVec_, linOp, zVec_, *preOp, pVec_);
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
-  alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
-  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : pVec_, alpha_);
-  stormBlas::Sub(rVec_, rVec_, vVec_, alpha_);
+  alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
+  Blas::Add(xVec, xVec, rightPre ? zVec_ : pVec_, alpha_);
+  Blas::Sub(rVec_, rVec_, vVec_, alpha_);
 
   // ----------------------
   // Update the solution and the residual again:
@@ -184,18 +184,18 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
   if (leftPre) {
-    stormBlas::MatVec(tVec_, *preOp, zVec_, linOp, rVec_);
+    Blas::MatVec(tVec_, *preOp, zVec_, linOp, rVec_);
   } else if (rightPre) {
-    stormBlas::MatVec(tVec_, linOp, zVec_, *preOp, rVec_);
+    Blas::MatVec(tVec_, linOp, zVec_, *preOp, rVec_);
   } else {
     linOp.MatVec(tVec_, rVec_);
   }
-  omega_ = stormUtils::SafeDivide(
-    stormBlas::Dot(tVec_, rVec_), stormBlas::Dot(tVec_, tVec_));
-  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
-  stormBlas::Sub(rVec_, rVec_, tVec_, omega_);
+  omega_ = Utils::SafeDivide(
+    Blas::Dot(tVec_, rVec_), Blas::Dot(tVec_, tVec_));
+  Blas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
+  Blas::Sub(rVec_, rVec_, tVec_, omega_);
 
-  return stormBlas::Norm2(rVec_);
+  return Blas::Norm2(rVec_);
 
 } // BiCgStabSolver<...>::Iterate
 
@@ -274,15 +274,15 @@ Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
   // 𝒓̃ ← 𝒓₀,
   // 𝜌 ← <𝒓̃⋅𝒓₀>.
   // ----------------------
-  stormBlas::Fill(uVecs_(0), 0.0);
+  Blas::Fill(uVecs_(0), 0.0);
   linOp.MatVec(rVecs_(0), xVec);
-  stormBlas::Sub(rVecs_(0), bVec, rVecs_(0));
+  Blas::Sub(rVecs_(0), bVec, rVecs_(0));
   if (preOp != nullptr) {
     std::swap(zVec_, rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);
   }
-  stormBlas::Set(rTildeVec_, rVecs_(0));
-  rho_ = stormBlas::Dot(rTildeVec_, rVecs_(0));
+  Blas::Set(rTildeVec_, rVecs_(0));
+  rho_ = Blas::Dot(rTildeVec_, rVecs_(0));
 
   return std::sqrt(rho_);
 
@@ -321,24 +321,24 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    stormBlas::Set(uVecs_(0), rVecs_(0));
+    Blas::Set(uVecs_(0), rVecs_(0));
   } else {
     Real_t const rhoBar = rho_;
-    rho_ = stormBlas::Dot(rTildeVec_, rVecs_(j));
+    rho_ = Blas::Dot(rTildeVec_, rVecs_(j));
     Real_t const beta =
-      alpha_*stormUtils::SafeDivide(rho_, rhoBar);
+      alpha_*Utils::SafeDivide(rho_, rhoBar);
     for (Size_t i = 0; i <= j; ++i) {
-      stormBlas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
+      Blas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
     }
   }
   if (preOp != nullptr) {
-    stormBlas::MatVec(uVecs_(j + 1), *preOp, zVec_, linOp, uVecs_(j));
+    Blas::MatVec(uVecs_(j + 1), *preOp, zVec_, linOp, uVecs_(j));
   } else {
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
-  alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, uVecs_(j + 1)));
+  alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, uVecs_(j + 1)));
   for (Size_t i = 0; i <= j; ++i) {
-    stormBlas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
+    Blas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
   }
 
   // ----------------------
@@ -350,9 +350,9 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒓ⱼ₊₁ ← 𝓐𝒓ⱼ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  stormBlas::Add(xVec, xVec, uVecs_(0), alpha_);
+  Blas::Add(xVec, xVec, uVecs_(0), alpha_);
   if (preOp != nullptr) {
-    stormBlas::MatVec(rVecs_(j + 1), *preOp, zVec_, linOp, rVecs_(j));
+    Blas::MatVec(rVecs_(j + 1), *preOp, zVec_, linOp, rVecs_(j));
   } else {
     linOp.MatVec(rVecs_(j + 1), rVecs_(j));
   }
@@ -372,12 +372,12 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     for (Size_t j = 1; j <= l; ++j) {
       for (Size_t i = 1; i < j; ++i) {
         tau_(i, j) = 
-          stormUtils::SafeDivide(stormBlas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
-        stormBlas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
+          Utils::SafeDivide(Blas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
+        Blas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
       }
-      sigma_(j) = stormBlas::Dot(rVecs_(j), rVecs_(j));
+      sigma_(j) = Blas::Dot(rVecs_(j), rVecs_(j));
       gammaBar_(j) = 
-        stormUtils::SafeDivide(stormBlas::Dot(rVecs_(0), rVecs_(j)), sigma_(j));
+        Utils::SafeDivide(Blas::Dot(rVecs_(0), rVecs_(j)), sigma_(j));
     }
 
     // ----------------------
@@ -420,17 +420,17 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     //   𝒖₀ ← 𝒖₀ - 𝛾ⱼ⋅𝒖ⱼ.
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    stormBlas::Add(xVec, xVec, rVecs_(0), gamma_(1));
-    stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(l), gammaBar_(l));
-    stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(l), gamma_(l));
+    Blas::Add(xVec, xVec, rVecs_(0), gamma_(1));
+    Blas::Sub(rVecs_(0), rVecs_(0), rVecs_(l), gammaBar_(l));
+    Blas::Sub(uVecs_(0), uVecs_(0), uVecs_(l), gamma_(l));
     for (Size_t j = 1; j < l; ++j) {
-      stormBlas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
-      stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(j), gammaBar_(j));
-      stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(j), gamma_(j));
+      Blas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
+      Blas::Sub(rVecs_(0), rVecs_(0), rVecs_(j), gammaBar_(j));
+      Blas::Sub(uVecs_(0), uVecs_(0), uVecs_(j), gamma_(j));
     }
   }
 
-  return stormBlas::Norm2(rVecs_(0));
+  return Blas::Norm2(rVecs_(0));
 
 } // BiCGStabLSolver<...>::InnerIterate
 

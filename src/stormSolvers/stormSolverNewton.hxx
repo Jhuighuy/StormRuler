@@ -131,9 +131,9 @@ stormReal_t stormJfnkSolver<Vector>::Init(Vector const& xVec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   linOp.MatVec(wVec_, xVec);
-  rVec_.Sub(bVec, wVec_);
+  stormBlas::Sub(rVec_, bVec, wVec_);
 
-  return rVec_.Norm2();  
+  return stormBlas::Norm2(rVec_);  
 
 } // stormJfnkSolver<...>::Init
 
@@ -152,8 +152,8 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
   static stormReal_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<stormReal_t>::epsilon());
   stormReal_t const mu = 
-    sqrtOfEpsilon*std::sqrt(1.0 + xVec.Norm2());
-  tVec_.Assign(rVec_);
+    sqrtOfEpsilon*std::sqrt(1.0 + stormBlas::Norm2(xVec));
+  stormBlas::Set(tVec_, rVec_);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
@@ -173,11 +173,11 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         stormReal_t const delta = 
-          stormUtils::SafeDivide(mu, yVec.Norm2());
-        sVec_.Add(xVec, yVec, delta);
+          stormUtils::SafeDivide(mu, stormBlas::Norm2(yVec));
+        stormBlas::Add(sVec_, xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
         stormReal_t const deltaInverse = stormUtils::SafeDivide(1.0, delta);
-        zVec.Sub(zVec, deltaInverse, wVec_, deltaInverse);
+        stormBlas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
 
       });
     solver->Solve(tVec_, rVec_, *op);
@@ -189,11 +189,11 @@ stormReal_t stormJfnkSolver<Vector>::Iterate(Vector& xVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  xVec.Add(tVec_);
+  stormBlas::Add(xVec, xVec, tVec_);
   linOp.MatVec(wVec_, xVec);
-  rVec_.Sub(bVec, wVec_);
+  stormBlas::Sub(rVec_, bVec, wVec_);
 
-  return rVec_.Norm2();  
+  return stormBlas::Norm2(rVec_);  
 
 } // stormJfnkSolver<...>::Iterate
 

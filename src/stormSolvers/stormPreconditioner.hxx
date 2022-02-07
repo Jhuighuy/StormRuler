@@ -84,13 +84,13 @@ private:
   void MatVec(Vector& yVec,
               Vector const& xVec) const override {
     std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
-    yVec.Assign(xVec);
+    stormBlas::Set(yVec, xVec);
   }
 
   void ConjMatVec(Vector& xVec,
                   Vector const& yVec) const override {
     std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
-    xVec.Assign(yVec);
+    stormBlas::Set(xVec, yVec);
   }
 
 }; // class stormIdentityPreconditioner<...>

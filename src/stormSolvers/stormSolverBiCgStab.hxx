@@ -96,12 +96,12 @@ stormReal_t stormBiCgStabSolver<Vector>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   linOp.MatVec(rVec_, xVec);
-  rVec_.Sub(bVec, rVec_);
+  stormBlas::Sub(rVec_, bVec, rVec_);
   if (leftPre) {
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  rTildeVec_.Assign(rVec_);
+  stormBlas::Set(rTildeVec_, rVec_);
   rho_ = stormBlas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
@@ -133,14 +133,14 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    pVec_.Assign(rVec_);
+    stormBlas::Set(pVec_, rVec_);
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVec_);
     stormReal_t const beta =
       stormUtils::SafeDivide(rho_, rhoBar)*stormUtils::SafeDivide(alpha_, omega_);
-    pVec_.Sub(vVec_, omega_);
-    pVec_.Add(rVec_, pVec_, beta);
+    stormBlas::Sub(pVec_, pVec_, vVec_, omega_);
+    stormBlas::Add(pVec_, rVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -164,8 +164,8 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
     linOp.MatVec(vVec_, pVec_);
   }
   alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, vVec_));
-  xVec.Add(rightPre ? zVec_ : pVec_, alpha_);
-  rVec_.Sub(vVec_, alpha_);
+  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : pVec_, alpha_);
+  stormBlas::Sub(rVec_, rVec_, vVec_, alpha_);
 
   // ----------------------
   // Update the solution and the residual again:
@@ -189,10 +189,10 @@ stormReal_t stormBiCgStabSolver<Vector>::Iterate(Vector& xVec,
   }
   omega_ = stormUtils::SafeDivide(
     stormBlas::Dot(tVec_, rVec_), stormBlas::Dot(tVec_, tVec_));
-  xVec.Add(rightPre ? zVec_ : rVec_, omega_);
-  rVec_.Sub(tVec_, omega_);
+  stormBlas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
+  stormBlas::Sub(rVec_, rVec_, tVec_, omega_);
 
-  return rVec_.Norm2();
+  return stormBlas::Norm2(rVec_);
 
 } // stormBiCgStabSolver<...>::Iterate
 
@@ -272,14 +272,14 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   // 𝒓̃ ← 𝒓₀,
   // 𝜌 ← <𝒓̃⋅𝒓₀>.
   // ----------------------
-  uVecs_(0).Fill(0.0);
+  stormBlas::Fill(uVecs_(0), 0.0);
   linOp.MatVec(rVecs_(0), xVec);
-  rVecs_(0).Sub(bVec, rVecs_(0));
+  stormBlas::Sub(rVecs_(0), bVec, rVecs_(0));
   if (preOp != nullptr) {
     std::swap(zVec_, rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);
   }
-  rTildeVec_.Assign(rVecs_(0));
+  stormBlas::Set(rTildeVec_, rVecs_(0));
   rho_ = stormBlas::Dot(rTildeVec_, rVecs_(0));
 
   return std::sqrt(rho_);
@@ -320,14 +320,14 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    uVecs_(0).Assign(rVecs_(0));
+    stormBlas::Set(uVecs_(0), rVecs_(0));
   } else {
     stormReal_t const rhoBar = rho_;
     rho_ = stormBlas::Dot(rTildeVec_, rVecs_(j));
     stormReal_t const beta =
       alpha_*stormUtils::SafeDivide(rho_, rhoBar);
     for (stormSize_t i = 0; i <= j; ++i) {
-      uVecs_(i).Sub(rVecs_(i), uVecs_(i), beta);
+      stormBlas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
     }
   }
   if (preOp != nullptr) {
@@ -337,7 +337,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   }
   alpha_ = stormUtils::SafeDivide(rho_, stormBlas::Dot(rTildeVec_, uVecs_(j + 1)));
   for (stormSize_t i = 0; i <= j; ++i) {
-    rVecs_(i).Sub(uVecs_(i + 1), alpha_);
+    stormBlas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
   }
 
   // ----------------------
@@ -349,7 +349,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
   //   𝒓ⱼ₊₁ ← 𝓐𝒓ⱼ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  xVec.Add(uVecs_(0), alpha_);
+  stormBlas::Add(xVec, xVec, uVecs_(0), alpha_);
   if (preOp != nullptr) {
     stormBlas::MatVec(rVecs_(j + 1), *preOp, zVec_, linOp, rVecs_(j));
   } else {
@@ -372,7 +372,7 @@ stormReal_t stormBiCGStabLSolver<Vector>::
       for (stormSize_t i = 1; i < j; ++i) {
         tau_(i, j) = 
           stormUtils::SafeDivide(stormBlas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
-        rVecs_(j).Sub(rVecs_(i), tau_(i, j));
+        stormBlas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
       }
       sigma_(j) = stormBlas::Dot(rVecs_(j), rVecs_(j));
       gammaBar_(j) = 
@@ -419,17 +419,17 @@ stormReal_t stormBiCGStabLSolver<Vector>::
     //   𝒖₀ ← 𝒖₀ - 𝛾ⱼ⋅𝒖ⱼ.
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    xVec.Add(rVecs_(0), gamma_(1));
-    rVecs_(0).Sub(rVecs_(l), gammaBar_(l));
-    uVecs_(0).Sub(uVecs_(l), gamma_(l));
+    stormBlas::Add(xVec, xVec, rVecs_(0), gamma_(1));
+    stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(l), gammaBar_(l));
+    stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(l), gamma_(l));
     for (stormSize_t j = 1; j < l; ++j) {
-      xVec.Add(rVecs_(j), gammaBarBar_(j));
-      rVecs_(0).Sub(rVecs_(j), gammaBar_(j));
-      uVecs_(0).Sub(uVecs_(j), gamma_(j));
+      stormBlas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
+      stormBlas::Sub(rVecs_(0), rVecs_(0), rVecs_(j), gammaBar_(j));
+      stormBlas::Sub(uVecs_(0), uVecs_(0), uVecs_(j), gamma_(j));
     }
   }
 
-  return rVecs_(0).Norm2();
+  return stormBlas::Norm2(rVecs_(0));
 
 } // stormBiCGStabLSolver<...>::InnerIterate
 

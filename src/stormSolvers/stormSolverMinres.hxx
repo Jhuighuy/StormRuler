@@ -125,11 +125,11 @@ stormReal_t stormMinresSolver<Vector>::Init(Vector const& xVec,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  wBarVec.Fill(0.0);
-  wBarBarVec.Fill(0.0);
+  stormBlas::Fill(wBarVec, 0.0);
+  stormBlas::Fill(wBarBarVec, 0.0);
   linOp.MatVec(zBarVec, xVec);
-  zBarVec.Sub(bVec, zBarVec);
-  zBarBarVec.Fill(0.0);
+  stormBlas::Sub(zBarVec, bVec, zBarVec);
+  stormBlas::Fill(zBarBarVec, 0.0);
   if (preOp != nullptr) {
     preOp->MatVec(qVec, zBarVec);
   } else {
@@ -163,8 +163,8 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   linOp.MatVec(pVec, qVec);
   alpha = stormBlas::Dot(qVec, pVec)*std::pow(beta, -2);
-  zVec.Sub(pVec, 1.0/beta, zBarVec, alpha/beta);
-  zVec.Sub(zVec, zBarBarVec, beta/betaBar);
+  stormBlas::Sub(zVec, pVec, 1.0/beta, zBarVec, alpha/beta);
+  stormBlas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
   if (preOp != nullptr) {
     std::swap(qBarVec, qVec);
     preOp->MatVec(qVec, zVec);
@@ -193,9 +193,9 @@ stormReal_t stormMinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  wVec.Sub(qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
-  wVec.Sub(wVec, wBarBarVec, epsilonBar/gamma);
-  xVec.Add(wVec, tau);
+  stormBlas::Sub(wVec, qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
+  stormBlas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
+  stormBlas::Add(xVec, xVec, wVec, tau);
   std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
 
   return phi;

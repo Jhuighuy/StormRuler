@@ -209,9 +209,9 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     if (leftPre) {
-      Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+      preOp->MatVec(sVec_, zVec_, linOp, yVec_);
     } else if (rightPre) {
-      Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+      linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
@@ -223,9 +223,9 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     Blas::Add(vVec_, sVec_, vVec_, beta);
     Blas::Add(yVec_, uVec_, yVec_, beta);
     if (leftPre) {
-      Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+      preOp->MatVec(sVec_, zVec_, linOp, yVec_);
     } else if (rightPre) {
-      Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+      linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
@@ -281,9 +281,9 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     if (m == 0) {
       Blas::Sub(yVec_, yVec_, vVec_, alpha);
       if (leftPre) {
-        Blas::MatVec(sVec_, *preOp, zVec_, linOp, yVec_);
+        preOp->MatVec(sVec_, zVec_, linOp, yVec_);
       } else if (rightPre) {
-        Blas::MatVec(sVec_, linOp, zVec_, *preOp, yVec_);
+        linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
       } else {
         linOp.MatVec(sVec_, yVec_);
       }

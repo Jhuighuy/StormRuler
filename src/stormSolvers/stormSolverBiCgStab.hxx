@@ -140,8 +140,7 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   } else {
     Real_t const rhoBar = rho_;
     rho_ = Blas::Dot(rTildeVec_, rVec_);
-    Real_t const beta =
-      Utils::SafeDivide(rho_, rhoBar)*Utils::SafeDivide(alpha_, omega_);
+    Real_t const beta = Utils::SafeDivide(alpha_*rho_, omega_*rhoBar);
     Blas::Sub(pVec_, pVec_, vVec_, omega_);
     Blas::Add(pVec_, rVec_, pVec_, beta);
   }
@@ -160,9 +159,9 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
   if (leftPre) {
-    Blas::MatVec(vVec_, *preOp, zVec_, linOp, pVec_);
+    preOp->MatVec(vVec_, zVec_, linOp, pVec_);
   } else if (rightPre) {
-    Blas::MatVec(vVec_, linOp, zVec_, *preOp, pVec_);
+    linOp.MatVec(vVec_, zVec_, *preOp, pVec_);
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
@@ -184,9 +183,9 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
   if (leftPre) {
-    Blas::MatVec(tVec_, *preOp, zVec_, linOp, rVec_);
+    preOp->MatVec(tVec_, zVec_, linOp, rVec_);
   } else if (rightPre) {
-    Blas::MatVec(tVec_, linOp, zVec_, *preOp, rVec_);
+    linOp.MatVec(tVec_, zVec_, *preOp, rVec_);
   } else {
     linOp.MatVec(tVec_, rVec_);
   }
@@ -325,14 +324,13 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
   } else {
     Real_t const rhoBar = rho_;
     rho_ = Blas::Dot(rTildeVec_, rVecs_(j));
-    Real_t const beta =
-      alpha_*Utils::SafeDivide(rho_, rhoBar);
+    Real_t const beta = Utils::SafeDivide(alpha_*rho_, rhoBar);
     for (Size_t i = 0; i <= j; ++i) {
       Blas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
     }
   }
   if (preOp != nullptr) {
-    Blas::MatVec(uVecs_(j + 1), *preOp, zVec_, linOp, uVecs_(j));
+    preOp->MatVec(uVecs_(j + 1), zVec_, linOp, uVecs_(j));
   } else {
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
@@ -352,7 +350,7 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   Blas::Add(xVec, xVec, uVecs_(0), alpha_);
   if (preOp != nullptr) {
-    Blas::MatVec(rVecs_(j + 1), *preOp, zVec_, linOp, rVecs_(j));
+    preOp->MatVec(rVecs_(j + 1), zVec_, linOp, rVecs_(j));
   } else {
     linOp.MatVec(rVecs_(j + 1), rVecs_(j));
   }

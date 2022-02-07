@@ -245,10 +245,10 @@ Real_t BaseGmresSolver<Vector, Flexible, Loose>::
   // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
   // ----------------------
   if (leftPre) {
-    Blas::MatVec(qVecs_(k + 1), *preOp, zVecs_(0), linOp, qVecs_(k));
+    preOp->MatVec(qVecs_(k + 1), zVecs_(0), linOp, qVecs_(k));
   } else if (rightPre) {
     Size_t const j = Flexible ? k : 0;
-    Blas::MatVec(qVecs_(k + 1), linOp, zVecs_(j), *preOp, qVecs_(k));
+    linOp.MatVec(qVecs_(k + 1), zVecs_(j), *preOp, qVecs_(k));
   } else {
     linOp.MatVec(qVecs_(k + 1), qVecs_(k));
   }

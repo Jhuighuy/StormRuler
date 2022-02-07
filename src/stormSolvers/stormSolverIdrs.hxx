@@ -236,7 +236,7 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
     Blas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
   }
   if (leftPre) {
-    Blas::MatVec(gVecs_(k), *preOp, zVec_, linOp, uVecs_(k));
+    preOp->MatVec(gVecs_(k), zVec_, linOp, uVecs_(k));
   } else {
     linOp.MatVec(gVecs_(k), uVecs_(k));
   }
@@ -272,8 +272,7 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  Real_t const beta = 
-    Utils::SafeDivide(phi_(k), mu_(k, k));
+  Real_t const beta = Utils::SafeDivide(phi_(k), mu_(k, k));
   Blas::Add(xVec, xVec, uVecs_(k), beta);
   Blas::Sub(rVec_, rVec_, gVecs_(k), beta);
 
@@ -300,9 +299,9 @@ Real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
     // 𝒓 ← 𝒓 - 𝜔⋅𝒗.
     // ----------------------
     if (leftPre) {
-      Blas::MatVec(vVec_, *preOp, zVec_, linOp, rVec_);
+      preOp->MatVec(vVec_, zVec_, linOp, rVec_);
     } else if (rightPre) {
-      Blas::MatVec(vVec_, linOp, zVec_, *preOp, rVec_);
+      linOp.MatVec(vVec_, zVec_, *preOp, rVec_);
     } else {
       linOp.MatVec(vVec_, rVec_);
     }

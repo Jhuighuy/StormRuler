@@ -137,8 +137,7 @@ Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   } else {
     Real_t const rhoBar = rho_; 
     rho_ = Blas::Dot(rTildeVec_, rVec_);
-    Real_t const beta = 
-      Utils::SafeDivide(rho_, rhoBar);
+    Real_t const beta = Utils::SafeDivide(rho_, rhoBar);
     Blas::Add(uVec_, rVec_, qVec_, beta);
     Blas::Add(pVec_, qVec_, pVec_, beta);
     Blas::Add(pVec_, uVec_, pVec_, beta);
@@ -157,9 +156,9 @@ Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   // 𝒗 ← 𝒖 + 𝒒.
   // ----------------------
   if (leftPre) {
-    Blas::MatVec(vVec_, *preOp, qVec_, linOp, pVec_);
+    preOp->MatVec(vVec_, qVec_, linOp, pVec_);
   } else if (rightPre) {
-    Blas::MatVec(vVec_, linOp, qVec_, *preOp, pVec_);
+    linOp.MatVec(vVec_, qVec_, *preOp, pVec_);
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
@@ -186,10 +185,10 @@ Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   if (leftPre) {
     Blas::Add(xVec, xVec, vVec_, alpha);
-    Blas::MatVec(vVec_, *preOp, uVec_, linOp, vVec_);
+    preOp->MatVec(vVec_, uVec_, linOp, vVec_);
     Blas::Sub(rVec_, rVec_, vVec_, alpha);
   } else if (rightPre) {
-    Blas::MatVec(vVec_, linOp, uVec_, *preOp, vVec_);
+    linOp.MatVec(vVec_, uVec_, *preOp, vVec_);
     Blas::Add(xVec, xVec, uVec_, alpha);
     Blas::Sub(rVec_, rVec_, vVec_, alpha);
   } else {

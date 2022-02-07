@@ -187,10 +187,25 @@ public:
   virtual void MatVec(OutVector& yVec,
                       InVector const& xVec) const = 0;
 
+  /// @brief Compute a chained \
+  ///   operator-vector product, 𝒛 ← 𝓐(𝒚 ← 𝓑(𝒙)).
+  ///
+  /// @param zVec Output vector, 𝒛.
+  /// @param yVec Intermediate vector, 𝒚.
+  /// @param xVec Input vector, 𝒙.
+  template<class InOutVector = InVector>
+  void MatVec(OutVector& zVec,
+              InOutVector& yVec,
+              Operator<InVector, InOutVector> const& otherOp,
+              InVector const& xVec) const {
+    otherOp.MatVec(yVec, xVec);
+    MatVec(zVec, yVec);
+  }
+
   /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   ///
-  /// @param yVec Output vector, 𝒚.
-  /// @param xVec Input vector, 𝒙.
+  /// @param xVec Output vector, 𝒙.
+  /// @param yVec Input vector, 𝒚.
   virtual void ConjMatVec(InVector& xVec,
                           OutVector const& yVec) const {
     throw std::runtime_error(
@@ -198,31 +213,6 @@ public:
   }
 
 }; // class Operator<...>
-
-namespace Blas {
-
-  template<class InVector, class tInOutArray, class OutVector>
-  void MatVec(OutVector& zVec,
-              Operator<tInOutArray, OutVector> const& linOp1,
-              tInOutArray& yVec,
-              Operator<InVector, tInOutArray> const& linOp2,
-              InVector const& xVec) {
-
-    linOp2.MatVec(yVec, xVec);
-    linOp1.MatVec(zVec, yVec);
-
-  } // MatVec<...>
-
-  template<class Vector>
-  void ConjMatVec(Vector& yVec,
-                  Operator<Vector> const& linOp,
-                  Vector const& xVec) {
-
-    linOp.ConjMatVec(yVec, xVec);
-
-  } // ConjMatVec
-
-} // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.

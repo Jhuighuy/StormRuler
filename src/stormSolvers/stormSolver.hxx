@@ -35,13 +35,6 @@
 
 _STORM_NAMESPACE_BEGIN_
 
-template<class InVector, class OutVector = InVector>
-using Operator = stormOperator<InVector, OutVector>;
-
-using PreconditionerSide = stormPreconditionerSide;
-template<class Vector>
-using Preconditioner = stormPreconditioner<Vector>;
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -91,7 +84,7 @@ protected:
   virtual Real_t Init(InVector const& xVec,
                       OutVector const& bVec,
                       Operator<InVector, OutVector> const& anyOp,
-                      stormPreconditioner<InVector> const* preOp) = 0;
+                      Preconditioner<InVector> const* preOp) = 0;
 
   /// @brief Iterate the solver.
   ///

@@ -27,8 +27,10 @@
 
 #include <cmath>
 
-#include <StormRuler_API.h>
+#include <stormBase.hxx>
 #include <stormSolvers/stormPreconditioner.hxx>
+
+_STORM_NAMESPACE_BEGIN_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract polynomial preconditioner.
@@ -36,8 +38,9 @@
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormPolynomialPreconditioner : public stormPreconditioner<Vector> {
-}; // class stormPolynomialPreconditioner<...>
+class PolynomialPreconditioner : public Preconditioner<Vector> {
+
+}; // class PolynomialPreconditioner<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Chebyshev polynomial preconditioner.
@@ -45,18 +48,18 @@ class stormPolynomialPreconditioner : public stormPreconditioner<Vector> {
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormChebyshevPreconditioner final : 
-    public stormPolynomialPreconditioner<Vector> {
+class ChebyshevPreconditioner final : 
+    public PolynomialPreconditioner<Vector> {
 private:
-  stormSize_t NumIterations = 10;
+  Size_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
-  stormReal_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
+  Real_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
   mutable Vector pVec, rVec;
-  stormOperator<Vector> const* linOp;
+  Operator<Vector> const* linOp;
 
   void Build(Vector const& xVec,
              Vector const& bVec,
-             stormOperator<Vector> const& linOp) override;
+             Operator<Vector> const& linOp) override;
 
   void MatVec(Vector& yVec,
               Vector const& xVec) const override;
@@ -69,19 +72,19 @@ private:
 }; // class stormIdentityPreconditioner<...>
 
 template<class Vector>
-void stormChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
-                                                 Vector const& bVec,
-                                                 stormOperator<Vector> const& linOp) {
+void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
+                                            Vector const& bVec,
+                                            Operator<Vector> const& linOp) {
 
   pVec.Assign(xVec, false);
   rVec.Assign(xVec, false);
   this->linOp = &linOp;
 
-} // stormChebyshevPreconditioner<...>::Build
+} // ChebyshevPreconditioner<...>::Build
 
 template<class Vector>
-void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
-                                                  Vector const& xVec) const {
+void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
+                                             Vector const& xVec) const {
 
   assert(linOp != nullptr && "Preconditioner was not built!");
 
@@ -94,11 +97,11 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // ----------------------
   stormBlas::Set(rVec, xVec);
   stormBlas::Fill(yVec, 0.0);
-  const stormReal_t c = 0.5*(lambdaMax - lambdaMin);
-  const stormReal_t d = 0.5*(lambdaMax + lambdaMin);
+  const Real_t c = 0.5*(lambdaMax - lambdaMin);
+  const Real_t d = 0.5*(lambdaMax + lambdaMin);
 
-  stormReal_t alpha;
-  for (stormSize_t iteration = 0; iteration < NumIterations; ++iteration) {
+  Real_t alpha;
+  for (Size_t iteration = 0; iteration < NumIterations; ++iteration) {
     
     // ----------------------
     // Continue the Chebyshev iterations:
@@ -116,7 +119,7 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
       alpha = 1.0/d;
       stormBlas::Set(pVec, rVec);
     } else {
-      stormReal_t beta;
+      Real_t beta;
       if (iteration == 2) {
         beta = 0.5*std::pow(c*alpha, 2);
       } else {
@@ -137,6 +140,8 @@ void stormChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     stormBlas::Sub(rVec, xVec, rVec);
   }
 
-} // stormChebyshevPreconditioner<...>::MatVec
+} // ChebyshevPreconditioner<...>::MatVec
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_PRECONDITIONER_POLYNOMIAL_

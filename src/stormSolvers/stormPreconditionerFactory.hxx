@@ -28,10 +28,14 @@
 #include <string_view>
 #include <stdexcept>
 
+#include <stormBase.hxx>
+
 #include <stormSolvers/stormPreconditioner.hxx>
 #include <stormSolvers/stormPreconditionerPolynomial.hxx>
 
-/// Precondtioner types.
+_STORM_NAMESPACE_BEGIN_
+
+/// @brief Precondtioner types.
 /// @{
 #define STORM_PRE_NONE   ""
 #define STORM_PRE_ID     "ID"
@@ -53,8 +57,8 @@
 /// @brief Make preconditioner of the specified type.
 /// ----------------------------------------------------------------- ///
 template<class Vector>
-std::unique_ptr<stormPreconditioner<Vector>>
-    stormMakePreconditioner(std::string_view const& preType) {
+std::unique_ptr<Preconditioner<Vector>>
+    MakePreconditioner(std::string_view const& preType) {
 
   if (preType == STORM_PRE_NONE) {
 
@@ -62,7 +66,7 @@ std::unique_ptr<stormPreconditioner<Vector>>
 
   } else if (preType == STORM_PRE_ID) {
 
-    return std::make_unique<stormIdentityPreconditioner<Vector>>();
+    return std::make_unique<IdentityPreconditioner<Vector>>();
 
   } else if (preType == STORM_PRE_JACOBI) {
 
@@ -106,7 +110,7 @@ std::unique_ptr<stormPreconditioner<Vector>>
 
   } else if (preType == STORM_PRE_CHEBY) {
 
-    return std::make_unique<stormChebyshevPreconditioner<Vector>>();
+    return std::make_unique<ChebyshevPreconditioner<Vector>>();
 
   } else if (preType == STORM_PRE_KRYLOV) {
 
@@ -116,6 +120,8 @@ std::unique_ptr<stormPreconditioner<Vector>>
 
   throw std::invalid_argument("Invalid preconditioner type specified.");
 
-} // stormMakePreconditioner<...>
+} // MakePreconditioner<...>
+
+_STORM_NAMESPACE_END_
 
 #endif // _STORM_PRECONDITIONER_FACTORY_

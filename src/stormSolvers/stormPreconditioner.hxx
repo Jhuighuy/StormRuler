@@ -27,12 +27,18 @@
 
 #include <iostream>
 
+#include <stormBase.hxx>
 #include <stormBlas/stormOperator.hxx>
+
+_STORM_NAMESPACE_BEGIN_
+
+template<class InVector, class OutVector = InVector>
+using Operator = stormOperator<InVector, OutVector>;
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Preconditioner side.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-enum class stormPreconditionerSide {
+enum class PreconditionerSide {
 
   /// @brief Left preconditioned equation is solved, 𝓟𝓐𝒙 = 𝓟𝒃.
   ///
@@ -53,13 +59,13 @@ enum class stormPreconditionerSide {
   ///   convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
   Symmetric,
 
-}; // enum class stormPreconditionerSide
+}; // enum class PreconditionerSide
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract preconditioner operator.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormPreconditioner : public stormOperator<Vector> {
+class Preconditioner : public Operator<Vector> {
 public:
 
   /// @brief Build the preconditioner.
@@ -69,30 +75,32 @@ public:
   /// @param anyOp Operator to build the preconditioner upon.
   virtual void Build(Vector const& xVec,
                      Vector const& bVec,
-                     stormOperator<Vector> const& anyOp) {}
+                     Operator<Vector> const& anyOp) {}
 
-}; // class stormPreconditioner<...>
+}; // class Preconditioner<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Identity preconditioner, \
 ///   intended to be used for debugging only.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class stormIdentityPreconditioner final : public stormPreconditioner<Vector> {
+class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 
   void MatVec(Vector& yVec,
               Vector const& xVec) const override {
-    std::cout << "`stormIdentityPreconditioner<...>::MatVec`!" << std::endl;
+    std::cout << "`IdentityPreconditioner<...>::MatVec`!" << std::endl;
     stormBlas::Set(yVec, xVec);
   }
 
   void ConjMatVec(Vector& xVec,
                   Vector const& yVec) const override {
-    std::cout << "`stormIdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
+    std::cout << "`IdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
     stormBlas::Set(xVec, yVec);
   }
 
-}; // class stormIdentityPreconditioner<...>
+}; // class IdentityPreconditioner<...>
+
+_STORM_NAMESPACE_END_
 
 #endif // ifndef _STORM_PRECONDITIONER_HXX_

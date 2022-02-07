@@ -50,7 +50,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     });
 
   auto solver = storm::MakeIterativeSolver<stormArray>(method);
-  solver->PreOp = stormMakePreconditioner<stormArray>(preMethod);
+  solver->PreOp = storm::MakePreconditioner<stormArray>(preMethod);
 #if 0
   stormSparseRowMatrix<stormReal_t> matrix;
   do_the_thing(matrix, xx, *symOp);

@@ -39,24 +39,43 @@ _STORM_NAMESPACE_BEGIN_
 /// @brief Precondtioner types.
 /// ----------------------------------------------------------------- ///
 namespace PreconditionerType {
+  
+  /// @brief No preconditioning.
+  static std::string_view const None = "";
+  /// @brief Identity preconditioner.
+  static std::string_view const Identity = "Identity";
 
-  static std::string_view const
-    None      = "",
-    Id        = "Id",
-    Jacobi    = "Jacobi",
-    Sgs       = "Sgs",
-    Ic0       = "Ic0",
-    Ict       = "Ict",
-    Ilu0      = "Ilu0",
-    Ilut      = "Ilut",
-    Ilq0      = "Ilq0",
-    Ilqt      = "Ilqt",
-    Ainv0     = "Ainv0",
-    Ainv      = "Ainv",
-    Spai0     = "Spai0",
-    Spai      = "Spai",
-    Chebyshev = "Chebyshev",
-    Krylov    = "Krylov";
+  /// @brief @c Jacobi preconditioner.
+  static std::string_view const Jacobi = "Jacobi";
+  /// @brief @c SGS preconditioner.
+  static std::string_view const Sgs = "Sgs";
+  
+  /// @brief @c IC(0) preconditioner.
+  static std::string_view const Ic0 = "Ic0";
+  /// @brief @c IC(t) preconditioner.
+  static std::string_view const Ict = "Ict";
+  /// @brief @c ILU(0) preconditioner.
+  static std::string_view const Ilu0 = "Ilu0";
+  /// @brief @c ILU(t) preconditioner.
+  static std::string_view const Ilut = "Ilut";
+  /// @brief @c ILQ(0) preconditioner.
+  static std::string_view const Ilq0 = "Ilq0";
+  /// @brief @c ILQ(t) preconditioner.
+  static std::string_view const Ilqt = "Ilqt";
+  
+  /// @brief @c AINV(0) preconditioner.
+  static std::string_view const Ainv0 = "Ainv0";
+  /// @brief @c AINV preconditioner.
+  static std::string_view const Ainv = "Ainv";
+  /// @brief @c SPAI(0) preconditioner.
+  static std::string_view const Spai0 = "Spai0";
+  /// @brief @c SPAI preconditioner.
+  static std::string_view const Spai = "Spai";
+  
+  /// @brief @c Chebyshev polynomial preconditioner.
+  static std::string_view const Chebyshev = "Chebyshev";
+  /// @brief @c Krylov preconditioner.
+  static std::string_view const Krylov = "Krylov";
 
 } // namespace PreconditionerType
 
@@ -67,10 +86,10 @@ template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
     MakePreconditioner(std::string_view const& preType) {
 
-  if (preType == PreconditionerType::None) {
+  if (preType.empty() || preType == PreconditionerType::None) {
     return nullptr;
   }
-  if (preType == PreconditionerType::Id) {
+  if (preType == PreconditionerType::Identity) {
     return std::make_unique<IdentityPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Jacobi) {

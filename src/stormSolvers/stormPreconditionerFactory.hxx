@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_PRECONDITIONER_FACTORY_
-#define _STORM_PRECONDITIONER_FACTORY_
+
+#pragma once
 
 #include <string_view>
 #include <stdexcept>
@@ -39,41 +39,52 @@ _STORM_NAMESPACE_BEGIN_
 /// @brief Precondtioner types.
 /// ----------------------------------------------------------------- ///
 namespace PreconditionerType {
-  
+
   /// @brief No preconditioning.
   static std::string_view const None = "";
+
   /// @brief Identity preconditioner.
   static std::string_view const Identity = "Identity";
 
   /// @brief @c Jacobi preconditioner.
   static std::string_view const Jacobi = "Jacobi";
+
   /// @brief @c SGS preconditioner.
   static std::string_view const Sgs = "Sgs";
-  
+
   /// @brief @c IC(0) preconditioner.
   static std::string_view const Ic0 = "Ic0";
+
   /// @brief @c IC(t) preconditioner.
   static std::string_view const Ict = "Ict";
+
   /// @brief @c ILU(0) preconditioner.
   static std::string_view const Ilu0 = "Ilu0";
+
   /// @brief @c ILU(t) preconditioner.
   static std::string_view const Ilut = "Ilut";
+
   /// @brief @c ILQ(0) preconditioner.
   static std::string_view const Ilq0 = "Ilq0";
+
   /// @brief @c ILQ(t) preconditioner.
   static std::string_view const Ilqt = "Ilqt";
-  
+
   /// @brief @c AINV(0) preconditioner.
   static std::string_view const Ainv0 = "Ainv0";
+
   /// @brief @c AINV preconditioner.
   static std::string_view const Ainv = "Ainv";
+
   /// @brief @c SPAI(0) preconditioner.
   static std::string_view const Spai0 = "Spai0";
+
   /// @brief @c SPAI preconditioner.
   static std::string_view const Spai = "Spai";
-  
+
   /// @brief @c Chebyshev polynomial preconditioner.
   static std::string_view const Chebyshev = "Chebyshev";
+
   /// @brief @c Krylov preconditioner.
   static std::string_view const Krylov = "Krylov";
 
@@ -84,7 +95,7 @@ namespace PreconditionerType {
 /// ----------------------------------------------------------------- ///
 template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
-    MakePreconditioner(std::string_view const& preType) {
+    MakePreconditioner(std::string_view const& preType = {}) {
 
   if (preType.empty() || preType == PreconditionerType::None) {
     return nullptr;
@@ -140,5 +151,3 @@ std::unique_ptr<Preconditioner<Vector>>
 } // MakePreconditioner<...>
 
 _STORM_NAMESPACE_END_
-
-#endif // _STORM_PRECONDITIONER_FACTORY_

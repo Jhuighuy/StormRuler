@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_BICGSTAB_
-#define _STORM_SOLVER_BICGSTAB_
+
+#pragma once
 
 #include <cmath>
 
@@ -429,5 +429,3 @@ real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
 } // BiCGStabLSolver<...>::InnerIterate
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_BICGSTAB_

@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_FACTORY_HXX_
-#define _STORM_SOLVER_FACTORY_HXX_
+
+#pragma once
 
 #include <string_view>
 #include <stdexcept>
@@ -52,42 +52,58 @@ namespace SolverType {
   
   /// @brief @c CG iterative solver.
   static std::string_view const Cg = "CG";
+  
   /// @brief @c FCG iterative solver.
   static std::string_view const Fcg = "FCG";
+  
   /// @brief @c MINRES iterative solver.
   static std::string_view const Minres = "MINRES";
+  
   /// @brief @c CGS iterative solver.
   static std::string_view const Cgs = "CGS";
+  
   /// @brief @c BiCGStab iterative solver.
   static std::string_view const BiCgStab = "BiCgStab";
+  
   /// @brief @c BiCGStab(l) iterative solver.
   static std::string_view const BiCgStabL = "BiCgStab(l)";
+  
   /// @brief @c TFQMR iterative solver.
   static std::string_view const Tfqmr = "TFQMR";
+  
   /// @brief @c TFQMR(1) iterative solver.
   static std::string_view const Tfqmr1 = "TFQMR(1)";
+  
   /// @brief @c IDR(s) iterative solver.
   static std::string_view const Idrs = "IDR(s)";
+  
   /// @brief @c GMRES iterative solver.
   static std::string_view const Gmres = "GMRES";
+  
   /// @brief @c FGMRES iterative solver.
   static std::string_view const Fgmres = "FGMRES";
+  
   /// @brief @c LGMRES iterative solver.
   static std::string_view const Lgmres = "LGMRES";
+  
   /// @brief @c LFGMRES iterative solver.
   static std::string_view const Lfgmres = "LFGMRES";
   
   /// @brief @c LSQR iterative solver.
   static std::string_view const Lsqr = "LSQR";
+  
   /// @brief @c LSMR iterative solver.
   static std::string_view const Lsmr = "LSMR";
 
   /// @brief @c Richardson iterative solver.
   static std::string_view const Richarson = "Richardson";
+  
   /// @brief @c Broyden iterative solver.
   static std::string_view const Broyden = "Broyden";
+  
   /// @brief @c Newton iterative solver.
   static std::string_view const Newton = "Newton";
+  
   /// @brief @c JFNK iterative solver.
   static std::string_view const Jfnk = "JFNK";
 
@@ -98,7 +114,7 @@ namespace SolverType {
 /// ----------------------------------------------------------------- ///
 template<class InVector, class OutVector = InVector>
 std::unique_ptr<IterativeSolver<InVector, OutVector>>
-    MakeIterativeSolver(std::string_view const& solverType) {
+    MakeIterativeSolver(std::string_view const& solverType = {}) {
 
   // ----------------------
   // Try the square Krylov subspace solver first:
@@ -131,8 +147,9 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
     if (solverType == SolverType::Idrs) {
       return std::make_unique<IdrsSolver<InVector>>();
     }
-    if (solverType == SolverType::Gmres) {
-      return std::make_unique<GmresSolver<InVector>>();
+    if (solverType.empty() || solverType == SolverType::Gmres) {
+      // Note: GMRES is the default square solver.
+      return std::make_unique<GmresSolver<InVector>>(); 
     }
     if (solverType == SolverType::Fgmres) {
       return std::make_unique<FgmresSolver<InVector>>();
@@ -146,17 +163,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
   }
 
   // ----------------------
-  // Try the Krylov subspace least squares solvers next:
-  // ----------------------
-  if (solverType == SolverType::Lsqr) {
-    //return std::make_unique<LsqrSolver<InVector, OutVector>>();
-  }
-  if (solverType == SolverType::Lsmr) {
-    //return std::make_unique<LsmrSolver<InVector, OutVector>>();
-  }
-
-  // ----------------------
-  // Finally, try the other general solvers:
+  // Next, try the other general solvers:
   // ----------------------
   if constexpr (std::is_same_v<InVector, OutVector>) {
     if (solverType == SolverType::Richarson) {
@@ -173,10 +180,19 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
     }
   }
 
+  // ----------------------
+  // Finally, try the Krylov subspace least squares solvers:
+  // ----------------------
+  if (solverType == SolverType::Lsqr) {
+    //return std::make_unique<LsqrSolver<InVector, OutVector>>();
+  }
+  if (solverType.empty() || solverType == SolverType::Lsmr) { 
+    // Note: LSMR is the default rectangular solver.
+    //return std::make_unique<LsmrSolver<InVector, OutVector>>();
+  }
+
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
 } // MakeSolver<...>
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_FACTORY_HXX_

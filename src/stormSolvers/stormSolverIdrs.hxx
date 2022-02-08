@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_IDRs_HXX_
-#define _STORM_SOLVER_IDRs_HXX_
+
+#pragma once
 
 #include <stormBase.hxx>
 #include <stormBlas/stormTensor.hxx>
@@ -314,5 +314,3 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
 } // IdrsSolver<...>::InnerIterate
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_IDRs_HXX_

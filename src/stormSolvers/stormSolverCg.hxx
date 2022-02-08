@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_CG_HXX_
-#define _STORM_SOLVER_CG_HXX_
+
+#pragma once
 
 #include <cmath>
 
@@ -153,5 +153,3 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
 } // CgSolver<...>::Iterate
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_CG_HXX_

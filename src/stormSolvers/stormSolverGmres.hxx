@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_GMRES_HXX_
-#define _STORM_SOLVER_GMRES_HXX_
+
+#pragma once
 
 #include <stormBase.hxx>
 #include <stormBlas/stormTensor.hxx>
@@ -349,5 +349,3 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
 } // BaseGmresSolver<...>::InnerFinalize
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_GMRES_HXX_

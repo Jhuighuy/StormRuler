@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_NEWTON_HXX_
-#define _STORM_SOLVER_NEWTON_HXX_
+
+#pragma once
 
 #include <limits>
 
@@ -201,5 +201,3 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
 } // JfnkSolver<...>::Iterate
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_NEWTON_HXX_

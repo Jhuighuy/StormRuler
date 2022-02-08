@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_HXX_
-#define _STORM_SOLVER_HXX_
+
+#pragma once
 
 #include <iomanip>
 #include <iostream>
@@ -367,5 +367,3 @@ real_t PowerIterations<Array>::
 } // PowerIterations<...>::EstimateLargestEigenvalue
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_HXX_

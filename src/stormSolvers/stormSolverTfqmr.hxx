@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SOLVER_TFQMR_
-#define _STORM_SOLVER_TFQMR_
+
+#pragma once
 
 #include <cmath>
 
@@ -306,5 +306,3 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
 } // BaseTfqmrSolver<...>::Iterate
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_SOLVER_TFQMR_

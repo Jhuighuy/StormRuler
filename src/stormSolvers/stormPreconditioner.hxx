@@ -22,8 +22,8 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_PRECONDITIONER_HXX_
-#define _STORM_PRECONDITIONER_HXX_
+
+#pragma once
 
 #include <iostream>
 
@@ -99,5 +99,3 @@ private:
 }; // class IdentityPreconditioner<...>
 
 _STORM_NAMESPACE_END_
-
-#endif // ifndef _STORM_PRECONDITIONER_HXX_

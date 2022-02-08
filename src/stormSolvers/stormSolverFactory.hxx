@@ -50,62 +50,65 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 namespace SolverType {
 
+  /// @brief Default solver.
+  static std::string_view constexpr Default = {};
+
   /// @brief @c CG iterative solver.
-  static std::string_view const Cg = "CG";
+  static std::string_view constexpr Cg = "CG";
 
   /// @brief @c FCG iterative solver.
-  static std::string_view const Fcg = "FCG";
+  static std::string_view constexpr Fcg = "FCG";
 
   /// @brief @c MINRES iterative solver.
-  static std::string_view const Minres = "MINRES";
+  static std::string_view constexpr Minres = "MINRES";
 
   /// @brief @c CGS iterative solver.
-  static std::string_view const Cgs = "CGS";
+  static std::string_view constexpr Cgs = "CGS";
 
   /// @brief @c BiCGStab iterative solver.
-  static std::string_view const BiCgStab = "BiCgStab";
+  static std::string_view constexpr BiCgStab = "BiCgStab";
 
   /// @brief @c BiCGStab(l) iterative solver.
-  static std::string_view const BiCgStabL = "BiCgStab(l)";
+  static std::string_view constexpr BiCgStabL = "BiCgStab(l)";
 
   /// @brief @c TFQMR iterative solver.
-  static std::string_view const Tfqmr = "TFQMR";
+  static std::string_view constexpr Tfqmr = "TFQMR";
 
   /// @brief @c TFQMR(1) iterative solver.
-  static std::string_view const Tfqmr1 = "TFQMR(1)";
+  static std::string_view constexpr Tfqmr1 = "TFQMR(1)";
 
   /// @brief @c IDR(s) iterative solver.
-  static std::string_view const Idrs = "IDR(s)";
+  static std::string_view constexpr Idrs = "IDR(s)";
 
   /// @brief @c GMRES iterative solver.
-  static std::string_view const Gmres = "GMRES";
+  static std::string_view constexpr Gmres = "GMRES";
 
   /// @brief @c FGMRES iterative solver.
-  static std::string_view const Fgmres = "FGMRES";
+  static std::string_view constexpr Fgmres = "FGMRES";
 
   /// @brief @c LGMRES iterative solver.
-  static std::string_view const Lgmres = "LGMRES";
+  static std::string_view constexpr Lgmres = "LGMRES";
 
   /// @brief @c LFGMRES iterative solver.
-  static std::string_view const Lfgmres = "LFGMRES";
+  static std::string_view constexpr Lfgmres = "LFGMRES";
 
   /// @brief @c LSQR iterative solver.
-  static std::string_view const Lsqr = "LSQR";
+  static std::string_view constexpr Lsqr = "LSQR";
 
   /// @brief @c LSMR iterative solver.
-  static std::string_view const Lsmr = "LSMR";
+  static std::string_view constexpr Lsmr = "LSMR";
 
   /// @brief @c Richardson iterative solver.
-  static std::string_view const Richarson = "Richardson";
+  static std::string_view constexpr Richarson = "Richardson";
 
   /// @brief @c Broyden iterative solver.
-  static std::string_view const Broyden = "Broyden";
+  static std::string_view constexpr Broyden = "Broyden";
 
   /// @brief @c Newton iterative solver.
-  static std::string_view const Newton = "Newton";
+  static std::string_view constexpr Newton = "Newton";
 
   /// @brief @c JFNK iterative solver.
-  static std::string_view const Jfnk = "JFNK";
+  static std::string_view constexpr Jfnk = "JFNK";
 
 } // namespace SolverType
 

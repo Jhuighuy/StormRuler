@@ -41,52 +41,52 @@ namespace Storm {
 namespace PreconditionerType {
 
   /// @brief No preconditioning.
-  static std::string_view const None = "";
+  static std::string_view constexpr None = {};
 
   /// @brief Identity preconditioner.
-  static std::string_view const Identity = "Identity";
+  static std::string_view constexpr Identity = "Identity";
 
   /// @brief @c Jacobi preconditioner.
-  static std::string_view const Jacobi = "Jacobi";
+  static std::string_view constexpr Jacobi = "Jacobi";
 
   /// @brief @c SGS preconditioner.
-  static std::string_view const Sgs = "Sgs";
+  static std::string_view constexpr Sgs = "Sgs";
 
   /// @brief @c IC(0) preconditioner.
-  static std::string_view const Ic0 = "Ic0";
+  static std::string_view constexpr Ic0 = "Ic0";
 
   /// @brief @c IC(t) preconditioner.
-  static std::string_view const Ict = "Ict";
+  static std::string_view constexpr Ict = "Ict";
 
   /// @brief @c ILU(0) preconditioner.
-  static std::string_view const Ilu0 = "Ilu0";
+  static std::string_view constexpr Ilu0 = "Ilu0";
 
   /// @brief @c ILU(t) preconditioner.
-  static std::string_view const Ilut = "Ilut";
+  static std::string_view constexpr Ilut = "Ilut";
 
   /// @brief @c ILQ(0) preconditioner.
-  static std::string_view const Ilq0 = "Ilq0";
+  static std::string_view constexpr Ilq0 = "Ilq0";
 
   /// @brief @c ILQ(t) preconditioner.
-  static std::string_view const Ilqt = "Ilqt";
+  static std::string_view constexpr Ilqt = "Ilqt";
 
   /// @brief @c AINV(0) preconditioner.
-  static std::string_view const Ainv0 = "Ainv0";
+  static std::string_view constexpr Ainv0 = "Ainv0";
 
   /// @brief @c AINV preconditioner.
-  static std::string_view const Ainv = "Ainv";
+  static std::string_view constexpr Ainv = "Ainv";
 
   /// @brief @c SPAI(0) preconditioner.
-  static std::string_view const Spai0 = "Spai0";
+  static std::string_view constexpr Spai0 = "Spai0";
 
   /// @brief @c SPAI preconditioner.
-  static std::string_view const Spai = "Spai";
+  static std::string_view constexpr Spai = "Spai";
 
   /// @brief @c Chebyshev polynomial preconditioner.
-  static std::string_view const Chebyshev = "Chebyshev";
+  static std::string_view constexpr Chebyshev = "Chebyshev";
 
   /// @brief @c Krylov preconditioner.
-  static std::string_view const Krylov = "Krylov";
+  static std::string_view constexpr Krylov = "Krylov";
 
 } // namespace PreconditionerType
 
@@ -97,7 +97,7 @@ template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
     MakePreconditioner(std::string_view const& preType = {}) {
 
-  if (preType.empty() || preType == PreconditionerType::None) {
+  if (preType.empty()) {
     return nullptr;
   }
   if (preType == PreconditionerType::Identity) {

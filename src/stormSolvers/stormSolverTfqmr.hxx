@@ -38,15 +38,15 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector, bool L1>
 class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
-  Real_t rho_, tau_;
+  real_t rho_, tau_;
   Vector dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_, zVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -114,7 +114,7 @@ class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {
 }; // class Tfqmr1Solver<...>
 
 template<class Vector, bool L1>
-Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
+real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
                                          Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {
@@ -167,7 +167,7 @@ Real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
 } // BaseTfqmrSolver<...>::Init
 
 template<class Vector, bool L1>
-Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
+real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
                                             Vector const& bVec,
                                             Operator<Vector> const& linOp,
                                             Preconditioner<Vector> const* preOp) {
@@ -215,9 +215,9 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     }
     Blas::Set(vVec_, sVec_);
   } else {
-    Real_t const rhoBar = rho_;
+    real_t const rhoBar = rho_;
     rho_ = Blas::Dot(rTildeVec_, uVec_);
-    Real_t const beta = Utils::SafeDivide(rho_, rhoBar);
+    real_t const beta = Utils::SafeDivide(rho_, rhoBar);
     Blas::Add(vVec_, sVec_, vVec_, beta);
     Blas::Add(yVec_, uVec_, yVec_, beta);
     if (leftPre) {
@@ -259,12 +259,12 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  Real_t const alpha =
+  real_t const alpha =
     Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
-  for (Size_t m = 0; m <= 1; ++m) {
+  for (size_t m = 0; m <= 1; ++m) {
     Blas::Sub(uVec_, uVec_, sVec_, alpha);
     Blas::Add(dVec_, dVec_, rightPre ? zVec_ : yVec_, alpha);
-    Real_t const omega = Blas::Norm2(uVec_);
+    real_t const omega = Blas::Norm2(uVec_);
     if constexpr (L1) {
       if (omega < tau_) {
         tau_ = omega, Blas::Set(xVec, dVec_);
@@ -296,9 +296,9 @@ Real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  Real_t tauTilde = tau_;
+  real_t tauTilde = tau_;
   if constexpr (!L1) {
-    Size_t const k = this->Iteration;
+    size_t const k = this->Iteration;
     tauTilde *= std::sqrt(2.0*k + 3.0);
   }
 

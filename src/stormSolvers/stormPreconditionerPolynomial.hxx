@@ -51,9 +51,9 @@ template<class Vector>
 class ChebyshevPreconditioner final : 
     public PolynomialPreconditioner<Vector> {
 private:
-  Size_t NumIterations = 10;
+  size_t NumIterations = 10;
   /// @todo: Estimate the true eigenvalue bounds!
-  Real_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
+  real_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
   mutable Vector pVec, rVec;
   Operator<Vector> const* linOp;
 
@@ -97,11 +97,11 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // ----------------------
   Blas::Set(rVec, xVec);
   Blas::Fill(yVec, 0.0);
-  Real_t const c = 0.5*(lambdaMax - lambdaMin);
-  Real_t const d = 0.5*(lambdaMax + lambdaMin);
+  real_t const c = 0.5*(lambdaMax - lambdaMin);
+  real_t const d = 0.5*(lambdaMax + lambdaMin);
 
-  Real_t alpha;
-  for (Size_t iteration = 0; iteration < NumIterations; ++iteration) {
+  real_t alpha;
+  for (size_t iteration = 0; iteration < NumIterations; ++iteration) {
     
     // ----------------------
     // Continue the Chebyshev iterations:
@@ -119,7 +119,7 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
       alpha = 1.0/d;
       Blas::Set(pVec, rVec);
     } else {
-      Real_t beta;
+      real_t beta;
       if (iteration == 2) {
         beta = 0.5*std::pow(c*alpha, 2);
       } else {

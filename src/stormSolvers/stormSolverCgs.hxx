@@ -51,15 +51,15 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
-  Real_t rho_;
+  real_t rho_;
   Vector pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -67,7 +67,7 @@ private:
 }; // class CgsSolver<...>
 
 template<class Vector>
-Real_t CgsSolver<Vector>::Init(Vector const& xVec,
+real_t CgsSolver<Vector>::Init(Vector const& xVec,
                                Vector const& bVec,
                                Operator<Vector> const& linOp,
                                Preconditioner<Vector> const* preOp) {
@@ -104,7 +104,7 @@ Real_t CgsSolver<Vector>::Init(Vector const& xVec,
 } // CgsSolver<...>::Init
 
 template<class Vector>
-Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
+real_t CgsSolver<Vector>::Iterate(Vector& xVec,
                                   Vector const& bVec,
                                   Operator<Vector> const& linOp,
                                   Preconditioner<Vector> const* preOp) {
@@ -133,9 +133,9 @@ Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
     Blas::Set(uVec_, rVec_);
     Blas::Set(pVec_, uVec_);
   } else {
-    Real_t const rhoBar = rho_; 
+    real_t const rhoBar = rho_; 
     rho_ = Blas::Dot(rTildeVec_, rVec_);
-    Real_t const beta = Utils::SafeDivide(rho_, rhoBar);
+    real_t const beta = Utils::SafeDivide(rho_, rhoBar);
     Blas::Add(uVec_, rVec_, qVec_, beta);
     Blas::Add(pVec_, qVec_, pVec_, beta);
     Blas::Add(pVec_, uVec_, pVec_, beta);
@@ -160,7 +160,7 @@ Real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
-  Real_t const alpha = 
+  real_t const alpha = 
     Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
   Blas::Sub(qVec_, uVec_, vVec_, alpha);
   Blas::Add(vVec_, uVec_, qVec_);

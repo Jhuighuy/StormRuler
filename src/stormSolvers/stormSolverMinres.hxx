@@ -80,17 +80,17 @@ namespace Blas {
 template<class Vector>
 class MinresSolver final : public IterativeSolver<Vector> {
 private:
-  Real_t alpha, beta, betaBar, gamma, delta, deltaBar,
+  real_t alpha, beta, betaBar, gamma, delta, deltaBar,
     epsilon, epsilonBar, tau, phi, phiTilde, cs, sn;
   Vector pVec, qVec, qBarVec,
     wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -98,7 +98,7 @@ private:
 }; // class MinresSolver<...>
 
 template<class Vector>
-Real_t MinresSolver<Vector>::Init(Vector const& xVec,
+real_t MinresSolver<Vector>::Init(Vector const& xVec,
                                   Vector const& bVec,
                                   Operator<Vector> const& linOp,
                                   Preconditioner<Vector> const* preOp) {
@@ -148,7 +148,7 @@ Real_t MinresSolver<Vector>::Init(Vector const& xVec,
 } // MinresSolver<...>::Init
 
 template<class Vector>
-Real_t MinresSolver<Vector>::Iterate(Vector& xVec,
+real_t MinresSolver<Vector>::Iterate(Vector& xVec,
                                      Vector const& bVec,
                                      Operator<Vector> const& linOp,
                                      Preconditioner<Vector> const* preOp) {

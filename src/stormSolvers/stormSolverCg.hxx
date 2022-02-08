@@ -50,15 +50,15 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
-  Real_t alpha_;
+  real_t alpha_;
   Vector pVec_, rVec_, zVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -66,7 +66,7 @@ private:
 }; // class CgSolver<...>
 
 template<class Vector>
-Real_t CgSolver<Vector>::Init(Vector const& xVec,
+real_t CgSolver<Vector>::Init(Vector const& xVec,
                               Vector const& bVec,
                               Operator<Vector> const& linOp,
                               Preconditioner<Vector> const* preOp) {
@@ -107,7 +107,7 @@ Real_t CgSolver<Vector>::Init(Vector const& xVec,
 } // CgSolver<...>::Init
 
 template<class Vector>
-Real_t CgSolver<Vector>::Iterate(Vector& xVec,
+real_t CgSolver<Vector>::Iterate(Vector& xVec,
                                  Vector const& bVec,
                                  Operator<Vector> const& linOp,
                                  Preconditioner<Vector> const* preOp) {
@@ -121,7 +121,7 @@ Real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
-  Real_t const alphaBar = alpha_;
+  real_t const alphaBar = alpha_;
   Utils::SafeDivideEquals(alpha_, Blas::Dot(pVec_, zVec_));
   Blas::Add(xVec, xVec, pVec_, alpha_);
   Blas::Sub(rVec_, rVec_, zVec_, alpha_);
@@ -145,7 +145,7 @@ Real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // 𝛽 ← 𝛼/𝛼̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  Real_t const beta = Utils::SafeDivide(alpha_, alphaBar);
+  real_t const beta = Utils::SafeDivide(alpha_, alphaBar);
   Blas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
 
   return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(alpha_);

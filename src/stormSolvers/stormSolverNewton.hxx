@@ -58,12 +58,12 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector>
 class NewtonSolver : public IterativeSolver<Vector, tOperator> {
 private:
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& anyOp,
               Preconditioner<Vector> const* preOp) override final;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& anyOp,
                  Preconditioner<Vector> const* preOp) override final;
@@ -106,12 +106,12 @@ class JfnkSolver final : public IterativeSolver<Vector> {
 private:
   Vector sVec_, tVec_, rVec_, wVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -119,7 +119,7 @@ private:
 }; // class JfnkSolver<...>
 
 template<class Vector>
-Real_t JfnkSolver<Vector>::Init(Vector const& xVec,
+real_t JfnkSolver<Vector>::Init(Vector const& xVec,
                                 Vector const& bVec,
                                 Operator<Vector> const& linOp,
                                 Preconditioner<Vector> const* preOp) {
@@ -141,7 +141,7 @@ Real_t JfnkSolver<Vector>::Init(Vector const& xVec,
 } // JfnkSolver<...>::Init
 
 template<class Vector>
-Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
+real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
                                    Vector const& bVec,
                                    Operator<Vector> const& linOp,
                                    Preconditioner<Vector> const* preOp) {
@@ -152,9 +152,9 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
   // 𝒕 ← 𝒓,
   // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
   // ----------------------
-  static Real_t const sqrtOfEpsilon = 
-    std::sqrt(std::numeric_limits<Real_t>::epsilon());
-  Real_t const mu = 
+  static real_t const sqrtOfEpsilon = 
+    std::sqrt(std::numeric_limits<real_t>::epsilon());
+  real_t const mu = 
     sqrtOfEpsilon*std::sqrt(1.0 + Blas::Norm2(xVec));
   Blas::Set(tVec_, rVec_);
   {
@@ -175,11 +175,11 @@ Real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
         // 𝒛 ← 𝓐(𝒔),
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
-        Real_t const delta = 
+        real_t const delta = 
           Utils::SafeDivide(mu, Blas::Norm2(yVec));
         Blas::Add(sVec_, xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
-        Real_t const deltaInverse = Utils::SafeDivide(1.0, delta);
+        real_t const deltaInverse = Utils::SafeDivide(1.0, delta);
         Blas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
 
       });

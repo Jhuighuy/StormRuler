@@ -36,8 +36,8 @@
 
 _STORM_NAMESPACE_BEGIN_
 
-using Size_t = std::size_t;
-using Real_t = double;
+using size_t = std::size_t;
+using real_t = double;
 
 _STORM_NAMESPACE_END_
 

@@ -44,8 +44,8 @@ public:
   stormArray_t Array = nullptr;
   std::shared_ptr<int> RefCounter;
 private:
-  Real_t* Data_ = nullptr;
-  Size_t Size_ = 0;
+  real_t* Data_ = nullptr;
+  size_t Size_ = 0;
 
 public:
   stormArray() = default;
@@ -70,14 +70,14 @@ public:
     }
   }
 
-  Size_t Size() const noexcept {
+  size_t Size() const noexcept {
     return Size_;
   }
-  Real_t& operator()(Size_t index) {
+  real_t& operator()(size_t index) {
     stormAssert(index < Size_);
     return Data_[index];
   }
-  Real_t const& operator()(Size_t index) const {
+  real_t const& operator()(size_t index) const {
     stormAssert(index < Size_);
     return Data_[index];
   }
@@ -104,11 +104,11 @@ public:
 
 namespace Utils {
   
-  Real_t SafeDivide(Real_t x, Real_t y) {
+  real_t SafeDivide(real_t x, real_t y) {
     return (y == 0.0) ? 0.0 : (x/y);
   }
 
-  Real_t& SafeDivideEquals(Real_t& x, Real_t y) {
+  real_t& SafeDivideEquals(real_t& x, real_t y) {
     x = SafeDivide(x, y);
     return x;
   }
@@ -117,10 +117,10 @@ namespace Utils {
 
 namespace Blas {
 
-  Real_t Dot(stormArray const& z, stormArray const& y) {
+  real_t Dot(stormArray const& z, stormArray const& y) {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
-  Real_t Norm2(stormArray const& z) {
+  real_t Norm2(stormArray const& z) {
     return stormNorm2(z.Mesh, z.Array);
   }
 
@@ -128,14 +128,14 @@ namespace Blas {
     stormSet(z.Mesh, z.Array, y.Array);
   }
 
-  void Fill(stormArray& z, Real_t a) {
+  void Fill(stormArray& z, real_t a) {
     stormFill(z.Mesh, z.Array, a);
   }
   void RandFill(stormArray& z) {
     stormRandFill(z.Mesh, z.Array);
   }
 
-  void Scale(stormArray& z, stormArray const& y, Real_t a) {
+  void Scale(stormArray& z, stormArray const& y, real_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
 
@@ -146,12 +146,12 @@ namespace Blas {
   }
   void Add(stormArray& z, 
            stormArray const& y, 
-           stormArray const& x, Real_t a) {
+           stormArray const& x, real_t a) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
   }
   void Add(stormArray& z, 
-           stormArray const& y, Real_t b,
-           stormArray const& x, Real_t a) {
+           stormArray const& y, real_t b,
+           stormArray const& x, real_t a) {
     stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 
@@ -162,12 +162,12 @@ namespace Blas {
   }
   void Sub(stormArray& z, 
            stormArray const& y, 
-           stormArray const& x, Real_t a) {
+           stormArray const& x, real_t a) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
   }
   void Sub(stormArray& z, 
-           stormArray const& y, Real_t b, 
-           stormArray const& x, Real_t a) {
+           stormArray const& y, real_t b, 
+           stormArray const& x, real_t a) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 

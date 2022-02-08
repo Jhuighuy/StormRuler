@@ -61,10 +61,10 @@ public:
 template<class InVector, class OutVector = InVector>
 class IterativeSolver : public Solver<InVector, OutVector> {
 public:
-  Size_t Iteration = 0;
-  Size_t NumIterations = 2000;
-  Real_t AbsoluteError = 0.0, RelativeError = 0.0;
-  Real_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
+  size_t Iteration = 0;
+  size_t NumIterations = 2000;
+  real_t AbsoluteError = 0.0, RelativeError = 0.0;
+  real_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
   bool VerifySolution = false;
 
 public:
@@ -81,7 +81,7 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual Real_t Init(InVector const& xVec,
+  virtual real_t Init(InVector const& xVec,
                       OutVector const& bVec,
                       Operator<InVector, OutVector> const& anyOp,
                       Preconditioner<InVector> const* preOp) = 0;
@@ -94,7 +94,7 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual Real_t Iterate(InVector& xVec,
+  virtual real_t Iterate(InVector& xVec,
                          OutVector const& bVec,
                          Operator<InVector, OutVector> const& anyOp,
                          Preconditioner<InVector> const* preOp) = 0;
@@ -130,7 +130,7 @@ bool IterativeSolver<InVector, OutVector>::
   if (PreOp != nullptr) {
     PreOp->Build(xVec, bVec, anyOp);
   }
-  Real_t const initialError =
+  real_t const initialError =
     (AbsoluteError = Init(xVec, bVec, anyOp, PreOp.get()));
   std::cout << std::fixed << std::scientific << std::setprecision(15);
   std::cout << "\tI\t" << initialError << std::endl;
@@ -165,7 +165,7 @@ bool IterativeSolver<InVector, OutVector>::
     OutVector rVec;
     rVec.Assign(bVec, false);
     anyOp.Residual(rVec, bVec, xVec);
-    Real_t const
+    real_t const
       trueAbsoluteError = Blas::Norm2(rVec),
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
@@ -183,8 +183,8 @@ bool IterativeSolver<InVector, OutVector>::
 template<class InVector, class OutVector = InVector>
 class InnerOuterIterativeSolver : public IterativeSolver<InVector, OutVector> {
 public:
-  Size_t InnerIteration = 0;
-  Size_t NumInnerIterations = 50;
+  size_t InnerIteration = 0;
+  size_t NumInnerIterations = 50;
 
 protected:
 
@@ -199,7 +199,7 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm of the initial guess, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual Real_t OuterInit(InVector const& xVec,
+  virtual real_t OuterInit(InVector const& xVec,
                            OutVector const& bVec,
                            Operator<InVector, OutVector> const& anyOp,
                            Preconditioner<InVector> const* preOp) = 0;
@@ -225,7 +225,7 @@ protected:
   /// @param preOp Preconditioner operator, 𝓟(𝒙).
   ///
   /// @returns Residual norm, ‖𝒃 - 𝓐(𝒙)‖.
-  virtual Real_t InnerIterate(InVector& xVec,
+  virtual real_t InnerIterate(InVector& xVec,
                               OutVector const& bVec,
                               Operator<InVector, OutVector> const& anyOp,
                               Preconditioner<InVector> const* preOp) = 0;
@@ -260,14 +260,14 @@ protected:
 
 private:
 
-  Real_t Init(InVector const& xVec,
+  real_t Init(InVector const& xVec,
               OutVector const& bVec,
               Operator<InVector, OutVector> const& anyOp,
               Preconditioner<InVector> const* preOp) override final {
     return OuterInit(xVec, bVec, anyOp, preOp);
   }
 
-  Real_t Iterate(InVector& xVec,
+  real_t Iterate(InVector& xVec,
                  OutVector const& bVec,
                  Operator<InVector, OutVector> const& anyOp,
                  Preconditioner<InVector> const* preOp) override final {
@@ -275,7 +275,7 @@ private:
     if (InnerIteration == 0) {
       InnerInit(xVec, bVec, anyOp, preOp);
     }
-    Real_t const residualNorm = InnerIterate(xVec, bVec, anyOp, preOp);
+    real_t const residualNorm = InnerIterate(xVec, bVec, anyOp, preOp);
     if (InnerIteration == NumInnerIterations - 1) {
       InnerFinalize(xVec, bVec, anyOp, preOp);
     }
@@ -313,20 +313,20 @@ public:
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
-  static Real_t
+  static real_t
     EstimateLargestEigenvalue(Array& xVec,
                               Operator<Array> const& linOp,
-                              Size_t maxIterations = 20,
-                              Real_t relativeTolerance = 1.0e-8);
+                              size_t maxIterations = 20,
+                              real_t relativeTolerance = 1.0e-8);
 
 }; // class PowerIterations<...>
 
 template<class Array>
-Real_t PowerIterations<Array>::
+real_t PowerIterations<Array>::
     EstimateLargestEigenvalue(Array& xVec,
                               Operator<Array> const& linOp,
-                              Size_t maxIterations,
-                              Real_t relativeTolerance) {
+                              size_t maxIterations,
+                              real_t relativeTolerance) {
 
   Array yVec;
   yVec.Assign(xVec, false);
@@ -337,11 +337,11 @@ Real_t PowerIterations<Array>::
   // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
-  Real_t lambda = 1.0;
+  real_t lambda = 1.0;
   Blas::RandFill(xVec);
   Blas::Scale(xVec, xVec, 1.0/Blas::Norm2(xVec));
 
-  for (Size_t iteration = 0; iteration < maxIterations; ++iteration) {
+  for (size_t iteration = 0; iteration < maxIterations; ++iteration) {
 
     // ----------------------
     // Continue the Power Iterations:
@@ -350,7 +350,7 @@ Real_t PowerIterations<Array>::
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yVec, xVec);
-    Real_t const lambdaBar = lambda;
+    real_t const lambdaBar = lambda;
     lambda = Blas::Dot(xVec, yVec);
     Blas::Scale(xVec, yVec, 1.0/Blas::Norm2(yVec));
 

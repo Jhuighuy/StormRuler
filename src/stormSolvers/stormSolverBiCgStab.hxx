@@ -55,15 +55,15 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
-  Real_t alpha_, rho_, omega_;
+  real_t alpha_, rho_, omega_;
   Vector pVec_, rVec_, rTildeVec_, tVec_, vVec_, zVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -71,7 +71,7 @@ private:
 }; // class BiCgStabSolver<...>
 
 template<class Vector>
-Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
+real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
                                     Vector const& bVec,
                                     Operator<Vector> const& linOp,
                                     Preconditioner<Vector> const* preOp) {
@@ -110,7 +110,7 @@ Real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
 } // BiCgStabSolver<...>::Init
 
 template<class Vector>
-Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
+real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
                                        Vector const& bVec,
                                        Operator<Vector> const& linOp,
                                        Preconditioner<Vector> const* preOp) {
@@ -136,9 +136,9 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   if (firstIteration) {
     Blas::Set(pVec_, rVec_);
   } else {
-    Real_t const rhoBar = rho_;
+    real_t const rhoBar = rho_;
     rho_ = Blas::Dot(rTildeVec_, rVec_);
-    Real_t const beta = Utils::SafeDivide(alpha_*rho_, omega_*rhoBar);
+    real_t const beta = Utils::SafeDivide(alpha_*rho_, omega_*rhoBar);
     Blas::Sub(pVec_, pVec_, vVec_, omega_);
     Blas::Add(pVec_, rVec_, pVec_, beta);
   }
@@ -214,18 +214,18 @@ Real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
 template<class Vector>
 class BiCGStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
-  Real_t alpha_, rho_, omega_;
-  stormVector<Real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
-  stormMatrix<Real_t> tau_;
+  real_t alpha_, rho_, omega_;
+  stormVector<real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
+  stormMatrix<real_t> tau_;
   Vector rTildeVec_, zVec_;
   stormSubspace<Vector> rVecs_, uVecs_;
 
-  Real_t OuterInit(Vector const& xVec,
+  real_t OuterInit(Vector const& xVec,
                    Vector const& bVec,
                    Operator<Vector> const& linOp,
                    Preconditioner<Vector> const* preOp) override;
 
-  Real_t InnerIterate(Vector& xVec,
+  real_t InnerIterate(Vector& xVec,
                       Vector const& bVec,
                       Operator<Vector> const& linOp,
                       Preconditioner<Vector> const* preOp) override;
@@ -239,12 +239,12 @@ public:
 }; // class BiCGStabLSolver<...>
 
 template<class Vector>
-Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
+real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp,
                                           Preconditioner<Vector> const* preOp) {
 
-  Size_t const l = this->NumInnerIterations;
+  size_t const l = this->NumInnerIterations;
 
   gamma_.Assign(l + 1);
   gammaBar_.Assign(l + 1);
@@ -284,13 +284,13 @@ Real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
 } // BiCGStabLSolver<...>::OuterInit
 
 template<class Vector>
-Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
+real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
                                              Vector const& bVec,
                                              Operator<Vector> const& linOp,
                                              Preconditioner<Vector> const* preOp) {
 
-  Size_t const l = this->NumInnerIterations;
-  Size_t const j = this->InnerIteration;
+  size_t const l = this->NumInnerIterations;
+  size_t const j = this->InnerIteration;
 
   // ----------------------
   // BiCG part:
@@ -318,10 +318,10 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
   if (firstIteration) {
     Blas::Set(uVecs_(0), rVecs_(0));
   } else {
-    Real_t const rhoBar = rho_;
+    real_t const rhoBar = rho_;
     rho_ = Blas::Dot(rTildeVec_, rVecs_(j));
-    Real_t const beta = Utils::SafeDivide(alpha_*rho_, rhoBar);
-    for (Size_t i = 0; i <= j; ++i) {
+    real_t const beta = Utils::SafeDivide(alpha_*rho_, rhoBar);
+    for (size_t i = 0; i <= j; ++i) {
       Blas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
     }
   }
@@ -331,7 +331,7 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
   alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, uVecs_(j + 1)));
-  for (Size_t i = 0; i <= j; ++i) {
+  for (size_t i = 0; i <= j; ++i) {
     Blas::Sub(rVecs_(i), rVecs_(i), uVecs_(i + 1), alpha_);
   }
 
@@ -363,8 +363,8 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     //   𝛾̅ⱼ ← <𝒓₀⋅𝒓ⱼ>/𝜎ⱼ,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    for (Size_t j = 1; j <= l; ++j) {
-      for (Size_t i = 1; i < j; ++i) {
+    for (size_t j = 1; j <= l; ++j) {
+      for (size_t i = 1; i < j; ++i) {
         tau_(i, j) = 
           Utils::SafeDivide(Blas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
         Blas::Sub(rVecs_(j), rVecs_(j), rVecs_(i), tau_(i, j));
@@ -390,15 +390,15 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     omega_ = gamma_(l) = gammaBar_(l), rho_ *= -omega_;
-    for (Size_t j = l - 1; j != 0; --j) {
+    for (size_t j = l - 1; j != 0; --j) {
       gamma_(j) = gammaBar_(j);
-      for (Size_t i = j + 1; i <= l; ++i) {
+      for (size_t i = j + 1; i <= l; ++i) {
         gamma_(j) -= tau_(j, i)*gamma_(i);
       }
     }
-    for (Size_t j = 1; j < l; ++j) {
+    for (size_t j = 1; j < l; ++j) {
       gammaBarBar_(j) = gamma_(j + 1);
-      for (Size_t i = j + 1; i < l; ++i) {
+      for (size_t i = j + 1; i < l; ++i) {
         gammaBarBar_(j) += tau_(j, i)*gamma_(i + 1);
       }
     }
@@ -417,7 +417,7 @@ Real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
     Blas::Add(xVec, xVec, rVecs_(0), gamma_(1));
     Blas::Sub(rVecs_(0), rVecs_(0), rVecs_(l), gammaBar_(l));
     Blas::Sub(uVecs_(0), uVecs_(0), uVecs_(l), gamma_(l));
-    for (Size_t j = 1; j < l; ++j) {
+    for (size_t j = 1; j < l; ++j) {
       Blas::Add(xVec, xVec, rVecs_(j), gammaBarBar_(j));
       Blas::Sub(rVecs_(0), rVecs_(0), rVecs_(j), gammaBar_(j));
       Blas::Sub(uVecs_(0), uVecs_(0), uVecs_(j), gamma_(j));

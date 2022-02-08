@@ -42,17 +42,17 @@ _STORM_NAMESPACE_BEGIN_
 template<class Vector>
 class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
-  Real_t RelaxationFactor = 1.0e-4;
+  real_t RelaxationFactor = 1.0e-4;
 
 private:
   Vector rVec_, zVec_;
 
-  Real_t Init(Vector const& xVec,
+  real_t Init(Vector const& xVec,
               Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  Real_t Iterate(Vector& xVec,
+  real_t Iterate(Vector& xVec,
                  Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
@@ -60,7 +60,7 @@ private:
 }; // class RichardsonSolver<...>
 
 template<class Vector>
-Real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
+real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
                                       Vector const& bVec,
                                       Operator<Vector> const& linOp,
                                       Preconditioner<Vector> const* preOp) {
@@ -89,12 +89,12 @@ Real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
 } // RichardsonSolver<...>::Init
 
 template<class Vector>
-Real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
+real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
                                          Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {
 
-  Real_t const& omega = RelaxationFactor;
+  real_t const& omega = RelaxationFactor;
 
   // ----------------------
   // Update the solution and the residual:

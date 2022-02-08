@@ -270,8 +270,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
         tau_ = omega, Blas::Set(xVec, dVec_);
       }
     } else {
-      auto const [cs, sn, rr] =
-        Blas::SymOrtho(tau_, omega);
+      auto const [cs, sn, rr] = Blas::SymOrtho(tau_, omega);
       tau_ = omega*cs;
       Blas::Add(xVec, xVec, dVec_, std::pow(cs, 2));
       Blas::Scale(dVec_, dVec_, std::pow(sn, 2));

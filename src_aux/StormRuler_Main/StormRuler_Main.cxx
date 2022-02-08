@@ -36,8 +36,8 @@
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormLinSolve2(stormMesh_t mesh,
-                              stormString_t method,
-                              stormString_t preMethod,
+                              std::string_view const& method,
+                              std::string_view const& preMethod,
                               stormArray_t x,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
@@ -71,7 +71,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
-                                 stormString_t method,
+                                 std::string_view const& method,
                                  stormArray_t x,
                                  stormArray_t b,
                                  stormMatVecFuncT_t matVec) {
@@ -231,11 +231,11 @@ static void CahnHilliard_Step(stormMesh_t mesh,
   stormSet(mesh, c_hat, c);
   stormLinSolve2(mesh,
 #if YURI
-      STORM_KSP_BiCGStab,
-      STORM_PRE_NONE/*"extr"*/, 
+      storm::SolverType::BiCgStab,
+      storm::PreconditionerType::None/*"extr"*/, 
 #else
-      STORM_KSP_IDRs,
-      STORM_PRE_NONE/*"extr"*/,
+      storm::SolverType::Idrs,
+      storm::PreconditionerType::None/*"extr"*/,
 #endif
     c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
@@ -401,7 +401,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, rhs, rhs, v);
   
   stormSet(mesh, v_hat, v);
-  stormNonlinSolve2(mesh, STORM_JFNK, v_hat, v, 
+  stormNonlinSolve2(mesh, storm::SolverType::Jfnk, v_hat, v, 
     [&](stormMesh_t mesh, stormArray_t Av, stormArray_t v) {
       SetBCs_v(mesh, v);
 
@@ -433,7 +433,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, STORM_KSP_CG, STORM_PRE_NONE/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, storm::SolverType::Cg, storm::PreconditionerType::None/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

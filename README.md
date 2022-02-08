@@ -63,68 +63,60 @@ products.
 
 **StormRuler** contains:
 - 🛸 Nonlinear solvers:
+  * Richardson iteration solver
+    (for the _general_ problems);
+  * _(planned)_ Broyden iteration solver
+    (for the _general_ problems);
   * Newton solver 
-    (`Newton`, for the general nonlinear problems),
+    (for the _general_ nonlinear problems),
   * Jacobian-Free Newton-Krylov solver 
-    (`JFNK`, for the general nonlinear problems);
+    (for the _general_ nonlinear problems);
 
 - 🏎 Linear iterative solvers:
-  * Richardson iteration solver
-    (`Richardson`, for the _general_ linear problems);
-  * Conjugate Gradients solver 
-    (`CG`, for the _definite symmetric_ linear problems),
-  * _(planned)_ Flexible Conjugate Gradients solver 
-    (`FCG`, for the _definite symmetric_ linear problems
+  * **CG**, Conjugate Gradients solver 
+    (for the _definite symmetric_ linear problems),
+  * _(planned)_ **FCG**, Flexible Conjugate Gradients solver 
+    (for the _definite symmetric_ linear problems
      with _flexible preconditioning_),
-  * Minimal Residual solver
-    (`MINRES`, for the _indefinite symmetric_ linear problems),
-  * Conjugate Gradients Squared solver 
-    (`CGS`, for the _general_ linear problems),
-  * Biconjugate Gradients (stabilized) solver
-    (`BiCGStab`/`BiCGStab(l)`, for the _general_ linear problems),
-  * Transpose-Free Quasi-Minimal Residual solver
-    (`TFQMR`/`TFQMR(1)`, for the _general_ linear problems),
-  * Induced Dimension Reduction solver
-    (`IDR(s)`, for the _general_ linear problems);
-  * Generalized Minimal Residual solver
-    (`GMRES`, for the _general_ linear problems),
-  * Flexible Generalized Minimal Residual solver
-    (`FGMRES`, for the _general_ linear problems
-     with _flexible preconditioning_),
-  * _(planned)_ Loose (Flexible) Generalized Minimal Residual solver,
-    (`LGMRES`/`LFGMRES`, for the _general_ linear problems),
+  * **MINRES**, Minimal Residual solver
+    (for the _indefinite symmetric_ linear problems),
+  * **CGS**, Conjugate Gradients Squared solver 
+    (for the _general_ linear problems),
+  * **BiCGStab**/**BiCGStab(l)**, 
+    Biconjugate Gradients (stabilized) solver
+    (for the _general_ linear problems),
+  * **TFQMR**/**TFQMR(1)**,
+    Transpose-Free Quasi-Minimal Residual solver
+    (for the _general_ linear problems),
+  * **IDR(s)**, Induced Dimension Reduction solver
+    (for the _general_ linear problems);
+  * **GMRES**/**FGMRES**, 
+    (Flexible) Generalized Minimal Residual solver
+    (for the _general_ linear problems with _flexible preconditioning_),
+  * _(planned)_ **LGMRES**/**LFGMRES**, 
+    Loose (Flexible) Generalized Minimal Residual solver,
+    (for the _general_ linear problems with _flexible preconditioning_);
 
 - 🚜 Linear iterative least squares solvers:
-  * Least squares-QR solver
-    (`LSQR`, for the linear _least squares_ problems),
-  * Least squares-MINRES solver
-    (`LSMR`, for the linear _least squares_ problems);
+  * **LSQR**, Least squares-QR solver
+    (for the linear _least squares_ problems),
+  * **LSMR**, Least squares-MINRES solver
+    (for the linear _least squares_ problems);
 
 - 🚂 Linear direct solvers:
-  * _(planned)_ PARDISO direct solver
-    (`PARDISO`/`PARDISO_MKL`),
-  * _(planned)_ SuperLU direct solver
-    (`SuperLU`);
+  * _(planned)_ PARDISO direct solver,
+  * _(planned)_ SuperLU direct solver;
 
 - 🚨 Preconditioners:
-  * _(planned)_ Diagonal preconditioner
-    (`Jacobi`, for any problems),
-  * Symmetric Gauss-Seidel preconditioner
-    (`LU_SGS`, for any linear problems),
-  * _(planned)_ Incomplete Cholesky preconditioner
-    (`IC0`, `ICT`, for _definite symmetric_ problems),
-  * Incomplete LU preconditioner
-    (`ILU0`, `ILUT`, for _unsymmetric_ problems, _currently requires MKL_),
-  * _(planned)_ Approximate Inverse preconditioner
-    (`AINV0`, `AINV`, for _symmetric_ problems),
-  * _(planned)_ SPAI preconditioner
-    (`SPAI0`, `SPAI`, for _unsymmetric_ problems);
-  * Chebyshev Polynomial preconditioner
-    (`Cheby`, for _definite symmetric_ problems),
-  * _(planned)_ Polynomial preconditioner
-    (`Poly`, ...),
-  * _(planned)_ Krylov preconditioner
-    (`Krylov`, ...),
+  * _(planned)_ Diagonal preconditioner,
+  * Symmetric Gauss-Seidel preconditioner,
+  * _(planned)_ Incomplete Cholesky preconditioner,
+  * Incomplete LU preconditioner,
+  * _(planned)_ Approximate Inverse preconditioner,
+  * _(planned)_ SPAI preconditioner,
+  * Chebyshev Polynomial preconditioner,
+  * _(planned)_ Polynomial preconditioner,
+  * _(planned)_ Krylov preconditioner.
 
 <!----------------------------------------------------------------->
 ## 🛤Road map

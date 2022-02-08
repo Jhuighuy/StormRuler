@@ -45,31 +45,37 @@
 
 _STORM_NAMESPACE_BEGIN_
 
-/// @brief Krylov-subspace solver types.
-/// @{
-#define STORM_KSP_CG        "CG"
-#define STORM_KSP_FCG       "FCG"
-#define STORM_KSP_MINRES    "MINRES"
-#define STORM_KSP_CGS       "CGS"
-#define STORM_KSP_BiCGStab  "BiCGStab"
-#define STORM_KSP_BiCGStabL "BiCGStab(l)"
-#define STORM_KSP_TFQMR     "TFQMR"
-#define STORM_KSP_TFQMR1    "TFQMR(1)"
-#define STORM_KSP_IDRs      "IDR(s)"
-#define STORM_KSP_GMRES     "GMRES"
-#define STORM_KSP_FGMRES    "FGMRES"
-#define STORM_KSP_LGMRES    "LGMRES"
-#define STORM_KSP_LFGMRES   "LFGMRES"
-#define STORM_KSP_LSQR      "LSQR"
-#define STORM_KSP_LSMR      "LSMR"
-/// @}
+/// ----------------------------------------------------------------- ///
+/// @brief Solver types.
+/// ----------------------------------------------------------------- ///
+namespace SolverType {
 
-/// @brief General methods.
-/// @{
-#define STORM_Richardson "Richardson"
-#define STORM_Newton     "Newton"
-#define STORM_JFNK       "JFNK"
-/// @}
+  static std::string_view const
+    Cg        = "CG",
+    Fcg       = "FCG",
+    Minres    = "MINRES",
+    Cgs       = "CGS",
+    BiCgStab  = "BiCgStab",
+    BiCgStabL = "BiCgStab(l)",
+    Tfqmr     = "TFQMR",
+    Tfqmr1    = "TFQMR(1)",
+    Idrs      = "IDR(s)",
+    Gmres     = "GMRES",
+    Fgmres    = "FGMRES",
+    Lgmres    = "LGMRES",
+    Lfgmres   = "LFGMRES";
+
+  static std::string_view const
+    Lsqr      = "LSQR",
+    Lsmr      = "LSMR";
+
+  static std::string_view const
+    Richarson = "Richardson",
+    Broyden   = "Broyden",
+    Newton    = "Newton",
+    Jfnk      = "JFNK";
+
+} // namespace SolverType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.
@@ -82,68 +88,71 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
   // Try the square Krylov subspace solver first:
   // ----------------------
   if constexpr (std::is_same_v<InVector, OutVector>) {
-    if (solverType == STORM_KSP_CG) {
+    if (solverType == SolverType::Cg) {
       return std::make_unique<CgSolver<InVector>>();
     }
-  //if (solverType == STORM_KSP_FCG) {
-  //  return std::make_unique<FcgSolver<InVector>>();
-  //}
-    if (solverType == STORM_KSP_MINRES) {
+    if (solverType == SolverType::Fcg) {
+      //return std::make_unique<FcgSolver<InVector>>();
+    }
+    if (solverType == SolverType::Minres) {
       return std::make_unique<MinresSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_CGS) {
+    if (solverType == SolverType::Cgs) {
       return std::make_unique<CgsSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_BiCGStab) {
+    if (solverType == SolverType::BiCgStab) {
       return std::make_unique<BiCgStabSolver<InVector>>();
-    } 
-    if (solverType == STORM_KSP_BiCGStabL) {
+    }
+    if (solverType == SolverType::BiCgStabL) {
       return std::make_unique<BiCGStabLSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_TFQMR) {
+    if (solverType == SolverType::Tfqmr) {
       return std::make_unique<TfqmrSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_TFQMR1) {
+    if (solverType == SolverType::Tfqmr1) {
       return std::make_unique<Tfqmr1Solver<InVector>>();
     }
-    if (solverType == STORM_KSP_IDRs) {
+    if (solverType == SolverType::Idrs) {
       return std::make_unique<IdrsSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_GMRES) {
+    if (solverType == SolverType::Gmres) {
       return std::make_unique<GmresSolver<InVector>>();
     }
-    if (solverType == STORM_KSP_FGMRES) {
+    if (solverType == SolverType::Fgmres) {
       return std::make_unique<FgmresSolver<InVector>>();
     }
-  //if (solverType == STORM_KSP_LGMRES) {
-  //  return std::make_unique<LgmresSolver<InVector>>();
-  //}
-  //if (solverType == STORM_KSP_LFGMRES) {
-  //  return std::make_unique<LfgmresSolver<InVector>>();
-  //}
+    if (solverType == SolverType::Lgmres) {
+      //return std::make_unique<LgmresSolver<InVector>>();
+    }
+    if (solverType == SolverType::Lfgmres) {
+      //return std::make_unique<LfgmresSolver<InVector>>();
+    }
   }
 
   // ----------------------
   // Try the Krylov subspace least squares solvers next:
   // ----------------------
-//if (solverType == STORM_KSP_LSQR) {
-//  return std::make_unique<LsqrSolver<InVector, OutVector>>();
-//} 
-//if (solverType == STORM_KSP_LSMR) {
-//  return std::make_unique<LsmrSolver<InVector, OutVector>>();
-//}
+  if (solverType == SolverType::Lsqr) {
+    //return std::make_unique<LsqrSolver<InVector, OutVector>>();
+  }
+  if (solverType == SolverType::Lsmr) {
+    //return std::make_unique<LsmrSolver<InVector, OutVector>>();
+  }
 
   // ----------------------
   // Finally, try the other general solvers:
   // ----------------------
   if constexpr (std::is_same_v<InVector, OutVector>) {
-    if (solverType == STORM_Richardson) {
+    if (solverType == SolverType::Richarson) {
       return std::make_unique<RichardsonSolver<InVector>>();
     }
-  //if (solverType == STORM_Newton) {
-  //  return std::make_unique<NewtonSolver<InVector>>();
-  //}
-    if (solverType == STORM_JFNK) {
+    if (solverType == SolverType::Broyden) {
+      //return std::make_unique<BroydenSolver<InVector>>();
+    }
+    if (solverType == SolverType::Newton) {
+      //return std::make_unique<NewtonSolver<InVector>>();
+    }
+    if (solverType == SolverType::Jfnk) {
       return std::make_unique<JfnkSolver<InVector>>();
     }
   }

@@ -35,23 +35,30 @@
 
 _STORM_NAMESPACE_BEGIN_
 
+/// ----------------------------------------------------------------- ///
 /// @brief Precondtioner types.
-/// @{
-#define STORM_PRE_NONE   ""
-#define STORM_PRE_ID     "ID"
-#define STORM_PRE_JACOBI "JACOBI"
-#define STORM_PRE_LU_SGS "LU_SGS"
-#define STORM_PRE_IC0    "IC0"
-#define STORM_PRE_ICT    "ICT"
-#define STORM_PRE_ILU0   "ILU0"
-#define STORM_PRE_ILUT   "ILUT"
-#define STORM_PRE_AINV0  "AINV0"
-#define STORM_PRE_AINV   "AINV"
-#define STORM_PRE_SPAI0  "SPAI0"
-#define STORM_PRE_SPAI   "SPAI"
-#define STORM_PRE_CHEBY  "Cheby"
-#define STORM_PRE_KRYLOV "Krylov"
-/// @}
+/// ----------------------------------------------------------------- ///
+namespace PreconditionerType {
+
+  static std::string_view const
+    None      = "",
+    Id        = "Id",
+    Jacobi    = "Jacobi",
+    Sgs       = "Sgs",
+    Ic0       = "Ic0",
+    Ict       = "Ict",
+    Ilu0      = "Ilu0",
+    Ilut      = "Ilut",
+    Ilq0      = "Ilq0",
+    Ilqt      = "Ilqt",
+    Ainv0     = "Ainv0",
+    Ainv      = "Ainv",
+    Spai0     = "Spai0",
+    Spai      = "Spai",
+    Chebyshev = "Chebyshev",
+    Krylov    = "Krylov";
+
+} // namespace PreconditionerType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make preconditioner of the specified type.
@@ -60,62 +67,53 @@ template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
     MakePreconditioner(std::string_view const& preType) {
 
-  if (preType == STORM_PRE_NONE) {
-
+  if (preType == PreconditionerType::None) {
     return nullptr;
-
-  } else if (preType == STORM_PRE_ID) {
-
+  }
+  if (preType == PreconditionerType::Id) {
     return std::make_unique<IdentityPreconditioner<Vector>>();
-
-  } else if (preType == STORM_PRE_JACOBI) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_LU_SGS) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_IC0) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_ICT) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_ILU0) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_ILUT) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_AINV0) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_AINV) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_SPAI0) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_SPAI) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } else if (preType == STORM_PRE_CHEBY) {
-
+  }
+  if (preType == PreconditionerType::Jacobi) {
+    //return std::make_unique<JacobiPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Sgs) {
+    //return std::make_unique<SgsPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ic0) {
+    //return std::make_unique<Ic0Preconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ict) {
+    //return std::make_unique<IctPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ilu0) {
+    //return std::make_unique<Ilu0Preconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ilut) {
+    //return std::make_unique<IlutPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ilq0) {
+    //return std::make_unique<Ilq0Preconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ilqt) {
+    //return std::make_unique<IlqtPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ainv0) {
+    //return std::make_unique<Ainv0Preconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Ainv) {
+    //return std::make_unique<AinvPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Spai0) {
+    //return std::make_unique<Spai0Preconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Spai) {
+    //return std::make_unique<SpaiPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Chebyshev) {
     return std::make_unique<ChebyshevPreconditioner<Vector>>();
-
-  } else if (preType == STORM_PRE_KRYLOV) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
+  }
+  if (preType == PreconditionerType::Krylov) {
+    //return std::make_unique<KrylovPreconditioner<Vector>>();
   }
 
   throw std::invalid_argument("Invalid preconditioner type specified.");

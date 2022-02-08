@@ -218,7 +218,7 @@ private:
   stormVector<real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
   stormMatrix<real_t> tau_;
   Vector rTildeVec_, zVec_;
-  stormSubspace<Vector> rVecs_, uVecs_;
+  Subspace<Vector> rVecs_, uVecs_;
 
   real_t OuterInit(Vector const& xVec,
                    Vector const& bVec,

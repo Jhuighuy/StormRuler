@@ -41,8 +41,8 @@ class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
 private:
   stormVector<real_t> beta_, cs_, sn_;
   stormMatrix<real_t> H_;
-  stormSubspace<Vector> qVecs_;
-  stormSubspace<Vector, Flexible ? stormDynamicExtent : 1> zVecs_;
+  Subspace<Vector> qVecs_;
+  Subspace<Vector, Flexible ? DynamicExtent : 1> zVecs_;
 
   real_t OuterInit(Vector const& xVec,
                    Vector const& bVec,

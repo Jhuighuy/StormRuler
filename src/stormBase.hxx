@@ -26,6 +26,10 @@
 #define _STORM_BASE_HXX_
 
 #include <cstddef>
+#include <array>
+#include <vector>
+#include <type_traits>
+
 #include <StormRuler_API.h>
 
 #define _STORM_NOT_IMPLEMENTED_() do { \
@@ -35,6 +39,20 @@ namespace Storm {
 
 using size_t = std::size_t;
 using real_t = double;
+
+static size_t const DynamicExtent = SIZE_MAX;
+
+template<size_t Extent>
+using ExtentSize = 
+  std::conditional_t<Extent == DynamicExtent, 
+                     size_t, 
+                     std::integral_constant<size_t, Extent>>;
+
+template<class Value, size_t Extent>
+using ExtentArray =
+  std::conditional_t<Extent == DynamicExtent,
+                     std::vector<Value>,
+                     std::array<Value, Extent>>;
 
 } // namespace Storm
 

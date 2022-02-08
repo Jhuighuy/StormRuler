@@ -22,39 +22,33 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_SUBSPACE_HXX_
-#define _STORM_SUBSPACE_HXX_
 
-#include <array>
-#include <vector>
-#include <type_traits>
+#pragma once
 
-#include <stormBlas/stormShape.hxx>
+#include <stormBase.hxx>
+
+namespace Storm {
 
 /// ----------------------------------------------------------------- ///
 /// @brief Vector subspace.
 /// ----------------------------------------------------------------- ///
-template<class Vector, stormSize_t Extent = stormDynamicExtent>
-class stormSubspace {
+template<class Vector, size_t Extent = DynamicExtent>
+class Subspace {
 private:
-  [[no_unique_address]] stormShape<Extent> Shape_ = {};
-  [[no_unique_address]] std::conditional_t<
-    Extent == stormDynamicExtent,
-    std::vector<Vector>, 
-    std::array<Vector, Extent>> Vectors_; 
+  [[no_unique_address]] ExtentArray<Vector, Extent> Vectors_; 
 
 public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
   void Assign(Vector const& like, bool copy) 
-      requires(Extent != stormDynamicExtent) {
+      requires(Extent != DynamicExtent) {
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
     }
   }
-  void Assign(stormSize_t size, Vector const& like, bool copy) 
-      requires(Extent == stormDynamicExtent) {
+  void Assign(size_t size, Vector const& like, bool copy) 
+      requires(Extent == DynamicExtent) {
     Vectors_.resize(size);
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
@@ -64,14 +58,16 @@ public:
 
   /// @brief Access vector at index.
   /// @{
-  Vector& operator()(stormSize_t index) noexcept {
-    return Vectors_[Shape_(index)];
+  Vector& operator()(size_t index) noexcept {
+    stormAssert(index < Vectors_.size());
+    return Vectors_[index];
   }
-  Vector const& operator()(stormSize_t index) const noexcept {
-    return Vectors_[Shape_(index)];
+  Vector const& operator()(size_t index) const noexcept {
+    stormAssert(index < Vectors_.size());
+    return Vectors_[index];
   }
   /// @}
 
-}; // class stormSubspace
+}; // class Subspace
 
-#endif // ifndef _STORM_SUBSPACE_HXX_
+} // namespace Storm

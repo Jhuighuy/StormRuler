@@ -55,7 +55,7 @@ private:
   stormVector<real_t> phi_, gamma_;
   stormMatrix<real_t> mu_;
   Vector rVec_, vVec_, zVec_;
-  stormSubspace<Vector> pVecs_, uVecs_, gVecs_;
+  Subspace<Vector> pVecs_, uVecs_, gVecs_;
 
   real_t OuterInit(Vector const& xVec,
                    Vector const& bVec,

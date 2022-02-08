@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormBlas/stormOperator.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Preconditioner side.
@@ -98,4 +98,4 @@ private:
 
 }; // class IdentityPreconditioner<...>
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

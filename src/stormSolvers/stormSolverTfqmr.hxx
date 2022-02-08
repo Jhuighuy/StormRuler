@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
@@ -305,4 +305,4 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
 
 } // BaseTfqmrSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

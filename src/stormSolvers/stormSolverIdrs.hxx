@@ -30,7 +30,7 @@
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular linear operator equation \
@@ -313,4 +313,4 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
 
 } // IdrsSolver<...>::InnerIterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

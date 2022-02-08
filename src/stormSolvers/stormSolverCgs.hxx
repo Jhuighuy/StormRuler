@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular operator equation \
@@ -199,4 +199,4 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
 
 } // CgsSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

@@ -33,10 +33,10 @@
 #include <stormSolvers/stormPreconditioner.hxx>
 #include <stormSolvers/stormPreconditionerPolynomial.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// ----------------------------------------------------------------- ///
-/// @brief Precondtioner types.
+/// @brief Preconditioner types.
 /// ----------------------------------------------------------------- ///
 namespace PreconditionerType {
 
@@ -150,4 +150,4 @@ std::unique_ptr<Preconditioner<Vector>>
 
 } // MakePreconditioner<...>
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

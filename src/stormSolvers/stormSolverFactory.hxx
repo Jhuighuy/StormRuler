@@ -43,67 +43,67 @@
 #include <stormSolvers/stormSolverRichardson.hxx>
 #include <stormSolvers/stormSolverNewton.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// ----------------------------------------------------------------- ///
 /// @brief Solver types.
 /// ----------------------------------------------------------------- ///
 namespace SolverType {
-  
+
   /// @brief @c CG iterative solver.
   static std::string_view const Cg = "CG";
-  
+
   /// @brief @c FCG iterative solver.
   static std::string_view const Fcg = "FCG";
-  
+
   /// @brief @c MINRES iterative solver.
   static std::string_view const Minres = "MINRES";
-  
+
   /// @brief @c CGS iterative solver.
   static std::string_view const Cgs = "CGS";
-  
+
   /// @brief @c BiCGStab iterative solver.
   static std::string_view const BiCgStab = "BiCgStab";
-  
+
   /// @brief @c BiCGStab(l) iterative solver.
   static std::string_view const BiCgStabL = "BiCgStab(l)";
-  
+
   /// @brief @c TFQMR iterative solver.
   static std::string_view const Tfqmr = "TFQMR";
-  
+
   /// @brief @c TFQMR(1) iterative solver.
   static std::string_view const Tfqmr1 = "TFQMR(1)";
-  
+
   /// @brief @c IDR(s) iterative solver.
   static std::string_view const Idrs = "IDR(s)";
-  
+
   /// @brief @c GMRES iterative solver.
   static std::string_view const Gmres = "GMRES";
-  
+
   /// @brief @c FGMRES iterative solver.
   static std::string_view const Fgmres = "FGMRES";
-  
+
   /// @brief @c LGMRES iterative solver.
   static std::string_view const Lgmres = "LGMRES";
-  
+
   /// @brief @c LFGMRES iterative solver.
   static std::string_view const Lfgmres = "LFGMRES";
-  
+
   /// @brief @c LSQR iterative solver.
   static std::string_view const Lsqr = "LSQR";
-  
+
   /// @brief @c LSMR iterative solver.
   static std::string_view const Lsmr = "LSMR";
 
   /// @brief @c Richardson iterative solver.
   static std::string_view const Richarson = "Richardson";
-  
+
   /// @brief @c Broyden iterative solver.
   static std::string_view const Broyden = "Broyden";
-  
+
   /// @brief @c Newton iterative solver.
   static std::string_view const Newton = "Newton";
-  
+
   /// @brief @c JFNK iterative solver.
   static std::string_view const Jfnk = "JFNK";
 
@@ -136,7 +136,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
       return std::make_unique<BiCgStabSolver<InVector>>();
     }
     if (solverType == SolverType::BiCgStabL) {
-      return std::make_unique<BiCGStabLSolver<InVector>>();
+      return std::make_unique<BiCgStabLSolver<InVector>>();
     }
     if (solverType == SolverType::Tfqmr) {
       return std::make_unique<TfqmrSolver<InVector>>();
@@ -149,7 +149,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
     }
     if (solverType.empty() || solverType == SolverType::Gmres) {
       // Note: GMRES is the default square solver.
-      return std::make_unique<GmresSolver<InVector>>(); 
+      return std::make_unique<GmresSolver<InVector>>();
     }
     if (solverType == SolverType::Fgmres) {
       return std::make_unique<FgmresSolver<InVector>>();
@@ -186,7 +186,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
   if (solverType == SolverType::Lsqr) {
     //return std::make_unique<LsqrSolver<InVector, OutVector>>();
   }
-  if (solverType.empty() || solverType == SolverType::Lsmr) { 
+  if (solverType.empty() || solverType == SolverType::Lsmr) {
     // Note: LSMR is the default rectangular solver.
     //return std::make_unique<LsmrSolver<InVector, OutVector>>();
   }
@@ -195,4 +195,4 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
 
 } // MakeSolver<...>
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

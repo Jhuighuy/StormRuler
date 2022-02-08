@@ -28,7 +28,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a non-singular operator equation \
@@ -116,4 +116,4 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
 
 } // RichardsonSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

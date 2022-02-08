@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 namespace Blas {
 
@@ -206,4 +206,4 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
 
 } // MinresSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

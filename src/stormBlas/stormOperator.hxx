@@ -31,7 +31,7 @@
 
 #include <stormBase.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 class BaseObject {
 public:
@@ -313,6 +313,6 @@ auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
 
 } // MakeSymmetricOperator<...>
 
-_STORM_NAMESPACE_END_
+} // namespace Storm
 
 #endif // ifndef _STORM_OPERATOR_HXX_

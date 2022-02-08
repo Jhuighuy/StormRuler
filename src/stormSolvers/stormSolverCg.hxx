@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear self-adjoint definite operator equation \
@@ -152,4 +152,4 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
 
 } // CgSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

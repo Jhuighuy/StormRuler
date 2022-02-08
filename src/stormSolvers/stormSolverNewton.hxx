@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 #if 0
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -200,4 +200,4 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
 
 } // JfnkSolver<...>::Iterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

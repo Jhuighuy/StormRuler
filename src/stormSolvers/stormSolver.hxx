@@ -33,7 +33,7 @@
 #include <stormBlas/stormOperator.hxx>
 #include <stormSolvers/stormPreconditioner.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
@@ -366,4 +366,4 @@ real_t PowerIterations<Array>::
 
 } // PowerIterations<...>::EstimateLargestEigenvalue
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

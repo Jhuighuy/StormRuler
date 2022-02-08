@@ -28,17 +28,14 @@
 #include <cstddef>
 #include <StormRuler_API.h>
 
-#define _STORM_NAMESPACE_BEGIN_ namespace storm {
-#define _STORM_NAMESPACE_END_ } // namespace storm
-
 #define _STORM_NOT_IMPLEMENTED_() do { \
   std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 using size_t = std::size_t;
 using real_t = double;
 
-_STORM_NAMESPACE_END_
+} // namespace Storm
 
 #endif // ifndef _STORM_BASE_HXX_

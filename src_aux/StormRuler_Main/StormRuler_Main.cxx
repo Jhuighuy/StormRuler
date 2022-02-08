@@ -41,16 +41,16 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               stormArray_t x,
                               stormArray_t b,
                               stormMatVecFuncT_t matVec) {
-  storm::stormArray xx = {mesh, x}, bb = {mesh, b};
+  Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   stormSize_t numMatVecs = 0;
-  auto symOp = storm::MakeSymmetricOperator<storm::stormArray>(
-    [&](storm::stormArray& yy, const storm::stormArray& xx) {
+  auto symOp = Storm::MakeSymmetricOperator<Storm::stormArray>(
+    [&](Storm::stormArray& yy, const Storm::stormArray& xx) {
       numMatVecs += 1;
       matVec(yy.Mesh, yy.Array, xx.Array);
     });
 
-  auto solver = storm::MakeIterativeSolver<storm::stormArray>(method);
-  solver->PreOp = storm::MakePreconditioner<storm::stormArray>(preMethod);
+  auto solver = Storm::MakeIterativeSolver<Storm::stormArray>(method);
+  solver->PreOp = Storm::MakePreconditioner<Storm::stormArray>(preMethod);
 #if 0
   stormSparseRowMatrix<stormReal_t> matrix;
   do_the_thing(matrix, xx, *symOp);
@@ -76,14 +76,14 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
                                  stormArray_t b,
                                  stormMatVecFuncT_t matVec) {
 
-  storm::stormArray xx = {mesh, x}, bb = {mesh, b};
-  auto op = storm::MakeSymmetricOperator<storm::stormArray>(
-      [&](storm::stormArray& yy, const storm::stormArray& xx) {
+  Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
+  auto op = Storm::MakeSymmetricOperator<Storm::stormArray>(
+      [&](Storm::stormArray& yy, const Storm::stormArray& xx) {
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::unique_ptr<storm::IterativeSolver<storm::stormArray>> solver = 
-    std::make_unique<storm::JfnkSolver<storm::stormArray>>();
+  std::unique_ptr<Storm::IterativeSolver<Storm::stormArray>> solver = 
+    std::make_unique<Storm::JfnkSolver<Storm::stormArray>>();
   solver->AbsoluteTolerance = 1.0e-4;
   solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);
@@ -231,11 +231,11 @@ static void CahnHilliard_Step(stormMesh_t mesh,
   stormSet(mesh, c_hat, c);
   stormLinSolve2(mesh,
 #if YURI
-      storm::SolverType::BiCgStab,
-      storm::PreconditionerType::None/*"extr"*/, 
+      Storm::SolverType::BiCgStab,
+      Storm::PreconditionerType::None/*"extr"*/, 
 #else
-      storm::SolverType::Idrs,
-      storm::PreconditionerType::None/*"extr"*/,
+      Storm::SolverType::Idrs,
+      Storm::PreconditionerType::None/*"extr"*/,
 #endif
     c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
@@ -255,7 +255,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    //abort();
+    abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -401,7 +401,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormAdd(mesh, rhs, rhs, v);
   
   stormSet(mesh, v_hat, v);
-  stormNonlinSolve2(mesh, storm::SolverType::Jfnk, v_hat, v, 
+  stormNonlinSolve2(mesh, Storm::SolverType::Jfnk, v_hat, v, 
     [&](stormMesh_t mesh, stormArray_t Av, stormArray_t v) {
       SetBCs_v(mesh, v);
 
@@ -433,7 +433,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
   stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, storm::SolverType::Cg, storm::PreconditionerType::None/*"extr"*/, p_hat, rhs,
+  stormLinSolve2(mesh, Storm::SolverType::Cg, Storm::PreconditionerType::None/*"extr"*/, p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 

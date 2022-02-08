@@ -30,7 +30,7 @@
 #include <stormBase.hxx>
 #include <stormSolvers/stormPreconditioner.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract polynomial preconditioner.
@@ -142,4 +142,4 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
 
 } // ChebyshevPreconditioner<...>::MatVec
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

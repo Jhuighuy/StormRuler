@@ -32,7 +32,7 @@
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a linear operator equation with the good old \
@@ -212,7 +212,7 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class BiCGStabLSolver final : public InnerOuterIterativeSolver<Vector> {
+class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
   real_t alpha_, rho_, omega_;
   stormVector<real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
@@ -232,14 +232,14 @@ private:
 
 public:
 
-  BiCGStabLSolver() {
+  BiCgStabLSolver() {
     this->NumInnerIterations = 2;
   }
 
-}; // class BiCGStabLSolver<...>
+}; // class BiCgStabLSolver<...>
 
 template<class Vector>
-real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
+real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp,
                                           Preconditioner<Vector> const* preOp) {
@@ -281,10 +281,10 @@ real_t BiCGStabLSolver<Vector>::OuterInit(Vector const& xVec,
 
   return std::sqrt(rho_);
 
-} // BiCGStabLSolver<...>::OuterInit
+} // BiCgStabLSolver<...>::OuterInit
 
 template<class Vector>
-real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
+real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
                                              Vector const& bVec,
                                              Operator<Vector> const& linOp,
                                              Preconditioner<Vector> const* preOp) {
@@ -426,6 +426,6 @@ real_t BiCGStabLSolver<Vector>::InnerIterate(Vector& xVec,
 
   return Blas::Norm2(rVecs_(0));
 
-} // BiCGStabLSolver<...>::InnerIterate
+} // BiCgStabLSolver<...>::InnerIterate
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

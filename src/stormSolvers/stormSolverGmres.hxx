@@ -30,7 +30,7 @@
 #include <stormBlas/stormSubspace.hxx>
 #include <stormSolvers/stormSolver.hxx>
 
-_STORM_NAMESPACE_BEGIN_
+namespace Storm {
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c GMRES, @c FGMRES, \
@@ -348,4 +348,4 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
 
 } // BaseGmresSolver<...>::InnerFinalize
 
-_STORM_NAMESPACE_END_
+} // namespace Storm

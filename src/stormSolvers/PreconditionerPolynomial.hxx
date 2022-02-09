@@ -28,7 +28,7 @@
 #include <cmath>
 
 #include <stormBase.hxx>
-#include <stormSolvers/stormPreconditioner.hxx>
+#include <stormSolvers/Preconditioner.hxx>
 
 namespace Storm {
 

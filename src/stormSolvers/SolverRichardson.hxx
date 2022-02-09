@@ -26,7 +26,7 @@
 #pragma once
 
 #include <stormBase.hxx>
-#include <stormSolvers/stormSolver.hxx>
+#include <stormSolvers/Solver.hxx>
 
 namespace Storm {
 

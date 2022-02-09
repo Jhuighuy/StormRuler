@@ -28,7 +28,7 @@
 #include <stormBase.hxx>
 #include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
-#include <stormSolvers/stormSolver.hxx>
+#include <stormSolvers/Solver.hxx>
 
 namespace Storm {
 

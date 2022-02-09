@@ -30,18 +30,18 @@
 
 #include <stormBase.hxx>
 
-#include <stormSolvers/stormSolver.hxx>
-#include <stormSolvers/stormSolverCg.hxx>
-#include <stormSolvers/stormSolverMinres.hxx>
-#include <stormSolvers/stormSolverCgs.hxx>
-#include <stormSolvers/stormSolverBiCgStab.hxx>
-#include <stormSolvers/stormSolverTfqmr.hxx>
-#include <stormSolvers/stormSolverIdrs.hxx>
-#include <stormSolvers/stormSolverGmres.hxx>
-//#include <stormSolvers/stormSolverLsqr.hxx>
+#include <stormSolvers/Solver.hxx>
+#include <stormSolvers/SolverCg.hxx>
+#include <stormSolvers/SolverMinres.hxx>
+#include <stormSolvers/SolverCgs.hxx>
+#include <stormSolvers/SolverBiCgStab.hxx>
+#include <stormSolvers/SolverTfqmr.hxx>
+#include <stormSolvers/SolverIdrs.hxx>
+#include <stormSolvers/SolverGmres.hxx>
+//#include <stormSolvers/SolverLsqr.hxx>
 
-#include <stormSolvers/stormSolverRichardson.hxx>
-#include <stormSolvers/stormSolverNewton.hxx>
+#include <stormSolvers/SolverRichardson.hxx>
+#include <stormSolvers/SolverNewton.hxx>
 
 namespace Storm {
 

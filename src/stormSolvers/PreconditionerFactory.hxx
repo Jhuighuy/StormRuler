@@ -30,8 +30,8 @@
 
 #include <stormBase.hxx>
 
-#include <stormSolvers/stormPreconditioner.hxx>
-#include <stormSolvers/stormPreconditionerPolynomial.hxx>
+#include <stormSolvers/Preconditioner.hxx>
+#include <stormSolvers/PreconditionerPolynomial.hxx>
 
 namespace Storm {
 

@@ -27,7 +27,7 @@
 
 #include <cmath>
 
-#include <stormSolvers/stormSolver.hxx>
+#include <stormSolvers/Solver.hxx>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for solvers, based on \

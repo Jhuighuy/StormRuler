@@ -65,7 +65,7 @@ public:
   size_t NumIterations = 2000;
   real_t AbsoluteError = 0.0, RelativeError = 0.0;
   real_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
-  bool VerifySolution = false;
+  bool VerifySolution = true;
 
 public:
   PreconditionerSide PreSide = PreconditionerSide::Right;
@@ -297,7 +297,7 @@ private:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Array>
+template<class Vector>
 class PowerIterations final : public BaseObject {
 public:
 
@@ -314,21 +314,21 @@ public:
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
   static real_t
-    EstimateLargestEigenvalue(Array& xVec,
-                              Operator<Array> const& linOp,
+    EstimateLargestEigenvalue(Vector& xVec,
+                              Operator<Vector> const& linOp,
                               size_t maxIterations = 20,
                               real_t relativeTolerance = 1.0e-8);
 
 }; // class PowerIterations<...>
 
-template<class Array>
-real_t PowerIterations<Array>::
-    EstimateLargestEigenvalue(Array& xVec,
-                              Operator<Array> const& linOp,
+template<class Vector>
+real_t PowerIterations<Vector>::
+    EstimateLargestEigenvalue(Vector& xVec,
+                              Operator<Vector> const& linOp,
                               size_t maxIterations,
                               real_t relativeTolerance) {
 
-  Array yVec;
+  Vector yVec;
   yVec.Assign(xVec, false);
 
   // ----------------------

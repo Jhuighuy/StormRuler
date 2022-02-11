@@ -26,6 +26,10 @@
 #pragma once
 
 #include <cmath>
+#if 0
+#include <fstream>
+#include <mkl.h>
+#endif
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
@@ -50,8 +54,9 @@ namespace Storm {
 template<class Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
-  real_t alpha_;
+  real_t gamma_;
   Vector pVec_, rVec_, zVec_;
+  std::vector<real_t> Diagonal_, SubDiagonal_;
 
   real_t Init(Vector const& xVec,
               Vector const& bVec,
@@ -77,32 +82,30 @@ real_t CgSolver<Vector>::Init(Vector const& xVec,
 
   // ----------------------
   // Initialize:
-  // 𝒓 ← 𝓐𝒙,
-  // 𝒓 ← 𝒃 - 𝒓.
+  // 𝒓 ← 𝒃 - 𝓐𝒙.
   // ----------------------
-  linOp.MatVec(rVec_, xVec);
-  Blas::Sub(rVec_, bVec, rVec_);
+  linOp.Residual(rVec_, bVec, xVec);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝓟𝒓,
   //   𝒑 ← 𝒛,
-  //   𝛼 ← <𝒓⋅𝒛>,
+  //   𝛾 ← <𝒓⋅𝒛>,
   // 𝗲𝗹𝘀𝗲:
   //   𝒑 ← 𝒓,
-  //   𝛼 ← <𝒓⋅𝒓>.
+  //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
     Blas::Set(pVec_, zVec_);
-    alpha_ = Blas::Dot(rVec_, zVec_);
+    gamma_ = Blas::Dot(rVec_, zVec_);
   } else {
     Blas::Set(pVec_, rVec_);
-    alpha_ = Blas::Dot(rVec_, rVec_);
+    gamma_ = Blas::Dot(rVec_, rVec_);
   }
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(alpha_);
+  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
 
 } // CgSolver<...>::Init
 
@@ -115,40 +118,95 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   // Iterate:
   // 𝒛 ← 𝓐𝒑,
-  // 𝛼̅ ← 𝛼,
-  // 𝛼 ← 𝛼/<𝒑⋅𝒛>,
+  // 𝛾̅ ← 𝛾,
+  // 𝛼 ← 𝛾/<𝒑⋅𝒛>,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
-  real_t const alphaBar = alpha_;
-  Utils::SafeDivideEquals(alpha_, Blas::Dot(pVec_, zVec_));
-  Blas::Add(xVec, xVec, pVec_, alpha_);
-  Blas::Sub(rVec_, rVec_, zVec_, alpha_);
+  real_t const gammaBar = gamma_;
+  real_t const alpha = 
+    Utils::SafeDivide(gamma_, Blas::Dot(pVec_, zVec_));
+  Blas::Add(xVec, xVec, pVec_, alpha);
+  Blas::Sub(rVec_, rVec_, zVec_, alpha);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝓟𝒓,
-  //   𝛼 ← <𝒓⋅𝒛>,
+  //   𝛾 ← <𝒓⋅𝒛>,
   // 𝗲𝗹𝘀𝗲:
-  //   𝛼 ← <𝒓⋅𝒓>.
+  //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    alpha_ = Blas::Dot(rVec_, zVec_);
+    gamma_ = Blas::Dot(rVec_, zVec_);
   } else {
-    alpha_ = Blas::Dot(rVec_, rVec_);
+    gamma_ = Blas::Dot(rVec_, rVec_);
   }
 
   // ----------------------
-  // 𝛽 ← 𝛼/𝛼̅,
+  // 𝛽 ← 𝛾/𝛾̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  real_t const beta = Utils::SafeDivide(alpha_, alphaBar);
+  real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
   Blas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(alpha_);
+#if 0
+  bool const computeEigenvalues = true;
+  if (computeEigenvalues) {
+
+    // ----------------------
+    // Update the tridiagonal matrix:
+    // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
+    //  𝑇ₖₖ ← 𝟣/𝛼,
+    // 𝗲𝗹𝘀𝗲:
+    //  𝑇ₖₖ ← 𝑇ₖₖ + 𝟣/𝛼,
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // 𝑇ₖ₊₁,ₖ₊₁ ← 𝛽/𝛼,
+    // 𝑇ₖ₊₁,ₖ ← 𝛽¹ᐟ²/𝛼.
+    // ----------------------
+    real_t const alphaInverse = 1.0/alpha;
+    bool const firstIteration = this->Iteration == 0;
+    if (firstIteration) {
+      Diagonal_.push_back(alphaInverse);
+    } else {
+      Diagonal_.back() += alphaInverse;
+    }
+    Diagonal_.push_back(beta*alphaInverse);
+    SubDiagonal_.push_back(std::sqrt(beta)*alphaInverse);
+
+    lapack_int const n = this->Iteration + 1;
+    if (n == 200) {
+      std::vector<real_t> eigenvalues(n);
+      std::vector<lapack_int> iblock(n), isplit(n);
+
+      lapack_int m, nsplit, info;
+      info = LAPACKE_dstebz('A', 'E', n, 
+        0.0, 0.0, 
+        0, 0,
+        0.0,
+        Diagonal_.data(),
+        SubDiagonal_.data(),
+        &m, &nsplit, eigenvalues.data(), iblock.data(), isplit.data());
+
+      std::cout << "emax = " << eigenvalues.front() << std::endl;
+      std::cout << "emin = " << eigenvalues.back() << std::endl;
+      std::cout << info << std::endl;
+
+      std::ofstream file("eigenvalues.txt");
+      for (real_t const& ev : eigenvalues) {
+        file << ev << " 0" << std::endl;
+      }
+      file.close();
+
+      abort();
+    }
+
+  }
+#endif
+
+  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
 
 } // CgSolver<...>::Iterate
 

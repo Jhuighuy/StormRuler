@@ -29,8 +29,8 @@
 #include <StormRuler_API.h>
 #include <stormBlas/stormTensor.hxx>
 //#include <stormBlas/stormMatrixExtraction.hxx>
-#include <stormSolvers/stormSolverFactory.hxx>
-#include <stormSolvers/stormPreconditionerFactory.hxx>
+#include <stormSolvers/SolverFactory.hxx>
+#include <stormSolvers/PreconditionerFactory.hxx>
 
 #include <cstring>
 
@@ -234,7 +234,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       Storm::SolverType::BiCgStab,
       Storm::PreconditionerType::None/*"extr"*/, 
 #else
-      Storm::SolverType::Idrs,
+      Storm::SolverType::BiCgStab,
       Storm::PreconditionerType::None/*"extr"*/,
 #endif
     c_hat, rhs,
@@ -255,7 +255,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -271,7 +271,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
 static double mu_1 = 0.08, mu_2 = 0.08;
 #if !YURI
-static double rho_1 = 1.0, rho_2 = 1.0;
+static double rho_1 = 1.0, rho_2 = 50.0;
 #endif
 
 void InvRho(stormSize_t size, stormReal_t* inv_rho, const stormReal_t* rho, void* env) {
@@ -311,6 +311,14 @@ void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
 } // NVsC
 #endif
 
+void AddGravity(stormSize_t size, stormReal_t* rhs, const stormReal_t* rhs_, void* env) {
+#if YURI
+  rhs[1] += tau*(-0.3);
+#else
+  rhs[1] += tau*(-1.0);
+#endif
+}
+
 static void NavierStokes_VaD_Step(stormMesh_t mesh,
   stormArray_t p, stormArray_t v,
   stormArray_t c, stormArray_t w,
@@ -325,14 +333,14 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // Navier-Stokes equation:
   //
   // 𝜌(∂𝒗/∂𝑡 + 𝒗(∇⋅𝒗)) + ∇𝑝 = 𝜇Δ𝒗 + 𝙛,
-  // 𝜌 = ½𝜌₁(1 - 𝑐) + ½𝜌₂(1 + 𝑐),
-  // 𝜇 = ½𝜇₁(1 - 𝑐) + ½𝜇₂(1 + 𝑐),
+  // 𝜌 = 𝜌₁(1 - 𝑐) + 𝜌₂*𝑐,
+  // 𝜇 = 𝜇₁(1 - 𝑐) + 𝜇₂*𝑐,
   // ∇⋅𝒗 = 0, 𝙛 = -𝑐∇𝑤,
   //
   // with the semi-implicit scheme:
   // 
-  // 𝜌 ← ½(𝜌₁ + 𝜌₂) + (½𝜌₂ - ½𝜌₁)𝑐,
-  // 𝜇 ← ½(𝜇₁ + 𝜇₂) + (½𝜇₂ - ½𝜇₁)𝑐,
+  // 𝜌 ← 𝜌₁ + (𝜌₂ - 𝜌₁)𝑐,
+  // 𝜇 ← 𝜇₁ + (𝜇₂ - 𝜇₁)𝑐,
   // 𝒗̂ + 𝜏𝒗̂(∇⋅𝒗̂) - (𝜏𝜇/𝜌)Δ𝒗̂ = 𝒗 + (𝜏/𝜌)𝙛,
   // 𝑝̂ - 𝜏∇⋅(∇𝑝̂/𝜌) = 𝑝 - ∇⋅𝒗,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
@@ -374,16 +382,16 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   II = 1; stormFuncProd(mesh, n2, c, NVsC, STORM_NULL);
   stormAdd(mesh, rho, n1, n2, mol_mass[1], mol_mass[0]);
 #else
-  stormFill(mesh, rho, 0.5*(rho_1 + rho_2));
-  stormAdd(mesh, rho, rho, c, 0.5*(rho_2 - rho_1));
+  stormFill(mesh, rho, rho_1);
+  stormAdd(mesh, rho, rho, c, rho_2 - rho_1);
 #endif
 
   stormArray_t rho_inv = stormAllocLike(rho);
   stormFuncProd(mesh, rho_inv, rho, InvRho, STORM_NULL);
 
   stormArray_t mu = stormAllocLike(c);
-  stormFill(mesh, mu, 0.5*(mu_1 + mu_2));
-  stormAdd(mesh, mu, mu, c, 0.5*(mu_2 - mu_1));
+  stormFill(mesh, mu, mu_1);
+  stormAdd(mesh, mu, mu, c, mu_2 - mu_1);
 
   //
   // Compute 𝒗̂ prediction.
@@ -421,6 +429,8 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   
   stormFree(rhs);
 
+  stormFuncProd(mesh, v_hat, v_hat, AddGravity, STORM_NULL);
+
   //
   // Solve pressure equation and correct 𝒗̂.
   // 
@@ -432,14 +442,18 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   SetBCs_w(mesh, rho_inv);
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
-  stormSet(mesh, p_hat, p);
-  stormLinSolve2(mesh, Storm::SolverType::Cg, Storm::PreconditionerType::None/*"extr"*/, p_hat, rhs,
+  stormSet(mesh, p_hat, p); 
+  stormLinSolve2(mesh, 
+    Storm::SolverType::Cg,
+    Storm::PreconditionerType::None/*"extr"*/,
+    p_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Lp, stormArray_t p) {
       SetBCs_p(mesh, p);
 
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
+    abort();
 
   stormFree(rhs);
 
@@ -467,10 +481,10 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
     stormSize_t size, stormReal_t* c, const stormReal_t* _, void* env) {
 
   static const stormReal_t L = 1.0;
-  int in = 0;
+  bool in = false;
   if (fabs(r[0]-0*L) <= L*0.101 && 
       fabs(2*L-r[1]) <= L*0.665) {
-    in = 1.0;
+    in = true;
   }
 
   *c = 0.0;

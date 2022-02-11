@@ -31,7 +31,7 @@
 #include <stormBase.hxx>
 
 #include <stormSolvers/Preconditioner.hxx>
-#include <stormSolvers/PreconditionerPolynomial.hxx>
+#include <stormSolvers/PreconditionerChebyshev.hxx>
 
 namespace Storm {
 

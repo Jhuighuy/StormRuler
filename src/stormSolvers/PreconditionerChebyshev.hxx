@@ -33,25 +33,17 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Abstract polynomial preconditioner.
+/// @brief @c Chebyshev polynomial preconditioner.
 ///
-/// @todo Document me!
+/// @verbatim
+/// [1] Saad, Yousef. 
+///     “Iterative methods for sparse linear systems.” (2003).
+/// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class PolynomialPreconditioner : public Preconditioner<Vector> {
-
-}; // class PolynomialPreconditioner<...>
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Chebyshev polynomial preconditioner.
-///
-/// @todo Document me!
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
-class ChebyshevPreconditioner final :
-    public PolynomialPreconditioner<Vector> {
+class ChebyshevPreconditioner final : public Preconditioner<Vector> {
 public:
-  size_t Degree = 10;
+  size_t Degree = 5;
 
 private:
   real_t theta_, delta_;
@@ -82,14 +74,20 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
   this->LinOp_ = &linOp;
 
   //PowerIterations<Vector> powerIterations;
-  //lambdaMax =
-  //  powerIterations.EstimateLargestEigenvalue(pVec, linOp);
-  //lambdaMin = 0.01*lambdaMax;
+  //real_t const beta =
+  //  powerIterations.EstimateLargestEigenvalue(pVec_, linOp);
+  //real_t const alpha = 0.01*beta;
 
   /// @todo: Estimate the true eigenvalue bounds!
   real_t const alpha = 0.95*1.046599390654509e+00;
-  real_t const beta = 1.05*8.003575342439456e+02;
+  real_t const beta  = 1.05*8.003575342439456e+02;
 
+  // ----------------------
+  // Initialize the center and the semi-major 
+  // axis of ellipse containing the eigenvalues:
+  // 𝜃 ← ½⋅(𝛽 + 𝛼),
+  // 𝛿 ← ½⋅(𝛽 - 𝛼).
+  // ----------------------
   theta_ = 0.5*(beta + alpha);
   delta_ = 0.5*(beta - alpha);
 
@@ -100,40 +98,29 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
                                              Vector const& xVec) const {
 
   // ----------------------
-  // Clear the solution:
-  // 𝒚 ← {𝟢}ᵀ.
+  // Initialize the solution:
+  // 𝛼 ← 𝟤/𝜃,
+  // 𝒑 ← 𝒙/𝜃,
+  // 𝒚 ← 𝒑.
   // ----------------------
-  Blas::Fill(yVec, 0.0);
+  real_t alpha = 2.0/theta_;
+  Blas::Scale(pVec_, xVec, 1.0/theta_);
+  Blas::Set(yVec, pVec_);
 
-  real_t alpha;
   for (size_t k = 0; k < Degree; ++k) {
 
     // ----------------------
-    // Compute the residual:
-    // 𝒓 ← 𝒙 - 𝓐𝒚.
-    // ----------------------
-    LinOp_->Residual(rVec_, xVec, yVec);
-
-    // ----------------------
-    // Update the solution:
-    // 𝗶𝗳 𝑘 = 𝟢:
-    //   𝒑 ← 𝒓/𝜃,
-    // 𝗲𝗹𝘀𝗲:
-    //   𝛼 ← 𝑘 = 𝟣 ? 𝟤⋅𝜃/(𝟤⋅𝜃² - 𝛿²) : 𝟣/(𝜃 - ¼⋅𝛼⋅𝛿²),
-    //   𝛽 ← 𝛼⋅𝜃 - 𝟣,
-    //   𝒑 ← 𝛼⋅𝒓 + 𝛽⋅𝒑,
-    // 𝗲𝗻𝗱 𝗶𝗳
+    // Compute the residual and update the solution:
+    // 𝛼 ← 𝟣/(𝜃 - ¼⋅𝛼⋅𝛿²),
+    // 𝛽 ← 𝛼⋅𝜃 - 𝟣,
+    // 𝒓 ← 𝒙 - 𝓐𝒚,
+    // 𝒑 ← 𝛼⋅𝒓 + 𝛽⋅𝒑,
     // 𝒚 ← 𝒚 + 𝒑.
     // ----------------------
-    if (k == 0) {
-      Blas::Scale(pVec_, rVec_, 1.0/theta_);
-    } else {
-      alpha = k == 1 ?
-        2.0*theta_/(2.0*std::pow(theta_, 2) - std::pow(delta_, 2)) :
-        1.0/(theta_ - 0.25*alpha*std::pow(delta_, 2));
-      real_t const beta = alpha*theta_ - 1.0;
-      Blas::Add(pVec_, rVec_, alpha, pVec_, beta);
-    }
+    alpha = 1.0/(theta_ - 0.25*alpha*std::pow(delta_, 2));
+    real_t const beta = alpha*theta_ - 1.0;
+    LinOp_->Residual(rVec_, xVec, yVec);
+    Blas::Add(pVec_, rVec_, alpha, pVec_, beta);
     Blas::Add(yVec, yVec, pVec_);
 
   }

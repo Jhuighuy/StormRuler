@@ -57,8 +57,8 @@ namespace Blas {
 } // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear self-adjoint indefinite operator equation \
-///   with the @c MINRES method.
+/// @brief The @c MINRES (Minimal Residual) linear self-adjoint \
+///   (indefinite) operator equation solver.
 ///
 /// @c MINRES can be applied to the singular problems, and the \
 ///   self-adjoint least squares problems, although convergeance to \

@@ -37,8 +37,8 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear self-adjoint definite operator equation \
-///   equation with the @c CG (Conjugate Gradients) method.
+/// @brief The @c CG (Conjugate Gradients) linear self-adjoint \
+///   definite operator equation solver.
 ///
 /// @c CG may be applied to the consistent singular problems,
 /// it converges towards..

@@ -33,8 +33,8 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a non-singular operator equation \
-///   equation with the @c CGS (Conjugate Gradients Squared) method.
+/// @brief The @c CGS (Conjugate Gradients Squared)
+///   linear operator equation solver.
 ///
 /// @c CGS, like the other @c BiCG type solvers, requires \
 ///   two operator multiplications per iteration.

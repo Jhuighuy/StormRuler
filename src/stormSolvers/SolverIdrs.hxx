@@ -33,8 +33,8 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a non-singular linear operator equation \
-///   equation with the @c IDR(s) (Induced Dimension Reduction) method.
+/// @brief The @c IDR(s) (Induced Dimension Reduction)
+///   linear operator equation solver.
 ///
 /// References:
 /// @verbatim

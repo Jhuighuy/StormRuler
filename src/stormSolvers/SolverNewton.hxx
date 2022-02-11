@@ -34,7 +34,7 @@ namespace Storm {
 
 #if 0
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a nonlinear operator equation with the Newton's method.
+/// @brief The @c Newton method nonlinear operator equation solver.
 ///
 /// The classical Newton iterations are based on the linearization 
 /// of 𝓐(𝒙) near 𝒙: 
@@ -72,10 +72,10 @@ private:
 #endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a nonlinear operator equation with the \
-///   first order @c JFNK (Jacobian free-Newton-Krylov) method.
+/// @brief The first-order @c JFNK (Jacobian free-Newton-Krylov) \
+///   nonlinear operator equation solver.
 ///
-/// For the Newton iterations, computing of the Jacobian-vector
+/// For the @c Newton iterations, computing of the Jacobian-vector
 /// products 𝒛 = 𝓙(𝒙)𝒚, where 𝓙(𝒙) ≈ ∂𝓐(𝒙)/∂𝒙 is required.
 /// Consider the expansion:
 ///

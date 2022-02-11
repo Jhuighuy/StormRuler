@@ -31,8 +31,7 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a non-singular operator equation \
-///   equation with the @c Richardson method.
+/// @brief The @c Richardson iteration linear operator equation solver.
 ///
 /// References:
 /// @verbatim

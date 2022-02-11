@@ -58,8 +58,8 @@ protected:
 }; // class BaseTfqmrSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the
-///   @c TFQMR (Transpose-Free Quasi-Minimal Residual) method.
+/// @brief The @c TFQMR (Transpose-Free Quasi-Minimal Residual) \
+///   linear operator equation solver.
 ///
 /// @c TFQMR, like the other @c BiCG type methods, normally \
 ///   requires two operator-vector products per iteration. \
@@ -89,8 +89,8 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
 }; // class TfqmrSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the
-///   @c TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) method.
+/// @brief The @c TFQMR1 (Transpose-Free 1-norm \
+///   Quasi-Minimal Residual) linear operator equation solver.
 ///
 /// @c TFQMR1, like the other @c BiCG type solvers, requires \
 ///   two operator-vector products per iteration. Unlike @c TFQMR, \

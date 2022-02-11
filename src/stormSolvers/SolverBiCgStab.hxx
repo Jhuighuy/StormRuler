@@ -35,8 +35,8 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the good old \
-///   @c BiCGStab (Biconjugate Gradients Stabilized) method.
+/// @brief The @c BiCGStab (Biconjugate Gradients Stabilized) \
+///   linear operator equation solver.
 ///
 /// @c BiCGStab, like the other @c BiCG type solvers, requires \
 ///   two operator multiplications per iteration.
@@ -197,8 +197,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
 } // BiCgStabSolver<...>::Iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the \
-///   @c BiCGStab(l) (Biconjugate Gradients Stabilized) method.
+/// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized) \
+///   linear operator equation solver.
 ///
 /// @c BiCGStab(l), like the other @c BiCG type solvers, requires \
 ///   two operator multiplications per iteration.

@@ -71,8 +71,8 @@ protected:
 }; // class BaseGmresSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation with the
-///   monstrous @c GMRES (Generalized Minimal Residual) method.
+/// @brief The @c GMRES (Generalized Minimal Residual) \
+///   linear operator equation solver.
 ///
 /// @c GMRES is typically more robust than the @c BiCG type solvers, \
 ///   but it may be slower than the @c BiCG solvers for the \
@@ -101,9 +101,8 @@ class GmresSolver final : public BaseGmresSolver<Vector, false> {
 }; // class GmresSolver<...>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a linear operator equation, using \
-///   the yet more monstrous @c FGMRES (Flexible Generalized \
-///   Minimal Residual) method.
+/// @brief The @c FGMRES (Flexible Generalized Minimal Residual) \
+///   linear operator equation solver.
 ///
 /// @c FGMRES is typically more robust than the @c BiCG type solvers, \
 ///   but it may be slower than the @c BiCG solvers for the \

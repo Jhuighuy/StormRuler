@@ -34,7 +34,7 @@ namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract polynomial preconditioner.
-/// 
+///
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
@@ -44,18 +44,19 @@ class PolynomialPreconditioner : public Preconditioner<Vector> {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Chebyshev polynomial preconditioner.
-/// 
+///
 /// @todo Document me!
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-class ChebyshevPreconditioner final : 
+class ChebyshevPreconditioner final :
     public PolynomialPreconditioner<Vector> {
+public:
+  size_t Degree = 10;
+
 private:
-  size_t NumIterations = 10;
-  /// @todo: Estimate the true eigenvalue bounds!
-  real_t lambdaMin = 0.3*8000.0, lambdaMax = 1.2*8000.0;
-  mutable Vector pVec, rVec;
-  Operator<Vector> const* linOp;
+  real_t theta_, delta_;
+  mutable Vector rVec_, pVec_;
+  Operator<Vector> const* LinOp_;
 
   void Build(Vector const& xVec,
              Vector const& bVec,
@@ -76,9 +77,21 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
                                             Vector const& bVec,
                                             Operator<Vector> const& linOp) {
 
-  pVec.Assign(xVec, false);
-  rVec.Assign(xVec, false);
-  this->linOp = &linOp;
+  rVec_.Assign(xVec, false);
+  pVec_.Assign(xVec, false);
+  this->LinOp_ = &linOp;
+
+  //PowerIterations<Vector> powerIterations;
+  //lambdaMax =
+  //  powerIterations.EstimateLargestEigenvalue(pVec, linOp);
+  //lambdaMin = 0.01*lambdaMax;
+
+  /// @todo: Estimate the true eigenvalue bounds!
+  real_t const alpha = 0.95*1.046599390654509e+00;
+  real_t const beta = 1.05*8.003575342439456e+02;
+
+  theta_ = 0.5*(beta + alpha);
+  delta_ = 0.5*(beta - alpha);
 
 } // ChebyshevPreconditioner<...>::Build
 
@@ -86,58 +99,43 @@ template<class Vector>
 void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
                                              Vector const& xVec) const {
 
-  assert(linOp != nullptr && "Preconditioner was not built!");
-
   // ----------------------
-  // Initialize the Chebyshev iterations:
-  // 𝒓 ← 𝒙,
-  // 𝒚 ← {𝟢}ᵀ,
-  // 𝑐 ← ½(𝜆ₘₐₓ - 𝜆ₘᵢₙ),
-  // 𝑑 ← ½(𝜆ₘₐₓ + 𝜆ₘᵢₙ).
+  // Clear the solution:
+  // 𝒚 ← {𝟢}ᵀ.
   // ----------------------
-  Blas::Set(rVec, xVec);
   Blas::Fill(yVec, 0.0);
-  real_t const c = 0.5*(lambdaMax - lambdaMin);
-  real_t const d = 0.5*(lambdaMax + lambdaMin);
 
   real_t alpha;
-  for (size_t iteration = 0; iteration < NumIterations; ++iteration) {
-    
+  for (size_t k = 0; k < Degree; ++k) {
+
     // ----------------------
-    // Continue the Chebyshev iterations:
-    // 𝗶𝗳 𝑘 = 𝟢:
-    //   𝛼 ← 1/𝑑,
-    //   𝒑 ← 𝒓,
-    // 𝗲𝗹𝘀𝗲:
-    //   𝗶𝗳 𝑘 = 2: 𝛽 ← ½(𝑐⋅𝛼)²,
-    //   𝗲𝗹𝘀𝗲: 𝛽 ← (½⋅𝑐⋅𝛼)², 𝗲𝗻𝗱 𝗶𝗳
-    //   𝛼 ← 𝛼/(𝑑⋅𝛼 - 𝛽),
-    //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
-    // 𝗲𝗻𝗱 𝗶𝗳
+    // Compute the residual:
+    // 𝒓 ← 𝒙 - 𝓐𝒚.
     // ----------------------
-    if (iteration == 0) {
-      alpha = 1.0/d;
-      Blas::Set(pVec, rVec);
-    } else {
-      real_t beta;
-      if (iteration == 2) {
-        beta = 0.5*std::pow(c*alpha, 2);
-      } else {
-        beta = std::pow(0.5*c*alpha, 2);
-      }
-      alpha /= (d*alpha - beta);
-      Blas::Add(pVec, rVec, pVec, beta);
-    }
+    LinOp_->Residual(rVec_, xVec, yVec);
 
     // ----------------------
     // Update the solution:
-    // 𝒚 ← 𝒚 + 𝛼𝒑,
-    // 𝒓 ← 𝓐𝒚,
-    // 𝒓 ← 𝒙 - 𝒓.
+    // 𝗶𝗳 𝑘 = 𝟢:
+    //   𝒑 ← 𝒓/𝜃,
+    // 𝗲𝗹𝘀𝗲:
+    //   𝛼 ← 𝑘 = 𝟣 ? 𝟤⋅𝜃/(𝟤⋅𝜃² - 𝛿²) : 𝟣/(𝜃 - ¼⋅𝛼⋅𝛿²),
+    //   𝛽 ← 𝛼⋅𝜃 - 𝟣,
+    //   𝒑 ← 𝛼⋅𝒓 + 𝛽⋅𝒑,
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // 𝒚 ← 𝒚 + 𝒑.
     // ----------------------
-    Blas::Add(yVec, yVec, pVec, alpha);
-    linOp->MatVec(rVec, yVec);
-    Blas::Sub(rVec, xVec, rVec);
+    if (k == 0) {
+      Blas::Scale(pVec_, rVec_, 1.0/theta_);
+    } else {
+      alpha = k == 1 ?
+        2.0*theta_/(2.0*std::pow(theta_, 2) - std::pow(delta_, 2)) :
+        1.0/(theta_ - 0.25*alpha*std::pow(delta_, 2));
+      real_t const beta = alpha*theta_ - 1.0;
+      Blas::Add(pVec_, rVec_, alpha, pVec_, beta);
+    }
+    Blas::Add(yVec, yVec, pVec_);
+
   }
 
 } // ChebyshevPreconditioner<...>::MatVec

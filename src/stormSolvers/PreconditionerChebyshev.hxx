@@ -35,6 +35,8 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief @c Chebyshev polynomial preconditioner.
 ///
+/// @c Chebyshev preconditioner can operate in the matrix-free mode.
+///
 /// @verbatim
 /// [1] Saad, Yousef. 
 ///     “Iterative methods for sparse linear systems.” (2003).
@@ -62,7 +64,7 @@ private:
     MatVec(xVec, yVec);
   }
 
-}; // class stormIdentityPreconditioner<...>
+}; // class ChebyshevPreconditioner<...>
 
 template<class Vector>
 void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,

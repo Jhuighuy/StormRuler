@@ -235,7 +235,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       Storm::PreconditionerType::None/*"extr"*/, 
 #else
       Storm::SolverType::BiCgStab,
-      Storm::PreconditionerType::None/*"extr"*/,
+      Storm::PreconditionerType::Broyden/*"extr"*/,
 #endif
     c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
@@ -255,7 +255,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    //abort();
+    abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -453,7 +453,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
     });
-    abort();
+    //abort();
 
   stormFree(rhs);
 

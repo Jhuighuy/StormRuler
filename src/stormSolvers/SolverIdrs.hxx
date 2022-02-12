@@ -240,7 +240,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   }
 
   // ----------------------
-  // Biorthogonalize the new 𝒈ₖ and 𝒖ₖ vectors:
+  // Biorthogonalize the new vectors 𝒈ₖ and 𝒖ₖ:
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝛼 ← <𝒑ᵢ⋅𝒈ₖ>/𝜇ᵢᵢ,
   //   𝒖ₖ ← 𝒖ₖ - 𝛼⋅𝒖ᵢ,

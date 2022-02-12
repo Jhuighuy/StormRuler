@@ -68,7 +68,7 @@ public:
   bool VerifySolution = true;
 
 public:
-  PreconditionerSide PreSide = PreconditionerSide::Right;
+  PreconditionerSide PreSide = PreconditionerSide::Left;
   std::unique_ptr<Preconditioner<InVector>> PreOp = nullptr;
 
 protected:

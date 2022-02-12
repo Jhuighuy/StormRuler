@@ -31,6 +31,7 @@
 #include <stormBase.hxx>
 
 #include <stormSolvers/Preconditioner.hxx>
+#include <stormSolvers/PreconditionerBroyden.hxx>
 #include <stormSolvers/PreconditionerChebyshev.hxx>
 
 namespace Storm {
@@ -81,6 +82,9 @@ namespace PreconditionerType {
 
   /// @brief @c SPAI preconditioner.
   static std::string_view constexpr Spai = "Spai";
+
+  /// @brief @c Broyden preconditioner.
+  static std::string_view constexpr Broyden = "Broyden";
 
   /// @brief @c Chebyshev polynomial preconditioner.
   static std::string_view constexpr Chebyshev = "Chebyshev";
@@ -138,6 +142,9 @@ std::unique_ptr<Preconditioner<Vector>>
   }
   if (preType == PreconditionerType::Spai) {
     //return std::make_unique<SpaiPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Broyden) {
+    return std::make_unique<BroydenPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Chebyshev) {
     return std::make_unique<ChebyshevPreconditioner<Vector>>();

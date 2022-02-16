@@ -35,6 +35,8 @@
 #define _STORM_NOT_IMPLEMENTED_() do { \
   std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
 
+#define StormAssert stormAssert
+
 namespace Storm {
 
 using size_t = std::size_t;

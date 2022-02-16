@@ -27,6 +27,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
 
 #include <stormBase.hxx>
@@ -68,7 +69,7 @@ public:
   bool VerifySolution = true;
 
 public:
-  PreconditionerSide PreSide = PreconditionerSide::Left;
+  PreconditionerSide PreSide = PreconditionerSide::Right;
   std::unique_ptr<Preconditioner<InVector>> PreOp = nullptr;
 
 protected:
@@ -132,6 +133,8 @@ bool IterativeSolver<InVector, OutVector>::
   }
   real_t const initialError =
     (AbsoluteError = Init(xVec, bVec, anyOp, PreOp.get()));
+  //std::ofstream errorFile("residual.txt");
+  //errorFile << initialError << std::endl;
   std::cout << std::fixed << std::scientific << std::setprecision(15);
   std::cout << "\tI\t" << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
@@ -155,6 +158,7 @@ bool IterativeSolver<InVector, OutVector>::
     if (Iteration % 1 == 0 || converged) {
       std::cout << "\t" << (Iteration + 1) << "\t"
         << AbsoluteError << "\t" << RelativeError << std::endl;
+      //errorFile << AbsoluteError << std::endl;
     }
   }
 
@@ -170,6 +174,20 @@ bool IterativeSolver<InVector, OutVector>::
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
+    //if constexpr (std::is_same_v<InVector, OutVector>) {
+    //  if (PreOp != nullptr && PreSide == PreconditionerSide::Left) {
+    //    InVector zVec;
+    //    zVec.Assign(xVec, false);
+    //    PreOp->MatVec(zVec, rVec);
+    //    real_t const
+    //      truePreAbsoluteError = Blas::Norm2(zVec),
+    //      truePreRelativeError = truePreAbsoluteError/initialError;
+    //    std::cout << "\tP\t"
+    //      << truePreAbsoluteError << "\t" 
+    //      << truePreRelativeError << "\t"
+    //      << trueAbsoluteError/truePreAbsoluteError << std::endl;
+    //  }
+    //}
     std::cout << "\t----------------------" << std::endl;
   }
 
@@ -350,16 +368,16 @@ real_t PowerIterations<Vector>::
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yVec, xVec);
-    real_t const lambdaBar = lambda;
+    //real_t const lambdaBar = lambda;
     lambda = Blas::Dot(xVec, yVec);
     Blas::Scale(xVec, yVec, 1.0/Blas::Norm2(yVec));
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:
     // ----------------------
-    if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
-      break;
-    }
+    //if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
+    //  break;
+    //}
   }
 
   return lambda;

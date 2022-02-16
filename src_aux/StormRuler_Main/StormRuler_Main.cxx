@@ -60,7 +60,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
       matrix.mat_vec(yy, xx);
     });
 
-  solver->Solve(xx, bb, *matOp /* *symOp */);
+  solver->Solve(xx, bb, *matOp /* *symOp */); 
   std::cout << "num matvecs = " << numMatVecs << std::endl;
 #endif
 
@@ -235,7 +235,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       Storm::PreconditionerType::None/*"extr"*/, 
 #else
       Storm::SolverType::BiCgStab,
-      Storm::PreconditionerType::Broyden/*"extr"*/,
+      Storm::PreconditionerType::None/*"extr"*/,
 #endif
     c_hat, rhs,
     [&](stormMesh_t mesh, stormArray_t Qc, stormArray_t c) {
@@ -255,7 +255,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
       stormFree(tmp);
     });
-    abort();
+    //abort();
   stormFree(rhs);
 
   SetBCs_c(mesh, c_hat);
@@ -346,7 +346,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   // 𝒗̂ ← 𝒗̂ - (𝜏/𝜌)∇𝑝̂.
   //
 
-#if YURI
+#if YURI && 0
   static bool first = true;
   if (first) {
     first = false;
@@ -442,7 +442,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
   SetBCs_w(mesh, rho_inv);
   stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
-  stormSet(mesh, p_hat, p); 
+  stormSet(mesh, p_hat, p);
   stormLinSolve2(mesh, 
     Storm::SolverType::Cg,
     Storm::PreconditionerType::None/*"extr"*/,

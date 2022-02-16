@@ -51,40 +51,43 @@ namespace PreconditionerType {
   static std::string_view constexpr Jacobi = "Jacobi";
 
   /// @brief @c SGS preconditioner.
-  static std::string_view constexpr Sgs = "Sgs";
+  static std::string_view constexpr Sgs = "CGS";
 
   /// @brief @c IC(0) preconditioner.
-  static std::string_view constexpr Ic0 = "Ic0";
+  static std::string_view constexpr Ic0 = "IC0";
 
   /// @brief @c IC(t) preconditioner.
-  static std::string_view constexpr Ict = "Ict";
+  static std::string_view constexpr Ict = "IC(T)";
 
   /// @brief @c ILU(0) preconditioner.
-  static std::string_view constexpr Ilu0 = "Ilu0";
+  static std::string_view constexpr Ilu0 = "ILU0";
 
   /// @brief @c ILU(t) preconditioner.
-  static std::string_view constexpr Ilut = "Ilut";
+  static std::string_view constexpr Ilut = "ILU(T)";
 
   /// @brief @c ILQ(0) preconditioner.
-  static std::string_view constexpr Ilq0 = "Ilq0";
+  static std::string_view constexpr Ilq0 = "ILQ0";
 
   /// @brief @c ILQ(t) preconditioner.
-  static std::string_view constexpr Ilqt = "Ilqt";
+  static std::string_view constexpr Ilqt = "ILQ(T)";
 
   /// @brief @c AINV(0) preconditioner.
-  static std::string_view constexpr Ainv0 = "Ainv0";
+  static std::string_view constexpr Ainv0 = "AINV0";
 
   /// @brief @c AINV preconditioner.
-  static std::string_view constexpr Ainv = "Ainv";
+  static std::string_view constexpr Ainv = "AINV";
 
   /// @brief @c SPAI(0) preconditioner.
-  static std::string_view constexpr Spai0 = "Spai0";
+  static std::string_view constexpr Spai0 = "SPAI0";
 
   /// @brief @c SPAI preconditioner.
-  static std::string_view constexpr Spai = "Spai";
+  static std::string_view constexpr Spai = "SPAI";
 
   /// @brief @c Broyden preconditioner.
   static std::string_view constexpr Broyden = "Broyden";
+  
+  /// @brief @c BFGS preconditioner.
+  static std::string_view constexpr Bfgs = "BFGS";
 
   /// @brief @c Chebyshev polynomial preconditioner.
   static std::string_view constexpr Chebyshev = "Chebyshev";
@@ -145,6 +148,9 @@ std::unique_ptr<Preconditioner<Vector>>
   }
   if (preType == PreconditionerType::Broyden) {
     return std::make_unique<BroydenPreconditioner<Vector>>();
+  }
+  if (preType == PreconditionerType::Bfgs) {
+    return std::make_unique<BfgsPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Chebyshev) {
     return std::make_unique<ChebyshevPreconditioner<Vector>>();

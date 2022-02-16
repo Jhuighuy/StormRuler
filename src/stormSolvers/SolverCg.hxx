@@ -121,7 +121,7 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // 𝛾̅ ← 𝛾,
   // 𝛼 ← 𝛾/<𝒑⋅𝒛>,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
-  // 𝒓 ← 𝒓 - 𝛼⋅𝒛,
+  // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
   real_t const gammaBar = gamma_;

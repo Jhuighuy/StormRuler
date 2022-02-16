@@ -214,6 +214,14 @@ public:
     Blas::Sub(rVec, bVec, rVec);
   }
 
+  real_t ResidualNorm(OutVector const& bVec,
+                      InVector const& xVec) const {
+    OutVector rVec;
+    rVec.Assign(bVec, false);
+    Residual(rVec, bVec, xVec);
+    return Blas::Norm2(rVec);
+  }
+
   /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   ///
   /// @param xVec Output vector, 𝒙.

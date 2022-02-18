@@ -35,11 +35,15 @@
 #define _STORM_NOT_IMPLEMENTED_() do { \
   std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
 
+#define StormEnabledAssert(x) assert(x)
+#define StormDisabledAssert(x) static_cast<void>(x)
 #define StormAssert stormAssert
+#define _STORM_MESH_DEBUG_
 
 namespace Storm {
 
 using size_t = std::size_t;
+using ptrdiff_t = std::ptrdiff_t;
 using real_t = double;
 
 static size_t const DynamicExtent = SIZE_MAX;

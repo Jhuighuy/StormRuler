@@ -27,10 +27,11 @@
 
 #include <tuple>
 #include <utility>
-#include <algorithm>
+#include <ranges>
 
 #include <stormBase.hxx>
 #include <stormUtils/TaggedIndex.hxx>
+#include <stormUtils/Array.hxx>
 
 // Use a different assert macro to debug the
 // mesh algorithms separate from the others.
@@ -61,9 +62,6 @@ class FaceView;
 template<size_t Dim>
 class CellView;
 
-template<class Mesh, class View, class PointerOrIndex>
-class ElementIterator;
-
 /// @brief Index of a node in the mesh.
 using NodeIndex = TaggedIndex<NodeTag_>;
 
@@ -87,46 +85,6 @@ using FaceMarkIndex = TaggedIndex<MarkTag_<FaceTag_>>;
 
 /// @brief Index of a cell mark in the mesh.
 using CellMarkIndex = TaggedIndex<MarkTag_<CellTag_>>;
-
-/// @brief Node iterator.
-template<size_t Dim>
-using NodeIterator = 
-  ElementIterator<Mesh<Dim>, NodeView<Dim>, NodeIndex>;
-
-/// @brief Edge iterator.
-template<size_t Dim>
-using EdgeIterator = 
-  ElementIterator<Mesh<Dim>, EdgeView<Dim>, EdgeIndex>;
-
-/// @brief Face iterator.
-template<size_t Dim>
-using FaceIterator = 
-  ElementIterator<Mesh<Dim>, FaceView<Dim>, FaceIndex>;
-
-/// @brief Cell iterator.
-template<size_t Dim>
-using CellIterator = 
-  ElementIterator<Mesh<Dim>, CellView<Dim>, CellIndex>;
-
-/// @brief Node local iterator.
-template<size_t Dim>
-using NodeLocalIterator = 
-  ElementIterator<Mesh<Dim>, NodeView<Dim>, NodeIndex const*>;
-
-/// @brief Edge local iterator.
-template<size_t Dim>
-using EdgeLocalIterator = 
-  ElementIterator<Mesh<Dim>, EdgeView<Dim>, EdgeIndex const*>;
-
-/// @brief Face local iterator.
-template<size_t Dim>
-using FaceLocalIterator = 
-  ElementIterator<Mesh<Dim>, FaceView<Dim>, FaceIndex const*>;
-
-/// @brief Cell local iterator.
-template<size_t Dim>
-using CellLocalIterator = 
-  ElementIterator<Mesh<Dim>, CellView<Dim>, CellIndex const*>;
 
 /// ----------------------------------------------------------------- ///
 /// @brief Shape of a mesh element.
@@ -214,6 +172,16 @@ protected:
   Array<Shape, FaceIndex> FaceShapes_;
   Array<Shape, CellIndex> CellShapes_;
 
+  template<class View, class Range>
+  auto ViewRange_(Range range) const noexcept {
+    return std::views::transform(range,
+      [this](auto index){ return View(this, index); });
+  }
+  template<class View, class Index>
+  auto IotaViewRange_(Index first, Index last) const noexcept {
+    return ViewRange_<View>(std::views::iota(first, last));
+  }
+
 public:
 
   /// @brief Total number of nodes in the mesh.
@@ -280,80 +248,32 @@ public:
     return CellRanges_.Size() - 1;
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first node with the specified mark.
-  auto BeginNode(NodeMarkIndex nodeMark = 0) const noexcept {
+  /// @brief Range of nodes with the specified mark.
+  auto Nodes(NodeMarkIndex nodeMark = 0) const noexcept {
     StormMeshAssert(nodeMark < NumNodeMarks());
-    return NodeIterator<Dim>(this, NodeRanges_[nodeMark]);
+    return IotaViewRange_<NodeView<Dim>>(
+      NodeRanges_[nodeMark], NodeRanges_[nodeMark + 1]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the node following the last node with the specified mark.
-  auto EndNode(NodeMarkIndex nodeMark = 0) const noexcept {
-    StormMeshAssert(nodeMark < NumNodeMarks());
-    return NodeIterator<Dim>(this, NodeRanges_[nodeMark + 1]);
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first edge with the specified mark.
-  auto BeginEdge(EdgeMarkIndex edgeMark = 0) const noexcept {
+  /// @brief Range of edges with the specified mark.
+  auto Edges(EdgeMarkIndex edgeMark = 0) const noexcept {
     StormMeshAssert(edgeMark < NumEdgeMarks());
-    return EdgeIterator<Dim>(this, EdgeRanges_[edgeMark]);
+    return IotaViewRange_<EdgeView<Dim>>(
+      EdgeRanges_[edgeMark], EdgeRanges_[edgeMark + 1]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the edge following the last edge with the specified mark.
-  auto EndEdge(EdgeMarkIndex edgeMark = 0) const noexcept {
-    StormMeshAssert(edgeMark < NumEdgeMarks());
-    return EdgeIterator<Dim>(this, EdgeRanges_[edgeMark + 1]);
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first face with the specified mark.
-  auto BeginFace(FaceMarkIndex faceMark = 0) const noexcept {
+  /// @brief Range of faces with the specified mark.
+  auto Faces(FaceMarkIndex faceMark = 0) const noexcept {
     StormMeshAssert(faceMark < NumFaceMarks());
-    return FaceIterator<Dim>(this, FaceRanges_[faceMark]);
+    return IotaViewRange_<FaceView<Dim>>(
+      FaceRanges_[faceMark], FaceRanges_[faceMark + 1]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the face following the last face with the specified mark.
-  auto EndFace(FaceMarkIndex faceMark = 0) const noexcept {
-    StormMeshAssert(faceMark < NumFaceMarks());
-    return FaceIterator<Dim>(this, FaceRanges_[faceMark + 1]);
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first cell with the specified mark.
-  auto BeginCell(CellMarkIndex cellMark = 0) const noexcept {
+  /// @brief Range of faces with the specified mark.
+  auto Cells(CellMarkIndex cellMark = 0) const noexcept {
     StormMeshAssert(cellMark < NumCellMarks());
-    return CellIterator<Dim>(this, CellRanges_[cellMark]);
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the cell following after the last face with a given mark.
-  auto EndCell(CellMarkIndex cellMark = 0) const noexcept {
-    StormMeshAssert(cellMark < NumCellMarks());
-    return CellIterator<Dim>(this, CellRanges_[cellMark + 1]);
-  }
-
-  /// @brief Number of nodes with the specified mark. 
-  NodeIndex NumNodes(NodeMarkIndex nodeMark = 0) const noexcept {
-    return EndNode(nodeMark) - BeginNode(nodeMark);
-  }
-
-  /// @brief Number of edges with the specified mark. 
-  EdgeIndex NumEdges(EdgeMarkIndex edgeMark = 0) const noexcept {
-    return EndEdge(edgeMark) - BeginEdge(edgeMark);
-  }
-
-  /// @brief Number of faces with the specified mark. 
-  FaceIndex NumFaces(FaceMarkIndex faceMark = 0) const noexcept {
-    return EndFace(faceMark) - BeginFace(faceMark);
-  }
-
-  /// @brief Number of cells with the specified mark. 
-  CellIndex NumCells(CellMarkIndex cellMark = 0) const noexcept {
-    return EndCell(cellMark) - BeginCell(cellMark);
+    return IotaViewRange_<CellView<Dim>>(
+      CellRanges_[cellMark], CellRanges_[cellMark + 1]);
   }
 
 }; // class Mesh<...>
@@ -362,7 +282,7 @@ public:
 /// @brief View to a node of the unstructured mesh.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<size_t Dim>
-class NodeView {
+class NodeView final {
 private:
   Mesh<Dim> const* Mesh_;
   NodeIndex NodeIndex_;
@@ -387,96 +307,28 @@ public:
     return Mesh_->NodeCoords_[NodeIndex_];
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first node that shares an edge with the current node.
-  auto BeginNode() const noexcept {
+  /// @brief Range of nodes that share an edge with the current node.
+  auto Nodes() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeNodes_[NodeIndex_].Begin());
+    return Mesh_->template ViewRange_<NodeView<Dim>>(Mesh_->NodeNodes_[NodeIndex_]);
   }
 
-  /// @brief Iterator pointing to the node following \
-  ///   the last node that shares an edge with the current node.
-  auto EndNode() const noexcept {
+  /// @brief Range of edges that contain the current node.
+  auto Edges() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeNodes_[NodeIndex_].End());
+    return Mesh_->template ViewRange_<EdgeView<Dim>>(Mesh_->NodeEdges_[NodeIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first edge that contains the current node.
-  auto BeginEdge() const noexcept {
+  /// @brief Range of faces that contain the current node.
+  auto Faces() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeEdges_[NodeIndex_].Begin());
+    return Mesh_->template ViewRange_<FaceView<Dim>>(Mesh_->NodeFaces_[NodeIndex_]);
   }
 
-  /// @brief Iterator pointing to the edge following \
-  ///   the last edge that contains the current node.
-  auto EndEdge() const noexcept {
+  /// @brief Range of cells that contain the current node.
+  auto Cells() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeEdges_[NodeIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first face that contains the current node.
-  auto BeginFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeFaces_[NodeIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the face following \
-  ///   the last face that contains the current node.
-  auto EndFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeFaces_[NodeIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first cell that contains the current node.
-  auto BeginCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeCells_[NodeIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the cell following \
-  ///   the last cell that contains the current node.
-  auto EndCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->NodeCells_[NodeIndex_].End());
-  }
-
-  /// @brief Iterate through all nodes \
-  ///   that shares an edge with the current node.
-  template<class Func>
-  void ForEachNode(Func const& nodeFunc) const noexcept {
-    std::for_each(BeginNode(), EndNode(), nodeFunc);
-  }
-
-  /// @brief Iterate through all edges \
-  ///   that contain the current node.
-  template<class Func>
-  void ForEachEdge(Func const& edgeFunc) const noexcept {
-    std::for_each(BeginEdge(), EndEdge(), edgeFunc);
-  }
-
-  /// @brief Iterate through all faces \
-  ///   that contain the current node.
-  template<class Func>
-  void ForEachFace(Func const& faceFunc) const noexcept {
-    std::for_each(BeginFace(), EndFace(), faceFunc);
-  }
-
-  /// @brief Iterate through all cells \
-  ///   that contain the current node.
-  template<class Func>
-  void ForEachCell(Func const& cellFunc) const noexcept {
-    std::for_each(BeginCell(), EndCell(), cellFunc);
+    return Mesh_->template ViewRange_<CellView<Dim>>(Mesh_->NodeCells_[NodeIndex_]);
   }
 
 }; // class NodeView<...>
@@ -516,81 +368,30 @@ public:
     return std::get<1>(Mesh_->EdgeDirsAndLengths_[EdgeIndex_]);
   }
 
-  /// @brief Get the nodes of the edge.
-  auto Nodes() const noexcept {
+  /// @brief Pair of nodes of the edge.
+  auto NodesPair() const noexcept {
     SelfCheck_();
     auto const& nodeIndices = Mesh_->EdgeNodes_[EdgeIndex_];
     return std::make_pair(
       Mesh_->Node(nodeIndices.first), Mesh_->Node(nodeIndices.second));
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first edge that shares a node with the current edge.
-  auto BeginEdge() const noexcept {
+  /// @brief Ranges of edges that share a node with the current edge.
+  auto Edges() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeEdges_[EdgeIndex_].Begin());
+    return Mesh_->template ViewRange_<EdgeView<Dim>>(Mesh_->EdgeEdges_[EdgeIndex_]);
   }
 
-  /// @brief Iterator pointing to the edge following \
-  ///   the last edge that shares a node with the current edge.
-  auto EndEdge() const noexcept {
+  /// @brief Range of faces that contain the current edge.
+  auto Faces() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeEdges_[EdgeIndex_].End());
+    return Mesh_->template ViewRange_<FaceView<Dim>>(Mesh_->EdgeFaces_[EdgeIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first face that contains the current edge.
-  auto BeginFace() const noexcept {
+  /// @brief Range of cells that contain the current cell.
+  auto Cells() const noexcept {
     SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeFaces_[EdgeIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the face following \
-  ///   the last face that contains the current edge.
-  auto EndFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeFaces_[EdgeIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first cell that contains the current edge.
-  auto BeginCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeCells_[EdgeIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the cell following \
-  ///   the last cell that contains the current edge.
-  auto EndCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->EdgeCells_[EdgeIndex_].End());
-  }
-
-  /// @brief Iterate through all edges \
-  ///   that share a node with the current edge.
-  template<class Func>
-  void ForEachEdge(Func const& edgeFunc) const noexcept {
-    std::for_each(BeginEdge(), EndEdge(), edgeFunc);
-  }
-
-  /// @brief Iterate through all faces \
-  ///   that contain the current edge.
-  template<class Func>
-  void ForEachFace(Func const& faceFunc) const noexcept {
-    std::for_each(BeginFace(), EndFace(), faceFunc);
-  }
-
-  /// @brief Iterate through all cells \
-  ///   that contain the current cell.
-  template<class Func>
-  void ForEachCell(Func const& cellFunc) const noexcept {
-    std::for_each(BeginCell(), EndCell(), cellFunc);
+    return Mesh_->template ViewRange_<CellView<Dim>>(Mesh_->EdgeCells_[EdgeIndex_]);
   }
 
 }; // class EdgeView<...>
@@ -639,79 +440,30 @@ public:
       Mesh_->FaceCenterCoordsAndNormalsAndAreas_[FaceIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first node of the current face.
-  auto BeginNode() const noexcept {
+  /// @brief Range of all nodes of the face.
+  auto Nodes() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceNodes_[FaceIndex_].Begin());
+    return Mesh_->template ViewRange_<NodeView<Dim>>(Mesh_->FaceNodes_[FaceIndex_]);
   }
 
-  /// @brief Iterator pointing to the node following \
-  ///   the last node of the current face.
-  auto EndNode() const noexcept {
+  /// @brief Range of all edges of the face.
+  auto Edges() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceNodes_[FaceIndex_].End());
+    return Mesh_->template ViewRange_<EdgeView<Dim>>(Mesh_->FaceEdges_[FaceIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first edge of the current face.
-  auto BeginEdge() const noexcept {
+  /// @brief Range of all faces that share an edge with the current face.
+  auto Faces() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceEdges_[FaceIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the edge following \
-  ///   the last edge of the current face.
-  auto EndEdge() const noexcept {
-    SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceEdges_[FaceIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first face that shares an edge with the current face.
-  auto BeginFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceFaces_[FaceIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the face following \
-  ///   the last face that share an edge with the current face.
-  auto EndFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->FaceFaces_[FaceIndex_].End());
+    return Mesh_->template ViewRange_<FaceView<Dim>>(Mesh_->FaceFaces_[FaceIndex_]);
   }
 
   /// @brief Get the inner and outer cells of the face.
-  auto Cells() const noexcept {
+  auto CellsPair() const noexcept {
     SelfCheck_();
     auto const& cellIndices = Mesh_->FaceCells_[FaceIndex_];
     return std::make_pair(
       Mesh_->Cell(cellIndices.first), Mesh_->Cell(cellIndices.second));
-  }
-
-  /// @brief Iterate through all nodes of the face.
-  template<class Func>
-  void ForEachNode(Func const& nodeFunc) const noexcept {
-    std::for_each(BeginNode(), EndNode(), nodeFunc);
-  }
-
-  /// @brief Iterate through all edges of the face.
-  template<class Func>
-  void ForEachEdge(Func const& edgeFunc) const noexcept {
-    std::for_each(BeginEdge(), EndEdge(), edgeFunc);
-  }
-
-  /// @brief Iterate through all faces \
-  ///   that share an edge with the current face.
-  template<class Func>
-  void ForEachFace(Func const& faceFunc) const noexcept {
-    std::for_each(BeginFace(), EndFace(), faceFunc);
   }
 
 }; // class FaceView<...>
@@ -751,127 +503,30 @@ public:
     return std::get<1>(Mesh_->CellCenterCoordsAndVolumes_[CellIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first node of the current cell.
-  auto BeginNode() const noexcept {
+  /// @brief Range of all nodes of the cell.
+  auto Nodes() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->CellNodes_[CellIndex_].Begin());
+    return Mesh_->template ViewRange_<NodeView<Dim>>(Mesh_->CellNodes_[CellIndex_]);
   }
 
-  /// @brief Iterator pointing to the node following \
-  ///   the last node of the current cell.
-  auto EndNode() const noexcept {
+  /// @brief Range of all edges of the cell.
+  auto Edges() const noexcept {
     SelfCheck_();
-    return NodeLocalIterator<Dim>(
-      Mesh_, Mesh_->CellNodes_[CellIndex_].End());
+    return Mesh_->template ViewRange_<EdgeView<Dim>>(Mesh_->CellEdges_[CellIndex_]);
   }
 
-  /// @brief Iterator pointing to \
-  ///   the first edge of the current cell.
-  auto BeginEdge() const noexcept {
+  /// @brief Range of all faces of the cell.
+  auto Faces() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->CellEdges_[CellIndex_].Begin());
+    return Mesh_->template ViewRange_<FaceView<Dim>>(Mesh_->CellFaces_[CellIndex_]);
   }
 
-  /// @brief Iterator pointing to the edge following \
-  ///   the last edge of the current cell.
-  auto EndEdge() const noexcept {
+  /// @brief Range of all cells that share a face with the current cell.
+  auto Cells() const noexcept {
     SelfCheck_();
-    return EdgeLocalIterator<Dim>(
-      Mesh_, Mesh_->CellEdges_[CellIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first face of the current cell.
-  auto BeginFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->CellFaces_[CellIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the face following \
-  ///   the last face of the current cell.
-  auto EndFace() const noexcept {
-    SelfCheck_();
-    return FaceLocalIterator<Dim>(
-      Mesh_, Mesh_->CellFaces_[CellIndex_].End());
-  }
-
-  /// @brief Iterator pointing to \
-  ///   the first cell that shares a face with the current cell.
-  auto BeginCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->CellCells_[CellIndex_].Begin());
-  }
-
-  /// @brief Iterator pointing to the face following \
-  ///   the last cell that share a face with the current cell.
-  auto EndCell() const noexcept {
-    SelfCheck_();
-    return CellLocalIterator<Dim>(
-      Mesh_, Mesh_->CellCells_[CellIndex_].End());
-  }
-
-  /// @brief Iterate through all nodes of the cell.
-  template<class Func>
-  void ForEachNode(Func const& nodeFunc) const {
-    std::for_each(BeginNode(), EndNode(), nodeFunc);
-  }
-
-  /// @brief Iterate through all edges of the cell.
-  template<class Func>
-  void ForEachEdge(Func const& edgeFunc) const {
-    std::for_each(BeginEdge(), EndEdge(), edgeFunc);
-  }
-
-  /// @brief Iterate through all faces of the face.
-  template<class Func>
-  void ForEachFace(Func const& faceFunc) const {
-    std::for_each(BeginFace(), EndFace(), faceFunc);
-  }
-
-  /// @brief Iterate through all cells \
-  ///   that share a face with the current cell.
-  template<class Func>
-  void ForEachCell(Func const& cellFunc) const {
-    std::for_each(BeginCell(), EndCell(), cellFunc);
+    return Mesh_->template ViewRange_<CellView<Dim>>(Mesh_->CellCells_[CellIndex_]);
   }
 
 }; // class CellView<...>
-
-/// ----------------------------------------------------------------- ///
-/// @brief Immutable element random access iterator, \
-///   can be used for the both mesh elements iteration and \
-//    local connectivity iterations.
-/// ----------------------------------------------------------------- ///
-template<class Mesh, class View, class PointerOrIndex>
-class ElementIterator final : 
-  public BaseIterator<ElementIterator<Mesh, View, PointerOrIndex>> {
-private:
-  Mesh const* Mesh_;
-  PointerOrIndex PointerOrIndex_;
-
-public:
-
-  /// @brief Construct an iterator.
-  explicit ElementIterator(Mesh const* mesh,
-                           PointerOrIndex pointerOrIndex) noexcept :
-      Mesh_{mesh}, PointerOrIndex_{pointerOrIndex} {
-    StormMeshAssert(Mesh_ != nullptr);
-  }
-
-  /// @brief Dereference an iterator to a view.
-  View operator*() const noexcept {
-    if constexpr (std::is_pointer_v<PointerOrIndex>) {
-      return View(Mesh_, *PointerOrIndex_);
-    } else {
-      return View(Mesh_, PointerOrIndex_);
-    }
-  }
-
-}; // class ElementIterator<...>
 
 } // namespace Storm

@@ -80,16 +80,6 @@ class BaseIterator {
 
 };
 
-template<class Value, class Index = size_t>
-class Array {
-public:
-
-  Index Size() const;
-
-  Value const& operator[](Index index) const;
-
-};
-
 template<class Value, class ColumnIndex>
 class TableRow {
 public:

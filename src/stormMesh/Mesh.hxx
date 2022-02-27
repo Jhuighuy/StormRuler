@@ -25,100 +25,14 @@
 
 #pragma once
 
+#include <ranges>
 #include <tuple>
 #include <utility>
-#include <ranges>
 
 #include <stormBase.hxx>
-#include <stormUtils/TaggedIndex.hxx>
-#include <stormUtils/Array.hxx>
-
-// Use a different assert macro to debug the
-// mesh algorithms separate from the others.
-#ifdef _STORM_MESH_DEBUG_
-#define StormMeshAssert StormEnabledAssert
-#else
-#define StormMeshAssert StormDisabledAssert
-#endif
+#include <stormMesh/Forward.hxx>
 
 namespace Storm {
-
-class NodeTag_;
-class EdgeTag_;
-class FaceTag_;
-class CellTag_;
-template<class Tag>
-class MarkTag_;
-
-template<size_t Dim>
-class Mesh;
-
-template<size_t Dim>
-class NodeView;
-template<size_t Dim>
-class EdgeView;
-template<size_t Dim>
-class FaceView;
-template<size_t Dim>
-class CellView;
-
-/// @brief Index of a node in the mesh.
-using NodeIndex = TaggedIndex<NodeTag_>;
-
-/// @brief Index of an edge in the mesh.
-using EdgeIndex = TaggedIndex<EdgeTag_>;
-
-/// @brief Index of a face in the mesh.
-using FaceIndex = TaggedIndex<FaceTag_>;
-
-/// @brief Index of a cell in the mesh.
-using CellIndex = TaggedIndex<CellTag_>;
-
-/// @brief Index of a node mark in the mesh.
-using NodeMarkIndex = TaggedIndex<MarkTag_<NodeTag_>>;
-
-/// @brief Index of an edge mark in the mesh.
-using EdgeMarkIndex = TaggedIndex<MarkTag_<EdgeTag_>>;
-
-/// @brief Index of a face mark in the mesh.
-using FaceMarkIndex = TaggedIndex<MarkTag_<FaceTag_>>;
-
-/// @brief Index of a cell mark in the mesh.
-using CellMarkIndex = TaggedIndex<MarkTag_<CellTag_>>;
-
-/// ----------------------------------------------------------------- ///
-/// @brief Shape of a mesh element.
-/// ----------------------------------------------------------------- ///
-enum class Shape {
-
-  /// @brief Undefined shape.
-  Undefined,
-
-  /// @brief Node shape.
-  Node,
-
-  /// @brief Segment shape.
-  Segment,
-
-  /// @brief Triangle shape.
-  Triangle,
-
-  /// @brief Quadrangle shape.
-  Quadrangle,
-
-  /// @brief Tetrahedron shape.
-  Tetrahedron,
-
-  /// @brief Pyramid shape.
-  Pyramid,
-
-  /// @brief Prism (or wedge, penthedron) shape.
-  Prism,
-
-  /// @brief Hexahedron shape.
-  Hexahedron,
-
-}; // enum class Shape
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Immutable hybrid unstructured multidimensional mesh.
@@ -138,45 +52,50 @@ private:
 
 protected:
 
-  NodeIndex NumAllNodes_;
-  EdgeIndex NumAllEdges_;
-  FaceIndex NumAllFaces_;
-  CellIndex NumAllCells_;
-  Array<NodeIndex, NodeMarkIndex> NodeRanges_;
-  Array<EdgeIndex, EdgeMarkIndex> EdgeRanges_;
-  Array<FaceIndex, FaceMarkIndex> FaceRanges_;
-  Array<CellIndex, CellMarkIndex> CellRanges_;
-  Table<void, NodeIndex, NodeIndex> NodeNodes_;
-  Table<void, NodeIndex, EdgeIndex> NodeEdges_;
-  Table<void, NodeIndex, FaceIndex> NodeFaces_;
-  Table<void, NodeIndex, CellIndex> NodeCells_;
-  Array<std::pair<NodeIndex, NodeIndex>, EdgeIndex> EdgeNodes_;
-  Table<void, EdgeIndex, EdgeIndex> EdgeEdges_;
-  Table<void, EdgeIndex, FaceIndex> EdgeFaces_;
-  Table<void, EdgeIndex, CellIndex> EdgeCells_;
-  Table<void, FaceIndex, NodeIndex> FaceNodes_;
-  Table<void, FaceIndex, EdgeIndex> FaceEdges_;
-  Table<void, FaceIndex, FaceIndex> FaceFaces_;
-  Array<std::pair<CellIndex, CellIndex>, FaceIndex> FaceCells_;
-  Table<void, CellIndex, NodeIndex> CellNodes_;
-  Table<void, CellIndex, EdgeIndex> CellEdges_;
-  Table<void, CellIndex, FaceIndex> CellFaces_;
-  Table<void, CellIndex, CellIndex> CellCells_;
-  Array<Vec<Dim>, NodeIndex> NodeCoords_;
-  Array<std::tuple<Vec<Dim>, real_t>, EdgeIndex> 
-                                EdgeDirsAndLengths_;
-  Array<std::tuple<Vec<Dim>, Vec<Dim>, real_t>, FaceIndex> 
-                          FaceCenterCoordsAndNormalsAndAreas_;
-  Array<std::tuple<Vec<Dim>, real_t>, CellIndex> 
-                        CellCenterCoordsAndVolumes_;
-  Array<Shape, FaceIndex> FaceShapes_;
-  Array<Shape, CellIndex> CellShapes_;
+  size_t NumAllNodes_;
+  size_t NumAllEdges_;
+  size_t NumAllFaces_;
+  size_t NumAllCells_;
+  std::vector<size_t> NodeRanges_;
+  std::vector<size_t> EdgeRanges_;
+  std::vector<size_t> FaceRanges_;
+  std::vector<size_t> CellRanges_;
+  Table<void> NodeNodes_; // NodeEdges_*EdgeNodes_
+  Table<void> NodeEdges_; // (EdgeNodes_)^T
+  Table<void> NodeFaces_; // (FaceNodes_)^T
+  Table<void> NodeCells_; // (CellNodes_)^T
+  std::vector<std::pair<size_t, size_t>> EdgeNodes_; // T
+  Table<void> EdgeEdges_; // EdgeNodes_*EdgeNodes_
+  Table<void> EdgeFaces_; // (FaceEdges_)^T, Pass 2.
+  Table<void> EdgeCells_; // (CellNodes_)^T
+  Table<void> FaceNodes_; // T
+  Table<void> FaceEdges_; // T, Pass 2.
+  Table<void> FaceFaces_; // FaceEdges_*EdgeFaces_, Pass 1.
+  std::vector<std::pair<size_t, size_t>> FaceCells_;
+  Table<void> CellNodes_; // T, IN
+  Table<void> CellEdges_; // T
+  Table<void> CellFaces_; // T, Pass 1.
+  Table<void> CellCells_; // CellFaces_*FaceCells_
+  std::vector<GVec<Dim>> NodeCoords_;
+  std::vector<std::tuple<GVec<Dim>, real_t>> EdgeDirsAndLengths_;
+  std::vector<std::tuple<GVec<Dim>, GVec<Dim>, real_t>> 
+              FaceCenterCoordsAndNormalsAndAreas_;
+  std::vector<std::tuple<GVec<Dim>, real_t>> CellCenterCoordsAndVolumes_;
+  std::vector<ShapeType> FaceShapes_;
+  std::vector<ShapeType> CellShapes_;
 
-  template<class View, class Range>
-  auto ViewRange_(Range range) const noexcept {
-    return std::views::transform(range,
+private:
+
+  /// @brief Transform the specified \
+  ///   index range to the element view range.
+  template<class View, class IndexRange>
+  auto ViewRange_(IndexRange indexRange) const noexcept {
+    return indexRange | std::views::transform(
       [this](auto index){ return View(this, index); });
   }
+
+  /// @brief Transform the iota \
+  ///   index range to the element view range.
   template<class View, class Index>
   auto IotaViewRange_(Index first, Index last) const noexcept {
     return ViewRange_<View>(std::views::iota(first, last));
@@ -185,92 +104,92 @@ protected:
 public:
 
   /// @brief Total number of nodes in the mesh.
-  NodeIndex NumAllNodes() const noexcept {
+  size_t NumAllNodes() const noexcept {
     return NumAllNodes_;
   }
 
   /// @brief Total number of edges in the mesh.
-  EdgeIndex NumAllEdges() const noexcept {
+  size_t NumAllEdges() const noexcept {
     return NumAllEdges_;
   }
 
   /// @brief Total number of faces in the mesh.
-  FaceIndex NumAllFaces() const noexcept {
+  size_t NumAllFaces() const noexcept {
     return NumAllFaces_;
   }
 
   /// @brief Total number of cells in the mesh.
-  CellIndex NumAllCells() const noexcept {
+  size_t NumAllCells() const noexcept {
     return NumAllCells_;
   }
 
   /// @brief Get node at the index.
-  auto Node(NodeIndex nodeIndex) const noexcept {
+  auto Node(size_t nodeIndex) const noexcept {
     StormMeshAssert(nodeIndex < NumAllNodes_);
     return NodeView<Dim>(this, nodeIndex);
   }
 
   /// @brief Get edge at the index.
-  auto Edge(EdgeIndex edgeIndex) const noexcept {
+  auto Edge(size_t edgeIndex) const noexcept {
     StormMeshAssert(edgeIndex < NumAllEdges_);
     return EdgeView<Dim>(this, edgeIndex);
   }
 
   /// @brief Get face at the index.
-  auto Face(FaceIndex faceIndex) const noexcept {
+  auto Face(size_t faceIndex) const noexcept {
     StormMeshAssert(faceIndex < NumAllFaces_);
     return FaceView<Dim>(this, faceIndex);
   }
 
   /// @brief Get cell at the index.
-  auto Cell(CellIndex cellIndex) const noexcept {
+  auto Cell(size_t cellIndex) const noexcept {
     StormMeshAssert(cellIndex < NumAllCells_);
     return CellView<Dim>(this, cellIndex);
   }
 
   /// @brief Number of node marks in the mesh.
-  NodeMarkIndex NumNodeMarks() const noexcept {
-    return NodeRanges_.Size() - 1;
+  size_t NumNodeMarks() const noexcept {
+    return NodeRanges_.size() - 1;
   }
 
   /// @brief Number of edge marks in the mesh.
-  EdgeMarkIndex NumEdgeMarks() const noexcept {
-    return EdgeRanges_.Size() - 1;
+  size_t NumEdgeMarks() const noexcept {
+    return EdgeRanges_.size() - 1;
   }
 
   /// @brief Number of face marks in the mesh.
-  FaceMarkIndex NumFaceMarks() const noexcept {
-    return FaceRanges_.Size() - 1;
+  size_t NumFaceMarks() const noexcept {
+    return FaceRanges_.size() - 1;
   }
 
   /// @brief Number of cell marks in the mesh.
-  CellMarkIndex NumCellMarks() const noexcept {
-    return CellRanges_.Size() - 1;
+  size_t NumCellMarks() const noexcept {
+    return CellRanges_.size() - 1;
   }
 
   /// @brief Range of nodes with the specified mark.
-  auto Nodes(NodeMarkIndex nodeMark = 0) const noexcept {
+  auto Nodes(size_t nodeMark = 0) const noexcept {
     StormMeshAssert(nodeMark < NumNodeMarks());
     return IotaViewRange_<NodeView<Dim>>(
       NodeRanges_[nodeMark], NodeRanges_[nodeMark + 1]);
   }
 
   /// @brief Range of edges with the specified mark.
-  auto Edges(EdgeMarkIndex edgeMark = 0) const noexcept {
+  auto Edges(size_t edgeMark = 0) const noexcept {
     StormMeshAssert(edgeMark < NumEdgeMarks());
     return IotaViewRange_<EdgeView<Dim>>(
       EdgeRanges_[edgeMark], EdgeRanges_[edgeMark + 1]);
   }
 
   /// @brief Range of faces with the specified mark.
-  auto Faces(FaceMarkIndex faceMark = 0) const noexcept {
+  auto Faces(size_t faceMark = 0) const noexcept {
     StormMeshAssert(faceMark < NumFaceMarks());
     return IotaViewRange_<FaceView<Dim>>(
       FaceRanges_[faceMark], FaceRanges_[faceMark + 1]);
   }
 
   /// @brief Range of faces with the specified mark.
-  auto Cells(CellMarkIndex cellMark = 0) const noexcept {
+  auto Cells(size_t cellMark = 0) const noexcept {
     StormMeshAssert(cellMark < NumCellMarks());
     return IotaViewRange_<CellView<Dim>>(
       CellRanges_[cellMark], CellRanges_[cellMark + 1]);
@@ -285,7 +204,7 @@ template<size_t Dim>
 class NodeView final {
 private:
   Mesh<Dim> const* Mesh_;
-  NodeIndex NodeIndex_;
+  size_t NodeIndex_;
 
   void SelfCheck_() const noexcept {
     StormMeshAssert(
@@ -296,13 +215,19 @@ public:
 
   /// @brief Construct pointer to a node.
   explicit NodeView(Mesh<Dim> const* mesh,
-                    NodeIndex nodeIndex) noexcept :
+                    size_t nodeIndex) noexcept :
       Mesh_{mesh}, NodeIndex_{nodeIndex} {
     SelfCheck_();
   }
 
+  /// @brief Implicit cast to index.
+  operator size_t() const noexcept {
+    SelfCheck_();
+    return NodeIndex_;
+  }
+
   /// @brief Coordinates of the current node.
-  Vec<Dim> const& Coords() const noexcept {
+  GVec<Dim> const& Coords() const noexcept {
     SelfCheck_();
     return Mesh_->NodeCoords_[NodeIndex_];
   }
@@ -340,7 +265,7 @@ template<size_t Dim>
 class EdgeView final {
 private:
   Mesh<Dim> const* Mesh_;
-  EdgeIndex EdgeIndex_;
+  size_t EdgeIndex_;
 
   void SelfCheck_() const noexcept {
     StormMeshAssert(
@@ -351,13 +276,19 @@ public:
 
   /// @brief Construct pointer to an edge.
   explicit EdgeView(Mesh<Dim> const* mesh,
-                    EdgeIndex edgeIndex) noexcept :
+                    size_t edgeIndex) noexcept :
       Mesh_{mesh}, EdgeIndex_{edgeIndex} {
     SelfCheck_();
   }
 
+  /// @brief Implicit cast to index.
+  operator size_t() const noexcept {
+    SelfCheck_();
+    return EdgeIndex_;
+  }
+
   /// @brief Unit direction to the current edge.
-  Vec<Dim> const& Direction() const noexcept {
+  GVec<Dim> const& Direction() const noexcept {
     SelfCheck_();
     return std::get<0>(Mesh_->EdgeDirsAndLengths_[EdgeIndex_]);
   }
@@ -403,7 +334,7 @@ template<size_t Dim>
 class FaceView final {
 private:
   Mesh<Dim> const* Mesh_;
-  FaceIndex FaceIndex_;
+  size_t FaceIndex_;
 
   void SelfCheck_() const noexcept {
     StormMeshAssert(
@@ -414,20 +345,26 @@ public:
 
   /// @brief Construct pointer to a face.
   explicit FaceView(Mesh<Dim> const* mesh,
-                    FaceIndex faceIndex) noexcept :
+                    size_t faceIndex) noexcept :
       Mesh_{mesh}, FaceIndex_{faceIndex} {
     SelfCheck_();
   }
 
+  /// @brief Implicit cast to index.
+  operator size_t() const noexcept {
+    SelfCheck_();
+    return FaceIndex_;
+  }
+
   /// @brief Center coordinates of the current face.
-  Vec<Dim> const& CenterCoords() const noexcept {
+  GVec<Dim> const& CenterCoords() const noexcept {
     SelfCheck_();
     return std::get<0>(
       Mesh_->FaceCenterCoordsAndNormalsAndAreas_[FaceIndex_]);
   }
 
   /// @brief Unit normal to the current face.
-  Vec<Dim> const& Normal() const noexcept {
+  GVec<Dim> const& Normal() const noexcept {
     SelfCheck_();
     return std::get<1>(
       Mesh_->FaceCenterCoordsAndNormalsAndAreas_[FaceIndex_]);
@@ -475,7 +412,7 @@ template<size_t Dim>
 class CellView final {
 private:
   Mesh<Dim> const* Mesh_;
-  CellIndex CellIndex_;
+  size_t CellIndex_;
 
   void SelfCheck_() const noexcept {
     StormMeshAssert(
@@ -486,13 +423,19 @@ public:
 
   /// @brief Construct pointer to a cell.
   explicit CellView(Mesh<Dim> const* mesh,
-                    CellIndex cellIndex) noexcept :
+                    size_t cellIndex) noexcept :
       Mesh_{mesh}, CellIndex_{cellIndex} {
     SelfCheck_();
   }
 
+  /// @brief Implicit cast to index.
+  operator size_t() const noexcept {
+    SelfCheck_();
+    return CellIndex_;
+  }
+
   /// @brief Center coordinates of the current cell.
-  Vec<Dim> const& CenterCoords() const noexcept {
+  GVec<Dim> const& CenterCoords() const noexcept {
     SelfCheck_();
     return std::get<0>(Mesh_->CellCenterCoordsAndVolumes_[CellIndex_]);
   }

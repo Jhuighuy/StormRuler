@@ -25,79 +25,30 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include <stormBase.hxx>
 
 namespace Storm {
 
-template<class Tag, class Index = size_t>
-using TaggedIndex = Index;
-
-#if 0
-template<class Tag, class Index = size_t>
-class TaggedIndex {
-private:
-  Index Index_ = 0;
-
-public:
-
-  constexpr TaggedIndex() noexcept = default;
-  
-  constexpr TaggedIndex(Index index) noexcept :
-    Index_{index} {
-  }
-
-  constexpr Index Get() const {
-    return Index_;
-  }
-
-  constexpr auto operator<=>(TaggedIndex const& other) const noexcept = default;
-
-  constexpr auto operator-(TaggedIndex const& other) const noexcept {
-    return Index_ - other.Index_;
-  }
-
-  constexpr TaggedIndex& operator++() noexcept {
-    return ++Index_, *this;
-  }
-  constexpr TaggedIndex& operator--() noexcept {
-    return --Index_, *this;
-  }
-
-  constexpr auto operator++(int) noexcept {
-    TaggedIndex copy(*this);
-    return ++Index_, copy;
-  }
-  constexpr auto operator--(int) noexcept {
-    TaggedIndex copy(*this);
-    return --Index_, copy;
-  }
-
-}; // class TaggedIndex<...>
-#endif
-
-template<class>
-class BaseIterator {
-
-};
-
-template<class Value, class ColumnIndex>
-class TableRow {
-public:
-
-  ColumnIndex const* Begin() const;
-  ColumnIndex const* End() const;
-
-};
-
 template<class Value, class RowIndex = size_t, class ColumnIndex = RowIndex>
 class Table {
+private:
+  std::vector<RowIndex> RowPointers_;
+  std::vector<ColumnIndex> ColumnIndices_;
+  //std::vector<Value> ColumnValues_;
+
 public:
 
-  TableRow<Value, ColumnIndex> const& operator[](RowIndex index) const;
+  auto operator[](RowIndex rowIndex) const noexcept {
+    auto const columnRange = std::views::iota(
+      RowPointers_[rowIndex], RowPointers_[rowIndex + 1]);
+    if constexpr (std::is_void_v<Value>) {
+      return std::views::transform(columnRange,
+        [this](RowIndex rowPointer){ return ColumnIndices_[rowPointer]; });
+    }
+  }
 
 };
-
-template<size_t Dim>
-class Vec {};
 
 } // namespace Storm

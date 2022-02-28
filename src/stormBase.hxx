@@ -29,6 +29,7 @@
 #include <array>
 #include <vector>
 #include <type_traits>
+#include <iostream>
 
 #include <StormRuler_API.h>
 

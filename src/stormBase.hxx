@@ -34,7 +34,7 @@
 #include <StormRuler_API.h>
 
 #define _STORM_NOT_IMPLEMENTED_() do { \
-  std::cerr << __FUNCTION__ << " not implemented" << std::endl; exit(1); } while(false)
+  std::cerr << __FUNCTION__ << " not implemented" << std::endl; std::exit(1); } while(false)
 
 #define StormEnabledAssert(x) assert(x)
 #define StormDisabledAssert(x) static_cast<void>(x)

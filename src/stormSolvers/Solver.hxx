@@ -31,7 +31,7 @@
 #include <stdexcept>
 
 #include <stormBase.hxx>
-#include <stormBlas/stormOperator.hxx>
+#include <stormBlas/Operator.hxx>
 #include <stormSolvers/Preconditioner.hxx>
 
 namespace Storm {

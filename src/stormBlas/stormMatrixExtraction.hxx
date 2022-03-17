@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-#include <stormBlas/stormOperator.hxx>
+#include <stormBlas/Operator.hxx>
 #include <stormBlas/stormSubspace.hxx>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

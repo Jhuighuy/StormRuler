@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include <string_view>
 #include <stdexcept>
 
 #include <stormBase.hxx>
@@ -39,72 +38,74 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Preconditioner types.
 /// ----------------------------------------------------------------- ///
-namespace PreconditionerType {
+class PreconditionerType final : public Enum<PreconditionerType> {
+
+  _STORM_ENUM_(PreconditionerType)
 
   /// @brief No preconditioning.
-  static std::string_view constexpr None = {};
+  _STORM_ENUM_VALUE_S_(None, {})
 
   /// @brief Identity preconditioner.
-  static std::string_view constexpr Identity = "Identity";
+  _STORM_ENUM_VALUE_S_(Identity, "Identity")
 
   /// @brief @c Jacobi preconditioner.
-  static std::string_view constexpr Jacobi = "Jacobi";
+  _STORM_ENUM_VALUE_S_(Jacobi, "Jacobi")
 
   /// @brief @c SGS preconditioner.
-  static std::string_view constexpr Sgs = "CGS";
+  _STORM_ENUM_VALUE_S_(Sgs, "CGS")
 
   /// @brief @c IC(0) preconditioner.
-  static std::string_view constexpr Ic0 = "IC0";
+  _STORM_ENUM_VALUE_S_(Ic0, "IC0")
 
   /// @brief @c IC(t) preconditioner.
-  static std::string_view constexpr Ict = "IC(T)";
+  _STORM_ENUM_VALUE_S_(Ict, "IC(T)")
 
   /// @brief @c ILU(0) preconditioner.
-  static std::string_view constexpr Ilu0 = "ILU0";
+  _STORM_ENUM_VALUE_S_(Ilu0, "ILU0")
 
   /// @brief @c ILU(t) preconditioner.
-  static std::string_view constexpr Ilut = "ILU(T)";
+  _STORM_ENUM_VALUE_S_(Ilut, "ILU(T)")
 
   /// @brief @c ILQ(0) preconditioner.
-  static std::string_view constexpr Ilq0 = "ILQ0";
+  _STORM_ENUM_VALUE_S_(Ilq0, "ILQ0")
 
   /// @brief @c ILQ(t) preconditioner.
-  static std::string_view constexpr Ilqt = "ILQ(T)";
+  _STORM_ENUM_VALUE_S_(Ilqt, "ILQ(T)")
 
   /// @brief @c AINV(0) preconditioner.
-  static std::string_view constexpr Ainv0 = "AINV0";
+  _STORM_ENUM_VALUE_S_(Ainv0, "AINV0")
 
   /// @brief @c AINV preconditioner.
-  static std::string_view constexpr Ainv = "AINV";
+  _STORM_ENUM_VALUE_S_(Ainv, "AINV")
 
   /// @brief @c SPAI(0) preconditioner.
-  static std::string_view constexpr Spai0 = "SPAI0";
+  _STORM_ENUM_VALUE_S_(Spai0, "SPAI0")
 
   /// @brief @c SPAI preconditioner.
-  static std::string_view constexpr Spai = "SPAI";
+  _STORM_ENUM_VALUE_S_(Spai, "SPAI")
 
   /// @brief @c Broyden preconditioner.
-  static std::string_view constexpr Broyden = "Broyden";
+  _STORM_ENUM_VALUE_(Broyden)
   
   /// @brief @c BFGS preconditioner.
-  static std::string_view constexpr Bfgs = "BFGS";
+  _STORM_ENUM_VALUE_S_(Bfgs, "BFGS")
 
   /// @brief @c Chebyshev polynomial preconditioner.
-  static std::string_view constexpr Chebyshev = "Chebyshev";
+  _STORM_ENUM_VALUE_(Chebyshev)
 
   /// @brief @c Krylov preconditioner.
-  static std::string_view constexpr Krylov = "Krylov";
+  _STORM_ENUM_VALUE_(Krylov)
 
-} // namespace PreconditionerType
+}; // class PreconditionerType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make preconditioner of the specified type.
 /// ----------------------------------------------------------------- ///
 template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
-    MakePreconditioner(std::string_view const& preType = {}) {
+    MakePreconditioner(PreconditionerType preType = PreconditionerType::None) {
 
-  if (preType.empty()) {
+  if (preType == PreconditionerType::None) {
     return nullptr;
   }
   if (preType == PreconditionerType::Identity) {

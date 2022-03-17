@@ -28,7 +28,7 @@
 #include <iostream>
 
 #include <stormBase.hxx>
-#include <stormBlas/stormOperator.hxx>
+#include <stormBlas/Operator.hxx>
 
 namespace Storm {
 

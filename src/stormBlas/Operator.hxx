@@ -22,12 +22,13 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_OPERATOR_HXX_
-#define _STORM_OPERATOR_HXX_
+
+#pragma once
 
 #include <memory>
 #include <stdexcept>
 #include <functional>
+#include <cmath>
 
 #include <stormBase.hxx>
 
@@ -74,11 +75,11 @@ public:
     return Size_;
   }
   real_t& operator()(size_t index) {
-    stormAssert(index < Size_);
+    //stormAssert(index < Size_);
     return Data_[index];
   }
   real_t const& operator()(size_t index) const {
-    stormAssert(index < Size_);
+    //stormAssert(index < Size_);
     return Data_[index];
   }
 
@@ -102,6 +103,61 @@ public:
 
 };
 
+template<class Value>
+class Array {
+private:
+  size_t Size_ = 0;
+  std::vector<Value> Data_;
+
+public:
+
+  explicit Array(size_t size) :
+      Size_(size), Data_(size) {
+  }
+  Array(size_t size, size_t fullSize) :
+      Size_(size), Data_(fullSize) {
+  }
+
+  Array() = default;
+
+  Array(Array const&) = default;
+
+  Array(Array&&) noexcept = default;
+
+  ~Array() = default;
+
+  Array& operator=(Array&&) = default;
+
+  Array& operator=(Array const&) = default;
+
+  void Assign(Array const& array, bool copy = true) {
+    Size_ = array.Size_;
+    if (copy) {
+      Data_ = array.Data_;
+    } else {
+      Data_.resize(array.Data_.size());
+    }
+  }
+
+  size_t Size() const noexcept {
+    return Size_;
+  }
+
+  size_t FullSize() const noexcept {
+    return Data_.size();
+  }
+
+  Value& operator()(size_t index) noexcept {
+    StormAssert(index < Data_.size());
+    return Data_[index];
+  }
+  Value const& operator()(size_t index) const noexcept {
+    StormAssert(index < Data_.size());
+    return Data_[index];
+  }
+
+}; // class Array<...>
+
 namespace Utils {
   
   real_t SafeDivide(real_t x, real_t y) {
@@ -114,6 +170,35 @@ namespace Utils {
   }
 
 } // namespace Utils
+
+#if 0
+inline void ToArray(Array<real_t>& to, stormArray const& from) {
+  for (size_t i = 0; i < 15906; ++i) {
+    to(i) = from(i); 
+  }
+}
+inline void FromArray(stormArray& to, 
+                      Array<real_t> const& from) {
+  for (size_t i = 0; i < 15906; ++i) {
+    to(i) = from(i); 
+  }
+}
+
+template<class Func>
+void ParallelFor(size_t first, size_t last, Func&& func) {
+  for (size_t index = first; index <= last; ++index) {
+    func(index);
+  }
+}
+
+template<class Value, class Func>
+auto ParallelSum(size_t first, size_t last, Value init, Func&& func) {
+  for (size_t index = first; index <= last; ++index) {
+    init += func(index);
+  }
+  return init;
+}
+#endif
 
 namespace Blas {
 
@@ -171,6 +256,111 @@ namespace Blas {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
 
+#if 0
+  template<class Value>
+  Value Dot(Array<Value> const& xVec, 
+            Array<Value> const& yVec) {
+        
+    return ParallelSum(0, xVec.Size(), Value(0),
+      [&](size_t i) { return xVec(i)*yVec(i); });
+  }
+
+  template<class Value>
+  auto Norm2(Array<Value> const& xVec) {
+        
+    return std::sqrt(Dot(xVec, xVec));
+  }
+
+  template<class Value>
+  void Set(Array<Value>& xVec, 
+           Array<Value> const& yVec) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = yVec(i); });
+
+  } // Set<...>
+
+  template<class Value>
+  void Fill(Array<Value>& xVec, 
+            Value const& alpha) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = alpha; });
+
+  } // Fill<...>
+  template<class Value>
+  void RandFill(Array<Value>& xVec) {
+
+    _STORM_NOT_IMPLEMENTED_();
+
+  } // RandFill<...>
+
+  template<class Value>
+  void Scale(Array<Value>& xVec, 
+             Array<Value> const& yVec, real_t alpha) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = alpha*yVec(i); });
+
+  } // Scale<...>
+
+  template<class Value>
+  void Add(Array<Value>& xVec, 
+           Array<Value> const& yVec,
+           Array<Value> const& zVec) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = yVec(i) + zVec(i); });
+
+  } // Add<...>
+  template<class Value>
+  void Add(Array<Value>& xVec, 
+           Array<Value> const& yVec,
+           Array<Value> const& zVec, real_t beta) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = yVec(i) + beta*zVec(i); });
+
+  } // Add<...>
+  template<class Value>
+  void Add(Array<Value>& xVec, 
+           Array<Value> const& yVec, real_t alpha,
+           Array<Value> const& zVec, real_t beta) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = alpha*yVec(i) + beta*zVec(i); });
+
+  } // Add<...>
+
+  template<class Value>
+  void Sub(Array<Value>& xVec, 
+           Array<Value> const& yVec,
+           Array<Value> const& zVec) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = yVec(i) - zVec(i); });
+
+  } // Sub<...>
+  template<class Value>
+  void Sub(Array<Value>& xVec, 
+           Array<Value> const& yVec,
+           Array<Value> const& zVec, real_t beta) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = yVec(i) - beta*zVec(i); });
+
+  } // Sub<...>
+  template<class Value>
+  void Sub(Array<Value>& xVec, 
+           Array<Value> const& yVec, real_t alpha,
+           Array<Value> const& zVec, real_t beta) {
+
+    ParallelFor(0, xVec.Size(), 
+      [&](size_t i) { xVec(i) = alpha*yVec(i) - beta*zVec(i); });
+
+  } // Sub<...>
+#endif
+
 } // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -214,6 +404,10 @@ public:
     Blas::Sub(rVec, bVec, rVec);
   }
 
+  /// @brief Compute a residual norm, ‖𝒃 - 𝓐𝒙‖.
+  ///
+  /// @param bVec Input vector, 𝒃.
+  /// @param xVec Input vector, 𝒙.
   real_t ResidualNorm(OutVector const& bVec,
                       InVector const& xVec) const {
     OutVector rVec;
@@ -322,5 +516,3 @@ auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
 } // MakeSymmetricOperator<...>
 
 } // namespace Storm
-
-#endif // ifndef _STORM_OPERATOR_HXX_

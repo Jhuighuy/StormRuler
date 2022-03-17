@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include <string_view>
 #include <stdexcept>
 
 #include <stormBase.hxx>
+#include <stormUtils/Enum.hxx>
 
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/SolverCg.hxx>
@@ -48,76 +48,78 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Solver types.
 /// ----------------------------------------------------------------- ///
-namespace SolverType {
+class SolverType final : public Enum<SolverType> {
+  
+  _STORM_ENUM_(SolverType)
 
   /// @brief Default solver.
-  static std::string_view constexpr Default = {};
+  _STORM_ENUM_VALUE_S_(Default, {})
 
   /// @brief @c CG iterative solver.
-  static std::string_view constexpr Cg = "CG";
+  _STORM_ENUM_VALUE_S_(Cg, "CG")
 
   /// @brief @c FCG iterative solver.
-  static std::string_view constexpr Fcg = "FCG";
+  _STORM_ENUM_VALUE_S_(Fcg, "FCG")
 
   /// @brief @c MINRES iterative solver.
-  static std::string_view constexpr Minres = "MINRES";
+  _STORM_ENUM_VALUE_S_(Minres, "MINRES")
 
   /// @brief @c CGS iterative solver.
-  static std::string_view constexpr Cgs = "CGS";
+  _STORM_ENUM_VALUE_S_(Cgs, "CGS")
 
   /// @brief @c BiCGStab iterative solver.
-  static std::string_view constexpr BiCgStab = "BiCgStab";
+  _STORM_ENUM_VALUE_S_(BiCgStab, "BiCgStab")
 
   /// @brief @c BiCGStab(l) iterative solver.
-  static std::string_view constexpr BiCgStabL = "BiCgStab(l)";
+  _STORM_ENUM_VALUE_S_(BiCgStabL, "BiCgStab(l)")
 
   /// @brief @c TFQMR iterative solver.
-  static std::string_view constexpr Tfqmr = "TFQMR";
+  _STORM_ENUM_VALUE_S_(Tfqmr, "TFQMR")
 
   /// @brief @c TFQMR(1) iterative solver.
-  static std::string_view constexpr Tfqmr1 = "TFQMR(1)";
+  _STORM_ENUM_VALUE_S_(Tfqmr1, "TFQMR(1)")
 
   /// @brief @c IDR(s) iterative solver.
-  static std::string_view constexpr Idrs = "IDR(s)";
+  _STORM_ENUM_VALUE_S_(Idrs, "IDR(s)")
 
   /// @brief @c GMRES iterative solver.
-  static std::string_view constexpr Gmres = "GMRES";
+  _STORM_ENUM_VALUE_S_(Gmres, "GMRES")
 
   /// @brief @c FGMRES iterative solver.
-  static std::string_view constexpr Fgmres = "FGMRES";
+  _STORM_ENUM_VALUE_S_(Fgmres, "FGMRES")
 
   /// @brief @c LGMRES iterative solver.
-  static std::string_view constexpr Lgmres = "LGMRES";
+  _STORM_ENUM_VALUE_S_(Lgmres, "LGMRES")
 
   /// @brief @c LFGMRES iterative solver.
-  static std::string_view constexpr Lfgmres = "LFGMRES";
+  _STORM_ENUM_VALUE_S_(Lfgmres, "LFGMRES")
 
   /// @brief @c LSQR iterative solver.
-  static std::string_view constexpr Lsqr = "LSQR";
+  _STORM_ENUM_VALUE_S_(Lsqr, "LSQR")
 
   /// @brief @c LSMR iterative solver.
-  static std::string_view constexpr Lsmr = "LSMR";
+  _STORM_ENUM_VALUE_S_(Lsmr, "LSMR")
 
   /// @brief @c Richardson iterative solver.
-  static std::string_view constexpr Richarson = "Richardson";
+  _STORM_ENUM_VALUE_(Richarson)
 
   /// @brief @c Broyden iterative solver.
-  static std::string_view constexpr Broyden = "Broyden";
+  _STORM_ENUM_VALUE_(Broyden)
 
   /// @brief @c Newton iterative solver.
-  static std::string_view constexpr Newton = "Newton";
+  _STORM_ENUM_VALUE_(Newton)
 
   /// @brief @c JFNK iterative solver.
-  static std::string_view constexpr Jfnk = "JFNK";
+  _STORM_ENUM_VALUE_S_(Jfnk, "JFNK")
 
-} // namespace SolverType
+}; // class SolverType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
 template<class InVector, class OutVector = InVector>
 std::unique_ptr<IterativeSolver<InVector, OutVector>>
-    MakeIterativeSolver(std::string_view const& solverType = {}) {
+    MakeIterativeSolver(SolverType solverType = SolverType::Default) {
 
   // ----------------------
   // Try the square Krylov subspace solver first:
@@ -150,7 +152,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
     if (solverType == SolverType::Idrs) {
       return std::make_unique<IdrsSolver<InVector>>();
     }
-    if (solverType.empty() || solverType == SolverType::Gmres) {
+    if (solverType == SolverType::Default || solverType == SolverType::Gmres) {
       // Note: GMRES is the default square solver.
       return std::make_unique<GmresSolver<InVector>>();
     }
@@ -189,7 +191,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
   if (solverType == SolverType::Lsqr) {
     //return std::make_unique<LsqrSolver<InVector, OutVector>>();
   }
-  if (solverType.empty() || solverType == SolverType::Lsmr) {
+  if (solverType == SolverType::Default || solverType == SolverType::Lsmr) {
     // Note: LSMR is the default rectangular solver.
     //return std::make_unique<LsmrSolver<InVector, OutVector>>();
   }

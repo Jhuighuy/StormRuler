@@ -121,6 +121,41 @@ subroutine FDM_ApplyBCs_SlipWall(mesh, mark, v)
 
 end subroutine FDM_ApplyBCs_SlipWall
 
+subroutine FDM_ApplyBCs_CosWall(mesh, mark, phi_hat, phi, a)
+  class(tMesh), intent(in) :: mesh
+  integer(ip), intent(in) :: mark
+  real(dp), intent(inout) :: phi_hat(:), phi(:)
+  real(dp) :: a
+
+  integer(ip) :: dim
+  integer(ip) :: cell, bndCell, bndCellConn, gCell
+
+  !$omp parallel do private(cell, bndCell, bndCellConn, gCell)
+  do bndCell = mesh%BndCellAddrs(mark), mesh%BndCellAddrs(mark + 1) - 1
+    bndCellConn = mesh%BndCellConns(bndCell)
+    cell = mesh%CellToCell(Flip(bndCellConn), bndCell)
+
+    dim = (bndCellConn - 1)/2 + 1
+
+    !phi_hat(bndCell) = phi_hat(cell) - a*( phi(cell)*( 1.0_dp - phi(cell) ) ) 
+    
+    phi_hat(bndCell) = phi_hat(cell) - &
+      & a*0.5_dp*( phi_hat(cell)*( 1.0_dp - phi(cell) ) + phi(cell)*( 1.0_dp - phi_hat(cell) ) )
+
+    ! ----------------------
+    ! Propagate the boundary condition towards the ghost cells.
+    ! ----------------------
+    gCell = mesh%CellToCell(bndCellConn, bndCell)
+    do while(gCell /= 0)
+      phi_hat(gCell) = phi_hat(bndCell)
+      gCell = mesh%CellToCell(bndCellConn, gCell)
+    end do
+
+  end do
+  !$omp end parallel do
+
+end subroutine FDM_ApplyBCs_CosWall
+
 subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v)
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: mark
@@ -154,7 +189,8 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v)
 
     RR = mesh%CellCenter(1, cell)
 
-    RRR = merge(0.1_dp, 10.0_dp, mark == 2)
+    !RRR = merge(0.1_dp, 10.0_dp, mark == 2)
+    RRR = merge(0.1_dp, 0.101_dp, mark == 2)
 
     v(:,bndCell) = 0.0_dp
     v(2,bndCell) = -RRR*( R**2 - RR**2 )

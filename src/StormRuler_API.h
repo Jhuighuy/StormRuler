@@ -266,6 +266,12 @@ STORM_API void stormApplyBCs_SlipWall(stormMesh_t mesh,
                                       stormArray_t u,
                                       stormInt_t iBC);
 
+STORM_API void stormApplyBCs_CosWall(stormMesh_t mesh,
+                                     stormArray_t phiBar,
+                                     stormArray_t phi,
+                                     stormReal_t a,
+                                     stormInt_t iBC);
+
 STORM_API void stormApplyBCs_InOutLet(stormMesh_t mesh,
                                       stormArray_t u,
                                       stormInt_t iBC);

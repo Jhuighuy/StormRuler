@@ -32,15 +32,43 @@
 #include <stormSolvers/SolverFactory.hxx>
 #include <stormSolvers/PreconditionerFactory.hxx>
 
+//#include <stormMesh/Mesh.hxx>
+
+#include <stormUtils/JsonValue.hxx>
+
 #include <cstring>
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormLinSolve2(stormMesh_t mesh,
-                              std::string_view const& method,
-                              std::string_view const& preMethod,
+                              Storm::SolverType const& method,
+                              Storm::PreconditionerType const& preMethod,
                               stormArray_t x,
                               stormArray_t b,
-                              stormMatVecFuncT_t matVec) {
+                              stormMatVecFuncT_t matVec,
+                              bool uniform = true) {
+  using namespace Storm;
+
+#if 0
+  Array<real_t> xVec(14674, 15906), bVec(xVec);
+
+  Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
+  ToArray(xVec, xx);
+  ToArray(bVec, bb);
+
+  stormSize_t numMatVecs = 0;
+  Solve(
+    method, preMethod,
+    xVec, bVec,
+    [&](Array<real_t>& yVec, Array<real_t> const& zVec) {
+     numMatVecs += 1;
+      stormArray_t y = stormAllocLike(x), z = stormAllocLike(b);
+      Storm::stormArray yy = {mesh, y}, zz = {mesh, z};
+      FromArray(yy, yVec), FromArray(zz, zVec);
+      matVec(mesh, y, z);
+      ToArray(yVec, yy);
+      stormFree(y), stormFree(z);
+    });
+#else
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   stormSize_t numMatVecs = 0;
   auto symOp = Storm::MakeSymmetricOperator<Storm::stormArray>(
@@ -51,29 +79,22 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
 
   auto solver = Storm::MakeIterativeSolver<Storm::stormArray>(method);
   solver->PreOp = Storm::MakePreconditioner<Storm::stormArray>(preMethod);
-#if 0
-  stormSparseRowMatrix<stormReal_t> matrix;
-  do_the_thing(matrix, xx, *symOp);
-  auto matOp = stormMakeSymmetricOperator<stormArray>(
-    [&](stormArray& yy, const stormArray& xx) {
-      numMatVecs += 1;
-      matrix.mat_vec(yy, xx);
-    });
 
-  solver->Solve(xx, bb, *matOp /* *symOp */); 
-  std::cout << "num matvecs = " << numMatVecs << std::endl;
+  if (uniform) {
+    solver->Solve(xx, bb, *symOp);
+  } else {
+    Storm::SolveNonUniform(*solver, xx, bb, *symOp);
+  }
 #endif
-
-  solver->Solve(xx, bb, *symOp);
-  std::cout << "num matvecs = " << numMatVecs << std::endl;
+  std::cout << "num matvecs = " << numMatVecs << ' ' <<  method.ToString() << std::endl;
 
 } // stormLinSolve2<...>
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
-                                 std::string_view const& method,
+                                 Storm::SolverType const& method,
                                  stormArray_t x,
-                                 stormArray_t b,
+                                 stormArray_t b, 
                                  stormMatVecFuncT_t matVec) {
 
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
@@ -97,6 +118,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #include <time.h>
 
 #include <fstream>
+#include <algorithm>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -109,9 +131,14 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 
 static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
 
-static void SetBCs_c(stormMesh_t mesh, stormArray_t c) {
-  stormApplyBCs(mesh, c, SR_ALL, SR_PURE_NEUMANN);
-  //stormApplyBCs(mesh, c, 4, SR_DIRICHLET(1.0));
+static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
+  stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
+  stormApplyBCs_CosWall(mesh, c_hat, c, 
+  
+    0.01/std::sqrt(Gamma)*6.0*std::cos(M_PI/2 - M_PI/16)
+    
+    , 1);
+  stormApplyBCs(mesh, c_hat, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
 static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
@@ -121,7 +148,7 @@ static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
 static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   //stormApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  //stormApplyBCs(mesh, p, 4, SR_DIRICHLET(50.0));
+  //stormApplyBCs(mesh, p, 4, SR_DIRICHLET(2.0));
 } // SetBCs_p
 
 static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
@@ -197,6 +224,62 @@ void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
 
 } // Vol
 
+#if 1
+static void CahnHilliard_Step(stormMesh_t mesh,
+    stormArray_t c, stormArray_t v,
+    stormArray_t c_hat, stormArray_t w_hat
+#if YURI
+    , double& V, double& V_hat
+#endif
+    ) {
+
+  SetBCs_c(mesh, c, c);
+  SetBCs_v(mesh, v);
+
+  stormArray_t tmp = stormAllocLike(c);
+  stormFuncProd(mesh, tmp, c, dWdC, STORM_NULL);
+
+  stormSet(mesh, c_hat, c);
+  stormLinSolve2(mesh,
+#if YURI
+      Storm::SolverType::BiCgStab,
+      Storm::PreconditionerType::None/*"extr"*/, 
+#else
+      Storm::SolverType::Tfqmr1,
+      Storm::PreconditionerType::None/*"extr"*/,
+#endif
+    c_hat, c,
+    [&](stormMesh_t mesh, stormArray_t c_out, stormArray_t c_in) {
+
+      stormSet(mesh, w_hat, tmp);
+      stormAdd(mesh, w_hat, w_hat, c_in, 2.0*sigma);
+      stormSub(mesh, w_hat, w_hat, c, 2.0*sigma);
+
+      SetBCs_c(mesh, c_in, c);
+      stormDivGrad(mesh, w_hat, -Gamma, c_in);
+
+      stormSet(mesh, c_out, c_in);
+      stormConvection(mesh, c_out, -tau, c_in, v);
+
+      SetBCs_w(mesh, w_hat);
+      stormDivGrad(mesh, c_out, -tau, w_hat);
+
+    }, false);
+    abort();
+
+  stormFree(tmp);
+
+  SetBCs_c(mesh, c_hat, c);
+  stormFuncProd(mesh, w_hat, c_hat, dWdC, STORM_NULL);
+  stormDivGrad(mesh, w_hat, -Gamma, c_hat);
+
+#if YURI
+  V = V_hat;
+  V_hat = stormIntegrate(mesh, c_hat, Vol, STORM_NULL);
+#endif
+
+} // CahnHilliard_Step
+#else
 static void CahnHilliard_Step(stormMesh_t mesh,
     stormArray_t c, stormArray_t v,
     stormArray_t c_hat, stormArray_t w_hat
@@ -268,6 +351,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 #endif
 
 } // CahnHilliard_Step
+#endif
 
 static double mu_1 = 0.08, mu_2 = 0.08;
 #if !YURI
@@ -313,9 +397,9 @@ void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
 
 void AddGravity(stormSize_t size, stormReal_t* rhs, const stormReal_t* rhs_, void* env) {
 #if YURI
-  rhs[1] += tau*(-0.3);
+  //rhs[1] += tau*(-0.3);
 #else
-  rhs[1] += tau*(-1.0);
+  //rhs[1] += tau*(-1.0);
 #endif
 }
 
@@ -452,7 +536,7 @@ static void NavierStokes_VaD_Step(stormMesh_t mesh,
 
       stormSet(mesh, Lp, p);
       stormDivWGrad(mesh, Lp, -tau, rho_inv, p);
-    });
+    }, false);
     //abort();
 
   stormFree(rhs);
@@ -482,8 +566,10 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
 
   static const stormReal_t L = 1.0;
   bool in = false;
-  if (fabs(r[0]-0*L) <= L*0.101 && 
-      fabs(2*L-r[1]) <= L*0.665) {
+  //if (fabs(r[0]-0*L) <= L*0.101 && fabs(2*L-r[1]) <= L*0.665) {
+  //  in = true;
+  //}
+  if (fabs(2*L-r[1]) <= L*0.2) {
     in = true;
   }
 
@@ -494,7 +580,13 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
 
 } // Initial_Data
 
-int main() {
+int main_turbo();
+
+int main(int argc, char** argv) {
+
+  if (argc > 1 && strcmp(argv[1], "turbo") == 0) {
+    return main_turbo();
+  }
 
 #if YURI
   phi_set.Assign(101);

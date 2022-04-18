@@ -41,7 +41,8 @@ use StormRuler_BLAS, only: Norm_2, Dot, &
 use StormRuler_BLAS, only: tMatVecFunc
 
 use StormRuler_FDM_BCs, only: &
-  & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_InOutLet
+  & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_CosWall, &
+  & FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient, FDM_Divergence, FDM_DivGrad, FDM_DivWGrad
 use StormRuler_FDM_RhieChow, only: FDM_RhieChow_Correction
@@ -233,7 +234,8 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
     allocate(gMesh)
 
-    call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    !call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    call Load_PPM('test/Domain-200-Flat.ppm', pixels)
     call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
     call InitMeshFromImage(gMesh, pixels, 0, colorToMark, 2, .true.)
 
@@ -719,6 +721,41 @@ subroutine stormApplyBCs_SlipWall(meshPtr, uPtr, markMask) &
   end do
 
 end subroutine stormApplyBCs_SlipWall
+
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
+subroutine stormApplyBCs_CosWall(meshPtr, phiHatPtr, phiPtr, a, markMask) &
+  & bind(C, name='stormApplyBCs_CosWall')
+  type(c_ptr), intent(in), value :: meshPtr
+  integer(c_int), intent(in), value :: markMask
+  type(c_ptr), intent(in), value :: phiHatPtr, phiPtr
+  real(dp), intent(in), value :: a
+
+  class(tMesh), pointer :: mesh
+  class(tArray), pointer :: phiHatArr, phiArr
+  integer(ip) :: mark, firstMark, lastMark
+
+  call Unwrap(meshPtr, mesh)
+  call Unwrap(phiHatPtr, phiHatArr)
+  call Unwrap(phiPtr, phiArr)
+
+  if (markMask /= 0) then
+    firstMark = markMask; lastMark = markMask
+  else
+    firstMark = 1; lastMark = mesh%NumBndMarks
+  end if
+
+  do mark = firstMark, lastMark
+    block
+      !! TODO: fix me!
+      real(dp), pointer :: phi_hat(:), phi(:)
+      call phiHatArr%Get(phi_hat)
+      call phiArr%Get(phi)
+      call FDM_ApplyBCs_CosWall(mesh, mark, phi_hat, phi, a)
+    end block
+  end do
+
+end subroutine stormApplyBCs_CosWall
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

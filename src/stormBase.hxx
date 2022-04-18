@@ -47,6 +47,38 @@ using size_t = std::size_t;
 using ptrdiff_t = std::ptrdiff_t;
 using real_t = double;
 
+namespace Utils {
+  
+  template<class Value>
+  Value SafeDivide(Value x, Value y) {
+    return (y == 0.0) ? 0.0 : (x/y);
+  }
+
+  template<class Value>
+  Value& SafeDivideEquals(Value& x, Value y) {
+    x = SafeDivide(x, y);
+    return x;
+  }
+
+} // namespace Utils
+
+/// ----------------------------------------------------------------- ///
+/// @brief A non-copyable object. 
+/// ----------------------------------------------------------------- ///
+class NonCopyable {
+public:
+
+  /// @brief Default constructor.
+  NonCopyable() = default;
+
+  /// @brief Copying is prohibited.
+  NonCopyable(const NonCopyable&) = delete;
+
+  /// @brief Copy-assignmennt is prohibited.
+  NonCopyable& operator=(const NonCopyable&) = delete;
+
+}; // class NonCopyable
+
 static size_t const DynamicExtent = SIZE_MAX;
 
 template<size_t Extent>

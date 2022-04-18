@@ -178,10 +178,6 @@ endif()
 #find_package(IntelDPCPP REQUIRED)
 #message(STATUS "SYCL (Intel DC++) enabled.")
 
-# Find GLM.
-find_package(GLM REQUIRED)
-target_link_libraries(StormRuler_BASE INTERFACE GLM)
-
 # Find OpenMP.
 if(StormRuler_NO_OpenMP)
   message(STATUS "StormRuler OpenMP was disabled by user.")

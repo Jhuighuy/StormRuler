@@ -32,21 +32,23 @@
 
 namespace Storm {
 
-#define _STORM_ENUM_(Class) \
+/// ----------------------------------------------------------------- ///
+/// @brief Macro for spawning a reflectible enumeration body.
+/// ----------------------------------------------------------------- ///
+#define STORM_ENUM_(Class) \
   private: \
     \
     using Class_ = Class; \
     friend class Enum<Class>; \
+    static constexpr size_t BaseCounter_{__COUNTER__}; \
     \
-    static constexpr ptrdiff_t BaseCounter_{__COUNTER__}; \
-    \
-    template<ptrdiff_t Index_, class Func> \
-    struct Reflection_ { \
+    template<size_t Index_, class Func> \
+    struct ReflectionChain_ { \
       static constexpr void Invoke_(Func const&) noexcept {} \
     }; \
     template<class Func> \
     static constexpr void Reflect_(Func const& func) noexcept { \
-      Reflection_<0, Func>::Invoke_(func); \
+      ReflectionChain_<0, Func>::Invoke_(func); \
     } \
     \
   public: \
@@ -57,22 +59,26 @@ namespace Storm {
     constexpr explicit Class(Integer value) : Enum<Class>(value) { \
     }
 
-#define _STORM_ENUM_VALUE_S_(Name, String) \
+/// ----------------------------------------------------------------- ///
+/// @brief Macro for spawning a reflectible enumeration value body.
+/// ----------------------------------------------------------------- ///
+#define STORM_ENUM_VALUE_(Name, ...) \
+    STORM_ENUM_VALUE__(Name, ##__VA_ARGS__, #Name)
+
+#define STORM_ENUM_VALUE__(Name, String, ...) \
     static constexpr Enum<Class_> Name{__COUNTER__ - BaseCounter_ - 1}; \
     \
   private: \
     \
     template<class Func> \
-    struct Reflection_<static_cast<ptrdiff_t>(Name), Func> { \
+    struct ReflectionChain_<static_cast<size_t>(Name), Func> { \
       static constexpr void Invoke_(Func const& func) noexcept { \
         func(Name, String); \
-        Reflection_<static_cast<ptrdiff_t>(Name) + 1, Func>::Invoke_(func); \
+        ReflectionChain_<static_cast<size_t>(Name) + 1, Func>::Invoke_(func); \
       } \
     }; \
     \
   public:
-
-#define _STORM_ENUM_VALUE_(Name) _STORM_ENUM_VALUE_S_(Name, #Name) \
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Reflectible enumeration.
@@ -115,29 +121,45 @@ public:
   /// @}
 
   /// @brief Convert the enumeration into the string.
-  constexpr std::string_view ToString() const noexcept {
-    std::string_view result{};
-    Derived::Reflect_(
-      [&](Enum<Derived> const& value, std::string_view string) {
-        if (*this == value) result = string;
-      });
-    return result;
-  }
+  constexpr std::string_view ToString() const noexcept;
 
   /// @brief Convert the specified @p string to the enumeration. 
-  static constexpr Enum<Derived, Underlying> FromString(std::string_view string) {
-    bool found = false;
-    Enum<Derived, Underlying> result;
-    Derived::Reflect_(
-      [&](Enum<Derived> const& value, std::string_view theString) {
-        if (string == theString) result = value, found = true;
-      });
-    if (!found) {
-      throw std::invalid_argument("Invalid enum string");
-    }
-    return result;
-  }
+  static constexpr Enum<Derived, Underlying> FromString(std::string_view string);
 
 }; // class Enum<...>
+
+template<class Derived, class Underlying>
+constexpr std::string_view 
+    Enum<Derived, Underlying>::ToString() const noexcept {
+
+  std::string_view result{};
+
+  Derived::Reflect_(
+    [&](Enum<Derived> value, std::string_view string) {
+      if (*this == value) result = string;
+    });
+
+  return result;
+
+} // Enum<...>::ToString
+
+template<class Derived, class Underlying>
+constexpr Enum<Derived, Underlying> 
+    Enum<Derived, Underlying>::FromString(std::string_view string) {
+
+  bool found = false;
+  Enum<Derived, Underlying> result;
+
+  Derived::Reflect_(
+    [&](Enum<Derived> value, std::string_view theString) {
+      if (string == theString) result = value, found = true;
+    });
+  if (!found) {
+    throw std::invalid_argument("Invalid enum string");
+  }
+
+  return result;
+
+} // Enum<...>::FromString
 
 } // namespace Storm

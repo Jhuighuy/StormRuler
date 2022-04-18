@@ -25,30 +25,35 @@
 
 #pragma once
 
-#include <type_traits>
-
 #include <stormBase.hxx>
 
-namespace Storm {
+namespace Storm::Turbo {
 
-template<class Value, class RowIndex = size_t, class ColumnIndex = RowIndex>
-class Table {
-private:
-  std::vector<RowIndex> RowPointers_;
-  std::vector<ColumnIndex> ColumnIndices_;
-  //std::vector<Value> ColumnValues_;
+template<class Function>
+void ParFor(size_t beginX, size_t endX,
+            size_t beginY, size_t endY, Function const& func) {
 
-public:
-
-  auto operator[](RowIndex rowIndex) const noexcept {
-    auto const columnRange = std::views::iota(
-      RowPointers_[rowIndex], RowPointers_[rowIndex + 1]);
-    if constexpr (std::is_void_v<Value>) {
-      return std::views::transform(columnRange,
-        [this](RowIndex rowPointer){ return ColumnIndices_[rowPointer]; });
+  for (size_t ix = beginX; ix != endX; ++ix) {
+    for (size_t iy = beginY; iy != endY; ++iy) {
+      func(ix, iy);
     }
   }
 
-};
+} // ParFor
 
-} // namespace Storm
+template<class Function>
+void ParFor(size_t beginX, size_t endX,
+            size_t beginY, size_t endY,
+            size_t beginZ, size_t endZ, Function const& func) {
+
+  for (size_t ix = beginX; ix != endX; ++ix) {
+    for (size_t iy = beginY; iy != endY; ++iy) {
+      for (size_t iz = beginZ; iz != endZ; ++iz) {
+        func(ix, iy, iz);
+      }
+    }
+  }
+
+} // ParFor
+
+} // namespace Storm::Turbo

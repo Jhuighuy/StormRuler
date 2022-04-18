@@ -28,6 +28,7 @@
 #include <stdexcept>
 
 #include <stormBase.hxx>
+#include <stormUtils/Enum.hxx>
 
 #include <stormSolvers/Preconditioner.hxx>
 #include <stormSolvers/PreconditionerBroyden.hxx>
@@ -40,61 +41,61 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 class PreconditionerType final : public Enum<PreconditionerType> {
 
-  _STORM_ENUM_(PreconditionerType)
+  STORM_ENUM_(PreconditionerType)
 
   /// @brief No preconditioning.
-  _STORM_ENUM_VALUE_S_(None, {})
+  STORM_ENUM_VALUE_(None)
 
   /// @brief Identity preconditioner.
-  _STORM_ENUM_VALUE_S_(Identity, "Identity")
+  STORM_ENUM_VALUE_(Identity)
 
   /// @brief @c Jacobi preconditioner.
-  _STORM_ENUM_VALUE_S_(Jacobi, "Jacobi")
+  STORM_ENUM_VALUE_(Jacobi)
 
   /// @brief @c SGS preconditioner.
-  _STORM_ENUM_VALUE_S_(Sgs, "CGS")
+  STORM_ENUM_VALUE_(Sgs, "CGS")
 
   /// @brief @c IC(0) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ic0, "IC0")
+  STORM_ENUM_VALUE_(Ic0, "IC0")
 
   /// @brief @c IC(t) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ict, "IC(T)")
+  STORM_ENUM_VALUE_(Ict, "IC(T)")
 
   /// @brief @c ILU(0) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ilu0, "ILU0")
+  STORM_ENUM_VALUE_(Ilu0, "ILU0")
 
   /// @brief @c ILU(t) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ilut, "ILU(T)")
+  STORM_ENUM_VALUE_(Ilut, "ILU(T)")
 
   /// @brief @c ILQ(0) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ilq0, "ILQ0")
+  STORM_ENUM_VALUE_(Ilq0, "ILQ0")
 
   /// @brief @c ILQ(t) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ilqt, "ILQ(T)")
+  STORM_ENUM_VALUE_(Ilqt, "ILQ(T)")
 
   /// @brief @c AINV(0) preconditioner.
-  _STORM_ENUM_VALUE_S_(Ainv0, "AINV0")
+  STORM_ENUM_VALUE_(Ainv0, "AINV0")
 
   /// @brief @c AINV preconditioner.
-  _STORM_ENUM_VALUE_S_(Ainv, "AINV")
+  STORM_ENUM_VALUE_(Ainv, "AINV")
 
   /// @brief @c SPAI(0) preconditioner.
-  _STORM_ENUM_VALUE_S_(Spai0, "SPAI0")
+  STORM_ENUM_VALUE_(Spai0, "SPAI0")
 
   /// @brief @c SPAI preconditioner.
-  _STORM_ENUM_VALUE_S_(Spai, "SPAI")
+  STORM_ENUM_VALUE_(Spai, "SPAI")
 
   /// @brief @c Broyden preconditioner.
-  _STORM_ENUM_VALUE_(Broyden)
+  STORM_ENUM_VALUE_(Broyden)
   
   /// @brief @c BFGS preconditioner.
-  _STORM_ENUM_VALUE_S_(Bfgs, "BFGS")
+  STORM_ENUM_VALUE_(Bfgs, "BFGS")
 
   /// @brief @c Chebyshev polynomial preconditioner.
-  _STORM_ENUM_VALUE_(Chebyshev)
+  STORM_ENUM_VALUE_(Chebyshev)
 
   /// @brief @c Krylov preconditioner.
-  _STORM_ENUM_VALUE_(Krylov)
+  STORM_ENUM_VALUE_(Krylov)
 
 }; // class PreconditionerType
 

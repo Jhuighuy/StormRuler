@@ -32,7 +32,7 @@
 
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/SolverCg.hxx>
-#include <stormSolvers/SolverMinres.hxx>
+//#include <stormSolvers/SolverMinres.hxx>
 #include <stormSolvers/SolverCgs.hxx>
 #include <stormSolvers/SolverBiCgStab.hxx>
 #include <stormSolvers/SolverTfqmr.hxx>
@@ -50,74 +50,75 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 class SolverType final : public Enum<SolverType> {
   
-  _STORM_ENUM_(SolverType)
+  STORM_ENUM_(SolverType)
 
   /// @brief Default solver.
-  _STORM_ENUM_VALUE_S_(Default, {})
+  STORM_ENUM_VALUE_(Default)
 
   /// @brief @c CG iterative solver.
-  _STORM_ENUM_VALUE_S_(Cg, "CG")
+  STORM_ENUM_VALUE_(Cg, "CG")
 
   /// @brief @c FCG iterative solver.
-  _STORM_ENUM_VALUE_S_(Fcg, "FCG")
+  STORM_ENUM_VALUE_(Fcg, "FCG")
 
   /// @brief @c MINRES iterative solver.
-  _STORM_ENUM_VALUE_S_(Minres, "MINRES")
+  STORM_ENUM_VALUE_(Minres, "MINRES")
 
   /// @brief @c CGS iterative solver.
-  _STORM_ENUM_VALUE_S_(Cgs, "CGS")
+  STORM_ENUM_VALUE_(Cgs, "CGS")
 
   /// @brief @c BiCGStab iterative solver.
-  _STORM_ENUM_VALUE_S_(BiCgStab, "BiCgStab")
+  STORM_ENUM_VALUE_(BiCgStab, "BiCgStab")
 
   /// @brief @c BiCGStab(l) iterative solver.
-  _STORM_ENUM_VALUE_S_(BiCgStabL, "BiCgStab(l)")
+  STORM_ENUM_VALUE_(BiCgStabL, "BiCgStab(l)")
 
   /// @brief @c TFQMR iterative solver.
-  _STORM_ENUM_VALUE_S_(Tfqmr, "TFQMR")
+  STORM_ENUM_VALUE_(Tfqmr, "TFQMR")
 
   /// @brief @c TFQMR(1) iterative solver.
-  _STORM_ENUM_VALUE_S_(Tfqmr1, "TFQMR(1)")
+  STORM_ENUM_VALUE_(Tfqmr1, "TFQMR(1)")
 
   /// @brief @c IDR(s) iterative solver.
-  _STORM_ENUM_VALUE_S_(Idrs, "IDR(s)")
+  STORM_ENUM_VALUE_(Idrs, "IDR(s)")
 
   /// @brief @c GMRES iterative solver.
-  _STORM_ENUM_VALUE_S_(Gmres, "GMRES")
+  STORM_ENUM_VALUE_(Gmres, "GMRES")
 
   /// @brief @c FGMRES iterative solver.
-  _STORM_ENUM_VALUE_S_(Fgmres, "FGMRES")
+  STORM_ENUM_VALUE_(Fgmres, "FGMRES")
 
   /// @brief @c LGMRES iterative solver.
-  _STORM_ENUM_VALUE_S_(Lgmres, "LGMRES")
+  STORM_ENUM_VALUE_(Lgmres, "LGMRES")
 
   /// @brief @c LFGMRES iterative solver.
-  _STORM_ENUM_VALUE_S_(Lfgmres, "LFGMRES")
+  STORM_ENUM_VALUE_(Lfgmres, "LFGMRES")
 
   /// @brief @c LSQR iterative solver.
-  _STORM_ENUM_VALUE_S_(Lsqr, "LSQR")
+  STORM_ENUM_VALUE_(Lsqr, "LSQR")
 
   /// @brief @c LSMR iterative solver.
-  _STORM_ENUM_VALUE_S_(Lsmr, "LSMR")
+  STORM_ENUM_VALUE_(Lsmr, "LSMR")
 
   /// @brief @c Richardson iterative solver.
-  _STORM_ENUM_VALUE_(Richarson)
+  STORM_ENUM_VALUE_(Richarson)
 
   /// @brief @c Broyden iterative solver.
-  _STORM_ENUM_VALUE_(Broyden)
+  STORM_ENUM_VALUE_(Broyden)
 
   /// @brief @c Newton iterative solver.
-  _STORM_ENUM_VALUE_(Newton)
+  STORM_ENUM_VALUE_(Newton)
 
   /// @brief @c JFNK iterative solver.
-  _STORM_ENUM_VALUE_S_(Jfnk, "JFNK")
+  STORM_ENUM_VALUE_(Jfnk, "JFNK")
 
 }; // class SolverType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
-template<class InVector, class OutVector = InVector>
+template<VectorLike InVector, 
+         VectorLike OutVector = InVector>
 std::unique_ptr<IterativeSolver<InVector, OutVector>>
     MakeIterativeSolver(SolverType solverType = SolverType::Default) {
 
@@ -132,7 +133,7 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
       //return std::make_unique<FcgSolver<InVector>>();
     }
     if (solverType == SolverType::Minres) {
-      return std::make_unique<MinresSolver<InVector>>();
+      //return std::make_unique<MinresSolver<InVector>>();
     }
     if (solverType == SolverType::Cgs) {
       return std::make_unique<CgsSolver<InVector>>();
@@ -198,6 +199,6 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
 
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
-} // MakeSolver<...>
+} // MakeIterativeSolver<...>
 
 } // namespace Storm

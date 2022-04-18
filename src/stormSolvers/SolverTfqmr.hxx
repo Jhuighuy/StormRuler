@@ -35,7 +35,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
-template<class Vector, bool L1>
+template<VectorLike Vector, bool L1>
 class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
   real_t rho_, tau_;
@@ -83,7 +83,7 @@ protected:
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
 
 }; // class TfqmrSolver<...>
@@ -108,12 +108,12 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {
 
 }; // class Tfqmr1Solver<...>
 
-template<class Vector, bool L1>
+template<VectorLike Vector, bool L1>
 real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
                                          Vector const& bVec,
                                          Operator<Vector> const& linOp,
@@ -149,24 +149,24 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    Blas::Set(dVec_, xVec);
+    dVec_.Set(xVec);
   } else {
-    Blas::Fill(dVec_, 0.0);
+    dVec_.Fill(0.0);
   }
   linOp.Residual(yVec_, bVec, xVec);
   if (leftPre) {
     std::swap(zVec_, yVec_);
     preOp->MatVec(yVec_, zVec_);
   }
-  Blas::Set(uVec_, yVec_);
-  Blas::Set(rTildeVec_, uVec_);
-  rho_ = Blas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
+  uVec_.Set(yVec_);
+  rTildeVec_.Set(uVec_);
+  rho_ = rTildeVec_.Dot(uVec_), tau_ = std::sqrt(rho_);
 
   return tau_;
 
 } // BaseTfqmrSolver<...>::Init
 
-template<class Vector, bool L1>
+template<VectorLike Vector, bool L1>
 real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
                                             Vector const& bVec,
                                             Operator<Vector> const& linOp,
@@ -213,13 +213,13 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    Blas::Set(vVec_, sVec_);
+    vVec_.Set(sVec_);
   } else {
     real_t const rhoBar = rho_;
-    rho_ = Blas::Dot(rTildeVec_, uVec_);
+    rho_ = rTildeVec_.Dot(uVec_);
     real_t const beta = Utils::SafeDivide(rho_, rhoBar);
-    Blas::Add(vVec_, sVec_, vVec_, beta);
-    Blas::Add(yVec_, uVec_, yVec_, beta);
+    vVec_.Add(sVec_, vVec_, beta);
+    yVec_.Add(uVec_, yVec_, beta);
     if (leftPre) {
       preOp->MatVec(sVec_, zVec_, linOp, yVec_);
     } else if (rightPre) {
@@ -227,7 +227,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    Blas::Add(vVec_, sVec_, vVec_, beta);
+    vVec_.Add(sVec_, vVec_, beta);
   }
 
   // ----------------------
@@ -260,23 +260,23 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   real_t const alpha =
-    Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
+    Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_));
   for (size_t m = 0; m <= 1; ++m) {
-    Blas::Sub(uVec_, uVec_, sVec_, alpha);
-    Blas::Add(dVec_, dVec_, rightPre ? zVec_ : yVec_, alpha);
-    real_t const omega = Blas::Norm2(uVec_);
+    uVec_.SubAssign(sVec_, alpha);
+    dVec_.AddAssign(rightPre ? zVec_ : yVec_, alpha);
+    real_t const omega = uVec_.Norm2();
     if constexpr (L1) {
       if (omega < tau_) {
-        tau_ = omega, Blas::Set(xVec, dVec_);
+        tau_ = omega, xVec.Set(dVec_);
       }
     } else {
       auto const [cs, sn, rr] = Blas::SymOrtho(tau_, omega);
       tau_ = omega*cs;
-      Blas::Add(xVec, xVec, dVec_, std::pow(cs, 2));
-      Blas::Scale(dVec_, dVec_, std::pow(sn, 2));
+      xVec.AddAssign(dVec_, std::pow(cs, 2));
+      dVec_.ScaleAssign(std::pow(sn, 2));
     }
     if (m == 0) {
-      Blas::Sub(yVec_, yVec_, vVec_, alpha);
+      yVec_.SubAssign(vVec_, alpha);
       if (leftPre) {
         preOp->MatVec(sVec_, zVec_, linOp, yVec_);
       } else if (rightPre) {

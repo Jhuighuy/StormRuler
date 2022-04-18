@@ -48,7 +48,7 @@ namespace Storm {
 ///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
   real_t rho_;
@@ -66,7 +66,7 @@ private:
 
 }; // class CgsSolver<...>
 
-template<class Vector>
+template<VectorLike Vector>
 real_t CgsSolver<Vector>::Init(Vector const& xVec,
                                Vector const& bVec,
                                Operator<Vector> const& linOp,
@@ -96,14 +96,14 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec,
     std::swap(uVec_, rVec_);
     preOp->MatVec(rVec_, uVec_);
   }
-  Blas::Set(rTildeVec_, rVec_);
-  rho_ = Blas::Dot(rTildeVec_, rVec_);
+  rTildeVec_.Set(rVec_);
+  rho_ = rTildeVec_.Dot(rVec_);
 
   return std::sqrt(rho_);
 
 } // CgsSolver<...>::Init
 
-template<class Vector>
+template<VectorLike Vector>
 real_t CgsSolver<Vector>::Iterate(Vector& xVec,
                                   Vector const& bVec,
                                   Operator<Vector> const& linOp,
@@ -130,15 +130,15 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
-    Blas::Set(uVec_, rVec_);
-    Blas::Set(pVec_, uVec_);
+    uVec_.Set(rVec_);
+    pVec_.Set(uVec_);
   } else {
     real_t const rhoBar = rho_; 
-    rho_ = Blas::Dot(rTildeVec_, rVec_);
+    rho_ = rTildeVec_.Dot(rVec_);
     real_t const beta = Utils::SafeDivide(rho_, rhoBar);
-    Blas::Add(uVec_, rVec_, qVec_, beta);
-    Blas::Add(pVec_, qVec_, pVec_, beta);
-    Blas::Add(pVec_, uVec_, pVec_, beta);
+    uVec_.Add(rVec_, qVec_, beta);
+    pVec_.Add(qVec_, pVec_, beta);
+    pVec_.Add(uVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -161,9 +161,9 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
     linOp.MatVec(vVec_, pVec_);
   }
   real_t const alpha = 
-    Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
-  Blas::Sub(qVec_, uVec_, vVec_, alpha);
-  Blas::Add(vVec_, uVec_, qVec_);
+    Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_));
+  qVec_.Sub(uVec_, vVec_, alpha);
+  vVec_.Add(uVec_, qVec_);
 
   // ----------------------
   // Update the solution and the residual:
@@ -182,20 +182,20 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    Blas::Add(xVec, xVec, vVec_, alpha);
+    xVec.AddAssign(vVec_, alpha);
     preOp->MatVec(vVec_, uVec_, linOp, vVec_);
-    Blas::Sub(rVec_, rVec_, vVec_, alpha);
+    rVec_.SubAssign(vVec_, alpha);
   } else if (rightPre) {
     linOp.MatVec(vVec_, uVec_, *preOp, vVec_);
-    Blas::Add(xVec, xVec, uVec_, alpha);
-    Blas::Sub(rVec_, rVec_, vVec_, alpha);
+    xVec.AddAssign(uVec_, alpha);
+    rVec_.SubAssign(vVec_, alpha);
   } else {
     linOp.MatVec(uVec_, vVec_);
-    Blas::Add(xVec, xVec, vVec_, alpha);
-    Blas::Sub(rVec_, rVec_, uVec_, alpha);
+    xVec.AddAssign(vVec_, alpha);
+    rVec_.SubAssign(uVec_, alpha);
   }
 
-  return Blas::Norm2(rVec_);
+  return rVec_.Norm2();
 
 } // CgsSolver<...>::Iterate
 

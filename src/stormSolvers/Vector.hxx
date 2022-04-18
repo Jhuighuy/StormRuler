@@ -25,28 +25,21 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
-
 #include <stormBase.hxx>
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief @c GLM vector.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<size_t Dim>
-using GVec = glm::vec<Dim, real_t>;
+template<class Vector>
+concept VectorLike = requires(Vector xVec) {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief @c GLM integer vector.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<size_t Dim>
-using IVec = glm::vec<Dim, int>;
+  xVec.Assign(xVec, false);
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief @c GLM matrix.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<size_t Dim>
-using GMat = glm::mat<Dim, Dim, real_t>;
+}; // concept VectorLike
+
+template<class Operator, class InVector, class OutVector = InVector>
+concept OperatorLike =
+  requires (Operator& anyOp, 
+            OutVector& yVec, 
+            InVector const& xVec) { anyOp(yVec, xVec); };
 
 } // namespace Storm

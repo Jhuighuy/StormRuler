@@ -48,7 +48,7 @@ namespace Storm {
 ///     ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
   real_t omega_;
@@ -80,7 +80,7 @@ public:
 
 }; // class IdrsSolver<...>
 
-template<class Vector>
+template<VectorLike Vector>
 real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
                                      Vector const& bVec,
                                      Operator<Vector> const& linOp,
@@ -118,13 +118,13 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
     std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  phi_(0) = Blas::Norm2(rVec_);
+  phi_(0) = rVec_.Norm2();
 
   return phi_(0);
 
 } // IdrsSolver<...>::OuterInit
 
-template<class Vector>
+template<VectorLike Vector>
 void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
                                    Vector const& bVec,
                                    Operator<Vector> const& linOp,
@@ -155,27 +155,26 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
   bool const firstIteration = this->Iteration == 0;
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    Blas::Scale(pVecs_(0), rVec_, 1.0/phi_(0));
+    pVecs_(0).Scale(rVec_, 1.0/phi_(0));
     for (size_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      Blas::RandFill(pVecs_(i));
+      pVecs_(i).RandFill();
       for (size_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
-        Blas::Sub(pVecs_(i), pVecs_(i),
-          pVecs_(j), Blas::Dot(pVecs_(i), pVecs_(j)));
+        pVecs_(i).SubAssign(
+          pVecs_(j), pVecs_(i).Dot(pVecs_(j)));
       }
-      Blas::Scale(pVecs_(i),
-        pVecs_(i), 1.0/Blas::Norm2(pVecs_(i)));
+      pVecs_(i).ScaleAssign(1.0/pVecs_(i).Norm2());
     }
   } else {
     for (size_t i = 0; i < s; ++i) {
-      phi_(i) = Blas::Dot(pVecs_(i), rVec_);
+      phi_(i) = pVecs_(i).Dot(rVec_);
     }
   }
 
 } // IdrsSolver<...>::InnerInit
 
-template<class Vector>
+template<VectorLike Vector>
 real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
                                         Vector const& bVec,
                                         Operator<Vector> const& linOp,
@@ -221,17 +220,17 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒈ₖ ← 𝓐𝒖ₖ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  Blas::Sub(vVec_, rVec_, gVecs_(k), gamma_(k));
+  vVec_.Sub(rVec_, gVecs_(k), gamma_(k));
   for (size_t i = k + 1; i < s; ++i) {
-    Blas::Sub(vVec_, vVec_, gVecs_(i), gamma_(i));
+    vVec_.SubAssign(gVecs_(i), gamma_(i));
   }
   if (rightPre) {
     std::swap(zVec_, vVec_);
     preOp->MatVec(vVec_, zVec_);
   }
-  Blas::Add(uVecs_(k), uVecs_(k), gamma_(k), vVec_, omega_);
+  uVecs_(k).Add(uVecs_(k), gamma_(k), vVec_, omega_);
   for (size_t i = k + 1; i < s; ++i) {
-    Blas::Add(uVecs_(k), uVecs_(k), uVecs_(i), gamma_(i));
+    uVecs_(k).AddAssign(uVecs_(i), gamma_(i));
   }
   if (leftPre) {
     preOp->MatVec(gVecs_(k), zVec_, linOp, uVecs_(k));
@@ -249,9 +248,9 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // ----------------------
   for (size_t i = 0; i < k; ++i) {
     real_t const alpha =
-      Utils::SafeDivide(Blas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i));
-    Blas::Sub(uVecs_(k), uVecs_(k), uVecs_(i), alpha);
-    Blas::Sub(gVecs_(k), gVecs_(k), gVecs_(i), alpha);
+      Utils::SafeDivide(pVecs_(i).Dot(gVecs_(k)), mu_(i, i));
+    uVecs_(k).SubAssign(uVecs_(i), alpha);
+    gVecs_(k).SubAssign(gVecs_(i), alpha);
   }
 
   // ----------------------
@@ -261,7 +260,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (size_t i = k; i < s; ++i) {
-    mu_(i, k) = Blas::Dot(pVecs_(i), gVecs_(k));
+    mu_(i, k) = pVecs_(i).Dot(gVecs_(k));
   }
 
   // ----------------------
@@ -271,8 +270,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
   real_t const beta = Utils::SafeDivide(phi_(k), mu_(k, k));
-  Blas::Add(xVec, xVec, uVecs_(k), beta);
-  Blas::Sub(rVec_, rVec_, gVecs_(k), beta);
+  xVec.AddAssign(uVecs_(k), beta);
+  rVec_.SubAssign(gVecs_(k), beta);
 
   // ----------------------
   // Update 𝜑:
@@ -304,12 +303,12 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
       linOp.MatVec(vVec_, rVec_);
     }
     omega_ = Utils::SafeDivide(
-      Blas::Dot(vVec_, rVec_), Blas::Dot(vVec_, vVec_));
-    Blas::Add(xVec, xVec, rightPre ? zVec_ : rVec_, omega_);
-    Blas::Sub(rVec_, rVec_, vVec_, omega_);
+      vVec_.Dot(rVec_), vVec_.Dot(vVec_));
+    xVec.AddAssign(rightPre ? zVec_ : rVec_, omega_);
+    rVec_.SubAssign(vVec_, omega_);
   }
 
-  return Blas::Norm2(rVec_);
+  return rVec_.Norm2();
 
 } // IdrsSolver<...>::InnerIterate
 

@@ -31,7 +31,9 @@
 #include <stdexcept>
 
 #include <stormBase.hxx>
-#include <stormBlas/Operator.hxx>
+#include <stormUtils/Class.hxx>
+
+#include <stormSolvers/Operator.hxx>
 #include <stormSolvers/Preconditioner.hxx>
 
 namespace Storm {
@@ -39,9 +41,10 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class InVector, class OutVector = InVector>
-class Solver : public BaseObject {
+template<VectorLike InVector, VectorLike OutVector = InVector>
+class Solver : public Object {
 public:
+  STORM_CLASS_(Solver, Object)
 
   /// @brief Solve the operator equation 𝓐(𝒙) = 𝒃.
   ///
@@ -59,18 +62,22 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class InVector, class OutVector = InVector>
+template<VectorLike InVector, VectorLike OutVector = InVector>
 class IterativeSolver : public Solver<InVector, OutVector> {
 public:
-  size_t Iteration = 0;
-  size_t NumIterations = 2000;
-  real_t AbsoluteError = 0.0, RelativeError = 0.0;
-  real_t AbsoluteTolerance = 1.0e-6, RelativeTolerance = 1.0e-6;
-  bool VerifySolution = true;
+  STORM_CLASS_(IterativeSolver, Solver<InVector, OutVector>)
 
-public:
-  PreconditionerSide PreSide = PreconditionerSide::Right;
-  std::unique_ptr<Preconditioner<InVector>> PreOp = nullptr;
+  STORM_FIELD_(size_t, Iteration, {0})
+  STORM_FIELD_(size_t, NumIterations, {2000})
+  STORM_FIELD_(real_t, AbsoluteError, {0.0}) 
+  STORM_FIELD_(real_t, RelativeError, {0.0}) 
+
+  STORM_FIELD_(real_t, AbsoluteTolerance, {1.0e-6}) 
+  STORM_FIELD_(real_t, RelativeTolerance, {1.0e-6}) 
+  STORM_FIELD_(bool, VerifySolution, {true})
+
+  STORM_FIELD_(PreconditionerSide, PreSide, {PreconditionerSide::Right})
+  STORM_FIELD_(std::unique_ptr<Preconditioner<InVector>>, PreOp, {nullptr})
 
 protected:
 
@@ -119,7 +126,7 @@ public:
 
 }; // class IterativeSolver<...>
 
-template<class InVector, class OutVector>
+template<VectorLike InVector, VectorLike OutVector>
 bool IterativeSolver<InVector, OutVector>::
                           Solve(InVector& xVec,
                                 OutVector const& bVec,
@@ -133,8 +140,6 @@ bool IterativeSolver<InVector, OutVector>::
   }
   real_t const initialError =
     (AbsoluteError = Init(xVec, bVec, anyOp, PreOp.get()));
-  //std::ofstream errorFile("residual.txt");
-  //errorFile << initialError << std::endl;
   std::cout << std::fixed << std::scientific << std::setprecision(15);
   std::cout << "\tI\t" << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
@@ -155,10 +160,9 @@ bool IterativeSolver<InVector, OutVector>::
     converged |=
       (RelativeTolerance > 0.0) && (RelativeError < RelativeTolerance);
 
-    if (Iteration % 1 == 0 || converged) {
+    if (Iteration % 20 == 0 || converged) {
       std::cout << "\t" << (Iteration + 1) << "\t"
         << AbsoluteError << "\t" << RelativeError << std::endl;
-      //errorFile << AbsoluteError << std::endl;
     }
   }
 
@@ -170,24 +174,10 @@ bool IterativeSolver<InVector, OutVector>::
     rVec.Assign(bVec, false);
     anyOp.Residual(rVec, bVec, xVec);
     real_t const
-      trueAbsoluteError = Blas::Norm2(rVec),
+      trueAbsoluteError = rVec.Norm2(),
       trueRelativeError = trueAbsoluteError/initialError;
     std::cout << "\tT\t"
       << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
-    //if constexpr (std::is_same_v<InVector, OutVector>) {
-    //  if (PreOp != nullptr && PreSide == PreconditionerSide::Left) {
-    //    InVector zVec;
-    //    zVec.Assign(xVec, false);
-    //    PreOp->MatVec(zVec, rVec);
-    //    real_t const
-    //      truePreAbsoluteError = Blas::Norm2(zVec),
-    //      truePreRelativeError = truePreAbsoluteError/initialError;
-    //    std::cout << "\tP\t"
-    //      << truePreAbsoluteError << "\t" 
-    //      << truePreRelativeError << "\t"
-    //      << trueAbsoluteError/truePreAbsoluteError << std::endl;
-    //  }
-    //}
     std::cout << "\t----------------------" << std::endl;
   }
 
@@ -198,11 +188,13 @@ bool IterativeSolver<InVector, OutVector>::
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class InVector, class OutVector = InVector>
+template<VectorLike InVector, VectorLike OutVector = InVector>
 class InnerOuterIterativeSolver : public IterativeSolver<InVector, OutVector> {
 public:
-  size_t InnerIteration = 0;
-  size_t NumInnerIterations = 50;
+  STORM_CLASS_(InnerOuterIterativeSolver, IterativeSolver<InVector, OutVector>)
+
+  STORM_FIELD_(size_t, InnerIteration, {0})
+  STORM_FIELD_(size_t, NumInnerIterations, {50})
 
 protected:
 
@@ -312,11 +304,44 @@ private:
 
 }; // class InnerOuterIterativeSolver<...>
 
+/// ----------------------------------------------------------------- ///
+/// @brief Solve the operator equation 𝓐(𝒙) = 𝒃, \
+///   when 𝓐(𝒙) is the non-uniform operator (𝓐(𝟢) ≠ 𝟢).
+/// ----------------------------------------------------------------- ///
+template<VectorLike Vector>
+bool SolveNonUniform(Solver<Vector>& solver,
+                     Vector& xVec,
+                     Vector const& bVec,
+                     Operator<Vector> const& anyOp) {
+
+  Vector zVec, fVec;
+
+  zVec.Assign(xVec, false);
+  fVec.Assign(bVec, false);
+
+  // ----------------------
+  // Solve an equation with the "uniformed" operator:
+  // 𝓐(𝒙) - 𝓐(𝟢) = 𝒃 - 𝓐(𝟢).
+  // ----------------------
+  fVec.Fill(0.0);
+  anyOp.MatVec(zVec, fVec);
+  fVec.Sub(bVec, zVec);
+  
+  auto const uniOp = MakeOperator<Vector>(
+    [&](Vector& yVec, Vector const& xVec) {
+      anyOp.MatVec(yVec, xVec);
+      yVec.SubAssign(zVec);
+    });
+
+  return solver.Solve(xVec, fVec, *uniOp);
+
+} // SolveNonUniform<...>
+
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
-class PowerIterations final : public BaseObject {
+template<VectorLike Vector>
+class PowerIterations final : public Object {
 public:
 
   /// @brief Estimate the largest eigenvalue of \
@@ -339,7 +364,7 @@ public:
 
 }; // class PowerIterations<...>
 
-template<class Vector>
+template<VectorLike Vector>
 real_t PowerIterations<Vector>::
     EstimateLargestEigenvalue(Vector& xVec,
                               Operator<Vector> const& linOp,
@@ -356,8 +381,8 @@ real_t PowerIterations<Vector>::
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
   real_t lambda = 1.0;
-  Blas::RandFill(xVec);
-  Blas::Scale(xVec, xVec, 1.0/Blas::Norm2(xVec));
+  xVec.RandFill();
+  xVec.ScaleAssign(1.0/xVec.Norm2());
 
   for (size_t iteration = 0; iteration < maxIterations; ++iteration) {
 
@@ -369,8 +394,8 @@ real_t PowerIterations<Vector>::
     // ----------------------
     linOp.MatVec(yVec, xVec);
     //real_t const lambdaBar = lambda;
-    lambda = Blas::Dot(xVec, yVec);
-    Blas::Scale(xVec, yVec, 1.0/Blas::Norm2(yVec));
+    lambda = xVec.Dot(yVec);
+    xVec.Scale(yVec, 1.0/yVec.Norm2());
 
     // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:

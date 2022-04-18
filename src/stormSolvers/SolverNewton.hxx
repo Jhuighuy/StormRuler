@@ -101,7 +101,7 @@ private:
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
   Vector sVec_, tVec_, rVec_, wVec_;
@@ -118,7 +118,7 @@ private:
 
 }; // class JfnkSolver<...>
 
-template<class Vector>
+template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Init(Vector const& xVec,
                                 Vector const& bVec,
                                 Operator<Vector> const& linOp,
@@ -134,13 +134,13 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   linOp.MatVec(wVec_, xVec);
-  Blas::Sub(rVec_, bVec, wVec_);
+  rVec_.Sub(bVec, wVec_);
 
-  return Blas::Norm2(rVec_);  
+  return rVec_.Norm2();  
 
 } // JfnkSolver<...>::Init
 
-template<class Vector>
+template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
                                    Vector const& bVec,
                                    Operator<Vector> const& linOp,
@@ -155,8 +155,8 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
   static real_t const sqrtOfEpsilon = 
     std::sqrt(std::numeric_limits<real_t>::epsilon());
   real_t const mu = 
-    sqrtOfEpsilon*std::sqrt(1.0 + Blas::Norm2(xVec));
-  Blas::Set(tVec_, rVec_);
+    sqrtOfEpsilon*std::sqrt(1.0 + xVec.Norm2());
+  tVec_.Set(rVec_);
   {
     /// @todo Refactor me!
     /// @todo equation parameters!
@@ -176,11 +176,11 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         real_t const delta = 
-          Utils::SafeDivide(mu, Blas::Norm2(yVec));
-        Blas::Add(sVec_, xVec, yVec, delta);
+          Utils::SafeDivide(mu, yVec.Norm2());
+        sVec_.Add(xVec, yVec, delta);
         linOp.MatVec(zVec, sVec_);
         real_t const deltaInverse = Utils::SafeDivide(1.0, delta);
-        Blas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
+        zVec.Sub(zVec, deltaInverse, wVec_, deltaInverse);
 
       });
     solver->Solve(tVec_, rVec_, *op);
@@ -192,11 +192,11 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  Blas::Add(xVec, xVec, tVec_);
+  xVec.AddAssign(tVec_);
   linOp.MatVec(wVec_, xVec);
-  Blas::Sub(rVec_, bVec, wVec_);
+  rVec_.Sub(bVec, wVec_);
 
-  return Blas::Norm2(rVec_);  
+  return rVec_.Norm2();  
 
 } // JfnkSolver<...>::Iterate
 

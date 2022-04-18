@@ -31,56 +31,39 @@
 #include <cmath>
 
 #include <stormBase.hxx>
+#include <stormSolvers/Vector.hxx>
 
 namespace Storm {
-
-class BaseObject {
-public:
-  virtual ~BaseObject() = default;
-}; // class BaseObject
 
 class stormArray {
 public:
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
   std::shared_ptr<int> RefCounter;
-private:
-  real_t* Data_ = nullptr;
-  size_t Size_ = 0;
 
 public:
+
   stormArray() = default;
+
   stormArray(stormMesh_t mesh, stormArray_t array): Mesh(mesh), Array(array) {
     RefCounter = std::make_shared<int>(2);
-    stormArrayUnwrap(Array, &Data_, &Size_);
   }
+
   stormArray(stormArray&& oth): Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
-    Data_ = oth.Data_, Size_ = oth.Size_;
   }
+
   stormArray(stormArray const& oth): Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
-    Data_ = oth.Data_, Size_ = oth.Size_;
   }
+
   ~stormArray() {
     if (RefCounter) {
       *RefCounter -= 1;
       if (*RefCounter == 0) stormFree(Array);
     }
-  }
-
-  size_t Size() const noexcept {
-    return Size_;
-  }
-  real_t& operator()(size_t index) {
-    //stormAssert(index < Size_);
-    return Data_[index];
-  }
-  real_t const& operator()(size_t index) const {
-    //stormAssert(index < Size_);
-    return Data_[index];
   }
 
   stormArray& operator=(stormArray&& oth) {
@@ -97,111 +80,104 @@ public:
   void Assign(stormArray const& like, bool copy = true) {
     Mesh = like.Mesh;
     Array = stormAllocLike(like.Array);
-    stormArrayUnwrap(Array, &Data_, &Size_);
     if (copy) stormSet(Mesh, Array, like.Array);
+  }
+
+  real_t Dot(stormArray const& y) const {
+    return stormDot(Mesh, Array, y.Array);
+  }
+  real_t Norm2() const {
+    return stormNorm2(Mesh, Array);
+  }
+
+  void Set(stormArray const& y) {
+    stormSet(Mesh, Array, y.Array);
+  }
+
+  void Fill(real_t a) {
+    stormFill(Mesh, Array, a);
+  }
+  void RandFill() {
+    stormRandFill(Mesh, Array);
+  }
+
+  void Scale(stormArray const& y, real_t a) {
+    stormScale(Mesh, Array, y.Array, a);
+  }
+
+  void ScaleAssign(real_t a) {
+    Scale(*this, a);
+  }
+
+  void Add(stormArray const& y, 
+           stormArray const& x) {
+    stormAdd(Mesh, Array, y.Array, x.Array);
+  }
+  void Add(stormArray const& y, 
+           stormArray const& x, real_t a) {
+    stormAdd(Mesh, Array, y.Array, x.Array, a);
+  }
+  void Add(stormArray const& y, real_t b,
+           stormArray const& x, real_t a) {
+    stormAdd(Mesh, Array, y.Array, x.Array, a, b);
+  }
+
+  void AddAssign(stormArray const& y) {
+    Add(*this, y);
+  }
+  void AddAssign(stormArray const& y, real_t a) {
+    Add(*this, y, a);
+  }
+
+  void Sub(stormArray const& y, 
+           stormArray const& x) {
+    stormSub(Mesh, Array, y.Array, x.Array);
+  }
+  void Sub(stormArray const& y, 
+           stormArray const& x, real_t a) {
+    stormSub(Mesh, Array, y.Array, x.Array, a);
+  }
+  void Sub(stormArray const& y, real_t b, 
+           stormArray const& x, real_t a) {
+    stormSub(Mesh, Array, y.Array, x.Array, a, b);
+  }
+
+  void SubAssign(stormArray const& y) {
+    Sub(*this, y);
+  }
+  void SubAssign(stormArray const& y, real_t a) {
+    Sub(*this, y, a);
   }
 
 };
 
-template<class Value>
-class Array {
-private:
-  size_t Size_ = 0;
-  std::vector<Value> Data_;
+namespace Blas {
 
-public:
+  /// @brief Generate Givens rotation.
+  template<class Real>
+  inline auto SymOrtho(Real a, Real b) {
 
-  explicit Array(size_t size) :
-      Size_(size), Data_(size) {
-  }
-  Array(size_t size, size_t fullSize) :
-      Size_(size), Data_(fullSize) {
-  }
-
-  Array() = default;
-
-  Array(Array const&) = default;
-
-  Array(Array&&) noexcept = default;
-
-  ~Array() = default;
-
-  Array& operator=(Array&&) = default;
-
-  Array& operator=(Array const&) = default;
-
-  void Assign(Array const& array, bool copy = true) {
-    Size_ = array.Size_;
-    if (copy) {
-      Data_ = array.Data_;
+    // ----------------------
+    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+    // ----------------------
+    Real cs, sn, rr;
+    rr = std::hypot(a, b);
+    if (rr > 0.0) {
+      cs = a/rr; sn = b/rr;
     } else {
-      Data_.resize(array.Data_.size());
+      cs = 1.0; sn = 0.0;
     }
-  }
 
-  size_t Size() const noexcept {
-    return Size_;
-  }
+    return std::make_tuple(cs, sn, rr);
 
-  size_t FullSize() const noexcept {
-    return Data_.size();
-  }
+  } // SymOrtho
 
-  Value& operator()(size_t index) noexcept {
-    StormAssert(index < Data_.size());
-    return Data_[index];
-  }
-  Value const& operator()(size_t index) const noexcept {
-    StormAssert(index < Data_.size());
-    return Data_[index];
-  }
-
-}; // class Array<...>
-
-namespace Utils {
-  
-  real_t SafeDivide(real_t x, real_t y) {
-    return (y == 0.0) ? 0.0 : (x/y);
-  }
-
-  real_t& SafeDivideEquals(real_t& x, real_t y) {
-    x = SafeDivide(x, y);
-    return x;
-  }
-
-} // namespace Utils
-
-#if 0
-inline void ToArray(Array<real_t>& to, stormArray const& from) {
-  for (size_t i = 0; i < 15906; ++i) {
-    to(i) = from(i); 
-  }
-}
-inline void FromArray(stormArray& to, 
-                      Array<real_t> const& from) {
-  for (size_t i = 0; i < 15906; ++i) {
-    to(i) = from(i); 
-  }
-}
-
-template<class Func>
-void ParallelFor(size_t first, size_t last, Func&& func) {
-  for (size_t index = first; index <= last; ++index) {
-    func(index);
-  }
-}
-
-template<class Value, class Func>
-auto ParallelSum(size_t first, size_t last, Value init, Func&& func) {
-  for (size_t index = first; index <= last; ++index) {
-    init += func(index);
-  }
-  return init;
-}
-#endif
+} // namespace Blas
 
 namespace Blas {
 
+#if 0
   real_t Dot(stormArray const& z, stormArray const& y) {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
@@ -255,110 +231,6 @@ namespace Blas {
            stormArray const& x, real_t a) {
     stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
   }
-
-#if 0
-  template<class Value>
-  Value Dot(Array<Value> const& xVec, 
-            Array<Value> const& yVec) {
-        
-    return ParallelSum(0, xVec.Size(), Value(0),
-      [&](size_t i) { return xVec(i)*yVec(i); });
-  }
-
-  template<class Value>
-  auto Norm2(Array<Value> const& xVec) {
-        
-    return std::sqrt(Dot(xVec, xVec));
-  }
-
-  template<class Value>
-  void Set(Array<Value>& xVec, 
-           Array<Value> const& yVec) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = yVec(i); });
-
-  } // Set<...>
-
-  template<class Value>
-  void Fill(Array<Value>& xVec, 
-            Value const& alpha) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = alpha; });
-
-  } // Fill<...>
-  template<class Value>
-  void RandFill(Array<Value>& xVec) {
-
-    _STORM_NOT_IMPLEMENTED_();
-
-  } // RandFill<...>
-
-  template<class Value>
-  void Scale(Array<Value>& xVec, 
-             Array<Value> const& yVec, real_t alpha) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = alpha*yVec(i); });
-
-  } // Scale<...>
-
-  template<class Value>
-  void Add(Array<Value>& xVec, 
-           Array<Value> const& yVec,
-           Array<Value> const& zVec) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = yVec(i) + zVec(i); });
-
-  } // Add<...>
-  template<class Value>
-  void Add(Array<Value>& xVec, 
-           Array<Value> const& yVec,
-           Array<Value> const& zVec, real_t beta) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = yVec(i) + beta*zVec(i); });
-
-  } // Add<...>
-  template<class Value>
-  void Add(Array<Value>& xVec, 
-           Array<Value> const& yVec, real_t alpha,
-           Array<Value> const& zVec, real_t beta) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = alpha*yVec(i) + beta*zVec(i); });
-
-  } // Add<...>
-
-  template<class Value>
-  void Sub(Array<Value>& xVec, 
-           Array<Value> const& yVec,
-           Array<Value> const& zVec) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = yVec(i) - zVec(i); });
-
-  } // Sub<...>
-  template<class Value>
-  void Sub(Array<Value>& xVec, 
-           Array<Value> const& yVec,
-           Array<Value> const& zVec, real_t beta) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = yVec(i) - beta*zVec(i); });
-
-  } // Sub<...>
-  template<class Value>
-  void Sub(Array<Value>& xVec, 
-           Array<Value> const& yVec, real_t alpha,
-           Array<Value> const& zVec, real_t beta) {
-
-    ParallelFor(0, xVec.Size(), 
-      [&](size_t i) { xVec(i) = alpha*yVec(i) - beta*zVec(i); });
-
-  } // Sub<...>
 #endif
 
 } // namespace Blas
@@ -366,8 +238,8 @@ namespace Blas {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class InVector, class OutVector = InVector>
-class Operator : public BaseObject {
+template<VectorLike InVector, VectorLike OutVector = InVector>
+class Operator : public Object {
 public:
 
   /// @brief Compute an operator-vector product, 𝒚 ← 𝓐(𝒙).
@@ -383,7 +255,7 @@ public:
   /// @param zVec Output vector, 𝒛.
   /// @param yVec Intermediate vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
-  template<class InOutVector = InVector>
+  template<VectorLike InOutVector = InVector>
   void MatVec(OutVector& zVec,
               InOutVector& yVec,
               Operator<InVector, InOutVector> const& otherOp,
@@ -401,7 +273,7 @@ public:
                 OutVector const& bVec,
                 InVector const& xVec) const {
     MatVec(rVec, xVec);
-    Blas::Sub(rVec, bVec, rVec);
+    rVec.Sub(bVec, rVec);
   }
 
   /// @brief Compute a residual norm, ‖𝒃 - 𝓐𝒙‖.
@@ -413,7 +285,7 @@ public:
     OutVector rVec;
     rVec.Assign(bVec, false);
     Residual(rVec, bVec, xVec);
-    return Blas::Norm2(rVec);
+    return rVec.Norm2();
   }
 
   /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
@@ -431,7 +303,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class InVector, class OutVector = InVector>
+template<VectorLike InVector, VectorLike OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
   std::function<void(OutVector&, InVector const&)> MatVecFunc_;
@@ -444,17 +316,18 @@ public:
   /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
   /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   /// @{
-  template<class MatVecFunc>
+  template<OperatorLike<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc) :
       MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
-    stormAssert(MatVecFunc_);
+    StormAssert(MatVecFunc_);
   }
-  template<class MatVecFunc, class ConjMatVecFunc>
+  template<OperatorLike<InVector, OutVector> MatVecFunc, 
+           OperatorLike<OutVector, InVector> ConjMatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc,
                               ConjMatVecFunc&& conjMatVecFunc) :
       MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
       ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
-    stormAssert(MatVecFunc_ && ConjMatVecFunc_);
+    StormAssert(MatVecFunc_ && ConjMatVecFunc_);
   }
   /// @}
 
@@ -484,16 +357,19 @@ private:
 /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
 /// @{
-template<class InVector, class OutVector = InVector, 
-         class MatVecFunc>
+template<VectorLike InVector, 
+         VectorLike OutVector = InVector, 
+         OperatorLike<InVector, OutVector> MatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc) {
 
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
     std::forward<MatVecFunc>(matVecFunc));
 
 } // MakeOperator<...>
-template<class InVector, class OutVector = InVector, 
-         class MatVecFunc, class ConjMatVecFunc>
+template<VectorLike InVector, 
+         VectorLike OutVector = InVector, 
+         OperatorLike<InVector, OutVector> MatVecFunc, 
+         OperatorLike<OutVector, InVector> ConjMatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc,
                   ConjMatVecFunc&& conjMatVecFunc) {
 
@@ -507,7 +383,8 @@ auto MakeOperator(MatVecFunc&& matVecFunc,
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<class Vector, class MatVecFunc>
+template<VectorLike Vector, 
+         OperatorLike<Vector> MatVecFunc>
 auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
 
   return std::make_unique<FunctionalOperator<Vector>>(

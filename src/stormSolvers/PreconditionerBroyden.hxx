@@ -35,7 +35,7 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief @c Broyden's method preconditioner.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class BroydenPreconditioner final : public Preconditioner<Vector> {
 public:
   size_t Rank = 40;
@@ -57,11 +57,12 @@ private:
 
 }; // class BroydenPreconditioner<...>
 
-template<class Vector>
+template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::Build(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp) {
 
+#if 0
   size_t const m = Rank;
 
   Vector rVec, qVec, yVec;
@@ -128,10 +129,12 @@ void BroydenPreconditioner<Vector>::Build(Vector const& xVec,
   //  powerIterations.EstimateLargestEigenvalue(qVec, *leftPreOp/**this*/, 200);
   //std::cout << "My lambda max = " << sigma_ << " " << 1.0/sigma_ << std::endl;
   //abort();
+#endif
+  abort();
 
 } // BroydenPreconditioner<...>::Build
 
-template<class Vector>
+template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::MatVec(Vector& yVec,
                                            Vector const& xVec) const {
 
@@ -146,11 +149,12 @@ void BroydenPreconditioner<Vector>::MatVec(Vector& yVec,
 
 } // BroydenPreconditioner<...>::MatVec
 
-template<class Vector>
+template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::MatVec(size_t k,
                                            Vector& yVec,
                                            Vector const& xVec) const {
 
+#if 0
   Blas::Scale(yVec, xVec, 1.0/omega_);
   for (size_t i = 0; i < k; ++i) {
     Blas::Add(yVec, yVec, uVecs_(i), Blas::Dot(vVecs_(i), yVec));
@@ -177,10 +181,11 @@ void BroydenPreconditioner<Vector>::MatVec(size_t k,
   // ----------------------
   Blas::Add(yVec, yVec, uVecs_(k), Blas::Dot(vVecs_(k), yVec));
 #endif
+#endif
 
 } // BroydenPreconditioner<...>::MatVec
 
-template<class Vector>
+template<VectorLike Vector>
 class BfgsPreconditioner final : public Preconditioner<Vector> {
 public:
   size_t Rank = 20;
@@ -203,11 +208,12 @@ private:
 
 }; // class BfgsPreconditioner<...>
 
-template<class Vector>
+template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::Build(Vector const& xVec,
                                        Vector const& bVec,
                                        Operator<Vector> const& linOp) {
 
+#if 0
   size_t const m = Rank;
 
   real_t alpha;
@@ -282,10 +288,11 @@ void BfgsPreconditioner<Vector>::Build(Vector const& xVec,
   }
 
   omega_ = 1.0/(rho_(m - 1)*Blas::Dot(yVecs_(m - 1), yVecs_(m - 1)));
+#endif
 
 } // BfgsPreconditioner<...>::Build
 
-template<class Vector>
+template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::MatVec(Vector& uVec,
                                         Vector const& xVec) const {
 
@@ -299,11 +306,12 @@ void BfgsPreconditioner<Vector>::MatVec(Vector& uVec,
 
 } // BfgsPreconditioner<...>::MatVec
 
-template<class Vector>
+template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::MatVec(size_t k,
                                         Vector& uVec,
                                         Vector const& xVec) const {
 
+#if 0
   // ----------------------
   // Compute 𝒖 ← (𝓗ₖ)𝒙, where:
   // 𝓗₀ = 𝜔⋅𝓘,
@@ -337,6 +345,7 @@ void BfgsPreconditioner<Vector>::MatVec(size_t k,
     real_t const beta = alpha - Blas::Dot(yVecs_(k - 1), uVec);
     Blas::Add(uVec, uVec, sVecs_(k - 1), beta*rho_(k - 1));
   }
+#endif
 
 } // BfgsPreconditioner<...>::MatVec
 

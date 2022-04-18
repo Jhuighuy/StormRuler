@@ -51,7 +51,7 @@ namespace Storm {
 ///     Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
+template<VectorLike Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
   real_t gamma_;
@@ -70,7 +70,7 @@ private:
 
 }; // class CgSolver<...>
 
-template<class Vector>
+template<VectorLike Vector>
 real_t CgSolver<Vector>::Init(Vector const& xVec,
                               Vector const& bVec,
                               Operator<Vector> const& linOp,
@@ -98,18 +98,18 @@ real_t CgSolver<Vector>::Init(Vector const& xVec,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    Blas::Set(pVec_, zVec_);
-    gamma_ = Blas::Dot(rVec_, zVec_);
+    pVec_.Set(zVec_);
+    gamma_ = rVec_.Dot(zVec_);
   } else {
-    Blas::Set(pVec_, rVec_);
-    gamma_ = Blas::Dot(rVec_, rVec_);
+    pVec_.Set(rVec_);
+    gamma_ = rVec_.Dot(rVec_);
   }
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
+  return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(gamma_);
 
 } // CgSolver<...>::Init
 
-template<class Vector>
+template<VectorLike Vector>
 real_t CgSolver<Vector>::Iterate(Vector& xVec,
                                  Vector const& bVec,
                                  Operator<Vector> const& linOp,
@@ -125,10 +125,9 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
   real_t const gammaBar = gamma_;
-  real_t const alpha = 
-    Utils::SafeDivide(gamma_, Blas::Dot(pVec_, zVec_));
-  Blas::Add(xVec, xVec, pVec_, alpha);
-  Blas::Sub(rVec_, rVec_, zVec_, alpha);
+  real_t const alpha = Utils::SafeDivide(gamma_, pVec_.Dot(zVec_));
+  xVec.AddAssign(pVec_, alpha);
+  rVec_.SubAssign(zVec_, alpha);
 
   // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -140,9 +139,9 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    gamma_ = Blas::Dot(rVec_, zVec_);
+    gamma_ = rVec_.Dot(zVec_);
   } else {
-    gamma_ = Blas::Dot(rVec_, rVec_);
+    gamma_ = rVec_.Dot(rVec_);
   }
 
   // ----------------------
@@ -150,7 +149,7 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
-  Blas::Add(pVec_, (preOp != nullptr ? zVec_ : rVec_), pVec_, beta);
+  pVec_.Add(preOp != nullptr ? zVec_ : rVec_, pVec_, beta);
 
 #if 0
   bool const computeEigenvalues = true;
@@ -206,7 +205,7 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   }
 #endif
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
+  return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(gamma_);
 
 } // CgSolver<...>::Iterate
 

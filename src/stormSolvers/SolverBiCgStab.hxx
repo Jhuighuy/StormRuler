@@ -99,7 +99,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    std::swap(zVec_, rVec_);
+    zVec_.Swap(rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
   rTildeVec_.Set(rVec_);
@@ -273,7 +273,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
   uVecs_(0).Fill(0.0);
   linOp.Residual(rVecs_(0), bVec, xVec);
   if (preOp != nullptr) {
-    std::swap(zVec_, rVecs_(0));
+    zVec_.Swap(rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);
   }
   rTildeVec_.Set(rVecs_(0));

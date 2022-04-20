@@ -83,6 +83,10 @@ public:
     if (copy) stormSet(Mesh, Array, like.Array);
   }
 
+  void Swap(stormArray& y) {
+    std::swap(*this, y);
+  }
+
   real_t Dot(stormArray const& y) const {
     return stormDot(Mesh, Array, y.Array);
   }
@@ -172,66 +176,6 @@ namespace Blas {
     return std::make_tuple(cs, sn, rr);
 
   } // SymOrtho
-
-} // namespace Blas
-
-namespace Blas {
-
-#if 0
-  real_t Dot(stormArray const& z, stormArray const& y) {
-    return stormDot(z.Mesh, z.Array, y.Array);
-  }
-  real_t Norm2(stormArray const& z) {
-    return stormNorm2(z.Mesh, z.Array);
-  }
-
-  void Set(stormArray& z, stormArray const& y) {
-    stormSet(z.Mesh, z.Array, y.Array);
-  }
-
-  void Fill(stormArray& z, real_t a) {
-    stormFill(z.Mesh, z.Array, a);
-  }
-  void RandFill(stormArray& z) {
-    stormRandFill(z.Mesh, z.Array);
-  }
-
-  void Scale(stormArray& z, stormArray const& y, real_t a) {
-    stormScale(z.Mesh, z.Array, y.Array, a);
-  }
-
-  void Add(stormArray& z, 
-           stormArray const& y, 
-           stormArray const& x) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array);
-  }
-  void Add(stormArray& z, 
-           stormArray const& y, 
-           stormArray const& x, real_t a) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
-  }
-  void Add(stormArray& z, 
-           stormArray const& y, real_t b,
-           stormArray const& x, real_t a) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-
-  void Sub(stormArray& z, 
-           stormArray const& y, 
-           stormArray const& x) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array);
-  }
-  void Sub(stormArray& z, 
-           stormArray const& y, 
-           stormArray const& x, real_t a) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
-  }
-  void Sub(stormArray& z, 
-           stormArray const& y, real_t b, 
-           stormArray const& x, real_t a) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-#endif
 
 } // namespace Blas
 

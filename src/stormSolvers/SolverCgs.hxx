@@ -93,7 +93,7 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    std::swap(uVec_, rVec_);
+    uVec_.Swap(rVec_);
     preOp->MatVec(rVec_, uVec_);
   }
   rTildeVec_.Set(rVec_);

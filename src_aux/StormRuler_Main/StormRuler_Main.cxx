@@ -48,27 +48,6 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
                               bool uniform = true) {
   using namespace Storm;
 
-#if 0
-  Array<real_t> xVec(14674, 15906), bVec(xVec);
-
-  Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
-  ToArray(xVec, xx);
-  ToArray(bVec, bb);
-
-  stormSize_t numMatVecs = 0;
-  Solve(
-    method, preMethod,
-    xVec, bVec,
-    [&](Array<real_t>& yVec, Array<real_t> const& zVec) {
-     numMatVecs += 1;
-      stormArray_t y = stormAllocLike(x), z = stormAllocLike(b);
-      Storm::stormArray yy = {mesh, y}, zz = {mesh, z};
-      FromArray(yy, yVec), FromArray(zz, zVec);
-      matVec(mesh, y, z);
-      ToArray(yVec, yy);
-      stormFree(y), stormFree(z);
-    });
-#else
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   stormSize_t numMatVecs = 0;
   auto symOp = Storm::MakeSymmetricOperator<Storm::stormArray>(
@@ -85,7 +64,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
   } else {
     Storm::SolveNonUniform(*solver, xx, bb, *symOp);
   }
-#endif
+
   std::cout << "num matvecs = " << numMatVecs << ' ' <<  method.ToString() << std::endl;
 
 } // stormLinSolve2<...>
@@ -147,17 +126,19 @@ static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
 
 static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  //stormApplyBCs(mesh, p, 2, SR_DIRICHLET(1.0));
-  //stormApplyBCs(mesh, p, 4, SR_DIRICHLET(2.0));
+  stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
+  stormApplyBCs(mesh, p, 4, SR_DIRICHLET(0.000001));
 } // SetBCs_p
 
 static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
 #if !YURI
-  stormApplyBCs_InOutLet(mesh, v, 2);
+  stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
+  //stormApplyBCs_InOutLet(mesh, v, 2);
 #endif
-  stormApplyBCs_InOutLet(mesh, v, 4);
+  stormApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
+  //stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
 #if YURI
@@ -265,7 +246,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       stormDivGrad(mesh, c_out, -tau, w_hat);
 
     }, false);
-    abort();
+    //abort();
 
   stormFree(tmp);
 

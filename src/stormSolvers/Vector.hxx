@@ -29,17 +29,54 @@
 
 namespace Storm {
 
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Vector-like concept.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-concept VectorLike = requires(Vector xVec) {
+concept VectorLike = 
+  requires(Vector& zVec, 
+           Vector const& yVec,
+           bool copy) {
 
-  xVec.Assign(xVec, false);
+    // Require assignment:
+    // 𝒛 ← 𝒚.
+    { zVec.Assign(yVec) };
+    { zVec.Assign(yVec, copy) };
 
-}; // concept VectorLike
+  } &&
+  requires(Vector const& zVec, 
+           Vector const& yVec) {
 
-template<class Operator, class InVector, class OutVector = InVector>
+    // Require norm and operator computation:
+    // <𝒛⋅𝒚> → ℙ, ‖𝒛‖ → ℝ.
+    { zVec.Dot(yVec) } -> std::same_as<real_t>;
+    { zVec.Norm2() } -> std::same_as<real_t>;
+
+  } &&
+  requires(Vector& zVec, 
+           Vector const& yVec, 
+           Vector const& xVec) {
+
+    { zVec.Fill(0.0) };
+    { zVec.RandFill() };
+
+    { zVec.Scale(yVec, 1.0) };
+    { zVec.ScaleAssign(1.0) };
+
+  };
+
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Operator-like concept.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Operator, 
+         class InVector, class OutVector = InVector>
 concept OperatorLike =
   requires (Operator& anyOp, 
             OutVector& yVec, 
-            InVector const& xVec) { anyOp(yVec, xVec); };
+            InVector const& xVec) { 
+              
+    anyOp(yVec, xVec); 
+
+  };
 
 } // namespace Storm

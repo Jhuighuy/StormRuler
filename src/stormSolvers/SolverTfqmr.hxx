@@ -155,7 +155,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   }
   linOp.Residual(yVec_, bVec, xVec);
   if (leftPre) {
-    std::swap(zVec_, yVec_);
+    zVec_.Swap(yVec_);
     preOp->MatVec(yVec_, zVec_);
   }
   uVec_.Set(yVec_);

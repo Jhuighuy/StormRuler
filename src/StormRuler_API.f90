@@ -235,7 +235,7 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
     allocate(gMesh)
 
     !call Load_PPM('test/Domain-100-Tube.ppm', pixels)
-    call Load_PPM('test/Domain-200-Flat.ppm', pixels)
+    call Load_PPM('test/Domain-200-Ellipse.ppm', pixels)
     call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
     call InitMeshFromImage(gMesh, pixels, 0, colorToMark, 2, .true.)
 

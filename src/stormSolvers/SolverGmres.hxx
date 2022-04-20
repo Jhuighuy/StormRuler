@@ -169,7 +169,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    std::swap(zVecs_(0), qVecs_(0));
+    zVecs_(0).Swap(qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = qVecs_(0).Norm2();
@@ -200,7 +200,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    std::swap(zVecs_(0), qVecs_(0));
+    zVecs_(0).Swap(qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = qVecs_(0).Norm2();

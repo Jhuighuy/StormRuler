@@ -59,11 +59,11 @@ public:
   /// @brief Access vector at index.
   /// @{
   Vector& operator()(size_t index) noexcept {
-    stormAssert(index < Vectors_.size());
+    StormAssert(index < Vectors_.size());
     return Vectors_[index];
   }
   Vector const& operator()(size_t index) const noexcept {
-    stormAssert(index < Vectors_.size());
+    StormAssert(index < Vectors_.size());
     return Vectors_[index];
   }
   /// @}

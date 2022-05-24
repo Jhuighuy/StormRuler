@@ -74,7 +74,7 @@ public:
 
   STORM_FIELD_(real_t, AbsoluteTolerance, {1.0e-6}) 
   STORM_FIELD_(real_t, RelativeTolerance, {1.0e-6}) 
-  STORM_FIELD_(bool, VerifySolution, {true})
+  STORM_FIELD_(bool, VerifySolution, {false})
 
   STORM_FIELD_(PreconditionerSide, PreSide, {PreconditionerSide::Right})
   STORM_FIELD_(std::unique_ptr<Preconditioner<InVector>>, PreOp, {nullptr})
@@ -126,6 +126,7 @@ public:
 
 }; // class IterativeSolver<...>
 
+#if 1
 template<VectorLike InVector, VectorLike OutVector>
 bool IterativeSolver<InVector, OutVector>::
                           Solve(InVector& xVec,
@@ -140,8 +141,8 @@ bool IterativeSolver<InVector, OutVector>::
   }
   real_t const initialError =
     (AbsoluteError = Init(xVec, bVec, anyOp, PreOp.get()));
-  std::cout << std::fixed << std::scientific << std::setprecision(15);
-  std::cout << "\tI\t" << initialError << std::endl;
+  //std::cout << std::fixed << std::scientific << std::setprecision(15);
+  //std::cout << "\tI\t" << initialError << std::endl;
   if (AbsoluteTolerance > 0.0 && AbsoluteError < AbsoluteTolerance) {
     Finalize(xVec, bVec, anyOp, PreOp.get());
     return true;
@@ -160,30 +161,31 @@ bool IterativeSolver<InVector, OutVector>::
     converged |=
       (RelativeTolerance > 0.0) && (RelativeError < RelativeTolerance);
 
-    if (Iteration % 20 == 0 || converged) {
-      std::cout << "\t" << (Iteration + 1) << "\t"
-        << AbsoluteError << "\t" << RelativeError << std::endl;
-    }
+    //if (Iteration % 20 == 0 || converged) {
+    //  std::cout << "\t" << (Iteration + 1) << "\t"
+    //    << AbsoluteError << "\t" << RelativeError << std::endl;
+    //}
   }
 
   Finalize(xVec, bVec, anyOp, PreOp.get());
-  std::cout << "\t----------------------" << std::endl;
+  //std::cout << "\t----------------------" << std::endl;
 
-  if (VerifySolution) {
-    OutVector rVec;
-    rVec.Assign(bVec, false);
-    anyOp.Residual(rVec, bVec, xVec);
-    real_t const
-      trueAbsoluteError = rVec.Norm2(),
-      trueRelativeError = trueAbsoluteError/initialError;
-    std::cout << "\tT\t"
-      << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
-    std::cout << "\t----------------------" << std::endl;
-  }
+  //if (VerifySolution) {
+  //  OutVector rVec;
+  //  rVec.Assign(bVec, false);
+  //  anyOp.Residual(rVec, bVec, xVec);
+  //  real_t const
+  //    trueAbsoluteError = rVec.Norm2(),
+  //    trueRelativeError = trueAbsoluteError/initialError;
+  //  std::cout << "\tT\t"
+  //    << trueAbsoluteError << "\t" << trueRelativeError << std::endl;
+  //  std::cout << "\t----------------------" << std::endl;
+  //}
 
   return converged;
 
 } // IterativeSolver<...>::Solve
+#endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
@@ -336,77 +338,5 @@ bool SolveNonUniform(Solver<Vector>& solver,
   return solver.Solve(xVec, fVec, *uniOp);
 
 } // SolveNonUniform<...>
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Largest eigenvalue estimator based on the Power Iterations.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
-class PowerIterations final : public Object {
-public:
-
-  /// @brief Estimate the largest eigenvalue of \
-  ///   the linear operator 𝓐 using the Power Iterations method.
-  ///
-  /// @param xVec On input: a non-zero vector that is used as \
-  ///   the initial guess for the Power iterations; on output: \
-  ///   estimate of the eigenvector, corresponding to the largest eigenvalue.
-  /// @param linOp Linear operator, 𝓐𝒙.
-  /// @param maxIterations Maximum number of the iterations.
-  /// @param relativeTolerance Relative error tolerance \
-  ///   to terminate the iterations before the maximum number is reached.
-  ///
-  /// @returns Estimate the largest eigenvalue of 𝓐.
-  static real_t
-    EstimateLargestEigenvalue(Vector& xVec,
-                              Operator<Vector> const& linOp,
-                              size_t maxIterations = 20,
-                              real_t relativeTolerance = 1.0e-8);
-
-}; // class PowerIterations<...>
-
-template<VectorLike Vector>
-real_t PowerIterations<Vector>::
-    EstimateLargestEigenvalue(Vector& xVec,
-                              Operator<Vector> const& linOp,
-                              size_t maxIterations,
-                              real_t relativeTolerance) {
-
-  Vector yVec;
-  yVec.Assign(xVec, false);
-
-  // ----------------------
-  // Initialize the Power Iterations:
-  // 𝜆 ← 𝟣,
-  // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
-  // 𝒙 ← 𝒙/‖𝒙‖.
-  // ----------------------
-  real_t lambda = 1.0;
-  xVec.RandFill();
-  xVec.ScaleAssign(1.0/xVec.Norm2());
-
-  for (size_t iteration = 0; iteration < maxIterations; ++iteration) {
-
-    // ----------------------
-    // Continue the Power Iterations:
-    // 𝒚 ← 𝓐𝒙,
-    // 𝜆̅ ← 𝜆, 𝜆 ← <𝒙⋅𝒚>,
-    // 𝒙 ← 𝒚/‖𝒚‖.
-    // ----------------------
-    linOp.MatVec(yVec, xVec);
-    //real_t const lambdaBar = lambda;
-    lambda = xVec.Dot(yVec);
-    xVec.Scale(yVec, 1.0/yVec.Norm2());
-
-    // ----------------------
-    // Check for the convergence on 𝜆 and 𝜆̅:
-    // ----------------------
-    //if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
-    //  break;
-    //}
-  }
-
-  return lambda;
-
-} // PowerIterations<...>::EstimateLargestEigenvalue
 
 } // namespace Storm

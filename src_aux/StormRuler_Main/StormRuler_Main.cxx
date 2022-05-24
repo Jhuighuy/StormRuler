@@ -108,7 +108,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
 #define min(x, y) ( (x) < (y) ? (x) : (y) )
 #define max(x, y) ( (x) > (y) ? (x) : (y) )
 
-static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0;
+static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -127,7 +127,11 @@ static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
 static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
-  stormApplyBCs(mesh, p, 4, SR_DIRICHLET(0.000001));
+  stormApplyBCs(mesh, p, 4, SR_DIRICHLET(
+    
+    2.5 * std::cos(M_PI/2 - M_PI/16) / (2.0 * 0.01 * 26)
+    
+    ));
 } // SetBCs_p
 
 static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
@@ -198,6 +202,10 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 
 } // dWdC
 
+void clampC(stormSize_t, stormReal_t* Wc, const stormReal_t* c, void*) {
+  *Wc = min(1.0, max(0.0, *c));
+}
+
 void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
@@ -226,7 +234,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
       Storm::SolverType::BiCgStab,
       Storm::PreconditionerType::None/*"extr"*/, 
 #else
-      Storm::SolverType::Tfqmr1,
+      Storm::SolverType::BiCgStab,
       Storm::PreconditionerType::None/*"extr"*/,
 #endif
     c_hat, c,
@@ -249,6 +257,8 @@ static void CahnHilliard_Step(stormMesh_t mesh,
     //abort();
 
   stormFree(tmp);
+
+  stormFuncProd(mesh, c_hat, c_hat, clampC, STORM_NULL);
 
   SetBCs_c(mesh, c_hat, c);
   stormFuncProd(mesh, w_hat, c_hat, dWdC, STORM_NULL);
@@ -336,7 +346,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,
 
 static double mu_1 = 0.08, mu_2 = 0.08;
 #if !YURI
-static double rho_1 = 1.0, rho_2 = 50.0;
+static double rho_1 = 1.0, rho_2 = 10.0;
 #endif
 
 void InvRho(stormSize_t size, stormReal_t* inv_rho, const stormReal_t* rho, void* env) {
@@ -550,7 +560,7 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
   //if (fabs(r[0]-0*L) <= L*0.101 && fabs(2*L-r[1]) <= L*0.665) {
   //  in = true;
   //}
-  if (fabs(2*L-r[1]) <= L*0.2) {
+  if (fabs(2*L-r[1]) <= L*0.4) {
     in = true;
   }
 

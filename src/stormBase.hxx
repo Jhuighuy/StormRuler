@@ -93,6 +93,36 @@ using ExtentArray =
                      std::vector<Value>,
                      std::array<Value, Extent>>;
 
+/// ----------------------------------------------------------------- ///
+/// @brief Constant to mark the the dynamic size in the \
+///    SOD (static or dynamic) containers.
+/// ----------------------------------------------------------------- ///
+static constexpr size_t DynamicSize{SIZE_MAX};
+
+/// ----------------------------------------------------------------- ///
+/// @brief SOD @c size_t template.
+/// 
+/// Usage:
+/// @code
+///   [[no_unique_address]] SodSize_t<Size> MySize;
+/// @endcode
+/// ----------------------------------------------------------------- ///
+template<size_t Size>
+using SodSize_t = std::conditional_t<
+  Size == DynamicSize, size_t, std::integral_constant<size_t, Size>>;
+
+/// ----------------------------------------------------------------- ///
+/// @brief SOD array template.
+/// 
+/// Usage:
+/// @code
+///   [[no_unique_address]] SodArray<Value, Size> MyArray;
+/// @endcode
+/// ----------------------------------------------------------------- ///
+template<class Value, size_t Size>
+using SodArray = std::conditional_t<
+  Size == DynamicSize, std::vector<Value>, std::array<Value, Size>>;
+
 } // namespace Storm
 
 #endif // ifndef _STORM_BASE_HXX_

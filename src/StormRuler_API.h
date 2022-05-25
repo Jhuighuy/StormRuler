@@ -313,30 +313,4 @@ STORM_API void stormRhieChowCorrection(stormMesh_t mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-STORM_API void stormLbmStream(stormMesh_t mesh,
-                              stormArray_t g,
-                              stormArray_t f);
-
-STORM_API void stormLbmMacroscopics(stormMesh_t mesh,
-                                    stormArray_t rho,
-                                    stormArray_t v,
-                                    stormSize_t sizeOfM,
-                                    const stormReal_t* m,
-                                    stormArray_t f);
-#if STORM_CXX14_
-STORM_INL void stormLbmMacroscopics(stormMesh_t mesh,
-                                    stormArray_t rho,
-                                    stormArray_t v,
-                                    const std::vector<stormReal_t>& m,
-                                    stormArray_t f) {
-  stormLbmMacroscopics(mesh, rho, v, m.size(), m.data(), f);
-} // stormLbmMacroscopics
-#endif
-
-STORM_API void stormLbmCollisionBGK(stormMesh_t mesh,
-                                    stormArray_t f,
-                                    stormReal_t tau,
-                                    stormArray_t rho,
-                                    stormArray_t v);
-
 #endif // ifndef STORM_RULER_API_H

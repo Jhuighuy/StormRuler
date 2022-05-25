@@ -96,8 +96,8 @@ public:
   }
   /// @}
 
-  /// @brief Get reference to the component at the index. 
-  /// @{ 
+  /// @brief Get reference to the component at the index.
+  /// @{
   constexpr Value& operator()(size_t ix, size_t iy = 0) noexcept {
     StormAssert(ix < SizeX && iy < SizeY);
     return (Data_[ix])[iy];
@@ -106,13 +106,23 @@ public:
     StormAssert(ix < SizeX && iy < SizeY);
     return (Data_[ix])[iy];
   }
-  /// @} 
+  /// @}
 
 }; // class Mat<...>
 
+template<class Any>
+struct IsMat_t : std::bool_constant<false> {};
+template<class Value, size_t SizeX, size_t SizeY>
+struct IsMat_t<Mat<Value, SizeX, SizeY>> : std::bool_constant<true> {};
+template<class Any>
+constexpr bool IsMat = IsMat_t<Any>::value;
+
+template<class Mat>
+concept MatLike = IsMat<Mat>;
+
 /// @todo Parse types in order to get the output type.
 template<class Value, class... Values>
-using ResultType = Value; 
+using ResultType = Value;
 
 /// @brief Make a vector.
 template<size_t Size, class Value>
@@ -124,9 +134,7 @@ constexpr auto MakeVec(Value const& val) noexcept {
   return vec;
 }
 
-/// ----------------------------------------------------------------- ///
 /// @brief Make a diagonal matrix with value @p val of a diagonal.
-/// ----------------------------------------------------------------- ///
 template<size_t SizeX, size_t SizeY = SizeX, class Value>
 constexpr auto MakeMat(Value const& val) noexcept {
   Mat<Value, SizeX, SizeY> mat;
@@ -142,7 +150,7 @@ constexpr auto MakeMat(Value const& val) noexcept {
   return mat;
 }
 
-/// @brief Transpose a matrix @p mat. 
+/// @brief Transpose a matrix @p mat.
 template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto Transpose(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   Mat<Value, SizeY, SizeX> out;
@@ -154,13 +162,13 @@ constexpr auto Transpose(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   return out;
 }
 
-/// @brief Copy a matrix @p mat. 
+/// @brief Copy a matrix @p mat.
 template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto operator+(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   return mat;
 }
 
-/// @brief Negate a matrix @p mat. 
+/// @brief Negate a matrix @p mat.
 template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto operator-(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   Mat<ResultType<Value>, SizeX, SizeY> out;
@@ -172,9 +180,9 @@ constexpr auto operator-(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   return out;
 }
 
-/// @brief Add matrices @p mat1 and @p mat2. 
-/// @{ 
-template<class Value1, class Value2, 
+/// @brief Add matrices @p mat1 and @p mat2.
+/// @{
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto& operator+=(Mat<Value1, SizeX, SizeY>& mat1,
                            Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -185,7 +193,7 @@ constexpr auto& operator+=(Mat<Value1, SizeX, SizeY>& mat1,
   }
   return mat1;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator+(Mat<Value1, SizeX, SizeY> const& mat1,
                          Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -197,11 +205,11 @@ constexpr auto operator+(Mat<Value1, SizeX, SizeY> const& mat1,
   }
   return out;
 }
-/// @} 
+/// @}
 
-/// @brief Subtract matrices @p mat1 and @p mat2. 
-/// @{ 
-template<class Value1, class Value2, 
+/// @brief Subtract matrices @p mat1 and @p mat2.
+/// @{
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto& operator-=(Mat<Value1, SizeX, SizeY>& mat1,
                            Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -212,7 +220,7 @@ constexpr auto& operator-=(Mat<Value1, SizeX, SizeY>& mat1,
   }
   return mat1;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator-(Mat<Value1, SizeX, SizeY> const& mat1,
                          Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -224,11 +232,11 @@ constexpr auto operator-(Mat<Value1, SizeX, SizeY> const& mat1,
   }
   return out;
 }
-/// @} 
+/// @}
 
-/// @brief Multiply a matrix @p mat by a scalar @p val. 
-/// @{ 
-template<class Value1, class Value2, 
+/// @brief Multiply a matrix @p mat by a scalar @p val.
+/// @{
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto& operator*=(Mat<Value1, SizeX, SizeY>& mat,
                            Value2 const& val) noexcept {
@@ -239,7 +247,7 @@ constexpr auto& operator*=(Mat<Value1, SizeX, SizeY>& mat,
   }
   return mat;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator*(Mat<Value1, SizeX, SizeY> const& mat,
                          Value2 const& val) noexcept {
@@ -251,7 +259,7 @@ constexpr auto operator*(Mat<Value1, SizeX, SizeY> const& mat,
   }
   return out;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator*(Value1 const& val,
                          Mat<Value2, SizeX, SizeY> const& mat) noexcept {
@@ -263,11 +271,11 @@ constexpr auto operator*(Value1 const& val,
   }
   return out;
 }
-/// @} 
+/// @}
 
-/// @brief Multiply matrices @p mat1 and @p mat2 (in component-wise sense). 
-/// @{ 
-template<class Value1, class Value2, 
+/// @brief Multiply matrices @p mat1 and @p mat2 (in component-wise sense).
+/// @{
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto& operator*=(Mat<Value1, SizeX, SizeY>& mat1,
                            Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -278,7 +286,7 @@ constexpr auto& operator*=(Mat<Value1, SizeX, SizeY>& mat1,
   }
   return mat1;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator*(Mat<Value1, SizeX, SizeY> const& mat1,
                          Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -290,10 +298,10 @@ constexpr auto operator*(Mat<Value1, SizeX, SizeY> const& mat1,
   }
   return out;
 }
-/// @} 
+/// @}
 
-/// @brief Divide a matrix @p mat by a scalar @p val. 
-template<class Value1, class Value2, 
+/// @brief Divide a matrix @p mat by a scalar @p val.
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator/=(Mat<Value1, SizeX, SizeY>& mat,
                           Value2 const& val) noexcept {
@@ -304,7 +312,7 @@ constexpr auto operator/=(Mat<Value1, SizeX, SizeY>& mat,
   }
   return mat;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator/(Mat<Value1, SizeX, SizeY> const& mat,
                          Value2 const& val) noexcept {
@@ -320,7 +328,7 @@ constexpr auto operator/(Mat<Value1, SizeX, SizeY> const& mat,
 
 /// @brief Divide matrices @p mat1 and @p mat2 (in the component-wise sense).
 /// @{
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto& operator/=(Mat<Value1, SizeX, SizeY>& mat1,
                            Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -331,7 +339,7 @@ constexpr auto& operator/=(Mat<Value1, SizeX, SizeY>& mat1,
   }
   return mat1;
 }
-template<class Value1, class Value2, 
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto operator/(Mat<Value1, SizeX, SizeY> const& mat1,
                          Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -343,10 +351,10 @@ constexpr auto operator/(Mat<Value1, SizeX, SizeY> const& mat1,
   }
   return out;
 }
-/// @} 
+/// @}
 
-/// @brief Dot product of matrices @p mat1 and @p mat2 (in the vector sense). 
-template<class Value1, class Value2, 
+/// @brief Dot product of matrices @p mat1 and @p mat2 (in the vector sense).
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY>
 constexpr auto Dot(Mat<Value1, SizeX, SizeY> const& mat1,
                    Mat<Value2, SizeX, SizeY> const& mat2) noexcept {
@@ -362,14 +370,14 @@ constexpr auto Dot(Mat<Value1, SizeX, SizeY> const& mat1,
   return out;
 }
 
-/// @brief Frobenius norm of a matrix. 
+/// @brief Frobenius norm of a matrix.
 template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto Norm(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   return std::sqrt(Dot(mat, mat));
 }
 
-/// @brief Multiply matrices @p mat1 and @p mat2 (in normal sense). 
-template<class Value1, class Value2, 
+/// @brief Multiply matrices @p mat1 and @p mat2 (in normal sense).
+template<class Value1, class Value2,
          size_t SizeX, size_t SizeY, size_t SizeZ>
 constexpr auto MatMul(Mat<Value1, SizeX, SizeY> const& mat1,
                       Mat<Value2, SizeY, SizeZ> const& mat2) noexcept {
@@ -389,8 +397,8 @@ constexpr auto MatMul(Mat<Value1, SizeX, SizeY> const& mat1,
 /// @returns A pair of matrices, L and U factors.
 template<std::floating_point Value, size_t Size>
 constexpr auto DecomposeLu(Mat<Value, Size, Size> const& mat) noexcept {
-  auto lMat = MakeMat<Size>(Value(1.0));
-  auto uMat = MakeMat<Size>(Value(0.0));
+  auto lMat = MakeMat<Size>(Value{1});
+  auto uMat = MakeMat<Size>(Value{0});
   for (size_t ix{0}; ix < Size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
       lMat(ix, iy) = mat(ix, iy);
@@ -414,7 +422,7 @@ constexpr auto DecomposeLu(Mat<Value, Size, Size> const& mat) noexcept {
 template<std::floating_point Value, size_t SizeX, size_t SizeY>
 constexpr auto DecomposeQr(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   Mat<Value, SizeX, SizeY> qMat;
-  auto rMat = MakeMat<SizeY, SizeY>(Value(0.0));
+  auto rMat = MakeMat<SizeY, SizeY>(Value{0});
   for (size_t ix{0}; ix < SizeX; ++ix) {
     for (size_t iy{0}; iy < SizeY; ++iy) {
       std::abort();
@@ -423,13 +431,13 @@ constexpr auto DecomposeQr(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   return std::make_pair(qMat, rMat);
 }
 
-/// @brief Inverse a square matrix @p mat using the LU decomposition. 
+/// @brief Inverse a square matrix @p mat using the LU decomposition.
 template<std::floating_point Value, size_t Size>
 constexpr auto InverseLU(Mat<Value, Size, Size> const& mat) noexcept;
 
-/// @brief Print a matrix. 
+/// @brief Print a matrix.
 template<class Value, size_t SizeX, size_t SizeY>
-std::ostream& operator<<(std::ostream& out, 
+std::ostream& operator<<(std::ostream& out,
                          Mat<Value, SizeX, SizeY> const& mat) {
   for (size_t ix{0}; ix < SizeX; ++ix) {
     for (size_t iy{0}; iy < SizeY; ++iy) {

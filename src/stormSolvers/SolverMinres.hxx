@@ -95,7 +95,7 @@ private:
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-}; // class MinresSolver<...>
+}; // class MinresSolver
 
 template<class Vector>
 real_t MinresSolver<Vector>::Init(Vector const& xVec,
@@ -145,7 +145,7 @@ real_t MinresSolver<Vector>::Init(Vector const& xVec,
 
   return phi;
 
-} // MinresSolver<...>::Init
+} // MinresSolver::Init
 
 template<class Vector>
 real_t MinresSolver<Vector>::Iterate(Vector& xVec,
@@ -204,6 +204,6 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
 
   return phi;
 
-} // MinresSolver<...>::Iterate
+} // MinresSolver::Iterate
 
 } // namespace Storm

@@ -68,7 +68,7 @@ private:
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-}; // class CgSolver<...>
+}; // class CgSolver
 
 template<VectorLike Vector>
 real_t CgSolver<Vector>::Init(Vector const& xVec,
@@ -107,7 +107,7 @@ real_t CgSolver<Vector>::Init(Vector const& xVec,
 
   return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(gamma_);
 
-} // CgSolver<...>::Init
+} // CgSolver::Init
 
 template<VectorLike Vector>
 real_t CgSolver<Vector>::Iterate(Vector& xVec,
@@ -207,6 +207,6 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
 
   return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(gamma_);
 
-} // CgSolver<...>::Iterate
+} // CgSolver::Iterate
 
 } // namespace Storm

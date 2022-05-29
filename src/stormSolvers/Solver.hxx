@@ -57,7 +57,7 @@ public:
                      OutVector const& bVec,
                      Operator<InVector, OutVector> const& anyOp) = 0;
 
-}; // class Solver<...>
+}; // class Solver
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation iterative solver.
@@ -124,7 +124,7 @@ public:
              OutVector const& bVec,
              Operator<InVector, OutVector> const& anyOp) override final;
 
-}; // class IterativeSolver<...>
+}; // class IterativeSolver
 
 #if 1
 template<VectorLike InVector, VectorLike OutVector>
@@ -184,7 +184,7 @@ bool IterativeSolver<InVector, OutVector>::
 
   return converged;
 
-} // IterativeSolver<...>::Solve
+} // IterativeSolver::Solve
 #endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -304,7 +304,7 @@ private:
     OuterFinalize(xVec, bVec, anyOp, preOp);
   }
 
-}; // class InnerOuterIterativeSolver<...>
+}; // class InnerOuterIterativeSolver
 
 /// ----------------------------------------------------------------- ///
 /// @brief Solve the operator equation 𝓐(𝒙) = 𝒃, \
@@ -337,6 +337,6 @@ bool SolveNonUniform(Solver<Vector>& solver,
 
   return solver.Solve(xVec, fVec, *uniOp);
 
-} // SolveNonUniform<...>
+} // SolveNonUniform
 
 } // namespace Storm

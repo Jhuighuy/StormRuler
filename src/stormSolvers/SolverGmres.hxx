@@ -68,7 +68,7 @@ protected:
 
   BaseGmresSolver() = default;
 
-}; // class BaseGmresSolver<...>
+}; // class BaseGmresSolver
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c GMRES (Generalized Minimal Residual) \
@@ -96,9 +96,7 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
-class GmresSolver final : public BaseGmresSolver<Vector, false> {
-
-}; // class GmresSolver<...>
+class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c FGMRES (Flexible Generalized Minimal Residual) \
@@ -127,9 +125,7 @@ class GmresSolver final : public BaseGmresSolver<Vector, false> {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
-class FgmresSolver final : public BaseGmresSolver<Vector, true> {
-
-}; // class FgmresSolver<...>
+class FgmresSolver final : public BaseGmresSolver<Vector, true> {};
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 real_t BaseGmresSolver<Vector, Flexible, Loose>::
@@ -177,7 +173,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::
 
   return beta_(0);
 
-} // BaseGmresSolver<...>::OuterInit
+} // BaseGmresSolver::OuterInit
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 void BaseGmresSolver<Vector, Flexible, Loose>::
@@ -206,7 +202,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
   beta_(0) = qVecs_(0).Norm2();
   qVecs_(0).ScaleAssign(1.0/beta_(0));
 
-} // BaseGmresSolver<...>::InnerInit
+} // BaseGmresSolver::InnerInit
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 real_t BaseGmresSolver<Vector, Flexible, Loose>::
@@ -284,7 +280,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::
 
   return std::abs(beta_(k + 1));
 
-} // BaseGmresSolver<...>::InnerIterate
+} // BaseGmresSolver::InnerIterate
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 void BaseGmresSolver<Vector, Flexible, Loose>::
@@ -345,6 +341,6 @@ void BaseGmresSolver<Vector, Flexible, Loose>::
     xVec.AddAssign(zVecs_(0));
   }
 
-} // BaseGmresSolver<...>::InnerFinalize
+} // BaseGmresSolver::InnerFinalize
 
 } // namespace Storm

@@ -126,7 +126,7 @@ inline std::shared_ptr<JsonValue> MakeJsonValue(Enum<Derived, Underlying> value)
 
   return std::make_shared<JsonStringValue>(value.ToString());
 
-} // MakeJsonValue<Enum<...>>
+} // MakeJsonValue<Enum>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Array JSON value.
@@ -148,7 +148,7 @@ inline std::shared_ptr<JsonValue> MakeJsonValue(Range const& range) {
   }
   return array;
 
-} // MakeJsonValue<Enum<...>>
+} // MakeJsonValue<Enum>
 
 /// ----------------------------------------------------------------- ///
 /// @brief Null JSON value.

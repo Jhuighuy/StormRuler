@@ -239,10 +239,10 @@ public:
   virtual void ConjMatVec(InVector& xVec,
                           OutVector const& yVec) const {
     throw std::runtime_error(
-      "`Operator<...>::ConjMatVec` was not overriden");
+      "`Operator::ConjMatVec` was not overriden");
   }
 
-}; // class Operator<...>
+}; // class Operator
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
@@ -286,13 +286,13 @@ private:
                   OutVector const& yVec) const override {
     if (!ConjMatVecFunc_) {
       throw std::runtime_error(
-        "`FunctionalOperator<...>::ConjMatVec`"
+        "`FunctionalOperator::ConjMatVec`"
         " conjugate product function was not set.");
     }
     ConjMatVecFunc_(xVec, yVec);
   }
 
-}; // class FunctionalOperator<...>
+}; // class FunctionalOperator
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make the functional operator.
@@ -309,7 +309,7 @@ auto MakeOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
     std::forward<MatVecFunc>(matVecFunc));
 
-} // MakeOperator<...>
+} // MakeOperator
 template<VectorLike InVector, 
          VectorLike OutVector = InVector, 
          OperatorLike<InVector, OutVector> MatVecFunc, 
@@ -321,7 +321,7 @@ auto MakeOperator(MatVecFunc&& matVecFunc,
     std::forward<MatVecFunc>(matVecFunc), 
     std::forward<ConjMatVecFunc>(conjMatVecFunc));
 
-} // MakeOperator<...>
+} // MakeOperator
 /// @}
 
 /// ----------------------------------------------------------------- ///
@@ -334,6 +334,6 @@ auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<Vector>>(
     matVecFunc, std::forward<MatVecFunc>(matVecFunc));
 
-} // MakeSymmetricOperator<...>
+} // MakeSymmetricOperator
 
 } // namespace Storm

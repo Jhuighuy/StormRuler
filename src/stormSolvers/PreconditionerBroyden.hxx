@@ -55,7 +55,7 @@ private:
               Vector& yVec,
               Vector const& xVec) const;
 
-}; // class BroydenPreconditioner<...>
+}; // class BroydenPreconditioner
 
 template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::Build(Vector const& xVec,
@@ -132,7 +132,7 @@ void BroydenPreconditioner<Vector>::Build(Vector const& xVec,
 #endif
   abort();
 
-} // BroydenPreconditioner<...>::Build
+} // BroydenPreconditioner::Build
 
 template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::MatVec(Vector& yVec,
@@ -147,7 +147,7 @@ void BroydenPreconditioner<Vector>::MatVec(Vector& yVec,
   MatVec(m, yVec, xVec);
   //Blas::Scale(yVec, yVec, omega_);
 
-} // BroydenPreconditioner<...>::MatVec
+} // BroydenPreconditioner::MatVec
 
 template<VectorLike Vector>
 void BroydenPreconditioner<Vector>::MatVec(size_t k,
@@ -183,7 +183,7 @@ void BroydenPreconditioner<Vector>::MatVec(size_t k,
 #endif
 #endif
 
-} // BroydenPreconditioner<...>::MatVec
+} // BroydenPreconditioner::MatVec
 
 template<VectorLike Vector>
 class BfgsPreconditioner final : public Preconditioner<Vector> {
@@ -206,7 +206,7 @@ private:
               Vector& yVec,
               Vector const& xVec) const;
 
-}; // class BfgsPreconditioner<...>
+}; // class BfgsPreconditioner
 
 template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::Build(Vector const& xVec,
@@ -290,7 +290,7 @@ void BfgsPreconditioner<Vector>::Build(Vector const& xVec,
   omega_ = 1.0/(rho_(m - 1)*Blas::Dot(yVecs_(m - 1), yVecs_(m - 1)));
 #endif
 
-} // BfgsPreconditioner<...>::Build
+} // BfgsPreconditioner::Build
 
 template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::MatVec(Vector& uVec,
@@ -304,7 +304,7 @@ void BfgsPreconditioner<Vector>::MatVec(Vector& uVec,
   // ----------------------
   MatVec(m, uVec, xVec);
 
-} // BfgsPreconditioner<...>::MatVec
+} // BfgsPreconditioner::MatVec
 
 template<VectorLike Vector>
 void BfgsPreconditioner<Vector>::MatVec(size_t k,
@@ -347,6 +347,6 @@ void BfgsPreconditioner<Vector>::MatVec(size_t k,
   }
 #endif
 
-} // BfgsPreconditioner<...>::MatVec
+} // BfgsPreconditioner::MatVec
 
 } // namespace Storm

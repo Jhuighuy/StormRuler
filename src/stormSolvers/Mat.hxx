@@ -108,7 +108,7 @@ public:
   }
   /// @}
 
-}; // class Mat<...>
+}; // class Mat
 
 template<class Any>
 struct IsMat_t : std::bool_constant<false> {};

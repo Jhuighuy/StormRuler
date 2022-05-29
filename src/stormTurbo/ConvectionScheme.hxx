@@ -45,7 +45,7 @@ public:
                        Array3D<Vec<Value, Size>>& Qhat,
                        Array3D<Vec<Value, Size>> const& Q) const = 0;
 
-}; // class ConvectionScheme3D<...>
+}; // class ConvectionScheme3D
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Upwind convection scheme.
@@ -63,7 +63,7 @@ public:
                Array3D<Vec<Value, Size>>& Qhat,
                Array3D<Vec<Value, Size>> const& Q) const override;
 
-}; // class UpwindConvectionScheme3D<...>
+}; // class UpwindConvectionScheme3D
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Piecewise-linear upwind convection scheme.
@@ -83,7 +83,7 @@ public:
                Array3D<Vec<Value, Size>>& Qhat,
                Array3D<Vec<Value, Size>> const& Q) const override;
 
-}; // class Upwind2ConvectionScheme3D<...>
+}; // class Upwind2ConvectionScheme3D
 
 template<class Value, size_t Size, 
          class FluxScheme>
@@ -146,6 +146,6 @@ void UpwindConvectionScheme3D<Value, Size, FluxScheme>::
    Qhat(ix, iy, iz) /= G.CellVolume(ix, iy, iz);
   });
 
-} // UpwindConvectionScheme3D<...>::Compute
+} // UpwindConvectionScheme3D::Compute
 
 } // namespace Storm::Turbo

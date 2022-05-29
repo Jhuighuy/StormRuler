@@ -163,6 +163,6 @@ std::unique_ptr<Preconditioner<Vector>>
 
   throw std::invalid_argument("Invalid preconditioner type specified.");
 
-} // MakePreconditioner<...>
+} // MakePreconditioner
 
 } // namespace Storm

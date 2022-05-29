@@ -68,7 +68,7 @@ private:
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-}; // class BiCgStabSolver<...>
+}; // class BiCgStabSolver
 
 template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
@@ -107,7 +107,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
 
   return std::sqrt(rho_);
 
-} // BiCgStabSolver<...>::Init
+} // BiCgStabSolver::Init
 
 template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
@@ -194,7 +194,7 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
 
   return rVec_.Norm2();
 
-} // BiCgStabSolver<...>::Iterate
+} // BiCgStabSolver::Iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized) \
@@ -236,7 +236,7 @@ public:
     this->NumInnerIterations = 2;
   }
 
-}; // class BiCgStabLSolver<...>
+}; // class BiCgStabLSolver
 
 template<VectorLike Vector>
 real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
@@ -281,7 +281,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
 
   return std::sqrt(rho_);
 
-} // BiCgStabLSolver<...>::OuterInit
+} // BiCgStabLSolver::OuterInit
 
 template<VectorLike Vector>
 real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
@@ -427,6 +427,6 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
 
   return rVecs_(0).Norm2();
 
-} // BiCgStabLSolver<...>::InnerIterate
+} // BiCgStabLSolver::InnerIterate
 
 } // namespace Storm

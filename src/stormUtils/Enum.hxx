@@ -126,7 +126,7 @@ public:
   /// @brief Convert the specified @p string to the enumeration. 
   static constexpr Enum<Derived, Underlying> FromString(std::string_view string);
 
-}; // class Enum<...>
+}; // class Enum
 
 template<class Derived, class Underlying>
 constexpr std::string_view 
@@ -141,7 +141,7 @@ constexpr std::string_view
 
   return result;
 
-} // Enum<...>::ToString
+} // Enum::ToString
 
 template<class Derived, class Underlying>
 constexpr Enum<Derived, Underlying> 
@@ -160,6 +160,6 @@ constexpr Enum<Derived, Underlying>
 
   return result;
 
-} // Enum<...>::FromString
+} // Enum::FromString
 
 } // namespace Storm

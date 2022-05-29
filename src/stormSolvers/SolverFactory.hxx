@@ -199,6 +199,6 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
 
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
-} // MakeIterativeSolver<...>
+} // MakeIterativeSolver
 
 } // namespace Storm

@@ -78,7 +78,7 @@ public:
                      Vector const& bVec,
                      Operator<Vector> const& anyOp) {}
 
-}; // class Preconditioner<...>
+}; // class Preconditioner
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Identity preconditioner, \
@@ -90,16 +90,16 @@ private:
 
   void MatVec(Vector& yVec,
               Vector const& xVec) const override {
-    std::cout << "`IdentityPreconditioner<...>::MatVec`!" << std::endl;
+    std::cout << "`IdentityPreconditioner::MatVec`!" << std::endl;
     yVec.Set(xVec);
   }
 
   void ConjMatVec(Vector& xVec,
                   Vector const& yVec) const override {
-    std::cout << "`IdentityPreconditioner<...>::ConjMatVec`!" << std::endl;
+    std::cout << "`IdentityPreconditioner::ConjMatVec`!" << std::endl;
     xVec.Set(yVec);
   }
 
-}; // class IdentityPreconditioner<...>
+}; // class IdentityPreconditioner
 
 } // namespace Storm

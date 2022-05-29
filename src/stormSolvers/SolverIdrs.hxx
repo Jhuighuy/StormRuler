@@ -78,7 +78,7 @@ public:
     this->NumInnerIterations = 4;
   }
 
-}; // class IdrsSolver<...>
+}; // class IdrsSolver
 
 template<VectorLike Vector>
 real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
@@ -122,7 +122,7 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
 
   return phi_(0);
 
-} // IdrsSolver<...>::OuterInit
+} // IdrsSolver::OuterInit
 
 template<VectorLike Vector>
 void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
@@ -172,7 +172,7 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
     }
   }
 
-} // IdrsSolver<...>::InnerInit
+} // IdrsSolver::InnerInit
 
 template<VectorLike Vector>
 real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
@@ -310,6 +310,6 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
 
   return rVec_.Norm2();
 
-} // IdrsSolver<...>::InnerIterate
+} // IdrsSolver::InnerIterate
 
 } // namespace Storm

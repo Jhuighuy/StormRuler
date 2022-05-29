@@ -64,7 +64,7 @@ private:
     MatVec(xVec, yVec);
   }
 
-}; // class ChebyshevPreconditioner<...>
+}; // class ChebyshevPreconditioner
 
 template<VectorLike Vector>
 void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
@@ -93,7 +93,7 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
   theta_ = 0.5*(beta + alpha);
   delta_ = 0.5*(beta - alpha);
 
-} // ChebyshevPreconditioner<...>::Build
+} // ChebyshevPreconditioner::Build
 
 template<VectorLike Vector>
 void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
@@ -127,6 +127,6 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
 
   }
 
-} // ChebyshevPreconditioner<...>::MatVec
+} // ChebyshevPreconditioner::MatVec
 
 } // namespace Storm

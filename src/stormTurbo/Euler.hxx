@@ -99,21 +99,21 @@ GasState<Value>::GasState(Vec3D<real_t> const& n,
   ent = nrg + p/rho;
   snd = std::sqrt(Gamma*p/rho);
 
-} // GasState<...>::GasState
+} // GasState::GasState
 
 template<class Value>
 Vec<Value, 5> GasState<Value>::ToCons() const noexcept {
 
   return { rho, rho*nrg, rho*vel(0), rho*vel(1), rho*vel(2) };
 
-} // GasState<...>::ToCons
+} // GasState::ToCons
 
 template<class Value>
 Vec<Value, 5> GasState<Value>::ToPrim() const noexcept {
 
   return { rho, p, vel(0), vel(1), vel(2) };
 
-} // GasState<...>::ToPrim
+} // GasState::ToPrim
 
 template<class Value>
 Vec<Value, 5> GasState<Value>::ToFlux(Vec3D<real_t> const& n) const noexcept {
@@ -121,7 +121,7 @@ Vec<Value, 5> GasState<Value>::ToFlux(Vec3D<real_t> const& n) const noexcept {
   real_t const vn = rho*Dot(vel, n);
   return { vn, vn*ent, vn*vel(0) + p*n(0), vn*vel(1) + p*n(1), vn*vel(2) + p*n(2) };
 
-} // GasState<...>::ToPrim
+} // GasState::ToPrim
 
 template<class Value>
 Vec<Value, 5> LaxFriedrichsFlux(Vec3D<real_t> const& n,

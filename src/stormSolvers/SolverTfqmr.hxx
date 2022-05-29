@@ -55,7 +55,7 @@ protected:
 
   BaseTfqmrSolver() = default;
 
-}; // class BaseTfqmrSolver<...>
+}; // class BaseTfqmrSolver
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c TFQMR (Transpose-Free Quasi-Minimal Residual) \
@@ -84,9 +84,7 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
-class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
-
-}; // class TfqmrSolver<...>
+class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c TFQMR1 (Transpose-Free 1-norm \
@@ -109,9 +107,7 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
-class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {
-
-}; // class Tfqmr1Solver<...>
+class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
 real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
@@ -164,7 +160,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
 
   return tau_;
 
-} // BaseTfqmrSolver<...>::Init
+} // BaseTfqmrSolver::Init
 
 template<VectorLike Vector, bool L1>
 real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
@@ -303,6 +299,6 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
 
   return tauTilde;
 
-} // BaseTfqmrSolver<...>::Iterate
+} // BaseTfqmrSolver::Iterate
 
 } // namespace Storm

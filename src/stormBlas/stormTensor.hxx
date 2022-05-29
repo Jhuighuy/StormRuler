@@ -108,7 +108,7 @@ public:
   }
   /// @}
 
-}; // class stormBaseTensor<...>
+}; // class stormBaseTensor
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense tensor.

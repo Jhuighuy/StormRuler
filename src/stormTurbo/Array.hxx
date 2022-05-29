@@ -100,7 +100,7 @@ public:
   }
   /// @}
 
-}; // class Array2D<...>
+}; // class Array2D
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief A simple non-copyable 3D array.
@@ -174,6 +174,6 @@ public:
   }
   /// @}
 
-}; // class Array3D<...>
+}; // class Array3D
 
 } // namespace Storm::Turbo

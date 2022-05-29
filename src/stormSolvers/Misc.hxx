@@ -55,7 +55,7 @@ public:
                               size_t maxIterations = 20,
                               real_t relativeTolerance = 1.0e-8);
 
-}; // class PowerIterations<...>
+}; // class PowerIterations
 
 template<VectorLike Vector>
 real_t PowerIterations<Vector>::
@@ -100,6 +100,6 @@ real_t PowerIterations<Vector>::
 
   return lambda;
 
-} // PowerIterations<...>::EstimateLargestEigenvalue
+} // PowerIterations::EstimateLargestEigenvalue
 
 } // namespace Storm

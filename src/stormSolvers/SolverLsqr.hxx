@@ -63,7 +63,7 @@ protected:
                                         stormOperator<tInArray, tOutArray> const& linOp,
                                         stormPreconditioner<tInArray> const* preOp);
 
-}; // class stormGolubKahanSolver<...>
+}; // class stormGolubKahanSolver
 
 template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::
@@ -94,7 +94,7 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
   }
   alpha = stormBlas::Norm2(tArr); stormBlas::Scale(vArr, tArr, 1.0/alpha);
 
-} // stormGolubKahanSolver<...>::InitBidiagonalization
+} // stormGolubKahanSolver::InitBidiagonalization
 
 template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::
@@ -137,7 +137,7 @@ void stormGolubKahanSolver<tInArray, tOutArray>::
   stormBlas::Sub(tArr, tArr, vArr, beta);
   alpha = stormBlas::Norm2(tArr); stormBlas::Scale(vArr, tArr, 1.0/alpha);
 
-} // stormGolubKahanSolver<...>::ContinueBidiagonalization
+} // stormGolubKahanSolver::ContinueBidiagonalization
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem \
@@ -187,7 +187,7 @@ private:
                 stormOperator<tInArray, tOutArray> const& linOp,
                 stormPreconditioner<tInArray> const* preOp) override;
 
-}; // class stormLsqrSolver<...>
+}; // class stormLsqrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::
@@ -232,7 +232,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
 
   return phiBar;
 
-} // stormLsqrSolver<...>::Init
+} // stormLsqrSolver::Init
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::
@@ -270,7 +270,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::
 
   return phiBar;
 
-} // stormLsqrSolver<...>::Iterate
+} // stormLsqrSolver::Iterate
 
 template<class tInArray, class tOutArray>
 void stormLsqrSolver<tInArray, tOutArray>::
@@ -292,7 +292,7 @@ void stormLsqrSolver<tInArray, tOutArray>::
     stormBlas::Add(xArr, xArr, zArr);
   }
 
-} // stormLsqrSolver<...>::Finalize
+} // stormLsqrSolver::Finalize
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem \
@@ -343,7 +343,7 @@ private:
                 stormOperator<tInArray, tOutArray> const& linOp,
                 stormPreconditioner<tInArray> const* preOp) override;
 
-}; // class stormLsmrSolver<...>
+}; // class stormLsmrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::
@@ -390,7 +390,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
 
   return std::abs(psiBar);
 
-} // stormLsmrSolver<...>::Init
+} // stormLsmrSolver::Init
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::
@@ -434,7 +434,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::
 
   return std::abs(psiBar);
 
-} // stormLsmrSolver<...>::Iterate
+} // stormLsmrSolver::Iterate
 
 template<class tInArray, class tOutArray>
 void stormLsmrSolver<tInArray, tOutArray>::
@@ -456,6 +456,6 @@ void stormLsmrSolver<tInArray, tOutArray>::
     stormBlas::Add(xArr, xArr, zArr);
   }
 
-} // stormLsmrSolver<...>::Finalize
+} // stormLsmrSolver::Finalize
 
 #endif // ifndef _STORM_SOLVER_LSQR_HXX_

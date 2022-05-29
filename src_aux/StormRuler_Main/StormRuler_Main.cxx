@@ -67,7 +67,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
 
   std::cout << "num matvecs = " << numMatVecs << ' ' <<  method.ToString() << std::endl;
 
-} // stormLinSolve2<...>
+} // stormLinSolve2
 
 template<typename stormMatVecFuncT_t>
 STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
@@ -88,7 +88,7 @@ STORM_INL void stormNonlinSolve2(stormMesh_t mesh,
   solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);
 
-} // stormNonLinSolve2<...>
+} // stormNonLinSolve2
 
 #include <math.h>
 #include <stdio.h>

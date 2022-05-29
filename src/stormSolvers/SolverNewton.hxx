@@ -68,7 +68,7 @@ private:
                  Operator<Vector> const& anyOp,
                  Preconditioner<Vector> const* preOp) override final;
 
-}; // class NewtonSolver<...>
+}; // class NewtonSolver
 #endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -116,7 +116,7 @@ private:
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-}; // class JfnkSolver<...>
+}; // class JfnkSolver
 
 template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Init(Vector const& xVec,
@@ -138,7 +138,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec,
 
   return rVec_.Norm2();  
 
-} // JfnkSolver<...>::Init
+} // JfnkSolver::Init
 
 template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
@@ -198,6 +198,6 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec,
 
   return rVec_.Norm2();  
 
-} // JfnkSolver<...>::Iterate
+} // JfnkSolver::Iterate
 
 } // namespace Storm

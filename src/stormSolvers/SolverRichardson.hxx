@@ -56,7 +56,7 @@ private:
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-}; // class RichardsonSolver<...>
+}; // class RichardsonSolver
 
 template<VectorLike Vector>
 real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
@@ -85,7 +85,7 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
 
   return rVec_.Norm2();
 
-} // RichardsonSolver<...>::Init
+} // RichardsonSolver::Init
 
 template<VectorLike Vector>
 real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
@@ -113,6 +113,6 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
 
   return rVec_.Norm2();
 
-} // RichardsonSolver<...>::Iterate
+} // RichardsonSolver::Iterate
 
 } // namespace Storm

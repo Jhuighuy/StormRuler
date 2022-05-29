@@ -101,6 +101,6 @@ public:
     }
   }
 
-}; // class stormShape<...>
+}; // class stormShape
 
 #endif // ifndef _STORM_SHAPE_HXX_

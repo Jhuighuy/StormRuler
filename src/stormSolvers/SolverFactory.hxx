@@ -50,67 +50,67 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 class SolverType final : public Enum<SolverType> {
   
-  STORM_ENUM_(SolverType)
+  StormEnum_(SolverType)
 
   /// @brief Default solver.
-  STORM_ENUM_VALUE_(Default)
+  StormEnumValue_(Default)
 
   /// @brief @c CG iterative solver.
-  STORM_ENUM_VALUE_(Cg, "CG")
+  StormEnumValue_(Cg, "CG")
 
   /// @brief @c FCG iterative solver.
-  STORM_ENUM_VALUE_(Fcg, "FCG")
+  StormEnumValue_(Fcg, "FCG")
 
   /// @brief @c MINRES iterative solver.
-  STORM_ENUM_VALUE_(Minres, "MINRES")
+  StormEnumValue_(Minres, "MINRES")
 
   /// @brief @c CGS iterative solver.
-  STORM_ENUM_VALUE_(Cgs, "CGS")
+  StormEnumValue_(Cgs, "CGS")
 
   /// @brief @c BiCGStab iterative solver.
-  STORM_ENUM_VALUE_(BiCgStab, "BiCgStab")
+  StormEnumValue_(BiCgStab, "BiCgStab")
 
   /// @brief @c BiCGStab(l) iterative solver.
-  STORM_ENUM_VALUE_(BiCgStabL, "BiCgStab(l)")
+  StormEnumValue_(BiCgStabL, "BiCgStab(l)")
 
   /// @brief @c TFQMR iterative solver.
-  STORM_ENUM_VALUE_(Tfqmr, "TFQMR")
+  StormEnumValue_(Tfqmr, "TFQMR")
 
   /// @brief @c TFQMR(1) iterative solver.
-  STORM_ENUM_VALUE_(Tfqmr1, "TFQMR(1)")
+  StormEnumValue_(Tfqmr1, "TFQMR(1)")
 
   /// @brief @c IDR(s) iterative solver.
-  STORM_ENUM_VALUE_(Idrs, "IDR(s)")
+  StormEnumValue_(Idrs, "IDR(s)")
 
   /// @brief @c GMRES iterative solver.
-  STORM_ENUM_VALUE_(Gmres, "GMRES")
+  StormEnumValue_(Gmres, "GMRES")
 
   /// @brief @c FGMRES iterative solver.
-  STORM_ENUM_VALUE_(Fgmres, "FGMRES")
+  StormEnumValue_(Fgmres, "FGMRES")
 
   /// @brief @c LGMRES iterative solver.
-  STORM_ENUM_VALUE_(Lgmres, "LGMRES")
+  StormEnumValue_(Lgmres, "LGMRES")
 
   /// @brief @c LFGMRES iterative solver.
-  STORM_ENUM_VALUE_(Lfgmres, "LFGMRES")
+  StormEnumValue_(Lfgmres, "LFGMRES")
 
   /// @brief @c LSQR iterative solver.
-  STORM_ENUM_VALUE_(Lsqr, "LSQR")
+  StormEnumValue_(Lsqr, "LSQR")
 
   /// @brief @c LSMR iterative solver.
-  STORM_ENUM_VALUE_(Lsmr, "LSMR")
+  StormEnumValue_(Lsmr, "LSMR")
 
   /// @brief @c Richardson iterative solver.
-  STORM_ENUM_VALUE_(Richarson)
+  StormEnumValue_(Richarson)
 
   /// @brief @c Broyden iterative solver.
-  STORM_ENUM_VALUE_(Broyden)
+  StormEnumValue_(Broyden)
 
   /// @brief @c Newton iterative solver.
-  STORM_ENUM_VALUE_(Newton)
+  StormEnumValue_(Newton)
 
   /// @brief @c JFNK iterative solver.
-  STORM_ENUM_VALUE_(Jfnk, "JFNK")
+  StormEnumValue_(Jfnk, "JFNK")
 
 }; // class SolverType
 

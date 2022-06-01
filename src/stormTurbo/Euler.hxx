@@ -86,7 +86,7 @@ GasState<Value>::GasState(Vec3D<real_t> const& n,
     nrg = cons(1)/rho;
     vel = {cons(2), cons(3), cons(4)};
     vel = vel/rho;
-    eps = nrg - 0.5*Dot(vel, vel);
+    eps = nrg - 0.5*dot(vel, vel);
     p   = (Gamma - 1.0)*rho*eps;
   } else if (primPtr != nullptr) {
     auto const& prim = *primPtr;
@@ -94,7 +94,7 @@ GasState<Value>::GasState(Vec3D<real_t> const& n,
     p   = prim(1);
     vel = {prim(2), prim(2), prim(3)};
     eps = p/rho/(Gamma - 1.0);
-    nrg = eps + 0.5*Dot(vel, vel);
+    nrg = eps + 0.5*dot(vel, vel);
   }
   ent = nrg + p/rho;
   snd = std::sqrt(Gamma*p/rho);
@@ -118,7 +118,7 @@ Vec<Value, 5> GasState<Value>::ToPrim() const noexcept {
 template<class Value>
 Vec<Value, 5> GasState<Value>::ToFlux(Vec3D<real_t> const& n) const noexcept {
 
-  real_t const vn = rho*Dot(vel, n);
+  real_t const vn = rho*dot(vel, n);
   return { vn, vn*ent, vn*vel(0) + p*n(0), vn*vel(1) + p*n(1), vn*vel(2) + p*n(2) };
 
 } // GasState::ToPrim
@@ -131,8 +131,8 @@ Vec<Value, 5> LaxFriedrichsFlux(Vec3D<real_t> const& n,
   GasState<Value> ur(n, &rCons), ul(n, &lCons);
 
   Value const ss = std::max(
-    std::abs(Dot(n, ur.vel)) + ur.snd,
-    std::abs(Dot(n, ul.vel)) + ul.snd);
+    std::abs(dot(n, ur.vel)) + ur.snd,
+    std::abs(dot(n, ul.vel)) + ul.snd);
 
   return 0.5*(ur.ToFlux(n) + ul.ToFlux(n)) - ss*(rCons - lCons);
 

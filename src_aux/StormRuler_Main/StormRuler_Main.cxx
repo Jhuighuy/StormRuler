@@ -34,6 +34,7 @@
 
 //#include <stormMesh/Mesh.hxx>
 
+#include <stormSolvers/Mat.hxx>
 #include <stormUtils/JsonValue.hxx>
 
 #include <cstring>
@@ -65,7 +66,7 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh,
     Storm::SolveNonUniform(*solver, xx, bb, *symOp);
   }
 
-  std::cout << "num matvecs = " << numMatVecs << ' ' <<  method.ToString() << std::endl;
+  std::cout << "num matvecs = " << numMatVecs << ' ' <<  method.toString() << std::endl;
 
 } // stormLinSolve2
 
@@ -575,6 +576,27 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r,
 int main_turbo();
 
 int main(int argc, char** argv) {
+
+  {
+    using namespace Storm;
+    Mat<real_t, 5, 5> mat {
+      10, 2, 3, 4, 5,
+      6, 10, 8, 2, 1,
+      2, 3, 10, 5, 6,
+      7, 8, 9, 10, 2,
+      0, 4, 5, 1, 10,
+    };
+    auto lu = decompose_lu(mat, 3);
+    auto inv = inverse_lu(mat, 3);
+    std::cout << mat << std::endl << std::endl;
+    std::cout << lu.first << std::endl << std::endl;
+    std::cout << lu.second << std::endl << std::endl;
+    std::cout << inv << std::endl << std::endl;
+    std::cout << matmul(mat, inv) << std::endl << std::endl;
+    std::cout << matmul(inv, mat) << std::endl << std::endl;
+  }
+
+  return 0;
 
   if (argc > 1 && strcmp(argv[1], "turbo") == 0) {
     return main_turbo();

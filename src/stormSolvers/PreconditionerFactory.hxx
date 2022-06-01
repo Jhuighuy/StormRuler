@@ -41,61 +41,61 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 class PreconditionerType final : public Enum<PreconditionerType> {
 
-  STORM_ENUM_(PreconditionerType)
+  StormEnum_(PreconditionerType)
 
   /// @brief No preconditioning.
-  STORM_ENUM_VALUE_(None)
+  StormEnumValue_(None)
 
   /// @brief Identity preconditioner.
-  STORM_ENUM_VALUE_(Identity)
+  StormEnumValue_(Identity)
 
   /// @brief @c Jacobi preconditioner.
-  STORM_ENUM_VALUE_(Jacobi)
+  StormEnumValue_(Jacobi)
 
   /// @brief @c SGS preconditioner.
-  STORM_ENUM_VALUE_(Sgs, "CGS")
+  StormEnumValue_(Sgs, "CGS")
 
   /// @brief @c IC(0) preconditioner.
-  STORM_ENUM_VALUE_(Ic0, "IC0")
+  StormEnumValue_(Ic0, "IC0")
 
   /// @brief @c IC(t) preconditioner.
-  STORM_ENUM_VALUE_(Ict, "IC(T)")
+  StormEnumValue_(Ict, "IC(T)")
 
   /// @brief @c ILU(0) preconditioner.
-  STORM_ENUM_VALUE_(Ilu0, "ILU0")
+  StormEnumValue_(Ilu0, "ILU0")
 
   /// @brief @c ILU(t) preconditioner.
-  STORM_ENUM_VALUE_(Ilut, "ILU(T)")
+  StormEnumValue_(Ilut, "ILU(T)")
 
   /// @brief @c ILQ(0) preconditioner.
-  STORM_ENUM_VALUE_(Ilq0, "ILQ0")
+  StormEnumValue_(Ilq0, "ILQ0")
 
   /// @brief @c ILQ(t) preconditioner.
-  STORM_ENUM_VALUE_(Ilqt, "ILQ(T)")
+  StormEnumValue_(Ilqt, "ILQ(T)")
 
   /// @brief @c AINV(0) preconditioner.
-  STORM_ENUM_VALUE_(Ainv0, "AINV0")
+  StormEnumValue_(Ainv0, "AINV0")
 
   /// @brief @c AINV preconditioner.
-  STORM_ENUM_VALUE_(Ainv, "AINV")
+  StormEnumValue_(Ainv, "AINV")
 
   /// @brief @c SPAI(0) preconditioner.
-  STORM_ENUM_VALUE_(Spai0, "SPAI0")
+  StormEnumValue_(Spai0, "SPAI0")
 
   /// @brief @c SPAI preconditioner.
-  STORM_ENUM_VALUE_(Spai, "SPAI")
+  StormEnumValue_(Spai, "SPAI")
 
   /// @brief @c Broyden preconditioner.
-  STORM_ENUM_VALUE_(Broyden)
+  StormEnumValue_(Broyden)
   
   /// @brief @c BFGS preconditioner.
-  STORM_ENUM_VALUE_(Bfgs, "BFGS")
+  StormEnumValue_(Bfgs, "BFGS")
 
   /// @brief @c Chebyshev polynomial preconditioner.
-  STORM_ENUM_VALUE_(Chebyshev)
+  StormEnumValue_(Chebyshev)
 
   /// @brief @c Krylov preconditioner.
-  STORM_ENUM_VALUE_(Krylov)
+  StormEnumValue_(Krylov)
 
 }; // class PreconditionerType
 

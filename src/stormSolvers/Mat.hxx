@@ -371,7 +371,7 @@ constexpr auto MatMul(Mat<Value1, SizeX, SizeY> const& mat1,
 
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 /// @returns A pair of matrices, L and U factors.
-template<std::floating_point Value, size_t Size>
+template<real_or_complex_floating_point Value, size_t Size>
 constexpr auto DecomposeLu(Mat<Value, Size, Size> const& mat,
                            size_t size = Size) noexcept {
   auto lMat = MakeMat<Size>(Value{1});
@@ -394,7 +394,7 @@ constexpr auto DecomposeLu(Mat<Value, Size, Size> const& mat,
   return std::pair(lMat, uMat);
 }
 
-template<std::floating_point Value, size_t Size>
+template<real_or_complex_floating_point Value, size_t Size>
 constexpr void
 SolveLu(auto& vec,
         std::pair<Mat<Value, Size, Size>, Mat<Value, Size, Size>> const& lu,
@@ -416,7 +416,7 @@ SolveLu(auto& vec,
 }
 
 /// @brief Inverse a square matrix @p mat using the LU decomposition.
-template<std::floating_point Value, size_t Size>
+template<real_or_complex_floating_point Value, size_t Size>
 constexpr auto InverseLu(Mat<Value, Size, Size> const& mat,
                          size_t size = Size) noexcept {
   auto const lu = DecomposeLu(mat, size);
@@ -430,7 +430,7 @@ constexpr auto InverseLu(Mat<Value, Size, Size> const& mat,
 
 /// @brief Perform a QR decomposition of a matrix @p mat.
 /// @returns A pair of matrices, Q and R factors.
-template<std::floating_point Value, size_t SizeX, size_t SizeY>
+template<real_or_complex_floating_point Value, size_t SizeX, size_t SizeY>
 constexpr auto DecomposeQr(Mat<Value, SizeX, SizeY> const& mat) noexcept {
   Mat<Value, SizeX, SizeY> qMat;
   auto rMat = MakeMat<SizeY, SizeY>(Value{0});

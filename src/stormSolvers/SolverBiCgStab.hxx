@@ -28,7 +28,7 @@
 #include <cmath>
 
 #include <stormBase.hxx>
-#include <stormBlas/stormTensor.hxx>
+#include <stormSolvers/LegacyTensor.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Subspace.hxx>
 

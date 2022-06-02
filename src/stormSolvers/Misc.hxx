@@ -34,7 +34,7 @@ namespace Storm {
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
-class PowerIterations final : public Object {
+class PowerIterations final {
 public:
 
   /// @brief Estimate the largest eigenvalue of \

@@ -25,68 +25,67 @@
 #ifndef _STORM_BASE_HXX_
 #define _STORM_BASE_HXX_
 
-#include <array>
 #include <cstddef>
+
+#include <array>
+#include <complex>
+#include <concepts>
 #include <iostream>
 #include <type_traits>
 #include <vector>
 
 #include <StormRuler_API.h>
 
-#define _STORM_NOT_IMPLEMENTED_()                                              \
-  do {                                                                         \
-    std::cerr << __FUNCTION__ << " not implemented" << std::endl;              \
-    std::exit(1);                                                              \
-  } while (false)
-
 #define StormEnabledAssert(x) assert(x)
 #define StormDisabledAssert(x) static_cast<void>(x)
 #define StormAssert stormAssert
-#define _STORM_MESH_DEBUG_
 
 namespace Storm {
 
+/// @brief Size type.
 using size_t = std::size_t;
+
+/// @brief Pointer difference type.
 using ptrdiff_t = std::ptrdiff_t;
+
+/// @brief Real floating-point type.
 using real_t = double;
+
+/// @brief Check if type is a complex floating point.
+/// @{
+template<class>
+struct is_complex_floating_point_t : std::false_type {};
+template<class T>
+struct is_complex_floating_point_t<std::complex<T>> :
+    std::bool_constant<std::is_floating_point_v<T>> {};
+template<class T>
+inline constexpr bool is_complex_floating_point_v =
+    is_complex_floating_point_t<T>::value;
+/// @}
+
+/// @brief Concept for the real or complex floaing point numbers,
+///   e.g. @c real_t or @c std::complex<real_t>.
+template<class T>
+concept real_or_complex_floating_point =
+    std::floating_point<T> || is_complex_floating_point_v<T>;
 
 namespace Utils {
 
-template<class Value>
-Value SafeDivide(Value x, Value y) {
+/// @brief If @p y is zero, return zero, else
+///   return value of @p x divided by @p y.
+auto SafeDivide(real_or_complex_floating_point auto x,
+                real_or_complex_floating_point auto y) {
   return (y == 0.0) ? 0.0 : (x / y);
 }
 
-template<class Value>
-Value& SafeDivideEquals(Value& x, Value y) {
-  x = SafeDivide(x, y);
-  return x;
+/// @brief If @p y is zero, assign to @p x and return zero, else
+///   assign to @p x and return value of @p x divided by @p y.
+auto& SafeDivideEquals(real_or_complex_floating_point auto& x,
+                       real_or_complex_floating_point auto y) {
+  return x = SafeDivide(x, y);
 }
 
 } // namespace Utils
-
-class Object {
-public:
-
-  virtual ~Object() = default;
-};
-
-/// ----------------------------------------------------------------- ///
-/// @brief A non-copyable object.
-/// ----------------------------------------------------------------- ///
-class NonCopyable {
-public:
-
-  /// @brief Default constructor.
-  NonCopyable() = default;
-
-  /// @brief Copying is prohibited.
-  NonCopyable(const NonCopyable&) = delete;
-
-  /// @brief Copy-assignmennt is prohibited.
-  NonCopyable& operator=(const NonCopyable&) = delete;
-
-}; // class NonCopyable
 
 static size_t const DynamicExtent = SIZE_MAX;
 

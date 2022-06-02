@@ -32,6 +32,7 @@
 
 #include <stormBase.hxx>
 #include <stormSolvers/Vector.hxx>
+#include <stormUtils/Object.hxx>
 
 namespace Storm {
 
@@ -293,8 +294,7 @@ template<VectorLike InVector, VectorLike OutVector = InVector,
 auto MakeOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc));
-
-} // MakeOperator
+}
 template<VectorLike InVector, VectorLike OutVector = InVector,
          OperatorLike<InVector, OutVector> MatVecFunc,
          OperatorLike<OutVector, InVector> ConjMatVecFunc>
@@ -302,8 +302,7 @@ auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc),
       std::forward<ConjMatVecFunc>(conjMatVecFunc));
-
-} // MakeOperator
+}
 /// @}
 
 /// ----------------------------------------------------------------- ///
@@ -313,7 +312,6 @@ template<VectorLike Vector, OperatorLike<Vector> MatVecFunc>
 auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<Vector>>(
       matVecFunc, std::forward<MatVecFunc>(matVecFunc));
-
-} // MakeSymmetricOperator
+}
 
 } // namespace Storm

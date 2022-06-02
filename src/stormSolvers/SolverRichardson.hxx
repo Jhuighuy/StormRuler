@@ -65,8 +65,8 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   rVec_.Assign(xVec, false);
   if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
-  // ----------------------
   // Initialize:
+  // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝒓,
@@ -89,8 +89,8 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                          Preconditioner<Vector> const* preOp) {
   real_t const& omega{RelaxationFactor};
 
-  // ----------------------
   // Update the solution and the residual:
+  // ----------------------
   // 𝒙 ← 𝒙 + 𝜔⋅𝒓,
   // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:

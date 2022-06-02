@@ -22,7 +22,7 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-
+#if 0
 #pragma once
 
 #include <cmath>
@@ -34,25 +34,26 @@ namespace Storm {
 
 namespace Blas {
 
-  /// @brief Generate Givens rotation.
-  template<class Real>
-  inline auto SymOrtho(Real a, Real b) {
+/// @brief Generate Givens rotation.
+template<class Real>
+inline auto SymOrtho(Real a, Real b) {
+  // ----------------------
+  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+  // ----------------------
+  Real cs, sn, rr;
+  rr = std::hypot(a, b);
+  if (rr > 0.0) {
+    cs = a / rr;
+    sn = b / rr;
+  } else {
+    cs = 1.0;
+    sn = 0.0;
+  }
 
-    // ----------------------
-    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-    // ----------------------
-    Real cs, sn, rr;
-    rr = std::hypot(a, b);
-    if (rr > 0.0) {
-      cs = a/rr; sn = b/rr;
-    } else {
-      cs = 1.0; sn = 0.0;
-    }
+  return std::make_tuple(cs, sn, rr);
 
-    return std::make_tuple(cs, sn, rr);
-
-  } // SymOrtho
+} // SymOrtho
 
 } // namespace Blas
 
@@ -80,41 +81,38 @@ namespace Blas {
 template<class Vector>
 class MinresSolver final : public IterativeSolver<Vector> {
 private:
-  real_t alpha, beta, betaBar, gamma, delta, deltaBar,
-    epsilon, epsilonBar, tau, phi, phiTilde, cs, sn;
-  Vector pVec, qVec, qBarVec,
-    wVec, wBarVec, wBarBarVec, zVec, zBarVec, zBarBarVec;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t alpha, beta, betaBar, gamma, delta, deltaBar, epsilon, epsilonBar, tau,
+      phi, phiTilde, cs, sn;
+  Vector pVec, qVec, qBarVec, wVec, wBarVec, wBarBarVec, zVec, zBarVec,
+      zBarBarVec;
+
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class MinresSolver
 
 template<class Vector>
-real_t MinresSolver<Vector>::Init(Vector const& xVec,
-                                  Vector const& bVec,
+real_t MinresSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                   Operator<Vector> const& linOp,
                                   Preconditioner<Vector> const* preOp) {
-
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
   pVec.Assign(xVec, false);
-  wVec.Assign(xVec, false); 
-  wBarVec.Assign(xVec, false); 
-  wBarBarVec.Assign(xVec, false); 
-  zVec.Assign(xVec, false); 
-  zBarVec.Assign(xVec, false); 
-  zBarBarVec.Assign(xVec, false); 
+  wVec.Assign(xVec, false);
+  wBarVec.Assign(xVec, false);
+  wBarBarVec.Assign(xVec, false);
+  zVec.Assign(xVec, false);
+  zBarVec.Assign(xVec, false);
+  zBarBarVec.Assign(xVec, false);
   if (preOp != nullptr) {
-    qVec.Assign(xVec, false); 
-    qBarVec.Assign(xVec, false); 
+    qVec.Assign(xVec, false);
+    qBarVec.Assign(xVec, false);
   }
 
   // ----------------------
@@ -137,22 +135,24 @@ real_t MinresSolver<Vector>::Init(Vector const& xVec,
   if (preOp != nullptr) {
     preOp->MatVec(qVec, zBarVec);
   } else {
-    //qVec = zBarVec
+    // qVec = zBarVec
   }
-  betaBar = 1.0; beta = std::sqrt(Blas::Dot(qVec, zBarVec));
-  phi = beta; delta = 0.0; epsilon = 0.0;
-  cs = -1.0; sn = 0.0;
+  betaBar = 1.0;
+  beta = std::sqrt(Blas::Dot(qVec, zBarVec));
+  phi = beta;
+  delta = 0.0;
+  epsilon = 0.0;
+  cs = -1.0;
+  sn = 0.0;
 
   return phi;
 
 } // MinresSolver::Init
 
 template<class Vector>
-real_t MinresSolver<Vector>::Iterate(Vector& xVec,
-                                     Vector const& bVec,
+real_t MinresSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                      Operator<Vector> const& linOp,
                                      Preconditioner<Vector> const* preOp) {
-
   assert(preOp != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------
@@ -166,14 +166,14 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
   linOp.MatVec(pVec, qVec);
-  alpha = Blas::Dot(qVec, pVec)*std::pow(beta, -2);
-  Blas::Sub(zVec, pVec, 1.0/beta, zBarVec, alpha/beta);
-  Blas::Sub(zVec, zVec, zBarBarVec, beta/betaBar);
+  alpha = Blas::Dot(qVec, pVec) * std::pow(beta, -2);
+  Blas::Sub(zVec, pVec, 1.0 / beta, zBarVec, alpha / beta);
+  Blas::Sub(zVec, zVec, zBarBarVec, beta / betaBar);
   if (preOp != nullptr) {
     std::swap(qBarVec, qVec);
     preOp->MatVec(qVec, zVec);
   } else {
-    //qBarVec = qVec; qVec = zVec
+    // qBarVec = qVec; qVec = zVec
   }
   betaBar = beta, beta = std::sqrt(Blas::Dot(qVec, zVec));
   std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, zVec);
@@ -185,10 +185,10 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝑐𝑠, 𝑠𝑛, 𝛾 ← 𝘚𝘺𝘮𝘖𝘳𝘵𝘩𝘰(𝛾, 𝛽),
   // 𝜏 ← 𝑐𝑠⋅𝜑, 𝜑 ← 𝑠𝑛⋅𝜑.
   // ----------------------
-  deltaBar = cs*delta + sn*alpha, gamma = sn*delta - cs*alpha;
-  epsilonBar = epsilon, epsilon = sn*beta, delta = -cs*beta;
+  deltaBar = cs * delta + sn * alpha, gamma = sn * delta - cs * alpha;
+  epsilonBar = epsilon, epsilon = sn * beta, delta = -cs * beta;
   std::tie(cs, sn, gamma) = Blas::SymOrtho(gamma, beta);
-  tau = cs*phi, phi = sn*phi;
+  tau = cs * phi, phi = sn * phi;
 
   // ----------------------
   // Update the solution:
@@ -197,8 +197,8 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  Blas::Sub(wVec, qBarVec, 1.0/(betaBar*gamma), wBarVec, deltaBar/gamma);
-  Blas::Sub(wVec, wVec, wBarBarVec, epsilonBar/gamma);
+  Blas::Sub(wVec, qBarVec, 1.0 / (betaBar * gamma), wBarVec, deltaBar / gamma);
+  Blas::Sub(wVec, wVec, wBarBarVec, epsilonBar / gamma);
   Blas::Add(xVec, xVec, wVec, tau);
   std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
 
@@ -207,3 +207,4 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec,
 } // MinresSolver::Iterate
 
 } // namespace Storm
+#endif

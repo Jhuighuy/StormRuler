@@ -73,13 +73,9 @@ real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   rVec_.Assign(xVec, false);
   zVec_.Assign(xVec, false);
 
-  // ----------------------
   // Initialize:
+  // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙.
-  // ----------------------
-  linOp.Residual(rVec_, bVec, xVec);
-
-  // ----------------------
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝓟𝒓,
   //   𝒑 ← 𝒛,
@@ -89,6 +85,7 @@ real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
+  linOp.Residual(rVec_, bVec, xVec);
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
     pVec_.Set(zVec_);
@@ -106,8 +103,8 @@ template<VectorLike Vector>
 real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                  Operator<Vector> const& linOp,
                                  Preconditioner<Vector> const* preOp) {
-  // ----------------------
   // Iterate:
+  // ----------------------
   // 𝒛 ← 𝓐𝒑,
   // 𝛾̅ ← 𝛾,
   // 𝛼 ← 𝛾/<𝒑⋅𝒛>,

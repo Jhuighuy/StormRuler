@@ -148,6 +148,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::OuterInit(
   bool const leftPre{(preOp != nullptr) && (!Flexible) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
+  // Initialize:
   // ----------------------
   // 𝒒₀ ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -176,6 +177,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
   bool const leftPre{(preOp != nullptr) && (!Flexible) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
+  // Initialize:
   // ----------------------
   // 𝒒₀ ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -208,8 +210,8 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
       (preOp != nullptr) &&
       (Flexible || (this->PreSide == PreconditionerSide::Right))};
 
-  // ----------------------
   // Compute the new 𝒒ₖ₊₁ vector:
+  // ----------------------
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒒ₖ₊₁ ← 𝓟(𝒛₀ ← 𝓐𝒒ₖ),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
@@ -240,9 +242,9 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
   H_(k + 1, k) = qVecs_(k + 1).Norm2();
   qVecs_(k + 1).ScaleAssign(1.0 / H_(k + 1, k));
 
-  // ----------------------
   // Eliminate the last element in 𝐻
   // and and update the rotation matrix:
+  // ----------------------
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝜒 ← 𝑐𝑠ᵢ⋅𝐻ᵢₖ + 𝑠𝑛ᵢ⋅𝐻ᵢ₊₁,ₖ,
   //   𝐻ᵢ₊₁,ₖ ← -𝑠𝑛ᵢ⋅𝐻ᵢₖ + 𝑐𝑠ᵢ⋅𝐻ᵢ₊₁,ₖ,
@@ -262,8 +264,8 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
   H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 
-  // ----------------------
   // Update the 𝛽-solution and residual norm:
+  // ----------------------
   // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ.
   // ----------------------
   beta_(k + 1) = -sn_(k) * beta_(k), beta_(k) *= cs_(k);
@@ -282,8 +284,8 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
       (preOp != nullptr) &&
       (Flexible || (this->PreSide == PreconditionerSide::Right))};
 
-  // ----------------------
   // Finalize the 𝛽-solution:
+  // ----------------------
   // 𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
   // ----------------------
   for (size_t i{k}; i != STORM_SIZE_MAX; --i) {
@@ -293,8 +295,8 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
     beta_(i) /= H_(i, i);
   }
 
+  // Compute the 𝒙-solution:
   // ----------------------
-  // Compute 𝒙-solution:
   // 𝗶𝗳 𝗻𝗼𝘁 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
   //   𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 𝗱𝗼:
   //     𝒙 ← 𝒙 + 𝛽ᵢ⋅𝒒ᵢ.

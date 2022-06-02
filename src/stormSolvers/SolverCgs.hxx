@@ -79,6 +79,7 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   uVec_.Assign(xVec, false);
   vVec_.Assign(xVec, false);
 
+  // Initialize:
   // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -109,8 +110,8 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   bool const rightPre{(preOp != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
-  // ----------------------
   // Continue the iterations:
+  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝒖 ← 𝒓,
   //   𝒑 ← 𝒖.
@@ -159,8 +160,8 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   qVec_.Sub(uVec_, vVec_, alpha);
   vVec_.Add(uVec_, qVec_);
 
-  // ----------------------
   // Update the solution and the residual:
+  // ----------------------
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒙 ← 𝒙 + 𝛼⋅𝒗,
   //   𝒗 ← 𝓟(𝒖 ← 𝓐𝒗),

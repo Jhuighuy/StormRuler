@@ -99,6 +99,7 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
   uVecs_.Assign(s, xVec, false);
   gVecs_.Assign(s, xVec, false);
 
+  // Initialize:
   // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -124,8 +125,8 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
                                    Preconditioner<Vector> const* preOp) {
   size_t const s{this->NumInnerIterations};
 
-  // ----------------------
   // Build shadow space and initialize 𝜑:
+  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝜔 ← 𝜇₀₀ ← 𝟣,
   //   𝒑₀ ← 𝒓/𝜑₀,
@@ -177,8 +178,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   bool const rightPre{(preOp != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
-  // ----------------------
   // Compute 𝛾:
+  // ----------------------
   // 𝛾ₖ:ₛ₋₁ ← (𝜇ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹⋅𝜑ₖ:ₛ₋₁.
   // ----------------------
   for (size_t i = k; i < s; ++i) {
@@ -189,8 +190,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     gamma_(i) /= mu_(i, i);
   }
 
-  // ----------------------
   // Compute the new 𝒈ₖ and 𝒖ₖ vectors:
+  // ----------------------
   // 𝒗 ← 𝒓 - 𝛾ₖ⋅𝒈ₖ,
   // 𝗳𝗼𝗿 𝑖 = 𝑘 + 𝟣, 𝑠 - 𝟣 𝗱𝗼:
   //   𝒗 ← 𝒗 - 𝛾ᵢ⋅𝒈ᵢ,
@@ -227,8 +228,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     linOp.MatVec(gVecs_(k), uVecs_(k));
   }
 
-  // ----------------------
   // Biorthogonalize the new vectors 𝒈ₖ and 𝒖ₖ:
+  // ----------------------
   // 𝗳𝗼𝗿 𝑖 = 𝟢, 𝑘 - 𝟣 𝗱𝗼:
   //   𝛼 ← <𝒑ᵢ⋅𝒈ₖ>/𝜇ᵢᵢ,
   //   𝒖ₖ ← 𝒖ₖ - 𝛼⋅𝒖ᵢ,
@@ -241,8 +242,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     gVecs_(k).SubAssign(gVecs_(i), alpha);
   }
 
-  // ----------------------
   // Compute the new column of 𝜇:
+  // ----------------------
   // 𝗳𝗼𝗿 𝑖 = 𝑘, 𝑠 - 𝟣 𝗱𝗼:
   //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
@@ -251,8 +252,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     mu_(i, k) = pVecs_(i).Dot(gVecs_(k));
   }
 
-  // ----------------------
   // Update the solution and the residual:
+  // ----------------------
   // 𝛽 ← 𝜑ₖ/𝜇ₖₖ,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
@@ -261,8 +262,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   xVec.AddAssign(uVecs_(k), beta);
   rVec_.SubAssign(gVecs_(k), beta);
 
-  // ----------------------
   // Update 𝜑:
+  // ----------------------
   // 𝜑ₖ₊₁:ₛ₋₁ ← 𝜑ₖ₊₁:ₛ₋₁ - 𝛽⋅𝜇ₖ₊₁:ₛ₋₁,ₖ.
   // ----------------------
   for (size_t i{k + 1}; i < s; ++i) {
@@ -270,8 +271,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   }
 
   if (k == s - 1) {
-    // ----------------------
     // Enter the next 𝓖 subspace:
+    // ----------------------
     // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
     //   𝒗 ← 𝓟(𝒛 ← 𝓐𝒓),
     // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:

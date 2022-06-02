@@ -31,7 +31,6 @@
 #include <stormUtils/Enum.hxx>
 
 #include <stormSolvers/Preconditioner.hxx>
-#include <stormSolvers/PreconditionerBroyden.hxx>
 #include <stormSolvers/PreconditionerChebyshev.hxx>
 
 namespace Storm {
@@ -40,6 +39,7 @@ namespace Storm {
 /// @brief Preconditioner types.
 /// ----------------------------------------------------------------- ///
 class PreconditionerType final : public Enum<PreconditionerType> {
+  // clang-format off
 
   StormEnum_(PreconditionerType)
 
@@ -97,6 +97,8 @@ class PreconditionerType final : public Enum<PreconditionerType> {
   /// @brief @c Krylov preconditioner.
   StormEnumValue_(Krylov)
 
+  // clang-format on
+
 }; // class PreconditionerType
 
 /// ----------------------------------------------------------------- ///
@@ -104,61 +106,58 @@ class PreconditionerType final : public Enum<PreconditionerType> {
 /// ----------------------------------------------------------------- ///
 template<class Vector>
 std::unique_ptr<Preconditioner<Vector>>
-    MakePreconditioner(PreconditionerType preType = PreconditionerType::None) {
-
-  if (preType == PreconditionerType::None) {
-    return nullptr;
-  }
+MakePreconditioner(PreconditionerType preType = PreconditionerType::None) {
+  if (preType == PreconditionerType::None) { return nullptr; }
   if (preType == PreconditionerType::Identity) {
     return std::make_unique<IdentityPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Jacobi) {
-    //return std::make_unique<JacobiPreconditioner<Vector>>();
+    // return std::make_unique<JacobiPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Sgs) {
-    //return std::make_unique<SgsPreconditioner<Vector>>();
+    // return std::make_unique<SgsPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ic0) {
-    //return std::make_unique<Ic0Preconditioner<Vector>>();
+    // return std::make_unique<Ic0Preconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ict) {
-    //return std::make_unique<IctPreconditioner<Vector>>();
+    // return std::make_unique<IctPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ilu0) {
-    //return std::make_unique<Ilu0Preconditioner<Vector>>();
+    // return std::make_unique<Ilu0Preconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ilut) {
-    //return std::make_unique<IlutPreconditioner<Vector>>();
+    // return std::make_unique<IlutPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ilq0) {
-    //return std::make_unique<Ilq0Preconditioner<Vector>>();
+    // return std::make_unique<Ilq0Preconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ilqt) {
-    //return std::make_unique<IlqtPreconditioner<Vector>>();
+    // return std::make_unique<IlqtPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ainv0) {
-    //return std::make_unique<Ainv0Preconditioner<Vector>>();
+    // return std::make_unique<Ainv0Preconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Ainv) {
-    //return std::make_unique<AinvPreconditioner<Vector>>();
+    // return std::make_unique<AinvPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Spai0) {
-    //return std::make_unique<Spai0Preconditioner<Vector>>();
+    // return std::make_unique<Spai0Preconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Spai) {
-    //return std::make_unique<SpaiPreconditioner<Vector>>();
+    // return std::make_unique<SpaiPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Broyden) {
-    return std::make_unique<BroydenPreconditioner<Vector>>();
+    // return std::make_unique<BroydenPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Bfgs) {
-    return std::make_unique<BfgsPreconditioner<Vector>>();
+    // return std::make_unique<BfgsPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Chebyshev) {
     return std::make_unique<ChebyshevPreconditioner<Vector>>();
   }
   if (preType == PreconditionerType::Krylov) {
-    //return std::make_unique<KrylovPreconditioner<Vector>>();
+    // return std::make_unique<KrylovPreconditioner<Vector>>();
   }
 
   throw std::invalid_argument("Invalid preconditioner type specified.");

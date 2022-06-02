@@ -123,8 +123,8 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec, Vector const& bVec,
   sVec_.Assign(xVec, false);
   if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
-  // ----------------------
   // Initialize:
+  // ----------------------
   // 𝗶𝗳 𝘓₁:
   //   𝒅 ← 𝒙,
   // 𝗲𝗹𝘀𝗲:
@@ -167,8 +167,8 @@ BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
   bool const rightPre{(preOp != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
-  // ----------------------
   // Continue the iterations:
+  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //     𝒔 ← 𝓟(𝒛 ← 𝓐𝒚),
@@ -220,8 +220,8 @@ BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
     vVec_.Add(sVec_, vVec_, beta);
   }
 
-  // ----------------------
   // Update the solution:
+  // ----------------------
   // 𝛼 ← 𝜌/<𝒓̃⋅𝒗>,
   // 𝗳𝗼𝗿 𝑚 = 𝟢, 𝟣 𝗱𝗼:
   //   𝒖 ← 𝒖 - 𝛼⋅𝒔,
@@ -274,9 +274,9 @@ BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
     }
   }
 
-  // ----------------------
   // Compute the residual norm
   // (or it's upper bound estimate in the ℒ₂ case):
+  // ----------------------
   // 𝜏̃ ← 𝜏,
   // 𝗶𝗳 𝗻𝗼𝘁 𝘓₁:
   //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².

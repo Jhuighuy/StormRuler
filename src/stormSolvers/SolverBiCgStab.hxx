@@ -83,6 +83,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   vVec_.Assign(xVec, false);
   if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
+  // Initialize:
   // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙,
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
@@ -113,8 +114,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   bool const rightPre{(preOp != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
-  // ----------------------
   // Continue the iterations:
+  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝒑 ← 𝒓.
   // 𝗲𝗹𝘀𝗲:
@@ -136,8 +137,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
     pVec_.Add(rVec_, pVec_, beta);
   }
 
-  // ----------------------
   // Update the solution and the residual:
+  // ----------------------
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒗 ← 𝓟(𝒛 ← 𝓐𝒑),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
@@ -160,8 +161,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   xVec.AddAssign(rightPre ? zVec_ : pVec_, alpha_);
   rVec_.SubAssign(vVec_, alpha_);
 
-  // ----------------------
   // Update the solution and the residual again:
+  // ----------------------
   // 𝗶𝗳 𝘓𝘦𝘧𝘵𝘗𝘳𝘦:
   //   𝒕 ← 𝓟(𝒛 ← 𝓐𝒓),
   // 𝗲𝗹𝘀𝗲 𝗶𝗳 𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦:
@@ -248,6 +249,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
   rVecs_.Assign(l + 1, xVec, false);
   uVecs_.Assign(l + 1, xVec, false);
 
+  // Initialize:
   // ----------------------
   // 𝒖₀ ← {𝟢}ᵀ,
   // 𝒓₀ ← 𝒃 - 𝓐𝒙,
@@ -279,8 +281,8 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   size_t const l{this->NumInnerIterations};
   size_t const j{this->InnerIteration};
 
-  // ----------------------
   // BiCG part:
+  // ----------------------
   // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
   //   𝒖₀ ← 𝒓₀,
   // 𝗲𝗹𝘀𝗲:
@@ -322,8 +324,8 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     rVecs_(i).SubAssign(uVecs_(i + 1), alpha_);
   }
 
-  // ----------------------
   // Update the solution and the residual:
+  // ----------------------
   // 𝒙 ← 𝒙 + 𝛼⋅𝒖₀,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒓ⱼ₊₁ ← 𝓟(𝒛 ← 𝓐𝒓ⱼ).
@@ -339,8 +341,8 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   }
 
   if (j == l - 1) {
-    // ----------------------
     // Minimal residual part:
+    // ----------------------
     // 𝗳𝗼𝗿 𝑗 = 𝟣, 𝑙 𝗱𝗼:
     //   𝗳𝗼𝗿 𝑖 = 𝟣, 𝑗 - 𝟣 𝗱𝗼:
     //     𝜏ᵢⱼ ← <𝒓ᵢ⋅𝒓ⱼ>/𝜎ᵢ,
@@ -388,8 +390,8 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
       }
     }
 
-    // ----------------------
     // Update the solution and the residual again:
+    // ----------------------
     // 𝒙 ← 𝒙 + 𝛾₁⋅𝒓₀,
     // 𝒓₀ ← 𝒓₀ - 𝛾̅ₗ⋅𝒓ₗ,
     // 𝒖₀ ← 𝒖₀ - 𝛾ₗ⋅𝒖ₗ,

@@ -38,6 +38,7 @@ namespace Storm {
 /// @brief Preconditioner side.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 class PreconditionerSide final : public Enum<PreconditionerSide> {
+  // clang-format off
 
   StormEnum_(PreconditionerSide)
 
@@ -60,6 +61,8 @@ class PreconditionerSide final : public Enum<PreconditionerSide> {
   ///   convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
   StormEnumValue_(Symmetric)
 
+  // clang-format on
+
 }; // enum class PreconditionerSide
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -74,8 +77,7 @@ public:
   /// @param xVec Solution vector, 𝒙.
   /// @param bVec Right-hand-side vector, 𝒃.
   /// @param anyOp Operator to build the preconditioner upon.
-  virtual void Build(Vector const& xVec,
-                     Vector const& bVec,
+  virtual void Build(Vector const& xVec, Vector const& bVec,
                      Operator<Vector> const& anyOp) {}
 
 }; // class Preconditioner
@@ -88,14 +90,12 @@ template<VectorLike Vector>
 class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 
-  void MatVec(Vector& yVec,
-              Vector const& xVec) const override {
+  void MatVec(Vector& yVec, Vector const& xVec) const override {
     std::cout << "`IdentityPreconditioner::MatVec`!" << std::endl;
     yVec.Set(xVec);
   }
 
-  void ConjMatVec(Vector& xVec,
-                  Vector const& yVec) const override {
+  void ConjMatVec(Vector& xVec, Vector const& yVec) const override {
     std::cout << "`IdentityPreconditioner::ConjMatVec`!" << std::endl;
     xVec.Set(yVec);
   }

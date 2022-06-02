@@ -176,6 +176,7 @@ template<VectorLike Vector, bool Flexible, bool Loose>
 void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
     Vector const& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
+  // Force right preconditioning for the flexible GMRES.
   bool const leftPre{(preOp != nullptr) && (!Flexible) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
@@ -205,6 +206,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
     Preconditioner<Vector> const* preOp) {
   size_t const k{this->InnerIteration};
 
+  // Force right preconditioning for the flexible GMRES.
   bool const leftPre{
       (preOp != nullptr) &&
       (!Flexible && (this->PreSide == PreconditionerSide::Left))};

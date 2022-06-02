@@ -31,6 +31,7 @@
 #include <stormSolvers/LegacyTensor.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Subspace.hxx>
+#include <stormSolvers/Vector.hxx>
 
 namespace Storm {
 

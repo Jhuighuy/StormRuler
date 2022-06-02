@@ -27,6 +27,7 @@
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
+#include <stormSolvers/Vector.hxx>
 
 namespace Storm {
 

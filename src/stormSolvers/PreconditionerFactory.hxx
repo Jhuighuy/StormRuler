@@ -105,8 +105,8 @@ class PreconditionerType final : public Enum<PreconditionerType> {
 /// @brief Make preconditioner of the specified type.
 /// ----------------------------------------------------------------- ///
 template<class Vector>
-std::unique_ptr<Preconditioner<Vector>>
-MakePreconditioner(PreconditionerType preType = PreconditionerType::None) {
+auto MakePreconditioner(PreconditionerType preType = PreconditionerType::None)
+    -> std::unique_ptr<Preconditioner<Vector>> {
   if (preType == PreconditionerType::None) { return nullptr; }
   if (preType == PreconditionerType::Identity) {
     return std::make_unique<IdentityPreconditioner<Vector>>();

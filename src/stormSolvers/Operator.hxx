@@ -25,10 +25,10 @@
 
 #pragma once
 
+#include <cmath>
+#include <functional>
 #include <memory>
 #include <stdexcept>
-#include <functional>
-#include <cmath>
 
 #include <stormBase.hxx>
 #include <stormSolvers/Vector.hxx>
@@ -37,6 +37,7 @@ namespace Storm {
 
 class stormArray {
 public:
+
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
   std::shared_ptr<int> RefCounter;
@@ -45,16 +46,16 @@ public:
 
   stormArray() = default;
 
-  stormArray(stormMesh_t mesh, stormArray_t array): Mesh(mesh), Array(array) {
+  stormArray(stormMesh_t mesh, stormArray_t array) : Mesh(mesh), Array(array) {
     RefCounter = std::make_shared<int>(2);
   }
 
-  stormArray(stormArray&& oth): Mesh(oth.Mesh), Array(oth.Array) {
+  stormArray(stormArray&& oth) : Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
   }
 
-  stormArray(stormArray const& oth): Mesh(oth.Mesh), Array(oth.Array) {
+  stormArray(stormArray const& oth) : Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
   }
@@ -68,12 +69,12 @@ public:
 
   stormArray& operator=(stormArray&& oth) {
     this->~stormArray();
-    new(this) stormArray(std::forward<stormArray>(oth));
+    new (this) stormArray(std::forward<stormArray>(oth));
     return *this;
   }
   stormArray& operator=(stormArray const& oth) {
     this->~stormArray();
-    new(this) stormArray(oth);
+    new (this) stormArray(oth);
     return *this;
   }
 
@@ -113,16 +114,13 @@ public:
     Scale(*this, a);
   }
 
-  void Add(stormArray const& y, 
-           stormArray const& x) {
+  void Add(stormArray const& y, stormArray const& x) {
     stormAdd(Mesh, Array, y.Array, x.Array);
   }
-  void Add(stormArray const& y, 
-           stormArray const& x, real_t a) {
+  void Add(stormArray const& y, stormArray const& x, real_t a) {
     stormAdd(Mesh, Array, y.Array, x.Array, a);
   }
-  void Add(stormArray const& y, real_t b,
-           stormArray const& x, real_t a) {
+  void Add(stormArray const& y, real_t b, stormArray const& x, real_t a) {
     stormAdd(Mesh, Array, y.Array, x.Array, a, b);
   }
 
@@ -133,16 +131,13 @@ public:
     Add(*this, y, a);
   }
 
-  void Sub(stormArray const& y, 
-           stormArray const& x) {
+  void Sub(stormArray const& y, stormArray const& x) {
     stormSub(Mesh, Array, y.Array, x.Array);
   }
-  void Sub(stormArray const& y, 
-           stormArray const& x, real_t a) {
+  void Sub(stormArray const& y, stormArray const& x, real_t a) {
     stormSub(Mesh, Array, y.Array, x.Array, a);
   }
-  void Sub(stormArray const& y, real_t b, 
-           stormArray const& x, real_t a) {
+  void Sub(stormArray const& y, real_t b, stormArray const& x, real_t a) {
     stormSub(Mesh, Array, y.Array, x.Array, a, b);
   }
 
@@ -152,30 +147,30 @@ public:
   void SubAssign(stormArray const& y, real_t a) {
     Sub(*this, y, a);
   }
-
 };
 
 namespace Blas {
 
-  /// @brief Generate Givens rotation.
-  template<class Real>
-  inline auto SymOrtho(Real a, Real b) {
+/// @brief Generate Givens rotation.
+template<class Real>
+inline auto SymOrtho(Real a, Real b) {
+  // ----------------------
+  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+  // ----------------------
+  Real cs, sn, rr;
+  rr = std::hypot(a, b);
+  if (rr > 0.0) {
+    cs = a / rr;
+    sn = b / rr;
+  } else {
+    cs = 1.0;
+    sn = 0.0;
+  }
 
-    // ----------------------
-    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-    // ----------------------
-    Real cs, sn, rr;
-    rr = std::hypot(a, b);
-    if (rr > 0.0) {
-      cs = a/rr; sn = b/rr;
-    } else {
-      cs = 1.0; sn = 0.0;
-    }
+  return std::make_tuple(cs, sn, rr);
 
-    return std::make_tuple(cs, sn, rr);
-
-  } // SymOrtho
+} // SymOrtho
 
 } // namespace Blas
 
@@ -190,8 +185,7 @@ public:
   ///
   /// @param yVec Output vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
-  virtual void MatVec(OutVector& yVec,
-                      InVector const& xVec) const = 0;
+  virtual void MatVec(OutVector& yVec, InVector const& xVec) const = 0;
 
   /// @brief Compute a chained \
   ///   operator-vector product, 𝒛 ← 𝓐(𝒚 ← 𝓑(𝒙)).
@@ -200,8 +194,7 @@ public:
   /// @param yVec Intermediate vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
   template<VectorLike InOutVector = InVector>
-  void MatVec(OutVector& zVec,
-              InOutVector& yVec,
+  void MatVec(OutVector& zVec, InOutVector& yVec,
               Operator<InVector, InOutVector> const& otherOp,
               InVector const& xVec) const {
     otherOp.MatVec(yVec, xVec);
@@ -213,8 +206,7 @@ public:
   /// @param rVec Residual vector, 𝒓.
   /// @param bVec Input vector, 𝒃.
   /// @param xVec Input vector, 𝒙.
-  void Residual(OutVector& rVec,
-                OutVector const& bVec,
+  void Residual(OutVector& rVec, OutVector const& bVec,
                 InVector const& xVec) const {
     MatVec(rVec, xVec);
     rVec.Sub(bVec, rVec);
@@ -224,8 +216,7 @@ public:
   ///
   /// @param bVec Input vector, 𝒃.
   /// @param xVec Input vector, 𝒙.
-  real_t ResidualNorm(OutVector const& bVec,
-                      InVector const& xVec) const {
+  real_t ResidualNorm(OutVector const& bVec, InVector const& xVec) const {
     OutVector rVec;
     rVec.Assign(bVec, false);
     Residual(rVec, bVec, xVec);
@@ -236,10 +227,8 @@ public:
   ///
   /// @param xVec Output vector, 𝒙.
   /// @param yVec Input vector, 𝒚.
-  virtual void ConjMatVec(InVector& xVec,
-                          OutVector const& yVec) const {
-    throw std::runtime_error(
-      "`Operator::ConjMatVec` was not overriden");
+  virtual void ConjMatVec(InVector& xVec, OutVector const& yVec) const {
+    throw std::runtime_error("`Operator::ConjMatVec` was not overriden");
   }
 
 }; // class Operator
@@ -250,44 +239,42 @@ public:
 template<VectorLike InVector, VectorLike OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
+
   std::function<void(OutVector&, InVector const&)> MatVecFunc_;
   std::function<void(InVector&, OutVector const&)> ConjMatVecFunc_;
 
 public:
 
   /// @brief Construct the functional operator.
-  ///  
+  ///
   /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
   /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   /// @{
   template<OperatorLike<InVector, OutVector> MatVecFunc>
-  explicit FunctionalOperator(MatVecFunc&& matVecFunc) :
-      MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
+  explicit FunctionalOperator(MatVecFunc&& matVecFunc)
+      : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
     StormAssert(MatVecFunc_);
   }
-  template<OperatorLike<InVector, OutVector> MatVecFunc, 
+  template<OperatorLike<InVector, OutVector> MatVecFunc,
            OperatorLike<OutVector, InVector> ConjMatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc,
-                              ConjMatVecFunc&& conjMatVecFunc) :
-      MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
-      ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
+                              ConjMatVecFunc&& conjMatVecFunc)
+      : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
+        ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
     StormAssert(MatVecFunc_ && ConjMatVecFunc_);
   }
   /// @}
 
 private:
 
-  void MatVec(OutVector& yVec,
-              InVector const& xVec) const override {
+  void MatVec(OutVector& yVec, InVector const& xVec) const override {
     MatVecFunc_(yVec, xVec);
   }
 
-  void ConjMatVec(InVector& xVec,
-                  OutVector const& yVec) const override {
+  void ConjMatVec(InVector& xVec, OutVector const& yVec) const override {
     if (!ConjMatVecFunc_) {
-      throw std::runtime_error(
-        "`FunctionalOperator::ConjMatVec`"
-        " conjugate product function was not set.");
+      throw std::runtime_error("`FunctionalOperator::ConjMatVec`"
+                               " conjugate product function was not set.");
     }
     ConjMatVecFunc_(xVec, yVec);
   }
@@ -296,30 +283,25 @@ private:
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make the functional operator.
-///  
+///
 /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
 /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
 /// @{
-template<VectorLike InVector, 
-         VectorLike OutVector = InVector, 
+template<VectorLike InVector, VectorLike OutVector = InVector,
          OperatorLike<InVector, OutVector> MatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc) {
-
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
-    std::forward<MatVecFunc>(matVecFunc));
+      std::forward<MatVecFunc>(matVecFunc));
 
 } // MakeOperator
-template<VectorLike InVector, 
-         VectorLike OutVector = InVector, 
-         OperatorLike<InVector, OutVector> MatVecFunc, 
+template<VectorLike InVector, VectorLike OutVector = InVector,
+         OperatorLike<InVector, OutVector> MatVecFunc,
          OperatorLike<OutVector, InVector> ConjMatVecFunc>
-auto MakeOperator(MatVecFunc&& matVecFunc,
-                  ConjMatVecFunc&& conjMatVecFunc) {
-
+auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
-    std::forward<MatVecFunc>(matVecFunc), 
-    std::forward<ConjMatVecFunc>(conjMatVecFunc));
+      std::forward<MatVecFunc>(matVecFunc),
+      std::forward<ConjMatVecFunc>(conjMatVecFunc));
 
 } // MakeOperator
 /// @}
@@ -327,12 +309,10 @@ auto MakeOperator(MatVecFunc&& matVecFunc,
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, 
-         OperatorLike<Vector> MatVecFunc>
+template<VectorLike Vector, OperatorLike<Vector> MatVecFunc>
 auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
-
   return std::make_unique<FunctionalOperator<Vector>>(
-    matVecFunc, std::forward<MatVecFunc>(matVecFunc));
+      matVecFunc, std::forward<MatVecFunc>(matVecFunc));
 
 } // MakeSymmetricOperator
 

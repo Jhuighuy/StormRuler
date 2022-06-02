@@ -25,16 +25,19 @@
 #ifndef _STORM_BASE_HXX_
 #define _STORM_BASE_HXX_
 
-#include <cstddef>
 #include <array>
-#include <vector>
-#include <type_traits>
+#include <cstddef>
 #include <iostream>
+#include <type_traits>
+#include <vector>
 
 #include <StormRuler_API.h>
 
-#define _STORM_NOT_IMPLEMENTED_() do { \
-  std::cerr << __FUNCTION__ << " not implemented" << std::endl; std::exit(1); } while(false)
+#define _STORM_NOT_IMPLEMENTED_()                                              \
+  do {                                                                         \
+    std::cerr << __FUNCTION__ << " not implemented" << std::endl;              \
+    std::exit(1);                                                              \
+  } while (false)
 
 #define StormEnabledAssert(x) assert(x)
 #define StormDisabledAssert(x) static_cast<void>(x)
@@ -48,22 +51,28 @@ using ptrdiff_t = std::ptrdiff_t;
 using real_t = double;
 
 namespace Utils {
-  
-  template<class Value>
-  Value SafeDivide(Value x, Value y) {
-    return (y == 0.0) ? 0.0 : (x/y);
-  }
 
-  template<class Value>
-  Value& SafeDivideEquals(Value& x, Value y) {
-    x = SafeDivide(x, y);
-    return x;
-  }
+template<class Value>
+Value SafeDivide(Value x, Value y) {
+  return (y == 0.0) ? 0.0 : (x / y);
+}
+
+template<class Value>
+Value& SafeDivideEquals(Value& x, Value y) {
+  x = SafeDivide(x, y);
+  return x;
+}
 
 } // namespace Utils
 
+class Object {
+public:
+
+  virtual ~Object() = default;
+};
+
 /// ----------------------------------------------------------------- ///
-/// @brief A non-copyable object. 
+/// @brief A non-copyable object.
 /// ----------------------------------------------------------------- ///
 class NonCopyable {
 public:
@@ -82,16 +91,13 @@ public:
 static size_t const DynamicExtent = SIZE_MAX;
 
 template<size_t Extent>
-using ExtentSize = 
-  std::conditional_t<Extent == DynamicExtent, 
-                     size_t, 
-                     std::integral_constant<size_t, Extent>>;
+using ExtentSize = std::conditional_t<Extent == DynamicExtent, size_t,
+                                      std::integral_constant<size_t, Extent>>;
 
 template<class Value, size_t Extent>
 using ExtentArray =
-  std::conditional_t<Extent == DynamicExtent,
-                     std::vector<Value>,
-                     std::array<Value, Extent>>;
+    std::conditional_t<Extent == DynamicExtent, std::vector<Value>,
+                       std::array<Value, Extent>>;
 
 /// ----------------------------------------------------------------- ///
 /// @brief Constant to mark the the dynamic size in the \
@@ -101,27 +107,27 @@ static constexpr size_t DynamicSize{SIZE_MAX};
 
 /// ----------------------------------------------------------------- ///
 /// @brief SOD @c size_t template.
-/// 
+///
 /// Usage:
 /// @code
 ///   [[no_unique_address]] SodSize_t<Size> MySize;
 /// @endcode
 /// ----------------------------------------------------------------- ///
 template<size_t Size>
-using SodSize_t = std::conditional_t<
-  Size == DynamicSize, size_t, std::integral_constant<size_t, Size>>;
+using SodSize_t = std::conditional_t<Size == DynamicSize, size_t,
+                                     std::integral_constant<size_t, Size>>;
 
 /// ----------------------------------------------------------------- ///
 /// @brief SOD array template.
-/// 
+///
 /// Usage:
 /// @code
 ///   [[no_unique_address]] SodArray<Value, Size> MyArray;
 /// @endcode
 /// ----------------------------------------------------------------- ///
 template<class Value, size_t Size>
-using SodArray = std::conditional_t<
-  Size == DynamicSize, std::vector<Value>, std::array<Value, Size>>;
+using SodArray = std::conditional_t<Size == DynamicSize, std::vector<Value>,
+                                    std::array<Value, Size>>;
 
 } // namespace Storm
 

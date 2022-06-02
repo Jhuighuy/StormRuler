@@ -49,53 +49,46 @@ public:
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
-  static real_t
-    EstimateLargestEigenvalue(Vector& xVec,
-                              Operator<Vector> const& linOp,
-                              size_t maxIterations = 20,
-                              real_t relativeTolerance = 1.0e-8);
+  static real_t EstimateLargestEigenvalue(Vector& xVec,
+                                          Operator<Vector> const& linOp,
+                                          size_t maxIterations = 20,
+                                          real_t relativeTolerance = 1.0e-8);
 
 }; // class PowerIterations
 
 template<VectorLike Vector>
-real_t PowerIterations<Vector>::
-    EstimateLargestEigenvalue(Vector& xVec,
-                              Operator<Vector> const& linOp,
-                              size_t maxIterations,
-                              real_t relativeTolerance) {
-
+real_t PowerIterations<Vector>::EstimateLargestEigenvalue(
+    Vector& xVec, Operator<Vector> const& linOp, size_t maxIterations,
+    real_t relativeTolerance) {
   Vector yVec;
   yVec.Assign(xVec, false);
 
+  // Initialize the power iterations:
   // ----------------------
-  // Initialize the Power Iterations:
   // 𝜆 ← 𝟣,
   // 𝒙 ← 𝘙𝘢𝘯𝘥𝘰𝘮(),
   // 𝒙 ← 𝒙/‖𝒙‖.
   // ----------------------
-  real_t lambda = 1.0;
+  real_t lambda{1.0};
   xVec.RandFill();
-  xVec.ScaleAssign(1.0/xVec.Norm2());
+  xVec.ScaleAssign(1.0 / xVec.Norm2());
 
-  for (size_t iteration = 0; iteration < maxIterations; ++iteration) {
-
+  for (size_t k{0}; k < maxIterations; ++k) {
+    // Continue the power iterations:
     // ----------------------
-    // Continue the Power Iterations:
     // 𝒚 ← 𝓐𝒙,
     // 𝜆̅ ← 𝜆, 𝜆 ← <𝒙⋅𝒚>,
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     linOp.MatVec(yVec, xVec);
-    //real_t const lambdaBar = lambda;
+    real_t const lambdaBar{lambda};
     lambda = xVec.Dot(yVec);
-    xVec.Scale(yVec, 1.0/yVec.Norm2());
+    xVec.Scale(yVec, 1.0 / yVec.Norm2());
 
-    // ----------------------
     // Check for the convergence on 𝜆 and 𝜆̅:
-    // ----------------------
-    //if (std::abs((lambda - lambdaBar)/lambdaBar) < relativeTolerance) {
-    //  break;
-    //}
+    if (std::abs((lambda - lambdaBar) / lambdaBar) < relativeTolerance) {
+      break;
+    }
   }
 
   return lambda;

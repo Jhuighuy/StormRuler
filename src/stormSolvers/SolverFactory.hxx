@@ -33,15 +33,15 @@
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/SolverCg.hxx>
 //#include <stormSolvers/SolverMinres.hxx>
-#include <stormSolvers/SolverCgs.hxx>
 #include <stormSolvers/SolverBiCgStab.hxx>
-#include <stormSolvers/SolverTfqmr.hxx>
-#include <stormSolvers/SolverIdrs.hxx>
+#include <stormSolvers/SolverCgs.hxx>
 #include <stormSolvers/SolverGmres.hxx>
+#include <stormSolvers/SolverIdrs.hxx>
+#include <stormSolvers/SolverTfqmr.hxx>
 //#include <stormSolvers/SolverLsqr.hxx>
 
-#include <stormSolvers/SolverRichardson.hxx>
 #include <stormSolvers/SolverNewton.hxx>
+#include <stormSolvers/SolverRichardson.hxx>
 
 namespace Storm {
 
@@ -49,7 +49,7 @@ namespace Storm {
 /// @brief Solver types.
 /// ----------------------------------------------------------------- ///
 class SolverType final : public Enum<SolverType> {
-  
+  // clang-format off
   StormEnum_(SolverType)
 
   /// @brief Default solver.
@@ -112,28 +112,26 @@ class SolverType final : public Enum<SolverType> {
   /// @brief @c JFNK iterative solver.
   StormEnumValue_(Jfnk, "JFNK")
 
+  // clang-format on
+
 }; // class SolverType
 
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
-template<VectorLike InVector, 
-         VectorLike OutVector = InVector>
-std::unique_ptr<IterativeSolver<InVector, OutVector>>
-    MakeIterativeSolver(SolverType solverType = SolverType::Default) {
-
-  // ----------------------
+template<VectorLike InVector, VectorLike OutVector = InVector>
+auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
+    -> std::unique_ptr<IterativeSolver<InVector, OutVector>> {
   // Try the square Krylov subspace solver first:
-  // ----------------------
   if constexpr (std::is_same_v<InVector, OutVector>) {
     if (solverType == SolverType::Cg) {
       return std::make_unique<CgSolver<InVector>>();
     }
     if (solverType == SolverType::Fcg) {
-      //return std::make_unique<FcgSolver<InVector>>();
+      // return std::make_unique<FcgSolver<InVector>>();
     }
     if (solverType == SolverType::Minres) {
-      //return std::make_unique<MinresSolver<InVector>>();
+      // return std::make_unique<MinresSolver<InVector>>();
     }
     if (solverType == SolverType::Cgs) {
       return std::make_unique<CgsSolver<InVector>>();
@@ -161,40 +159,36 @@ std::unique_ptr<IterativeSolver<InVector, OutVector>>
       return std::make_unique<FgmresSolver<InVector>>();
     }
     if (solverType == SolverType::Lgmres) {
-      //return std::make_unique<LgmresSolver<InVector>>();
+      // return std::make_unique<LgmresSolver<InVector>>();
     }
     if (solverType == SolverType::Lfgmres) {
-      //return std::make_unique<LfgmresSolver<InVector>>();
+      // return std::make_unique<LfgmresSolver<InVector>>();
     }
   }
 
-  // ----------------------
   // Next, try the other general solvers:
-  // ----------------------
   if constexpr (std::is_same_v<InVector, OutVector>) {
     if (solverType == SolverType::Richarson) {
       return std::make_unique<RichardsonSolver<InVector>>();
     }
     if (solverType == SolverType::Broyden) {
-      //return std::make_unique<BroydenSolver<InVector>>();
+      // return std::make_unique<BroydenSolver<InVector>>();
     }
     if (solverType == SolverType::Newton) {
-      //return std::make_unique<NewtonSolver<InVector>>();
+      // return std::make_unique<NewtonSolver<InVector>>();
     }
     if (solverType == SolverType::Jfnk) {
       return std::make_unique<JfnkSolver<InVector>>();
     }
   }
 
-  // ----------------------
   // Finally, try the Krylov subspace least squares solvers:
-  // ----------------------
   if (solverType == SolverType::Lsqr) {
-    //return std::make_unique<LsqrSolver<InVector, OutVector>>();
+    // return std::make_unique<LsqrSolver<InVector, OutVector>>();
   }
   if (solverType == SolverType::Default || solverType == SolverType::Lsmr) {
     // Note: LSMR is the default rectangular solver.
-    //return std::make_unique<LsmrSolver<InVector, OutVector>>();
+    // return std::make_unique<LsmrSolver<InVector, OutVector>>();
   }
 
   throw std::invalid_argument("Invalid iterative solver type specified.");

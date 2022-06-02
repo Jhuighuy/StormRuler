@@ -38,16 +38,15 @@ namespace Storm {
 template<VectorLike Vector, bool L1>
 class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
+
   real_t rho_, tau_;
   Vector dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_, zVec_;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
@@ -101,8 +100,8 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 ///
 /// References:
 /// @verbatim
-/// [1] H.M Bücker, 
-///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm 
+/// [1] H.M Bücker,
+///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -110,13 +109,11 @@ template<VectorLike Vector>
 class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
-real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
-                                         Vector const& bVec,
+real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec, Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Left);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
 
   dVec_.Assign(xVec, false);
   rTildeVec_.Assign(xVec, false);
@@ -124,9 +121,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
   vVec_.Assign(xVec, false);
   yVec_.Assign(xVec, false);
   sVec_.Assign(xVec, false);
-  if (preOp != nullptr) {
-    zVec_.Assign(xVec, false);
-  }
+  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
   // ----------------------
   // Initialize:
@@ -163,15 +158,14 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec,
 } // BaseTfqmrSolver::Init
 
 template<VectorLike Vector, bool L1>
-real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
-                                            Vector const& bVec,
-                                            Operator<Vector> const& linOp,
-                                            Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Right);
+real_t
+BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
+                                     Operator<Vector> const& linOp,
+                                     Preconditioner<Vector> const* preOp) {
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
+  bool const rightPre{(preOp != nullptr) &&
+                      (this->PreSide == PreconditionerSide::Right)};
 
   // ----------------------
   // Continue the iterations:
@@ -186,7 +180,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   //   𝒗 ← 𝒔,
   // 𝗲𝗹𝘀𝗲:
   //   𝜌̅ ← 𝜌,
-  //   𝜌 ← <𝒓̃⋅𝒖>, 
+  //   𝜌 ← <𝒓̃⋅𝒖>,
   //   𝛽 ← 𝜌/𝜌̅,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗,
   //   𝒚 ← 𝒖 + 𝛽⋅𝒚,
@@ -200,7 +194,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration = this->Iteration == 0;
+  bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     if (leftPre) {
       preOp->MatVec(sVec_, zVec_, linOp, yVec_);
@@ -211,9 +205,9 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
     }
     vVec_.Set(sVec_);
   } else {
-    real_t const rhoBar = rho_;
+    real_t const rhoBar{rho_};
     rho_ = rTildeVec_.Dot(uVec_);
-    real_t const beta = Utils::SafeDivide(rho_, rhoBar);
+    real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
     vVec_.Add(sVec_, vVec_, beta);
     yVec_.Add(uVec_, yVec_, beta);
     if (leftPre) {
@@ -255,19 +249,16 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  real_t const alpha =
-    Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_));
-  for (size_t m = 0; m <= 1; ++m) {
+  real_t const alpha{Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_))};
+  for (size_t m{0}; m <= 1; ++m) {
     uVec_.SubAssign(sVec_, alpha);
     dVec_.AddAssign(rightPre ? zVec_ : yVec_, alpha);
-    real_t const omega = uVec_.Norm2();
+    real_t const omega{uVec_.Norm2()};
     if constexpr (L1) {
-      if (omega < tau_) {
-        tau_ = omega, xVec.Set(dVec_);
-      }
+      if (omega < tau_) { tau_ = omega, xVec.Set(dVec_); }
     } else {
       auto const [cs, sn, rr] = Blas::SymOrtho(tau_, omega);
-      tau_ = omega*cs;
+      tau_ = omega * cs;
       xVec.AddAssign(dVec_, std::pow(cs, 2));
       dVec_.ScaleAssign(std::pow(sn, 2));
     }
@@ -284,17 +275,17 @@ real_t BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec,
   }
 
   // ----------------------
-  // Compute the residual norm 
+  // Compute the residual norm
   // (or it's upper bound estimate in the ℒ₂ case):
   // 𝜏̃ ← 𝜏,
   // 𝗶𝗳 𝗻𝗼𝘁 𝘓₁:
   //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  real_t tauTilde = tau_;
+  real_t tauTilde{tau_};
   if constexpr (!L1) {
     size_t const k = this->Iteration;
-    tauTilde *= std::sqrt(2.0*k + 3.0);
+    tauTilde *= std::sqrt(2.0 * k + 3.0);
   }
 
   return tauTilde;

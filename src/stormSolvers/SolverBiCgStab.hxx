@@ -28,8 +28,8 @@
 #include <cmath>
 
 #include <stormBase.hxx>
-#include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
+#include <stormBlas/stormTensor.hxx>
 #include <stormSolvers/Solver.hxx>
 
 namespace Storm {
@@ -55,38 +55,33 @@ namespace Storm {
 template<VectorLike Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
+
   real_t alpha_, rho_, omega_;
   Vector pVec_, rVec_, rTildeVec_, tVec_, vVec_, zVec_;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class BiCgStabSolver
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
-                                    Vector const& bVec,
+real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                     Operator<Vector> const& linOp,
                                     Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Left);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
 
   pVec_.Assign(xVec, false);
   rVec_.Assign(xVec, false);
   rTildeVec_.Assign(xVec, false);
   tVec_.Assign(xVec, false);
   vVec_.Assign(xVec, false);
-  if (preOp != nullptr) {
-    zVec_.Assign(xVec, false);
-  }
+  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
   // ----------------------
   // 𝒓 ← 𝒃 - 𝓐𝒙,
@@ -110,15 +105,13 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec,
 } // BiCgStabSolver::Init
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
-                                       Vector const& bVec,
+real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                        Operator<Vector> const& linOp,
                                        Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Right);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
+  bool const rightPre{(preOp != nullptr) &&
+                      (this->PreSide == PreconditionerSide::Right)};
 
   // ----------------------
   // Continue the iterations:
@@ -132,13 +125,13 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration = this->Iteration == 0;
+  bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     pVec_.Set(rVec_);
   } else {
-    real_t const rhoBar = rho_;
+    real_t const rhoBar{rho_};
     rho_ = rTildeVec_.Dot(rVec_);
-    real_t const beta = Utils::SafeDivide(alpha_*rho_, omega_*rhoBar);
+    real_t const beta{Utils::SafeDivide(alpha_ * rho_, omega_ * rhoBar)};
     pVec_.SubAssign(vVec_, omega_);
     pVec_.Add(rVec_, pVec_, beta);
   }
@@ -187,8 +180,7 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
   } else {
     linOp.MatVec(tVec_, rVec_);
   }
-  omega_ = Utils::SafeDivide(
-    tVec_.Dot(rVec_), tVec_.Dot(tVec_));
+  omega_ = Utils::SafeDivide(tVec_.Dot(rVec_), tVec_.Dot(tVec_));
   xVec.AddAssign(rightPre ? zVec_ : rVec_, omega_);
   rVec_.SubAssign(tVec_, omega_);
 
@@ -205,28 +197,27 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec,
 ///
 /// References:
 /// @verbatim
-/// [1] Gerard L. G. Sleijpen and Diederik R. Fokkema. 
-///     “BiCGStab(l) for Linear Equations involving 
-///      Unsymmetric Matrices with Complex Spectrum.” 
+/// [1] Gerard L. G. Sleijpen and Diederik R. Fokkema.
+///     “BiCGStab(l) for Linear Equations involving
+///      Unsymmetric Matrices with Complex Spectrum.”
 ///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
+
   real_t alpha_, rho_, omega_;
   stormVector<real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
   stormMatrix<real_t> tau_;
   Vector rTildeVec_, zVec_;
   Subspace<Vector> rVecs_, uVecs_;
 
-  real_t OuterInit(Vector const& xVec,
-                   Vector const& bVec,
+  real_t OuterInit(Vector const& xVec, Vector const& bVec,
                    Operator<Vector> const& linOp,
                    Preconditioner<Vector> const* preOp) override;
 
-  real_t InnerIterate(Vector& xVec,
-                      Vector const& bVec,
+  real_t InnerIterate(Vector& xVec, Vector const& bVec,
                       Operator<Vector> const& linOp,
                       Preconditioner<Vector> const* preOp) override;
 
@@ -243,8 +234,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp,
                                           Preconditioner<Vector> const* preOp) {
-
-  size_t const l = this->NumInnerIterations;
+  size_t const l{this->NumInnerIterations};
 
   gamma_.Assign(l + 1);
   gammaBar_.Assign(l + 1);
@@ -253,9 +243,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
   tau_.Assign(l + 1, l + 1);
 
   rTildeVec_.Assign(xVec, false);
-  if (preOp != nullptr) {
-    zVec_.Assign(xVec, false);
-  }
+  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
   rVecs_.Assign(l + 1, xVec, false);
   uVecs_.Assign(l + 1, xVec, false);
@@ -284,13 +272,12 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
 } // BiCgStabLSolver::OuterInit
 
 template<VectorLike Vector>
-real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
-                                             Vector const& bVec,
-                                             Operator<Vector> const& linOp,
-                                             Preconditioner<Vector> const* preOp) {
-
-  size_t const l = this->NumInnerIterations;
-  size_t const j = this->InnerIteration;
+real_t
+BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
+                                      Operator<Vector> const& linOp,
+                                      Preconditioner<Vector> const* preOp) {
+  size_t const l{this->NumInnerIterations};
+  size_t const j{this->InnerIteration};
 
   // ----------------------
   // BiCG part:
@@ -314,14 +301,14 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒓ᵢ ← 𝒓ᵢ - 𝛼⋅𝒖ᵢ₊₁.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  bool const firstIteration = this->Iteration == 0;
+  bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     uVecs_(0).Set(rVecs_(0));
   } else {
-    real_t const rhoBar = rho_;
+    real_t const rhoBar{rho_};
     rho_ = rTildeVec_.Dot(rVecs_(j));
-    real_t const beta = Utils::SafeDivide(alpha_*rho_, rhoBar);
-    for (size_t i = 0; i <= j; ++i) {
+    real_t const beta{Utils::SafeDivide(alpha_ * rho_, rhoBar)};
+    for (size_t i{0}; i <= j; ++i) {
       uVecs_(i).Sub(rVecs_(i), uVecs_(i), beta);
     }
   }
@@ -330,9 +317,8 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
   } else {
     linOp.MatVec(uVecs_(j + 1), uVecs_(j));
   }
-  alpha_ = Utils::SafeDivide(
-    rho_, rTildeVec_.Dot(uVecs_(j + 1)));
-  for (size_t i = 0; i <= j; ++i) {
+  alpha_ = Utils::SafeDivide(rho_, rTildeVec_.Dot(uVecs_(j + 1)));
+  for (size_t i{0}; i <= j; ++i) {
     rVecs_(i).SubAssign(uVecs_(i + 1), alpha_);
   }
 
@@ -364,19 +350,17 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
     //   𝛾̅ⱼ ← <𝒓₀⋅𝒓ⱼ>/𝜎ⱼ,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    for (size_t j = 1; j <= l; ++j) {
-      for (size_t i = 1; i < j; ++i) {
-        tau_(i, j) = 
-          Utils::SafeDivide(rVecs_(i).Dot(rVecs_(j)), sigma_(i));
+    for (size_t j{1}; j <= l; ++j) {
+      for (size_t i{1}; i < j; ++i) {
+        tau_(i, j) = Utils::SafeDivide(rVecs_(i).Dot(rVecs_(j)), sigma_(i));
         rVecs_(j).SubAssign(rVecs_(i), tau_(i, j));
       }
       sigma_(j) = rVecs_(j).Dot(rVecs_(j));
-      gammaBar_(j) = 
-        Utils::SafeDivide(rVecs_(0).Dot(rVecs_(j)), sigma_(j));
+      gammaBar_(j) = Utils::SafeDivide(rVecs_(0).Dot(rVecs_(j)), sigma_(j));
     }
 
     // ----------------------
-    // 𝜔 ← 𝛾ₗ ← 𝛾̅ₗ, 𝜌 ← -𝜔⋅𝜌, 
+    // 𝜔 ← 𝛾ₗ ← 𝛾̅ₗ, 𝜌 ← -𝜔⋅𝜌,
     // 𝗳𝗼𝗿 𝑗 = 𝑙 - 𝟣, 𝟣, -𝟣 𝗱𝗼:
     //   𝛾ⱼ ← 𝛾̅ⱼ,
     //   𝗳𝗼𝗿 𝑖 = 𝑗 + 𝟣, 𝑙 𝗱𝗼:
@@ -391,16 +375,16 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     omega_ = gamma_(l) = gammaBar_(l), rho_ *= -omega_;
-    for (size_t j = l - 1; j != 0; --j) {
+    for (size_t j{l - 1}; j != 0; --j) {
       gamma_(j) = gammaBar_(j);
-      for (size_t i = j + 1; i <= l; ++i) {
-        gamma_(j) -= tau_(j, i)*gamma_(i);
+      for (size_t i{j + 1}; i <= l; ++i) {
+        gamma_(j) -= tau_(j, i) * gamma_(i);
       }
     }
-    for (size_t j = 1; j < l; ++j) {
+    for (size_t j{1}; j < l; ++j) {
       gammaBarBar_(j) = gamma_(j + 1);
-      for (size_t i = j + 1; i < l; ++i) {
-        gammaBarBar_(j) += tau_(j, i)*gamma_(i + 1);
+      for (size_t i{j + 1}; i < l; ++i) {
+        gammaBarBar_(j) += tau_(j, i) * gamma_(i + 1);
       }
     }
 
@@ -418,7 +402,7 @@ real_t BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec,
     xVec.AddAssign(rVecs_(0), gamma_(1));
     rVecs_(0).SubAssign(rVecs_(l), gammaBar_(l));
     uVecs_(0).SubAssign(uVecs_(l), gamma_(l));
-    for (size_t j = 1; j < l; ++j) {
+    for (size_t j{1}; j < l; ++j) {
       xVec.AddAssign(rVecs_(j), gammaBarBar_(j));
       rVecs_(0).SubAssign(rVecs_(j), gammaBar_(j));
       uVecs_(0).SubAssign(uVecs_(j), gamma_(j));

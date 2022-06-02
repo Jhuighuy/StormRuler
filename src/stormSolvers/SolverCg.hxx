@@ -26,10 +26,6 @@
 #pragma once
 
 #include <cmath>
-#if 0
-#include <fstream>
-#include <mkl.h>
-#endif
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
@@ -47,35 +43,32 @@ namespace Storm {
 /// @verbatim
 /// [1] Hestenes, Magnus R. and Eduard Stiefel.
 ///     “Methods of conjugate gradients for solving linear systems.”
-///     Journal of research of the National 
+///     Journal of research of the National
 ///     Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
+
   real_t gamma_;
   Vector pVec_, rVec_, zVec_;
   std::vector<real_t> Diagonal_, SubDiagonal_;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class CgSolver
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Init(Vector const& xVec,
-                              Vector const& bVec,
+real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                               Operator<Vector> const& linOp,
                               Preconditioner<Vector> const* preOp) {
-
   pVec_.Assign(xVec, false);
   rVec_.Assign(xVec, false);
   zVec_.Assign(xVec, false);
@@ -110,11 +103,9 @@ real_t CgSolver<Vector>::Init(Vector const& xVec,
 } // CgSolver::Init
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Iterate(Vector& xVec,
-                                 Vector const& bVec,
+real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                  Operator<Vector> const& linOp,
                                  Preconditioner<Vector> const* preOp) {
-
   // ----------------------
   // Iterate:
   // 𝒛 ← 𝓐𝒑,
@@ -124,8 +115,8 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
-  real_t const gammaBar = gamma_;
-  real_t const alpha = Utils::SafeDivide(gamma_, pVec_.Dot(zVec_));
+  real_t const gammaBar{gamma_};
+  real_t const alpha{Utils::SafeDivide(gamma_, pVec_.Dot(zVec_))};
   xVec.AddAssign(pVec_, alpha);
   rVec_.SubAssign(zVec_, alpha);
 
@@ -150,60 +141,6 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec,
   // ----------------------
   real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
   pVec_.Add(preOp != nullptr ? zVec_ : rVec_, pVec_, beta);
-
-#if 0
-  bool const computeEigenvalues = true;
-  if (computeEigenvalues) {
-
-    // ----------------------
-    // Update the tridiagonal matrix:
-    // 𝗶𝗳 𝘍𝘪𝘳𝘴𝘵𝘐𝘵𝘦𝘳𝘢𝘵𝘪𝘰𝘯:
-    //  𝑇ₖₖ ← 𝟣/𝛼,
-    // 𝗲𝗹𝘀𝗲:
-    //  𝑇ₖₖ ← 𝑇ₖₖ + 𝟣/𝛼,
-    // 𝗲𝗻𝗱 𝗶𝗳
-    // 𝑇ₖ₊₁,ₖ₊₁ ← 𝛽/𝛼,
-    // 𝑇ₖ₊₁,ₖ ← 𝛽¹ᐟ²/𝛼.
-    // ----------------------
-    real_t const alphaInverse = 1.0/alpha;
-    bool const firstIteration = this->Iteration == 0;
-    if (firstIteration) {
-      Diagonal_.push_back(alphaInverse);
-    } else {
-      Diagonal_.back() += alphaInverse;
-    }
-    Diagonal_.push_back(beta*alphaInverse);
-    SubDiagonal_.push_back(std::sqrt(beta)*alphaInverse);
-
-    lapack_int const n = this->Iteration + 1;
-    if (n == 200) {
-      std::vector<real_t> eigenvalues(n);
-      std::vector<lapack_int> iblock(n), isplit(n);
-
-      lapack_int m, nsplit, info;
-      info = LAPACKE_dstebz('A', 'E', n, 
-        0.0, 0.0, 
-        0, 0,
-        0.0,
-        Diagonal_.data(),
-        SubDiagonal_.data(),
-        &m, &nsplit, eigenvalues.data(), iblock.data(), isplit.data());
-
-      std::cout << "emax = " << eigenvalues.front() << std::endl;
-      std::cout << "emin = " << eigenvalues.back() << std::endl;
-      std::cout << info << std::endl;
-
-      std::ofstream file("eigenvalues.txt");
-      for (real_t const& ev : eigenvalues) {
-        file << ev << " 0" << std::endl;
-      }
-      file.close();
-
-      abort();
-    }
-
-  }
-#endif
 
   return (preOp != nullptr) ? rVec_.Norm2() : std::sqrt(gamma_);
 

@@ -26,8 +26,8 @@
 #pragma once
 
 #include <stormBase.hxx>
-#include <stormBlas/stormTensor.hxx>
 #include <stormBlas/stormSubspace.hxx>
+#include <stormBlas/stormTensor.hxx>
 #include <stormSolvers/Solver.hxx>
 
 namespace Storm {
@@ -51,24 +51,22 @@ namespace Storm {
 template<VectorLike Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
+
   real_t omega_;
   stormVector<real_t> phi_, gamma_;
   stormMatrix<real_t> mu_;
   Vector rVec_, vVec_, zVec_;
   Subspace<Vector> pVecs_, uVecs_, gVecs_;
 
-  real_t OuterInit(Vector const& xVec,
-                   Vector const& bVec,
+  real_t OuterInit(Vector const& xVec, Vector const& bVec,
                    Operator<Vector> const& linOp,
                    Preconditioner<Vector> const* preOp) override;
 
-  void InnerInit(Vector const& xVec,
-                 Vector const& bVec,
+  void InnerInit(Vector const& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
-  real_t InnerIterate(Vector& xVec,
-                      Vector const& bVec,
+  real_t InnerIterate(Vector& xVec, Vector const& bVec,
                       Operator<Vector> const& linOp,
                       Preconditioner<Vector> const* preOp) override;
 
@@ -81,15 +79,13 @@ public:
 }; // class IdrsSolver
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
-                                     Vector const& bVec,
+real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
                                      Operator<Vector> const& linOp,
                                      Preconditioner<Vector> const* preOp) {
+  size_t const s{this->NumInnerIterations};
 
-  size_t const s = this->NumInnerIterations;
-
-  bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Left);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
 
   phi_.Assign(s);
   gamma_.Assign(s);
@@ -97,9 +93,7 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
 
   rVec_.Assign(xVec, false);
   vVec_.Assign(xVec, false);
-  if (preOp != nullptr) {
-    zVec_.Assign(xVec, false);
-  }
+  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
   pVecs_.Assign(s, xVec, false);
   uVecs_.Assign(s, xVec, false);
@@ -115,7 +109,7 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    std::swap(zVec_, rVec_);
+    zVec_.Swap(rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
   phi_(0) = rVec_.Norm2();
@@ -125,12 +119,10 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec,
 } // IdrsSolver::OuterInit
 
 template<VectorLike Vector>
-void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
-                                   Vector const& bVec,
+void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
                                    Operator<Vector> const& linOp,
                                    Preconditioner<Vector> const* preOp) {
-
-  size_t const s = this->NumInnerIterations;
+  size_t const s{this->NumInnerIterations};
 
   // ----------------------
   // Build shadow space and initialize 𝜑:
@@ -152,22 +144,21 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration = this->Iteration == 0;
+  bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    pVecs_(0).Scale(rVec_, 1.0/phi_(0));
-    for (size_t i = 1; i < s; ++i) {
+    pVecs_(0).Scale(rVec_, 1.0 / phi_(0));
+    for (size_t i{1}; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
       pVecs_(i).RandFill();
-      for (size_t j = 0; j < i; ++j) {
+      for (size_t j{0}; j < i; ++j) {
         mu_(i, j) = 0.0;
-        pVecs_(i).SubAssign(
-          pVecs_(j), pVecs_(i).Dot(pVecs_(j)));
+        pVecs_(i).SubAssign(pVecs_(j), pVecs_(i).Dot(pVecs_(j)));
       }
-      pVecs_(i).ScaleAssign(1.0/pVecs_(i).Norm2());
+      pVecs_(i).ScaleAssign(1.0 / pVecs_(i).Norm2());
     }
   } else {
-    for (size_t i = 0; i < s; ++i) {
+    for (size_t i{0}; i < s; ++i) {
       phi_(i) = pVecs_(i).Dot(rVec_);
     }
   }
@@ -175,18 +166,16 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec,
 } // IdrsSolver::InnerInit
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
-                                        Vector const& bVec,
+real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
                                         Operator<Vector> const& linOp,
                                         Preconditioner<Vector> const* preOp) {
+  size_t const s{this->NumInnerIterations};
+  size_t const k{this->InnerIteration};
 
-  size_t const s = this->NumInnerIterations;
-  size_t const k = this->InnerIteration;
-
-  bool const leftPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) &&
-    (this->PreSide == PreconditionerSide::Right);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
+  bool const rightPre{(preOp != nullptr) &&
+                      (this->PreSide == PreconditionerSide::Right)};
 
   // ----------------------
   // Compute 𝛾:
@@ -195,7 +184,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   for (size_t i = k; i < s; ++i) {
     gamma_(i) = phi_(i);
     for (size_t j = k; j < i; ++j) {
-      gamma_(i) -= mu_(i, j)*gamma_(j);
+      gamma_(i) -= mu_(i, j) * gamma_(j);
     }
     gamma_(i) /= mu_(i, i);
   }
@@ -221,7 +210,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   vVec_.Sub(rVec_, gVecs_(k), gamma_(k));
-  for (size_t i = k + 1; i < s; ++i) {
+  for (size_t i{k + 1}; i < s; ++i) {
     vVec_.SubAssign(gVecs_(i), gamma_(i));
   }
   if (rightPre) {
@@ -229,7 +218,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
     preOp->MatVec(vVec_, zVec_);
   }
   uVecs_(k).Add(uVecs_(k), gamma_(k), vVec_, omega_);
-  for (size_t i = k + 1; i < s; ++i) {
+  for (size_t i{k + 1}; i < s; ++i) {
     uVecs_(k).AddAssign(uVecs_(i), gamma_(i));
   }
   if (leftPre) {
@@ -246,9 +235,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝒈ₖ ← 𝒈ₖ - 𝛼⋅𝒈ᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (size_t i = 0; i < k; ++i) {
-    real_t const alpha =
-      Utils::SafeDivide(pVecs_(i).Dot(gVecs_(k)), mu_(i, i));
+  for (size_t i{0}; i < k; ++i) {
+    real_t const alpha{Utils::SafeDivide(pVecs_(i).Dot(gVecs_(k)), mu_(i, i))};
     uVecs_(k).SubAssign(uVecs_(i), alpha);
     gVecs_(k).SubAssign(gVecs_(i), alpha);
   }
@@ -259,7 +247,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (size_t i = k; i < s; ++i) {
+  for (size_t i{k}; i < s; ++i) {
     mu_(i, k) = pVecs_(i).Dot(gVecs_(k));
   }
 
@@ -269,7 +257,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  real_t const beta = Utils::SafeDivide(phi_(k), mu_(k, k));
+  real_t const beta{Utils::SafeDivide(phi_(k), mu_(k, k))};
   xVec.AddAssign(uVecs_(k), beta);
   rVec_.SubAssign(gVecs_(k), beta);
 
@@ -277,8 +265,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
   // Update 𝜑:
   // 𝜑ₖ₊₁:ₛ₋₁ ← 𝜑ₖ₊₁:ₛ₋₁ - 𝛽⋅𝜇ₖ₊₁:ₛ₋₁,ₖ.
   // ----------------------
-  for (size_t i = k + 1; i < s; ++i) {
-    phi_(i) -= beta*mu_(i, k);
+  for (size_t i{k + 1}; i < s; ++i) {
+    phi_(i) -= beta * mu_(i, k);
   }
 
   if (k == s - 1) {
@@ -302,8 +290,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec,
     } else {
       linOp.MatVec(vVec_, rVec_);
     }
-    omega_ = Utils::SafeDivide(
-      vVec_.Dot(rVec_), vVec_.Dot(vVec_));
+    omega_ = Utils::SafeDivide(vVec_.Dot(rVec_), vVec_.Dot(vVec_));
     xVec.AddAssign(rightPre ? zVec_ : rVec_, omega_);
     rVec_.SubAssign(vVec_, omega_);
   }

@@ -41,33 +41,29 @@ namespace Storm {
 template<VectorLike Vector>
 class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
+
   real_t RelaxationFactor = 1.0e-4;
 
 private:
+
   Vector rVec_, zVec_;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class RichardsonSolver
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
-                                      Vector const& bVec,
+real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                       Operator<Vector> const& linOp,
                                       Preconditioner<Vector> const* preOp) {
-
   rVec_.Assign(xVec, false);
-  if (preOp != nullptr) {
-    zVec_.Assign(xVec, false);
-  }
+  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
 
   // ----------------------
   // Initialize:
@@ -88,12 +84,10 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec,
 } // RichardsonSolver::Init
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Iterate(Vector& xVec,
-                                         Vector const& bVec,
+real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {
-
-  real_t const& omega = RelaxationFactor;
+  real_t const& omega{RelaxationFactor};
 
   // ----------------------
   // Update the solution and the residual:

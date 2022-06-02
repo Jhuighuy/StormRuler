@@ -43,43 +43,40 @@ namespace Storm {
 ///
 /// References:
 /// @verbatim
-/// [1] Sonneveld, Peter. 
-///     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.” 
+/// [1] Sonneveld, Peter.
+///     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.”
 ///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<VectorLike Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
+
   real_t rho_;
   Vector pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_;
 
-  real_t Init(Vector const& xVec,
-              Vector const& bVec,
+  real_t Init(Vector const& xVec, Vector const& bVec,
               Operator<Vector> const& linOp,
               Preconditioner<Vector> const* preOp) override;
 
-  real_t Iterate(Vector& xVec,
-                 Vector const& bVec,
+  real_t Iterate(Vector& xVec, Vector const& bVec,
                  Operator<Vector> const& linOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class CgsSolver
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Init(Vector const& xVec,
-                               Vector const& bVec,
+real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                Operator<Vector> const& linOp,
                                Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Left);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
 
   pVec_.Assign(xVec, false);
-  qVec_.Assign(xVec, false); 
-  rVec_.Assign(xVec, false); 
+  qVec_.Assign(xVec, false);
+  rVec_.Assign(xVec, false);
   rTildeVec_.Assign(xVec, false);
-  uVec_.Assign(xVec, false); 
+  uVec_.Assign(xVec, false);
   vVec_.Assign(xVec, false);
 
   // ----------------------
@@ -104,15 +101,13 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec,
 } // CgsSolver::Init
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Iterate(Vector& xVec,
-                                  Vector const& bVec,
+real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                   Operator<Vector> const& linOp,
                                   Preconditioner<Vector> const* preOp) {
-
-  bool const leftPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Left);
-  bool const rightPre = (preOp != nullptr) && 
-    (this->PreSide == PreconditionerSide::Right);
+  bool const leftPre{(preOp != nullptr) &&
+                     (this->PreSide == PreconditionerSide::Left)};
+  bool const rightPre{(preOp != nullptr) &&
+                      (this->PreSide == PreconditionerSide::Right)};
 
   // ----------------------
   // Continue the iterations:
@@ -128,14 +123,14 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   //   𝒑 ← 𝒖 + 𝛽⋅𝒑.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration = this->Iteration == 0;
+  bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     uVec_.Set(rVec_);
     pVec_.Set(uVec_);
   } else {
-    real_t const rhoBar = rho_; 
+    real_t const rhoBar{rho_};
     rho_ = rTildeVec_.Dot(rVec_);
-    real_t const beta = Utils::SafeDivide(rho_, rhoBar);
+    real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
     uVec_.Add(rVec_, qVec_, beta);
     pVec_.Add(qVec_, pVec_, beta);
     pVec_.Add(uVec_, pVec_, beta);
@@ -160,8 +155,7 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec,
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
-  real_t const alpha = 
-    Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_));
+  real_t const alpha{Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_))};
   qVec_.Sub(uVec_, vVec_, alpha);
   vVec_.Add(uVec_, qVec_);
 

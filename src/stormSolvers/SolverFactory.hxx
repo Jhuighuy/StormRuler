@@ -175,7 +175,7 @@ auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
       // return std::make_unique<BroydenSolver<InVector>>();
     }
     if (solverType == SolverType::Newton) {
-      // return std::make_unique<NewtonSolver<InVector>>();
+      return std::make_unique<NewtonSolver<InVector>>();
     }
     if (solverType == SolverType::Jfnk) {
       return std::make_unique<JfnkSolver<InVector>>();

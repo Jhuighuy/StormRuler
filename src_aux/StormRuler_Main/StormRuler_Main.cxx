@@ -26,7 +26,20 @@
 #define _USE_MATH_DEFINES 1
 #define _GNU_SOURCE 1
 
+#include <algorithm>
 #include <cstring>
+#include <fstream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#define YURI 0
 
 #include <StormRuler_API.h>
 #include <stormSolvers/LegacyTensor.hxx>
@@ -79,21 +92,6 @@ void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
   solver->Solve(xx, bb, *op);
 
 } // stormNonLinSolve2
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-#include <algorithm>
-#include <fstream>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#define YURI 0
 
 static double tau = 1.0e-2, Gamma = 16.0e-4, sigma = 1.0, Sigma = 10.0;
 

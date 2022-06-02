@@ -33,7 +33,6 @@
 
 namespace Storm {
 
-#if 0
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c Newton method nonlinear operator equation solver.
 ///
@@ -56,8 +55,8 @@ namespace Storm {
 /// [1] ???
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
-class NewtonSolver : public IterativeSolver<Vector, tOperator> {
+template<vector_like Vector>
+class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
   real_t Init(Vector const& xVec, Vector const& bVec,
@@ -69,7 +68,20 @@ private:
                  Preconditioner<Vector> const* preOp) override final;
 
 }; // class NewtonSolver
-#endif
+
+template<vector_like Vector>
+real_t NewtonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
+                                  Operator<Vector> const& anyOp,
+                                  Preconditioner<Vector> const* preOp) {
+  StormEnsure(!"Newton solver was not implemented yet.");
+} // NewtonSolver::Init
+
+template<vector_like Vector>
+real_t NewtonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
+                                     Operator<Vector> const& anyOp,
+                                     Preconditioner<Vector> const* preOp) {
+  StormEnsure(!"Newton solver was not implemented yet.");
+} // NewtonSolver::Iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The first-order @c JFNK (Jacobian free-Newton-Krylov)
@@ -108,18 +120,18 @@ private:
   Vector sVec_, tVec_, rVec_, wVec_;
 
   real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
+              Operator<Vector> const& anyOp,
               Preconditioner<Vector> const* preOp) override;
 
   real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
+                 Operator<Vector> const& anyOp,
                  Preconditioner<Vector> const* preOp) override;
 
 }; // class JfnkSolver
 
 template<vector_like Vector>
 real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                                Operator<Vector> const& linOp,
+                                Operator<Vector> const& anyOp,
                                 Preconditioner<Vector> const* preOp) {
   sVec_.Assign(xVec, false);
   tVec_.Assign(xVec, false);
@@ -131,7 +143,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  linOp.MatVec(wVec_, xVec);
+  anyOp.MatVec(wVec_, xVec);
   rVec_.Sub(bVec, wVec_);
 
   return rVec_.Norm2();
@@ -140,7 +152,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 template<vector_like Vector>
 real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                   Operator<Vector> const& linOp,
+                                   Operator<Vector> const& anyOp,
                                    Preconditioner<Vector> const* preOp) {
   // Solve the Jacobian equation:
   // ----------------------
@@ -166,7 +178,7 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
       // ----------------------
       real_t const delta{Utils::SafeDivide(mu, yVec.Norm2())};
       sVec_.Add(xVec, yVec, delta);
-      linOp.MatVec(zVec, sVec_);
+      anyOp.MatVec(zVec, sVec_);
       real_t const deltaInverse{Utils::SafeDivide(1.0, delta)};
       zVec.Sub(zVec, deltaInverse, wVec_, deltaInverse);
     });
@@ -180,7 +192,7 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   xVec.AddAssign(tVec_);
-  linOp.MatVec(wVec_, xVec);
+  anyOp.MatVec(wVec_, xVec);
   rVec_.Sub(bVec, wVec_);
 
   return rVec_.Norm2();

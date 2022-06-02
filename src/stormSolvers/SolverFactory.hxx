@@ -25,23 +25,23 @@
 
 #pragma once
 
+#include <concepts>
+#include <memory>
 #include <stdexcept>
 
 #include <stormBase.hxx>
-#include <stormUtils/Enum.hxx>
-
 #include <stormSolvers/Solver.hxx>
-#include <stormSolvers/SolverCg.hxx>
-//#include <stormSolvers/SolverMinres.hxx>
 #include <stormSolvers/SolverBiCgStab.hxx>
+#include <stormSolvers/SolverCg.hxx>
 #include <stormSolvers/SolverCgs.hxx>
 #include <stormSolvers/SolverGmres.hxx>
 #include <stormSolvers/SolverIdrs.hxx>
-#include <stormSolvers/SolverTfqmr.hxx>
-//#include <stormSolvers/SolverLsqr.hxx>
-
+#include <stormSolvers/SolverLsqr.hxx>
+#include <stormSolvers/SolverMinres.hxx>
 #include <stormSolvers/SolverNewton.hxx>
 #include <stormSolvers/SolverRichardson.hxx>
+#include <stormSolvers/SolverTfqmr.hxx>
+#include <stormUtils/Enum.hxx>
 
 namespace Storm {
 
@@ -122,8 +122,8 @@ class SolverType final : public Enum<SolverType> {
 template<vector_like InVector, vector_like OutVector = InVector>
 auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
     -> std::unique_ptr<IterativeSolver<InVector, OutVector>> {
-  // Try the square Krylov subspace solver first:
-  if constexpr (std::is_same_v<InVector, OutVector>) {
+  // Try the Krylov subspace square solver first:
+  if constexpr (std::same_as<InVector, OutVector>) {
     if (solverType == SolverType::Cg) {
       return std::make_unique<CgSolver<InVector>>();
     }
@@ -166,8 +166,8 @@ auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
     }
   }
 
-  // Next, try the other general solvers:
-  if constexpr (std::is_same_v<InVector, OutVector>) {
+  // Next, try the other general square solvers:
+  if constexpr (std::same_as<InVector, OutVector>) {
     if (solverType == SolverType::Richarson) {
       return std::make_unique<RichardsonSolver<InVector>>();
     }

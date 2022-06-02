@@ -25,30 +25,37 @@
 
 #pragma once
 
+#include <span>
+
 #include <stormBase.hxx>
+#include <stormSolvers/Vector.hxx>
 
 namespace Storm {
 
 /// ----------------------------------------------------------------- ///
 /// @brief Vector subspace.
 /// ----------------------------------------------------------------- ///
-template<class Vector, size_t Extent = DynamicExtent>
+template<VectorLike Vector, size_t Extent = std::dynamic_extent>
 class Subspace {
 private:
 
-  [[no_unique_address]] ExtentArray<Vector, Extent> Vectors_;
+  [[no_unique_address]] std::conditional_t<Extent == std::dynamic_extent,
+                                           std::vector<Vector>,
+                                           std::array<Vector, Extent>>
+      Vectors_;
 
 public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
-  void Assign(Vector const& like, bool copy) requires(Extent != DynamicExtent) {
+  void Assign(Vector const& like,
+              bool copy) requires(Extent != std::dynamic_extent) {
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
     }
   }
   void Assign(size_t size, Vector const& like,
-              bool copy) requires(Extent == DynamicExtent) {
+              bool copy) requires(Extent == std::dynamic_extent) {
     Vectors_.resize(size);
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);

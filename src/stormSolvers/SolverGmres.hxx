@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <span>
+
 #include <stormBase.hxx>
 #include <stormSolvers/LegacyTensor.hxx>
 #include <stormSolvers/Solver.hxx>
@@ -43,7 +45,7 @@ private:
   stormVector<real_t> beta_, cs_, sn_;
   stormMatrix<real_t> H_;
   Subspace<Vector> qVecs_;
-  Subspace<Vector, Flexible ? DynamicExtent : 1> zVecs_;
+  Subspace<Vector, Flexible ? std::dynamic_extent : 1> zVecs_;
 
   real_t OuterInit(Vector const& xVec, Vector const& bVec,
                    Operator<Vector> const& linOp,

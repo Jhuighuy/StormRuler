@@ -36,7 +36,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, bool L1>
+template<vector_like Vector, bool L1>
 class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
 
@@ -83,7 +83,7 @@ protected:
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -106,10 +106,10 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {};
 
-template<VectorLike Vector, bool L1>
+template<vector_like Vector, bool L1>
 real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec, Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {
@@ -158,7 +158,7 @@ real_t BaseTfqmrSolver<Vector, L1>::Init(Vector const& xVec, Vector const& bVec,
 
 } // BaseTfqmrSolver::Init
 
-template<VectorLike Vector, bool L1>
+template<vector_like Vector, bool L1>
 real_t
 BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
                                      Operator<Vector> const& linOp,
@@ -258,7 +258,7 @@ BaseTfqmrSolver<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, xVec.Set(dVec_); }
     } else {
-      auto const [cs, sn, rr] = Blas::SymOrtho(tau_, omega);
+      auto const [cs, sn, rr] = Utils::SymOrtho(tau_, omega);
       tau_ = omega * cs;
       xVec.AddAssign(dVec_, std::pow(cs, 2));
       dVec_.ScaleAssign(std::pow(sn, 2));

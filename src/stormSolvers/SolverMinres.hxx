@@ -187,7 +187,7 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   deltaBar = cs * delta + sn * alpha, gamma = sn * delta - cs * alpha;
   epsilonBar = epsilon, epsilon = sn * beta, delta = -cs * beta;
-  std::tie(cs, sn, gamma) = Blas::SymOrtho(gamma, beta);
+  std::tie(cs, sn, gamma) = Utils::SymOrtho(gamma, beta);
   tau = cs * phi, phi = sn * phi;
 
   // ----------------------

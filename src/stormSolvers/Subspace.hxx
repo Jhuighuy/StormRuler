@@ -35,7 +35,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Vector subspace.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, size_t Extent = std::dynamic_extent>
+template<vector_like Vector, size_t Extent = std::dynamic_extent>
 class Subspace {
 private:
 

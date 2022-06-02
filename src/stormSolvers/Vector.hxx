@@ -35,7 +35,7 @@ namespace Storm {
 /// @brief Vector-like concept.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Vector>
-concept VectorLike = 
+concept vector_like = 
   requires(Vector& zVec, Vector const& yVec, bool copy) {
     // Require assignment:
     // 𝒛 ← 𝒚.
@@ -61,8 +61,8 @@ requires(Vector& zVec, Vector const& yVec, Vector const& xVec) {
 /// @brief Operator-like concept.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Operator, class InVector, class OutVector = InVector>
-concept OperatorLike = requires(Operator& anyOp, OutVector& yVec,
-                                InVector const& xVec) {
+concept operator_like = requires(Operator& anyOp, OutVector& yVec,
+                                 InVector const& xVec) {
   anyOp(yVec, xVec);
 };
 

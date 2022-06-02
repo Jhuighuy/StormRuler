@@ -39,7 +39,7 @@ namespace Storm {
 /// [1] ???
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
 
@@ -59,7 +59,7 @@ private:
 
 }; // class RichardsonSolver
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                       Operator<Vector> const& linOp,
                                       Preconditioner<Vector> const* preOp) {
@@ -84,7 +84,7 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // RichardsonSolver::Init
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                          Operator<Vector> const& linOp,
                                          Preconditioner<Vector> const* preOp) {

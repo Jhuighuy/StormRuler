@@ -95,9 +95,6 @@ void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
 
 #define YURI 0
 
-#define min(x, y) ((x) < (y) ? (x) : (y))
-#define max(x, y) ((x) > (y) ? (x) : (y))
-
 static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0, Sigma = 10.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
@@ -116,7 +113,7 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
   stormApplyBCs(mesh, p, 4,
-                SR_DIRICHLET(1.75 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
+                SR_DIRICHLET(2.0 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
                              (2.0 * 0.01 * 26)));
 } // SetBCs_p
 
@@ -187,7 +184,7 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
 } // dWdC
 
 void clampC(stormSize_t, stormReal_t* Wc, const stormReal_t* c, void*) {
-  *Wc = min(1.0, max(0.0, *c));
+  *Wc = std::min(1.0, std::max(0.0, *c));
 }
 
 void Vol(stormSize_t size, stormReal_t* Ic, const stormReal_t* c, void* env) {
@@ -271,7 +268,7 @@ void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
     return n_part_vs_phi_sandwich(slice, i, j);
   };
 
-  x = max(0.0, min(1.0, x));
+  x = std::max(0.0, std::min(1.0, x));
 
   const int i = II;
   double dd;
@@ -350,7 +347,7 @@ NavierStokes_VaD_Step(stormMesh_t mesh, stormArray_t p, stormArray_t v,
   // double alpha_dot = (V_hat - V)/tau;
   double A = 0.0133 / 4.55;
   N2_cur = N2_cur + tau * n_part_vs_phi_sandwich(slice, 100, 1) * A;
-  N2_cur = max(min(N2_cur, N2_max), N2_min);
+  N2_cur = std::max(std::min(N2_cur, N2_max), N2_min);
   auto new_slice = (stormSize_t) std::round(
       (N2_cur - N2_min) / (N2_max - N2_min) * (num_slices - 1));
   new_slice = num_slices - new_slice - 1;

@@ -26,12 +26,14 @@
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <memory>
 #include <span>
-#include <tuple>
 #include <type_traits>
 
 #include <stormBase.hxx>
+
+namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Multidimensional shape object, \
@@ -62,16 +64,15 @@ public:
 
   /// @brief Construct a shape object with the specified dynamic extents.
   /// @{
-  template<class... SizeTypes>
-    requires(Extent != std::dynamic_extent) 
-  constexpr explicit stormShape(
-      SizeTypes... dynamicExtents)
-      : Base_(dynamicExtents...), Extent_{} {}
-  template<class... SizeTypes>
+  template<std::same_as<size_t>... SizeTypes>
     requires(Extent == std::dynamic_extent) 
-  constexpr explicit stormShape(
-      size_t frontDynamicExtent, SizeTypes... restDynamicExtents)
+  constexpr explicit stormShape(size_t frontDynamicExtent, 
+                                SizeTypes... restDynamicExtents)
       : Base_(restDynamicExtents...), Extent_{frontDynamicExtent} {}
+  template<std::same_as<size_t>... SizeTypes>
+    requires(Extent != std::dynamic_extent) 
+  constexpr explicit stormShape(SizeTypes... dynamicExtents)
+      : Base_(dynamicExtents...), Extent_{} {}
   /// @}
 
   // clang-format on
@@ -191,38 +192,30 @@ class stormTensor final : public stormBaseTensor<Value, Shape> {
 public:
 }; // class stormTensor
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense vector with dynamic storage.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormVector = stormTensor<Value, stormShape<std::dynamic_extent>>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense matrix with dynamic storage.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormMatrix =
     stormTensor<Value, stormShape<std::dynamic_extent, std::dynamic_extent>>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 2 tensor with dynamic storage.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormTensor2R =
     stormTensor<Value, stormShape<std::dynamic_extent, std::dynamic_extent>>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 3 tensor with dynamic storage.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormTensor3R =
     stormTensor<Value, stormShape<std::dynamic_extent, std::dynamic_extent,
                                   std::dynamic_extent>>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Dense rank 4 tensor with dynamic storage.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value>
 using stormTensor4R =
     stormTensor<Value, stormShape<std::dynamic_extent, std::dynamic_extent,
                                   std::dynamic_extent, std::dynamic_extent>>;
+
+} // namespace Storm

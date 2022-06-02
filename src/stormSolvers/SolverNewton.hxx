@@ -101,7 +101,7 @@ private:
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -117,7 +117,7 @@ private:
 
 }; // class JfnkSolver
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                 Operator<Vector> const& linOp,
                                 Preconditioner<Vector> const* preOp) {
@@ -138,7 +138,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // JfnkSolver::Init
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                    Operator<Vector> const& linOp,
                                    Preconditioner<Vector> const* preOp) {

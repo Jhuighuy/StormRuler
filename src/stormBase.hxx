@@ -31,6 +31,7 @@
 #include <complex>
 #include <concepts>
 #include <iostream>
+#include <tuple>
 #include <type_traits>
 #include <vector>
 
@@ -84,6 +85,28 @@ auto& SafeDivideEquals(real_or_complex_floating_point auto& x,
                        real_or_complex_floating_point auto y) {
   return x = SafeDivide(x, y);
 }
+
+/// @brief Generate the Givens rotation.
+template<real_or_complex_floating_point Value>
+auto SymOrtho(Value a, Value b) {
+  // Compute:
+  // ----------------------
+  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+  // ----------------------
+  Value cs, sn, rr;
+  rr = std::hypot(a, b);
+  if (rr > 0.0) {
+    cs = a / rr;
+    sn = b / rr;
+  } else {
+    cs = 1.0;
+    sn = 0.0;
+  }
+
+  return std::tuple(cs, sn, rr);
+
+} // SymOrtho
 
 } // namespace Utils
 

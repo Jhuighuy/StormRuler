@@ -40,7 +40,7 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 class Solver : public Object {
 public:
 
@@ -59,7 +59,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 class IterativeSolver : public Solver<InVector, OutVector> {
 public:
 
@@ -118,7 +118,7 @@ public:
 
 }; // class IterativeSolver
 
-template<VectorLike InVector, VectorLike OutVector>
+template<vector_like InVector, vector_like OutVector>
 bool IterativeSolver<InVector, OutVector>::Solve(
     InVector& xVec, OutVector const& bVec,
     Operator<InVector, OutVector> const& anyOp) {
@@ -152,7 +152,7 @@ bool IterativeSolver<InVector, OutVector>::Solve(
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 class InnerOuterIterativeSolver : public IterativeSolver<InVector, OutVector> {
 public:
 
@@ -261,7 +261,7 @@ private:
 /// @brief Solve an operator equation 𝓐(𝒙) = 𝒃, \
 ///   when 𝓐(𝒙) is a non-uniform operator (𝓐(𝟢) ≠ 𝟢).
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 bool SolveNonUniform(Solver<Vector>& solver, Vector& xVec, Vector const& bVec,
                      Operator<Vector> const& anyOp) {
   Vector zVec, fVec;

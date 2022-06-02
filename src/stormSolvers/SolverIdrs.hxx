@@ -49,7 +49,7 @@ namespace Storm {
 ///     ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
@@ -79,7 +79,7 @@ public:
 
 }; // class IdrsSolver
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
                                      Operator<Vector> const& linOp,
                                      Preconditioner<Vector> const* preOp) {
@@ -120,7 +120,7 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
 
 } // IdrsSolver::OuterInit
 
-template<VectorLike Vector>
+template<vector_like Vector>
 void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
                                    Operator<Vector> const& linOp,
                                    Preconditioner<Vector> const* preOp) {
@@ -167,7 +167,7 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
 
 } // IdrsSolver::InnerInit
 
-template<VectorLike Vector>
+template<vector_like Vector>
 real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
                                         Operator<Vector> const& linOp,
                                         Preconditioner<Vector> const* preOp) {

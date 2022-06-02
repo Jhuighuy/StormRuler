@@ -38,7 +38,7 @@ namespace Storm {
 /// @brief Base class for @c GMRES, @c FGMRES, \
 ///   @c LGMRES and @c LFGMRES.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, bool Flexible, bool Loose = false>
+template<vector_like Vector, bool Flexible, bool Loose = false>
 class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
 private:
 
@@ -94,7 +94,7 @@ protected:
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -123,10 +123,10 @@ class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<vector_like Vector>
 class FgmresSolver final : public BaseGmresSolver<Vector, true> {};
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<vector_like Vector, bool Flexible, bool Loose>
 real_t BaseGmresSolver<Vector, Flexible, Loose>::OuterInit(
     Vector const& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
@@ -172,7 +172,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::OuterInit(
 
 } // BaseGmresSolver::OuterInit
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<vector_like Vector, bool Flexible, bool Loose>
 void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
     Vector const& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
@@ -200,7 +200,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
 
 } // BaseGmresSolver::InnerInit
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<vector_like Vector, bool Flexible, bool Loose>
 real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
     Vector& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
@@ -264,11 +264,11 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
     H_(i, k) = chi;
   }
   std::tie(cs_(k), sn_(k), std::ignore) =
-      Blas::SymOrtho(H_(k, k), H_(k + 1, k));
+      Utils::SymOrtho(H_(k, k), H_(k + 1, k));
   H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 
-  // Update the 𝛽-solution and residual norm:
+  // Update the 𝛽-solution and the residual norm:
   // ----------------------
   // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ.
   // ----------------------
@@ -278,7 +278,7 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
 
 } // BaseGmresSolver::InnerIterate
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<vector_like Vector, bool Flexible, bool Loose>
 void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
     Vector& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {

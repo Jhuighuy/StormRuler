@@ -150,35 +150,10 @@ public:
   }
 };
 
-namespace Blas {
-
-/// @brief Generate Givens rotation.
-template<class Real>
-inline auto SymOrtho(Real a, Real b) {
-  // ----------------------
-  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-  // ----------------------
-  Real cs, sn, rr;
-  rr = std::hypot(a, b);
-  if (rr > 0.0) {
-    cs = a / rr;
-    sn = b / rr;
-  } else {
-    cs = 1.0;
-    sn = 0.0;
-  }
-
-  return std::make_tuple(cs, sn, rr);
-
-} // SymOrtho
-
-} // namespace Blas
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 class Operator : public Object {
 public:
 
@@ -194,7 +169,7 @@ public:
   /// @param zVec Output vector, 𝒛.
   /// @param yVec Intermediate vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
-  template<VectorLike InOutVector = InVector>
+  template<vector_like InOutVector = InVector>
   void MatVec(OutVector& zVec, InOutVector& yVec,
               Operator<InVector, InOutVector> const& otherOp,
               InVector const& xVec) const {
@@ -237,7 +212,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
 
@@ -251,13 +226,13 @@ public:
   /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
   /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   /// @{
-  template<OperatorLike<InVector, OutVector> MatVecFunc>
+  template<operator_like<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
     StormAssert(MatVecFunc_);
   }
-  template<OperatorLike<InVector, OutVector> MatVecFunc,
-           OperatorLike<OutVector, InVector> ConjMatVecFunc>
+  template<operator_like<InVector, OutVector> MatVecFunc,
+           operator_like<OutVector, InVector> ConjMatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc,
                               ConjMatVecFunc&& conjMatVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
@@ -289,15 +264,15 @@ private:
 /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
 /// @{
-template<VectorLike InVector, VectorLike OutVector = InVector,
-         OperatorLike<InVector, OutVector> MatVecFunc>
+template<vector_like InVector, vector_like OutVector = InVector,
+         operator_like<InVector, OutVector> MatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc));
 }
-template<VectorLike InVector, VectorLike OutVector = InVector,
-         OperatorLike<InVector, OutVector> MatVecFunc,
-         OperatorLike<OutVector, InVector> ConjMatVecFunc>
+template<vector_like InVector, vector_like OutVector = InVector,
+         operator_like<InVector, OutVector> MatVecFunc,
+         operator_like<OutVector, InVector> ConjMatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc),
@@ -308,7 +283,7 @@ auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, OperatorLike<Vector> MatVecFunc>
+template<vector_like Vector, operator_like<Vector> MatVecFunc>
 auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<Vector>>(
       matVecFunc, std::forward<MatVecFunc>(matVecFunc));

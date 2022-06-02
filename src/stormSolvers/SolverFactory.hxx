@@ -119,7 +119,7 @@ class SolverType final : public Enum<SolverType> {
 /// ----------------------------------------------------------------- ///
 /// @brief Make iterative solver of the specified type.
 /// ----------------------------------------------------------------- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<vector_like InVector, vector_like OutVector = InVector>
 auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
     -> std::unique_ptr<IterativeSolver<InVector, OutVector>> {
   // Try the square Krylov subspace solver first:

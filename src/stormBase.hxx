@@ -25,19 +25,46 @@
 
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 
 #include <complex>
 #include <concepts>
+#include <source_location>
 #include <tuple>
 #include <type_traits>
 
 #include <StormRuler_API.h>
 
-#define StormEnabledAssert(x) assert(x)
-#define StormDisabledAssert(x) static_cast<void>(x)
-#define StormAssert stormAssert
+#ifdef _MSC_VER
+#define StormAssume(x) __assume(x)
+#else
+#define StormAssume(x)                     \
+  do {                                     \
+    if (!(x)) { __builtin_unreachable(); } \
+  } while (false)
+#endif
+
+/// @todo Reimplement me with std::source_location.
+#if (!defined(__PRETTY_FUNCTION__) && !defined(__GNUC__))
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+#define StormEnsure(x)                                                 \
+  do {                                                                 \
+    if (!(x)) {                                                        \
+      std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", \
+                   __FILE__, __LINE__, __PRETTY_FUNCTION__, #x);       \
+      std::abort();                                                    \
+    }                                                                  \
+  } while (false)
+
+#ifdef NDEBUG
+#define StormAssert(x) StormAssume(x)
+#else
+#define StormAssert(x) StormEnsure(x)
+#endif
 
 namespace Storm {
 
@@ -70,16 +97,16 @@ concept real_or_complex_floating_point =
 
 namespace Utils {
 
-/// @brief If @p y is zero, return zero, else
-///   return value of @p x divided by @p y.
+/// @brief If @p y is zero, return zero,
+///   else return value of @p x divided by @p y.
 template<real_or_complex_floating_point Value>
 auto SafeDivide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
 
-/// @brief If @p y is zero, assign to @p x and return zero, else
-///   assign to @p x and return value of @p x divided by @p y.
+/// @brief If @p y is zero, assign to @p x and return zero,
+///   else assign to @p x and return value of @p x divided by @p y.
 auto& SafeDivideEquals(real_or_complex_floating_point auto& x,
                        real_or_complex_floating_point auto y) {
   return x = SafeDivide(x, y);

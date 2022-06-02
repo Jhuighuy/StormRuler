@@ -1,5 +1,6 @@
 BasedOnStyle: LLVM
 AccessModifierOffset: -2
+AlignEscapedNewlines: Left
 EmptyLineAfterAccessModifier: Always
 EmptyLineBeforeAccessModifier: LogicalBlock
 AlignAfterOpenBracket: Align

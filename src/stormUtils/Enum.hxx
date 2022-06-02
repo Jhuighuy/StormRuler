@@ -34,45 +34,45 @@ namespace Storm {
 
 /// @brief Spawns a reflectible enumeration body.
 /// @param Class The current class name.
-#define StormEnum_(Class)                                                      \
-private:                                                                       \
-                                                                               \
-  using Class_ = Class;                                                        \
-  friend class Enum<Class>;                                                    \
-  static constexpr size_t BaseCounter_{__COUNTER__};                           \
-                                                                               \
-  template<size_t Index_, class Func>                                          \
-  struct ForEachValueImpl_ {                                                   \
-    static constexpr void call_(Func const&) noexcept {}                       \
-  };                                                                           \
-  template<class Func>                                                         \
-  static constexpr void forEachValue_(Func const& func) noexcept {             \
-    ForEachValueImpl_<0, Func>::call_(func);                                   \
-  }                                                                            \
-                                                                               \
-public:                                                                        \
-                                                                               \
-  /** @brief Construct the enumeration from the @p value. */                   \
-  template<std::integral Integer>                                              \
+#define StormEnum_(Class)                                          \
+private:                                                           \
+                                                                   \
+  using Class_ = Class;                                            \
+  friend class Enum<Class>;                                        \
+  static constexpr size_t BaseCounter_{__COUNTER__};               \
+                                                                   \
+  template<size_t Index_, class Func>                              \
+  struct ForEachValueImpl_ {                                       \
+    static constexpr void call_(Func const&) noexcept {}           \
+  };                                                               \
+  template<class Func>                                             \
+  static constexpr void forEachValue_(Func const& func) noexcept { \
+    ForEachValueImpl_<0, Func>::call_(func);                       \
+  }                                                                \
+                                                                   \
+public:                                                            \
+                                                                   \
+  /** @brief Construct the enumeration from the @p value. */       \
+  template<std::integral Integer>                                  \
   constexpr explicit Class(Integer value) : Enum<Class>(value) {}
 
 /// @brief Spawns a reflectible enumeration value.
 #define StormEnumValue_(Name, ...) StormEnumValueS_(Name, ##__VA_ARGS__, #Name)
 
 /// @brief Spawns a names reflectible enumeration value.
-#define StormEnumValueS_(Name, String, ...)                                    \
-  static constexpr Enum<Class_> Name{__COUNTER__ - BaseCounter_ - 1};          \
-                                                                               \
-private:                                                                       \
-                                                                               \
-  template<class Func>                                                         \
-  struct ForEachValueImpl_<static_cast<size_t>(Name), Func> {                  \
-    static constexpr void call_(Func const& func) noexcept {                   \
-      func(Name, String);                                                      \
-      ForEachValueImpl_<static_cast<size_t>(Name) + 1, Func>::call_(func);     \
-    }                                                                          \
-  };                                                                           \
-                                                                               \
+#define StormEnumValueS_(Name, String, ...)                                \
+  static constexpr Enum<Class_> Name{__COUNTER__ - BaseCounter_ - 1};      \
+                                                                           \
+private:                                                                   \
+                                                                           \
+  template<class Func>                                                     \
+  struct ForEachValueImpl_<static_cast<size_t>(Name), Func> {              \
+    static constexpr void call_(Func const& func) noexcept {               \
+      func(Name, String);                                                  \
+      ForEachValueImpl_<static_cast<size_t>(Name) + 1, Func>::call_(func); \
+    }                                                                      \
+  };                                                                       \
+                                                                           \
 public:
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

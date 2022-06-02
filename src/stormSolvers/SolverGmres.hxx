@@ -292,7 +292,7 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
   // ----------------------
   // 𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
   // ----------------------
-  for (size_t i{k}; i != STORM_SIZE_MAX; --i) {
+  for (size_t i{k}; i != SIZE_MAX; --i) {
     for (size_t j{i + 1}; j <= k; ++j) {
       beta_(i) -= H_(i, j) * beta_(j);
     }

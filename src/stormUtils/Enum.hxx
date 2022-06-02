@@ -36,6 +36,7 @@ namespace Storm {
 /// @param Class The current class name.
 #define StormEnum_(Class)                                                      \
 private:                                                                       \
+                                                                               \
   using Class_ = Class;                                                        \
   friend class Enum<Class>;                                                    \
   static constexpr size_t BaseCounter_{__COUNTER__};                           \
@@ -50,6 +51,7 @@ private:                                                                       \
   }                                                                            \
                                                                                \
 public:                                                                        \
+                                                                               \
   /** @brief Construct the enumeration from the @p value. */                   \
   template<std::integral Integer>                                              \
   constexpr explicit Class(Integer value) : Enum<Class>(value) {}
@@ -62,6 +64,7 @@ public:                                                                        \
   static constexpr Enum<Class_> Name{__COUNTER__ - BaseCounter_ - 1};          \
                                                                                \
 private:                                                                       \
+                                                                               \
   template<class Func>                                                         \
   struct ForEachValueImpl_<static_cast<size_t>(Name), Func> {                  \
     static constexpr void call_(Func const& func) noexcept {                   \
@@ -78,13 +81,15 @@ public:
 template<class Derived, std::integral Underlying = int>
 class Enum {
 private:
+
   Underlying Value_;
 
 public:
+
   /// @brief Construct the enumeration from @p value.
   template<std::integral Integer>
-  constexpr explicit Enum(Integer value = {}) noexcept :
-      Value_(static_cast<Underlying>(value)) {}
+  constexpr explicit Enum(Integer value = {}) noexcept
+      : Value_(static_cast<Underlying>(value)) {}
 
   /// @brief Convert the enumeration into the derived type.
   /// @{
@@ -106,16 +111,16 @@ public:
   constexpr auto operator<=>(Enum const& other) const noexcept = default;
 
   /// @brief Convert the enumeration into the string.
-  constexpr std::string_view toString() const noexcept;
+  constexpr std::string_view ToString() const noexcept;
 
   /// @brief Convert the specified @p string to the enumeration.
-  static constexpr Enum fromString(std::string_view string);
+  static constexpr Enum FromString(std::string_view string);
 
 }; // class Enum
 
 template<class Derived, std::integral Underlying>
 constexpr std::string_view
-Enum<Derived, Underlying>::toString() const noexcept {
+Enum<Derived, Underlying>::ToString() const noexcept {
   std::string_view result{};
 
   Derived::forEachValue_([&](Enum<Derived> value, std::string_view string) {
@@ -128,7 +133,7 @@ Enum<Derived, Underlying>::toString() const noexcept {
 
 template<class Derived, std::integral Underlying>
 constexpr Enum<Derived, Underlying>
-Enum<Derived, Underlying>::fromString(std::string_view string) {
+Enum<Derived, Underlying>::FromString(std::string_view string) {
   bool found = false;
   Enum<Derived, Underlying> result;
 

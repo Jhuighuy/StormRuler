@@ -26,24 +26,21 @@
 #define _USE_MATH_DEFINES 1
 #define _GNU_SOURCE 1
 
+#include <cstring>
+
 #include <StormRuler_API.h>
 #include <stormBlas/stormTensor.hxx>
-//#include <stormBlas/stormMatrixExtraction.hxx>
 #include <stormSolvers/PreconditionerFactory.hxx>
 #include <stormSolvers/SolverFactory.hxx>
 
-//#include <stormMesh/Mesh.hxx>
-
 #include <stormSolvers/Mat.hxx>
-#include <stormUtils/JsonValue.hxx>
 
-#include <cstring>
 
 template<typename stormMatVecFuncT_t>
-STORM_INL void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
-                              Storm::PreconditionerType const& preMethod,
-                              stormArray_t x, stormArray_t b,
-                              stormMatVecFuncT_t matVec, bool uniform = true) {
+void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
+                    Storm::PreconditionerType const& preMethod, stormArray_t x,
+                    stormArray_t b, stormMatVecFuncT_t matVec,
+                    bool uniform = true) {
   using namespace Storm;
 
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
@@ -63,23 +60,22 @@ STORM_INL void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
     Storm::SolveNonUniform(*solver, xx, bb, *symOp);
   }
 
-  std::cout << "num matvecs = " << numMatVecs << ' ' << method.toString()
+  std::cout << "num matvecs = " << numMatVecs << " " << method.ToString()
             << std::endl;
 
 } // stormLinSolve2
 
 template<typename stormMatVecFuncT_t>
-STORM_INL void
-stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
-                  stormArray_t x, stormArray_t b, stormMatVecFuncT_t matVec) {
+void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
+                       stormArray_t x, stormArray_t b,
+                       stormMatVecFuncT_t matVec) {
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   auto op = Storm::MakeSymmetricOperator<Storm::stormArray>(
       [&](Storm::stormArray& yy, const Storm::stormArray& xx) {
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
-  std::unique_ptr<Storm::IterativeSolver<Storm::stormArray>> solver =
-      std::make_unique<Storm::JfnkSolver<Storm::stormArray>>();
+  auto solver = std::make_unique<Storm::JfnkSolver<Storm::stormArray>>();
   solver->AbsoluteTolerance = 1.0e-4;
   solver->RelativeTolerance = 1.0e-4;
   solver->Solve(xx, bb, *op);

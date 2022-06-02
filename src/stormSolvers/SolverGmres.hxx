@@ -26,9 +26,9 @@
 #pragma once
 
 #include <stormBase.hxx>
-#include <stormBlas/stormSubspace.hxx>
 #include <stormBlas/stormTensor.hxx>
 #include <stormSolvers/Solver.hxx>
+#include <stormSolvers/Subspace.hxx>
 
 namespace Storm {
 

@@ -35,20 +35,20 @@ namespace Storm {
 template<class Vector, size_t Extent = DynamicExtent>
 class Subspace {
 private:
-  [[no_unique_address]] ExtentArray<Vector, Extent> Vectors_; 
+
+  [[no_unique_address]] ExtentArray<Vector, Extent> Vectors_;
 
 public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
-  void Assign(Vector const& like, bool copy) 
-      requires(Extent != DynamicExtent) {
+  void Assign(Vector const& like, bool copy) requires(Extent != DynamicExtent) {
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
     }
   }
-  void Assign(size_t size, Vector const& like, bool copy) 
-      requires(Extent == DynamicExtent) {
+  void Assign(size_t size, Vector const& like,
+              bool copy) requires(Extent == DynamicExtent) {
     Vectors_.resize(size);
     for (Vector& vector : Vectors_) {
       vector.Assign(like, copy);
@@ -56,7 +56,7 @@ public:
   }
   /// @}
 
-  /// @brief Access vector at index.
+  /// @brief Access vector at @p index.
   /// @{
   Vector& operator()(size_t index) noexcept {
     StormAssert(index < Vectors_.size());

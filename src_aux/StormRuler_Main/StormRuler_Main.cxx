@@ -29,12 +29,10 @@
 #include <cstring>
 
 #include <StormRuler_API.h>
-#include <stormBlas/stormTensor.hxx>
+#include <stormSolvers/LegacyTensor.hxx>
+#include <stormSolvers/Mat.hxx>
 #include <stormSolvers/PreconditionerFactory.hxx>
 #include <stormSolvers/SolverFactory.hxx>
-
-#include <stormSolvers/Mat.hxx>
-
 
 template<typename stormMatVecFuncT_t>
 void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
@@ -118,7 +116,7 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
   stormApplyBCs(mesh, p, 4,
-                SR_DIRICHLET(1.25 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
+                SR_DIRICHLET(1.75 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
                              (2.0 * 0.01 * 26)));
 } // SetBCs_p
 

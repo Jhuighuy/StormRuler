@@ -35,7 +35,7 @@
 namespace Storm {
 
 /// ----------------------------------------------------------------- ///
-/// @brief Base class for @c GMRES, @c FGMRES, \
+/// @brief Base class for @c GMRES, @c FGMRES,
 ///   @c LGMRES and @c LFGMRES.
 /// ----------------------------------------------------------------- ///
 template<vector_like Vector, bool Flexible, bool Loose = false>
@@ -70,20 +70,20 @@ protected:
 }; // class BaseGmresSolver
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c GMRES (Generalized Minimal Residual) \
+/// @brief The @c GMRES (Generalized Minimal Residual)
 ///   linear operator equation solver.
 ///
-/// @c GMRES is typically more robust than the @c BiCG type solvers, \
-///   but it may be slower than the @c BiCG solvers for the \
+/// @c GMRES is typically more robust than the @c BiCG type solvers,
+///   but it may be slower than the @c BiCG solvers for the
 ///   well-conditioned moderate sized problems.
 ///
-/// @c GMRES is algebraically equivalent to @c MINRES method \
-///   in the self-adjoint operator unpreconditioned case, \
-///   however, the need for restarts may lead to the much slower \
+/// @c GMRES is algebraically equivalent to @c MINRES method
+///   in the self-adjoint operator unpreconditioned case,
+///   however, the need for restarts may lead to the much slower
 ///   @c GMRES convergence rate.
 ///
-/// @c GMRES may be applied to the singular problems, and the square \
-///   least squares problems, although, similarly to @c MINRES, \
+/// @c GMRES may be applied to the singular problems, and the square
+///   least squares problems, although, similarly to @c MINRES,
 ///   convergeance to minimum norm solution is not guaranteed.
 ///
 /// References:
@@ -98,22 +98,22 @@ template<vector_like Vector>
 class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c FGMRES (Flexible Generalized Minimal Residual) \
+/// @brief The @c FGMRES (Flexible Generalized Minimal Residual)
 ///   linear operator equation solver.
 ///
-/// @c FGMRES is typically more robust than the @c BiCG type solvers, \
-///   but it may be slower than the @c BiCG solvers for the \
+/// @c FGMRES is typically more robust than the @c BiCG type solvers,
+///   but it may be slower than the @c BiCG solvers for the
 ///   well-conditioned moderate sized problems.
 ///
-/// @c FGMRES does the same amount of operations per iteration \
-///   as @c GMRES, but also allows usage of the variable (or flexible) \
-///   preconditioners with the price of doubleing of the memory \
-///   usage. For the static preconditioners, @c FGMRES requires \
-///   one preconditioner-vector product less than @c GMRES. \
+/// @c FGMRES does the same amount of operations per iteration
+///   as @c GMRES, but also allows usage of the variable (or flexible)
+///   preconditioners with the price of doubleing of the memory
+///   usage. For the static preconditioners, @c FGMRES requires
+///   one preconditioner-vector product less than @c GMRES.
 ///   @c FGMRES supports only the right preconditioning.
 ///
-/// @c FGMRES may be applied to the singular problems, and the square \
-///   least squares problems, although, similarly to @c MINRES, \
+/// @c FGMRES may be applied to the singular problems, and the square
+///   least squares problems, although, similarly to @c MINRES,
 ///   convergeance to minimum norm solution is not guaranteed.
 ///
 /// References:

@@ -72,7 +72,7 @@ private:
 #endif
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The first-order @c JFNK (Jacobian free-Newton-Krylov) \
+/// @brief The first-order @c JFNK (Jacobian free-Newton-Krylov)
 ///   nonlinear operator equation solver.
 ///
 /// For the @c Newton iterations, computing of the Jacobian-vector

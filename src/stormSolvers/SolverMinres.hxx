@@ -58,14 +58,14 @@ inline auto SymOrtho(Real a, Real b) {
 } // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c MINRES (Minimal Residual) linear self-adjoint \
+/// @brief The @c MINRES (Minimal Residual) linear self-adjoint 
 ///   (indefinite) operator equation solver.
 ///
-/// @c MINRES can be applied to the singular problems, and the \
-///   self-adjoint least squares problems, although convergeance to \
+/// @c MINRES can be applied to the singular problems, and the 
+///   self-adjoint least squares problems, although convergeance to 
 ///   minimum norm solution is not guaranteed.
 ///
-/// @note Despite 𝓐 may be indefinite, a positive-definite \
+/// @note Despite 𝓐 may be indefinite, a positive-definite 
 ///   preconditioner 𝓟 is explicitly required.
 ///
 /// References:

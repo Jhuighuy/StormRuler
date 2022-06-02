@@ -58,18 +58,18 @@ protected:
 }; // class BaseTfqmrSolver
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c TFQMR (Transpose-Free Quasi-Minimal Residual) \
+/// @brief The @c TFQMR (Transpose-Free Quasi-Minimal Residual)
 ///   linear operator equation solver.
 ///
-/// @c TFQMR, like the other @c BiCG type methods, normally \
-///   requires two operator-vector products per iteration. \
-///   But, unlike the other @c BiCG type methods, @c TFQMR does not \
-///   implicitly contain the residual norm estimate, only the rough \
-///   upper bound is avariable, so at the latter iterations an extra \
-///   operator-vector product per iteration may be required for the \
+/// @c TFQMR, like the other @c BiCG type methods, normally
+///   requires two operator-vector products per iteration.
+///   But, unlike the other @c BiCG type methods, @c TFQMR does not
+///   implicitly contain the residual norm estimate, only the rough
+///   upper bound is avariable, so at the latter iterations an extra
+///   operator-vector product per iteration may be required for the
 ///   explicit residual estimation.
 ///
-/// @c TFQMR typically converges much smoother, than \
+/// @c TFQMR typically converges much smoother, than
 ///   @c CGS and @c BiCGStab. @todo Breakdowns?
 ///
 /// References:
@@ -87,16 +87,16 @@ template<vector_like Vector>
 class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c TFQMR1 (Transpose-Free 1-norm \
+/// @brief The @c TFQMR1 (Transpose-Free 1-norm
 ///   Quasi-Minimal Residual) linear operator equation solver.
 ///
-/// @c TFQMR1, like the other @c BiCG type solvers, requires \
-///   two operator-vector products per iteration. Unlike @c TFQMR, \
-///   @c TFQMR1 implicitly contains the residual norm estimate, so no \
+/// @c TFQMR1, like the other @c BiCG type solvers, requires
+///   two operator-vector products per iteration. Unlike @c TFQMR,
+///   @c TFQMR1 implicitly contains the residual norm estimate, so no
 ///   extra operator-vector products are required.
 ///
-/// @c TFQMR1 typically converges much smoother, than \
-///   @c CGS and @c BiCGStab and is slightly faster than \
+/// @c TFQMR1 typically converges much smoother, than
+///   @c CGS and @c BiCGStab and is slightly faster than
 ///   @c TFQMR. @todo Breakdowns?
 ///
 /// References:

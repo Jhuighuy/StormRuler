@@ -163,7 +163,7 @@ public:
   /// @param xVec Input vector, 𝒙.
   virtual void MatVec(OutVector& yVec, InVector const& xVec) const = 0;
 
-  /// @brief Compute a chained \
+  /// @brief Compute a chained
   ///   operator-vector product, 𝒛 ← 𝓐(𝒚 ← 𝓑(𝒙)).
   ///
   /// @param zVec Output vector, 𝒛.

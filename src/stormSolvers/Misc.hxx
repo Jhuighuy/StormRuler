@@ -37,15 +37,15 @@ template<vector_like Vector>
 class PowerIterations final {
 public:
 
-  /// @brief Estimate the largest eigenvalue of \
+  /// @brief Estimate the largest eigenvalue of
   ///   the linear operator 𝓐 using the Power Iterations method.
   ///
-  /// @param xVec On input: a non-zero vector that is used as \
-  ///   the initial guess for the Power iterations; on output: \
+  /// @param xVec On input: a non-zero vector that is used as
+  ///   the initial guess for the Power iterations; on output:
   ///   estimate of the eigenvector, corresponding to the largest eigenvalue.
   /// @param linOp Linear operator, 𝓐𝒙.
   /// @param maxIterations Maximum number of the iterations.
-  /// @param relativeTolerance Relative error tolerance \
+  /// @param relativeTolerance Relative error tolerance
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.

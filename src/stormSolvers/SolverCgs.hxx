@@ -37,7 +37,7 @@ namespace Storm {
 /// @brief The @c CGS (Conjugate Gradients Squared)
 ///   linear operator equation solver.
 ///
-/// @c CGS, like the other @c BiCG type solvers, requires \
+/// @c CGS, like the other @c BiCG type solvers, requires
 ///   two operator multiplications per iteration.
 ///
 /// @warning @c CGS convergence behavior may be very erratic.

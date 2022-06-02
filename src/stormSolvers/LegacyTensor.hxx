@@ -36,7 +36,7 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Multidimensional shape object, \
+/// @brief Multidimensional shape object,
 ///   with a support for both static and dynamic extents.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<size_t... Extents>
@@ -118,14 +118,14 @@ private:
 
 public:
 
-  /// @brief Construct a tensor with \
+  /// @brief Construct a tensor with
   ///   unassigned storage and zero dynamic extents.
   stormBaseTensor() = default;
 
   /// @brief Destroy the tensor.
   ~stormBaseTensor() = default;
 
-  /// @brief Assign a shape to the tensor object \
+  /// @brief Assign a shape to the tensor object
   ///   and allocate the storage (if the storage class is dynamic).
   /// @{
   void Assign(ShapeType const& shape)

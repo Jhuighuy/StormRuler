@@ -31,7 +31,7 @@
 #include <stormSolvers/Solver.hxx>
 
 /// ----------------------------------------------------------------- ///
-/// @brief Base class for solvers, based on \
+/// @brief Base class for solvers, based on 
 ///   the Golub-Kahan-Lanczos bidiagonalization procedure.
 ///
 /// @see @c LSQR, @c LSMR.
@@ -128,7 +128,7 @@ void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
 } // stormGolubKahanSolver::ContinueBidiagonalization
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a right preconditioned linear least squares problem \
+/// @brief Solve a right preconditioned linear least squares problem 
 ///   with the @c LSQR method.
 ///
 /// @c LSQR is algebraically equivalent to applying @c CG
@@ -136,12 +136,12 @@ void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
 ///
-/// @note The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, \
-///   while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ \
-///   is not guaranteed to decrease. Please make sure that the right \
+/// @note The residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖₂ decreases monotonically, 
+///   while the normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
+///   is not guaranteed to decrease. Please make sure that the right 
 ///   stopping criterion is set.
 ///
-/// @warning Using @c LSQR is not recommended in the \
+/// @warning Using @c LSQR is not recommended in the 
 ///   self-adjoint case, please consider @c MINRES instead.
 ///
 /// References:
@@ -274,7 +274,7 @@ void stormLsqrSolver<tInArray, tOutArray>::Finalize(
 } // stormLsqrSolver::Finalize
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Solve a right preconditioned linear least squares problem \
+/// @brief Solve a right preconditioned linear least squares problem 
 ///   using the @c LSMR method.
 ///
 /// @c LSMR is algebraically equivalent to applying @c MINRES
@@ -282,12 +282,12 @@ void stormLsqrSolver<tInArray, tOutArray>::Finalize(
 /// (or, equivalently, [𝓟*]𝓐*𝓐[𝓟]𝒚 = [𝓟*]𝓐*𝒃, 𝒙 = [𝓟]𝒚),
 /// but has better numerical properties.
 ///
-/// @note The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ \
+/// @note The normal equation's residual norm ‖(𝓐[𝓟])*(𝓐[𝓟]𝒚 - 𝒃)‖ 
 ///   decreases monotonically, while the residual norm ‖𝓐[𝓟]𝒚 - 𝒃‖
-///   is not guaranteed to decrease (but decreases on practice). \
+///   is not guaranteed to decrease (but decreases on practice). 
 ///   Please make sure that the right stopping criterion is set.
 ///
-/// @warning Using @c LSMR is not recommended in the \
+/// @warning Using @c LSMR is not recommended in the 
 ///   self-adjoint case, please consider @c MINRES instead.
 ///
 /// References:

@@ -488,8 +488,11 @@ int main(int argc, char** argv) {
   {
     using namespace Storm;
     Mat<real_t, 5, 5> mat{
-        10, 2, 3, 4, 5, 6,  10, 8, 2, 1, 2, 3,  10,
-        5,  6, 7, 8, 9, 10, 2,  0, 4, 5, 1, 10,
+        10, 2, 3, 4, 5, //
+        6, 10, 8, 2, 1, //
+        2, 3, 10, 5, 6, //
+        7, 8, 9, 10, 2, //
+        0, 4, 5, 1, 10, //
     };
     auto lu = decompose_lu(mat, 3);
     auto inv = inverse_lu(mat, 3);

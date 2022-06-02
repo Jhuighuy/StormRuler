@@ -163,7 +163,7 @@ protected:
 
   /// @brief Initialize the outer iterations.
   ///
-  /// This function is used invoked only once, \
+  /// This function is used invoked only once,
   ///   in the initialization phase.
   ///
   /// @param xVec Initial guess for the solution vector, 𝒙.
@@ -202,7 +202,7 @@ protected:
 
   /// @brief Finalize the inner iterations.
   ///
-  /// This function is called in order to finalize \
+  /// This function is called in order to finalize
   ///   the inner iterations or if some stopping criterion is met.
   ///
   /// @param xVec Solution vector, 𝒙.
@@ -215,7 +215,7 @@ protected:
 
   /// @brief Finalize the outer iterations.
   ///
-  /// This function is used invoked only once, \
+  /// This function is used invoked only once,
   ///   when some stopping criterion is met.
   ///
   /// @param xVec Solution vector, 𝒙.
@@ -258,7 +258,7 @@ private:
 }; // class InnerOuterIterativeSolver
 
 /// ----------------------------------------------------------------- ///
-/// @brief Solve an operator equation 𝓐(𝒙) = 𝒃, \
+/// @brief Solve an operator equation 𝓐(𝒙) = 𝒃,
 ///   when 𝓐(𝒙) is a non-uniform operator (𝓐(𝟢) ≠ 𝟢).
 /// ----------------------------------------------------------------- ///
 template<vector_like Vector>

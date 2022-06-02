@@ -44,20 +44,20 @@ class PreconditionerSide final : public Enum<PreconditionerSide> {
 
   /// @brief Left preconditioned equation is solved, 𝓟𝓐𝒙 = 𝓟𝒃.
   ///
-  /// When the left preconditioning is used, iterative solver tracks \
+  /// When the left preconditioning is used, iterative solver tracks 
   ///   convergence by the left preconditioned residual norm, ‖𝓟(𝒃 - 𝓐𝒙)‖.
   StormEnumValue_(Left)
 
   /// Right preconditioned equation is solved, 𝓐𝓟𝒙̃ = 𝒃, 𝓟𝒙̃ = 𝒙.
   ///
-  /// When the right preconditioning is used, iterative solver tracks \
+  /// When the right preconditioning is used, iterative solver tracks 
   ///   convergence by the unpreconditioned residual norm, ‖𝒃 - 𝓐𝒙‖.
   StormEnumValue_(Right)
 
-  /// Symmetric preconditioned equation is solved, \
+  /// Symmetric preconditioned equation is solved, 
   ///   𝓜𝓐𝓝𝒙̃ = 𝓜𝒃, 𝓝𝒙̃ = 𝒙, 𝓟 = 𝓜𝓝.
   ///
-  /// When the symmetric preconditioning is used, iterative solver tracks \
+  /// When the symmetric preconditioning is used, iterative solver tracks 
   ///   convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
   StormEnumValue_(Symmetric)
 
@@ -83,7 +83,7 @@ public:
 }; // class Preconditioner
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Identity preconditioner, \
+/// @brief Identity preconditioner,
 ///   intended to be used for debugging only.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<vector_like Vector>

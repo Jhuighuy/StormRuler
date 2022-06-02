@@ -36,13 +36,13 @@
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c BiCGStab (Biconjugate Gradients Stabilized) \
+/// @brief The @c BiCGStab (Biconjugate Gradients Stabilized)
 ///   linear operator equation solver.
 ///
-/// @c BiCGStab, like the other @c BiCG type solvers, requires \
+/// @c BiCGStab, like the other @c BiCG type solvers, requires
 ///   two operator multiplications per iteration.
 ///
-/// @c BiCGStab typically converges much smoother, than \
+/// @c BiCGStab typically converges much smoother, than
 ///   @c CGS. @todo Breakdowns?
 ///
 /// References:
@@ -191,10 +191,10 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
 } // BiCgStabSolver::Iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized) \
+/// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized)
 ///   linear operator equation solver.
 ///
-/// @c BiCGStab(l), like the other @c BiCG type solvers, requires \
+/// @c BiCGStab(l), like the other @c BiCG type solvers, requires
 ///   two operator multiplications per iteration.
 ///
 /// References:

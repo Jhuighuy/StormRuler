@@ -95,7 +95,7 @@ void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
 
 #define YURI 0
 
-static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0, Sigma = 10.0;
+static double tau = 1.0e-2, Gamma = 16.0e-4, sigma = 1.0, Sigma = 10.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -214,7 +214,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, stormArray_t c, stormArray_t v,
 #if YURI
       Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #else
-      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
 #endif
       c_hat, c,
       [&](stormMesh_t mesh, stormArray_t c_out, stormArray_t c_in) {

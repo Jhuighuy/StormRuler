@@ -22,18 +22,16 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-#ifndef _STORM_BASE_HXX_
-#define _STORM_BASE_HXX_
 
+#pragma once
+
+#include <cmath>
 #include <cstddef>
 
-#include <array>
 #include <complex>
 #include <concepts>
-#include <iostream>
 #include <tuple>
 #include <type_traits>
-#include <vector>
 
 #include <StormRuler_API.h>
 
@@ -74,9 +72,10 @@ namespace Utils {
 
 /// @brief If @p y is zero, return zero, else
 ///   return value of @p x divided by @p y.
-auto SafeDivide(real_or_complex_floating_point auto x,
-                real_or_complex_floating_point auto y) {
-  return (y == 0.0) ? 0.0 : (x / y);
+template<real_or_complex_floating_point Value>
+auto SafeDivide(Value x, Value y) {
+  static constexpr Value zero{0.0};
+  return y == zero ? zero : (x / y);
 }
 
 /// @brief If @p y is zero, assign to @p x and return zero, else
@@ -96,7 +95,7 @@ auto SymOrtho(Value a, Value b) {
   // ----------------------
   Value cs, sn, rr;
   rr = std::hypot(a, b);
-  if (rr > 0.0) {
+  if (rr > Value{0.0}) {
     cs = a / rr;
     sn = b / rr;
   } else {
@@ -111,5 +110,3 @@ auto SymOrtho(Value a, Value b) {
 } // namespace Utils
 
 } // namespace Storm
-
-#endif // ifndef _STORM_BASE_HXX_

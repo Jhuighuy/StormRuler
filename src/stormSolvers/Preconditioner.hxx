@@ -68,7 +68,7 @@ class PreconditionerSide final : public Enum<PreconditionerSide> {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract preconditioner operator.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class Preconditioner : public Operator<Vector> {
 public:
 
@@ -86,7 +86,7 @@ public:
 /// @brief Identity preconditioner,
 ///   intended to be used for debugging only.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 

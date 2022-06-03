@@ -36,7 +36,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for @c TFQMR and @c TFQMR1.
 /// ----------------------------------------------------------------- ///
-template<vector_like Vector, bool L1>
+template<VectorLike Vector, bool L1>
 class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
 private:
 
@@ -83,7 +83,7 @@ protected:
 ///      for Non-Hermitian Linear Systems.” (1994).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class TfqmrSolver final : public BaseTfqmrSolver_<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -106,10 +106,10 @@ class TfqmrSolver final : public BaseTfqmrSolver_<Vector, false> {};
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class Tfqmr1Solver final : public BaseTfqmrSolver_<Vector, true> {};
 
-template<vector_like Vector, bool L1>
+template<VectorLike Vector, bool L1>
 real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp,
@@ -159,7 +159,7 @@ real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
 
 } // BaseTfqmrSolver_::Init
 
-template<vector_like Vector, bool L1>
+template<VectorLike Vector, bool L1>
 real_t
 BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
                                       Operator<Vector> const& linOp,

@@ -53,7 +53,7 @@ namespace Storm {
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -70,7 +70,7 @@ private:
 
 }; // class BiCgStabSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                     Operator<Vector> const& linOp,
                                     Preconditioner<Vector> const* preOp) {
@@ -106,7 +106,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // BiCgStabSolver::Init
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                        Operator<Vector> const& linOp,
                                        Preconditioner<Vector> const* preOp) {
@@ -205,7 +205,7 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
 ///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
@@ -231,7 +231,7 @@ public:
 
 }; // class BiCgStabLSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
                                           Vector const& bVec,
                                           Operator<Vector> const& linOp,
@@ -274,7 +274,7 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
 
 } // BiCgStabLSolver::OuterInit
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t
 BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
                                       Operator<Vector> const& linOp,

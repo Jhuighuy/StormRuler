@@ -49,7 +49,7 @@ namespace Storm {
 ///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -66,7 +66,7 @@ private:
 
 }; // class CgsSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                Operator<Vector> const& linOp,
                                Preconditioner<Vector> const* preOp) {
@@ -102,7 +102,7 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // CgsSolver::Init
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                   Operator<Vector> const& linOp,
                                   Preconditioner<Vector> const* preOp) {

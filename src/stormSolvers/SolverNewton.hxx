@@ -55,7 +55,7 @@ namespace Storm {
 /// [1] ???
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
@@ -69,14 +69,14 @@ private:
 
 }; // class NewtonSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t NewtonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                   Operator<Vector> const& anyOp,
                                   Preconditioner<Vector> const* preOp) {
   StormEnsure(!"Newton solver was not implemented yet.");
 } // NewtonSolver::Init
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t NewtonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                      Operator<Vector> const& anyOp,
                                      Preconditioner<Vector> const* preOp) {
@@ -113,7 +113,7 @@ real_t NewtonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -129,7 +129,7 @@ private:
 
 }; // class JfnkSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                                 Operator<Vector> const& anyOp,
                                 Preconditioner<Vector> const* preOp) {
@@ -150,7 +150,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // JfnkSolver::Init
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                    Operator<Vector> const& anyOp,
                                    Preconditioner<Vector> const* preOp) {

@@ -48,7 +48,7 @@ namespace Storm {
 ///     Bureau of Standards 49 (1952): 409-435.
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like Vector>
+template<VectorLike Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -65,7 +65,7 @@ private:
 
 }; // class CgSolver
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
                               Operator<Vector> const& linOp,
                               Preconditioner<Vector> const* preOp) {
@@ -99,7 +99,7 @@ real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 
 } // CgSolver::Init
 
-template<vector_like Vector>
+template<VectorLike Vector>
 real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
                                  Operator<Vector> const& linOp,
                                  Preconditioner<Vector> const* preOp) {

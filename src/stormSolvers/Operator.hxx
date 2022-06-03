@@ -86,79 +86,83 @@ public:
   }
 };
 
-namespace Blas {
+template<>
+class VectorOperations<stormArray> {
+public:
 
-void Swap(auto& x, auto& y) {
-  std::swap(x, y);
-}
+  static void Swap(auto& x, auto& y) {
+    std::swap(x, y);
+  }
 
-real_t Dot(stormArray const& z, stormArray const& y) {
-  return stormDot(z.Mesh, z.Array, y.Array);
-}
-real_t Norm2(stormArray const& z) {
-  return stormNorm2(z.Mesh, z.Array);
-}
+  static real_t Dot(stormArray const& z, stormArray const& y) {
+    return stormDot(z.Mesh, z.Array, y.Array);
+  }
+  static real_t Norm2(stormArray const& z) {
+    return stormNorm2(z.Mesh, z.Array);
+  }
 
-void Set(stormArray& z, stormArray const& y) {
-  stormSet(z.Mesh, z.Array, y.Array);
-}
+  static void Set(stormArray& z, stormArray const& y) {
+    stormSet(z.Mesh, z.Array, y.Array);
+  }
 
-void Fill(stormArray& z, real_t a) {
-  stormFill(z.Mesh, z.Array, a);
-}
-void RandFill(stormArray& z) {
-  stormRandFill(z.Mesh, z.Array);
-}
+  static void Fill(stormArray& z, real_t a) {
+    stormFill(z.Mesh, z.Array, a);
+  }
+  static void RandFill(stormArray& z) {
+    stormRandFill(z.Mesh, z.Array);
+  }
 
-void Scale(stormArray& z, stormArray const& y, real_t a) {
-  stormScale(z.Mesh, z.Array, y.Array, a);
-}
+  static void Scale(stormArray& z, stormArray const& y, real_t a) {
+    stormScale(z.Mesh, z.Array, y.Array, a);
+  }
 
-void ScaleAssign(stormArray& z, real_t a) {
-  Scale(z, z, a);
-}
+  static void ScaleAssign(stormArray& z, real_t a) {
+    Scale(z, z, a);
+  }
 
-void Add(stormArray& z, stormArray const& y, stormArray const& x) {
-  stormAdd(z.Mesh, z.Array, y.Array, x.Array);
-}
-void Add(stormArray& z, stormArray const& y, stormArray const& x, real_t a) {
-  stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
-}
-void Add(stormArray& z, stormArray const& y, real_t b, stormArray const& x,
-         real_t a) {
-  stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
-}
+  static void Add(stormArray& z, stormArray const& y, stormArray const& x) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array);
+  }
+  static void Add(stormArray& z, stormArray const& y, stormArray const& x,
+                  real_t a) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
+  }
+  static void Add(stormArray& z, stormArray const& y, real_t b,
+                  stormArray const& x, real_t a) {
+    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
+  }
 
-void AddAssign(stormArray& z, stormArray const& y) {
-  Add(z, z, y);
-}
-void AddAssign(stormArray& z, stormArray const& y, real_t a) {
-  Add(z, z, y, a);
-}
+  static void AddAssign(stormArray& z, stormArray const& y) {
+    Add(z, z, y);
+  }
+  static void AddAssign(stormArray& z, stormArray const& y, real_t a) {
+    Add(z, z, y, a);
+  }
 
-void Sub(stormArray& z, stormArray const& y, stormArray const& x) {
-  stormSub(z.Mesh, z.Array, y.Array, x.Array);
-}
-void Sub(stormArray& z, stormArray const& y, stormArray const& x, real_t a) {
-  stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
-}
-void Sub(stormArray& z, stormArray const& y, real_t b, stormArray const& x,
-         real_t a) {
-  stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-}
+  static void Sub(stormArray& z, stormArray const& y, stormArray const& x) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array);
+  }
+  static void Sub(stormArray& z, stormArray const& y, stormArray const& x,
+                  real_t a) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
+  }
+  static void Sub(stormArray& z, stormArray const& y, real_t b,
+                  stormArray const& x, real_t a) {
+    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
+  }
 
-void SubAssign(stormArray& z, stormArray const& y) {
-  Sub(z, z, y);
-}
-void SubAssign(stormArray& z, stormArray const& y, real_t a) {
-  Sub(z, z, y, a);
-}
-} // namespace Blas
+  static void SubAssign(stormArray& z, stormArray const& y) {
+    Sub(z, z, y);
+  }
+  static void SubAssign(stormArray& z, stormArray const& y, real_t a) {
+    Sub(z, z, y, a);
+  }
+}; // class BlasOp<stormArray>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like InVector, vector_like OutVector = InVector>
+template<VectorLike InVector, VectorLike OutVector = InVector>
 class Operator : public Object {
 public:
 
@@ -174,7 +178,7 @@ public:
   /// @param zVec Output vector, 𝒛.
   /// @param yVec Intermediate vector, 𝒚.
   /// @param xVec Input vector, 𝒙.
-  template<vector_like InOutVector = InVector>
+  template<VectorLike InOutVector = InVector>
   void MatVec(OutVector& zVec, InOutVector& yVec,
               Operator<InVector, InOutVector> const& otherOp,
               InVector const& xVec) const {
@@ -217,7 +221,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<vector_like InVector, vector_like OutVector = InVector>
+template<VectorLike InVector, VectorLike OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
 
@@ -269,13 +273,13 @@ private:
 /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
 /// @{
-template<vector_like InVector, vector_like OutVector = InVector,
+template<VectorLike InVector, VectorLike OutVector = InVector,
          operator_like<InVector, OutVector> MatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc));
 }
-template<vector_like InVector, vector_like OutVector = InVector,
+template<VectorLike InVector, VectorLike OutVector = InVector,
          operator_like<InVector, OutVector> MatVecFunc,
          operator_like<OutVector, InVector> ConjMatVecFunc>
 auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
@@ -288,7 +292,7 @@ auto MakeOperator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<vector_like Vector, operator_like<Vector> MatVecFunc>
+template<VectorLike Vector, operator_like<Vector> MatVecFunc>
 auto MakeSymmetricOperator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<Vector>>(
       matVecFunc, std::forward<MatVecFunc>(matVecFunc));

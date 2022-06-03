@@ -296,7 +296,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     omega_ =
         Utils::SafeDivide(Blas::Dot(vVec_, rVec_), Blas::Dot(vVec_, vVec_));
     Blas::AddAssign(xVec, rightPre ? zVec_ : rVec_, omega_);
-    Blas::AddAssign(rVec_, vVec_, omega_);
+    Blas::SubAssign(rVec_, vVec_, omega_);
   }
 
   return Blas::Norm2(rVec_);

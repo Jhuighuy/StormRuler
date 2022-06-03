@@ -46,7 +46,7 @@ template<vector_like Vector>
 class ChebyshevPreconditioner final : public Preconditioner<Vector> {
 public:
 
-  size_t Degree = 5;
+  size_t Degree{5};
 
 private:
 
@@ -103,8 +103,8 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // 𝒚 ← 𝒑.
   // ----------------------
   real_t alpha{2.0 / theta_};
-  pVec_.Scale(xVec, 1.0 / theta_);
-  yVec.Set(pVec_);
+  Blas::Scale(pVec_, xVec, 1.0 / theta_);
+  Blas::Set(yVec, pVec_);
 
   for (size_t k = 0; k < Degree; ++k) {
     // Compute the residual and update the solution:
@@ -118,8 +118,8 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     alpha = 1.0 / (theta_ - 0.25 * alpha * std::pow(delta_, 2));
     real_t const beta = alpha * theta_ - 1.0;
     LinOp_->Residual(rVec_, xVec, yVec);
-    pVec_.Add(rVec_, alpha, pVec_, beta);
-    yVec.AddAssign(pVec_);
+    Blas::Add(pVec_, rVec_, alpha, pVec_, beta);
+    Blas::AddAssign(yVec, pVec_);
   }
 
 } // ChebyshevPreconditioner::MatVec

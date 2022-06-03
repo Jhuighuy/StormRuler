@@ -92,11 +92,11 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    uVec_.Swap(rVec_);
+    Blas::Swap(uVec_, rVec_);
     preOp->MatVec(rVec_, uVec_);
   }
-  rTildeVec_.Set(rVec_);
-  rho_ = rTildeVec_.Dot(rVec_);
+  Blas::Set(rTildeVec_, rVec_);
+  rho_ = Blas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
 
@@ -127,15 +127,15 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
-    uVec_.Set(rVec_);
-    pVec_.Set(uVec_);
+    Blas::Set(uVec_, rVec_);
+    Blas::Set(pVec_, uVec_);
   } else {
     real_t const rhoBar{rho_};
-    rho_ = rTildeVec_.Dot(rVec_);
+    rho_ = Blas::Dot(rTildeVec_, rVec_);
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
-    uVec_.Add(rVec_, qVec_, beta);
-    pVec_.Add(qVec_, pVec_, beta);
-    pVec_.Add(uVec_, pVec_, beta);
+    Blas::Add(uVec_, rVec_, qVec_, beta);
+    Blas::Add(pVec_, qVec_, pVec_, beta);
+    Blas::Add(pVec_, uVec_, pVec_, beta);
   }
 
   // ----------------------
@@ -157,9 +157,9 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   } else {
     linOp.MatVec(vVec_, pVec_);
   }
-  real_t const alpha{Utils::SafeDivide(rho_, rTildeVec_.Dot(vVec_))};
-  qVec_.Sub(uVec_, vVec_, alpha);
-  vVec_.Add(uVec_, qVec_);
+  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_))};
+  Blas::Sub(qVec_, uVec_, vVec_, alpha);
+  Blas::Add(vVec_, uVec_, qVec_);
 
   // Update the solution and the residual:
   // ----------------------
@@ -178,20 +178,20 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    xVec.AddAssign(vVec_, alpha);
+    Blas::AddAssign(xVec, vVec_, alpha);
     preOp->MatVec(vVec_, uVec_, linOp, vVec_);
-    rVec_.SubAssign(vVec_, alpha);
+    Blas::SubAssign(rVec_, vVec_, alpha);
   } else if (rightPre) {
     linOp.MatVec(vVec_, uVec_, *preOp, vVec_);
-    xVec.AddAssign(uVec_, alpha);
-    rVec_.SubAssign(vVec_, alpha);
+    Blas::AddAssign(xVec, uVec_, alpha);
+    Blas::SubAssign(rVec_, vVec_, alpha);
   } else {
     linOp.MatVec(uVec_, vVec_);
-    xVec.AddAssign(vVec_, alpha);
-    rVec_.SubAssign(uVec_, alpha);
+    Blas::AddAssign(xVec, vVec_, alpha);
+    Blas::SubAssign(rVec_, uVec_, alpha);
   }
 
-  return rVec_.Norm2();
+  return Blas::Norm2(rVec_);
 
 } // CgsSolver::Iterate
 

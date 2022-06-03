@@ -271,14 +271,14 @@ bool SolveNonUniform(Solver<Vector>& solver, Vector& xVec, Vector const& bVec,
 
   // Solve an equation with the "uniformed" operator:
   // 𝓐(𝒙) - 𝓐(𝟢) = 𝒃 - 𝓐(𝟢).
-  fVec.Fill(0.0);
+  Blas::Fill(fVec, 0.0);
   anyOp.MatVec(zVec, fVec);
-  fVec.Sub(bVec, zVec);
+  Blas::Sub(fVec, bVec, zVec);
 
   auto const uniOp =
       MakeOperator<Vector>([&](Vector& yVec, Vector const& xVec) {
         anyOp.MatVec(yVec, xVec);
-        yVec.SubAssign(zVec);
+        Blas::SubAssign(yVec, zVec);
       });
 
   return solver.Solve(xVec, fVec, *uniOp);

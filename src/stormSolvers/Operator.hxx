@@ -84,71 +84,76 @@ public:
     Array = stormAllocLike(like.Array);
     if (copy) stormSet(Mesh, Array, like.Array);
   }
-
-  void Swap(stormArray& y) {
-    std::swap(*this, y);
-  }
-
-  real_t Dot(stormArray const& y) const {
-    return stormDot(Mesh, Array, y.Array);
-  }
-  real_t Norm2() const {
-    return stormNorm2(Mesh, Array);
-  }
-
-  void Set(stormArray const& y) {
-    stormSet(Mesh, Array, y.Array);
-  }
-
-  void Fill(real_t a) {
-    stormFill(Mesh, Array, a);
-  }
-  void RandFill() {
-    stormRandFill(Mesh, Array);
-  }
-
-  void Scale(stormArray const& y, real_t a) {
-    stormScale(Mesh, Array, y.Array, a);
-  }
-
-  void ScaleAssign(real_t a) {
-    Scale(*this, a);
-  }
-
-  void Add(stormArray const& y, stormArray const& x) {
-    stormAdd(Mesh, Array, y.Array, x.Array);
-  }
-  void Add(stormArray const& y, stormArray const& x, real_t a) {
-    stormAdd(Mesh, Array, y.Array, x.Array, a);
-  }
-  void Add(stormArray const& y, real_t b, stormArray const& x, real_t a) {
-    stormAdd(Mesh, Array, y.Array, x.Array, a, b);
-  }
-
-  void AddAssign(stormArray const& y) {
-    Add(*this, y);
-  }
-  void AddAssign(stormArray const& y, real_t a) {
-    Add(*this, y, a);
-  }
-
-  void Sub(stormArray const& y, stormArray const& x) {
-    stormSub(Mesh, Array, y.Array, x.Array);
-  }
-  void Sub(stormArray const& y, stormArray const& x, real_t a) {
-    stormSub(Mesh, Array, y.Array, x.Array, a);
-  }
-  void Sub(stormArray const& y, real_t b, stormArray const& x, real_t a) {
-    stormSub(Mesh, Array, y.Array, x.Array, a, b);
-  }
-
-  void SubAssign(stormArray const& y) {
-    Sub(*this, y);
-  }
-  void SubAssign(stormArray const& y, real_t a) {
-    Sub(*this, y, a);
-  }
 };
+
+namespace Blas {
+
+void Swap(auto& x, auto& y) {
+  std::swap(x, y);
+}
+
+real_t Dot(stormArray const& z, stormArray const& y) {
+  return stormDot(z.Mesh, z.Array, y.Array);
+}
+real_t Norm2(stormArray const& z) {
+  return stormNorm2(z.Mesh, z.Array);
+}
+
+void Set(stormArray& z, stormArray const& y) {
+  stormSet(z.Mesh, z.Array, y.Array);
+}
+
+void Fill(stormArray& z, real_t a) {
+  stormFill(z.Mesh, z.Array, a);
+}
+void RandFill(stormArray& z) {
+  stormRandFill(z.Mesh, z.Array);
+}
+
+void Scale(stormArray& z, stormArray const& y, real_t a) {
+  stormScale(z.Mesh, z.Array, y.Array, a);
+}
+
+void ScaleAssign(stormArray& z, real_t a) {
+  Scale(z, z, a);
+}
+
+void Add(stormArray& z, stormArray const& y, stormArray const& x) {
+  stormAdd(z.Mesh, z.Array, y.Array, x.Array);
+}
+void Add(stormArray& z, stormArray const& y, stormArray const& x, real_t a) {
+  stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
+}
+void Add(stormArray& z, stormArray const& y, real_t b, stormArray const& x,
+         real_t a) {
+  stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
+}
+
+void AddAssign(stormArray& z, stormArray const& y) {
+  Add(z, z, y);
+}
+void AddAssign(stormArray& z, stormArray const& y, real_t a) {
+  Add(z, z, y, a);
+}
+
+void Sub(stormArray& z, stormArray const& y, stormArray const& x) {
+  stormSub(z.Mesh, z.Array, y.Array, x.Array);
+}
+void Sub(stormArray& z, stormArray const& y, stormArray const& x, real_t a) {
+  stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
+}
+void Sub(stormArray& z, stormArray const& y, real_t b, stormArray const& x,
+         real_t a) {
+  stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
+}
+
+void SubAssign(stormArray& z, stormArray const& y) {
+  Sub(z, z, y);
+}
+void SubAssign(stormArray& z, stormArray const& y, real_t a) {
+  Sub(z, z, y, a);
+}
+} // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
@@ -185,7 +190,7 @@ public:
   void Residual(OutVector& rVec, OutVector const& bVec,
                 InVector const& xVec) const {
     MatVec(rVec, xVec);
-    rVec.Sub(bVec, rVec);
+    Blas::Sub(rVec, bVec, rVec);
   }
 
   /// @brief Compute a residual norm, ‖𝒃 - 𝓐𝒙‖.

@@ -29,6 +29,32 @@
 
 namespace Storm {
 
+#if 0
+namespace Blas {
+
+/// @todo Document me!
+auto Dot(auto const& xVec, auto const& yVec) = delete;
+
+/// @todo Document me!
+real_t Norm2(auto const& xVec) = delete;
+
+/// @todo Document me!
+void Set(auto& xVec, auto& yVec) = delete;
+
+/// @todo Document me!
+void Fill(auto& xVec, auto fillValue) = delete;
+
+/// @todo Document me!
+void RandFill(auto& xVec) = delete;
+
+/// @todo Document me!
+void Scale(auto& xVec, auto scaleFactor);
+
+void Scale(auto& xVec, auto const& yVec, auto scaleFactor);
+
+} // namespace Blas
+#endif
+
 // clang-format off
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -41,7 +67,7 @@ concept vector_like =
     // 𝒛 ← 𝒚.
     { zVec.Assign(yVec) };
     { zVec.Assign(yVec, copy) };
-  } &&
+  } /*&&
   requires(Vector const& zVec, Vector const& yVec) {
     // Require norm and operator computation:
     // <𝒛⋅𝒚> → ℙ, ‖𝒛‖ → ℝ.
@@ -53,7 +79,7 @@ requires(Vector& zVec, Vector const& yVec, Vector const& xVec) {
   { zVec.RandFill() };
   { zVec.Scale(yVec, 1.0) };
   { zVec.ScaleAssign(1.0) };
-};
+}*/;
 
 // clang-format on
 

@@ -91,13 +91,13 @@ class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 
   void MatVec(Vector& yVec, Vector const& xVec) const override {
-    std::cout << "`IdentityPreconditioner::MatVec`!" << std::endl;
-    yVec.Set(xVec);
+    std::clog << "IdentityPreconditioner::MatVec called" << std::endl;
+    Blas::Set(yVec, xVec);
   }
 
   void ConjMatVec(Vector& xVec, Vector const& yVec) const override {
-    std::cout << "`IdentityPreconditioner::ConjMatVec`!" << std::endl;
-    xVec.Set(yVec);
+    std::clog << "IdentityPreconditioner::ConjMatVec called" << std::endl;
+    Blas::Set(xVec, yVec);
   }
 
 }; // class IdentityPreconditioner

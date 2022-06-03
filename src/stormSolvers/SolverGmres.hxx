@@ -39,7 +39,7 @@ namespace Storm {
 ///   @c LGMRES and @c LFGMRES.
 /// ----------------------------------------------------------------- ///
 template<vector_like Vector, bool Flexible, bool Loose = false>
-class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
+class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
 private:
 
   stormVector<real_t> beta_, cs_, sn_;
@@ -65,9 +65,9 @@ private:
 
 protected:
 
-  BaseGmresSolver() = default;
+  BaseGmresSolver_() = default;
 
-}; // class BaseGmresSolver
+}; // class BaseGmresSolver_
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c GMRES (Generalized Minimal Residual)
@@ -95,7 +95,7 @@ protected:
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<vector_like Vector>
-class GmresSolver final : public BaseGmresSolver<Vector, false> {};
+class GmresSolver final : public BaseGmresSolver_<Vector, false> {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c FGMRES (Flexible Generalized Minimal Residual)
@@ -124,10 +124,10 @@ class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<vector_like Vector>
-class FgmresSolver final : public BaseGmresSolver<Vector, true> {};
+class FgmresSolver final : public BaseGmresSolver_<Vector, true> {};
 
 template<vector_like Vector, bool Flexible, bool Loose>
-real_t BaseGmresSolver<Vector, Flexible, Loose>::OuterInit(
+real_t BaseGmresSolver_<Vector, Flexible, Loose>::OuterInit(
     Vector const& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
   size_t const m{this->NumInnerIterations};
@@ -162,18 +162,18 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::OuterInit(
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    zVecs_(0).Swap(qVecs_(0));
+    Blas::Swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
-  beta_(0) = qVecs_(0).Norm2();
-  qVecs_(0).ScaleAssign(1.0 / beta_(0));
+  beta_(0) = Blas::Norm2(qVecs_(0));
+  Blas::ScaleAssign(qVecs_(0), 1.0 / beta_(0));
 
   return beta_(0);
 
-} // BaseGmresSolver::OuterInit
+} // BaseGmresSolver_::OuterInit
 
 template<vector_like Vector, bool Flexible, bool Loose>
-void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
+void BaseGmresSolver_<Vector, Flexible, Loose>::InnerInit(
     Vector const& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
   // Force right preconditioning for the flexible GMRES.
@@ -192,16 +192,16 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerInit(
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    zVecs_(0).Swap(qVecs_(0));
+    Blas::Swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
-  beta_(0) = qVecs_(0).Norm2();
-  qVecs_(0).ScaleAssign(1.0 / beta_(0));
+  beta_(0) = Blas::Norm2(qVecs_(0));
+  Blas::ScaleAssign(qVecs_(0), 1.0 / beta_(0));
 
-} // BaseGmresSolver::InnerInit
+} // BaseGmresSolver_::InnerInit
 
 template<vector_like Vector, bool Flexible, bool Loose>
-real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
+real_t BaseGmresSolver_<Vector, Flexible, Loose>::InnerIterate(
     Vector& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
   size_t const k{this->InnerIteration};
@@ -240,11 +240,11 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
     linOp.MatVec(qVecs_(k + 1), qVecs_(k));
   }
   for (size_t i{0}; i <= k; ++i) {
-    H_(i, k) = qVecs_(k + 1).Dot(qVecs_(i));
-    qVecs_(k + 1).SubAssign(qVecs_(i), H_(i, k));
+    H_(i, k) = Blas::Dot(qVecs_(k + 1), qVecs_(i));
+    Blas::SubAssign(qVecs_(k + 1), qVecs_(i), H_(i, k));
   }
-  H_(k + 1, k) = qVecs_(k + 1).Norm2();
-  qVecs_(k + 1).ScaleAssign(1.0 / H_(k + 1, k));
+  H_(k + 1, k) = Blas::Norm2(qVecs_(k + 1));
+  Blas::ScaleAssign(qVecs_(k + 1), 1.0 / H_(k + 1, k));
 
   // Eliminate the last element in 𝐻
   // and and update the rotation matrix:
@@ -276,10 +276,10 @@ real_t BaseGmresSolver<Vector, Flexible, Loose>::InnerIterate(
 
   return std::abs(beta_(k + 1));
 
-} // BaseGmresSolver::InnerIterate
+} // BaseGmresSolver_::InnerIterate
 
 template<vector_like Vector, bool Flexible, bool Loose>
-void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
+void BaseGmresSolver_<Vector, Flexible, Loose>::InnerFinalize(
     Vector& xVec, Vector const& bVec, Operator<Vector> const& linOp,
     Preconditioner<Vector> const* preOp) {
   size_t const k{this->InnerIteration};
@@ -320,21 +320,21 @@ void BaseGmresSolver<Vector, Flexible, Loose>::InnerFinalize(
   // ----------------------
   if (!rightPre) {
     for (size_t i{0}; i <= k; ++i) {
-      xVec.AddAssign(qVecs_(i), beta_(i));
+      Blas::AddAssign(xVec, qVecs_(i), beta_(i));
     }
   } else if constexpr (Flexible) {
     for (size_t i{0}; i <= k; ++i) {
-      xVec.AddAssign(zVecs_(i), beta_(i));
+      Blas::AddAssign(xVec, zVecs_(i), beta_(i));
     }
   } else {
-    qVecs_(0).ScaleAssign(beta_(0));
+    Blas::ScaleAssign(qVecs_(0), beta_(0));
     for (size_t i{1}; i <= k; ++i) {
-      qVecs_(0).AddAssign(qVecs_(i), beta_(i));
+      Blas::AddAssign(qVecs_(0), qVecs_(i), beta_(i));
     }
     preOp->MatVec(zVecs_(0), qVecs_(0));
-    xVec.AddAssign(zVecs_(0));
+    Blas::AddAssign(xVec, zVecs_(0));
   }
 
-} // BaseGmresSolver::InnerFinalize
+} // BaseGmresSolver_::InnerFinalize
 
 } // namespace Storm

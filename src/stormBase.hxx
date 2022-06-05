@@ -56,6 +56,7 @@
     if (!(x)) {                                                        \
       std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", \
                    __FILE__, __LINE__, __PRETTY_FUNCTION__, #x);       \
+      std::fflush(stderr);                                             \
       std::abort();                                                    \
     }                                                                  \
   } while (false)

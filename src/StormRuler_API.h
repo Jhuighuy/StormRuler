@@ -134,8 +134,8 @@ STORM_API stormArray_t stormAllocLike(stormArray_t array);
 
 STORM_API void stormFree(stormArray_t x);
 
-STORM_API void stormArrayUnwrap(stormArray_t x, stormReal_t** data,
-                                stormSize_t* size);
+STORM_API void stormArrayUnwrap(stormMesh_t mesh, stormArray_t x,
+                                stormReal_t** data, stormSize_t* size);
 
 /// @{
 #if STORM_C11_
@@ -163,6 +163,8 @@ STORM_API void SR_IO_Flush(stormIOList_t IO, stormMesh_t mesh,
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
+
+STORM_API stormSize_t stormSize(stormMesh_t mesh, stormArray_t x);
 
 STORM_API stormReal_t stormNorm2(stormMesh_t mesh, stormArray_t x);
 

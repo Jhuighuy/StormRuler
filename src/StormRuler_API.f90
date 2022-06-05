@@ -339,17 +339,20 @@ end subroutine stormFree
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormArrayUnwrap(xPtr, dataPtr, sizePtr) bind(C, name='stormArrayUnwrap')
+subroutine stormArrayUnwrap(meshPtr, xPtr, dataPtr, sizePtr) bind(C, name='stormArrayUnwrap')
+  type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr
   type(c_ptr), intent(out) :: dataPtr 
   integer(c_size_t), intent(out) :: sizePtr
 
+  class(tMesh), pointer :: mesh
   class(tArray), pointer :: xArr
 
+  call Unwrap(meshPtr, mesh)
   call Unwrap(xPtr, xArr)
 
   dataPtr = c_loc(xArr%mData)
-  sizePtr = 14674*product(xArr%mShape(:xArr%Rank() - 1))
+  sizePtr = mesh%NumCells*product(xArr%mShape(:xArr%Rank() - 1))
 
 end subroutine stormArrayUnwrap
 

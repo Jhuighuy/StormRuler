@@ -31,17 +31,20 @@
 #include <stdexcept>
 
 #include <stormBase.hxx>
+#include <stormSolvers/Matrix.hxx>
 #include <stormSolvers/Vector.hxx>
 #include <stormUtils/Object.hxx>
 
 namespace Storm {
 
-class stormArray {
+class stormArray : public BaseMatrix<stormArray> {
 public:
 
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
   std::shared_ptr<int> RefCounter;
+  real_t* MyData = nullptr;
+  size_t MySize = 0;
 
 public:
 
@@ -49,16 +52,19 @@ public:
 
   stormArray(stormMesh_t mesh, stormArray_t array) : Mesh(mesh), Array(array) {
     RefCounter = std::make_shared<int>(2);
+    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
   stormArray(stormArray&& oth) : Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
+    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
   stormArray(stormArray const& oth) : Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
+    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
   ~stormArray() {
@@ -79,9 +85,23 @@ public:
     return *this;
   }
 
+  auto shape() const noexcept {
+    return std::pair(MySize, std::integral_constant<size_t, 1>{});
+  }
+
+  auto operator()(size_t i, size_t j) const noexcept {
+    StormAssert(j == 0);
+    return MyData[i];
+  }
+  auto& operator()(size_t i, size_t j) noexcept {
+    StormAssert(j == 0);
+    return MyData[i];
+  }
+
   void Assign(stormArray const& like, bool copy = true) {
     Mesh = like.Mesh;
     Array = stormAllocLike(like.Array);
+    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
     if (copy) stormSet(Mesh, Array, like.Array);
   }
 };

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <cmath>
+#include <utility>
 
 #include <stormBase.hxx>
 #include <stormSolvers/LegacyTensor.hxx>
@@ -99,7 +100,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
     Blas::Swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
-  Blas::Set(rTildeVec_, rVec_);
+  rTildeVec_ <<= rVec_;
   rho_ = Blas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
@@ -123,19 +124,16 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝜌̅ ← 𝜌,
   //   𝜌 ← <𝒓̃⋅𝒓>,
   //   𝛽 ← (𝜌/𝜌̅)⋅(𝛼/𝜔),
-  //   𝒑 ← 𝒑 - 𝜔⋅𝒗,
-  //   𝒑 ← 𝒓 + 𝛽⋅𝒑.
+  //   𝒑 ← 𝒓 + 𝛽⋅(𝒑 - 𝜔⋅𝒗).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
-    Blas::Set(pVec_, rVec_);
+    pVec_ <<= rVec_;
   } else {
-    real_t const rhoBar{rho_};
-    rho_ = Blas::Dot(rTildeVec_, rVec_);
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, rVec_))};
     real_t const beta{Utils::SafeDivide(alpha_ * rho_, omega_ * rhoBar)};
-    Blas::SubAssign(pVec_, vVec_, omega_);
-    Blas::Add(pVec_, rVec_, pVec_, beta);
+    pVec_ <<= rVec_ + beta * (pVec_ - omega_ * vVec_);
   }
 
   // Update the solution and the residual:
@@ -159,8 +157,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
     linOp.MatVec(vVec_, pVec_);
   }
   alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_));
-  Blas::AddAssign(xVec, rightPre ? zVec_ : pVec_, alpha_);
-  Blas::SubAssign(rVec_, vVec_, alpha_);
+  xVec += alpha_ * (rightPre ? zVec_ : pVec_);
+  rVec_ -= alpha_ * vVec_;
 
   // Update the solution and the residual again:
   // ----------------------
@@ -183,8 +181,8 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
     linOp.MatVec(tVec_, rVec_);
   }
   omega_ = Utils::SafeDivide(Blas::Dot(tVec_, rVec_), Blas::Dot(tVec_, tVec_));
-  Blas::AddAssign(xVec, rightPre ? zVec_ : rVec_, omega_);
-  Blas::SubAssign(rVec_, tVec_, omega_);
+  xVec += omega_ * (rightPre ? zVec_ : rVec_);
+  rVec_ -= omega_ * tVec_;
 
   return Blas::Norm2(rVec_);
 

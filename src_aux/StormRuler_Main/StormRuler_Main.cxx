@@ -44,6 +44,7 @@
 #include <StormRuler_API.h>
 #include <stormSolvers/LegacyTensor.hxx>
 #include <stormSolvers/Mat.hxx>
+#include <stormSolvers/MatrixStatic.hxx>
 #include <stormSolvers/PreconditionerFactory.hxx>
 #include <stormSolvers/SolverFactory.hxx>
 
@@ -93,7 +94,7 @@ void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
 
 } // stormNonLinSolve2
 
-static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0, Sigma = 10.0;
+static double tau = 1.0e-2, Gamma = 16.0e-4, sigma = 1.0, Sigma = 10.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -111,7 +112,7 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
   stormApplyBCs(mesh, p, 4,
-                SR_DIRICHLET(0.75 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
+                SR_DIRICHLET(1.0 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
                              (2.0 * 0.01 * 26)));
 } // SetBCs_p
 
@@ -212,7 +213,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, stormArray_t c, stormArray_t v,
 #if YURI
       Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #else
-      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #endif
       c_hat, c,
       [&](stormMesh_t mesh, stormArray_t c_out, stormArray_t c_in) {
@@ -482,28 +483,6 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
-#if 0
-  {
-    using namespace Storm;
-    Mat<real_t, 5, 5> mat{
-        10, 2, 3, 4, 5, //
-        6, 10, 8, 2, 1, //
-        2, 3, 10, 5, 6, //
-        7, 8, 9, 10, 2, //
-        0, 4, 5, 1, 10, //
-    };
-    auto lu = decompose_lu(mat, 3);
-    auto inv = inverse_lu(mat, 3);
-    std::cout << mat << std::endl << std::endl;
-    std::cout << lu.first << std::endl << std::endl;
-    std::cout << lu.second << std::endl << std::endl;
-    std::cout << inv << std::endl << std::endl;
-    std::cout << matmul(mat, inv) << std::endl << std::endl;
-    std::cout << matmul(inv, mat) << std::endl << std::endl;
-  }
-  return 0;
-#endif
-
 #if YURI
   phi_set.Assign(101);
   ReadTensor(phi_set, "phi.csv");

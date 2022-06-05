@@ -88,10 +88,10 @@ real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   linOp.Residual(rVec_, bVec, xVec);
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
-    Blas::Set(pVec_, zVec_);
+    pVec_ <<= zVec_;
     gamma_ = Blas::Dot(rVec_, zVec_);
   } else {
-    Blas::Set(pVec_, rVec_);
+    pVec_ <<= rVec_;
     gamma_ = Blas::Dot(rVec_, rVec_);
   }
 
@@ -106,18 +106,17 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // Iterate:
   // ----------------------
   // 𝒛 ← 𝓐𝒑,
-  // 𝛾̅ ← 𝛾,
   // 𝛼 ← 𝛾/<𝒑⋅𝒛>,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   linOp.MatVec(zVec_, pVec_);
-  real_t const gammaBar{gamma_};
   real_t const alpha{Utils::SafeDivide(gamma_, Blas::Dot(pVec_, zVec_))};
-  Blas::AddAssign(xVec, pVec_, alpha);
-  Blas::SubAssign(rVec_, zVec_, alpha);
+  xVec += alpha * pVec_;
+  rVec_ -= alpha * zVec_;
 
   // ----------------------
+  // 𝛾̅ ← 𝛾,
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒛 ← 𝓟𝒓,
   //   𝛾 ← <𝒓⋅𝒛>,
@@ -125,6 +124,7 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
+  real_t const gammaBar{gamma_};
   if (preOp != nullptr) {
     preOp->MatVec(zVec_, rVec_);
     gamma_ = Blas::Dot(rVec_, zVec_);
@@ -137,7 +137,7 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
-  Blas::Add(pVec_, preOp != nullptr ? zVec_ : rVec_, pVec_, beta);
+  pVec_ <<= (preOp != nullptr ? zVec_ : rVec_) + beta * pVec_;
 
   return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
 

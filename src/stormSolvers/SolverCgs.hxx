@@ -26,6 +26,7 @@
 #pragma once
 
 #include <cmath>
+#include <utility>
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
@@ -92,10 +93,10 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    Blas::Swap(uVec_, rVec_);
+    std::swap(uVec_, rVec_);
     preOp->MatVec(rVec_, uVec_);
   }
-  Blas::Set(rTildeVec_, rVec_);
+  rTildeVec_ <<= rVec_;
   rho_ = Blas::Dot(rTildeVec_, rVec_);
 
   return std::sqrt(rho_);
@@ -121,21 +122,18 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝜌 ← <𝒓̃⋅𝒓>,
   //   𝛽 ← 𝜌/𝜌̅,
   //   𝒖 ← 𝒓 + 𝛽⋅𝒒,
-  //   𝒑 ← 𝒒 + 𝛽⋅𝒑,
-  //   𝒑 ← 𝒖 + 𝛽⋅𝒑.
+  //   𝒑 ← 𝒖 + 𝛽⋅(𝒒 + 𝛽⋅𝒑).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
-    Blas::Set(uVec_, rVec_);
-    Blas::Set(pVec_, uVec_);
+    uVec_ <<= rVec_;
+    pVec_ <<= uVec_;
   } else {
-    real_t const rhoBar{rho_};
-    rho_ = Blas::Dot(rTildeVec_, rVec_);
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, rVec_))};
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
-    Blas::Add(uVec_, rVec_, qVec_, beta);
-    Blas::Add(pVec_, qVec_, pVec_, beta);
-    Blas::Add(pVec_, uVec_, pVec_, beta);
+    uVec_ <<= rVec_ + beta * qVec_;
+    pVec_ <<= uVec_ + beta * (qVec_ + beta * pVec_);
   }
 
   // ----------------------
@@ -158,8 +156,8 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
     linOp.MatVec(vVec_, pVec_);
   }
   real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_))};
-  Blas::Sub(qVec_, uVec_, vVec_, alpha);
-  Blas::Add(vVec_, uVec_, qVec_);
+  qVec_ <<= uVec_ - alpha * vVec_;
+  vVec_ <<= uVec_ + qVec_;
 
   // Update the solution and the residual:
   // ----------------------
@@ -178,17 +176,17 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    Blas::AddAssign(xVec, vVec_, alpha);
+    xVec += alpha * vVec_;
     preOp->MatVec(vVec_, uVec_, linOp, vVec_);
-    Blas::SubAssign(rVec_, vVec_, alpha);
+    rVec_ -= alpha * vVec_;
   } else if (rightPre) {
     linOp.MatVec(vVec_, uVec_, *preOp, vVec_);
-    Blas::AddAssign(xVec, uVec_, alpha);
-    Blas::SubAssign(rVec_, vVec_, alpha);
+    xVec += alpha * uVec_;
+    rVec_ -= alpha * vVec_;
   } else {
     linOp.MatVec(uVec_, vVec_);
-    Blas::AddAssign(xVec, vVec_, alpha);
-    Blas::SubAssign(rVec_, uVec_, alpha);
+    xVec += alpha * vVec_;
+    rVec_ -= alpha * uVec_;
   }
 
   return Blas::Norm2(rVec_);

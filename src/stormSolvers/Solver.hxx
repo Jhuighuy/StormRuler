@@ -273,12 +273,12 @@ bool SolveNonUniform(Solver<Vector>& solver, Vector& xVec, Vector const& bVec,
   // 𝓐(𝒙) - 𝓐(𝟢) = 𝒃 - 𝓐(𝟢).
   Blas::Fill(fVec, 0.0);
   anyOp.MatVec(zVec, fVec);
-  Blas::Sub(fVec, bVec, zVec);
+  fVec <<= bVec - zVec;
 
   auto const uniOp =
       MakeOperator<Vector>([&](Vector& yVec, Vector const& xVec) {
         anyOp.MatVec(yVec, xVec);
-        Blas::SubAssign(yVec, zVec);
+        yVec -= zVec;
       });
 
   return solver.Solve(xVec, fVec, *uniOp);

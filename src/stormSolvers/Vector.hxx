@@ -57,9 +57,6 @@ public:
   /// @brief Compute @p xVec *= @p a.
   static void ScaleAssign(Vector& xVec, auto a);
 
-  /// @brief Compute @p xVec += @p a * @p yVec.
-  static void AddAssign(Vector& xVec, Vector const& yVec, auto a);
-
 }; // class VectorOperations
 
 /// @brief A type of a dot product of the two vectors.
@@ -87,22 +84,14 @@ concept VectorLike =
   requires(Vector const& xVec) {
     { VectorOperations<Vector>::Norm2(xVec) } -> std::convertible_to<real_t>;
   } &&
-  /// @pre Require the swap and set operations. 
-  requires(Vector& xVec, Vector& yVec) {
-    VectorOperations<Vector>::Swap(xVec, yVec);
-  } &&
-  requires(Vector& xVec, Vector const& yVec) {
-    VectorOperations<Vector>::Set(xVec, yVec);
-  } &&
   /// @pre Require the fill and random fill operations. 
   requires(Vector& xVec, DotType<Vector> a) {
     VectorOperations<Vector>::Fill(xVec, a);
     VectorOperations<Vector>::RandFill(xVec);
   } &&
-  /// @pre Require the scale and addition operations. 
+  /// @pre Require the addition operation. 
   requires(Vector& xVec, Vector const& yVec, DotType<Vector> a) {
     VectorOperations<Vector>::ScaleAssign(xVec, a);
-    VectorOperations<Vector>::AddAssign(xVec, yVec, a);
   };
 
 // clang-format on
@@ -119,18 +108,6 @@ auto Dot(Vector const& xVec, Vector const& yVec) {
 template<VectorLike Vector>
 real_t Norm2(Vector const& xVec) {
   return VectorOperations<Vector>::Norm2(xVec);
-}
-
-/// @brief Swap @p xVec and @p yVec.
-template<VectorLike Vector>
-void Swap(Vector& xVec, Vector& yVec) {
-  VectorOperations<Vector>::Swap(xVec, yVec);
-}
-
-/// @brief Compute @p xVec = @p yVec.
-template<VectorLike Vector>
-void Set(Vector& xVec, Vector const& yVec) {
-  VectorOperations<Vector>::Set(xVec, yVec);
 }
 
 /// @brief Randomly fill the @p xVec with value @p a.
@@ -155,52 +132,6 @@ void ScaleAssign(Vector& xVec, auto a) {
 template<VectorLike Vector>
 void Scale(Vector& xVec, Vector const& yVec, auto a) {
   VectorOperations<Vector>::Scale(xVec, yVec, a);
-}
-
-/// @brief Compute @p xVec += @p a * @p yVec.
-template<VectorLike Vector>
-void AddAssign(Vector& xVec, Vector const& yVec, auto a) {
-  VectorOperations<Vector>::AddAssign(xVec, yVec, a);
-}
-
-template<VectorLike Vector>
-void AddAssign(Vector& xVec, Vector const& yVec) {
-  VectorOperations<Vector>::AddAssign(xVec, yVec);
-}
-
-template<VectorLike Vector>
-void Add(Vector& xVec, Vector const& yVec, Vector const& zVec) {
-  VectorOperations<Vector>::Add(xVec, yVec, zVec);
-}
-template<VectorLike Vector>
-void Add(Vector& xVec, Vector const& yVec, Vector const& zVec, auto b) {
-  VectorOperations<Vector>::Add(xVec, yVec, zVec, b);
-}
-template<VectorLike Vector>
-void Add(Vector& xVec, Vector const& yVec, auto a, Vector const& zVec, auto b) {
-  VectorOperations<Vector>::Add(xVec, yVec, a, zVec, b);
-}
-
-template<VectorLike Vector>
-void SubAssign(Vector& xVec, Vector const& yVec, auto a) {
-  VectorOperations<Vector>::SubAssign(xVec, yVec, a);
-}
-template<VectorLike Vector>
-void SubAssign(Vector& xVec, Vector const& yVec) {
-  VectorOperations<Vector>::SubAssign(xVec, yVec);
-}
-
-template<VectorLike Vector>
-void Sub(Vector& xVec, Vector const& yVec, Vector const& zVec) {
-  VectorOperations<Vector>::Sub(xVec, yVec, zVec);
-}
-template<VectorLike Vector>
-void Sub(Vector& xVec, Vector const& yVec, Vector const& zVec, auto b) {
-  VectorOperations<Vector>::Sub(xVec, yVec, zVec, b);
-}
-template<VectorLike Vector>
-void Sub(Vector& xVec, Vector const& yVec, auto a, Vector const& zVec, auto b) {
-  VectorOperations<Vector>::Sub(xVec, yVec, a, zVec, b);
 }
 
 } // namespace Blas

@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <utility>
+
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Vector.hxx>
@@ -76,7 +78,7 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (preOp != nullptr) {
-    Blas::Swap(zVec_, rVec_);
+    std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 
@@ -99,10 +101,10 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  Blas::AddAssign(xVec, rVec_, omega);
+  xVec += omega * rVec_;
   linOp.Residual(rVec_, bVec, xVec);
   if (preOp != nullptr) {
-    Blas::Swap(zVec_, rVec_);
+    std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
 

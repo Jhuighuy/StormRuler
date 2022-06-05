@@ -92,12 +92,12 @@ private:
 
   void MatVec(Vector& yVec, Vector const& xVec) const override {
     std::clog << "IdentityPreconditioner::MatVec called" << std::endl;
-    Blas::Set(yVec, xVec);
+    yVec <<= xVec;
   }
 
   void ConjMatVec(Vector& xVec, Vector const& yVec) const override {
     std::clog << "IdentityPreconditioner::ConjMatVec called" << std::endl;
-    Blas::Set(xVec, yVec);
+    xVec <<= yVec;
   }
 
 }; // class IdentityPreconditioner

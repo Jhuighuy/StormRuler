@@ -144,7 +144,7 @@ real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   anyOp.MatVec(wVec_, xVec);
-  Blas::Sub(rVec_, bVec, wVec_);
+  rVec_ <<= bVec - wVec_;
 
   return Blas::Norm2(rVec_);
 
@@ -163,7 +163,7 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   static real_t const sqrtOfEpsilon{
       std::sqrt(std::numeric_limits<real_t>::epsilon())};
   real_t const mu{sqrtOfEpsilon * std::sqrt(1.0 + Blas::Norm2(xVec))};
-  Blas::Set(tVec_, rVec_);
+  tVec_ <<= rVec_;
   {
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
@@ -177,10 +177,10 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
       // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
       // ----------------------
       real_t const delta{Utils::SafeDivide(mu, Blas::Norm2(yVec))};
-      Blas::Add(sVec_, xVec, yVec, delta);
+      sVec_ <<= xVec + delta * yVec;
       anyOp.MatVec(zVec, sVec_);
       real_t const deltaInverse{Utils::SafeDivide(1.0, delta)};
-      Blas::Sub(zVec, zVec, deltaInverse, wVec_, deltaInverse);
+      zVec <<= deltaInverse * (zVec - wVec_);
     });
     solver->Solve(tVec_, rVec_, *op);
   }
@@ -191,9 +191,9 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  Blas::AddAssign(xVec, tVec_);
+  xVec += tVec_;
   anyOp.MatVec(wVec_, xVec);
-  Blas::Sub(rVec_, bVec, wVec_);
+  rVec_ <<= bVec - wVec_;
 
   return Blas::Norm2(rVec_);
 

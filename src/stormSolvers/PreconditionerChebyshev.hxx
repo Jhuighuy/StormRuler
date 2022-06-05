@@ -104,7 +104,7 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // ----------------------
   real_t alpha{2.0 / theta_};
   Blas::Scale(pVec_, xVec, 1.0 / theta_);
-  Blas::Set(yVec, pVec_);
+  yVec <<= pVec_;
 
   for (size_t k = 0; k < Degree; ++k) {
     // Compute the residual and update the solution:
@@ -118,8 +118,8 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     alpha = 1.0 / (theta_ - 0.25 * alpha * std::pow(delta_, 2));
     real_t const beta = alpha * theta_ - 1.0;
     LinOp_->Residual(rVec_, xVec, yVec);
-    Blas::Add(pVec_, rVec_, alpha, pVec_, beta);
-    Blas::AddAssign(yVec, pVec_);
+    pVec_ <<= alpha * rVec_ + beta * pVec_;
+    yVec += pVec_;
   }
 
 } // ChebyshevPreconditioner::MatVec

@@ -110,19 +110,11 @@ template<>
 class VectorOperations<stormArray> {
 public:
 
-  static void Swap(auto& x, auto& y) {
-    std::swap(x, y);
-  }
-
   static real_t Dot(stormArray const& z, stormArray const& y) {
     return stormDot(z.Mesh, z.Array, y.Array);
   }
   static real_t Norm2(stormArray const& z) {
     return stormNorm2(z.Mesh, z.Array);
-  }
-
-  static void Set(stormArray& z, stormArray const& y) {
-    stormSet(z.Mesh, z.Array, y.Array);
   }
 
   static void Fill(stormArray& z, real_t a) {
@@ -135,48 +127,10 @@ public:
   static void Scale(stormArray& z, stormArray const& y, real_t a) {
     stormScale(z.Mesh, z.Array, y.Array, a);
   }
-
   static void ScaleAssign(stormArray& z, real_t a) {
     Scale(z, z, a);
   }
 
-  static void Add(stormArray& z, stormArray const& y, stormArray const& x) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array);
-  }
-  static void Add(stormArray& z, stormArray const& y, stormArray const& x,
-                  real_t a) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a);
-  }
-  static void Add(stormArray& z, stormArray const& y, real_t b,
-                  stormArray const& x, real_t a) {
-    stormAdd(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-
-  static void AddAssign(stormArray& z, stormArray const& y) {
-    Add(z, z, y);
-  }
-  static void AddAssign(stormArray& z, stormArray const& y, real_t a) {
-    Add(z, z, y, a);
-  }
-
-  static void Sub(stormArray& z, stormArray const& y, stormArray const& x) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array);
-  }
-  static void Sub(stormArray& z, stormArray const& y, stormArray const& x,
-                  real_t a) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a);
-  }
-  static void Sub(stormArray& z, stormArray const& y, real_t b,
-                  stormArray const& x, real_t a) {
-    stormSub(z.Mesh, z.Array, y.Array, x.Array, a, b);
-  }
-
-  static void SubAssign(stormArray& z, stormArray const& y) {
-    Sub(z, z, y);
-  }
-  static void SubAssign(stormArray& z, stormArray const& y, real_t a) {
-    Sub(z, z, y, a);
-  }
 }; // class BlasOp<stormArray>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -214,7 +168,7 @@ public:
   void Residual(OutVector& rVec, OutVector const& bVec,
                 InVector const& xVec) const {
     MatVec(rVec, xVec);
-    Blas::Sub(rVec, bVec, rVec);
+    rVec <<= bVec - rVec;
   }
 
   /// @brief Compute a residual norm, ‖𝒃 - 𝓐𝒙‖.

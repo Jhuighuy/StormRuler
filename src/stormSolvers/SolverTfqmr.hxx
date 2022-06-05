@@ -26,6 +26,7 @@
 #pragma once
 
 #include <cmath>
+#include <utility>
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
@@ -142,17 +143,17 @@ real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    Blas::Set(dVec_, xVec);
+    dVec_ <<= xVec;
   } else {
     Blas::Fill(dVec_, 0.0);
   }
   linOp.Residual(yVec_, bVec, xVec);
   if (leftPre) {
-    Blas::Swap(zVec_, yVec_);
+    std::swap(zVec_, yVec_);
     preOp->MatVec(yVec_, zVec_);
   }
-  Blas::Set(uVec_, yVec_);
-  Blas::Set(rTildeVec_, uVec_);
+  uVec_ <<= yVec_;
+  rTildeVec_ <<= uVec_;
   rho_ = Blas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
 
   return tau_;
@@ -205,13 +206,12 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    Blas::Set(vVec_, sVec_);
+    vVec_ <<= sVec_;
   } else {
-    real_t const rhoBar{rho_};
-    rho_ = Blas::Dot(rTildeVec_, uVec_);
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, uVec_))};
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
-    Blas::Add(vVec_, sVec_, vVec_, beta);
-    Blas::Add(yVec_, uVec_, yVec_, beta);
+    vVec_ <<= sVec_ + beta * vVec_;
+    yVec_ <<= uVec_ + beta * yVec_;
     if (leftPre) {
       preOp->MatVec(sVec_, zVec_, linOp, yVec_);
     } else if (rightPre) {
@@ -219,7 +219,7 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
     } else {
       linOp.MatVec(sVec_, yVec_);
     }
-    Blas::Add(vVec_, sVec_, vVec_, beta);
+    vVec_ <<= sVec_ + beta * vVec_;
   }
 
   // Update the solution:
@@ -253,19 +253,19 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_))};
   for (size_t m{0}; m <= 1; ++m) {
-    Blas::SubAssign(uVec_, sVec_, alpha);
-    Blas::AddAssign(dVec_, rightPre ? zVec_ : yVec_, alpha);
+    uVec_ -= alpha * sVec_;
+    dVec_ += alpha * (rightPre ? zVec_ : yVec_);
     real_t const omega{Blas::Norm2(uVec_)};
     if constexpr (L1) {
-      if (omega < tau_) { tau_ = omega, Blas::Set(xVec, dVec_); }
+      if (omega < tau_) { tau_ = omega, xVec <<= dVec_; }
     } else {
       auto const [cs, sn, rr] = Utils::SymOrtho(tau_, omega);
       tau_ = omega * cs;
-      Blas::AddAssign(xVec, dVec_, std::pow(cs, 2));
+      xVec += std::pow(cs, 2) * dVec_;
       Blas::ScaleAssign(dVec_, std::pow(sn, 2));
     }
     if (m == 0) {
-      Blas::SubAssign(yVec_, vVec_, alpha);
+      yVec_ -= alpha * vVec_;
       if (leftPre) {
         preOp->MatVec(sVec_, zVec_, linOp, yVec_);
       } else if (rightPre) {

@@ -97,7 +97,7 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // ----------------------
   linOp.Residual(rVec_, bVec, xVec);
   if (leftPre) {
-    Blas::Swap(zVec_, rVec_);
+    std::swap(zVec_, rVec_);
     preOp->MatVec(rVec_, zVec_);
   }
   rTildeVec_ <<= rVec_;
@@ -262,10 +262,10 @@ real_t BiCgStabLSolver<Vector>::OuterInit(Vector const& xVec,
   Blas::Fill(uVecs_(0), 0.0);
   linOp.Residual(rVecs_(0), bVec, xVec);
   if (preOp != nullptr) {
-    Blas::Swap(zVec_, rVecs_(0));
+    std::swap(zVec_, rVecs_(0));
     preOp->MatVec(rVecs_(0), zVec_);
   }
-  Blas::Set(rTildeVec_, rVecs_(0));
+  rTildeVec_ <<= rVecs_(0);
   rho_ = Blas::Dot(rTildeVec_, rVecs_(0));
 
   return std::sqrt(rho_);
@@ -304,13 +304,12 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
-    Blas::Set(uVecs_(0), rVecs_(0));
+    uVecs_(0) <<= rVecs_(0);
   } else {
-    real_t const rhoBar{rho_};
-    rho_ = Blas::Dot(rTildeVec_, rVecs_(j));
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, rVecs_(j)))};
     real_t const beta{Utils::SafeDivide(alpha_ * rho_, rhoBar)};
     for (size_t i{0}; i <= j; ++i) {
-      Blas::Sub(uVecs_(i), rVecs_(i), uVecs_(i), beta);
+      uVecs_(i) <<= rVecs_(i) - beta * uVecs_(i);
     }
   }
   if (preOp != nullptr) {
@@ -320,7 +319,7 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   }
   alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, uVecs_(j + 1)));
   for (size_t i{0}; i <= j; ++i) {
-    Blas::SubAssign(rVecs_(i), uVecs_(i + 1), alpha_);
+    rVecs_(i) -= alpha_ * uVecs_(i + 1);
   }
 
   // Update the solution and the residual:
@@ -332,7 +331,7 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   //   𝒓ⱼ₊₁ ← 𝓐𝒓ⱼ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  Blas::AddAssign(xVec, uVecs_(0), alpha_);
+  xVec += alpha_ * uVecs_(0);
   if (preOp != nullptr) {
     preOp->MatVec(rVecs_(j + 1), zVec_, linOp, rVecs_(j));
   } else {
@@ -355,7 +354,7 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
       for (size_t i{1}; i < j; ++i) {
         tau_(i, j) =
             Utils::SafeDivide(Blas::Dot(rVecs_(i), rVecs_(j)), sigma_(i));
-        Blas::SubAssign(rVecs_(j), rVecs_(i), tau_(i, j));
+        rVecs_(j) -= tau_(i, j) * rVecs_(i);
       }
       sigma_(j) = Blas::Dot(rVecs_(j), rVecs_(j));
       gammaBar_(j) =
@@ -402,13 +401,13 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     //   𝒖₀ ← 𝒖₀ - 𝛾ⱼ⋅𝒖ⱼ.
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    Blas::AddAssign(xVec, rVecs_(0), gamma_(1));
-    Blas::SubAssign(rVecs_(0), rVecs_(l), gammaBar_(l));
-    Blas::SubAssign(uVecs_(0), uVecs_(l), gamma_(l));
+    xVec += gamma_(1) * rVecs_(0);
+    rVecs_(0) -= gammaBar_(l) * rVecs_(l);
+    uVecs_(0) -= gamma_(l) * uVecs_(l);
     for (size_t j{1}; j < l; ++j) {
-      Blas::AddAssign(xVec, rVecs_(j), gammaBarBar_(j));
-      Blas::SubAssign(rVecs_(0), rVecs_(j), gammaBar_(j));
-      Blas::SubAssign(uVecs_(0), uVecs_(j), gamma_(j));
+      xVec += gammaBarBar_(j) * rVecs_(j);
+      rVecs_(0) -= gammaBar_(j) * rVecs_(j);
+      uVecs_(0) -= gamma_(j) * uVecs_(j);
     }
   }
 

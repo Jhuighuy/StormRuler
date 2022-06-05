@@ -162,7 +162,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::OuterInit(
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    Blas::Swap(zVecs_(0), qVecs_(0));
+    std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = Blas::Norm2(qVecs_(0));
@@ -192,7 +192,7 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::InnerInit(
   // ----------------------
   linOp.Residual(qVecs_(0), bVec, xVec);
   if (leftPre) {
-    Blas::Swap(zVecs_(0), qVecs_(0));
+    std::swap(zVecs_(0), qVecs_(0));
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = Blas::Norm2(qVecs_(0));
@@ -241,7 +241,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::InnerIterate(
   }
   for (size_t i{0}; i <= k; ++i) {
     H_(i, k) = Blas::Dot(qVecs_(k + 1), qVecs_(i));
-    Blas::SubAssign(qVecs_(k + 1), qVecs_(i), H_(i, k));
+    qVecs_(k + 1) -= H_(i, k) * qVecs_(i);
   }
   H_(k + 1, k) = Blas::Norm2(qVecs_(k + 1));
   Blas::ScaleAssign(qVecs_(k + 1), 1.0 / H_(k + 1, k));
@@ -320,19 +320,19 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::InnerFinalize(
   // ----------------------
   if (!rightPre) {
     for (size_t i{0}; i <= k; ++i) {
-      Blas::AddAssign(xVec, qVecs_(i), beta_(i));
+      xVec += beta_(i) * qVecs_(i);
     }
   } else if constexpr (Flexible) {
     for (size_t i{0}; i <= k; ++i) {
-      Blas::AddAssign(xVec, zVecs_(i), beta_(i));
+      xVec += beta_(i) * zVecs_(i);
     }
   } else {
     Blas::ScaleAssign(qVecs_(0), beta_(0));
     for (size_t i{1}; i <= k; ++i) {
-      Blas::AddAssign(qVecs_(0), qVecs_(i), beta_(i));
+      qVecs_(0) += beta_(i) * qVecs_(i);
     }
     preOp->MatVec(zVecs_(0), qVecs_(0));
-    Blas::AddAssign(xVec, zVecs_(0));
+    xVec += zVecs_(0);
   }
 
 } // BaseGmresSolver_::InnerFinalize

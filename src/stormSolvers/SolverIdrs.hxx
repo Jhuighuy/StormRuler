@@ -151,7 +151,7 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    Blas::Scale(pVecs_(0), rVec_, 1.0 / phi_(0));
+    pVecs_(0) <<= rVec_ / phi_(0);
     for (size_t i{1}; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
       Blas::RandFill(pVecs_(i));
@@ -159,7 +159,7 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
         mu_(i, j) = 0.0;
         pVecs_(i) -= Blas::Dot(pVecs_(i), pVecs_(j)) * pVecs_(j);
       }
-      Blas::ScaleAssign(pVecs_(i), 1.0 / Blas::Norm2(pVecs_(i)));
+      pVecs_(i) /= Blas::Norm2(pVecs_(i));
     }
   } else {
     for (size_t i{0}; i < s; ++i) {

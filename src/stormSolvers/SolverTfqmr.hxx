@@ -262,7 +262,7 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
       auto const [cs, sn, rr] = Utils::SymOrtho(tau_, omega);
       tau_ = omega * cs;
       xVec += std::pow(cs, 2) * dVec_;
-      Blas::ScaleAssign(dVec_, std::pow(sn, 2));
+      dVec_ *= std::pow(sn, 2);
     }
     if (m == 0) {
       yVec_ -= alpha * vVec_;

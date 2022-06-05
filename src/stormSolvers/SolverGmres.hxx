@@ -166,7 +166,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::OuterInit(
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = Blas::Norm2(qVecs_(0));
-  Blas::ScaleAssign(qVecs_(0), 1.0 / beta_(0));
+  qVecs_(0) /= beta_(0);
 
   return beta_(0);
 
@@ -196,7 +196,7 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::InnerInit(
     preOp->MatVec(qVecs_(0), zVecs_(0));
   }
   beta_(0) = Blas::Norm2(qVecs_(0));
-  Blas::ScaleAssign(qVecs_(0), 1.0 / beta_(0));
+  qVecs_(0) /= beta_(0);
 
 } // BaseGmresSolver_::InnerInit
 
@@ -244,7 +244,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::InnerIterate(
     qVecs_(k + 1) -= H_(i, k) * qVecs_(i);
   }
   H_(k + 1, k) = Blas::Norm2(qVecs_(k + 1));
-  Blas::ScaleAssign(qVecs_(k + 1), 1.0 / H_(k + 1, k));
+  qVecs_(k + 1) /= H_(k + 1, k);
 
   // Eliminate the last element in 𝐻
   // and and update the rotation matrix:
@@ -327,7 +327,7 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::InnerFinalize(
       xVec += beta_(i) * zVecs_(i);
     }
   } else {
-    Blas::ScaleAssign(qVecs_(0), beta_(0));
+    qVecs_(0) *= beta_(0);
     for (size_t i{1}; i <= k; ++i) {
       qVecs_(0) += beta_(i) * qVecs_(i);
     }

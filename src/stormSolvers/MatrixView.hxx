@@ -137,6 +137,14 @@ constexpr auto operator*(V1 const& val1,
   });
 }
 
+template<class T1, class V2>
+constexpr auto operator/(BaseMatrixView<T1> const& mat1,
+                         V2 const& val2) noexcept {
+  return MatrixView(copy_shape_(mat1), [&](size_t rowIndex, size_t colIndex) {
+    return mat1(rowIndex, colIndex) / val2;
+  });
+}
+
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto operator*(BaseMatrixView<T1> const& mat1,

@@ -103,7 +103,7 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // 𝒚 ← 𝒑.
   // ----------------------
   real_t alpha{2.0 / theta_};
-  Blas::Scale(pVec_, xVec, 1.0 / theta_);
+  pVec_ <<= xVec / theta_;
   yVec <<= pVec_;
 
   for (size_t k = 0; k < Degree; ++k) {

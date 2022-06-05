@@ -88,10 +88,6 @@ concept VectorLike =
   requires(Vector& xVec, DotType<Vector> a) {
     VectorOperations<Vector>::Fill(xVec, a);
     VectorOperations<Vector>::RandFill(xVec);
-  } &&
-  /// @pre Require the addition operation. 
-  requires(Vector& xVec, Vector const& yVec, DotType<Vector> a) {
-    VectorOperations<Vector>::ScaleAssign(xVec, a);
   };
 
 // clang-format on
@@ -120,18 +116,6 @@ void Fill(Vector& xVec, auto a) {
 template<VectorLike Vector>
 void RandFill(Vector& xVec) {
   VectorOperations<Vector>::RandFill(xVec);
-}
-
-/// @brief Compute @p xVec *= @p a.
-template<VectorLike Vector>
-void ScaleAssign(Vector& xVec, auto a) {
-  VectorOperations<Vector>::ScaleAssign(xVec, a);
-}
-
-/// @brief Compute @p xVec = @p a * @p yVec.
-template<VectorLike Vector>
-void Scale(Vector& xVec, Vector const& yVec, auto a) {
-  VectorOperations<Vector>::Scale(xVec, yVec, a);
 }
 
 } // namespace Blas

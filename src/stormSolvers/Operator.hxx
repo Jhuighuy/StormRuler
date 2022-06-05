@@ -124,13 +124,6 @@ public:
     stormRandFill(z.Mesh, z.Array);
   }
 
-  static void Scale(stormArray& z, stormArray const& y, real_t a) {
-    stormScale(z.Mesh, z.Array, y.Array, a);
-  }
-  static void ScaleAssign(stormArray& z, real_t a) {
-    Scale(z, z, a);
-  }
-
 }; // class BlasOp<stormArray>
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

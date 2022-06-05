@@ -74,4 +74,13 @@ constexpr auto& operator-=(BaseMatrix<T1>& mat1,
   return mat1 <<= mat1 - mat2;
 }
 
+template<class T1, class V2>
+constexpr auto& operator*=(BaseMatrix<T1>& mat1, V2 const& val2) {
+  return mat1 <<= val2 * mat1;
+}
+template<class T1, class V2>
+constexpr auto& operator/=(BaseMatrix<T1>& mat1, V2 const& val2) {
+  return mat1 <<= mat1 / val2;
+}
+
 } // namespace Storm

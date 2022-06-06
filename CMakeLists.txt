@@ -197,9 +197,9 @@ else()
     if(OpenMP_Fortran_ENABLED)
       # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
       # Mixing different OpenMP runtimes is generally not a good idea.
-      if(CMAKE_Fortran_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
+      #if(CMAKE_Fortran_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
         set(OpenMP_CXX_ENABLED 1)
-      endif()
+      #endif()
       # NAG uses system C compiler as a backend,
       # which can should theoretically match used C compiler.
       if(CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")

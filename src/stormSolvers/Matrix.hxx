@@ -55,7 +55,8 @@ public:
 template<class T1, class T2>
 constexpr auto& operator<<=(BaseMatrix<T1>& mat1,
                             BaseMatrixView<T2> const& mat2) {
-  for (size_t rowIndex{0}; rowIndex < mat1.NumRows(); ++rowIndex) {
+#pragma omp parallel for
+  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
     for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
       mat1(rowIndex, colIndex) = mat2(rowIndex, colIndex);
     }

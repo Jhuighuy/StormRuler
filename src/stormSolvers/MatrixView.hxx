@@ -44,12 +44,12 @@ public:
   }
 
   /// @brief Number of rows.
-  constexpr size_t NumRows() const noexcept {
+  constexpr auto NumRows() const noexcept {
     return shape().first;
   }
 
   /// @brief Number of columns.
-  constexpr size_t NumCols() const noexcept {
+  constexpr auto NumCols() const noexcept {
     return shape().second;
   }
 

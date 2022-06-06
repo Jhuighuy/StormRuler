@@ -54,9 +54,6 @@ public:
   /// @brief Randomly fill the @p xVec.
   static void RandFill(Vector& xVec) = delete;
 
-  /// @brief Compute @p xVec *= @p a.
-  static void ScaleAssign(Vector& xVec, auto a);
-
 }; // class VectorOperations
 
 /// @brief A type of a dot product of the two vectors.

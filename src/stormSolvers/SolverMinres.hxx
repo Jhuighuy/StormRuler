@@ -127,11 +127,11 @@ real_t MinresSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
   // 𝜑 ← 𝛽, 𝛿 ← 𝟢, 𝜀 ← 𝟢,
   // 𝑐𝑠 ← -𝟣, 𝑠𝑛 ← 𝟢.
   // ----------------------
-  Blas::Fill(wBarVec, 0.0);
-  Blas::Fill(wBarBarVec, 0.0);
+  fill_with(wBarVec, 0.0);
+  fill_with(wBarBarVec, 0.0);
   lin_op.mul(zBarVec, x_vec);
   Blas::Sub(zBarVec, b_vec, zBarVec);
-  Blas::Fill(zBarBarVec, 0.0);
+  fill_with(zBarBarVec, 0.0);
   if (pre_op != nullptr) {
     pre_op->mul(q_vec, zBarVec);
   } else {

@@ -270,7 +270,7 @@ bool solve_non_uniform(Solver<Vector>& solver, Vector& x_vec,
 
   // Solve an equation with the "uniformed" operator:
   // 𝓐(𝒙) - 𝓐(𝟢) = 𝒃 - 𝓐(𝟢).
-  Blas::Fill(f_vec, 0.0);
+  fill_with(f_vec, 0.0);
   any_op.mul(z_vec, f_vec);
   f_vec <<= b_vec - z_vec;
 

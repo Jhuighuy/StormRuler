@@ -154,7 +154,7 @@ void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
     p_vecs_(0) <<= r_vec_ / phi_(0);
     for (size_t i{1}; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      Blas::RandFill(p_vecs_(i));
+      fill_randomly(p_vecs_(i));
       for (size_t j{0}; j < i; ++j) {
         mu_(i, j) = 0.0;
         p_vecs_(i) -= dot_product(p_vecs_(i), p_vecs_(j)) * p_vecs_(j);

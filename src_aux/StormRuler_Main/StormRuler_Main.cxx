@@ -213,7 +213,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, stormArray_t c, stormArray_t v,
 #if YURI
       Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #else
-      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #endif
       c_hat, c,
       [&](stormMesh_t mesh, stormArray_t c_out, stormArray_t c_in) {

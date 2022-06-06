@@ -145,7 +145,7 @@ BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
   if constexpr (L1) {
     d_vec_ <<= x_vec;
   } else {
-    Blas::Fill(d_vec_, 0.0);
+    fill_with(d_vec_, 0.0);
   }
   lin_op.Residual(y_vec_, b_vec, x_vec);
   if (left_pre) {

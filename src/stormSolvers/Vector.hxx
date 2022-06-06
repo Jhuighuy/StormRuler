@@ -29,33 +29,6 @@
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Set of the operations for given vector type.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Vector>
-class VectorOperations {
-public:
-
-  /// @brief Compute a dot product of @p x_vec and @p y_vec.
-  static auto Dot(Vector const& x_vec, Vector const& y_vec) = delete;
-
-  /// @brief Compute a norm of @p x_vec.
-  static auto Norm2(Vector const& x_vec) = delete;
-
-  /// @brief Swap @p x_vec and @p y_vec.
-  static void Swap(Vector& x_vec, Vector& y_vec) = delete;
-
-  /// @brief Compute @p x_vec = @p y_vec.
-  static void Set(Vector& x_vec, Vector const& y_vec) = delete;
-
-  /// @brief Randomly fill the @p x_vec with value @p a.
-  static void Fill(Vector& x_vec, auto a) = delete;
-
-  /// @brief Randomly fill the @p x_vec.
-  static void RandFill(Vector& x_vec) = delete;
-
-}; // class VectorOperations
-
 // clang-format off
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -68,30 +41,9 @@ concept VectorLike =
            bool copyContents) {
     { targetVec.assign(sourceVector) };
     { targetVec.assign(sourceVector, copyContents) };
-  } &&
-  /// @pre Require the fill and random fill operations. 
-  requires(Vector& x_vec, real_t a) {
-    VectorOperations<Vector>::Fill(x_vec, a);
-    VectorOperations<Vector>::RandFill(x_vec);
   };
 
 // clang-format on
-
-namespace Blas {
-
-/// @brief Randomly fill the @p x_vec with value @p a.
-template<VectorLike Vector>
-void Fill(Vector& x_vec, auto a) {
-  VectorOperations<Vector>::Fill(x_vec, a);
-}
-
-/// @brief Randomly fill the @p x_vec.
-template<VectorLike Vector>
-void RandFill(Vector& x_vec) {
-  VectorOperations<Vector>::RandFill(x_vec);
-}
-
-} // namespace Blas
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator-like concept.

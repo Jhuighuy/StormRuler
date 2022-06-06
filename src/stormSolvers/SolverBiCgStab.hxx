@@ -261,7 +261,7 @@ BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
   // 𝒓̃ ← 𝒓₀,
   // 𝜌 ← <𝒓̃⋅𝒓₀>.
   // ----------------------
-  Blas::Fill(u_vecs_(0), 0.0);
+  fill_with(u_vecs_(0), 0.0);
   lin_op.Residual(r_vecs_(0), b_vec, x_vec);
   if (pre_op != nullptr) {
     std::swap(z_vec_, r_vecs_(0));

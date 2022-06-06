@@ -106,19 +106,6 @@ public:
   }
 };
 
-template<>
-class VectorOperations<stormArray> {
-public:
-
-  static void Fill(stormArray& z, real_t a) {
-    stormFill(z.Mesh, z.Array, a);
-  }
-  static void RandFill(stormArray& z) {
-    stormRandFill(z.Mesh, z.Array);
-  }
-
-}; // class BlasOp<stormArray>
-
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///

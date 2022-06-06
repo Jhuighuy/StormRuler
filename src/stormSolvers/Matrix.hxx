@@ -94,6 +94,23 @@ constexpr auto& operator-=(BaseMatrix<T1>& mat1,
 }
 
 template<class T1, class V2>
+constexpr auto& fill_with(BaseMatrix<T1>& mat1, V2 const& val2) {
+#pragma omp parallel for
+  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
+    for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
+      mat1(rowIndex, colIndex) = val2;
+    }
+  }
+  return mat1;
+}
+
+template<class T1, class... V2>
+constexpr auto& fill_randomly(BaseMatrix<T1>& mat1, V2...) {
+  STORM_ENSURE_(!"Not implemented");
+  return mat1;
+}
+
+template<class T1, class V2>
 constexpr auto& operator*=(BaseMatrix<T1>& mat1, V2 const& val2) {
   return mat1 <<= val2 * mat1;
 }

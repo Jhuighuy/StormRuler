@@ -83,7 +83,7 @@ public:
 
   /// @brief Construct the matrix with the initializer list.
   constexpr Mat(std::initializer_list<Value> initializer) {
-    StormAssert(initializer.size() == SizeX * SizeY);
+    STORM_ASSERT_(initializer.size() == SizeX * SizeY);
     std::copy(initializer.begin(), initializer.end(), data());
   }
 
@@ -100,11 +100,11 @@ public:
   /// @brief Get reference to the component at the index.
   /// @{
   constexpr Value& operator()(size_t ix, size_t iy = 0) noexcept {
-    StormAssert(ix < SizeX && iy < SizeY);
+    STORM_ASSERT_(ix < SizeX && iy < SizeY);
     return (Coeffs_[ix])[iy];
   }
   constexpr Value const& operator()(size_t ix, size_t iy = 0) const noexcept {
-    StormAssert(ix < SizeX && iy < SizeY);
+    STORM_ASSERT_(ix < SizeX && iy < SizeY);
     return (Coeffs_[ix])[iy];
   }
   /// @}
@@ -296,7 +296,7 @@ constexpr auto operator/=(Mat<Value1, SizeX, SizeY>& mat,
 template<class Value1, class Value2, size_t SizeX, size_t SizeY>
 constexpr auto operator/(Mat<Value1, SizeX, SizeY> const& mat,
                          Value2 const& val) noexcept {
-  StormAssert(val != Value2{0});
+  STORM_ASSERT_(val != Value2{0});
   Mat<ResultType<Value1, Value2>, SizeX, SizeY> out;
   for (size_t ix{0}; ix < SizeX; ++ix) {
     for (size_t iy{0}; iy < SizeY; ++iy) {

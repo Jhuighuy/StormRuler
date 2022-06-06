@@ -42,7 +42,7 @@ class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
 private:
 
   real_t rho_, tau_;
-  Vector d_vec_, rTildeVec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
+  Vector d_vec_, r_tilde_vec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
 
   real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
@@ -119,7 +119,7 @@ BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
                       (this->pre_side == PreconditionerSide::Left)};
 
   d_vec_.assign(x_vec, false);
-  rTildeVec_.assign(x_vec, false);
+  r_tilde_vec_.assign(x_vec, false);
   u_vec_.assign(x_vec, false);
   v_vec_.assign(x_vec, false);
   y_vec_.assign(x_vec, false);
@@ -153,8 +153,8 @@ BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
     pre_op->mul(y_vec_, z_vec_);
   }
   u_vec_ <<= y_vec_;
-  rTildeVec_ <<= u_vec_;
-  rho_ = Blas::Dot(rTildeVec_, u_vec_), tau_ = std::sqrt(rho_);
+  r_tilde_vec_ <<= u_vec_;
+  rho_ = Blas::Dot(r_tilde_vec_, u_vec_), tau_ = std::sqrt(rho_);
 
   return tau_;
 
@@ -197,8 +197,8 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->iteration == 0};
-  if (firstIteration) {
+  bool const first_iteration{this->iteration == 0};
+  if (first_iteration) {
     if (left_pre) {
       pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
     } else if (right_pre) {
@@ -208,8 +208,8 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
     }
     v_vec_ <<= s_vec_;
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, u_vec_))};
-    real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
+    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, u_vec_))};
+    real_t const beta{utils::safe_div(rho_, rho_bar)};
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
     if (left_pre) {
@@ -251,7 +251,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
+  real_t const alpha{utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
     d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
@@ -259,7 +259,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {
-      auto const [cs, sn, rr] = Utils::SymOrtho(tau_, omega);
+      auto const [cs, sn, rr] = utils::sym_ortho(tau_, omega);
       tau_ = omega * cs;
       x_vec += std::pow(cs, 2) * d_vec_;
       d_vec_ *= std::pow(sn, 2);

@@ -55,7 +55,7 @@ class CgsSolver final : public IterativeSolver<Vector> {
 private:
 
   real_t rho_;
-  Vector p_vec_, q_vec_, r_vec_, rTildeVec_, u_vec_, v_vec_;
+  Vector p_vec_, q_vec_, r_vec_, r_tilde_vec_, u_vec_, v_vec_;
 
   real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
@@ -77,7 +77,7 @@ real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
   p_vec_.assign(x_vec, false);
   q_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
-  rTildeVec_.assign(x_vec, false);
+  r_tilde_vec_.assign(x_vec, false);
   u_vec_.assign(x_vec, false);
   v_vec_.assign(x_vec, false);
 
@@ -96,8 +96,8 @@ real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     std::swap(u_vec_, r_vec_);
     pre_op->mul(r_vec_, u_vec_);
   }
-  rTildeVec_ <<= r_vec_;
-  rho_ = Blas::Dot(rTildeVec_, r_vec_);
+  r_tilde_vec_ <<= r_vec_;
+  rho_ = Blas::Dot(r_tilde_vec_, r_vec_);
 
   return std::sqrt(rho_);
 
@@ -125,13 +125,13 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒖 + 𝛽⋅(𝒒 + 𝛽⋅𝒑).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->iteration == 0};
-  if (firstIteration) {
+  bool const first_iteration{this->iteration == 0};
+  if (first_iteration) {
     u_vec_ <<= r_vec_;
     p_vec_ <<= u_vec_;
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, r_vec_))};
-    real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
+    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vec_))};
+    real_t const beta{utils::safe_div(rho_, rho_bar)};
     u_vec_ <<= r_vec_ + beta * q_vec_;
     p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
@@ -155,7 +155,7 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
+  real_t const alpha{utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_))};
   q_vec_ <<= u_vec_ - alpha * v_vec_;
   v_vec_ <<= u_vec_ + q_vec_;
 

@@ -38,9 +38,9 @@
 #include <StormRuler_API.h>
 
 #ifdef _MSC_VER
-#define StormAssume(x) __assume(x)
+#define STORM_ASSUME_(x) __assume(x)
 #else
-#define StormAssume(x)                     \
+#define STORM_ASSUME_(x)                   \
   do {                                     \
     if (!(x)) { __builtin_unreachable(); } \
   } while (false)
@@ -51,7 +51,7 @@
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-#define StormEnsure(x)                                                 \
+#define STORM_ENSURE_(x)                                               \
   do {                                                                 \
     if (!(x)) {                                                        \
       std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", \
@@ -62,9 +62,9 @@
   } while (false)
 
 #ifdef NDEBUG
-#define StormAssert(x) StormAssume(x)
+#define STORM_ASSERT_(x) STORM_ASSUME_(x)
 #else
-#define StormAssert(x) StormEnsure(x)
+#define STORM_ASSERT_(x) STORM_ENSURE_(x)
 #endif
 
 namespace Storm {
@@ -96,26 +96,19 @@ template<class T>
 concept real_or_complex_floating_point =
     std::floating_point<T> || is_complex_floating_point_v<T>;
 
-namespace Utils {
+namespace utils {
 
 /// @brief If @p y is zero, return zero,
 ///   else return value of @p x divided by @p y.
 template<real_or_complex_floating_point Value>
-auto SafeDivide(Value x, Value y) {
+auto safe_div(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
 
-/// @brief If @p y is zero, assign to @p x and return zero,
-///   else assign to @p x and return value of @p x divided by @p y.
-auto& SafeDivideEquals(real_or_complex_floating_point auto& x,
-                       real_or_complex_floating_point auto y) {
-  return x = SafeDivide(x, y);
-}
-
 /// @brief Generate the Givens rotation.
 template<real_or_complex_floating_point Value>
-auto SymOrtho(Value a, Value b) {
+auto sym_ortho(Value a, Value b) {
   // Compute:
   // ----------------------
   // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
@@ -133,8 +126,8 @@ auto SymOrtho(Value a, Value b) {
 
   return std::tuple(cs, sn, rr);
 
-} // SymOrtho
+} // sym_ortho
 
-} // namespace Utils
+} // namespace utils
 
 } // namespace Storm

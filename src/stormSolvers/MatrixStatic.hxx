@@ -51,7 +51,7 @@ public:
 
   /// @brief Construct a matrix with an @p initList.
   constexpr StaticMatrix(std::initializer_list<Value> initList) noexcept {
-    StormAssert(initList.size() == size());
+    STORM_ASSERT_(initList.size() == size());
     std::ranges::copy(initList, data());
   }
 
@@ -90,7 +90,7 @@ public:
   /// @brief Reference to the coefficient at @p rowIndex and @p colIndex.
   /// @{
   constexpr Value& operator()(size_t rowIndex, size_t colIndex = 0) noexcept {
-    StormAssert(rowIndex < NumRows && colIndex < NumCols);
+    STORM_ASSERT_(rowIndex < NumRows && colIndex < NumCols);
     return (Coeffs_[rowIndex])[colIndex];
   }
   constexpr Value const& operator()(size_t rowIndex,

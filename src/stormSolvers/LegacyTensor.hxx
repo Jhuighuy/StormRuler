@@ -95,7 +95,7 @@ public:
   template<class... SizeTypes>
   requires((sizeof...(SizeTypes) + 1) == Rank()) constexpr size_t
   operator()(size_t frontIndex, SizeTypes... restIndices) const noexcept {
-    StormAssert(frontIndex < Extent_);
+    STORM_ASSERT_(frontIndex < Extent_);
     if constexpr (Rank() == 1) {
       return frontIndex;
     } else {

@@ -148,8 +148,8 @@ void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->iteration == 0};
-  if (firstIteration) {
+  bool const first_iteration{this->iteration == 0};
+  if (first_iteration) {
     omega_ = mu_(0, 0) = 1.0;
     p_vecs_(0) <<= r_vec_ / phi_(0);
     for (size_t i{1}; i < s; ++i) {
@@ -241,7 +241,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   for (size_t i{0}; i < k; ++i) {
     real_t const alpha{
-        Utils::SafeDivide(Blas::Dot(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
+        utils::safe_div(Blas::Dot(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
     u_vecs_(k) -= alpha * u_vecs_(i);
     g_vecs_(k) -= alpha * g_vecs_(i);
   }
@@ -262,7 +262,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  real_t const beta{Utils::SafeDivide(phi_(k), mu_(k, k))};
+  real_t const beta{utils::safe_div(phi_(k), mu_(k, k))};
   x_vec += beta * u_vecs_(k);
   r_vec_ -= beta * g_vecs_(k);
 
@@ -296,7 +296,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
       lin_op.mul(v_vec_, r_vec_);
     }
     omega_ =
-        Utils::SafeDivide(Blas::Dot(v_vec_, r_vec_), Blas::Dot(v_vec_, v_vec_));
+        utils::safe_div(Blas::Dot(v_vec_, r_vec_), Blas::Dot(v_vec_, v_vec_));
     x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
     r_vec_ -= omega_ * v_vec_;
   }

@@ -45,7 +45,7 @@ template<VectorLike Vector>
 class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
 
-  real_t RelaxationFactor = 1.0e-4;
+  real_t relaxation_factor = 1.0e-4;
 
 private:
 
@@ -90,7 +90,7 @@ template<VectorLike Vector>
 real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                          Operator<Vector> const& lin_op,
                                          Preconditioner<Vector> const* pre_op) {
-  real_t const& omega{RelaxationFactor};
+  real_t const& omega{relaxation_factor};
 
   // Update the solution and the residual:
   // ----------------------

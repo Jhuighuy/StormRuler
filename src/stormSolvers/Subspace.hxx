@@ -42,7 +42,7 @@ private:
   [[no_unique_address]] std::conditional_t<Extent == std::dynamic_extent,
                                            std::vector<Vector>,
                                            std::array<Vector, Extent>>
-      Vectors_;
+      vectors_;
 
 public:
 
@@ -50,14 +50,14 @@ public:
   /// @{
   void assign(Vector const& like,
               bool copy) requires(Extent != std::dynamic_extent) {
-    for (Vector& vector : Vectors_) {
+    for (Vector& vector : vectors_) {
       vector.assign(like, copy);
     }
   }
   void assign(size_t size, Vector const& like,
               bool copy) requires(Extent == std::dynamic_extent) {
-    Vectors_.resize(size);
-    for (Vector& vector : Vectors_) {
+    vectors_.resize(size);
+    for (Vector& vector : vectors_) {
       vector.assign(like, copy);
     }
   }
@@ -66,12 +66,12 @@ public:
   /// @brief Access vector at @p index.
   /// @{
   Vector& operator()(size_t index) noexcept {
-    StormAssert(index < Vectors_.size());
-    return Vectors_[index];
+    STORM_ASSERT_(index < vectors_.size());
+    return vectors_[index];
   }
   Vector const& operator()(size_t index) const noexcept {
-    StormAssert(index < Vectors_.size());
-    return Vectors_[index];
+    STORM_ASSERT_(index < vectors_.size());
+    return vectors_[index];
   }
   /// @}
 

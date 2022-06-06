@@ -123,8 +123,8 @@ bool IterativeSolver<InVector, OutVector>::solve(
     Operator<InVector, OutVector> const& any_op) {
   // Initialize the solver.
   if (pre_op != nullptr) { pre_op->Build(x_vec, b_vec, any_op); }
-  real_t const initial_error{absolute_error =
-                                 init(x_vec, b_vec, any_op, pre_op.get())};
+  real_t const initial_error{init(x_vec, b_vec, any_op, pre_op.get())};
+  absolute_error = initial_error;
   if (absolute_error_tolerance > 0.0 &&
       absolute_error < absolute_error_tolerance) {
     finalize(x_vec, b_vec, any_op, pre_op.get());

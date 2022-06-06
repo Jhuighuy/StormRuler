@@ -73,14 +73,14 @@ template<VectorLike Vector>
 real_t NewtonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                   Operator<Vector> const& any_op,
                                   Preconditioner<Vector> const* pre_op) {
-  StormEnsure(!"Newton solver was not implemented yet.");
+  STORM_ENSURE_(!"Newton solver was not implemented yet.");
 } // NewtonSolver::init
 
 template<VectorLike Vector>
 real_t NewtonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                      Operator<Vector> const& any_op,
                                      Preconditioner<Vector> const* pre_op) {
-  StormEnsure(!"Newton solver was not implemented yet.");
+  STORM_ENSURE_(!"Newton solver was not implemented yet.");
 } // NewtonSolver::iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -176,10 +176,10 @@ real_t JfnkSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
       // 𝒛 ← 𝓐(𝒔),
       // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
       // ----------------------
-      real_t const delta{Utils::SafeDivide(mu, Blas::Norm2(y_vec))};
+      real_t const delta{utils::safe_div(mu, Blas::Norm2(y_vec))};
       s_vec_ <<= x_vec + delta * y_vec;
       any_op.mul(z_vec, s_vec_);
-      real_t const delta_inverse{Utils::SafeDivide(1.0, delta)};
+      real_t const delta_inverse{utils::safe_div(1.0, delta)};
       z_vec <<= delta_inverse * (z_vec - w_vec_);
     });
     solver->solve(t_vec_, r_vec_, *op);

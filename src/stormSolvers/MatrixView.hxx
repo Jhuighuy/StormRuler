@@ -96,8 +96,8 @@ MatrixView(Shape, Indexable)
 template<class T1, class... TN>
 constexpr auto copy_shape_(BaseMatrixView<T1> const& mat1,
                            BaseMatrixView<TN> const&... mats) {
-  StormAssert((mat1.shape() == mats.shape()) && ... &&
-              "Shapes of the matrix arguments should be the same");
+  STORM_ASSERT_((mat1.shape() == mats.shape()) && ... &&
+                "Shapes of the matrix arguments should be the same");
   return mat1.shape();
 }
 /// @}

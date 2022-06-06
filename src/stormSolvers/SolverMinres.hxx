@@ -36,7 +36,7 @@ namespace Blas {
 
 /// @brief Generate Givens rotation.
 template<class Real>
-inline auto SymOrtho(Real a, Real b) {
+inline auto sym_ortho(Real a, Real b) {
   // ----------------------
   // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
   // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
@@ -53,7 +53,7 @@ inline auto SymOrtho(Real a, Real b) {
 
   return std::make_tuple(cs, sn, rr);
 
-} // SymOrtho
+} // sym_ortho
 
 } // namespace Blas
 
@@ -187,7 +187,7 @@ real_t MinresSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   deltaBar = cs * delta + sn * alpha, gamma = sn * delta - cs * alpha;
   epsilonBar = epsilon, epsilon = sn * beta, delta = -cs * beta;
-  std::tie(cs, sn, gamma) = Utils::SymOrtho(gamma, beta);
+  std::tie(cs, sn, gamma) = utils::sym_ortho(gamma, beta);
   tau = cs * phi, phi = sn * phi;
 
   // ----------------------

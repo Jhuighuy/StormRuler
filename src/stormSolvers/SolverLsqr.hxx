@@ -158,7 +158,7 @@ template<class tInArray, class tOutArray = tInArray>
 class stormLsqrSolver final :
     public stormGolubKahanSolver<tInArray, tOutArray> {
 private:
-  stormReal_t alpha, beta, rho, rhoBar, theta, phi, phiBar, phiTilde, cs, sn;
+  stormReal_t alpha, beta, rho, rho_bar, theta, phi, phiBar, phiTilde, cs, sn;
   tInArray sArr, tArr, rArr, uArr, vArr, wArr, zArr;
 
   stormReal_t Init(tInArray& xArr, tOutArray const& bArr,
@@ -210,7 +210,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::init(
   // 𝒘 ← 𝒗,
   // ----------------------
   phiBar = beta;
-  rhoBar = alpha;
+  rho_bar = alpha;
   stormBlas::Set(wArr, vArr);
 
   return phiBar;
@@ -236,9 +236,9 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::iterate(
   // 𝜃 ← 𝑠𝑛⋅𝛼, 𝜌̅ ← -𝑐𝑠⋅𝛼,
   // 𝜑 ← 𝑐𝑠⋅𝜑, 𝜑̅ ← 𝑠𝑛⋅𝜑̅.
   // ----------------------
-  rho = std::hypot(rhoBar, beta);
-  cs = rhoBar / rho, sn = beta / rho;
-  theta = sn * alpha, rhoBar = -cs * alpha;
+  rho = std::hypot(rho_bar, beta);
+  cs = rho_bar / rho, sn = beta / rho;
+  theta = sn * alpha, rho_bar = -cs * alpha;
   phi = cs * phiBar, phiBar = sn * phiBar;
 
   // ----------------------
@@ -304,7 +304,7 @@ template<class tInArray, class tOutArray = tInArray>
 class stormLsmrSolver final :
     public stormGolubKahanSolver<tInArray, tOutArray> {
 private:
-  stormReal_t alpha, alphaBar, beta, rho, rhoBar, cs, sn, theta, thetaBar, psi,
+  stormReal_t alpha, alphaBar, beta, rho, rho_bar, cs, sn, theta, thetaBar, psi,
       psiBar, psiTilde, zeta, csBar, snBar;
   tInArray rArr, sArr, tArr, wArr, hArr, uArr, vArr, zArr;
 
@@ -393,8 +393,8 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::iterate(
   rho = std::hypot(alphaBar, beta);
   cs = alphaBar / rho, sn = beta / rho;
   theta = sn * alpha, alphaBar = cs * alpha;
-  thetaBar = snBar * rho, rhoBar = std::hypot(csBar * rho, theta);
-  csBar = csBar * rho / rhoBar, snBar = theta / rhoBar;
+  thetaBar = snBar * rho, rho_bar = std::hypot(csBar * rho, theta);
+  csBar = csBar * rho / rho_bar, snBar = theta / rho_bar;
   psi = csBar * psiBar, psiBar = -snBar * psiBar;
 
   // ----------------------
@@ -404,7 +404,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::iterate(
   // 𝒘 ← 𝒗 - (𝜃/𝜌)𝒘.
   // ----------------------
   stormBlas::Sub(hArr, wArr, hArr, thetaBar * rho / zeta);
-  zeta = rho * rhoBar;
+  zeta = rho * rho_bar;
   stormBlas::Add(zArr, zArr, hArr, psi / zeta);
   stormBlas::Sub(wArr, vArr, wArr, theta / rho);
 

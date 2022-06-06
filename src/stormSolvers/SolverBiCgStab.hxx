@@ -59,7 +59,7 @@ class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
 
   real_t alpha_, rho_, omega_;
-  Vector p_vec_, r_vec_, rTildeVec_, t_vec_, v_vec_, z_vec_;
+  Vector p_vec_, r_vec_, r_tilde_vec_, t_vec_, v_vec_, z_vec_;
 
   real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
@@ -80,7 +80,7 @@ real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 
   p_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
-  rTildeVec_.assign(x_vec, false);
+  r_tilde_vec_.assign(x_vec, false);
   t_vec_.assign(x_vec, false);
   v_vec_.assign(x_vec, false);
   if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
@@ -100,8 +100,8 @@ real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     std::swap(z_vec_, r_vec_);
     pre_op->mul(r_vec_, z_vec_);
   }
-  rTildeVec_ <<= r_vec_;
-  rho_ = Blas::Dot(rTildeVec_, r_vec_);
+  r_tilde_vec_ <<= r_vec_;
+  rho_ = Blas::Dot(r_tilde_vec_, r_vec_);
 
   return std::sqrt(rho_);
 
@@ -127,12 +127,12 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒓 + 𝛽⋅(𝒑 - 𝜔⋅𝒗).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->iteration == 0};
-  if (firstIteration) {
+  bool const first_iteration{this->iteration == 0};
+  if (first_iteration) {
     p_vec_ <<= r_vec_;
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, r_vec_))};
-    real_t const beta{Utils::SafeDivide(alpha_ * rho_, omega_ * rhoBar)};
+    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vec_))};
+    real_t const beta{utils::safe_div(alpha_ * rho_, omega_ * rho_bar)};
     p_vec_ <<= r_vec_ + beta * (p_vec_ - omega_ * v_vec_);
   }
 
@@ -156,7 +156,7 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_));
+  alpha_ = utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_));
   x_vec += alpha_ * (right_pre ? z_vec_ : p_vec_);
   r_vec_ -= alpha_ * v_vec_;
 
@@ -181,7 +181,7 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
     lin_op.mul(t_vec_, r_vec_);
   }
   omega_ =
-      Utils::SafeDivide(Blas::Dot(t_vec_, r_vec_), Blas::Dot(t_vec_, t_vec_));
+      utils::safe_div(Blas::Dot(t_vec_, r_vec_), Blas::Dot(t_vec_, t_vec_));
   x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
   r_vec_ -= omega_ * t_vec_;
 
@@ -209,9 +209,9 @@ class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
   real_t alpha_, rho_, omega_;
-  stormVector<real_t> gamma_, gammaBar_, gammaBarBar_, sigma_;
+  stormVector<real_t> gamma_, gamma_bar_, gamma_bbar_, sigma_;
   stormMatrix<real_t> tau_;
-  Vector rTildeVec_, z_vec_;
+  Vector r_tilde_vec_, z_vec_;
   Subspace<Vector> r_vecs_, u_vecs_;
 
   real_t outer_init(Vector const& x_vec, Vector const& b_vec,
@@ -238,12 +238,12 @@ BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
   size_t const l{this->num_inner_iterations};
 
   gamma_.assign(l + 1);
-  gammaBar_.assign(l + 1);
-  gammaBarBar_.assign(l + 1);
+  gamma_bar_.assign(l + 1);
+  gamma_bbar_.assign(l + 1);
   sigma_.assign(l + 1);
   tau_.assign(l + 1, l + 1);
 
-  rTildeVec_.assign(x_vec, false);
+  r_tilde_vec_.assign(x_vec, false);
   if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
   r_vecs_.assign(l + 1, x_vec, false);
@@ -266,8 +266,8 @@ BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
     std::swap(z_vec_, r_vecs_(0));
     pre_op->mul(r_vecs_(0), z_vec_);
   }
-  rTildeVec_ <<= r_vecs_(0);
-  rho_ = Blas::Dot(rTildeVec_, r_vecs_(0));
+  r_tilde_vec_ <<= r_vecs_(0);
+  rho_ = Blas::Dot(r_tilde_vec_, r_vecs_(0));
 
   return std::sqrt(rho_);
 
@@ -303,12 +303,13 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒓ᵢ ← 𝒓ᵢ - 𝛼⋅𝒖ᵢ₊₁.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  bool const firstIteration{this->iteration == 0};
-  if (firstIteration) {
+  bool const first_iteration{this->iteration == 0};
+  if (first_iteration) {
     u_vecs_(0) <<= r_vecs_(0);
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, r_vecs_(j)))};
-    real_t const beta{Utils::SafeDivide(alpha_ * rho_, rhoBar)};
+    real_t const rho_bar{
+        std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vecs_(j)))};
+    real_t const beta{utils::safe_div(alpha_ * rho_, rho_bar)};
     for (size_t i{0}; i <= j; ++i) {
       u_vecs_(i) <<= r_vecs_(i) - beta * u_vecs_(i);
     }
@@ -318,7 +319,7 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(u_vecs_(j + 1), u_vecs_(j));
   }
-  alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, u_vecs_(j + 1)));
+  alpha_ = utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, u_vecs_(j + 1)));
   for (size_t i{0}; i <= j; ++i) {
     r_vecs_(i) -= alpha_ * u_vecs_(i + 1);
   }
@@ -354,12 +355,12 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     for (size_t j{1}; j <= l; ++j) {
       for (size_t i{1}; i < j; ++i) {
         tau_(i, j) =
-            Utils::SafeDivide(Blas::Dot(r_vecs_(i), r_vecs_(j)), sigma_(i));
+            utils::safe_div(Blas::Dot(r_vecs_(i), r_vecs_(j)), sigma_(i));
         r_vecs_(j) -= tau_(i, j) * r_vecs_(i);
       }
       sigma_(j) = Blas::Dot(r_vecs_(j), r_vecs_(j));
-      gammaBar_(j) =
-          Utils::SafeDivide(Blas::Dot(r_vecs_(0), r_vecs_(j)), sigma_(j));
+      gamma_bar_(j) =
+          utils::safe_div(Blas::Dot(r_vecs_(0), r_vecs_(j)), sigma_(j));
     }
 
     // ----------------------
@@ -377,17 +378,17 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     //   𝗲𝗻𝗱 𝗳𝗼𝗿
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    omega_ = gamma_(l) = gammaBar_(l), rho_ *= -omega_;
+    omega_ = gamma_(l) = gamma_bar_(l), rho_ *= -omega_;
     for (size_t j{l - 1}; j != 0; --j) {
-      gamma_(j) = gammaBar_(j);
+      gamma_(j) = gamma_bar_(j);
       for (size_t i{j + 1}; i <= l; ++i) {
         gamma_(j) -= tau_(j, i) * gamma_(i);
       }
     }
     for (size_t j{1}; j < l; ++j) {
-      gammaBarBar_(j) = gamma_(j + 1);
+      gamma_bbar_(j) = gamma_(j + 1);
       for (size_t i{j + 1}; i < l; ++i) {
-        gammaBarBar_(j) += tau_(j, i) * gamma_(i + 1);
+        gamma_bbar_(j) += tau_(j, i) * gamma_(i + 1);
       }
     }
 
@@ -403,11 +404,11 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     x_vec += gamma_(1) * r_vecs_(0);
-    r_vecs_(0) -= gammaBar_(l) * r_vecs_(l);
+    r_vecs_(0) -= gamma_bar_(l) * r_vecs_(l);
     u_vecs_(0) -= gamma_(l) * u_vecs_(l);
     for (size_t j{1}; j < l; ++j) {
-      x_vec += gammaBarBar_(j) * r_vecs_(j);
-      r_vecs_(0) -= gammaBar_(j) * r_vecs_(j);
+      x_vec += gamma_bbar_(j) * r_vecs_(j);
+      r_vecs_(0) -= gamma_bar_(j) * r_vecs_(j);
       u_vecs_(0) -= gamma_(j) * u_vecs_(j);
     }
   }

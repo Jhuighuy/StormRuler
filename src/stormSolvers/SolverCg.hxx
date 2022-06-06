@@ -111,7 +111,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   lin_op.mul(z_vec_, p_vec_);
-  real_t const alpha{Utils::SafeDivide(gamma_, Blas::Dot(p_vec_, z_vec_))};
+  real_t const alpha{utils::safe_div(gamma_, Blas::Dot(p_vec_, z_vec_))};
   x_vec += alpha * p_vec_;
   r_vec_ -= alpha * z_vec_;
 
@@ -124,7 +124,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  real_t const gammaBar{gamma_};
+  real_t const gamma_bar{gamma_};
   if (pre_op != nullptr) {
     pre_op->mul(z_vec_, r_vec_);
     gamma_ = Blas::Dot(r_vec_, z_vec_);
@@ -136,7 +136,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // 𝛽 ← 𝛾/𝛾̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
+  real_t const beta = utils::safe_div(gamma_, gamma_bar);
   p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
 
   return (pre_op != nullptr) ? Blas::Norm2(r_vec_) : std::sqrt(gamma_);

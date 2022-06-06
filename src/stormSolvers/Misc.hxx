@@ -49,15 +49,15 @@ public:
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
-  static real_t EstimateLargestEigenvalue(Vector& x_vec,
-                                          Operator<Vector> const& lin_op,
-                                          size_t max_iters = 20,
-                                          real_t relative_tolerance = 1.0e-8);
+  static real_t estimate_largest_eigenvalue(Vector& x_vec,
+                                            Operator<Vector> const& lin_op,
+                                            size_t max_iters = 20,
+                                            real_t relative_tolerance = 1.0e-8);
 
 }; // class PowerIterations
 
 template<VectorLike Vector>
-real_t PowerIterations<Vector>::EstimateLargestEigenvalue(
+real_t PowerIterations<Vector>::estimate_largest_eigenvalue(
     Vector& x_vec, Operator<Vector> const& lin_op, size_t max_iters,
     real_t relative_tolerance) {
   Vector y_vec;
@@ -93,6 +93,6 @@ real_t PowerIterations<Vector>::EstimateLargestEigenvalue(
 
   return lambda;
 
-} // PowerIterations::EstimateLargestEigenvalue
+} // PowerIterations::estimate_largest_eigenvalue
 
 } // namespace Storm

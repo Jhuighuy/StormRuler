@@ -264,7 +264,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     H_(i, k) = chi;
   }
   std::tie(cs_(k), sn_(k), std::ignore) =
-      Utils::SymOrtho(H_(k, k), H_(k + 1, k));
+      utils::sym_ortho(H_(k, k), H_(k + 1, k));
   H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 

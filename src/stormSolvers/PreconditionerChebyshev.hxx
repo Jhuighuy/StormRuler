@@ -46,7 +46,7 @@ template<VectorLike Vector>
 class ChebyshevPreconditioner final : public Preconditioner<Vector> {
 public:
 
-  size_t Degree{5};
+  size_t degree{5};
 
 private:
 
@@ -106,7 +106,7 @@ void ChebyshevPreconditioner<Vector>::mul(Vector& y_vec,
   p_vec_ <<= x_vec / theta_;
   y_vec <<= p_vec_;
 
-  for (size_t k = 0; k < Degree; ++k) {
+  for (size_t k = 0; k < degree; ++k) {
     // Compute the residual and update the solution:
     // ----------------------
     // 𝛼 ← 𝟣/(𝜃 - ¼⋅𝛼⋅𝛿²),

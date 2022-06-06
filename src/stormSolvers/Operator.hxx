@@ -90,11 +90,11 @@ public:
   }
 
   auto operator()(size_t i, size_t j) const noexcept {
-    StormAssert(j == 0);
+    STORM_ASSERT_(j == 0);
     return MyData[i];
   }
   auto& operator()(size_t i, size_t j) noexcept {
-    StormAssert(j == 0);
+    STORM_ASSERT_(j == 0);
     return MyData[i];
   }
 
@@ -205,7 +205,7 @@ public:
   template<operator_like<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
-    StormAssert(MatVecFunc_);
+    STORM_ASSERT_(MatVecFunc_);
   }
   template<operator_like<InVector, OutVector> MatVecFunc,
            operator_like<OutVector, InVector> ConjMatVecFunc>
@@ -213,7 +213,7 @@ public:
                               ConjMatVecFunc&& conjMatVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
         ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
-    StormAssert(MatVecFunc_ && ConjMatVecFunc_);
+    STORM_ASSERT_(MatVecFunc_ && ConjMatVecFunc_);
   }
   /// @}
 

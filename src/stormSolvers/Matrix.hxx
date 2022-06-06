@@ -41,7 +41,7 @@ public:
 
   template<class T>
   constexpr auto& assign(BaseMatrixView<T> const& mat) noexcept {
-    StormAssert(mat.shape() == this->shape());
+    STORM_ASSERT_(mat.shape() == this->shape());
     for (size_t rowIndex{0}; rowIndex < this->NumRows(); ++rowIndex) {
       for (size_t colIndex{0}; colIndex < this->NumCols(); ++colIndex) {
         (*this)(rowIndex, colIndex) = mat(rowIndex, colIndex);

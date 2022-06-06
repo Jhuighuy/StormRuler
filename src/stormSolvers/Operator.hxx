@@ -110,13 +110,6 @@ template<>
 class VectorOperations<stormArray> {
 public:
 
-  static real_t Dot(stormArray const& z, stormArray const& y) {
-    return stormDot(z.Mesh, z.Array, y.Array);
-  }
-  static real_t Norm2(stormArray const& z) {
-    return stormNorm2(z.Mesh, z.Array);
-  }
-
   static void Fill(stormArray& z, real_t a) {
     stormFill(z.Mesh, z.Array, a);
   }

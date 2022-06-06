@@ -56,11 +56,6 @@ public:
 
 }; // class VectorOperations
 
-/// @brief A type of a dot product of the two vectors.
-template<class Vector>
-using DotType = decltype(VectorOperations<Vector>::Dot(std::declval<Vector>(),
-                                                       std::declval<Vector>()));
-
 // clang-format off
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -74,15 +69,8 @@ concept VectorLike =
     { targetVec.assign(sourceVector) };
     { targetVec.assign(sourceVector, copyContents) };
   } &&
-  /// @pre Require the dot product operation. 
-  requires {
-    typename DotType<Vector>;
-  } &&
-  requires(Vector const& x_vec) {
-    { VectorOperations<Vector>::Norm2(x_vec) } -> std::convertible_to<real_t>;
-  } &&
   /// @pre Require the fill and random fill operations. 
-  requires(Vector& x_vec, DotType<Vector> a) {
+  requires(Vector& x_vec, real_t a) {
     VectorOperations<Vector>::Fill(x_vec, a);
     VectorOperations<Vector>::RandFill(x_vec);
   };
@@ -90,18 +78,6 @@ concept VectorLike =
 // clang-format on
 
 namespace Blas {
-
-/// @brief Compute a dot product of @p x_vec and @p y_vec.
-template<VectorLike Vector>
-auto Dot(Vector const& x_vec, Vector const& y_vec) {
-  return VectorOperations<Vector>::Dot(x_vec, y_vec);
-}
-
-/// @brief Compute a norm of @p x_vec.
-template<VectorLike Vector>
-real_t Norm2(Vector const& x_vec) {
-  return VectorOperations<Vector>::Norm2(x_vec);
-}
 
 /// @brief Randomly fill the @p x_vec with value @p a.
 template<VectorLike Vector>

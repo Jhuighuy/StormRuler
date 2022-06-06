@@ -138,7 +138,7 @@ real_t MinresSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     // q_vec = zBarVec
   }
   betaBar = 1.0;
-  beta = std::sqrt(Blas::Dot(q_vec, zBarVec));
+  beta = std::sqrt(dot_product(q_vec, zBarVec));
   phi = beta;
   delta = 0.0;
   epsilon = 0.0;
@@ -166,7 +166,7 @@ real_t MinresSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
   lin_op.mul(p_vec, q_vec);
-  alpha = Blas::Dot(q_vec, p_vec) * std::pow(beta, -2);
+  alpha = dot_product(q_vec, p_vec) * std::pow(beta, -2);
   Blas::Sub(z_vec, p_vec, 1.0 / beta, zBarVec, alpha / beta);
   Blas::Sub(z_vec, z_vec, zBarBarVec, beta / betaBar);
   if (pre_op != nullptr) {
@@ -175,7 +175,7 @@ real_t MinresSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     // qBarVec = q_vec; q_vec = z_vec
   }
-  betaBar = beta, beta = std::sqrt(Blas::Dot(q_vec, z_vec));
+  betaBar = beta, beta = std::sqrt(dot_product(q_vec, z_vec));
   std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, z_vec);
 
   // ----------------------

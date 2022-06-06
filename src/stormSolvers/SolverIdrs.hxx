@@ -116,7 +116,7 @@ real_t IdrsSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
     std::swap(z_vec_, r_vec_);
     pre_op->mul(r_vec_, z_vec_);
   }
-  phi_(0) = Blas::Norm2(r_vec_);
+  phi_(0) = norm_2(r_vec_);
 
   return phi_(0);
 
@@ -157,13 +157,13 @@ void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
       Blas::RandFill(p_vecs_(i));
       for (size_t j{0}; j < i; ++j) {
         mu_(i, j) = 0.0;
-        p_vecs_(i) -= Blas::Dot(p_vecs_(i), p_vecs_(j)) * p_vecs_(j);
+        p_vecs_(i) -= dot_product(p_vecs_(i), p_vecs_(j)) * p_vecs_(j);
       }
-      p_vecs_(i) /= Blas::Norm2(p_vecs_(i));
+      p_vecs_(i) /= norm_2(p_vecs_(i));
     }
   } else {
     for (size_t i{0}; i < s; ++i) {
-      phi_(i) = Blas::Dot(p_vecs_(i), r_vec_);
+      phi_(i) = dot_product(p_vecs_(i), r_vec_);
     }
   }
 
@@ -241,7 +241,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   for (size_t i{0}; i < k; ++i) {
     real_t const alpha{
-        utils::safe_div(Blas::Dot(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
+        safe_divide(dot_product(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
     u_vecs_(k) -= alpha * u_vecs_(i);
     g_vecs_(k) -= alpha * g_vecs_(i);
   }
@@ -253,7 +253,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (size_t i{k}; i < s; ++i) {
-    mu_(i, k) = Blas::Dot(p_vecs_(i), g_vecs_(k));
+    mu_(i, k) = dot_product(p_vecs_(i), g_vecs_(k));
   }
 
   // Update the solution and the residual:
@@ -262,7 +262,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  real_t const beta{utils::safe_div(phi_(k), mu_(k, k))};
+  real_t const beta{safe_divide(phi_(k), mu_(k, k))};
   x_vec += beta * u_vecs_(k);
   r_vec_ -= beta * g_vecs_(k);
 
@@ -296,12 +296,12 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
       lin_op.mul(v_vec_, r_vec_);
     }
     omega_ =
-        utils::safe_div(Blas::Dot(v_vec_, r_vec_), Blas::Dot(v_vec_, v_vec_));
+        safe_divide(dot_product(v_vec_, r_vec_), dot_product(v_vec_, v_vec_));
     x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
     r_vec_ -= omega_ * v_vec_;
   }
 
-  return Blas::Norm2(r_vec_);
+  return norm_2(r_vec_);
 
 } // IdrsSolver::inner_iterate
 

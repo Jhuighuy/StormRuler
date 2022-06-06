@@ -101,7 +101,7 @@ real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     pre_op->mul(r_vec_, z_vec_);
   }
   r_tilde_vec_ <<= r_vec_;
-  rho_ = Blas::Dot(r_tilde_vec_, r_vec_);
+  rho_ = dot_product(r_tilde_vec_, r_vec_);
 
   return std::sqrt(rho_);
 
@@ -131,8 +131,9 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   if (first_iteration) {
     p_vec_ <<= r_vec_;
   } else {
-    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vec_))};
-    real_t const beta{utils::safe_div(alpha_ * rho_, omega_ * rho_bar)};
+    real_t const rho_bar{
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
+    real_t const beta{safe_divide(alpha_ * rho_, omega_ * rho_bar)};
     p_vec_ <<= r_vec_ + beta * (p_vec_ - omega_ * v_vec_);
   }
 
@@ -156,7 +157,7 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  alpha_ = utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_));
+  alpha_ = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
   x_vec += alpha_ * (right_pre ? z_vec_ : p_vec_);
   r_vec_ -= alpha_ * v_vec_;
 
@@ -181,11 +182,11 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
     lin_op.mul(t_vec_, r_vec_);
   }
   omega_ =
-      utils::safe_div(Blas::Dot(t_vec_, r_vec_), Blas::Dot(t_vec_, t_vec_));
+      safe_divide(dot_product(t_vec_, r_vec_), dot_product(t_vec_, t_vec_));
   x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
   r_vec_ -= omega_ * t_vec_;
 
-  return Blas::Norm2(r_vec_);
+  return norm_2(r_vec_);
 
 } // BiCgStabSolver::iterate
 
@@ -267,7 +268,7 @@ BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
     pre_op->mul(r_vecs_(0), z_vec_);
   }
   r_tilde_vec_ <<= r_vecs_(0);
-  rho_ = Blas::Dot(r_tilde_vec_, r_vecs_(0));
+  rho_ = dot_product(r_tilde_vec_, r_vecs_(0));
 
   return std::sqrt(rho_);
 
@@ -308,8 +309,8 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     u_vecs_(0) <<= r_vecs_(0);
   } else {
     real_t const rho_bar{
-        std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vecs_(j)))};
-    real_t const beta{utils::safe_div(alpha_ * rho_, rho_bar)};
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vecs_(j)))};
+    real_t const beta{safe_divide(alpha_ * rho_, rho_bar)};
     for (size_t i{0}; i <= j; ++i) {
       u_vecs_(i) <<= r_vecs_(i) - beta * u_vecs_(i);
     }
@@ -319,7 +320,7 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(u_vecs_(j + 1), u_vecs_(j));
   }
-  alpha_ = utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, u_vecs_(j + 1)));
+  alpha_ = safe_divide(rho_, dot_product(r_tilde_vec_, u_vecs_(j + 1)));
   for (size_t i{0}; i <= j; ++i) {
     r_vecs_(i) -= alpha_ * u_vecs_(i + 1);
   }
@@ -355,12 +356,12 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     for (size_t j{1}; j <= l; ++j) {
       for (size_t i{1}; i < j; ++i) {
         tau_(i, j) =
-            utils::safe_div(Blas::Dot(r_vecs_(i), r_vecs_(j)), sigma_(i));
+            safe_divide(dot_product(r_vecs_(i), r_vecs_(j)), sigma_(i));
         r_vecs_(j) -= tau_(i, j) * r_vecs_(i);
       }
-      sigma_(j) = Blas::Dot(r_vecs_(j), r_vecs_(j));
+      sigma_(j) = dot_product(r_vecs_(j), r_vecs_(j));
       gamma_bar_(j) =
-          utils::safe_div(Blas::Dot(r_vecs_(0), r_vecs_(j)), sigma_(j));
+          safe_divide(dot_product(r_vecs_(0), r_vecs_(j)), sigma_(j));
     }
 
     // ----------------------
@@ -413,7 +414,7 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
     }
   }
 
-  return Blas::Norm2(r_vecs_(0));
+  return norm_2(r_vecs_(0));
 
 } // BiCgStabLSolver::inner_iterate
 

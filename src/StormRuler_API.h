@@ -166,11 +166,6 @@ STORM_API void SR_IO_Flush(stormIOList_t IO, stormMesh_t mesh,
 
 STORM_API stormSize_t stormSize(stormMesh_t mesh, stormArray_t x);
 
-STORM_API stormReal_t stormNorm2(stormMesh_t mesh, stormArray_t x);
-
-STORM_API stormReal_t stormDot(stormMesh_t mesh, stormArray_t x,
-                               stormArray_t y);
-
 STORM_API void stormFill(stormMesh_t mesh, stormArray_t x, stormReal_t alpha);
 
 STORM_API void stormRandFill(stormMesh_t mesh, stormArray_t x,

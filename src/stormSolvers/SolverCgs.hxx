@@ -97,7 +97,7 @@ real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     pre_op->mul(r_vec_, u_vec_);
   }
   r_tilde_vec_ <<= r_vec_;
-  rho_ = Blas::Dot(r_tilde_vec_, r_vec_);
+  rho_ = dot_product(r_tilde_vec_, r_vec_);
 
   return std::sqrt(rho_);
 
@@ -130,8 +130,9 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
     u_vec_ <<= r_vec_;
     p_vec_ <<= u_vec_;
   } else {
-    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, r_vec_))};
-    real_t const beta{utils::safe_div(rho_, rho_bar)};
+    real_t const rho_bar{
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
+    real_t const beta{safe_divide(rho_, rho_bar)};
     u_vec_ <<= r_vec_ + beta * q_vec_;
     p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
@@ -155,7 +156,7 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  real_t const alpha{utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_))};
+  real_t const alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   q_vec_ <<= u_vec_ - alpha * v_vec_;
   v_vec_ <<= u_vec_ + q_vec_;
 
@@ -189,7 +190,7 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
     r_vec_ -= alpha * u_vec_;
   }
 
-  return Blas::Norm2(r_vec_);
+  return norm_2(r_vec_);
 
 } // CgsSolver::iterate
 

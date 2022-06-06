@@ -96,15 +96,15 @@ template<class T>
 concept real_or_complex_floating_point =
     std::floating_point<T> || is_complex_floating_point_v<T>;
 
-namespace utils {
-
 /// @brief If @p y is zero, return zero,
 ///   else return value of @p x divided by @p y.
 template<real_or_complex_floating_point Value>
-auto safe_div(Value x, Value y) {
+auto safe_divide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
+
+namespace utils {
 
 /// @brief Generate the Givens rotation.
 template<real_or_complex_floating_point Value>

@@ -82,7 +82,7 @@ real_t RichardsonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
     pre_op->mul(r_vec_, z_vec_);
   }
 
-  return Blas::Norm2(r_vec_);
+  return norm_2(r_vec_);
 
 } // RichardsonSolver::init
 
@@ -108,7 +108,7 @@ real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
     pre_op->mul(r_vec_, z_vec_);
   }
 
-  return Blas::Norm2(r_vec_);
+  return norm_2(r_vec_);
 
 } // RichardsonSolver::iterate
 

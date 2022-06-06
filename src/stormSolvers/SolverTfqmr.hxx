@@ -154,7 +154,7 @@ BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
   }
   u_vec_ <<= y_vec_;
   r_tilde_vec_ <<= u_vec_;
-  rho_ = Blas::Dot(r_tilde_vec_, u_vec_), tau_ = std::sqrt(rho_);
+  rho_ = dot_product(r_tilde_vec_, u_vec_), tau_ = std::sqrt(rho_);
 
   return tau_;
 
@@ -208,8 +208,9 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
     }
     v_vec_ <<= s_vec_;
   } else {
-    real_t const rho_bar{std::exchange(rho_, Blas::Dot(r_tilde_vec_, u_vec_))};
-    real_t const beta{utils::safe_div(rho_, rho_bar)};
+    real_t const rho_bar{
+        std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_))};
+    real_t const beta{safe_divide(rho_, rho_bar)};
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
     if (left_pre) {
@@ -251,11 +252,11 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  real_t const alpha{utils::safe_div(rho_, Blas::Dot(r_tilde_vec_, v_vec_))};
+  real_t const alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
     d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
-    real_t const omega{Blas::Norm2(u_vec_)};
+    real_t const omega{norm_2(u_vec_)};
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {

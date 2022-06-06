@@ -165,7 +165,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
     std::swap(z_vecs_(0), q_vecs_(0));
     pre_op->mul(q_vecs_(0), z_vecs_(0));
   }
-  beta_(0) = Blas::Norm2(q_vecs_(0));
+  beta_(0) = norm_2(q_vecs_(0));
   q_vecs_(0) /= beta_(0);
 
   return beta_(0);
@@ -195,7 +195,7 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
     std::swap(z_vecs_(0), q_vecs_(0));
     pre_op->mul(q_vecs_(0), z_vecs_(0));
   }
-  beta_(0) = Blas::Norm2(q_vecs_(0));
+  beta_(0) = norm_2(q_vecs_(0));
   q_vecs_(0) /= beta_(0);
 
 } // BaseGmresSolver_::inner_init
@@ -240,10 +240,10 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     lin_op.mul(q_vecs_(k + 1), q_vecs_(k));
   }
   for (size_t i{0}; i <= k; ++i) {
-    H_(i, k) = Blas::Dot(q_vecs_(k + 1), q_vecs_(i));
+    H_(i, k) = dot_product(q_vecs_(k + 1), q_vecs_(i));
     q_vecs_(k + 1) -= H_(i, k) * q_vecs_(i);
   }
-  H_(k + 1, k) = Blas::Norm2(q_vecs_(k + 1));
+  H_(k + 1, k) = norm_2(q_vecs_(k + 1));
   q_vecs_(k + 1) /= H_(k + 1, k);
 
   // Eliminate the last element in 𝐻

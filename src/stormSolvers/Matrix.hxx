@@ -53,6 +53,24 @@ public:
 }; // class BaseMatrix
 
 template<class T1, class T2>
+constexpr real_t dot_product(BaseMatrixView<T1> const& mat1,
+                             BaseMatrixView<T2> const& mat2) {
+  real_t d{};
+#pragma omp parallel for reduction(+ : d)
+  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
+    for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
+      d += mat1(rowIndex, colIndex) * mat2(rowIndex, colIndex);
+    }
+  }
+  return d;
+}
+
+template<class T1>
+constexpr real_t norm_2(BaseMatrixView<T1> const& mat1) {
+  return std::sqrt(dot_product(mat1, mat1));
+}
+
+template<class T1, class T2>
 constexpr auto& operator<<=(BaseMatrix<T1>& mat1,
                             BaseMatrixView<T2> const& mat2) {
 #pragma omp parallel for

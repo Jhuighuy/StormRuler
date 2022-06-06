@@ -483,6 +483,21 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
+  {
+    using namespace Storm;
+    Matrix<double> A{{10.0, 1.0, 2.0, 3.0},
+                     {4.0, 11.0, 1.0, 5.0},
+                     {1.0, 3.0, 13.0, 2.0},
+                     {2.0, 4.0, 5.0, 25.0}};
+    Matrix<double> B(4, 4);
+    inverse_lu(B, A);
+    std::cout << A << std::endl << std::endl;
+    std::cout << B << std::endl << std::endl;
+    std::cout << matmul(B, A) << std::endl << std::endl;
+    std::cout << matmul(A, B) << std::endl << std::endl;
+  }
+  return 0;
+
 #if YURI
   phi_set.Assign(101);
   ReadTensor(phi_set, "phi.csv");

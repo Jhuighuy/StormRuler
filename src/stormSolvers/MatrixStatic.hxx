@@ -38,11 +38,12 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Statically-sized matrix.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Value, size_t NumRows, size_t NumCols>
-class StaticMatrix : public BaseMatrix<StaticMatrix<Value, NumRows, NumCols>> {
+template<class Value, size_t num_rows, size_t num_cols>
+class StaticMatrix :
+    public BaseMatrix<StaticMatrix<Value, num_rows, num_cols>> {
 private:
 
-  std::array<std::array<Value, NumCols>, NumRows> Coeffs_;
+  std::array<std::array<Value, num_cols>, num_rows> Coeffs_;
 
 public:
 
@@ -68,13 +69,13 @@ public:
 
   /// @brief Size of the matrix data.
   constexpr static auto size() noexcept {
-    return std::integral_constant<size_t, NumRows * NumCols>{};
+    return std::integral_constant<size_t, num_rows * num_cols>{};
   }
 
   /// @brief Shape of the matrix.
   constexpr static auto shape() noexcept {
-    return std::pair(std::integral_constant<size_t, NumRows>{},
-                     std::integral_constant<size_t, NumCols>{});
+    return std::pair(std::integral_constant<size_t, num_rows>{},
+                     std::integral_constant<size_t, num_cols>{});
   }
 
   /// @brief Pointer to the beginning of the matrix data.
@@ -87,15 +88,15 @@ public:
   }
   /// @}
 
-  /// @brief Reference to the coefficient at @p rowIndex and @p colIndex.
+  /// @brief Reference to the coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr Value& operator()(size_t rowIndex, size_t colIndex = 0) noexcept {
-    STORM_ASSERT_(rowIndex < NumRows && colIndex < NumCols);
-    return (Coeffs_[rowIndex])[colIndex];
+  constexpr Value& operator()(size_t row_index, size_t col_index = 0) noexcept {
+    STORM_ASSERT_(row_index < num_rows && col_index < num_cols);
+    return (Coeffs_[row_index])[col_index];
   }
-  constexpr const Value& operator()(size_t rowIndex,
-                                    size_t colIndex = 0) const noexcept {
-    return const_cast<StaticMatrix&>(*this)(rowIndex, colIndex);
+  constexpr const Value& operator()(size_t row_index,
+                                    size_t col_index = 0) const noexcept {
+    return const_cast<StaticMatrix&>(*this)(row_index, col_index);
   }
   /// @}
 

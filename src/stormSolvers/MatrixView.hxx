@@ -44,18 +44,18 @@ public:
   }
 
   /// @brief Number of rows.
-  constexpr auto NumRows() const noexcept {
+  constexpr auto num_rows() const noexcept {
     return shape().first;
   }
 
   /// @brief Number of columns.
-  constexpr auto NumCols() const noexcept {
+  constexpr auto num_cols() const noexcept {
     return shape().second;
   }
 
-  /// @brief Get the matrix coefficient at @p rowIndex and @p colIndex.
-  constexpr auto operator()(size_t rowIndex, size_t colIndex) const noexcept {
-    return static_cast<const Derived&>(*this)(rowIndex, colIndex);
+  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
+  constexpr auto operator()(auto row_index, auto col_index) const noexcept {
+    return static_cast<const Derived&>(*this)(row_index, col_index);
   }
 
 }; // class BaseMatrixView
@@ -82,119 +82,112 @@ public:
   }
 
   /// @copydoc BaseMatrixView::operator()
-  constexpr auto operator()(size_t rowIndex, size_t colIndex) const noexcept {
-    return indexable_(rowIndex, colIndex);
+  constexpr auto operator()(auto row_index, auto col_index) const noexcept {
+    return indexable_(row_index, col_index);
   }
 
 }; // class MatrixView
 
-template<class Shape, class Indexable>
-MatrixView(Shape, Indexable)
-    -> MatrixView<std::decay_t<Shape>, std::decay_t<Indexable>>;
+template<class ShapeRef, class IndexableRef>
+MatrixView(ShapeRef, IndexableRef)
+    -> MatrixView<std::decay_t<ShapeRef>, std::decay_t<IndexableRef>>;
 
-/// @{
+/// @brief Transpose the matrix @p mat.
+template<class T>
+constexpr auto transpose(const BaseMatrixView<T>& mat) noexcept {
+  const std::pair transposed_shape{mat.shape().second, mat.shape().first};
+  return MatrixView(transposed_shape, [&](auto row_index, auto col_index) {
+    return mat(col_index, row_index);
+  });
+}
+
+/// @brief Apply a @p func to the matrix arguments @p mat1, @p mats.
 template<class T1, class... TN>
-constexpr auto copy_shape_(const BaseMatrixView<T1>& mat1,
-                           const BaseMatrixView<TN>&... mats) {
+constexpr auto apply(auto func, const BaseMatrixView<T1>& mat1,
+                     const BaseMatrixView<TN>&... mats) noexcept {
   STORM_ASSERT_((mat1.shape() == mats.shape()) && ... &&
                 "Shapes of the matrix arguments should be the same");
-  return mat1.shape();
+  return MatrixView(mat1.shape(), [&, func](auto row_index, auto col_index) {
+    return func(mat1(row_index, col_index), mats(row_index, col_index)...);
+  });
+}
+
+/// @brief Multiply the matrix @p mat by a scalar @p scal.
+/// @{
+template<class T>
+constexpr auto operator*(const auto& scal,
+                         const BaseMatrixView<T>& mat) noexcept {
+  return apply([scal](const auto& val) { return scal * val; }, mat);
+}
+template<class T>
+constexpr auto operator*(const BaseMatrixView<T>& mat,
+                         const auto& scal) noexcept {
+  return apply([scal](const auto& val) { return val * scal; }, mat);
 }
 /// @}
 
-template<class T1, class T2>
-constexpr auto merge_shape_(const BaseMatrixView<T1>& mat1,
-                            const BaseMatrixView<T2>& mat2) {
-  return std::pair(std::pair(mat1.shape().first, mat2.shape().second),
-                   mat1.shape().second);
+/// @brief Divide the matrix @p mat by a scalar @p scal.
+template<class T>
+constexpr auto operator/(const BaseMatrixView<T>& mat, auto&& scal) noexcept {
+  return apply([scal](const auto& val) { return scal * val; }, mat);
 }
 
 /// @brief Add the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto operator+(const BaseMatrixView<T1>& mat1,
                          const BaseMatrixView<T2>& mat2) noexcept {
-  return MatrixView(
-      copy_shape_(mat1, mat2), [&](size_t rowIndex, size_t colIndex) {
-        return mat1(rowIndex, colIndex) + mat2(rowIndex, colIndex);
-      });
+  return apply([](const auto& val1, const auto& val2) { return val1 + val2; },
+               mat1, mat2);
 }
 
 /// @brief Subtract the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto operator-(const BaseMatrixView<T1>& mat1,
                          const BaseMatrixView<T2>& mat2) noexcept {
-  return MatrixView(
-      copy_shape_(mat1, mat2), [&](size_t rowIndex, size_t colIndex) {
-        return mat1(rowIndex, colIndex) - mat2(rowIndex, colIndex);
-      });
-}
-
-template<class V1, class T2>
-constexpr auto operator*(const V1& val1,
-                         const BaseMatrixView<T2>& mat2) noexcept {
-  return MatrixView(copy_shape_(mat2), [&](size_t rowIndex, size_t colIndex) {
-    return val1 * mat2(rowIndex, colIndex);
-  });
-}
-
-template<class T1, class V2>
-constexpr auto operator/(const BaseMatrixView<T1>& mat1,
-                         const V2& val2) noexcept {
-  return MatrixView(copy_shape_(mat1), [&](size_t rowIndex, size_t colIndex) {
-    return mat1(rowIndex, colIndex) / val2;
-  });
+  return apply([](const auto& val1, const auto& val2) { return val1 - val2; },
+               mat1, mat2);
 }
 
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto operator*(const BaseMatrixView<T1>& mat1,
                          const BaseMatrixView<T2>& mat2) noexcept {
-  return MatrixView(
-      copy_shape_(mat1, mat2), [&](size_t rowIndex, size_t colIndex) {
-        return mat1(rowIndex, colIndex) * mat2(rowIndex, colIndex);
-      });
+  return apply([](const auto& val1, const auto& val2) { return val1 * val2; },
+               mat1, mat2);
 }
 
 /// @brief Component-wise divide the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto operator/(const BaseMatrixView<T1>& mat1,
                          const BaseMatrixView<T2>& mat2) noexcept {
-  return MatrixView(
-      copy_shape_(mat1, mat2), [&](size_t rowIndex, size_t colIndex) {
-        return mat1(rowIndex, colIndex) / mat2(rowIndex, colIndex);
-      });
-}
-
-/// @brief Transpose the matrix @p mat.
-template<class T>
-constexpr auto transpose(const BaseMatrixView<T>& mat) noexcept {
-  return MatrixView(std::pair(mat.shape().second, mat.shape().first),
-                    [&](size_t rowIndex, size_t colIndex) {
-                      return mat(colIndex, rowIndex);
-                    });
+  return apply([](const auto& val1, const auto& val2) { return val1 / val2; },
+               mat1, mat2);
 }
 
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 template<class T1, class T2>
 constexpr auto matmul(const BaseMatrixView<T1>& mat1,
                       const BaseMatrixView<T2>& mat2) noexcept {
-  const auto [product_shape, cross_size] = merge_shape_(mat1, mat2);
+  STORM_ASSERT_(mat1.shape().second == mat2.shape().first &&
+                "mat1 should have the same number or columns as mat2 has rows");
+  const auto reduction_size{mat1.shape().second};
+  const std::pair product_shape{mat1.shape().first, mat2.shape().second};
   return MatrixView(product_shape,
-                    [&, cross_size](size_t rowIndex, size_t colIndex) {
-                      auto out = mat1(rowIndex, 0) * mat2(0, colIndex);
-                      for (size_t iz{1}; iz < cross_size; ++iz) {
-                        out += mat1(rowIndex, iz) * mat2(iz, colIndex);
+                    [&, reduction_size](size_t row_index, size_t col_index) {
+                      auto val = mat1(row_index, 0) * mat2(0, col_index);
+                      for (size_t iz{1}; iz < reduction_size; ++iz) {
+                        val += mat1(row_index, iz) * mat2(iz, col_index);
                       }
-                      return out;
+                      return val;
                     });
 }
 
 /// @brief Print a @p mat.
 template<class T>
 std::ostream& operator<<(std::ostream& out, const BaseMatrixView<T>& mat) {
-  for (size_t rowIndex{0}; rowIndex < mat.NumRows(); ++rowIndex) {
-    for (size_t colIndex{0}; colIndex < mat.NumCols(); ++colIndex) {
-      out << mat(rowIndex, colIndex) << ' ';
+  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
+      out << mat(row_index, col_index) << ' ';
     }
     out << std::endl;
   }

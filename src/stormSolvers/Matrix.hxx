@@ -25,98 +25,142 @@
 
 #pragma once
 
+#include <array>
+#include <memory>
+#include <span>
+#include <type_traits>
+
 #include <stormBase.hxx>
-#include <stormSolvers/MatrixView.hxx>
+#include <stormSolvers/MatrixBase.hxx>
 
 namespace Storm {
 
-template<class Derived>
-class BaseMatrix : public BaseMatrixView<Derived> {
+template<class Value, size_t NumRows = std::dynamic_extent,
+         size_t NumCols = std::dynamic_extent>
+class Matrix : public BaseMatrix<Matrix<Value, NumRows, NumCols>> {
+private:
+
+  static constexpr bool is_dynamic_{(NumRows == std::dynamic_extent) ||
+                                    (NumCols == std::dynamic_extent)};
+
+  std::conditional_t<is_dynamic_, std::unique_ptr<Value[]>,
+                     std::array<Value, NumRows * NumCols>>
+      coeffs_{};
+  [[no_unique_address]] std::conditional_t<
+      NumRows == std::dynamic_extent, size_t,
+      std::integral_constant<size_t, NumRows>>
+      num_rows_{};
+  [[no_unique_address]] std::conditional_t<
+      NumCols == std::dynamic_extent, size_t,
+      std::integral_constant<size_t, NumCols>>
+      num_cols_{};
+
 public:
 
-  /// @copydoc BaseMatrixView::operator()
-  constexpr auto& operator()(size_t rowIndex, size_t colIndex) noexcept {
-    return static_cast<Derived&>(*this)(rowIndex, colIndex);
+  /// @brief Initialize an empty matrix.
+  constexpr Matrix() = default;
+
+  constexpr Matrix(size_t num_rows, size_t num_cols) noexcept
+      : num_rows_{num_rows}, num_cols_{num_cols} {
+    coeffs_ = std::make_unique<Value[]>(size());
   }
 
-  template<class T>
-  constexpr auto& assign(const BaseMatrixView<T>& mat) noexcept {
-    STORM_ASSERT_(mat.shape() == this->shape());
-    for (size_t rowIndex{0}; rowIndex < this->NumRows(); ++rowIndex) {
-      for (size_t colIndex{0}; colIndex < this->NumCols(); ++colIndex) {
-        (*this)(rowIndex, colIndex) = mat(rowIndex, colIndex);
+  constexpr Matrix(
+      std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
+      : Matrix(coeffs.size(), coeffs.begin()->size()) {
+    *this <<= MatrixView(shape(), [&](auto i, auto j) {
+      return *((coeffs.begin() + i)->begin() + j);
+    });
+  }
+
+  constexpr auto num_rows() const noexcept {
+    return num_rows_;
+  }
+
+  constexpr auto num_cols() const noexcept {
+    return num_cols_;
+  }
+
+  constexpr auto size() const noexcept {
+    return num_rows_ * num_cols_;
+  }
+
+  constexpr auto shape() const noexcept {
+    return std::pair(num_rows_, num_cols_);
+  }
+
+  /// @brief Get the coefficient at @p row_index and @p col_index.
+  /// @{
+  constexpr auto& operator()(size_t row_index, size_t col_index) noexcept {
+    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
+                  "Matrix index out range.");
+    return coeffs_[row_index * num_cols_ + col_index];
+  }
+  constexpr const auto& operator()(size_t row_index,
+                                   size_t col_index) const noexcept {
+    return const_cast<Matrix&>(*this)(row_index, col_index);
+  }
+  /// @}
+
+}; // class Matrix
+
+/// @brief Perform a LU decomposition of a square matrix @p mat.
+/// @returns A pair of matrices, L and U factors.
+template<class T1, class T2, class T3>
+constexpr void decompose_lu(BaseMatrix<T1>& l_mat, BaseMatrix<T2>& u_mat,
+                            const BaseMatrixView<T3>& mat) noexcept {
+  const auto size{mat.num_rows()};
+  fill_diag_with(l_mat, 1.0);
+  fill_with(u_mat, 0.0);
+  for (size_t ix{0}; ix < size; ++ix) {
+    for (size_t iy{0}; iy < ix; ++iy) {
+      l_mat(ix, iy) = mat(ix, iy);
+      for (size_t iz{0}; iz < iy; ++iz) {
+        l_mat(ix, iy) -= l_mat(ix, iz) * u_mat(iz, iy);
+      }
+      l_mat(ix, iy) /= u_mat(iy, iy);
+    }
+    for (size_t iy{ix}; iy < size; ++iy) {
+      u_mat(ix, iy) = mat(ix, iy);
+      for (size_t iz{0}; iz < ix; ++iz) {
+        u_mat(ix, iy) -= l_mat(ix, iz) * u_mat(iz, iy);
       }
     }
-    return static_cast<Derived&>(*this);
   }
-
-}; // class BaseMatrix
+}
 
 template<class T1, class T2>
-constexpr real_t dot_product(const BaseMatrixView<T1>& mat1,
-                             const BaseMatrixView<T2>& mat2) {
-  real_t d{};
-#pragma omp parallel for reduction(+ : d)
-  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
-    for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
-      d += mat1(rowIndex, colIndex) * mat2(rowIndex, colIndex);
+constexpr void solve_lu(auto& vec, BaseMatrix<T1>& l_mat,
+                        BaseMatrix<T2>& u_mat) {
+  const auto size{l_mat.num_rows()};
+  for (size_t ix{0}; ix < size; ++ix) {
+    for (size_t iy{0}; iy < ix; ++iy) {
+      vec(ix) -= l_mat(ix, iy) * vec(iy);
     }
+    vec(ix) /= l_mat(ix, ix);
   }
-  return d;
-}
-
-template<class T1>
-constexpr real_t norm_2(const BaseMatrixView<T1>& mat1) {
-  return std::sqrt(dot_product(mat1, mat1));
-}
-
-template<class T1, class T2>
-constexpr auto& operator<<=(BaseMatrix<T1>& mat1,
-                            const BaseMatrixView<T2>& mat2) {
-#pragma omp parallel for
-  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
-    for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
-      mat1(rowIndex, colIndex) = mat2(rowIndex, colIndex);
+  for (size_t rix{0}; rix < size; ++rix) {
+    size_t ix{size - 1 - rix};
+    for (size_t iy{ix + 1}; iy < size; ++iy) {
+      vec(ix) -= u_mat(ix, iy) * vec(iy);
     }
+    vec(ix) /= u_mat(ix, ix);
   }
-  return mat1;
 }
 
+/// @brief Inverse a square matrix @p mat using the LU decomposition.
 template<class T1, class T2>
-constexpr auto& operator+=(BaseMatrix<T1>& mat1,
-                           const BaseMatrixView<T2>& mat2) {
-  return mat1 <<= mat1 + mat2;
-}
-template<class T1, class T2>
-constexpr auto& operator-=(BaseMatrix<T1>& mat1,
-                           const BaseMatrixView<T2>& mat2) {
-  return mat1 <<= mat1 - mat2;
-}
-
-template<class T1, class V2>
-constexpr auto& fill_with(BaseMatrix<T1>& mat1, const V2& val2) {
-#pragma omp parallel for
-  for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
-    for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
-      mat1(rowIndex, colIndex) = val2;
-    }
+constexpr void inverse_lu(BaseMatrix<T1>& out,
+                          const BaseMatrixView<T2>& mat) noexcept {
+  using Value = std::decay_t<decltype(mat(0, 0))>;
+  Matrix<Value> L(mat.num_rows(), mat.num_cols());
+  Matrix<Value> U(mat.num_rows(), mat.num_cols());
+  decompose_lu(L, U, mat);
+  fill_diag_with(out, 1.0);
+  for (size_t iy{0}; iy < mat.num_rows(); ++iy) {
+    auto outCol = [&](size_t ix) -> Value& { return out(ix, iy); };
+    solve_lu(outCol, L, U);
   }
-  return mat1;
-}
-
-template<class T1, class... V2>
-constexpr auto& fill_randomly(BaseMatrix<T1>& mat1, V2...) {
-  STORM_ENSURE_(!"Not implemented");
-  return mat1;
-}
-
-template<class T1, class V2>
-constexpr auto& operator*=(BaseMatrix<T1>& mat1, const V2& val2) {
-  return mat1 <<= val2 * mat1;
-}
-template<class T1, class V2>
-constexpr auto& operator/=(BaseMatrix<T1>& mat1, const V2& val2) {
-  return mat1 <<= mat1 / val2;
 }
 
 } // namespace Storm

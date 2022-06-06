@@ -59,27 +59,27 @@ template<VectorLike Vector>
 class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& any_op,
-              Preconditioner<Vector> const* pre_op) override final;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& any_op,
+              const Preconditioner<Vector>* pre_op) override final;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& any_op,
-                 Preconditioner<Vector> const* pre_op) override final;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& any_op,
+                 const Preconditioner<Vector>* pre_op) override final;
 
 }; // class NewtonSolver
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                                  Operator<Vector> const& any_op,
-                                  Preconditioner<Vector> const* pre_op) {
+real_t NewtonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                                  const Operator<Vector>& any_op,
+                                  const Preconditioner<Vector>* pre_op) {
   STORM_ENSURE_(!"Newton solver was not implemented yet.");
 } // NewtonSolver::init
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                     Operator<Vector> const& any_op,
-                                     Preconditioner<Vector> const* pre_op) {
+real_t NewtonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                     const Operator<Vector>& any_op,
+                                     const Preconditioner<Vector>* pre_op) {
   STORM_ENSURE_(!"Newton solver was not implemented yet.");
 } // NewtonSolver::iterate
 
@@ -119,20 +119,20 @@ private:
 
   Vector s_vec_, t_vec_, r_vec_, w_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& any_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& any_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& any_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& any_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class JfnkSolver
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                                Operator<Vector> const& any_op,
-                                Preconditioner<Vector> const* pre_op) {
+real_t JfnkSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                                const Operator<Vector>& any_op,
+                                const Preconditioner<Vector>* pre_op) {
   s_vec_.assign(x_vec, false);
   t_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
@@ -151,24 +151,24 @@ real_t JfnkSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // JfnkSolver::init
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                   Operator<Vector> const& any_op,
-                                   Preconditioner<Vector> const* pre_op) {
+real_t JfnkSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                   const Operator<Vector>& any_op,
+                                   const Preconditioner<Vector>* pre_op) {
   // Solve the Jacobian equation:
   // ----------------------
   // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
   // 𝒕 ← 𝒓,
   // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
   // ----------------------
-  static real_t const sqrtOfEpsilon{
+  static const real_t sqrtOfEpsilon{
       std::sqrt(std::numeric_limits<real_t>::epsilon())};
-  real_t const mu{sqrtOfEpsilon * std::sqrt(1.0 + norm_2(x_vec))};
+  const real_t mu{sqrtOfEpsilon * std::sqrt(1.0 + norm_2(x_vec))};
   t_vec_ <<= r_vec_;
   {
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
     solver->absolute_error_tolerance = 1.0e-8;
     solver->relative_error_tolerance = 1.0e-8;
-    auto op = make_operator<Vector>([&](Vector& z_vec, Vector const& y_vec) {
+    auto op = make_operator<Vector>([&](Vector& z_vec, const Vector& y_vec) {
       // Compute the Jacobian-vector product:
       // ----------------------
       // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
@@ -176,10 +176,10 @@ real_t JfnkSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
       // 𝒛 ← 𝓐(𝒔),
       // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
       // ----------------------
-      real_t const delta{safe_divide(mu, norm_2(y_vec))};
+      const real_t delta{safe_divide(mu, norm_2(y_vec))};
       s_vec_ <<= x_vec + delta * y_vec;
       any_op.mul(z_vec, s_vec_);
-      real_t const delta_inverse{safe_divide(1.0, delta)};
+      const real_t delta_inverse{safe_divide(1.0, delta)};
       z_vec <<= delta_inverse * (z_vec - w_vec_);
     });
     solver->solve(t_vec_, r_vec_, *op);

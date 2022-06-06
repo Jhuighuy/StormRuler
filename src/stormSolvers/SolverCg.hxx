@@ -55,20 +55,20 @@ private:
   real_t gamma_;
   Vector p_vec_, r_vec_, z_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class CgSolver
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                              Operator<Vector> const& lin_op,
-                              Preconditioner<Vector> const* pre_op) {
+real_t CgSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                              const Operator<Vector>& lin_op,
+                              const Preconditioner<Vector>* pre_op) {
   p_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
   z_vec_.assign(x_vec, false);
@@ -100,9 +100,9 @@ real_t CgSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // CgSolver::init
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                 Operator<Vector> const& lin_op,
-                                 Preconditioner<Vector> const* pre_op) {
+real_t CgSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                 const Operator<Vector>& lin_op,
+                                 const Preconditioner<Vector>* pre_op) {
   // Iterate:
   // ----------------------
   // 𝒛 ← 𝓐𝒑,
@@ -111,7 +111,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   lin_op.mul(z_vec_, p_vec_);
-  real_t const alpha{safe_divide(gamma_, dot_product(p_vec_, z_vec_))};
+  const real_t alpha{safe_divide(gamma_, dot_product(p_vec_, z_vec_))};
   x_vec += alpha * p_vec_;
   r_vec_ -= alpha * z_vec_;
 
@@ -124,7 +124,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  real_t const gamma_bar{gamma_};
+  const real_t gamma_bar{gamma_};
   if (pre_op != nullptr) {
     pre_op->mul(z_vec_, r_vec_);
     gamma_ = dot_product(r_vec_, z_vec_);
@@ -136,7 +136,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   // 𝛽 ← 𝛾/𝛾̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  real_t const beta = safe_divide(gamma_, gamma_bar);
+  const real_t beta = safe_divide(gamma_, gamma_bar);
   p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
 
   return (pre_op != nullptr) ? norm_2(r_vec_) : std::sqrt(gamma_);

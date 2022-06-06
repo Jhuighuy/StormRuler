@@ -128,7 +128,7 @@ public:
   /// @brief Assign a shape to the tensor object
   ///   and allocate the storage (if the storage class is dynamic).
   /// @{
-  void assign(ShapeType const& shape)
+  void assign(const ShapeType& shape)
   /*requires stormIsOwnedStorage<StorageType> &&
            stormIsDynamicStorage<StorageType>*/
   {
@@ -151,14 +151,14 @@ public:
     return Storage_.get();
     // return Storage_.Data();
   }
-  constexpr ValueType const* Data() const noexcept {
+  constexpr const ValueType* Data() const noexcept {
     return Storage_.get();
     // return Storage_.Data();
   }
   /// @}
 
   /// @brief Get tensor shape.
-  constexpr ShapeType const& Shape() const noexcept {
+  constexpr const ShapeType& Shape() const noexcept {
     return Shape_;
   }
 
@@ -176,7 +176,7 @@ public:
   }
   template<class... IndexTypes>
   requires(sizeof...(IndexTypes) ==
-           ShapeType::Rank()) constexpr ValueType const&
+           ShapeType::Rank()) constexpr const ValueType&
   operator()(IndexTypes... indices) const noexcept {
     return Storage_[Shape_(indices...)];
   }

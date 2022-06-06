@@ -44,13 +44,13 @@ private:
   real_t rho_, tau_;
   Vector d_vec_, r_tilde_vec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 protected:
 
@@ -112,10 +112,10 @@ class Tfqmr1Solver final : public BaseTfqmrSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
 real_t
-BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
-                                   Operator<Vector> const& lin_op,
-                                   Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+BaseTfqmrSolver_<Vector, L1>::init(const Vector& x_vec, const Vector& b_vec,
+                                   const Operator<Vector>& lin_op,
+                                   const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
 
   d_vec_.assign(x_vec, false);
@@ -162,12 +162,12 @@ BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
 
 template<VectorLike Vector, bool L1>
 real_t
-BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
-                                      Operator<Vector> const& lin_op,
-                                      Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, const Vector& b_vec,
+                                      const Operator<Vector>& lin_op,
+                                      const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
-  bool const right_pre{(pre_op != nullptr) &&
+  const bool right_pre{(pre_op != nullptr) &&
                        (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
@@ -197,7 +197,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const first_iteration{this->iteration == 0};
+  const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     if (left_pre) {
       pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
@@ -208,9 +208,9 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
     }
     v_vec_ <<= s_vec_;
   } else {
-    real_t const rho_bar{
+    const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_))};
-    real_t const beta{safe_divide(rho_, rho_bar)};
+    const real_t beta{safe_divide(rho_, rho_bar)};
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
     if (left_pre) {
@@ -252,15 +252,15 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  real_t const alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
+  const real_t alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
     d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
-    real_t const omega{norm_2(u_vec_)};
+    const real_t omega{norm_2(u_vec_)};
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {
-      auto const [cs, sn, rr] = utils::sym_ortho(tau_, omega);
+      const auto [cs, sn, rr] = utils::sym_ortho(tau_, omega);
       tau_ = omega * cs;
       x_vec += std::pow(cs, 2) * d_vec_;
       d_vec_ *= std::pow(sn, 2);
@@ -287,7 +287,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   real_t tauTilde{tau_};
   if constexpr (!L1) {
-    size_t const k{this->iteration};
+    const size_t k{this->iteration};
     tauTilde *= std::sqrt(2.0 * k + 3.0);
   }
 

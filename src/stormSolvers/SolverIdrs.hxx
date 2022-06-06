@@ -61,17 +61,17 @@ private:
   Vector r_vec_, v_vec_, z_vec_;
   Subspace<Vector> p_vecs_, u_vecs_, g_vecs_;
 
-  real_t outer_init(Vector const& x_vec, Vector const& b_vec,
-                    Operator<Vector> const& lin_op,
-                    Preconditioner<Vector> const* pre_op) override;
+  real_t outer_init(const Vector& x_vec, const Vector& b_vec,
+                    const Operator<Vector>& lin_op,
+                    const Preconditioner<Vector>* pre_op) override;
 
-  void inner_init(Vector const& x_vec, Vector const& b_vec,
-                  Operator<Vector> const& lin_op,
-                  Preconditioner<Vector> const* pre_op) override;
+  void inner_init(const Vector& x_vec, const Vector& b_vec,
+                  const Operator<Vector>& lin_op,
+                  const Preconditioner<Vector>* pre_op) override;
 
-  real_t inner_iterate(Vector& x_vec, Vector const& b_vec,
-                       Operator<Vector> const& lin_op,
-                       Preconditioner<Vector> const* pre_op) override;
+  real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
+                       const Operator<Vector>& lin_op,
+                       const Preconditioner<Vector>* pre_op) override;
 
 public:
 
@@ -82,12 +82,12 @@ public:
 }; // class IdrsSolver
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
-                                      Operator<Vector> const& lin_op,
-                                      Preconditioner<Vector> const* pre_op) {
-  size_t const s{this->num_inner_iterations};
+real_t IdrsSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
+                                      const Operator<Vector>& lin_op,
+                                      const Preconditioner<Vector>* pre_op) {
+  const size_t s{this->num_inner_iterations};
 
-  bool const left_pre{(pre_op != nullptr) &&
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
 
   phi_.assign(s);
@@ -123,10 +123,10 @@ real_t IdrsSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
 } // IdrsSolver::outer_init
 
 template<VectorLike Vector>
-void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
-                                    Operator<Vector> const& lin_op,
-                                    Preconditioner<Vector> const* pre_op) {
-  size_t const s{this->num_inner_iterations};
+void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
+                                    const Operator<Vector>& lin_op,
+                                    const Preconditioner<Vector>* pre_op) {
+  const size_t s{this->num_inner_iterations};
 
   // Build shadow space and initialize 𝜑:
   // ----------------------
@@ -148,7 +148,7 @@ void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const first_iteration{this->iteration == 0};
+  const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     omega_ = mu_(0, 0) = 1.0;
     p_vecs_(0) <<= r_vec_ / phi_(0);
@@ -170,15 +170,15 @@ void IdrsSolver<Vector>::inner_init(Vector const& x_vec, Vector const& b_vec,
 } // IdrsSolver::inner_init
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
-                                         Operator<Vector> const& lin_op,
-                                         Preconditioner<Vector> const* pre_op) {
-  size_t const s{this->num_inner_iterations};
-  size_t const k{this->inner_iteration};
+real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
+                                         const Operator<Vector>& lin_op,
+                                         const Preconditioner<Vector>* pre_op) {
+  const size_t s{this->num_inner_iterations};
+  const size_t k{this->inner_iteration};
 
-  bool const left_pre{(pre_op != nullptr) &&
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
-  bool const right_pre{(pre_op != nullptr) &&
+  const bool right_pre{(pre_op != nullptr) &&
                        (this->pre_side == PreconditionerSide::Right)};
 
   // Compute 𝛾:
@@ -240,7 +240,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (size_t i{0}; i < k; ++i) {
-    real_t const alpha{
+    const real_t alpha{
         safe_divide(dot_product(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
     u_vecs_(k) -= alpha * u_vecs_(i);
     g_vecs_(k) -= alpha * g_vecs_(i);
@@ -262,7 +262,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  real_t const beta{safe_divide(phi_(k), mu_(k, k))};
+  const real_t beta{safe_divide(phi_(k), mu_(k, k))};
   x_vec += beta * u_vecs_(k);
   r_vec_ -= beta * g_vecs_(k);
 

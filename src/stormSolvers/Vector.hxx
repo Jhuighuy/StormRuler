@@ -37,7 +37,7 @@ namespace Storm {
 template<class Vector>
 concept VectorLike = 
   /// @pre Require the vector type to be assignable.
-  requires(Vector& targetVec, Vector const& sourceVector, 
+  requires(Vector& targetVec, const Vector& sourceVector, 
            bool copyContents) {
     { targetVec.assign(sourceVector) };
     { targetVec.assign(sourceVector, copyContents) };
@@ -50,7 +50,7 @@ concept VectorLike =
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Operator, class InVector, class OutVector = InVector>
 concept operator_like = requires(Operator& any_op, OutVector& y_vec,
-                                 InVector const& x_vec) {
+                                 const InVector& x_vec) {
   any_op(y_vec, x_vec);
 };
 

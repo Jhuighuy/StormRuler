@@ -57,21 +57,21 @@ private:
   real_t rho_;
   Vector p_vec_, q_vec_, r_vec_, r_tilde_vec_, u_vec_, v_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class CgsSolver
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                               Operator<Vector> const& lin_op,
-                               Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+real_t CgsSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                               const Operator<Vector>& lin_op,
+                               const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
 
   p_vec_.assign(x_vec, false);
@@ -104,12 +104,12 @@ real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // CgsSolver::init
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                  Operator<Vector> const& lin_op,
-                                  Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                  const Operator<Vector>& lin_op,
+                                  const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
-  bool const right_pre{(pre_op != nullptr) &&
+  const bool right_pre{(pre_op != nullptr) &&
                        (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
@@ -125,14 +125,14 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒖 + 𝛽⋅(𝒒 + 𝛽⋅𝒑).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const first_iteration{this->iteration == 0};
+  const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     u_vec_ <<= r_vec_;
     p_vec_ <<= u_vec_;
   } else {
-    real_t const rho_bar{
+    const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
-    real_t const beta{safe_divide(rho_, rho_bar)};
+    const real_t beta{safe_divide(rho_, rho_bar)};
     u_vec_ <<= r_vec_ + beta * q_vec_;
     p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
@@ -156,7 +156,7 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  real_t const alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
+  const real_t alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   q_vec_ <<= u_vec_ - alpha * v_vec_;
   v_vec_ <<= u_vec_ + q_vec_;
 

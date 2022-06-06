@@ -43,10 +43,10 @@ private:                                                           \
                                                                    \
   template<size_t Index_, class Func>                              \
   struct ForEachValueImpl_ {                                       \
-    static constexpr void call_(Func const&) noexcept {}           \
+    static constexpr void call_(const Func&) noexcept {}           \
   };                                                               \
   template<class Func>                                             \
-  static constexpr void forEachValue_(Func const& func) noexcept { \
+  static constexpr void forEachValue_(const Func& func) noexcept { \
     ForEachValueImpl_<0, Func>::call_(func);                       \
   }                                                                \
                                                                    \
@@ -67,7 +67,7 @@ private:                                                                   \
                                                                            \
   template<class Func>                                                     \
   struct ForEachValueImpl_<static_cast<size_t>(Name), Func> {              \
-    static constexpr void call_(Func const& func) noexcept {               \
+    static constexpr void call_(const Func& func) noexcept {               \
       func(Name, String);                                                  \
       ForEachValueImpl_<static_cast<size_t>(Name) + 1, Func>::call_(func); \
     }                                                                      \
@@ -96,8 +96,8 @@ public:
   constexpr operator Derived&() noexcept {
     return static_cast<Derived&>(*this);
   }
-  constexpr operator Derived const&() const noexcept {
-    return static_cast<Derived const&>(*this);
+  constexpr operator const Derived&() const noexcept {
+    return static_cast<const Derived&>(*this);
   }
   /// @}
 
@@ -108,7 +108,7 @@ public:
   }
 
   /// @brief Enumeration comparison operators.
-  constexpr auto operator<=>(Enum const& other) const noexcept = default;
+  constexpr auto operator<=>(const Enum& other) const noexcept = default;
 
   /// @brief Convert the enumeration into the string.
   constexpr std::string_view ToString() const noexcept;

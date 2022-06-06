@@ -49,8 +49,8 @@
 #include <stormSolvers/SolverFactory.hxx>
 
 template<typename stormMatVecFuncT_t>
-void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
-                    Storm::PreconditionerType const& preMethod, stormArray_t x,
+void stormLinSolve2(stormMesh_t mesh, const Storm::SolverType& method,
+                    const Storm::PreconditionerType& preMethod, stormArray_t x,
                     stormArray_t b, stormMatVecFuncT_t matVec,
                     bool uniform = true) {
   using namespace Storm;
@@ -78,7 +78,7 @@ void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
 } // stormLinSolve2
 
 template<typename stormMatVecFuncT_t>
-void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
+void stormNonlinSolve2(stormMesh_t mesh, const Storm::SolverType& method,
                        stormArray_t x, stormArray_t b,
                        stormMatVecFuncT_t matVec) {
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
@@ -135,7 +135,7 @@ stormMatrix<double> D1_W_vs_phi_sandwich;
 stormTensor2R<double> N_part_sandwich;
 stormTensor3R<double> n_part_vs_phi_sandwich;
 double N2_min, N2_max, N2_cur;
-static double const mol_mass[2] = {0.0440098, 0.1422853};
+static const double mol_mass[2] = {0.0440098, 0.1422853};
 
 template<class Tensor>
 void ReadTensor(Tensor& tensor, std::string path) {
@@ -155,7 +155,7 @@ void dWdC(stormSize_t size, stormReal_t* Wc, const stormReal_t* c, void* env) {
                                   2.0 * x * (x - 1.0) * (2.0 * x - 1.0));
 #else
 
-  auto const D1_W_vs_phi = [&](auto i) {
+  const auto D1_W_vs_phi = [&](auto i) {
     return D1_W_vs_phi_sandwich(slice, i) / 32.0;
   };
 
@@ -263,7 +263,7 @@ static int II;
 void NVsC(stormSize_t size, stormReal_t* n, const stormReal_t* c, void* env) {
   stormReal_t x = *c;
 
-  auto const nPart_vs_phi = [&](auto i, auto j) {
+  const auto nPart_vs_phi = [&](auto i, auto j) {
     return n_part_vs_phi_sandwich(slice, i, j);
   };
 
@@ -470,7 +470,7 @@ NavierStokes_VaD_Step(stormMesh_t mesh, stormArray_t p, stormArray_t v,
 
 void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
                   stormReal_t* c, const stormReal_t* _, void* env) {
-  static const stormReal_t L = 1.0;
+  const static stormReal_t L = 1.0;
   bool in = false;
   // if (fabs(r[0]-0*L) <= L*0.101 && fabs(2*L-r[1]) <= L*0.665) {
   //   in = true;

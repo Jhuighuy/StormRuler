@@ -50,7 +50,7 @@ public:
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
   static real_t estimate_largest_eigenvalue(Vector& x_vec,
-                                            Operator<Vector> const& lin_op,
+                                            const Operator<Vector>& lin_op,
                                             size_t max_iters = 20,
                                             real_t relative_tolerance = 1.0e-8);
 
@@ -58,7 +58,7 @@ public:
 
 template<VectorLike Vector>
 real_t PowerIterations<Vector>::estimate_largest_eigenvalue(
-    Vector& x_vec, Operator<Vector> const& lin_op, size_t max_iters,
+    Vector& x_vec, const Operator<Vector>& lin_op, size_t max_iters,
     real_t relative_tolerance) {
   Vector y_vec;
   y_vec.assign(x_vec, false);
@@ -81,7 +81,7 @@ real_t PowerIterations<Vector>::estimate_largest_eigenvalue(
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
     lin_op.mul(y_vec, x_vec);
-    real_t const lambda_bar{lambda};
+    const real_t lambda_bar{lambda};
     lambda = x_vec.Dot(y_vec);
     x_vec.Scale(y_vec, 1.0 / y_vec.Norm2());
 

@@ -48,13 +48,13 @@ public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
-  void assign(Vector const& like,
+  void assign(const Vector& like,
               bool copy) requires(Extent != std::dynamic_extent) {
     for (Vector& vector : vectors_) {
       vector.assign(like, copy);
     }
   }
-  void assign(size_t size, Vector const& like,
+  void assign(size_t size, const Vector& like,
               bool copy) requires(Extent == std::dynamic_extent) {
     vectors_.resize(size);
     for (Vector& vector : vectors_) {
@@ -69,7 +69,7 @@ public:
     STORM_ASSERT_(index < vectors_.size());
     return vectors_[index];
   }
-  Vector const& operator()(size_t index) const noexcept {
+  const Vector& operator()(size_t index) const noexcept {
     STORM_ASSERT_(index < vectors_.size());
     return vectors_[index];
   }

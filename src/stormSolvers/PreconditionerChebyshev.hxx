@@ -52,35 +52,35 @@ private:
 
   real_t theta_, delta_;
   mutable Vector r_vec_, p_vec_;
-  Operator<Vector> const* LinOp_;
+  const Operator<Vector>* LinOp_;
 
-  void Build(Vector const& x_vec, Vector const& b_vec,
-             Operator<Vector> const& lin_op) override;
+  void Build(const Vector& x_vec, const Vector& b_vec,
+             const Operator<Vector>& lin_op) override;
 
-  void mul(Vector& y_vec, Vector const& x_vec) const override;
+  void mul(Vector& y_vec, const Vector& x_vec) const override;
 
-  void conj_mul(Vector& x_vec, Vector const& y_vec) const override {
+  void conj_mul(Vector& x_vec, const Vector& y_vec) const override {
     mul(x_vec, y_vec);
   }
 
 }; // class ChebyshevPreconditioner
 
 template<VectorLike Vector>
-void ChebyshevPreconditioner<Vector>::Build(Vector const& x_vec,
-                                            Vector const& b_vec,
-                                            Operator<Vector> const& lin_op) {
+void ChebyshevPreconditioner<Vector>::Build(const Vector& x_vec,
+                                            const Vector& b_vec,
+                                            const Operator<Vector>& lin_op) {
   r_vec_.assign(x_vec, false);
   p_vec_.assign(x_vec, false);
   this->LinOp_ = &lin_op;
 
   // PowerIterations<Vector> powerIterations;
-  // real_t const beta =
+  // const real_t beta =
   //   powerIterations.EstimateLargestEigenvalue(p_vec_, lin_op);
-  // real_t const alpha = 0.01*beta;
+  // const real_t alpha = 0.01*beta;
 
   /// @todo: Estimate the true eigenvalue bounds!
-  real_t const alpha = 0.95 * 1.046599390654509e+00;
-  real_t const beta = 1.05 * 8.003575342439456e+02;
+  const real_t alpha = 0.95 * 1.046599390654509e+00;
+  const real_t beta = 1.05 * 8.003575342439456e+02;
 
   // Initialize the center and the semi-major
   // axis of ellipse containing the eigenvalues:
@@ -95,7 +95,7 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& x_vec,
 
 template<VectorLike Vector>
 void ChebyshevPreconditioner<Vector>::mul(Vector& y_vec,
-                                          Vector const& x_vec) const {
+                                          const Vector& x_vec) const {
   // Initialize the solution:
   // ----------------------
   // 𝛼 ← 𝟤/𝜃,
@@ -116,7 +116,7 @@ void ChebyshevPreconditioner<Vector>::mul(Vector& y_vec,
     // 𝒚 ← 𝒚 + 𝒑.
     // ----------------------
     alpha = 1.0 / (theta_ - 0.25 * alpha * std::pow(delta_, 2));
-    real_t const beta = alpha * theta_ - 1.0;
+    const real_t beta = alpha * theta_ - 1.0;
     LinOp_->Residual(r_vec_, x_vec, y_vec);
     p_vec_ <<= alpha * r_vec_ + beta * p_vec_;
     y_vec += p_vec_;

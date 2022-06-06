@@ -51,20 +51,20 @@ private:
 
   Vector r_vec_, z_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class RichardsonSolver
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                                      Operator<Vector> const& lin_op,
-                                      Preconditioner<Vector> const* pre_op) {
+real_t RichardsonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                                      const Operator<Vector>& lin_op,
+                                      const Preconditioner<Vector>* pre_op) {
   r_vec_.assign(x_vec, false);
   if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
@@ -87,10 +87,10 @@ real_t RichardsonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // RichardsonSolver::init
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                         Operator<Vector> const& lin_op,
-                                         Preconditioner<Vector> const* pre_op) {
-  real_t const& omega{relaxation_factor};
+real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                         const Operator<Vector>& lin_op,
+                                         const Preconditioner<Vector>* pre_op) {
+  const real_t& omega{relaxation_factor};
 
   // Update the solution and the residual:
   // ----------------------

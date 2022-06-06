@@ -56,12 +56,12 @@ public:
   }
 
   template<class T>
-  constexpr explicit StaticMatrix(BaseMatrixView<T> const& mat) noexcept {
+  constexpr explicit StaticMatrix(const BaseMatrixView<T>& mat) noexcept {
     *this = mat;
   }
 
   template<class T>
-  constexpr auto& operator=(BaseMatrixView<T> const& mat) noexcept {
+  constexpr auto& operator=(const BaseMatrixView<T>& mat) noexcept {
     this->assign(mat);
     return *this;
   }
@@ -82,7 +82,7 @@ public:
   constexpr Value* data() noexcept {
     return Coeffs_[0].data();
   }
-  constexpr Value const* data() const noexcept {
+  constexpr const Value* data() const noexcept {
     return Coeffs_[0].data();
   }
   /// @}
@@ -93,7 +93,7 @@ public:
     STORM_ASSERT_(rowIndex < NumRows && colIndex < NumCols);
     return (Coeffs_[rowIndex])[colIndex];
   }
-  constexpr Value const& operator()(size_t rowIndex,
+  constexpr const Value& operator()(size_t rowIndex,
                                     size_t colIndex = 0) const noexcept {
     return const_cast<StaticMatrix&>(*this)(rowIndex, colIndex);
   }

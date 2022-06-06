@@ -46,26 +46,26 @@ protected:
   static void
   InitBidiagonalization(tInArray& sArr, tInArray& tArr, tInArray& uArr,
                         tInArray& vArr, stormReal_t& alpha, stormReal_t& beta,
-                        tInArray const& bArr,
-                        stormOperator<tInArray, tOutArray> const& lin_op,
-                        stormPreconditioner<tInArray> const* pre_op);
+                        const tInArray& bArr,
+                        const stormOperator<tInArray, tOutArray>& lin_op,
+                        const stormPreconditioner<tInArray>* pre_op);
 
   /// @brief Continue the bidiagonalization procedure.
   static void
   ContinueBidiagonalization(tInArray& sArr, tInArray& tArr, tInArray& uArr,
                             tInArray& vArr, stormReal_t& alpha,
                             stormReal_t& beta,
-                            stormOperator<tInArray, tOutArray> const& lin_op,
-                            stormPreconditioner<tInArray> const* pre_op);
+                            const stormOperator<tInArray, tOutArray>& lin_op,
+                            const stormPreconditioner<tInArray>* pre_op);
 
 }; // class stormGolubKahanSolver
 
 template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
     tInArray& sArr, tInArray& tArr, tInArray& uArr, tInArray& vArr,
-    stormReal_t& alpha, stormReal_t& beta, tInArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    stormReal_t& alpha, stormReal_t& beta, const tInArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Initialize the bidiagonalization procedure:
   // 𝛽 ← ‖𝒃‖, 𝒖 ← 𝒃/𝛽,
@@ -91,8 +91,8 @@ template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
     tInArray& sArr, tInArray& tArr, tInArray& uArr, tInArray& vArr,
     stormReal_t& alpha, stormReal_t& beta,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -161,25 +161,25 @@ private:
   stormReal_t alpha, beta, rho, rho_bar, theta, phi, phiBar, phiTilde, cs, sn;
   tInArray sArr, tArr, rArr, uArr, vArr, wArr, zArr;
 
-  stormReal_t Init(tInArray& xArr, tOutArray const& bArr,
-                   stormOperator<tInArray, tOutArray> const& lin_op,
-                   stormPreconditioner<tInArray> const* pre_op) override;
+  stormReal_t Init(tInArray& xArr, const tOutArray& bArr,
+                   const stormOperator<tInArray, tOutArray>& lin_op,
+                   const stormPreconditioner<tInArray>* pre_op) override;
 
-  stormReal_t Iterate(tInArray& xArr, tOutArray const& bArr,
-                      stormOperator<tInArray, tOutArray> const& lin_op,
-                      stormPreconditioner<tInArray> const* pre_op) override;
+  stormReal_t Iterate(tInArray& xArr, const tOutArray& bArr,
+                      const stormOperator<tInArray, tOutArray>& lin_op,
+                      const stormPreconditioner<tInArray>* pre_op) override;
 
-  void finalize(tInArray& xArr, tOutArray const& bArr,
-                stormOperator<tInArray, tOutArray> const& lin_op,
-                stormPreconditioner<tInArray> const* pre_op) override;
+  void finalize(tInArray& xArr, const tOutArray& bArr,
+                const stormOperator<tInArray, tOutArray>& lin_op,
+                const stormPreconditioner<tInArray>* pre_op) override;
 
 }; // class stormLsqrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::init(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -219,9 +219,9 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::init(
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::iterate(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
@@ -255,9 +255,9 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::iterate(
 
 template<class tInArray, class tOutArray>
 void stormLsqrSolver<tInArray, tOutArray>::finalize(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -308,25 +308,25 @@ private:
       psiBar, psiTilde, zeta, csBar, snBar;
   tInArray rArr, sArr, tArr, wArr, hArr, uArr, vArr, zArr;
 
-  stormReal_t Init(tInArray& xArr, tOutArray const& bArr,
-                   stormOperator<tInArray, tOutArray> const& lin_op,
-                   stormPreconditioner<tInArray> const* pre_op) override;
+  stormReal_t Init(tInArray& xArr, const tOutArray& bArr,
+                   const stormOperator<tInArray, tOutArray>& lin_op,
+                   const stormPreconditioner<tInArray>* pre_op) override;
 
-  stormReal_t Iterate(tInArray& xArr, tOutArray const& bArr,
-                      stormOperator<tInArray, tOutArray> const& lin_op,
-                      stormPreconditioner<tInArray> const* pre_op) override;
+  stormReal_t Iterate(tInArray& xArr, const tOutArray& bArr,
+                      const stormOperator<tInArray, tOutArray>& lin_op,
+                      const stormPreconditioner<tInArray>* pre_op) override;
 
-  void finalize(tInArray& xArr, tOutArray const& bArr,
-                stormOperator<tInArray, tOutArray> const& lin_op,
-                stormPreconditioner<tInArray> const* pre_op) override;
+  void finalize(tInArray& xArr, const tOutArray& bArr,
+                const stormOperator<tInArray, tOutArray>& lin_op,
+                const stormPreconditioner<tInArray>* pre_op) override;
 
 }; // class stormLsmrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::init(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
@@ -371,9 +371,9 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::init(
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::iterate(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
@@ -414,9 +414,9 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::iterate(
 
 template<class tInArray, class tOutArray>
 void stormLsmrSolver<tInArray, tOutArray>::finalize(
-    tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& lin_op,
-    stormPreconditioner<tInArray> const* pre_op) {
+    tInArray& xArr, const tOutArray& bArr,
+    const stormOperator<tInArray, tOutArray>& lin_op,
+    const stormPreconditioner<tInArray>* pre_op) {
   // ----------------------
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:

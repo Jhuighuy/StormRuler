@@ -40,7 +40,7 @@ public:
   }
 
   template<class T>
-  constexpr auto& assign(BaseMatrixView<T> const& mat) noexcept {
+  constexpr auto& assign(const BaseMatrixView<T>& mat) noexcept {
     STORM_ASSERT_(mat.shape() == this->shape());
     for (size_t rowIndex{0}; rowIndex < this->NumRows(); ++rowIndex) {
       for (size_t colIndex{0}; colIndex < this->NumCols(); ++colIndex) {
@@ -53,8 +53,8 @@ public:
 }; // class BaseMatrix
 
 template<class T1, class T2>
-constexpr real_t dot_product(BaseMatrixView<T1> const& mat1,
-                             BaseMatrixView<T2> const& mat2) {
+constexpr real_t dot_product(const BaseMatrixView<T1>& mat1,
+                             const BaseMatrixView<T2>& mat2) {
   real_t d{};
 #pragma omp parallel for reduction(+ : d)
   for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
@@ -66,13 +66,13 @@ constexpr real_t dot_product(BaseMatrixView<T1> const& mat1,
 }
 
 template<class T1>
-constexpr real_t norm_2(BaseMatrixView<T1> const& mat1) {
+constexpr real_t norm_2(const BaseMatrixView<T1>& mat1) {
   return std::sqrt(dot_product(mat1, mat1));
 }
 
 template<class T1, class T2>
 constexpr auto& operator<<=(BaseMatrix<T1>& mat1,
-                            BaseMatrixView<T2> const& mat2) {
+                            const BaseMatrixView<T2>& mat2) {
 #pragma omp parallel for
   for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
     for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
@@ -84,17 +84,17 @@ constexpr auto& operator<<=(BaseMatrix<T1>& mat1,
 
 template<class T1, class T2>
 constexpr auto& operator+=(BaseMatrix<T1>& mat1,
-                           BaseMatrixView<T2> const& mat2) {
+                           const BaseMatrixView<T2>& mat2) {
   return mat1 <<= mat1 + mat2;
 }
 template<class T1, class T2>
 constexpr auto& operator-=(BaseMatrix<T1>& mat1,
-                           BaseMatrixView<T2> const& mat2) {
+                           const BaseMatrixView<T2>& mat2) {
   return mat1 <<= mat1 - mat2;
 }
 
 template<class T1, class V2>
-constexpr auto& fill_with(BaseMatrix<T1>& mat1, V2 const& val2) {
+constexpr auto& fill_with(BaseMatrix<T1>& mat1, const V2& val2) {
 #pragma omp parallel for
   for (int rowIndex = 0; rowIndex < (int) mat1.NumRows(); ++rowIndex) {
     for (size_t colIndex{0}; colIndex < mat1.NumCols(); ++colIndex) {
@@ -111,11 +111,11 @@ constexpr auto& fill_randomly(BaseMatrix<T1>& mat1, V2...) {
 }
 
 template<class T1, class V2>
-constexpr auto& operator*=(BaseMatrix<T1>& mat1, V2 const& val2) {
+constexpr auto& operator*=(BaseMatrix<T1>& mat1, const V2& val2) {
   return mat1 <<= val2 * mat1;
 }
 template<class T1, class V2>
-constexpr auto& operator/=(BaseMatrix<T1>& mat1, V2 const& val2) {
+constexpr auto& operator/=(BaseMatrix<T1>& mat1, const V2& val2) {
   return mat1 <<= mat1 / val2;
 }
 

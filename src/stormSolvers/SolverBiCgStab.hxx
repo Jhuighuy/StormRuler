@@ -61,21 +61,21 @@ private:
   real_t alpha_, rho_, omega_;
   Vector p_vec_, r_vec_, r_tilde_vec_, t_vec_, v_vec_, z_vec_;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class BiCgStabSolver
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                                    Operator<Vector> const& lin_op,
-                                    Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+real_t BiCgStabSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                                    const Operator<Vector>& lin_op,
+                                    const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
 
   p_vec_.assign(x_vec, false);
@@ -108,12 +108,12 @@ real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // BiCgStabSolver::init
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                       Operator<Vector> const& lin_op,
-                                       Preconditioner<Vector> const* pre_op) {
-  bool const left_pre{(pre_op != nullptr) &&
+real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                       const Operator<Vector>& lin_op,
+                                       const Preconditioner<Vector>* pre_op) {
+  const bool left_pre{(pre_op != nullptr) &&
                       (this->pre_side == PreconditionerSide::Left)};
-  bool const right_pre{(pre_op != nullptr) &&
+  const bool right_pre{(pre_op != nullptr) &&
                        (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
@@ -127,13 +127,13 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒓 + 𝛽⋅(𝒑 - 𝜔⋅𝒗).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const first_iteration{this->iteration == 0};
+  const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     p_vec_ <<= r_vec_;
   } else {
-    real_t const rho_bar{
+    const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
-    real_t const beta{safe_divide(alpha_ * rho_, omega_ * rho_bar)};
+    const real_t beta{safe_divide(alpha_ * rho_, omega_ * rho_bar)};
     p_vec_ <<= r_vec_ + beta * (p_vec_ - omega_ * v_vec_);
   }
 
@@ -215,13 +215,13 @@ private:
   Vector r_tilde_vec_, z_vec_;
   Subspace<Vector> r_vecs_, u_vecs_;
 
-  real_t outer_init(Vector const& x_vec, Vector const& b_vec,
-                    Operator<Vector> const& lin_op,
-                    Preconditioner<Vector> const* pre_op) override;
+  real_t outer_init(const Vector& x_vec, const Vector& b_vec,
+                    const Operator<Vector>& lin_op,
+                    const Preconditioner<Vector>* pre_op) override;
 
-  real_t inner_iterate(Vector& x_vec, Vector const& b_vec,
-                       Operator<Vector> const& lin_op,
-                       Preconditioner<Vector> const* pre_op) override;
+  real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
+                       const Operator<Vector>& lin_op,
+                       const Preconditioner<Vector>* pre_op) override;
 
 public:
 
@@ -233,10 +233,10 @@ public:
 
 template<VectorLike Vector>
 real_t
-BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
-                                    Operator<Vector> const& lin_op,
-                                    Preconditioner<Vector> const* pre_op) {
-  size_t const l{this->num_inner_iterations};
+BiCgStabLSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
+                                    const Operator<Vector>& lin_op,
+                                    const Preconditioner<Vector>* pre_op) {
+  const size_t l{this->num_inner_iterations};
 
   gamma_.assign(l + 1);
   gamma_bar_.assign(l + 1);
@@ -276,11 +276,11 @@ BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
 
 template<VectorLike Vector>
 real_t
-BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
-                                       Operator<Vector> const& lin_op,
-                                       Preconditioner<Vector> const* pre_op) {
-  size_t const l{this->num_inner_iterations};
-  size_t const j{this->inner_iteration};
+BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
+                                       const Operator<Vector>& lin_op,
+                                       const Preconditioner<Vector>* pre_op) {
+  const size_t l{this->num_inner_iterations};
+  const size_t j{this->inner_iteration};
 
   // BiCG part:
   // ----------------------
@@ -304,13 +304,13 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒓ᵢ ← 𝒓ᵢ - 𝛼⋅𝒖ᵢ₊₁.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  bool const first_iteration{this->iteration == 0};
+  const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     u_vecs_(0) <<= r_vecs_(0);
   } else {
-    real_t const rho_bar{
+    const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, r_vecs_(j)))};
-    real_t const beta{safe_divide(alpha_ * rho_, rho_bar)};
+    const real_t beta{safe_divide(alpha_ * rho_, rho_bar)};
     for (size_t i{0}; i <= j; ++i) {
       u_vecs_(i) <<= r_vecs_(i) - beta * u_vecs_(i);
     }

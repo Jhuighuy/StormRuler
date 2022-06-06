@@ -61,7 +61,7 @@ public:
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
-  stormArray(stormArray const& oth) : Mesh(oth.Mesh), Array(oth.Array) {
+  stormArray(const stormArray& oth) : Mesh(oth.Mesh), Array(oth.Array) {
     RefCounter = oth.RefCounter;
     *RefCounter += 1;
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
@@ -79,7 +79,7 @@ public:
     new (this) stormArray(std::forward<stormArray>(oth));
     return *this;
   }
-  stormArray& operator=(stormArray const& oth) {
+  stormArray& operator=(const stormArray& oth) {
     this->~stormArray();
     new (this) stormArray(oth);
     return *this;
@@ -98,7 +98,7 @@ public:
     return MyData[i];
   }
 
-  void assign(stormArray const& like, bool copy = true) {
+  void assign(const stormArray& like, bool copy = true) {
     Mesh = like.Mesh;
     Array = stormAllocLike(like.Array);
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
@@ -117,7 +117,7 @@ public:
   ///
   /// @param y_vec Output vector, 𝒚.
   /// @param x_vec Input vector, 𝒙.
-  virtual void mul(OutVector& y_vec, InVector const& x_vec) const = 0;
+  virtual void mul(OutVector& y_vec, const InVector& x_vec) const = 0;
 
   /// @brief Compute a chained
   ///   operator-vector product, 𝒛 ← 𝓐(𝒚 ← 𝓑(𝒙)).
@@ -127,8 +127,8 @@ public:
   /// @param x_vec Input vector, 𝒙.
   template<VectorLike InOutVector = InVector>
   void mul(OutVector& z_vec, InOutVector& y_vec,
-           Operator<InVector, InOutVector> const& other_op,
-           InVector const& x_vec) const {
+           const Operator<InVector, InOutVector>& other_op,
+           const InVector& x_vec) const {
     other_op.mul(y_vec, x_vec);
     mul(z_vec, y_vec);
   }
@@ -138,8 +138,8 @@ public:
   /// @param r_vec Residual vector, 𝒓.
   /// @param b_vec Input vector, 𝒃.
   /// @param x_vec Input vector, 𝒙.
-  void Residual(OutVector& r_vec, OutVector const& b_vec,
-                InVector const& x_vec) const {
+  void Residual(OutVector& r_vec, const OutVector& b_vec,
+                const InVector& x_vec) const {
     mul(r_vec, x_vec);
     r_vec <<= b_vec - r_vec;
   }
@@ -148,7 +148,7 @@ public:
   ///
   /// @param b_vec Input vector, 𝒃.
   /// @param x_vec Input vector, 𝒙.
-  real_t ResidualNorm(OutVector const& b_vec, InVector const& x_vec) const {
+  real_t ResidualNorm(const OutVector& b_vec, const InVector& x_vec) const {
     OutVector r_vec;
     r_vec.assign(b_vec, false);
     Residual(r_vec, b_vec, x_vec);
@@ -159,7 +159,7 @@ public:
   ///
   /// @param x_vec Output vector, 𝒙.
   /// @param y_vec Input vector, 𝒚.
-  virtual void conj_mul(InVector& x_vec, OutVector const& y_vec) const {
+  virtual void conj_mul(InVector& x_vec, const OutVector& y_vec) const {
     throw std::runtime_error("`Operator::conj_mul` was not overriden");
   }
 
@@ -172,8 +172,8 @@ template<VectorLike InVector, VectorLike OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
 
-  std::function<void(OutVector&, InVector const&)> MatVecFunc_;
-  std::function<void(InVector&, OutVector const&)> ConjMatVecFunc_;
+  std::function<void(OutVector&, const InVector&)> MatVecFunc_;
+  std::function<void(InVector&, const OutVector&)> ConjMatVecFunc_;
 
 public:
 
@@ -199,11 +199,11 @@ public:
 
 private:
 
-  void mul(OutVector& y_vec, InVector const& x_vec) const override {
+  void mul(OutVector& y_vec, const InVector& x_vec) const override {
     MatVecFunc_(y_vec, x_vec);
   }
 
-  void conj_mul(InVector& x_vec, OutVector const& y_vec) const override {
+  void conj_mul(InVector& x_vec, const OutVector& y_vec) const override {
     if (!ConjMatVecFunc_) {
       throw std::runtime_error("`FunctionalOperator::conj_mul`"
                                " conjugate product function was not set.");

@@ -87,20 +87,20 @@ private:
   Vector p_vec, q_vec, qBarVec, w_vec, wBarVec, wBarBarVec, z_vec, zBarVec,
       zBarBarVec;
 
-  real_t init(Vector const& x_vec, Vector const& b_vec,
-              Operator<Vector> const& lin_op,
-              Preconditioner<Vector> const* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-  real_t iterate(Vector& x_vec, Vector const& b_vec,
-                 Operator<Vector> const& lin_op,
-                 Preconditioner<Vector> const* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
 }; // class MinresSolver
 
 template<class Vector>
-real_t MinresSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
-                                  Operator<Vector> const& lin_op,
-                                  Preconditioner<Vector> const* pre_op) {
+real_t MinresSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
+                                  const Operator<Vector>& lin_op,
+                                  const Preconditioner<Vector>* pre_op) {
   assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
 
   p_vec.assign(x_vec, false);
@@ -150,9 +150,9 @@ real_t MinresSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
 } // MinresSolver::init
 
 template<class Vector>
-real_t MinresSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
-                                     Operator<Vector> const& lin_op,
-                                     Preconditioner<Vector> const* pre_op) {
+real_t MinresSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
+                                     const Operator<Vector>& lin_op,
+                                     const Preconditioner<Vector>* pre_op) {
   assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------

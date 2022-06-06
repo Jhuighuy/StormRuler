@@ -116,77 +116,76 @@ class SolverType final : public Enum<SolverType> {
 
 }; // class SolverType
 
-/// ----------------------------------------------------------------- ///
-/// @brief Make iterative solver of the specified type.
-/// ----------------------------------------------------------------- ///
+/// @brief Make iterative solver of the specified @p solver_type.
 template<VectorLike InVector, VectorLike OutVector = InVector>
-auto MakeIterativeSolver(SolverType solverType = SolverType::Default)
+auto MakeIterativeSolver(SolverType solver_type = SolverType::Default)
     -> std::unique_ptr<IterativeSolver<InVector, OutVector>> {
   // Try the Krylov subspace square solver first:
   if constexpr (std::same_as<InVector, OutVector>) {
-    if (solverType == SolverType::Cg) {
+    if (solver_type == SolverType::Cg) {
       return std::make_unique<CgSolver<InVector>>();
     }
-    if (solverType == SolverType::Fcg) {
+    if (solver_type == SolverType::Fcg) {
       // return std::make_unique<FcgSolver<InVector>>();
     }
-    if (solverType == SolverType::Minres) {
+    if (solver_type == SolverType::Minres) {
       // return std::make_unique<MinresSolver<InVector>>();
     }
-    if (solverType == SolverType::Cgs) {
+    if (solver_type == SolverType::Cgs) {
       return std::make_unique<CgsSolver<InVector>>();
     }
-    if (solverType == SolverType::BiCgStab) {
+    if (solver_type == SolverType::BiCgStab) {
       return std::make_unique<BiCgStabSolver<InVector>>();
     }
-    if (solverType == SolverType::BiCgStabL) {
+    if (solver_type == SolverType::BiCgStabL) {
       return std::make_unique<BiCgStabLSolver<InVector>>();
     }
-    if (solverType == SolverType::Tfqmr) {
+    if (solver_type == SolverType::Tfqmr) {
       return std::make_unique<TfqmrSolver<InVector>>();
     }
-    if (solverType == SolverType::Tfqmr1) {
+    if (solver_type == SolverType::Tfqmr1) {
       return std::make_unique<Tfqmr1Solver<InVector>>();
     }
-    if (solverType == SolverType::Idrs) {
+    if (solver_type == SolverType::Idrs) {
       return std::make_unique<IdrsSolver<InVector>>();
     }
-    if (solverType == SolverType::Default || solverType == SolverType::Gmres) {
+    if (solver_type == SolverType::Default ||
+        solver_type == SolverType::Gmres) {
       // Note: GMRES is the default square solver.
       return std::make_unique<GmresSolver<InVector>>();
     }
-    if (solverType == SolverType::Fgmres) {
+    if (solver_type == SolverType::Fgmres) {
       return std::make_unique<FgmresSolver<InVector>>();
     }
-    if (solverType == SolverType::Lgmres) {
+    if (solver_type == SolverType::Lgmres) {
       // return std::make_unique<LgmresSolver<InVector>>();
     }
-    if (solverType == SolverType::Lfgmres) {
+    if (solver_type == SolverType::Lfgmres) {
       // return std::make_unique<LfgmresSolver<InVector>>();
     }
   }
 
   // Next, try the other general square solvers:
   if constexpr (std::same_as<InVector, OutVector>) {
-    if (solverType == SolverType::Richarson) {
+    if (solver_type == SolverType::Richarson) {
       return std::make_unique<RichardsonSolver<InVector>>();
     }
-    if (solverType == SolverType::Broyden) {
+    if (solver_type == SolverType::Broyden) {
       // return std::make_unique<BroydenSolver<InVector>>();
     }
-    if (solverType == SolverType::Newton) {
+    if (solver_type == SolverType::Newton) {
       return std::make_unique<NewtonSolver<InVector>>();
     }
-    if (solverType == SolverType::Jfnk) {
+    if (solver_type == SolverType::Jfnk) {
       return std::make_unique<JfnkSolver<InVector>>();
     }
   }
 
   // Finally, try the Krylov subspace least squares solvers:
-  if (solverType == SolverType::Lsqr) {
+  if (solver_type == SolverType::Lsqr) {
     // return std::make_unique<LsqrSolver<InVector, OutVector>>();
   }
-  if (solverType == SolverType::Default || solverType == SolverType::Lsmr) {
+  if (solver_type == SolverType::Default || solver_type == SolverType::Lsmr) {
     // Note: LSMR is the default rectangular solver.
     // return std::make_unique<LsmrSolver<InVector, OutVector>>();
   }

@@ -44,11 +44,11 @@ private:
   real_t rho_, tau_;
   Vector d_vec_, rTildeVec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
@@ -112,11 +112,11 @@ class Tfqmr1Solver final : public BaseTfqmrSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
 real_t
-BaseTfqmrSolver_<Vector, L1>::Init(Vector const& x_vec, Vector const& b_vec,
+BaseTfqmrSolver_<Vector, L1>::init(Vector const& x_vec, Vector const& b_vec,
                                    Operator<Vector> const& lin_op,
                                    Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
 
   d_vec_.assign(x_vec, false);
   rTildeVec_.assign(x_vec, false);
@@ -148,9 +148,9 @@ BaseTfqmrSolver_<Vector, L1>::Init(Vector const& x_vec, Vector const& b_vec,
     Blas::Fill(d_vec_, 0.0);
   }
   lin_op.Residual(y_vec_, b_vec, x_vec);
-  if (leftPre) {
+  if (left_pre) {
     std::swap(z_vec_, y_vec_);
-    pre_op->MatVec(y_vec_, z_vec_);
+    pre_op->mul(y_vec_, z_vec_);
   }
   u_vec_ <<= y_vec_;
   rTildeVec_ <<= u_vec_;
@@ -158,17 +158,17 @@ BaseTfqmrSolver_<Vector, L1>::Init(Vector const& x_vec, Vector const& b_vec,
 
   return tau_;
 
-} // BaseTfqmrSolver_::Init
+} // BaseTfqmrSolver_::init
 
 template<VectorLike Vector, bool L1>
 real_t
-BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
+BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, Vector const& b_vec,
                                       Operator<Vector> const& lin_op,
                                       Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(pre_op != nullptr) &&
-                      (this->PreSide == PreconditionerSide::Right)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
+  bool const right_pre{(pre_op != nullptr) &&
+                       (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
   // ----------------------
@@ -197,14 +197,14 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->Iteration == 0};
+  bool const firstIteration{this->iteration == 0};
   if (firstIteration) {
-    if (leftPre) {
-      pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
-    } else if (rightPre) {
-      lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
+    if (left_pre) {
+      pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+    } else if (right_pre) {
+      lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
     } else {
-      lin_op.MatVec(s_vec_, y_vec_);
+      lin_op.mul(s_vec_, y_vec_);
     }
     v_vec_ <<= s_vec_;
   } else {
@@ -212,12 +212,12 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
-    if (leftPre) {
-      pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
-    } else if (rightPre) {
-      lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
+    if (left_pre) {
+      pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+    } else if (right_pre) {
+      lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
     } else {
-      lin_op.MatVec(s_vec_, y_vec_);
+      lin_op.mul(s_vec_, y_vec_);
     }
     v_vec_ <<= s_vec_ + beta * v_vec_;
   }
@@ -254,7 +254,7 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
   real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
-    d_vec_ += alpha * (rightPre ? z_vec_ : y_vec_);
+    d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
     real_t const omega{Blas::Norm2(u_vec_)};
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
@@ -266,12 +266,12 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
     }
     if (m == 0) {
       y_vec_ -= alpha * v_vec_;
-      if (leftPre) {
-        pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
-      } else if (rightPre) {
-        lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
+      if (left_pre) {
+        pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+      } else if (right_pre) {
+        lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
       } else {
-        lin_op.MatVec(s_vec_, y_vec_);
+        lin_op.mul(s_vec_, y_vec_);
       }
     }
   }
@@ -286,12 +286,12 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   real_t tauTilde{tau_};
   if constexpr (!L1) {
-    size_t const k{this->Iteration};
+    size_t const k{this->iteration};
     tauTilde *= std::sqrt(2.0 * k + 3.0);
   }
 
   return tauTilde;
 
-} // BaseTfqmrSolver_::Iterate
+} // BaseTfqmrSolver_::iterate
 
 } // namespace Storm

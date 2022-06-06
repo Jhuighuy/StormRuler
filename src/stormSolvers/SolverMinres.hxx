@@ -87,18 +87,18 @@ private:
   Vector p_vec, q_vec, qBarVec, w_vec, wBarVec, wBarBarVec, z_vec, zBarVec,
       zBarBarVec;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class MinresSolver
 
 template<class Vector>
-real_t MinresSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t MinresSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                   Operator<Vector> const& lin_op,
                                   Preconditioner<Vector> const* pre_op) {
   assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
@@ -129,11 +129,11 @@ real_t MinresSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   // ----------------------
   Blas::Fill(wBarVec, 0.0);
   Blas::Fill(wBarBarVec, 0.0);
-  lin_op.MatVec(zBarVec, x_vec);
+  lin_op.mul(zBarVec, x_vec);
   Blas::Sub(zBarVec, b_vec, zBarVec);
   Blas::Fill(zBarBarVec, 0.0);
   if (pre_op != nullptr) {
-    pre_op->MatVec(q_vec, zBarVec);
+    pre_op->mul(q_vec, zBarVec);
   } else {
     // q_vec = zBarVec
   }
@@ -147,10 +147,10 @@ real_t MinresSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
 
   return phi;
 
-} // MinresSolver::Init
+} // MinresSolver::init
 
 template<class Vector>
-real_t MinresSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t MinresSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                      Operator<Vector> const& lin_op,
                                      Preconditioner<Vector> const* pre_op) {
   assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
@@ -165,13 +165,13 @@ real_t MinresSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝛽̅ ← 𝛽, 𝛽 ← <𝒒⋅𝒛>¹ᐟ²,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
-  lin_op.MatVec(p_vec, q_vec);
+  lin_op.mul(p_vec, q_vec);
   alpha = Blas::Dot(q_vec, p_vec) * std::pow(beta, -2);
   Blas::Sub(z_vec, p_vec, 1.0 / beta, zBarVec, alpha / beta);
   Blas::Sub(z_vec, z_vec, zBarBarVec, beta / betaBar);
   if (pre_op != nullptr) {
     std::swap(qBarVec, q_vec);
-    pre_op->MatVec(q_vec, z_vec);
+    pre_op->mul(q_vec, z_vec);
   } else {
     // qBarVec = q_vec; q_vec = z_vec
   }
@@ -204,7 +204,7 @@ real_t MinresSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
 
   return phi;
 
-} // MinresSolver::Iterate
+} // MinresSolver::iterate
 
 } // namespace Storm
 #endif

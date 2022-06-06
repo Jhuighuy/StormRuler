@@ -90,13 +90,13 @@ template<VectorLike Vector>
 class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 
-  void MatVec(Vector& y_vec, Vector const& x_vec) const override {
-    std::clog << "IdentityPreconditioner::MatVec called" << std::endl;
+  void mul(Vector& y_vec, Vector const& x_vec) const override {
+    std::clog << "IdentityPreconditioner::mul called" << std::endl;
     y_vec <<= x_vec;
   }
 
-  void ConjMatVec(Vector& x_vec, Vector const& y_vec) const override {
-    std::clog << "IdentityPreconditioner::ConjMatVec called" << std::endl;
+  void conj_mul(Vector& x_vec, Vector const& y_vec) const override {
+    std::clog << "IdentityPreconditioner::conj_mul called" << std::endl;
     x_vec <<= y_vec;
   }
 

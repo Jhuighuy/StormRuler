@@ -57,19 +57,19 @@ void stormLinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
 
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
   stormSize_t numMatVecs = 0;
-  auto symOp = Storm::MakeSymmetricOperator<Storm::stormArray>(
+  auto symOp = Storm::make_symmetric_operator<Storm::stormArray>(
       [&](Storm::stormArray& yy, const Storm::stormArray& xx) {
         numMatVecs += 1;
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
   auto solver = Storm::MakeIterativeSolver<Storm::stormArray>(method);
-  solver->PreOp = Storm::MakePreconditioner<Storm::stormArray>(preMethod);
+  solver->pre_op = Storm::make_preconditioner<Storm::stormArray>(preMethod);
 
   if (uniform) {
-    solver->Solve(xx, bb, *symOp);
+    solver->solve(xx, bb, *symOp);
   } else {
-    Storm::SolveNonUniform(*solver, xx, bb, *symOp);
+    Storm::solve_non_uniform(*solver, xx, bb, *symOp);
   }
 
   std::cout << "num matvecs = " << numMatVecs << " " << method.ToString()
@@ -82,15 +82,15 @@ void stormNonlinSolve2(stormMesh_t mesh, Storm::SolverType const& method,
                        stormArray_t x, stormArray_t b,
                        stormMatVecFuncT_t matVec) {
   Storm::stormArray xx = {mesh, x}, bb = {mesh, b};
-  auto op = Storm::MakeSymmetricOperator<Storm::stormArray>(
+  auto op = Storm::make_symmetric_operator<Storm::stormArray>(
       [&](Storm::stormArray& yy, const Storm::stormArray& xx) {
         matVec(yy.Mesh, yy.Array, xx.Array);
       });
 
   auto solver = std::make_unique<Storm::JfnkSolver<Storm::stormArray>>();
-  solver->AbsoluteTolerance = 1.0e-4;
-  solver->RelativeTolerance = 1.0e-4;
-  solver->Solve(xx, bb, *op);
+  solver->absolute_error_tolerance = 1.0e-4;
+  solver->relative_error_tolerance = 1.0e-4;
+  solver->solve(xx, bb, *op);
 
 } // stormNonLinSolve2
 

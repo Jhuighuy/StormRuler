@@ -61,22 +61,22 @@ private:
   real_t alpha_, rho_, omega_;
   Vector p_vec_, r_vec_, rTildeVec_, t_vec_, v_vec_, z_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class BiCgStabSolver
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t BiCgStabSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                     Operator<Vector> const& lin_op,
                                     Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
 
   p_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
@@ -96,25 +96,25 @@ real_t BiCgStabSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   lin_op.Residual(r_vec_, b_vec, x_vec);
-  if (leftPre) {
+  if (left_pre) {
     std::swap(z_vec_, r_vec_);
-    pre_op->MatVec(r_vec_, z_vec_);
+    pre_op->mul(r_vec_, z_vec_);
   }
   rTildeVec_ <<= r_vec_;
   rho_ = Blas::Dot(rTildeVec_, r_vec_);
 
   return std::sqrt(rho_);
 
-} // BiCgStabSolver::Init
+} // BiCgStabSolver::init
 
 template<VectorLike Vector>
-real_t BiCgStabSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                        Operator<Vector> const& lin_op,
                                        Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(pre_op != nullptr) &&
-                      (this->PreSide == PreconditionerSide::Right)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
+  bool const right_pre{(pre_op != nullptr) &&
+                       (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
   // ----------------------
@@ -127,7 +127,7 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒓 + 𝛽⋅(𝒑 - 𝜔⋅𝒗).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->Iteration == 0};
+  bool const firstIteration{this->iteration == 0};
   if (firstIteration) {
     p_vec_ <<= r_vec_;
   } else {
@@ -149,15 +149,15 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒑),
   // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
   // ----------------------
-  if (leftPre) {
-    pre_op->MatVec(v_vec_, z_vec_, lin_op, p_vec_);
-  } else if (rightPre) {
-    lin_op.MatVec(v_vec_, z_vec_, *pre_op, p_vec_);
+  if (left_pre) {
+    pre_op->mul(v_vec_, z_vec_, lin_op, p_vec_);
+  } else if (right_pre) {
+    lin_op.mul(v_vec_, z_vec_, *pre_op, p_vec_);
   } else {
-    lin_op.MatVec(v_vec_, p_vec_);
+    lin_op.mul(v_vec_, p_vec_);
   }
   alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_));
-  x_vec += alpha_ * (rightPre ? z_vec_ : p_vec_);
+  x_vec += alpha_ * (right_pre ? z_vec_ : p_vec_);
   r_vec_ -= alpha_ * v_vec_;
 
   // Update the solution and the residual again:
@@ -173,21 +173,21 @@ real_t BiCgStabSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
   // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
   // ----------------------
-  if (leftPre) {
-    pre_op->MatVec(t_vec_, z_vec_, lin_op, r_vec_);
-  } else if (rightPre) {
-    lin_op.MatVec(t_vec_, z_vec_, *pre_op, r_vec_);
+  if (left_pre) {
+    pre_op->mul(t_vec_, z_vec_, lin_op, r_vec_);
+  } else if (right_pre) {
+    lin_op.mul(t_vec_, z_vec_, *pre_op, r_vec_);
   } else {
-    lin_op.MatVec(t_vec_, r_vec_);
+    lin_op.mul(t_vec_, r_vec_);
   }
   omega_ =
       Utils::SafeDivide(Blas::Dot(t_vec_, r_vec_), Blas::Dot(t_vec_, t_vec_));
-  x_vec += omega_ * (rightPre ? z_vec_ : r_vec_);
+  x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
   r_vec_ -= omega_ * t_vec_;
 
   return Blas::Norm2(r_vec_);
 
-} // BiCgStabSolver::Iterate
+} // BiCgStabSolver::iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized)
@@ -214,28 +214,28 @@ private:
   Vector rTildeVec_, z_vec_;
   Subspace<Vector> r_vecs_, u_vecs_;
 
-  real_t OuterInit(Vector const& x_vec, Vector const& b_vec,
-                   Operator<Vector> const& lin_op,
-                   Preconditioner<Vector> const* pre_op) override;
+  real_t outer_init(Vector const& x_vec, Vector const& b_vec,
+                    Operator<Vector> const& lin_op,
+                    Preconditioner<Vector> const* pre_op) override;
 
-  real_t InnerIterate(Vector& x_vec, Vector const& b_vec,
-                      Operator<Vector> const& lin_op,
-                      Preconditioner<Vector> const* pre_op) override;
+  real_t inner_iterate(Vector& x_vec, Vector const& b_vec,
+                       Operator<Vector> const& lin_op,
+                       Preconditioner<Vector> const* pre_op) override;
 
 public:
 
   BiCgStabLSolver() {
-    this->NumInnerIterations = 2;
+    this->num_inner_iterations = 2;
   }
 
 }; // class BiCgStabLSolver
 
 template<VectorLike Vector>
 real_t
-BiCgStabLSolver<Vector>::OuterInit(Vector const& x_vec, Vector const& b_vec,
-                                   Operator<Vector> const& lin_op,
-                                   Preconditioner<Vector> const* pre_op) {
-  size_t const l{this->NumInnerIterations};
+BiCgStabLSolver<Vector>::outer_init(Vector const& x_vec, Vector const& b_vec,
+                                    Operator<Vector> const& lin_op,
+                                    Preconditioner<Vector> const* pre_op) {
+  size_t const l{this->num_inner_iterations};
 
   gamma_.assign(l + 1);
   gammaBar_.assign(l + 1);
@@ -264,22 +264,22 @@ BiCgStabLSolver<Vector>::OuterInit(Vector const& x_vec, Vector const& b_vec,
   lin_op.Residual(r_vecs_(0), b_vec, x_vec);
   if (pre_op != nullptr) {
     std::swap(z_vec_, r_vecs_(0));
-    pre_op->MatVec(r_vecs_(0), z_vec_);
+    pre_op->mul(r_vecs_(0), z_vec_);
   }
   rTildeVec_ <<= r_vecs_(0);
   rho_ = Blas::Dot(rTildeVec_, r_vecs_(0));
 
   return std::sqrt(rho_);
 
-} // BiCgStabLSolver::OuterInit
+} // BiCgStabLSolver::outer_init
 
 template<VectorLike Vector>
 real_t
-BiCgStabLSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
-                                      Operator<Vector> const& lin_op,
-                                      Preconditioner<Vector> const* pre_op) {
-  size_t const l{this->NumInnerIterations};
-  size_t const j{this->InnerIteration};
+BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, Vector const& b_vec,
+                                       Operator<Vector> const& lin_op,
+                                       Preconditioner<Vector> const* pre_op) {
+  size_t const l{this->num_inner_iterations};
+  size_t const j{this->inner_iteration};
 
   // BiCG part:
   // ----------------------
@@ -303,7 +303,7 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
   //   𝒓ᵢ ← 𝒓ᵢ - 𝛼⋅𝒖ᵢ₊₁.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  bool const firstIteration{this->Iteration == 0};
+  bool const firstIteration{this->iteration == 0};
   if (firstIteration) {
     u_vecs_(0) <<= r_vecs_(0);
   } else {
@@ -314,9 +314,9 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
     }
   }
   if (pre_op != nullptr) {
-    pre_op->MatVec(u_vecs_(j + 1), z_vec_, lin_op, u_vecs_(j));
+    pre_op->mul(u_vecs_(j + 1), z_vec_, lin_op, u_vecs_(j));
   } else {
-    lin_op.MatVec(u_vecs_(j + 1), u_vecs_(j));
+    lin_op.mul(u_vecs_(j + 1), u_vecs_(j));
   }
   alpha_ = Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, u_vecs_(j + 1)));
   for (size_t i{0}; i <= j; ++i) {
@@ -334,9 +334,9 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   x_vec += alpha_ * u_vecs_(0);
   if (pre_op != nullptr) {
-    pre_op->MatVec(r_vecs_(j + 1), z_vec_, lin_op, r_vecs_(j));
+    pre_op->mul(r_vecs_(j + 1), z_vec_, lin_op, r_vecs_(j));
   } else {
-    lin_op.MatVec(r_vecs_(j + 1), r_vecs_(j));
+    lin_op.mul(r_vecs_(j + 1), r_vecs_(j));
   }
 
   if (j == l - 1) {
@@ -414,6 +414,6 @@ BiCgStabLSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
 
   return Blas::Norm2(r_vecs_(0));
 
-} // BiCgStabLSolver::InnerIterate
+} // BiCgStabLSolver::inner_iterate
 
 } // namespace Storm

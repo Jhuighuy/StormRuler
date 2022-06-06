@@ -101,67 +101,64 @@ class PreconditionerType final : public Enum<PreconditionerType> {
 
 }; // class PreconditionerType
 
-/// ----------------------------------------------------------------- ///
-/// @brief Make preconditioner of the specified type.
-/// ----------------------------------------------------------------- ///
+/// @brief Make preconditioner of the specified @p pre_type.
 template<class Vector>
-auto MakePreconditioner(PreconditionerType preType = PreconditionerType::None)
+auto make_preconditioner(PreconditionerType pre_type = PreconditionerType::None)
     -> std::unique_ptr<Preconditioner<Vector>> {
-  if (preType == PreconditionerType::None) { return nullptr; }
-  if (preType == PreconditionerType::Identity) {
+  if (pre_type == PreconditionerType::None) { return nullptr; }
+  if (pre_type == PreconditionerType::Identity) {
     return std::make_unique<IdentityPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Jacobi) {
+  if (pre_type == PreconditionerType::Jacobi) {
     // return std::make_unique<JacobiPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Sgs) {
+  if (pre_type == PreconditionerType::Sgs) {
     // return std::make_unique<SgsPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ic0) {
+  if (pre_type == PreconditionerType::Ic0) {
     // return std::make_unique<Ic0Preconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ict) {
+  if (pre_type == PreconditionerType::Ict) {
     // return std::make_unique<IctPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ilu0) {
+  if (pre_type == PreconditionerType::Ilu0) {
     // return std::make_unique<Ilu0Preconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ilut) {
+  if (pre_type == PreconditionerType::Ilut) {
     // return std::make_unique<IlutPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ilq0) {
+  if (pre_type == PreconditionerType::Ilq0) {
     // return std::make_unique<Ilq0Preconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ilqt) {
+  if (pre_type == PreconditionerType::Ilqt) {
     // return std::make_unique<IlqtPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ainv0) {
+  if (pre_type == PreconditionerType::Ainv0) {
     // return std::make_unique<Ainv0Preconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Ainv) {
+  if (pre_type == PreconditionerType::Ainv) {
     // return std::make_unique<AinvPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Spai0) {
+  if (pre_type == PreconditionerType::Spai0) {
     // return std::make_unique<Spai0Preconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Spai) {
+  if (pre_type == PreconditionerType::Spai) {
     // return std::make_unique<SpaiPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Broyden) {
+  if (pre_type == PreconditionerType::Broyden) {
     // return std::make_unique<BroydenPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Bfgs) {
+  if (pre_type == PreconditionerType::Bfgs) {
     // return std::make_unique<BfgsPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Chebyshev) {
+  if (pre_type == PreconditionerType::Chebyshev) {
     return std::make_unique<ChebyshevPreconditioner<Vector>>();
   }
-  if (preType == PreconditionerType::Krylov) {
+  if (pre_type == PreconditionerType::Krylov) {
     // return std::make_unique<KrylovPreconditioner<Vector>>();
   }
 
   throw std::invalid_argument("Invalid preconditioner type specified.");
-
-} // MakePreconditioner
+}
 
 } // namespace Storm

@@ -44,22 +44,22 @@ public:
   ///   the initial guess for the Power iterations; on output:
   ///   estimate of the eigenvector, corresponding to the largest eigenvalue.
   /// @param lin_op Linear operator, 𝓐𝒙.
-  /// @param maxIterations Maximum number of the iterations.
-  /// @param relativeTolerance Relative error tolerance
+  /// @param max_iters Maximum number of the iterations.
+  /// @param relative_tolerance Relative error tolerance
   ///   to terminate the iterations before the maximum number is reached.
   ///
   /// @returns Estimate the largest eigenvalue of 𝓐.
   static real_t EstimateLargestEigenvalue(Vector& x_vec,
                                           Operator<Vector> const& lin_op,
-                                          size_t maxIterations = 20,
-                                          real_t relativeTolerance = 1.0e-8);
+                                          size_t max_iters = 20,
+                                          real_t relative_tolerance = 1.0e-8);
 
 }; // class PowerIterations
 
 template<VectorLike Vector>
 real_t PowerIterations<Vector>::EstimateLargestEigenvalue(
-    Vector& x_vec, Operator<Vector> const& lin_op, size_t maxIterations,
-    real_t relativeTolerance) {
+    Vector& x_vec, Operator<Vector> const& lin_op, size_t max_iters,
+    real_t relative_tolerance) {
   Vector y_vec;
   y_vec.assign(x_vec, false);
 
@@ -73,20 +73,20 @@ real_t PowerIterations<Vector>::EstimateLargestEigenvalue(
   x_vec.RandFill();
   x_vec.ScaleAssign(1.0 / x_vec.Norm2());
 
-  for (size_t k{0}; k < maxIterations; ++k) {
+  for (size_t k{0}; k < max_iters; ++k) {
     // Continue the power iterations:
     // ----------------------
     // 𝒚 ← 𝓐𝒙,
     // 𝜆̅ ← 𝜆, 𝜆 ← <𝒙⋅𝒚>,
     // 𝒙 ← 𝒚/‖𝒚‖.
     // ----------------------
-    lin_op.MatVec(y_vec, x_vec);
-    real_t const lambdaBar{lambda};
+    lin_op.mul(y_vec, x_vec);
+    real_t const lambda_bar{lambda};
     lambda = x_vec.Dot(y_vec);
     x_vec.Scale(y_vec, 1.0 / y_vec.Norm2());
 
     // Check for the convergence on 𝜆 and 𝜆̅:
-    if (std::abs((lambda - lambdaBar) / lambdaBar) < relativeTolerance) {
+    if (std::abs((lambda - lambda_bar) / lambda_bar) < relative_tolerance) {
       break;
     }
   }

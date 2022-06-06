@@ -57,10 +57,10 @@ private:
   void Build(Vector const& x_vec, Vector const& b_vec,
              Operator<Vector> const& lin_op) override;
 
-  void MatVec(Vector& y_vec, Vector const& x_vec) const override;
+  void mul(Vector& y_vec, Vector const& x_vec) const override;
 
-  void ConjMatVec(Vector& x_vec, Vector const& y_vec) const override {
-    MatVec(x_vec, y_vec);
+  void conj_mul(Vector& x_vec, Vector const& y_vec) const override {
+    mul(x_vec, y_vec);
   }
 
 }; // class ChebyshevPreconditioner
@@ -94,8 +94,8 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& x_vec,
 } // ChebyshevPreconditioner::Build
 
 template<VectorLike Vector>
-void ChebyshevPreconditioner<Vector>::MatVec(Vector& y_vec,
-                                             Vector const& x_vec) const {
+void ChebyshevPreconditioner<Vector>::mul(Vector& y_vec,
+                                          Vector const& x_vec) const {
   // Initialize the solution:
   // ----------------------
   // 𝛼 ← 𝟤/𝜃,
@@ -122,6 +122,6 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& y_vec,
     y_vec += p_vec_;
   }
 
-} // ChebyshevPreconditioner::MatVec
+} // ChebyshevPreconditioner::mul
 
 } // namespace Storm

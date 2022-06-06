@@ -55,18 +55,18 @@ private:
   real_t gamma_;
   Vector p_vec_, r_vec_, z_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class CgSolver
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t CgSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                               Operator<Vector> const& lin_op,
                               Preconditioner<Vector> const* pre_op) {
   p_vec_.assign(x_vec, false);
@@ -87,7 +87,7 @@ real_t CgSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   // ----------------------
   lin_op.Residual(r_vec_, b_vec, x_vec);
   if (pre_op != nullptr) {
-    pre_op->MatVec(z_vec_, r_vec_);
+    pre_op->mul(z_vec_, r_vec_);
     p_vec_ <<= z_vec_;
     gamma_ = Blas::Dot(r_vec_, z_vec_);
   } else {
@@ -97,10 +97,10 @@ real_t CgSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
 
   return (pre_op != nullptr) ? Blas::Norm2(r_vec_) : std::sqrt(gamma_);
 
-} // CgSolver::Init
+} // CgSolver::init
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t CgSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                  Operator<Vector> const& lin_op,
                                  Preconditioner<Vector> const* pre_op) {
   // Iterate:
@@ -110,7 +110,7 @@ real_t CgSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
-  lin_op.MatVec(z_vec_, p_vec_);
+  lin_op.mul(z_vec_, p_vec_);
   real_t const alpha{Utils::SafeDivide(gamma_, Blas::Dot(p_vec_, z_vec_))};
   x_vec += alpha * p_vec_;
   r_vec_ -= alpha * z_vec_;
@@ -126,7 +126,7 @@ real_t CgSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // ----------------------
   real_t const gammaBar{gamma_};
   if (pre_op != nullptr) {
-    pre_op->MatVec(z_vec_, r_vec_);
+    pre_op->mul(z_vec_, r_vec_);
     gamma_ = Blas::Dot(r_vec_, z_vec_);
   } else {
     gamma_ = Blas::Dot(r_vec_, r_vec_);
@@ -141,6 +141,6 @@ real_t CgSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
 
   return (pre_op != nullptr) ? Blas::Norm2(r_vec_) : std::sqrt(gamma_);
 
-} // CgSolver::Iterate
+} // CgSolver::iterate
 
 } // namespace Storm

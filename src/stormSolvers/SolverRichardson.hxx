@@ -51,18 +51,18 @@ private:
 
   Vector r_vec_, z_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class RichardsonSolver
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t RichardsonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                       Operator<Vector> const& lin_op,
                                       Preconditioner<Vector> const* pre_op) {
   r_vec_.assign(x_vec, false);
@@ -79,15 +79,15 @@ real_t RichardsonSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   lin_op.Residual(r_vec_, b_vec, x_vec);
   if (pre_op != nullptr) {
     std::swap(z_vec_, r_vec_);
-    pre_op->MatVec(r_vec_, z_vec_);
+    pre_op->mul(r_vec_, z_vec_);
   }
 
   return Blas::Norm2(r_vec_);
 
-} // RichardsonSolver::Init
+} // RichardsonSolver::init
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                          Operator<Vector> const& lin_op,
                                          Preconditioner<Vector> const* pre_op) {
   real_t const& omega{RelaxationFactor};
@@ -105,11 +105,11 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   lin_op.Residual(r_vec_, b_vec, x_vec);
   if (pre_op != nullptr) {
     std::swap(z_vec_, r_vec_);
-    pre_op->MatVec(r_vec_, z_vec_);
+    pre_op->mul(r_vec_, z_vec_);
   }
 
   return Blas::Norm2(r_vec_);
 
-} // RichardsonSolver::Iterate
+} // RichardsonSolver::iterate
 
 } // namespace Storm

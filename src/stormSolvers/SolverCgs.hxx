@@ -57,22 +57,22 @@ private:
   real_t rho_;
   Vector p_vec_, q_vec_, r_vec_, rTildeVec_, u_vec_, v_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& lin_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& lin_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class CgsSolver
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t CgsSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                Operator<Vector> const& lin_op,
                                Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
 
   p_vec_.assign(x_vec, false);
   q_vec_.assign(x_vec, false);
@@ -92,25 +92,25 @@ real_t CgsSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
   lin_op.Residual(r_vec_, b_vec, x_vec);
-  if (leftPre) {
+  if (left_pre) {
     std::swap(u_vec_, r_vec_);
-    pre_op->MatVec(r_vec_, u_vec_);
+    pre_op->mul(r_vec_, u_vec_);
   }
   rTildeVec_ <<= r_vec_;
   rho_ = Blas::Dot(rTildeVec_, r_vec_);
 
   return std::sqrt(rho_);
 
-} // CgsSolver::Init
+} // CgsSolver::init
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t CgsSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                   Operator<Vector> const& lin_op,
                                   Preconditioner<Vector> const* pre_op) {
-  bool const leftPre{(pre_op != nullptr) &&
-                     (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(pre_op != nullptr) &&
-                      (this->PreSide == PreconditionerSide::Right)};
+  bool const left_pre{(pre_op != nullptr) &&
+                      (this->pre_side == PreconditionerSide::Left)};
+  bool const right_pre{(pre_op != nullptr) &&
+                       (this->pre_side == PreconditionerSide::Right)};
 
   // Continue the iterations:
   // ----------------------
@@ -125,7 +125,7 @@ real_t CgsSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒑 ← 𝒖 + 𝛽⋅(𝒒 + 𝛽⋅𝒑).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  bool const firstIteration{this->Iteration == 0};
+  bool const firstIteration{this->iteration == 0};
   if (firstIteration) {
     u_vec_ <<= r_vec_;
     p_vec_ <<= u_vec_;
@@ -148,12 +148,12 @@ real_t CgsSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
   // 𝒗 ← 𝒖 + 𝒒.
   // ----------------------
-  if (leftPre) {
-    pre_op->MatVec(v_vec_, q_vec_, lin_op, p_vec_);
-  } else if (rightPre) {
-    lin_op.MatVec(v_vec_, q_vec_, *pre_op, p_vec_);
+  if (left_pre) {
+    pre_op->mul(v_vec_, q_vec_, lin_op, p_vec_);
+  } else if (right_pre) {
+    lin_op.mul(v_vec_, q_vec_, *pre_op, p_vec_);
   } else {
-    lin_op.MatVec(v_vec_, p_vec_);
+    lin_op.mul(v_vec_, p_vec_);
   }
   real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
   q_vec_ <<= u_vec_ - alpha * v_vec_;
@@ -175,22 +175,22 @@ real_t CgsSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   //   𝒓 ← 𝒓 - 𝛼⋅𝒖.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  if (leftPre) {
+  if (left_pre) {
     x_vec += alpha * v_vec_;
-    pre_op->MatVec(v_vec_, u_vec_, lin_op, v_vec_);
+    pre_op->mul(v_vec_, u_vec_, lin_op, v_vec_);
     r_vec_ -= alpha * v_vec_;
-  } else if (rightPre) {
-    lin_op.MatVec(v_vec_, u_vec_, *pre_op, v_vec_);
+  } else if (right_pre) {
+    lin_op.mul(v_vec_, u_vec_, *pre_op, v_vec_);
     x_vec += alpha * u_vec_;
     r_vec_ -= alpha * v_vec_;
   } else {
-    lin_op.MatVec(u_vec_, v_vec_);
+    lin_op.mul(u_vec_, v_vec_);
     x_vec += alpha * v_vec_;
     r_vec_ -= alpha * u_vec_;
   }
 
   return Blas::Norm2(r_vec_);
 
-} // CgsSolver::Iterate
+} // CgsSolver::iterate
 
 } // namespace Storm

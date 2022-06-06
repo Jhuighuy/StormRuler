@@ -59,29 +59,29 @@ template<VectorLike Vector>
 class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& any_op,
               Preconditioner<Vector> const* pre_op) override final;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& any_op,
                  Preconditioner<Vector> const* pre_op) override final;
 
 }; // class NewtonSolver
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t NewtonSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                   Operator<Vector> const& any_op,
                                   Preconditioner<Vector> const* pre_op) {
   StormEnsure(!"Newton solver was not implemented yet.");
-} // NewtonSolver::Init
+} // NewtonSolver::init
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t NewtonSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                      Operator<Vector> const& any_op,
                                      Preconditioner<Vector> const* pre_op) {
   StormEnsure(!"Newton solver was not implemented yet.");
-} // NewtonSolver::Iterate
+} // NewtonSolver::iterate
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief The first-order @c JFNK (Jacobian free-Newton-Krylov)
@@ -119,18 +119,18 @@ private:
 
   Vector s_vec_, t_vec_, r_vec_, w_vec_;
 
-  real_t Init(Vector const& x_vec, Vector const& b_vec,
+  real_t init(Vector const& x_vec, Vector const& b_vec,
               Operator<Vector> const& any_op,
               Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+  real_t iterate(Vector& x_vec, Vector const& b_vec,
                  Operator<Vector> const& any_op,
                  Preconditioner<Vector> const* pre_op) override;
 
 }; // class JfnkSolver
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+real_t JfnkSolver<Vector>::init(Vector const& x_vec, Vector const& b_vec,
                                 Operator<Vector> const& any_op,
                                 Preconditioner<Vector> const* pre_op) {
   s_vec_.assign(x_vec, false);
@@ -143,15 +143,15 @@ real_t JfnkSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  any_op.MatVec(w_vec_, x_vec);
+  any_op.mul(w_vec_, x_vec);
   r_vec_ <<= b_vec - w_vec_;
 
   return Blas::Norm2(r_vec_);
 
-} // JfnkSolver::Init
+} // JfnkSolver::init
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+real_t JfnkSolver<Vector>::iterate(Vector& x_vec, Vector const& b_vec,
                                    Operator<Vector> const& any_op,
                                    Preconditioner<Vector> const* pre_op) {
   // Solve the Jacobian equation:
@@ -166,9 +166,9 @@ real_t JfnkSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   t_vec_ <<= r_vec_;
   {
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
-    solver->AbsoluteTolerance = 1.0e-8;
-    solver->RelativeTolerance = 1.0e-8;
-    auto op = MakeOperator<Vector>([&](Vector& z_vec, Vector const& y_vec) {
+    solver->absolute_error_tolerance = 1.0e-8;
+    solver->relative_error_tolerance = 1.0e-8;
+    auto op = make_operator<Vector>([&](Vector& z_vec, Vector const& y_vec) {
       // Compute the Jacobian-vector product:
       // ----------------------
       // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
@@ -178,11 +178,11 @@ real_t JfnkSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
       // ----------------------
       real_t const delta{Utils::SafeDivide(mu, Blas::Norm2(y_vec))};
       s_vec_ <<= x_vec + delta * y_vec;
-      any_op.MatVec(z_vec, s_vec_);
-      real_t const deltaInverse{Utils::SafeDivide(1.0, delta)};
-      z_vec <<= deltaInverse * (z_vec - w_vec_);
+      any_op.mul(z_vec, s_vec_);
+      real_t const delta_inverse{Utils::SafeDivide(1.0, delta)};
+      z_vec <<= delta_inverse * (z_vec - w_vec_);
     });
-    solver->Solve(t_vec_, r_vec_, *op);
+    solver->solve(t_vec_, r_vec_, *op);
   }
 
   // Update the solution and the residual:
@@ -192,11 +192,11 @@ real_t JfnkSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
   x_vec += t_vec_;
-  any_op.MatVec(w_vec_, x_vec);
+  any_op.mul(w_vec_, x_vec);
   r_vec_ <<= b_vec - w_vec_;
 
   return Blas::Norm2(r_vec_);
 
-} // JfnkSolver::Iterate
+} // JfnkSolver::iterate
 
 } // namespace Storm

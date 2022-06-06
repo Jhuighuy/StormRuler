@@ -77,10 +77,10 @@ void stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
   beta = stormBlas::Norm2(bArr);
   stormBlas::Scale(uArr, bArr, 1.0 / beta);
   if (pre_op != nullptr) {
-    lin_op.ConjMatVec(sArr, uArr);
-    pre_op->ConjMatVec(tArr, sArr);
+    lin_op.conj_mul(sArr, uArr);
+    pre_op->conj_mul(tArr, sArr);
   } else {
-    lin_op.ConjMatVec(tArr, uArr);
+    lin_op.conj_mul(tArr, uArr);
   }
   alpha = stormBlas::Norm2(tArr);
   stormBlas::Scale(vArr, tArr, 1.0 / alpha);
@@ -107,19 +107,19 @@ void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   // ----------------------
   if (pre_op != nullptr) {
-    pre_op->MatVec(sArr, vArr);
-    lin_op.MatVec(tArr, sArr);
+    pre_op->mul(sArr, vArr);
+    lin_op.mul(tArr, sArr);
   } else {
-    lin_op.MatVec(tArr, vArr);
+    lin_op.mul(tArr, vArr);
   }
   stormBlas::Sub(tArr, tArr, uArr, alpha);
   beta = stormBlas::Norm2(tArr);
   stormBlas::Scale(uArr, tArr, 1.0 / beta);
   if (pre_op != nullptr) {
-    lin_op.ConjMatVec(sArr, uArr);
-    pre_op->ConjMatVec(tArr, sArr);
+    lin_op.conj_mul(sArr, uArr);
+    pre_op->conj_mul(tArr, sArr);
   } else {
-    lin_op.ConjMatVec(tArr, uArr);
+    lin_op.conj_mul(tArr, uArr);
   }
   stormBlas::Sub(tArr, tArr, vArr, beta);
   alpha = stormBlas::Norm2(tArr);
@@ -169,14 +169,14 @@ private:
                       stormOperator<tInArray, tOutArray> const& lin_op,
                       stormPreconditioner<tInArray> const* pre_op) override;
 
-  void Finalize(tInArray& xArr, tOutArray const& bArr,
+  void finalize(tInArray& xArr, tOutArray const& bArr,
                 stormOperator<tInArray, tOutArray> const& lin_op,
                 stormPreconditioner<tInArray> const* pre_op) override;
 
 }; // class stormLsqrSolver
 
 template<class tInArray, class tOutArray>
-stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
+stormReal_t stormLsqrSolver<tInArray, tOutArray>::init(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -194,7 +194,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
-  lin_op.MatVec(rArr, xArr);
+  lin_op.mul(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
   stormBlas::Fill(zArr, 0.0);
 
@@ -215,10 +215,10 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
 
   return phiBar;
 
-} // stormLsqrSolver::Init
+} // stormLsqrSolver::init
 
 template<class tInArray, class tOutArray>
-stormReal_t stormLsqrSolver<tInArray, tOutArray>::Iterate(
+stormReal_t stormLsqrSolver<tInArray, tOutArray>::iterate(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -251,10 +251,10 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Iterate(
 
   return phiBar;
 
-} // stormLsqrSolver::Iterate
+} // stormLsqrSolver::iterate
 
 template<class tInArray, class tOutArray>
-void stormLsqrSolver<tInArray, tOutArray>::Finalize(
+void stormLsqrSolver<tInArray, tOutArray>::finalize(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -265,13 +265,13 @@ void stormLsqrSolver<tInArray, tOutArray>::Finalize(
   // 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (pre_op != nullptr) {
-    pre_op->MatVec(tArr, zArr);
+    pre_op->mul(tArr, zArr);
     stormBlas::Add(xArr, xArr, tArr);
   } else {
     stormBlas::Add(xArr, xArr, zArr);
   }
 
-} // stormLsqrSolver::Finalize
+} // stormLsqrSolver::finalize
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Solve a right preconditioned linear least squares problem 
@@ -316,14 +316,14 @@ private:
                       stormOperator<tInArray, tOutArray> const& lin_op,
                       stormPreconditioner<tInArray> const* pre_op) override;
 
-  void Finalize(tInArray& xArr, tOutArray const& bArr,
+  void finalize(tInArray& xArr, tOutArray const& bArr,
                 stormOperator<tInArray, tOutArray> const& lin_op,
                 stormPreconditioner<tInArray> const* pre_op) override;
 
 }; // class stormLsmrSolver
 
 template<class tInArray, class tOutArray>
-stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
+stormReal_t stormLsmrSolver<tInArray, tOutArray>::init(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -341,7 +341,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
-  lin_op.MatVec(rArr, xArr);
+  lin_op.mul(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
   stormBlas::Fill(zArr, 0.0);
 
@@ -367,10 +367,10 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
 
   return std::abs(psiBar);
 
-} // stormLsmrSolver::Init
+} // stormLsmrSolver::init
 
 template<class tInArray, class tOutArray>
-stormReal_t stormLsmrSolver<tInArray, tOutArray>::Iterate(
+stormReal_t stormLsmrSolver<tInArray, tOutArray>::iterate(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -410,10 +410,10 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Iterate(
 
   return std::abs(psiBar);
 
-} // stormLsmrSolver::Iterate
+} // stormLsmrSolver::iterate
 
 template<class tInArray, class tOutArray>
-void stormLsmrSolver<tInArray, tOutArray>::Finalize(
+void stormLsmrSolver<tInArray, tOutArray>::finalize(
     tInArray& xArr, tOutArray const& bArr,
     stormOperator<tInArray, tOutArray> const& lin_op,
     stormPreconditioner<tInArray> const* pre_op) {
@@ -424,13 +424,13 @@ void stormLsmrSolver<tInArray, tOutArray>::Finalize(
   // 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (pre_op != nullptr) {
-    pre_op->MatVec(tArr, zArr);
+    pre_op->mul(tArr, zArr);
     stormBlas::Add(xArr, xArr, tArr);
   } else {
     stormBlas::Add(xArr, xArr, zArr);
   }
 
-} // stormLsmrSolver::Finalize
+} // stormLsmrSolver::finalize
 
 #endif // ifndef _STORM_SOLVER_LSQR_HXX_
 #endif

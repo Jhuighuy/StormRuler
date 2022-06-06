@@ -51,31 +51,31 @@ public:
 private:
 
   real_t theta_, delta_;
-  mutable Vector rVec_, pVec_;
+  mutable Vector r_vec_, p_vec_;
   Operator<Vector> const* LinOp_;
 
-  void Build(Vector const& xVec, Vector const& bVec,
-             Operator<Vector> const& linOp) override;
+  void Build(Vector const& x_vec, Vector const& b_vec,
+             Operator<Vector> const& lin_op) override;
 
-  void MatVec(Vector& yVec, Vector const& xVec) const override;
+  void MatVec(Vector& y_vec, Vector const& x_vec) const override;
 
-  void ConjMatVec(Vector& xVec, Vector const& yVec) const override {
-    MatVec(xVec, yVec);
+  void ConjMatVec(Vector& x_vec, Vector const& y_vec) const override {
+    MatVec(x_vec, y_vec);
   }
 
 }; // class ChebyshevPreconditioner
 
 template<VectorLike Vector>
-void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
-                                            Vector const& bVec,
-                                            Operator<Vector> const& linOp) {
-  rVec_.Assign(xVec, false);
-  pVec_.Assign(xVec, false);
-  this->LinOp_ = &linOp;
+void ChebyshevPreconditioner<Vector>::Build(Vector const& x_vec,
+                                            Vector const& b_vec,
+                                            Operator<Vector> const& lin_op) {
+  r_vec_.assign(x_vec, false);
+  p_vec_.assign(x_vec, false);
+  this->LinOp_ = &lin_op;
 
   // PowerIterations<Vector> powerIterations;
   // real_t const beta =
-  //   powerIterations.EstimateLargestEigenvalue(pVec_, linOp);
+  //   powerIterations.EstimateLargestEigenvalue(p_vec_, lin_op);
   // real_t const alpha = 0.01*beta;
 
   /// @todo: Estimate the true eigenvalue bounds!
@@ -94,8 +94,8 @@ void ChebyshevPreconditioner<Vector>::Build(Vector const& xVec,
 } // ChebyshevPreconditioner::Build
 
 template<VectorLike Vector>
-void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
-                                             Vector const& xVec) const {
+void ChebyshevPreconditioner<Vector>::MatVec(Vector& y_vec,
+                                             Vector const& x_vec) const {
   // Initialize the solution:
   // ----------------------
   // 𝛼 ← 𝟤/𝜃,
@@ -103,8 +103,8 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
   // 𝒚 ← 𝒑.
   // ----------------------
   real_t alpha{2.0 / theta_};
-  pVec_ <<= xVec / theta_;
-  yVec <<= pVec_;
+  p_vec_ <<= x_vec / theta_;
+  y_vec <<= p_vec_;
 
   for (size_t k = 0; k < Degree; ++k) {
     // Compute the residual and update the solution:
@@ -117,9 +117,9 @@ void ChebyshevPreconditioner<Vector>::MatVec(Vector& yVec,
     // ----------------------
     alpha = 1.0 / (theta_ - 0.25 * alpha * std::pow(delta_, 2));
     real_t const beta = alpha * theta_ - 1.0;
-    LinOp_->Residual(rVec_, xVec, yVec);
-    pVec_ <<= alpha * rVec_ + beta * pVec_;
-    yVec += pVec_;
+    LinOp_->Residual(r_vec_, x_vec, y_vec);
+    p_vec_ <<= alpha * r_vec_ + beta * p_vec_;
+    y_vec += p_vec_;
   }
 
 } // ChebyshevPreconditioner::MatVec

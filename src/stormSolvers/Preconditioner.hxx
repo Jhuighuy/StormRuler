@@ -74,11 +74,11 @@ public:
 
   /// @brief Build the preconditioner.
   ///
-  /// @param xVec Solution vector, 𝒙.
-  /// @param bVec Right-hand-side vector, 𝒃.
-  /// @param anyOp Operator to build the preconditioner upon.
-  virtual void Build(Vector const& xVec, Vector const& bVec,
-                     Operator<Vector> const& anyOp) {}
+  /// @param x_vec Solution vector, 𝒙.
+  /// @param b_vec Right-hand-side vector, 𝒃.
+  /// @param any_op Operator to build the preconditioner upon.
+  virtual void Build(Vector const& x_vec, Vector const& b_vec,
+                     Operator<Vector> const& any_op) {}
 
 }; // class Preconditioner
 
@@ -90,14 +90,14 @@ template<VectorLike Vector>
 class IdentityPreconditioner final : public Preconditioner<Vector> {
 private:
 
-  void MatVec(Vector& yVec, Vector const& xVec) const override {
+  void MatVec(Vector& y_vec, Vector const& x_vec) const override {
     std::clog << "IdentityPreconditioner::MatVec called" << std::endl;
-    yVec <<= xVec;
+    y_vec <<= x_vec;
   }
 
-  void ConjMatVec(Vector& xVec, Vector const& yVec) const override {
+  void ConjMatVec(Vector& x_vec, Vector const& y_vec) const override {
     std::clog << "IdentityPreconditioner::ConjMatVec called" << std::endl;
-    xVec <<= yVec;
+    x_vec <<= y_vec;
   }
 
 }; // class IdentityPreconditioner

@@ -59,27 +59,27 @@ template<VectorLike Vector>
 class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& anyOp,
-              Preconditioner<Vector> const* preOp) override final;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& any_op,
+              Preconditioner<Vector> const* pre_op) override final;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& anyOp,
-                 Preconditioner<Vector> const* preOp) override final;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& any_op,
+                 Preconditioner<Vector> const* pre_op) override final;
 
 }; // class NewtonSolver
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                                  Operator<Vector> const& anyOp,
-                                  Preconditioner<Vector> const* preOp) {
+real_t NewtonSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                                  Operator<Vector> const& any_op,
+                                  Preconditioner<Vector> const* pre_op) {
   StormEnsure(!"Newton solver was not implemented yet.");
 } // NewtonSolver::Init
 
 template<VectorLike Vector>
-real_t NewtonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                     Operator<Vector> const& anyOp,
-                                     Preconditioner<Vector> const* preOp) {
+real_t NewtonSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                     Operator<Vector> const& any_op,
+                                     Preconditioner<Vector> const* pre_op) {
   StormEnsure(!"Newton solver was not implemented yet.");
 } // NewtonSolver::Iterate
 
@@ -117,43 +117,43 @@ template<VectorLike Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
-  Vector sVec_, tVec_, rVec_, wVec_;
+  Vector s_vec_, t_vec_, r_vec_, w_vec_;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& anyOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& any_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& anyOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& any_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 }; // class JfnkSolver
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                                Operator<Vector> const& anyOp,
-                                Preconditioner<Vector> const* preOp) {
-  sVec_.Assign(xVec, false);
-  tVec_.Assign(xVec, false);
-  rVec_.Assign(xVec, false);
-  wVec_.Assign(xVec, false);
+real_t JfnkSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                                Operator<Vector> const& any_op,
+                                Preconditioner<Vector> const* pre_op) {
+  s_vec_.assign(x_vec, false);
+  t_vec_.assign(x_vec, false);
+  r_vec_.assign(x_vec, false);
+  w_vec_.assign(x_vec, false);
 
   // Initialize:
   // ----------------------
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  anyOp.MatVec(wVec_, xVec);
-  rVec_ <<= bVec - wVec_;
+  any_op.MatVec(w_vec_, x_vec);
+  r_vec_ <<= b_vec - w_vec_;
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // JfnkSolver::Init
 
 template<VectorLike Vector>
-real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                   Operator<Vector> const& anyOp,
-                                   Preconditioner<Vector> const* preOp) {
+real_t JfnkSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                   Operator<Vector> const& any_op,
+                                   Preconditioner<Vector> const* pre_op) {
   // Solve the Jacobian equation:
   // ----------------------
   // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
@@ -162,13 +162,13 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   static real_t const sqrtOfEpsilon{
       std::sqrt(std::numeric_limits<real_t>::epsilon())};
-  real_t const mu{sqrtOfEpsilon * std::sqrt(1.0 + Blas::Norm2(xVec))};
-  tVec_ <<= rVec_;
+  real_t const mu{sqrtOfEpsilon * std::sqrt(1.0 + Blas::Norm2(x_vec))};
+  t_vec_ <<= r_vec_;
   {
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
     solver->AbsoluteTolerance = 1.0e-8;
     solver->RelativeTolerance = 1.0e-8;
-    auto op = MakeOperator<Vector>([&](Vector& zVec, Vector const& yVec) {
+    auto op = MakeOperator<Vector>([&](Vector& z_vec, Vector const& y_vec) {
       // Compute the Jacobian-vector product:
       // ----------------------
       // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
@@ -176,13 +176,13 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
       // 𝒛 ← 𝓐(𝒔),
       // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
       // ----------------------
-      real_t const delta{Utils::SafeDivide(mu, Blas::Norm2(yVec))};
-      sVec_ <<= xVec + delta * yVec;
-      anyOp.MatVec(zVec, sVec_);
+      real_t const delta{Utils::SafeDivide(mu, Blas::Norm2(y_vec))};
+      s_vec_ <<= x_vec + delta * y_vec;
+      any_op.MatVec(z_vec, s_vec_);
       real_t const deltaInverse{Utils::SafeDivide(1.0, delta)};
-      zVec <<= deltaInverse * (zVec - wVec_);
+      z_vec <<= deltaInverse * (z_vec - w_vec_);
     });
-    solver->Solve(tVec_, rVec_, *op);
+    solver->Solve(t_vec_, r_vec_, *op);
   }
 
   // Update the solution and the residual:
@@ -191,11 +191,11 @@ real_t JfnkSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒘 ← 𝓐(𝒙),
   // 𝒓 ← 𝒃 - 𝒘.
   // ----------------------
-  xVec += tVec_;
-  anyOp.MatVec(wVec_, xVec);
-  rVec_ <<= bVec - wVec_;
+  x_vec += t_vec_;
+  any_op.MatVec(w_vec_, x_vec);
+  r_vec_ <<= b_vec - w_vec_;
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // JfnkSolver::Iterate
 

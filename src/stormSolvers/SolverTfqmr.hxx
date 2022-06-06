@@ -42,15 +42,15 @@ class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
 private:
 
   real_t rho_, tau_;
-  Vector dVec_, rTildeVec_, uVec_, vVec_, yVec_, sVec_, zVec_;
+  Vector d_vec_, rTildeVec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& lin_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 protected:
 
@@ -111,20 +111,20 @@ template<VectorLike Vector>
 class Tfqmr1Solver final : public BaseTfqmrSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
-real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
-                                          Vector const& bVec,
-                                          Operator<Vector> const& linOp,
-                                          Preconditioner<Vector> const* preOp) {
-  bool const leftPre{(preOp != nullptr) &&
+real_t
+BaseTfqmrSolver_<Vector, L1>::Init(Vector const& x_vec, Vector const& b_vec,
+                                   Operator<Vector> const& lin_op,
+                                   Preconditioner<Vector> const* pre_op) {
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
-  dVec_.Assign(xVec, false);
-  rTildeVec_.Assign(xVec, false);
-  uVec_.Assign(xVec, false);
-  vVec_.Assign(xVec, false);
-  yVec_.Assign(xVec, false);
-  sVec_.Assign(xVec, false);
-  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
+  d_vec_.assign(x_vec, false);
+  rTildeVec_.assign(x_vec, false);
+  u_vec_.assign(x_vec, false);
+  v_vec_.assign(x_vec, false);
+  y_vec_.assign(x_vec, false);
+  s_vec_.assign(x_vec, false);
+  if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
   // Initialize:
   // ----------------------
@@ -143,18 +143,18 @@ real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
   // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
   // ----------------------
   if constexpr (L1) {
-    dVec_ <<= xVec;
+    d_vec_ <<= x_vec;
   } else {
-    Blas::Fill(dVec_, 0.0);
+    Blas::Fill(d_vec_, 0.0);
   }
-  linOp.Residual(yVec_, bVec, xVec);
+  lin_op.Residual(y_vec_, b_vec, x_vec);
   if (leftPre) {
-    std::swap(zVec_, yVec_);
-    preOp->MatVec(yVec_, zVec_);
+    std::swap(z_vec_, y_vec_);
+    pre_op->MatVec(y_vec_, z_vec_);
   }
-  uVec_ <<= yVec_;
-  rTildeVec_ <<= uVec_;
-  rho_ = Blas::Dot(rTildeVec_, uVec_), tau_ = std::sqrt(rho_);
+  u_vec_ <<= y_vec_;
+  rTildeVec_ <<= u_vec_;
+  rho_ = Blas::Dot(rTildeVec_, u_vec_), tau_ = std::sqrt(rho_);
 
   return tau_;
 
@@ -162,12 +162,12 @@ real_t BaseTfqmrSolver_<Vector, L1>::Init(Vector const& xVec,
 
 template<VectorLike Vector, bool L1>
 real_t
-BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
-                                      Operator<Vector> const& linOp,
-                                      Preconditioner<Vector> const* preOp) {
-  bool const leftPre{(preOp != nullptr) &&
+BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                      Operator<Vector> const& lin_op,
+                                      Preconditioner<Vector> const* pre_op) {
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(preOp != nullptr) &&
+  bool const rightPre{(pre_op != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
   // Continue the iterations:
@@ -200,26 +200,26 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     if (leftPre) {
-      preOp->MatVec(sVec_, zVec_, linOp, yVec_);
+      pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
     } else if (rightPre) {
-      linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
+      lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
     } else {
-      linOp.MatVec(sVec_, yVec_);
+      lin_op.MatVec(s_vec_, y_vec_);
     }
-    vVec_ <<= sVec_;
+    v_vec_ <<= s_vec_;
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, uVec_))};
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, u_vec_))};
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
-    vVec_ <<= sVec_ + beta * vVec_;
-    yVec_ <<= uVec_ + beta * yVec_;
+    v_vec_ <<= s_vec_ + beta * v_vec_;
+    y_vec_ <<= u_vec_ + beta * y_vec_;
     if (leftPre) {
-      preOp->MatVec(sVec_, zVec_, linOp, yVec_);
+      pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
     } else if (rightPre) {
-      linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
+      lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
     } else {
-      linOp.MatVec(sVec_, yVec_);
+      lin_op.MatVec(s_vec_, y_vec_);
     }
-    vVec_ <<= sVec_ + beta * vVec_;
+    v_vec_ <<= s_vec_ + beta * v_vec_;
   }
 
   // Update the solution:
@@ -251,27 +251,27 @@ BaseTfqmrSolver_<Vector, L1>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_))};
+  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
-    uVec_ -= alpha * sVec_;
-    dVec_ += alpha * (rightPre ? zVec_ : yVec_);
-    real_t const omega{Blas::Norm2(uVec_)};
+    u_vec_ -= alpha * s_vec_;
+    d_vec_ += alpha * (rightPre ? z_vec_ : y_vec_);
+    real_t const omega{Blas::Norm2(u_vec_)};
     if constexpr (L1) {
-      if (omega < tau_) { tau_ = omega, xVec <<= dVec_; }
+      if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {
       auto const [cs, sn, rr] = Utils::SymOrtho(tau_, omega);
       tau_ = omega * cs;
-      xVec += std::pow(cs, 2) * dVec_;
-      dVec_ *= std::pow(sn, 2);
+      x_vec += std::pow(cs, 2) * d_vec_;
+      d_vec_ *= std::pow(sn, 2);
     }
     if (m == 0) {
-      yVec_ -= alpha * vVec_;
+      y_vec_ -= alpha * v_vec_;
       if (leftPre) {
-        preOp->MatVec(sVec_, zVec_, linOp, yVec_);
+        pre_op->MatVec(s_vec_, z_vec_, lin_op, y_vec_);
       } else if (rightPre) {
-        linOp.MatVec(sVec_, zVec_, *preOp, yVec_);
+        lin_op.MatVec(s_vec_, z_vec_, *pre_op, y_vec_);
       } else {
-        linOp.MatVec(sVec_, yVec_);
+        lin_op.MatVec(s_vec_, y_vec_);
       }
     }
   }

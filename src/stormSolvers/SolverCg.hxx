@@ -53,25 +53,25 @@ class CgSolver final : public IterativeSolver<Vector> {
 private:
 
   real_t gamma_;
-  Vector pVec_, rVec_, zVec_;
+  Vector p_vec_, r_vec_, z_vec_;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& lin_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 }; // class CgSolver
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                              Operator<Vector> const& linOp,
-                              Preconditioner<Vector> const* preOp) {
-  pVec_.Assign(xVec, false);
-  rVec_.Assign(xVec, false);
-  zVec_.Assign(xVec, false);
+real_t CgSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                              Operator<Vector> const& lin_op,
+                              Preconditioner<Vector> const* pre_op) {
+  p_vec_.assign(x_vec, false);
+  r_vec_.assign(x_vec, false);
+  z_vec_.assign(x_vec, false);
 
   // Initialize:
   // ----------------------
@@ -85,24 +85,24 @@ real_t CgSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   //   𝛾 ← <𝒓⋅𝒓>.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  linOp.Residual(rVec_, bVec, xVec);
-  if (preOp != nullptr) {
-    preOp->MatVec(zVec_, rVec_);
-    pVec_ <<= zVec_;
-    gamma_ = Blas::Dot(rVec_, zVec_);
+  lin_op.Residual(r_vec_, b_vec, x_vec);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(z_vec_, r_vec_);
+    p_vec_ <<= z_vec_;
+    gamma_ = Blas::Dot(r_vec_, z_vec_);
   } else {
-    pVec_ <<= rVec_;
-    gamma_ = Blas::Dot(rVec_, rVec_);
+    p_vec_ <<= r_vec_;
+    gamma_ = Blas::Dot(r_vec_, r_vec_);
   }
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
+  return (pre_op != nullptr) ? Blas::Norm2(r_vec_) : std::sqrt(gamma_);
 
 } // CgSolver::Init
 
 template<VectorLike Vector>
-real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                 Operator<Vector> const& linOp,
-                                 Preconditioner<Vector> const* preOp) {
+real_t CgSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                 Operator<Vector> const& lin_op,
+                                 Preconditioner<Vector> const* pre_op) {
   // Iterate:
   // ----------------------
   // 𝒛 ← 𝓐𝒑,
@@ -110,10 +110,10 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
-  linOp.MatVec(zVec_, pVec_);
-  real_t const alpha{Utils::SafeDivide(gamma_, Blas::Dot(pVec_, zVec_))};
-  xVec += alpha * pVec_;
-  rVec_ -= alpha * zVec_;
+  lin_op.MatVec(z_vec_, p_vec_);
+  real_t const alpha{Utils::SafeDivide(gamma_, Blas::Dot(p_vec_, z_vec_))};
+  x_vec += alpha * p_vec_;
+  r_vec_ -= alpha * z_vec_;
 
   // ----------------------
   // 𝛾̅ ← 𝛾,
@@ -125,11 +125,11 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   real_t const gammaBar{gamma_};
-  if (preOp != nullptr) {
-    preOp->MatVec(zVec_, rVec_);
-    gamma_ = Blas::Dot(rVec_, zVec_);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(z_vec_, r_vec_);
+    gamma_ = Blas::Dot(r_vec_, z_vec_);
   } else {
-    gamma_ = Blas::Dot(rVec_, rVec_);
+    gamma_ = Blas::Dot(r_vec_, r_vec_);
   }
 
   // ----------------------
@@ -137,9 +137,9 @@ real_t CgSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
   real_t const beta = Utils::SafeDivide(gamma_, gammaBar);
-  pVec_ <<= (preOp != nullptr ? zVec_ : rVec_) + beta * pVec_;
+  p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
 
-  return (preOp != nullptr) ? Blas::Norm2(rVec_) : std::sqrt(gamma_);
+  return (pre_op != nullptr) ? Blas::Norm2(r_vec_) : std::sqrt(gamma_);
 
 } // CgSolver::Iterate
 

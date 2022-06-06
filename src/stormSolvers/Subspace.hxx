@@ -48,17 +48,17 @@ public:
 
   /// @brief Assign a vector to the each of the subspace vectors.
   /// @{
-  void Assign(Vector const& like,
+  void assign(Vector const& like,
               bool copy) requires(Extent != std::dynamic_extent) {
     for (Vector& vector : Vectors_) {
-      vector.Assign(like, copy);
+      vector.assign(like, copy);
     }
   }
-  void Assign(size_t size, Vector const& like,
+  void assign(size_t size, Vector const& like,
               bool copy) requires(Extent == std::dynamic_extent) {
     Vectors_.resize(size);
     for (Vector& vector : Vectors_) {
-      vector.Assign(like, copy);
+      vector.assign(like, copy);
     }
   }
   /// @}

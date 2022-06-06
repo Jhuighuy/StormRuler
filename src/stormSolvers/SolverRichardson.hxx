@@ -49,24 +49,24 @@ public:
 
 private:
 
-  Vector rVec_, zVec_;
+  Vector r_vec_, z_vec_;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& lin_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 }; // class RichardsonSolver
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                                      Operator<Vector> const& linOp,
-                                      Preconditioner<Vector> const* preOp) {
-  rVec_.Assign(xVec, false);
-  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
+real_t RichardsonSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                                      Operator<Vector> const& lin_op,
+                                      Preconditioner<Vector> const* pre_op) {
+  r_vec_.assign(x_vec, false);
+  if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
   // Initialize:
   // ----------------------
@@ -76,20 +76,20 @@ real_t RichardsonSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  linOp.Residual(rVec_, bVec, xVec);
-  if (preOp != nullptr) {
-    std::swap(zVec_, rVec_);
-    preOp->MatVec(rVec_, zVec_);
+  lin_op.Residual(r_vec_, b_vec, x_vec);
+  if (pre_op != nullptr) {
+    std::swap(z_vec_, r_vec_);
+    pre_op->MatVec(r_vec_, z_vec_);
   }
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // RichardsonSolver::Init
 
 template<VectorLike Vector>
-real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                         Operator<Vector> const& linOp,
-                                         Preconditioner<Vector> const* preOp) {
+real_t RichardsonSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                         Operator<Vector> const& lin_op,
+                                         Preconditioner<Vector> const* pre_op) {
   real_t const& omega{RelaxationFactor};
 
   // Update the solution and the residual:
@@ -101,14 +101,14 @@ real_t RichardsonSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   //   𝒓 ← 𝓟𝒛.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  xVec += omega * rVec_;
-  linOp.Residual(rVec_, bVec, xVec);
-  if (preOp != nullptr) {
-    std::swap(zVec_, rVec_);
-    preOp->MatVec(rVec_, zVec_);
+  x_vec += omega * r_vec_;
+  lin_op.Residual(r_vec_, b_vec, x_vec);
+  if (pre_op != nullptr) {
+    std::swap(z_vec_, r_vec_);
+    pre_op->MatVec(r_vec_, z_vec_);
   }
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // RichardsonSolver::Iterate
 

@@ -55,31 +55,31 @@ class CgsSolver final : public IterativeSolver<Vector> {
 private:
 
   real_t rho_;
-  Vector pVec_, qVec_, rVec_, rTildeVec_, uVec_, vVec_;
+  Vector p_vec_, q_vec_, r_vec_, rTildeVec_, u_vec_, v_vec_;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& lin_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 }; // class CgsSolver
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                               Operator<Vector> const& linOp,
-                               Preconditioner<Vector> const* preOp) {
-  bool const leftPre{(preOp != nullptr) &&
+real_t CgsSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                               Operator<Vector> const& lin_op,
+                               Preconditioner<Vector> const* pre_op) {
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
-  pVec_.Assign(xVec, false);
-  qVec_.Assign(xVec, false);
-  rVec_.Assign(xVec, false);
-  rTildeVec_.Assign(xVec, false);
-  uVec_.Assign(xVec, false);
-  vVec_.Assign(xVec, false);
+  p_vec_.assign(x_vec, false);
+  q_vec_.assign(x_vec, false);
+  r_vec_.assign(x_vec, false);
+  rTildeVec_.assign(x_vec, false);
+  u_vec_.assign(x_vec, false);
+  v_vec_.assign(x_vec, false);
 
   // Initialize:
   // ----------------------
@@ -91,25 +91,25 @@ real_t CgsSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // 𝒓̃ ← 𝒓,
   // 𝜌 ← <𝒓̃⋅𝒓>.
   // ----------------------
-  linOp.Residual(rVec_, bVec, xVec);
+  lin_op.Residual(r_vec_, b_vec, x_vec);
   if (leftPre) {
-    std::swap(uVec_, rVec_);
-    preOp->MatVec(rVec_, uVec_);
+    std::swap(u_vec_, r_vec_);
+    pre_op->MatVec(r_vec_, u_vec_);
   }
-  rTildeVec_ <<= rVec_;
-  rho_ = Blas::Dot(rTildeVec_, rVec_);
+  rTildeVec_ <<= r_vec_;
+  rho_ = Blas::Dot(rTildeVec_, r_vec_);
 
   return std::sqrt(rho_);
 
 } // CgsSolver::Init
 
 template<VectorLike Vector>
-real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                  Operator<Vector> const& linOp,
-                                  Preconditioner<Vector> const* preOp) {
-  bool const leftPre{(preOp != nullptr) &&
+real_t CgsSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                  Operator<Vector> const& lin_op,
+                                  Preconditioner<Vector> const* pre_op) {
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(preOp != nullptr) &&
+  bool const rightPre{(pre_op != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
   // Continue the iterations:
@@ -127,13 +127,13 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
-    uVec_ <<= rVec_;
-    pVec_ <<= uVec_;
+    u_vec_ <<= r_vec_;
+    p_vec_ <<= u_vec_;
   } else {
-    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, rVec_))};
+    real_t const rhoBar{std::exchange(rho_, Blas::Dot(rTildeVec_, r_vec_))};
     real_t const beta{Utils::SafeDivide(rho_, rhoBar)};
-    uVec_ <<= rVec_ + beta * qVec_;
-    pVec_ <<= uVec_ + beta * (qVec_ + beta * pVec_);
+    u_vec_ <<= r_vec_ + beta * q_vec_;
+    p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
 
   // ----------------------
@@ -149,15 +149,15 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒗 ← 𝒖 + 𝒒.
   // ----------------------
   if (leftPre) {
-    preOp->MatVec(vVec_, qVec_, linOp, pVec_);
+    pre_op->MatVec(v_vec_, q_vec_, lin_op, p_vec_);
   } else if (rightPre) {
-    linOp.MatVec(vVec_, qVec_, *preOp, pVec_);
+    lin_op.MatVec(v_vec_, q_vec_, *pre_op, p_vec_);
   } else {
-    linOp.MatVec(vVec_, pVec_);
+    lin_op.MatVec(v_vec_, p_vec_);
   }
-  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, vVec_))};
-  qVec_ <<= uVec_ - alpha * vVec_;
-  vVec_ <<= uVec_ + qVec_;
+  real_t const alpha{Utils::SafeDivide(rho_, Blas::Dot(rTildeVec_, v_vec_))};
+  q_vec_ <<= u_vec_ - alpha * v_vec_;
+  v_vec_ <<= u_vec_ + q_vec_;
 
   // Update the solution and the residual:
   // ----------------------
@@ -176,20 +176,20 @@ real_t CgsSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (leftPre) {
-    xVec += alpha * vVec_;
-    preOp->MatVec(vVec_, uVec_, linOp, vVec_);
-    rVec_ -= alpha * vVec_;
+    x_vec += alpha * v_vec_;
+    pre_op->MatVec(v_vec_, u_vec_, lin_op, v_vec_);
+    r_vec_ -= alpha * v_vec_;
   } else if (rightPre) {
-    linOp.MatVec(vVec_, uVec_, *preOp, vVec_);
-    xVec += alpha * uVec_;
-    rVec_ -= alpha * vVec_;
+    lin_op.MatVec(v_vec_, u_vec_, *pre_op, v_vec_);
+    x_vec += alpha * u_vec_;
+    r_vec_ -= alpha * v_vec_;
   } else {
-    linOp.MatVec(uVec_, vVec_);
-    xVec += alpha * vVec_;
-    rVec_ -= alpha * uVec_;
+    lin_op.MatVec(u_vec_, v_vec_);
+    x_vec += alpha * v_vec_;
+    r_vec_ -= alpha * u_vec_;
   }
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // CgsSolver::Iterate
 

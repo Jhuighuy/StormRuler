@@ -58,20 +58,20 @@ private:
   real_t omega_;
   stormVector<real_t> phi_, gamma_;
   stormMatrix<real_t> mu_;
-  Vector rVec_, vVec_, zVec_;
-  Subspace<Vector> pVecs_, uVecs_, gVecs_;
+  Vector r_vec_, v_vec_, z_vec_;
+  Subspace<Vector> p_vecs_, u_vecs_, g_vecs_;
 
-  real_t OuterInit(Vector const& xVec, Vector const& bVec,
-                   Operator<Vector> const& linOp,
-                   Preconditioner<Vector> const* preOp) override;
+  real_t OuterInit(Vector const& x_vec, Vector const& b_vec,
+                   Operator<Vector> const& lin_op,
+                   Preconditioner<Vector> const* pre_op) override;
 
-  void InnerInit(Vector const& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  void InnerInit(Vector const& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
-  real_t InnerIterate(Vector& xVec, Vector const& bVec,
-                      Operator<Vector> const& linOp,
-                      Preconditioner<Vector> const* preOp) override;
+  real_t InnerIterate(Vector& x_vec, Vector const& b_vec,
+                      Operator<Vector> const& lin_op,
+                      Preconditioner<Vector> const* pre_op) override;
 
 public:
 
@@ -82,25 +82,25 @@ public:
 }; // class IdrsSolver
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
-                                     Operator<Vector> const& linOp,
-                                     Preconditioner<Vector> const* preOp) {
+real_t IdrsSolver<Vector>::OuterInit(Vector const& x_vec, Vector const& b_vec,
+                                     Operator<Vector> const& lin_op,
+                                     Preconditioner<Vector> const* pre_op) {
   size_t const s{this->NumInnerIterations};
 
-  bool const leftPre{(preOp != nullptr) &&
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
 
-  phi_.Assign(s);
-  gamma_.Assign(s);
-  mu_.Assign(s, s);
+  phi_.assign(s);
+  gamma_.assign(s);
+  mu_.assign(s, s);
 
-  rVec_.Assign(xVec, false);
-  vVec_.Assign(xVec, false);
-  if (preOp != nullptr) { zVec_.Assign(xVec, false); }
+  r_vec_.assign(x_vec, false);
+  v_vec_.assign(x_vec, false);
+  if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
-  pVecs_.Assign(s, xVec, false);
-  uVecs_.Assign(s, xVec, false);
-  gVecs_.Assign(s, xVec, false);
+  p_vecs_.assign(s, x_vec, false);
+  u_vecs_.assign(s, x_vec, false);
+  g_vecs_.assign(s, x_vec, false);
 
   // Initialize:
   // ----------------------
@@ -111,21 +111,21 @@ real_t IdrsSolver<Vector>::OuterInit(Vector const& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // 𝜑₀ ← ‖𝒓‖.
   // ----------------------
-  linOp.Residual(rVec_, bVec, xVec);
+  lin_op.Residual(r_vec_, b_vec, x_vec);
   if (leftPre) {
-    std::swap(zVec_, rVec_);
-    preOp->MatVec(rVec_, zVec_);
+    std::swap(z_vec_, r_vec_);
+    pre_op->MatVec(r_vec_, z_vec_);
   }
-  phi_(0) = Blas::Norm2(rVec_);
+  phi_(0) = Blas::Norm2(r_vec_);
 
   return phi_(0);
 
 } // IdrsSolver::OuterInit
 
 template<VectorLike Vector>
-void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
-                                   Operator<Vector> const& linOp,
-                                   Preconditioner<Vector> const* preOp) {
+void IdrsSolver<Vector>::InnerInit(Vector const& x_vec, Vector const& b_vec,
+                                   Operator<Vector> const& lin_op,
+                                   Preconditioner<Vector> const* pre_op) {
   size_t const s{this->NumInnerIterations};
 
   // Build shadow space and initialize 𝜑:
@@ -151,34 +151,34 @@ void IdrsSolver<Vector>::InnerInit(Vector const& xVec, Vector const& bVec,
   bool const firstIteration{this->Iteration == 0};
   if (firstIteration) {
     omega_ = mu_(0, 0) = 1.0;
-    pVecs_(0) <<= rVec_ / phi_(0);
+    p_vecs_(0) <<= r_vec_ / phi_(0);
     for (size_t i{1}; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      Blas::RandFill(pVecs_(i));
+      Blas::RandFill(p_vecs_(i));
       for (size_t j{0}; j < i; ++j) {
         mu_(i, j) = 0.0;
-        pVecs_(i) -= Blas::Dot(pVecs_(i), pVecs_(j)) * pVecs_(j);
+        p_vecs_(i) -= Blas::Dot(p_vecs_(i), p_vecs_(j)) * p_vecs_(j);
       }
-      pVecs_(i) /= Blas::Norm2(pVecs_(i));
+      p_vecs_(i) /= Blas::Norm2(p_vecs_(i));
     }
   } else {
     for (size_t i{0}; i < s; ++i) {
-      phi_(i) = Blas::Dot(pVecs_(i), rVec_);
+      phi_(i) = Blas::Dot(p_vecs_(i), r_vec_);
     }
   }
 
 } // IdrsSolver::InnerInit
 
 template<VectorLike Vector>
-real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
-                                        Operator<Vector> const& linOp,
-                                        Preconditioner<Vector> const* preOp) {
+real_t IdrsSolver<Vector>::InnerIterate(Vector& x_vec, Vector const& b_vec,
+                                        Operator<Vector> const& lin_op,
+                                        Preconditioner<Vector> const* pre_op) {
   size_t const s{this->NumInnerIterations};
   size_t const k{this->InnerIteration};
 
-  bool const leftPre{(preOp != nullptr) &&
+  bool const leftPre{(pre_op != nullptr) &&
                      (this->PreSide == PreconditionerSide::Left)};
-  bool const rightPre{(preOp != nullptr) &&
+  bool const rightPre{(pre_op != nullptr) &&
                       (this->PreSide == PreconditionerSide::Right)};
 
   // Compute 𝛾:
@@ -213,22 +213,22 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   //   𝒈ₖ ← 𝓐𝒖ₖ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  vVec_ <<= rVec_ - gamma_(k) * gVecs_(k);
+  v_vec_ <<= r_vec_ - gamma_(k) * g_vecs_(k);
   for (size_t i{k + 1}; i < s; ++i) {
-    vVec_ -= gamma_(i) * gVecs_(i);
+    v_vec_ -= gamma_(i) * g_vecs_(i);
   }
   if (rightPre) {
-    std::swap(zVec_, vVec_);
-    preOp->MatVec(vVec_, zVec_);
+    std::swap(z_vec_, v_vec_);
+    pre_op->MatVec(v_vec_, z_vec_);
   }
-  uVecs_(k) <<= omega_ * vVec_ + gamma_(k) * uVecs_(k);
+  u_vecs_(k) <<= omega_ * v_vec_ + gamma_(k) * u_vecs_(k);
   for (size_t i{k + 1}; i < s; ++i) {
-    uVecs_(k) += gamma_(i) * uVecs_(i);
+    u_vecs_(k) += gamma_(i) * u_vecs_(i);
   }
   if (leftPre) {
-    preOp->MatVec(gVecs_(k), zVec_, linOp, uVecs_(k));
+    pre_op->MatVec(g_vecs_(k), z_vec_, lin_op, u_vecs_(k));
   } else {
-    linOp.MatVec(gVecs_(k), uVecs_(k));
+    lin_op.MatVec(g_vecs_(k), u_vecs_(k));
   }
 
   // Biorthogonalize the new vectors 𝒈ₖ and 𝒖ₖ:
@@ -241,9 +241,9 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   // ----------------------
   for (size_t i{0}; i < k; ++i) {
     real_t const alpha{
-        Utils::SafeDivide(Blas::Dot(pVecs_(i), gVecs_(k)), mu_(i, i))};
-    uVecs_(k) -= alpha * uVecs_(i);
-    gVecs_(k) -= alpha * gVecs_(i);
+        Utils::SafeDivide(Blas::Dot(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
+    u_vecs_(k) -= alpha * u_vecs_(i);
+    g_vecs_(k) -= alpha * g_vecs_(i);
   }
 
   // Compute the new column of 𝜇:
@@ -253,7 +253,7 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (size_t i{k}; i < s; ++i) {
-    mu_(i, k) = Blas::Dot(pVecs_(i), gVecs_(k));
+    mu_(i, k) = Blas::Dot(p_vecs_(i), g_vecs_(k));
   }
 
   // Update the solution and the residual:
@@ -263,8 +263,8 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
   real_t const beta{Utils::SafeDivide(phi_(k), mu_(k, k))};
-  xVec += beta * uVecs_(k);
-  rVec_ -= beta * gVecs_(k);
+  x_vec += beta * u_vecs_(k);
+  r_vec_ -= beta * g_vecs_(k);
 
   // Update 𝜑:
   // ----------------------
@@ -289,19 +289,19 @@ real_t IdrsSolver<Vector>::InnerIterate(Vector& xVec, Vector const& bVec,
     // 𝒓 ← 𝒓 - 𝜔⋅𝒗.
     // ----------------------
     if (leftPre) {
-      preOp->MatVec(vVec_, zVec_, linOp, rVec_);
+      pre_op->MatVec(v_vec_, z_vec_, lin_op, r_vec_);
     } else if (rightPre) {
-      linOp.MatVec(vVec_, zVec_, *preOp, rVec_);
+      lin_op.MatVec(v_vec_, z_vec_, *pre_op, r_vec_);
     } else {
-      linOp.MatVec(vVec_, rVec_);
+      lin_op.MatVec(v_vec_, r_vec_);
     }
     omega_ =
-        Utils::SafeDivide(Blas::Dot(vVec_, rVec_), Blas::Dot(vVec_, vVec_));
-    xVec += omega_ * (rightPre ? zVec_ : rVec_);
-    rVec_ -= omega_ * vVec_;
+        Utils::SafeDivide(Blas::Dot(v_vec_, r_vec_), Blas::Dot(v_vec_, v_vec_));
+    x_vec += omega_ * (rightPre ? z_vec_ : r_vec_);
+    r_vec_ -= omega_ * v_vec_;
   }
 
-  return Blas::Norm2(rVec_);
+  return Blas::Norm2(r_vec_);
 
 } // IdrsSolver::InnerIterate
 

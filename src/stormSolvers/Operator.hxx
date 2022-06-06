@@ -98,7 +98,7 @@ public:
     return MyData[i];
   }
 
-  void Assign(stormArray const& like, bool copy = true) {
+  void assign(stormArray const& like, bool copy = true) {
     Mesh = like.Mesh;
     Array = stormAllocLike(like.Array);
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
@@ -135,51 +135,51 @@ public:
 
   /// @brief Compute an operator-vector product, 𝒚 ← 𝓐(𝒙).
   ///
-  /// @param yVec Output vector, 𝒚.
-  /// @param xVec Input vector, 𝒙.
-  virtual void MatVec(OutVector& yVec, InVector const& xVec) const = 0;
+  /// @param y_vec Output vector, 𝒚.
+  /// @param x_vec Input vector, 𝒙.
+  virtual void MatVec(OutVector& y_vec, InVector const& x_vec) const = 0;
 
   /// @brief Compute a chained
   ///   operator-vector product, 𝒛 ← 𝓐(𝒚 ← 𝓑(𝒙)).
   ///
-  /// @param zVec Output vector, 𝒛.
-  /// @param yVec Intermediate vector, 𝒚.
-  /// @param xVec Input vector, 𝒙.
+  /// @param z_vec Output vector, 𝒛.
+  /// @param y_vec Intermediate vector, 𝒚.
+  /// @param x_vec Input vector, 𝒙.
   template<VectorLike InOutVector = InVector>
-  void MatVec(OutVector& zVec, InOutVector& yVec,
+  void MatVec(OutVector& z_vec, InOutVector& y_vec,
               Operator<InVector, InOutVector> const& otherOp,
-              InVector const& xVec) const {
-    otherOp.MatVec(yVec, xVec);
-    MatVec(zVec, yVec);
+              InVector const& x_vec) const {
+    otherOp.MatVec(y_vec, x_vec);
+    MatVec(z_vec, y_vec);
   }
 
   /// @brief Compute a residual, 𝒓 ← 𝒃 - 𝓐(𝒙).
   ///
-  /// @param rVec Residual vector, 𝒓.
-  /// @param bVec Input vector, 𝒃.
-  /// @param xVec Input vector, 𝒙.
-  void Residual(OutVector& rVec, OutVector const& bVec,
-                InVector const& xVec) const {
-    MatVec(rVec, xVec);
-    rVec <<= bVec - rVec;
+  /// @param r_vec Residual vector, 𝒓.
+  /// @param b_vec Input vector, 𝒃.
+  /// @param x_vec Input vector, 𝒙.
+  void Residual(OutVector& r_vec, OutVector const& b_vec,
+                InVector const& x_vec) const {
+    MatVec(r_vec, x_vec);
+    r_vec <<= b_vec - r_vec;
   }
 
   /// @brief Compute a residual norm, ‖𝒃 - 𝓐𝒙‖.
   ///
-  /// @param bVec Input vector, 𝒃.
-  /// @param xVec Input vector, 𝒙.
-  real_t ResidualNorm(OutVector const& bVec, InVector const& xVec) const {
-    OutVector rVec;
-    rVec.Assign(bVec, false);
-    Residual(rVec, bVec, xVec);
-    return rVec.Norm2();
+  /// @param b_vec Input vector, 𝒃.
+  /// @param x_vec Input vector, 𝒙.
+  real_t ResidualNorm(OutVector const& b_vec, InVector const& x_vec) const {
+    OutVector r_vec;
+    r_vec.assign(b_vec, false);
+    Residual(r_vec, b_vec, x_vec);
+    return r_vec.Norm2();
   }
 
   /// @brief Compute an conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   ///
-  /// @param xVec Output vector, 𝒙.
-  /// @param yVec Input vector, 𝒚.
-  virtual void ConjMatVec(InVector& xVec, OutVector const& yVec) const {
+  /// @param x_vec Output vector, 𝒙.
+  /// @param y_vec Input vector, 𝒚.
+  virtual void ConjMatVec(InVector& x_vec, OutVector const& y_vec) const {
     throw std::runtime_error("`Operator::ConjMatVec` was not overriden");
   }
 
@@ -219,16 +219,16 @@ public:
 
 private:
 
-  void MatVec(OutVector& yVec, InVector const& xVec) const override {
-    MatVecFunc_(yVec, xVec);
+  void MatVec(OutVector& y_vec, InVector const& x_vec) const override {
+    MatVecFunc_(y_vec, x_vec);
   }
 
-  void ConjMatVec(InVector& xVec, OutVector const& yVec) const override {
+  void ConjMatVec(InVector& x_vec, OutVector const& y_vec) const override {
     if (!ConjMatVecFunc_) {
       throw std::runtime_error("`FunctionalOperator::ConjMatVec`"
                                " conjugate product function was not set.");
     }
-    ConjMatVecFunc_(xVec, yVec);
+    ConjMatVecFunc_(x_vec, y_vec);
   }
 
 }; // class FunctionalOperator

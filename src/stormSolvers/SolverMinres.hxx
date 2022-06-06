@@ -84,35 +84,35 @@ private:
 
   real_t alpha, beta, betaBar, gamma, delta, deltaBar, epsilon, epsilonBar, tau,
       phi, phiTilde, cs, sn;
-  Vector pVec, qVec, qBarVec, wVec, wBarVec, wBarBarVec, zVec, zBarVec,
+  Vector p_vec, q_vec, qBarVec, w_vec, wBarVec, wBarBarVec, z_vec, zBarVec,
       zBarBarVec;
 
-  real_t Init(Vector const& xVec, Vector const& bVec,
-              Operator<Vector> const& linOp,
-              Preconditioner<Vector> const* preOp) override;
+  real_t Init(Vector const& x_vec, Vector const& b_vec,
+              Operator<Vector> const& lin_op,
+              Preconditioner<Vector> const* pre_op) override;
 
-  real_t Iterate(Vector& xVec, Vector const& bVec,
-                 Operator<Vector> const& linOp,
-                 Preconditioner<Vector> const* preOp) override;
+  real_t Iterate(Vector& x_vec, Vector const& b_vec,
+                 Operator<Vector> const& lin_op,
+                 Preconditioner<Vector> const* pre_op) override;
 
 }; // class MinresSolver
 
 template<class Vector>
-real_t MinresSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
-                                  Operator<Vector> const& linOp,
-                                  Preconditioner<Vector> const* preOp) {
-  assert(preOp != nullptr && "MINRES requires preconditioning for now.");
+real_t MinresSolver<Vector>::Init(Vector const& x_vec, Vector const& b_vec,
+                                  Operator<Vector> const& lin_op,
+                                  Preconditioner<Vector> const* pre_op) {
+  assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
 
-  pVec.Assign(xVec, false);
-  wVec.Assign(xVec, false);
-  wBarVec.Assign(xVec, false);
-  wBarBarVec.Assign(xVec, false);
-  zVec.Assign(xVec, false);
-  zBarVec.Assign(xVec, false);
-  zBarBarVec.Assign(xVec, false);
-  if (preOp != nullptr) {
-    qVec.Assign(xVec, false);
-    qBarVec.Assign(xVec, false);
+  p_vec.assign(x_vec, false);
+  w_vec.assign(x_vec, false);
+  wBarVec.assign(x_vec, false);
+  wBarBarVec.assign(x_vec, false);
+  z_vec.assign(x_vec, false);
+  zBarVec.assign(x_vec, false);
+  zBarBarVec.assign(x_vec, false);
+  if (pre_op != nullptr) {
+    q_vec.assign(x_vec, false);
+    qBarVec.assign(x_vec, false);
   }
 
   // ----------------------
@@ -129,16 +129,16 @@ real_t MinresSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
   // ----------------------
   Blas::Fill(wBarVec, 0.0);
   Blas::Fill(wBarBarVec, 0.0);
-  linOp.MatVec(zBarVec, xVec);
-  Blas::Sub(zBarVec, bVec, zBarVec);
+  lin_op.MatVec(zBarVec, x_vec);
+  Blas::Sub(zBarVec, b_vec, zBarVec);
   Blas::Fill(zBarBarVec, 0.0);
-  if (preOp != nullptr) {
-    preOp->MatVec(qVec, zBarVec);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(q_vec, zBarVec);
   } else {
-    // qVec = zBarVec
+    // q_vec = zBarVec
   }
   betaBar = 1.0;
-  beta = std::sqrt(Blas::Dot(qVec, zBarVec));
+  beta = std::sqrt(Blas::Dot(q_vec, zBarVec));
   phi = beta;
   delta = 0.0;
   epsilon = 0.0;
@@ -150,10 +150,10 @@ real_t MinresSolver<Vector>::Init(Vector const& xVec, Vector const& bVec,
 } // MinresSolver::Init
 
 template<class Vector>
-real_t MinresSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
-                                     Operator<Vector> const& linOp,
-                                     Preconditioner<Vector> const* preOp) {
-  assert(preOp != nullptr && "MINRES requires preconditioning for now.");
+real_t MinresSolver<Vector>::Iterate(Vector& x_vec, Vector const& b_vec,
+                                     Operator<Vector> const& lin_op,
+                                     Preconditioner<Vector> const* pre_op) {
+  assert(pre_op != nullptr && "MINRES requires preconditioning for now.");
 
   // ----------------------
   // Continue the Lanczos process:
@@ -165,18 +165,18 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝛽̅ ← 𝛽, 𝛽 ← <𝒒⋅𝒛>¹ᐟ²,
   // 𝒛̿ ← 𝒛̅, 𝒛̅ ← 𝒛.
   // ----------------------
-  linOp.MatVec(pVec, qVec);
-  alpha = Blas::Dot(qVec, pVec) * std::pow(beta, -2);
-  Blas::Sub(zVec, pVec, 1.0 / beta, zBarVec, alpha / beta);
-  Blas::Sub(zVec, zVec, zBarBarVec, beta / betaBar);
-  if (preOp != nullptr) {
-    std::swap(qBarVec, qVec);
-    preOp->MatVec(qVec, zVec);
+  lin_op.MatVec(p_vec, q_vec);
+  alpha = Blas::Dot(q_vec, p_vec) * std::pow(beta, -2);
+  Blas::Sub(z_vec, p_vec, 1.0 / beta, zBarVec, alpha / beta);
+  Blas::Sub(z_vec, z_vec, zBarBarVec, beta / betaBar);
+  if (pre_op != nullptr) {
+    std::swap(qBarVec, q_vec);
+    pre_op->MatVec(q_vec, z_vec);
   } else {
-    // qBarVec = qVec; qVec = zVec
+    // qBarVec = q_vec; q_vec = z_vec
   }
-  betaBar = beta, beta = std::sqrt(Blas::Dot(qVec, zVec));
-  std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, zVec);
+  betaBar = beta, beta = std::sqrt(Blas::Dot(q_vec, z_vec));
+  std::swap(zBarBarVec, zBarVec), std::swap(zBarVec, z_vec);
 
   // ----------------------
   // Construct and apply rotations:
@@ -197,10 +197,10 @@ real_t MinresSolver<Vector>::Iterate(Vector& xVec, Vector const& bVec,
   // 𝒙 ← 𝒙 + 𝜏𝒘,
   // 𝒘̿ ← 𝒘̅, 𝒘̅ ← 𝒘.
   // ----------------------
-  Blas::Sub(wVec, qBarVec, 1.0 / (betaBar * gamma), wBarVec, deltaBar / gamma);
-  Blas::Sub(wVec, wVec, wBarBarVec, epsilonBar / gamma);
-  Blas::Add(xVec, xVec, wVec, tau);
-  std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, wVec);
+  Blas::Sub(w_vec, qBarVec, 1.0 / (betaBar * gamma), wBarVec, deltaBar / gamma);
+  Blas::Sub(w_vec, w_vec, wBarBarVec, epsilonBar / gamma);
+  Blas::Add(x_vec, x_vec, w_vec, tau);
+  std::swap(wBarBarVec, wBarVec), std::swap(wBarVec, w_vec);
 
   return phi;
 

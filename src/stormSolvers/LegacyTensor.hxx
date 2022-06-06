@@ -128,7 +128,7 @@ public:
   /// @brief Assign a shape to the tensor object
   ///   and allocate the storage (if the storage class is dynamic).
   /// @{
-  void Assign(ShapeType const& shape)
+  void assign(ShapeType const& shape)
   /*requires stormIsOwnedStorage<StorageType> &&
            stormIsDynamicStorage<StorageType>*/
   {
@@ -137,11 +137,11 @@ public:
     // Storage_.Allocate(Shape_.Size());
   }
   template<class... Indices>
-  void Assign(Indices... dynamicExtents)
+  void assign(Indices... dynamicExtents)
   /*requires stormIsOwnedStorage<StorageType> &&
            stormIsDynamicStorage<StorageType>*/
   {
-    Assign(ShapeType(dynamicExtents...));
+    assign(ShapeType(dynamicExtents...));
   }
   /// @}
 

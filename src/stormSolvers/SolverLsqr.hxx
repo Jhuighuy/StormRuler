@@ -47,16 +47,16 @@ protected:
   InitBidiagonalization(tInArray& sArr, tInArray& tArr, tInArray& uArr,
                         tInArray& vArr, stormReal_t& alpha, stormReal_t& beta,
                         tInArray const& bArr,
-                        stormOperator<tInArray, tOutArray> const& linOp,
-                        stormPreconditioner<tInArray> const* preOp);
+                        stormOperator<tInArray, tOutArray> const& lin_op,
+                        stormPreconditioner<tInArray> const* pre_op);
 
   /// @brief Continue the bidiagonalization procedure.
   static void
   ContinueBidiagonalization(tInArray& sArr, tInArray& tArr, tInArray& uArr,
                             tInArray& vArr, stormReal_t& alpha,
                             stormReal_t& beta,
-                            stormOperator<tInArray, tOutArray> const& linOp,
-                            stormPreconditioner<tInArray> const* preOp);
+                            stormOperator<tInArray, tOutArray> const& lin_op,
+                            stormPreconditioner<tInArray> const* pre_op);
 
 }; // class stormGolubKahanSolver
 
@@ -64,8 +64,8 @@ template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
     tInArray& sArr, tInArray& tArr, tInArray& uArr, tInArray& vArr,
     stormReal_t& alpha, stormReal_t& beta, tInArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Initialize the bidiagonalization procedure:
   // 𝛽 ← ‖𝒃‖, 𝒖 ← 𝒃/𝛽,
@@ -76,11 +76,11 @@ void stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
   // ----------------------
   beta = stormBlas::Norm2(bArr);
   stormBlas::Scale(uArr, bArr, 1.0 / beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
+  if (pre_op != nullptr) {
+    lin_op.ConjMatVec(sArr, uArr);
+    pre_op->ConjMatVec(tArr, sArr);
   } else {
-    linOp.ConjMatVec(tArr, uArr);
+    lin_op.ConjMatVec(tArr, uArr);
   }
   alpha = stormBlas::Norm2(tArr);
   stormBlas::Scale(vArr, tArr, 1.0 / alpha);
@@ -91,8 +91,8 @@ template<class tInArray, class tOutArray>
 void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
     tInArray& sArr, tInArray& tArr, tInArray& uArr, tInArray& vArr,
     stormReal_t& alpha, stormReal_t& beta,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
@@ -106,20 +106,20 @@ void stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
   // 𝒕 ← 𝒕 - 𝛽𝒗,
   // 𝛼 ← ‖𝒕‖, 𝒗 ← 𝒕/𝛼.
   // ----------------------
-  if (preOp != nullptr) {
-    preOp->MatVec(sArr, vArr);
-    linOp.MatVec(tArr, sArr);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(sArr, vArr);
+    lin_op.MatVec(tArr, sArr);
   } else {
-    linOp.MatVec(tArr, vArr);
+    lin_op.MatVec(tArr, vArr);
   }
   stormBlas::Sub(tArr, tArr, uArr, alpha);
   beta = stormBlas::Norm2(tArr);
   stormBlas::Scale(uArr, tArr, 1.0 / beta);
-  if (preOp != nullptr) {
-    linOp.ConjMatVec(sArr, uArr);
-    preOp->ConjMatVec(tArr, sArr);
+  if (pre_op != nullptr) {
+    lin_op.ConjMatVec(sArr, uArr);
+    pre_op->ConjMatVec(tArr, sArr);
   } else {
-    linOp.ConjMatVec(tArr, uArr);
+    lin_op.ConjMatVec(tArr, uArr);
   }
   stormBlas::Sub(tArr, tArr, vArr, beta);
   alpha = stormBlas::Norm2(tArr);
@@ -162,30 +162,30 @@ private:
   tInArray sArr, tArr, rArr, uArr, vArr, wArr, zArr;
 
   stormReal_t Init(tInArray& xArr, tOutArray const& bArr,
-                   stormOperator<tInArray, tOutArray> const& linOp,
-                   stormPreconditioner<tInArray> const* preOp) override;
+                   stormOperator<tInArray, tOutArray> const& lin_op,
+                   stormPreconditioner<tInArray> const* pre_op) override;
 
   stormReal_t Iterate(tInArray& xArr, tOutArray const& bArr,
-                      stormOperator<tInArray, tOutArray> const& linOp,
-                      stormPreconditioner<tInArray> const* preOp) override;
+                      stormOperator<tInArray, tOutArray> const& lin_op,
+                      stormPreconditioner<tInArray> const* pre_op) override;
 
   void Finalize(tInArray& xArr, tOutArray const& bArr,
-                stormOperator<tInArray, tOutArray> const& linOp,
-                stormPreconditioner<tInArray> const* preOp) override;
+                stormOperator<tInArray, tOutArray> const& lin_op,
+                stormPreconditioner<tInArray> const* pre_op) override;
 
 }; // class stormLsqrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
   /// @todo Some of these should be allocated like x, others like b.
   stormUtils::AllocLike(xArr, tArr, rArr, uArr, vArr, wArr, zArr);
-  if (preOp != nullptr) { stormUtils::AllocLike(xArr, sArr); }
+  if (pre_op != nullptr) { stormUtils::AllocLike(xArr, sArr); }
 
   // ----------------------
   // Utilize the initial guess
@@ -194,7 +194,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
-  linOp.MatVec(rArr, xArr);
+  lin_op.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
   stormBlas::Fill(zArr, 0.0);
 
@@ -203,7 +203,7 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
   // ----------------------
   stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
-      sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
+      sArr, tArr, uArr, vArr, alpha, beta, rArr, lin_op, pre_op);
 
   // ----------------------
   // 𝜑̅ ← 𝛽, 𝜌̅ ← 𝛼.
@@ -220,14 +220,14 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Init(
 template<class tInArray, class tOutArray>
 stormReal_t stormLsqrSolver<tInArray, tOutArray>::Iterate(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
   stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
-      sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
+      sArr, tArr, uArr, vArr, alpha, beta, lin_op, pre_op);
 
   // ----------------------
   // Construct and apply rotation:
@@ -256,16 +256,16 @@ stormReal_t stormLsqrSolver<tInArray, tOutArray>::Iterate(
 template<class tInArray, class tOutArray>
 void stormLsqrSolver<tInArray, tOutArray>::Finalize(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
   // 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  if (preOp != nullptr) {
-    preOp->MatVec(tArr, zArr);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(tArr, zArr);
     stormBlas::Add(xArr, xArr, tArr);
   } else {
     stormBlas::Add(xArr, xArr, zArr);
@@ -309,30 +309,30 @@ private:
   tInArray rArr, sArr, tArr, wArr, hArr, uArr, vArr, zArr;
 
   stormReal_t Init(tInArray& xArr, tOutArray const& bArr,
-                   stormOperator<tInArray, tOutArray> const& linOp,
-                   stormPreconditioner<tInArray> const* preOp) override;
+                   stormOperator<tInArray, tOutArray> const& lin_op,
+                   stormPreconditioner<tInArray> const* pre_op) override;
 
   stormReal_t Iterate(tInArray& xArr, tOutArray const& bArr,
-                      stormOperator<tInArray, tOutArray> const& linOp,
-                      stormPreconditioner<tInArray> const* preOp) override;
+                      stormOperator<tInArray, tOutArray> const& lin_op,
+                      stormPreconditioner<tInArray> const* pre_op) override;
 
   void Finalize(tInArray& xArr, tOutArray const& bArr,
-                stormOperator<tInArray, tOutArray> const& linOp,
-                stormPreconditioner<tInArray> const* preOp) override;
+                stormOperator<tInArray, tOutArray> const& lin_op,
+                stormPreconditioner<tInArray> const* pre_op) override;
 
 }; // class stormLsmrSolver
 
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Allocate the intermediate arrays:
   // ----------------------
   /// @todo Some of these should be allocated like x, others like b.
   stormUtils::AllocLike(xArr, tArr, rArr, uArr, vArr, wArr, hArr, zArr);
-  if (preOp != nullptr) { stormUtils::AllocLike(xArr, sArr); }
+  if (pre_op != nullptr) { stormUtils::AllocLike(xArr, sArr); }
 
   // ----------------------
   // Utilize the initial guess
@@ -341,7 +341,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
   // 𝒓 ← 𝒃 - 𝒓,
   // 𝒛 ← {𝟢}ᵀ,
   // ----------------------
-  linOp.MatVec(rArr, xArr);
+  lin_op.MatVec(rArr, xArr);
   stormBlas::Sub(rArr, bArr, rArr);
   stormBlas::Fill(zArr, 0.0);
 
@@ -350,7 +350,7 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝒓, 𝓐[, 𝓟]).
   // ----------------------
   stormGolubKahanSolver<tInArray, tOutArray>::InitBidiagonalization(
-      sArr, tArr, uArr, vArr, alpha, beta, rArr, linOp, preOp);
+      sArr, tArr, uArr, vArr, alpha, beta, rArr, lin_op, pre_op);
 
   // ----------------------
   // 𝛼̅ ← 𝛼, 𝜓̅ ← 𝛼𝛽,
@@ -372,14 +372,14 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Init(
 template<class tInArray, class tOutArray>
 stormReal_t stormLsmrSolver<tInArray, tOutArray>::Iterate(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Continue the bidiagonalization procedure:
   // 𝒖, 𝒗, 𝛼, 𝛽 ← 𝘉𝘪𝘋𝘪𝘢𝘨(𝒖, 𝒗, 𝛼, 𝛽, 𝓐[, 𝓟]).
   // ----------------------
   stormGolubKahanSolver<tInArray, tOutArray>::ContinueBidiagonalization(
-      sArr, tArr, uArr, vArr, alpha, beta, linOp, preOp);
+      sArr, tArr, uArr, vArr, alpha, beta, lin_op, pre_op);
 
   // ----------------------
   // Construct and apply rotations:
@@ -415,16 +415,16 @@ stormReal_t stormLsmrSolver<tInArray, tOutArray>::Iterate(
 template<class tInArray, class tOutArray>
 void stormLsmrSolver<tInArray, tOutArray>::Finalize(
     tInArray& xArr, tOutArray const& bArr,
-    stormOperator<tInArray, tOutArray> const& linOp,
-    stormPreconditioner<tInArray> const* preOp) {
+    stormOperator<tInArray, tOutArray> const& lin_op,
+    stormPreconditioner<tInArray> const* pre_op) {
   // ----------------------
   // Compute 𝒙-solution:
   // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
   //   𝒕 ← 𝓟𝒛, 𝒙 ← 𝒙 + 𝒕.
   // 𝗲𝗹𝘀𝗲: 𝒙 ← 𝒙 + 𝒛. 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  if (preOp != nullptr) {
-    preOp->MatVec(tArr, zArr);
+  if (pre_op != nullptr) {
+    pre_op->MatVec(tArr, zArr);
     stormBlas::Add(xArr, xArr, tArr);
   } else {
     stormBlas::Add(xArr, xArr, zArr);

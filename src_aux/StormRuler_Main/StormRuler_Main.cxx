@@ -506,7 +506,7 @@ int main(int argc, char** argv) {
     }
 #if 1
     {
-      auto AA = select_rows(select_cols(A + A, 0, 1, 3), 0, 1, 3);
+      auto AA = slice_rows(select_cols(A + A, 0, 1, 3), 0, 3, 1);
       auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);
       inplace_inverse_lu(AA, BB);
       std::cout << AA << std::endl << std::endl;

@@ -96,18 +96,21 @@ struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, Indexable>> :
 /// @name General views.
 /// @{
 
+/// @brief Wrap the matrix @p mat into a view.
+/// @{
 constexpr auto view(is_matrix auto& mat) {
   auto indexable{[&](size_t row_index, size_t col_index) -> decltype(auto) {
     return mat(row_index, col_index);
   }};
   return MatrixView(mat.num_rows(), mat.num_cols(), indexable);
 }
-constexpr auto view(const is_matrix auto& mat) {
+constexpr auto view(const is_matrix_view auto& mat) {
   auto indexable{[&](size_t row_index, size_t col_index) -> decltype(auto) {
     return mat(row_index, col_index);
   }};
   return MatrixView(mat.num_rows(), mat.num_cols(), indexable);
 }
+/// @}
 
 /// @brief Component-wise apply a @p func
 ///   to the matrix arguments @p mat1, @p mats.
@@ -364,6 +367,31 @@ constexpr auto matmul(const is_matrix_view auto& mat1,
 /// @name Slice views.
 /// @{
 
+/// @{
+constexpr auto slice_rows(is_matrix_view auto&& mat, size_t from, size_t to,
+                          size_t stride = 1) {
+  const size_t slice_num_rows{(to - from) / stride};
+  STORM_ASSERT_((from < to && to <= mat.num_rows() && slice_num_rows != 0) &&
+                "Invalid rows range.");
+  auto indexable{
+      [=, mat = std::forward<decltype(mat)>(mat)](
+          size_t slice_row_index, size_t col_index) -> decltype(auto) {
+        STORM_ASSERT_(slice_row_index < slice_num_rows &&
+                      "Row index is out of range.");
+        return mat(from + slice_row_index * stride, col_index);
+      }};
+  return MatrixView(slice_num_rows, mat.num_cols(), indexable);
+}
+constexpr auto slice_rows(const is_matrix_view auto& mat, size_t from,
+                          size_t to, size_t stride = 1) {
+  return slice_rows(view(mat), from, to, stride);
+}
+constexpr auto slice_rows(is_matrix auto& mat, size_t from, size_t to,
+                          size_t stride = 1) {
+  return slice_rows(view(mat), from, to, stride);
+}
+/// @}
+
 /// @brief Select the matrix @p mat rows at @p row_index.
 /// @{
 constexpr auto select_rows(is_matrix_view auto&& mat,
@@ -378,7 +406,8 @@ constexpr auto select_rows(is_matrix_view auto&& mat,
       [=, mat = std::forward<decltype(mat)>(mat),
        row_indices = std::array{static_cast<size_t>(row_indices)...}](
           size_t slice_row_index, size_t col_index) -> decltype(auto) {
-        STORM_ASSERT_(slice_row_index < slice_num_rows);
+        STORM_ASSERT_(slice_row_index < slice_num_rows &&
+                      "Row index is out of range.");
         return mat(row_indices[slice_row_index], col_index);
       }};
   return MatrixView(slice_num_rows, mat.num_cols(), indexable);
@@ -407,7 +436,8 @@ constexpr auto select_cols(is_matrix_view auto&& mat,
       [=, mat = std::forward<decltype(mat)>(mat),
        col_indices = std::array{static_cast<size_t>(col_indices)...}](
           size_t row_index, size_t slice_col_index) -> decltype(auto) {
-        STORM_ASSERT_(slice_col_index < slice_num_cols);
+        STORM_ASSERT_(slice_col_index < slice_num_cols &&
+                      "Column index is out of range.");
         return mat(row_index, col_indices[slice_col_index]);
       }};
   return MatrixView(mat.num_rows(), slice_num_cols, indexable);

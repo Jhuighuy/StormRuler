@@ -482,7 +482,7 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
-#if 1
+#if 0
   {
     using namespace Storm;
     Matrix<double> A{{10.0, 1.0, 2.0, 3.0},
@@ -506,8 +506,9 @@ int main(int argc, char** argv) {
     }
 #if 1
     {
-      auto AA = slice_rows(select_cols(A + A, 0, 1, 3), 0, 3, 1);
+      auto AA = slice_rows(select_cols(A, 0, 1, 3), 0, 3, 1);
       auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);
+      AA *= 1488.0;
       inplace_inverse_lu(AA, BB);
       std::cout << AA << std::endl << std::endl;
       std::cout << BB << std::endl << std::endl;

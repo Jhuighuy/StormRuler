@@ -103,8 +103,8 @@ struct is_matrix_view_t<Matrix<Value, NumRows, NumCols>> : std::true_type {};
 
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(const is_matrix_view auto& mat,
-                            is_matrix auto& l_mat,
-                            is_matrix auto& u_mat) noexcept {
+                            is_rw_matrix_view auto& l_mat,
+                            is_rw_matrix_view auto& u_mat) noexcept {
   const auto size{mat.num_rows()};
   fill_diag_with(l_mat, 1.0);
   fill_with(u_mat, 0.0);
@@ -145,7 +145,7 @@ constexpr void inplace_solve_lu(const is_matrix_view auto& l_mat,
 
 /// @brief Inverse a square matrix @p mat using the LU decomposition.
 constexpr void inplace_inverse_lu(const is_matrix_view auto& mat,
-                                  is_matrix auto& inv_mat) noexcept {
+                                  is_rw_matrix_view auto& inv_mat) noexcept {
   using Value = std::decay_t<decltype(mat(0, 0))>;
   Matrix<Value> L(mat.num_rows(), mat.num_cols());
   Matrix<Value> U(mat.num_rows(), mat.num_cols());

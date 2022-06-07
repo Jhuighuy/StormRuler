@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <stdlib.h>
+
 #include <concepts>
 #include <type_traits>
 
@@ -58,7 +60,7 @@ concept is_matrix_view_like =
 
 /// @brief Matrix concept.
 template<class Matrix>
-concept is_matrix_like = 
+concept is_rw_matrix_view_like = 
     is_matrix_view_like<Matrix> && 
     requires(Matrix& mat, size_t row_index, size_t col_index, 
              matrix_coeff_t<Matrix> val) {
@@ -73,7 +75,7 @@ concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 
 /// @brief Matrix concept.
 template<class T>
-concept is_matrix = is_matrix_view_v<T> && is_matrix_like<T>;
+concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
 
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
@@ -91,7 +93,7 @@ constexpr real_t norm_2(const is_matrix_view auto& mat1) {
   return std::sqrt(dot_product(mat1, mat1));
 }
 
-constexpr auto& operator<<=(is_matrix auto& mat1,
+constexpr auto& operator<<=(is_rw_matrix_view auto& mat1,
                             const is_matrix_view auto& mat2) {
 #pragma omp parallel for schedule(static)
   for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
@@ -102,16 +104,16 @@ constexpr auto& operator<<=(is_matrix auto& mat1,
   return mat1;
 }
 
-constexpr auto& operator+=(is_matrix auto& mat1,
+constexpr auto& operator+=(is_rw_matrix_view auto& mat1,
                            const is_matrix_view auto& mat2) {
   return mat1 <<= mat1 + mat2;
 }
-constexpr auto& operator-=(is_matrix auto& mat1,
+constexpr auto& operator-=(is_rw_matrix_view auto& mat1,
                            const is_matrix_view auto& mat2) {
   return mat1 <<= mat1 - mat2;
 }
 
-constexpr auto& fill_with(is_matrix auto& mat1, const auto& val2) {
+constexpr auto& fill_with(is_rw_matrix_view auto& mat1, const auto& val2) {
 #pragma omp parallel for schedule(static)
   for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
@@ -121,7 +123,7 @@ constexpr auto& fill_with(is_matrix auto& mat1, const auto& val2) {
   return mat1;
 }
 
-constexpr auto& fill_diag_with(is_matrix auto& mat1, const auto& val2) {
+constexpr auto& fill_diag_with(is_rw_matrix_view auto& mat1, const auto& val2) {
 #pragma omp parallel for schedule(static)
   for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
@@ -131,15 +133,20 @@ constexpr auto& fill_diag_with(is_matrix auto& mat1, const auto& val2) {
   return mat1;
 }
 
-constexpr auto& fill_randomly(is_matrix auto& mat1, auto...) {
-  STORM_ENSURE_(!"Not implemented");
+constexpr auto& fill_randomly(is_rw_matrix_view auto& mat1, auto...) {
+  srand(1792);
+  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+      mat1(row_index, col_index) = real_t(rand()) / RAND_MAX;
+    }
+  }
   return mat1;
 }
 
-constexpr auto& operator*=(is_matrix auto& mat1, const auto& val2) {
+constexpr auto& operator*=(is_rw_matrix_view auto& mat1, const auto& val2) {
   return mat1 <<= val2 * mat1;
 }
-constexpr auto& operator/=(is_matrix auto& mat1, const auto& val2) {
+constexpr auto& operator/=(is_rw_matrix_view auto& mat1, const auto& val2) {
   return mat1 <<= mat1 / val2;
 }
 

@@ -164,9 +164,8 @@ constexpr auto operator*(const is_matrix_view auto& mat, auto scal) noexcept {
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
-constexpr auto operator/(const is_matrix_view auto& mat,
-                         const auto& scal) noexcept {
-  return apply([scal](const auto& val) { return scal * val; }, mat);
+constexpr auto operator/(const is_matrix_view auto& mat, auto scal) noexcept {
+  return apply([scal](const auto& val) { return val / scal; }, mat);
 }
 
 /// @brief Add the matrices @p mat1 and @p mat2.
@@ -347,7 +346,7 @@ namespace math {
 
 /// @}
 
-/// @name Matrix-specific views.
+/// @name Matrix functions views.
 /// @{
 
 /// @brief Transpose the matrix @p mat.

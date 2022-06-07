@@ -25,171 +25,415 @@
 
 #pragma once
 
+#include <concepts>
+#include <ostream>
 #include <type_traits>
+#include <utility>
 
 #include <stormBase.hxx>
+#include <stormSolvers/MatrixBase.hxx>
+#include <stormUtils/Math.hxx>
 
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Base class for all matrix views.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Derived>
-class BaseMatrixView {
-public:
-
-  /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept {
-    return static_cast<const Derived&>(*this).shape();
-  }
-
-  /// @brief Number of rows.
-  constexpr auto num_rows() const noexcept {
-    return shape().first;
-  }
-
-  /// @brief Number of columns.
-  constexpr auto num_cols() const noexcept {
-    return shape().second;
-  }
-
-  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
-  constexpr auto operator()(auto row_index, auto col_index) const noexcept {
-    return static_cast<const Derived&>(*this)(row_index, col_index);
-  }
-
-}; // class BaseMatrixView
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Matrix view.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Shape, class Indexable>
-class MatrixView : public BaseMatrixView<MatrixView<Shape, Indexable>> {
+template<class RowsSize, class ColsSize, class Indexable>
+class MatrixView final {
 private:
 
-  [[no_unique_address]] Shape shape_;
+  [[no_unique_address]] RowsSize num_rows_;
+  [[no_unique_address]] ColsSize num_cols_;
   [[no_unique_address]] Indexable indexable_;
 
 public:
 
   /// @brief Construct a matrix view.
-  constexpr MatrixView(Shape shape, Indexable indexable)
-      : shape_{shape}, indexable_{indexable} {}
+  constexpr MatrixView(RowsSize num_rows, ColsSize num_cols,
+                       Indexable indexable)
+      : num_rows_{num_rows}, num_cols_{num_cols}, indexable_{indexable} {}
 
-  /// @copydoc BaseMatrixView::shape
-  constexpr auto shape() const noexcept {
-    return shape_;
+  /// @brief Number of the matrix rows.
+  constexpr auto num_rows() const noexcept {
+    return num_rows_;
   }
 
-  /// @copydoc BaseMatrixView::operator()
-  constexpr auto operator()(auto row_index, auto col_index) const noexcept {
+  /// @brief Number of the matrix columns.
+  constexpr auto num_cols() const noexcept {
+    return num_cols_;
+  }
+
+  /// @brief Get the coefficient at @p row_index and @p col_index.
+  /// @{
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) noexcept {
+    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
+                  "Indices are out of range.");
     return indexable_(row_index, col_index);
   }
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) const noexcept {
+    static_cast<void>(const_cast<MatrixView&>(*this)(row_index, col_index));
+    return indexable_(row_index, col_index);
+  }
+  /// @}
 
 }; // class MatrixView
 
-template<class ShapeRef, class IndexableRef>
-MatrixView(ShapeRef, IndexableRef)
-    -> MatrixView<std::decay_t<ShapeRef>, std::decay_t<IndexableRef>>;
+template<class RowsSizeRef, class ColsSizeRef, class IndexableRef>
+MatrixView(RowsSizeRef, ColsSizeRef, IndexableRef)
+    -> MatrixView<std::remove_cv_t<RowsSizeRef>, std::remove_cv_t<ColsSizeRef>,
+                  std::remove_cv_t<IndexableRef>>;
 
-/// @brief Transpose the matrix @p mat.
-template<class T>
-constexpr auto transpose(const BaseMatrixView<T>& mat) noexcept {
-  const std::pair transposed_shape{mat.shape().second, mat.shape().first};
-  return MatrixView(transposed_shape, [&](auto row_index, auto col_index) {
-    return mat(col_index, row_index);
-  });
+template<class RowsSize, class ColsSize, class Indexable>
+struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, Indexable>> :
+    std::true_type {};
+
+/// @name Matrix views.
+/// @{
+
+/// @name General views.
+/// @{
+
+constexpr auto view(is_matrix auto& mat) {
+  auto indexable{[&](size_t row_index, size_t col_index) -> decltype(auto) {
+    return mat(row_index, col_index);
+  }};
+  return MatrixView(mat.num_rows(), mat.num_cols(), indexable);
+}
+constexpr auto view(const is_matrix auto& mat) {
+  auto indexable{[&](size_t row_index, size_t col_index) -> decltype(auto) {
+    return mat(row_index, col_index);
+  }};
+  return MatrixView(mat.num_rows(), mat.num_cols(), indexable);
 }
 
-/// @brief Apply a @p func to the matrix arguments @p mat1, @p mats.
-template<class T1, class... TN>
-constexpr auto apply(auto func, const BaseMatrixView<T1>& mat1,
-                     const BaseMatrixView<TN>&... mats) noexcept {
-  STORM_ASSERT_((mat1.shape() == mats.shape()) && ... &&
-                "Shapes of the matrix arguments should be the same");
-  return MatrixView(mat1.shape(), [&, func](auto row_index, auto col_index) {
+/// @brief Component-wise apply a @p func
+///   to the matrix arguments @p mat1, @p mats.
+constexpr auto apply(auto func, const is_matrix_view auto& mat1,
+                     const is_matrix_view auto&... mats) noexcept {
+  STORM_ASSERT_(((mat1.num_rows() == mats.num_rows()) && ...) &&
+                ((mat1.num_cols() == mats.num_cols()) && ...) &&
+                "Shapes of the matrix arguments should be the same.");
+  auto indexable{[&, func](size_t row_index, size_t col_index) {
     return func(mat1(row_index, col_index), mats(row_index, col_index)...);
-  });
+  }};
+  return MatrixView(mat1.num_rows(), mat1.num_cols(), indexable);
+}
+
+/// @}
+
+/// @name Arithmetic operations views.
+/// @{
+
+/// @brief "+" the matrix @p mat.
+constexpr auto operator+(const is_matrix_view auto& mat) noexcept {
+  return apply([](const auto& val) { return +val; }, mat);
+}
+
+/// @brief Negate the matrix @p mat.
+constexpr auto operator-(const is_matrix_view auto& mat) noexcept {
+  return apply([](const auto& val) { return -val; }, mat);
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
-template<class T>
-constexpr auto operator*(const auto& scal,
-                         const BaseMatrixView<T>& mat) noexcept {
+constexpr auto operator*(auto scal, const is_matrix_view auto& mat) noexcept {
   return apply([scal](const auto& val) { return scal * val; }, mat);
 }
-template<class T>
-constexpr auto operator*(const BaseMatrixView<T>& mat,
-                         const auto& scal) noexcept {
+constexpr auto operator*(const is_matrix_view auto& mat, auto scal) noexcept {
   return apply([scal](const auto& val) { return val * scal; }, mat);
 }
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
-template<class T>
-constexpr auto operator/(const BaseMatrixView<T>& mat, auto&& scal) noexcept {
+constexpr auto operator/(const is_matrix_view auto& mat,
+                         const auto& scal) noexcept {
   return apply([scal](const auto& val) { return scal * val; }, mat);
 }
 
 /// @brief Add the matrices @p mat1 and @p mat2.
-template<class T1, class T2>
-constexpr auto operator+(const BaseMatrixView<T1>& mat1,
-                         const BaseMatrixView<T2>& mat2) noexcept {
+constexpr auto operator+(const is_matrix_view auto& mat1,
+                         const is_matrix_view auto& mat2) noexcept {
   return apply([](const auto& val1, const auto& val2) { return val1 + val2; },
                mat1, mat2);
 }
 
 /// @brief Subtract the matrices @p mat1 and @p mat2.
-template<class T1, class T2>
-constexpr auto operator-(const BaseMatrixView<T1>& mat1,
-                         const BaseMatrixView<T2>& mat2) noexcept {
+constexpr auto operator-(const is_matrix_view auto& mat1,
+                         const is_matrix_view auto& mat2) noexcept {
   return apply([](const auto& val1, const auto& val2) { return val1 - val2; },
                mat1, mat2);
 }
 
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
-template<class T1, class T2>
-constexpr auto operator*(const BaseMatrixView<T1>& mat1,
-                         const BaseMatrixView<T2>& mat2) noexcept {
+constexpr auto operator*(const is_matrix_view auto& mat1,
+                         const is_matrix_view auto& mat2) noexcept {
   return apply([](const auto& val1, const auto& val2) { return val1 * val2; },
                mat1, mat2);
 }
 
 /// @brief Component-wise divide the matrices @p mat1 and @p mat2.
-template<class T1, class T2>
-constexpr auto operator/(const BaseMatrixView<T1>& mat1,
-                         const BaseMatrixView<T2>& mat2) noexcept {
+constexpr auto operator/(const is_matrix_view auto& mat1,
+                         const is_matrix_view auto& mat2) noexcept {
   return apply([](const auto& val1, const auto& val2) { return val1 / val2; },
                mat1, mat2);
 }
 
-/// @brief Multiply the matrices @p mat1 and @p mat2.
-template<class T1, class T2>
-constexpr auto matmul(const BaseMatrixView<T1>& mat1,
-                      const BaseMatrixView<T2>& mat2) noexcept {
-  STORM_ASSERT_(mat1.shape().second == mat2.shape().first &&
-                "mat1 should have the same number or columns as mat2 has rows");
-  const auto reduction_size{mat1.shape().second};
-  const std::pair product_shape{mat1.shape().first, mat2.shape().second};
-  return MatrixView(product_shape,
-                    [&, reduction_size](size_t row_index, size_t col_index) {
-                      auto val = mat1(row_index, 0) * mat2(0, col_index);
-                      for (size_t iz{1}; iz < reduction_size; ++iz) {
-                        val += mat1(row_index, iz) * mat2(iz, col_index);
-                      }
-                      return val;
-                    });
+/// @}
+
+/// @name Math operations views.
+/// @{
+
+namespace math {
+
+  /// @name Basic operations.
+  /// @{
+
+  constexpr auto abs(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::abs(val); }, mat);
+  }
+
+  /// @}
+
+  /// @name Power functions.
+  /// @{
+
+  constexpr auto pow(const is_matrix_view auto& x_mat, auto y) noexcept {
+    return apply([y](const auto& x) { return math::pow(x, y); }, x_mat);
+  }
+
+  constexpr auto pow(auto x, const is_matrix_view auto& y_mat) noexcept {
+    return apply([x](const auto& y) { return math::pow(x, y); }, y_mat);
+  }
+
+  constexpr auto pow(const is_matrix_view auto& x_mat,
+                     const is_matrix_view auto& y_mat) noexcept {
+    return apply([](const auto& x, const auto& y) { return math::pow(x, y); },
+                 x_mat, y_mat);
+  }
+
+  constexpr auto sqrt(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::sqrt(val); }, mat);
+  }
+
+  constexpr auto cbrt(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::cbrt(val); }, mat);
+  }
+
+  constexpr auto hypot(const is_matrix_view auto& x_mat,
+                       const is_matrix_view auto& y_mat) noexcept {
+    return apply([](const auto& x, const auto& y) { return math::hypot(x, y); },
+                 x_mat, y_mat);
+  }
+
+  constexpr auto hypot(const is_matrix_view auto& x_mat,
+                       const is_matrix_view auto& y_mat,
+                       const is_matrix_view auto& z_mat) noexcept {
+    return apply([](const auto& x, const auto& y,
+                    const auto& z) { return math::hypot(x, y, z); },
+                 x_mat, y_mat, z_mat);
+  }
+
+  /// @}
+
+  /// @name Exponential functions.
+  /// @{
+
+  constexpr auto exp(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::exp(val); }, mat);
+  }
+
+  constexpr auto exp2(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::exp2(val); }, mat);
+  }
+
+  constexpr auto log(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::log(val); }, mat);
+  }
+
+  constexpr auto log2(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::log2(val); }, mat);
+  }
+
+  constexpr auto log10(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::log10(val); }, mat);
+  }
+
+  /// @}
+
+  /// @name Trigonometric functions.
+  /// @{
+
+  constexpr auto sin(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::sin(val); }, mat);
+  }
+
+  constexpr auto cos(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::cos(val); }, mat);
+  }
+
+  constexpr auto tan(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::tan(val); }, mat);
+  }
+
+  constexpr auto asin(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::asin(val); }, mat);
+  }
+
+  constexpr auto acos(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::acos(val); }, mat);
+  }
+
+  constexpr auto atan(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::atan(val); }, mat);
+  }
+
+  constexpr auto atan2(const is_matrix_view auto& y_mat,
+                       const is_matrix_view auto& x_mat) noexcept {
+    return apply([](const auto& y, const auto& x) { return math::atan2(y, x); },
+                 y_mat, x_mat);
+  }
+
+  /// @}
+
+  /// @name Hyperbolic functions.
+  /// @{
+
+  constexpr auto sinh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::sinh(val); }, mat);
+  }
+
+  constexpr auto cosh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::cosh(val); }, mat);
+  }
+
+  constexpr auto tanh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::tanh(val); }, mat);
+  }
+
+  constexpr auto asinh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::asinh(val); }, mat);
+  }
+
+  constexpr auto acosh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::acosh(val); }, mat);
+  }
+
+  constexpr auto atanh(const is_matrix_view auto& mat) noexcept {
+    return apply([](const auto& val) { return math::atanh(val); }, mat);
+  }
+
+  /// @}
+
+} // namespace math
+
+/// @}
+
+/// @name Matrix-specific views.
+/// @{
+
+/// @brief Transpose the matrix @p mat.
+constexpr auto transpose(const is_matrix_view auto& mat) noexcept {
+  auto indexable{[&](size_t row_index, size_t col_index) {
+    return mat(col_index, row_index);
+  }};
+  return MatrixView(mat.num_cols(), mat.num_rows(), indexable);
 }
 
-/// @brief Print a @p mat.
-template<class T>
-std::ostream& operator<<(std::ostream& out, const BaseMatrixView<T>& mat) {
-  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
-      out << mat(row_index, col_index) << ' ';
+/// @brief Multiply the matrices @p mat1 and @p mat2.
+constexpr auto matmul(const is_matrix_view auto& mat1,
+                      const is_matrix_view auto& mat2) noexcept {
+  STORM_ASSERT_(mat1.num_cols() == mat2.num_rows() &&
+                "The first matrix should have the same number of columns "
+                "as the second matrix has rows.");
+  auto indexable{[&](size_t row_index, size_t col_index) {
+    const auto cross_size{mat1.num_cols()};
+    auto val = mat1(row_index, 0) * mat2(0, col_index);
+    for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
+      val += mat1(row_index, cross_index) * mat2(cross_index, col_index);
     }
-    out << std::endl;
+    return val;
+  }};
+  return MatrixView(mat1.num_rows(), mat2.num_cols(), indexable);
+}
+
+/// @}
+
+/// @name Slice views.
+/// @{
+
+/// @brief Select the matrix @p mat rows at @p row_index.
+/// @{
+constexpr auto select_rows(is_matrix_view auto&& mat,
+                           std::integral auto... row_indices) noexcept {
+  constexpr auto slice_num_rows{
+      std::integral_constant<size_t, sizeof...(row_indices)>{}};
+  STORM_ASSERT_(slice_num_rows < mat.num_rows() &&
+                "Specified more rows than the matrix has.");
+  STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
+                "Row indices are out of range.");
+  auto indexable{
+      [=, mat = std::forward<decltype(mat)>(mat),
+       row_indices = std::array{static_cast<size_t>(row_indices)...}](
+          size_t slice_row_index, size_t col_index) -> decltype(auto) {
+        STORM_ASSERT_(slice_row_index < slice_num_rows);
+        return mat(row_indices[slice_row_index], col_index);
+      }};
+  return MatrixView(slice_num_rows, mat.num_cols(), indexable);
+}
+constexpr auto select_rows(const is_matrix_view auto& mat,
+                           std::integral auto... row_indices) noexcept {
+  return select_rows(view(mat), row_indices...);
+}
+constexpr auto select_rows(is_matrix auto& mat,
+                           std::integral auto... row_indices) noexcept {
+  return select_rows(view(mat), row_indices...);
+}
+/// @}
+
+/// @brief Select the matrix @p mat columns at @p col_index.
+/// @{
+constexpr auto select_cols(is_matrix_view auto&& mat,
+                           std::integral auto... col_indices) noexcept {
+  constexpr auto slice_num_cols{
+      std::integral_constant<size_t, sizeof...(col_indices)>{}};
+  STORM_ASSERT_(slice_num_cols < mat.num_cols() &&
+                "Specified more columns than the matrix has.");
+  STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
+                "Columns indices are out of range.");
+  auto indexable{
+      [=, mat = std::forward<decltype(mat)>(mat),
+       col_indices = std::array{static_cast<size_t>(col_indices)...}](
+          size_t row_index, size_t slice_col_index) -> decltype(auto) {
+        STORM_ASSERT_(slice_col_index < slice_num_cols);
+        return mat(row_index, col_indices[slice_col_index]);
+      }};
+  return MatrixView(mat.num_rows(), slice_num_cols, indexable);
+}
+constexpr auto select_cols(const is_matrix_view auto& mat,
+                           std::integral auto... col_indices) noexcept {
+  return select_cols(view(mat), col_indices...);
+}
+constexpr auto select_cols(is_matrix_view auto& mat,
+                           std::integral auto... col_indices) noexcept {
+  return select_cols(view(mat), col_indices...);
+}
+/// @}
+
+/// @}
+
+/// @}
+
+/// @brief Print a @p mat.
+std::ostream& operator<<(std::ostream& out, const is_matrix_view auto& mat) {
+  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
+    out << "( ";
+    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
+      out << mat(row_index, col_index) << " ";
+    }
+    out << ")" << std::endl;
   }
   return out;
 }

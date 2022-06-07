@@ -37,7 +37,7 @@
 
 namespace Storm {
 
-class stormArray : public BaseMatrix<stormArray> {
+class stormArray {
 public:
 
   stormMesh_t Mesh = nullptr;
@@ -85,8 +85,11 @@ public:
     return *this;
   }
 
-  auto shape() const noexcept {
-    return std::pair(MySize, std::integral_constant<size_t, 1>{});
+  auto num_rows() const noexcept {
+    return MySize;
+  }
+  auto num_cols() const noexcept {
+    return std::integral_constant<size_t, 1>{};
   }
 
   auto operator()(size_t i, size_t j) const noexcept {
@@ -105,6 +108,9 @@ public:
     if (copy) stormSet(Mesh, Array, like.Array);
   }
 };
+
+template<>
+struct is_matrix_view_t<stormArray> : std::true_type {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

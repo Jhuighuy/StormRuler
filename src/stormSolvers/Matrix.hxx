@@ -31,20 +31,18 @@
 #include <type_traits>
 
 #include <stormBase.hxx>
-#include <stormSolvers/MatrixBase.hxx>
+#include <stormSolvers/MatrixView.hxx>
 
 namespace Storm {
 
 template<class Value, size_t NumRows = std::dynamic_extent,
          size_t NumCols = std::dynamic_extent>
-class Matrix : public BaseMatrix<Matrix<Value, NumRows, NumCols>> {
+class Matrix {
 private:
 
-  static constexpr bool is_dynamic_{(NumRows == std::dynamic_extent) ||
-                                    (NumCols == std::dynamic_extent)};
-
-  std::conditional_t<is_dynamic_, std::unique_ptr<Value[]>,
-                     std::array<Value, NumRows * NumCols>>
+  std::conditional_t<
+      NumRows == std::dynamic_extent || NumCols == std::dynamic_extent,
+      std::unique_ptr<Value[]>, std::array<Value, NumRows * NumCols>>
       coeffs_{};
   [[no_unique_address]] std::conditional_t<
       NumRows == std::dynamic_extent, size_t,
@@ -68,7 +66,7 @@ public:
   constexpr Matrix(
       std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
       : Matrix(coeffs.size(), coeffs.begin()->size()) {
-    *this <<= MatrixView(shape(), [&](auto i, auto j) {
+    *this <<= MatrixView(num_rows_, num_cols_, [&](auto i, auto j) {
       return *((coeffs.begin() + i)->begin() + j);
     });
   }
@@ -83,10 +81,6 @@ public:
 
   constexpr auto size() const noexcept {
     return num_rows_ * num_cols_;
-  }
-
-  constexpr auto shape() const noexcept {
-    return std::pair(num_rows_, num_cols_);
   }
 
   /// @brief Get the coefficient at @p row_index and @p col_index.
@@ -104,11 +98,13 @@ public:
 
 }; // class Matrix
 
+template<class Value, size_t NumRows, size_t NumCols>
+struct is_matrix_view_t<Matrix<Value, NumRows, NumCols>> : std::true_type {};
+
 /// @brief Perform a LU decomposition of a square matrix @p mat.
-/// @returns A pair of matrices, L and U factors.
-template<class T1, class T2, class T3>
-constexpr void decompose_lu(BaseMatrix<T1>& l_mat, BaseMatrix<T2>& u_mat,
-                            const BaseMatrixView<T3>& mat) noexcept {
+constexpr void decompose_lu(const is_matrix_view auto& mat,
+                            is_matrix auto& l_mat,
+                            is_matrix auto& u_mat) noexcept {
   const auto size{mat.num_rows()};
   fill_diag_with(l_mat, 1.0);
   fill_with(u_mat, 0.0);
@@ -129,9 +125,8 @@ constexpr void decompose_lu(BaseMatrix<T1>& l_mat, BaseMatrix<T2>& u_mat,
   }
 }
 
-template<class T1, class T2>
-constexpr void solve_lu(auto& vec, BaseMatrix<T1>& l_mat,
-                        BaseMatrix<T2>& u_mat) {
+constexpr void inplace_solve_lu(const is_matrix_view auto& l_mat,
+                                const is_matrix_view auto& u_mat, auto& vec) {
   const auto size{l_mat.num_rows()};
   for (size_t ix{0}; ix < size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
@@ -149,18 +144,21 @@ constexpr void solve_lu(auto& vec, BaseMatrix<T1>& l_mat,
 }
 
 /// @brief Inverse a square matrix @p mat using the LU decomposition.
-template<class T1, class T2>
-constexpr void inverse_lu(BaseMatrix<T1>& out,
-                          const BaseMatrixView<T2>& mat) noexcept {
+constexpr void inplace_inverse_lu(const is_matrix_view auto& mat,
+                                  is_matrix auto& inv_mat) noexcept {
   using Value = std::decay_t<decltype(mat(0, 0))>;
   Matrix<Value> L(mat.num_rows(), mat.num_cols());
   Matrix<Value> U(mat.num_rows(), mat.num_cols());
-  decompose_lu(L, U, mat);
-  fill_diag_with(out, 1.0);
+  decompose_lu(mat, L, U);
+  fill_diag_with(inv_mat, 1.0);
   for (size_t iy{0}; iy < mat.num_rows(); ++iy) {
-    auto outCol = [&](size_t ix) -> Value& { return out(ix, iy); };
-    solve_lu(outCol, L, U);
+    auto inv_mat_col = [&](size_t ix) -> Value& { return inv_mat(ix, iy); };
+    inplace_solve_lu(L, U, inv_mat_col);
   }
 }
+
+/// @brief Perform a QR decomposition of a matrix @p mat.
+/// @returns A pair of matrices, Q and R factors.
+constexpr auto DecomposeQr(auto& mat) noexcept {}
 
 } // namespace Storm

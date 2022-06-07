@@ -111,36 +111,4 @@ public:
 
 }; // class Mat
 
-/// @todo Parse types in order to get the output type.
-template<class Value, class... Values>
-using ResultType = Value;
-
-
-/// @brief Perform a QR decomposition of a matrix @p mat.
-/// @returns A pair of matrices, Q and R factors.
-template<real_or_complex_floating_point Value, size_t SizeX, size_t SizeY>
-constexpr auto DecomposeQr(const Mat<Value, SizeX, SizeY>& mat) noexcept {
-  Mat<Value, SizeX, SizeY> qMat;
-  auto rMat = MakeMat<SizeY, SizeY>(Value{0});
-  for (size_t ix{0}; ix < SizeX; ++ix) {
-    for (size_t iy{0}; iy < SizeY; ++iy) {
-      std::abort();
-    }
-  }
-  return std::pair(qMat, rMat);
-}
-
-/// @brief Print a matrix.
-template<class Value, size_t SizeX, size_t SizeY>
-std::ostream& operator<<(std::ostream& out,
-                         const Mat<Value, SizeX, SizeY>& mat) {
-  for (size_t ix{0}; ix < SizeX; ++ix) {
-    for (size_t iy{0}; iy < SizeY; ++iy) {
-      out << mat(ix, iy) << ' ';
-    }
-    out << std::endl;
-  }
-  return out;
-}
-
 } // namespace Storm

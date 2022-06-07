@@ -32,9 +32,7 @@ namespace Storm::math {
 /// @name Basic operations.
 /// @{
 
-constexpr auto abs(auto arg) noexcept {
-  return std::abs(arg);
-}
+using std::abs;
 
 /// @brief If @p y is zero, return zero,
 ///   else return value of @p x divided by @p y.
@@ -49,112 +47,64 @@ auto safe_divide(Value x, Value y) {
 /// @name Exponential functions.
 /// @{
 
-constexpr auto exp(auto x) noexcept {
-  return std::exp(x);
-}
+using std::exp;
 
-constexpr auto exp2(auto x) noexcept {
-  return std::exp2(x);
-}
+using std::exp2;
 
-constexpr auto log(auto x) noexcept {
-  return std::log(x);
-}
+using std::log;
 
-constexpr auto log2(auto x) noexcept {
-  return std::log2(x);
-}
+using std::log2;
 
-constexpr auto log10(auto x) noexcept {
-  return std::log10(x);
-}
+using std::log10;
 
 /// @}
 
 /// @name Power functions.
 /// @{
 
-constexpr auto pow(auto x, auto y) noexcept {
-  return std::pow(x, y);
-}
+using std::pow;
 
-constexpr auto sqrt(auto x) noexcept {
-  return std::sqrt(x);
-}
+using std::sqrt;
 
-constexpr auto cbrt(auto x) noexcept {
-  return std::cbrt(x);
-}
+using std::cbrt;
 
-constexpr auto hypot(auto x, auto y) noexcept {
-  return std::hypot(x, y);
-}
-
-constexpr auto hypot(auto x, auto y, auto z) noexcept {
-  return std::hypot(x, y, z);
-}
+using std::hypot;
 
 /// @}
 
 /// @name Trigonometric functions.
 /// @{
 
-constexpr auto sin(auto x) noexcept {
-  return std::sin(x);
-}
+using std::sin;
 
-constexpr auto cos(auto x) noexcept {
-  return std::cos(x);
-}
+using std::cos;
 
-constexpr auto tan(auto x) noexcept {
-  return std::tan(x);
-}
+using std::tan;
 
-constexpr auto asin(auto x) noexcept {
-  return std::asin(x);
-}
+using std::asin;
 
-constexpr auto acos(auto x) noexcept {
-  return std::acos(x);
-}
+using std::acos;
 
-constexpr auto atan(auto x) noexcept {
-  return std::atan(x);
-}
+using std::atan;
 
-constexpr auto atan2(auto y, auto x) noexcept {
-  return std::atan2(y, x);
-}
+using std::atan2;
 
 /// @}
 
 /// @name Hyperbolic functions.
 /// @{
 
-constexpr auto sinh(auto x) noexcept {
-  return std::sinh(x);
-}
+using std::sinh;
 
-constexpr auto cosh(auto x) noexcept {
-  return std::cosh(x);
-}
+using std::cosh;
 
-constexpr auto tanh(auto x) noexcept {
-  return std::tanh(x);
-}
+using std::tanh;
 
-constexpr auto asinh(auto x) noexcept {
-  return std::asin(x);
-}
+using std::asinh;
 
-constexpr auto acosh(auto x) noexcept {
-  return std::acos(x);
-}
+using std::acosh;
 
-constexpr auto atanh(auto x) noexcept {
-  return std::atanh(x);
-}
+using std::atanh;
 
 /// @}
 

@@ -43,8 +43,7 @@
 
 #include <StormRuler_API.h>
 #include <stormSolvers/LegacyTensor.hxx>
-#include <stormSolvers/Mat.hxx>
-#include <stormSolvers/MatrixStatic.hxx>
+#include <stormSolvers/Matrix.hxx>
 #include <stormSolvers/PreconditionerFactory.hxx>
 #include <stormSolvers/SolverFactory.hxx>
 
@@ -483,6 +482,7 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
+#if 1
   {
     using namespace Storm;
     Matrix<double> A{{10.0, 1.0, 2.0, 3.0},
@@ -490,13 +490,35 @@ int main(int argc, char** argv) {
                      {1.0, 3.0, 13.0, 2.0},
                      {2.0, 4.0, 5.0, 25.0}};
     Matrix<double> B(4, 4);
-    inverse_lu(B, A);
-    std::cout << A << std::endl << std::endl;
-    std::cout << B << std::endl << std::endl;
-    std::cout << matmul(B, A) << std::endl << std::endl;
-    std::cout << matmul(A, B) << std::endl << std::endl;
+    {
+      inplace_inverse_lu(matmul(A, A), B);
+      std::cout << A << std::endl << std::endl;
+      std::cout << B << std::endl << std::endl;
+      std::cout << matmul(B, matmul(A, A)) << std::endl << std::endl;
+      std::cout << matmul(matmul(A, A), B) << std::endl << std::endl;
+      std::cout << "=======" << std::endl << std::endl;
+    }
+    {
+      auto AA = select_rows(A, 0, 1, 3);
+      AA(0, 0) = 100.0;
+      std::cout << AA << std::endl << std::endl;
+      std::cout << "=======" << std::endl << std::endl;
+    }
+#if 1
+    {
+      auto AA = select_rows(select_cols(A + A, 0, 1, 3), 0, 1, 3);
+      auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);
+      inplace_inverse_lu(AA, BB);
+      std::cout << AA << std::endl << std::endl;
+      std::cout << BB << std::endl << std::endl;
+      std::cout << matmul(BB, AA) << std::endl << std::endl;
+      std::cout << matmul(AA, BB) << std::endl << std::endl;
+      std::cout << "=======" << std::endl << std::endl;
+    }
+#endif
   }
   return 0;
+#endif
 
 #if YURI
   phi_set.Assign(101);

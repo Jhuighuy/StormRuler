@@ -31,6 +31,7 @@
 #include <stormSolvers/LegacyTensor.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Subspace.hxx>
+#include <stormUtils/Math.hxx>
 
 namespace Storm {
 
@@ -264,7 +265,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     H_(i, k) = chi;
   }
   std::tie(cs_(k), sn_(k), std::ignore) =
-      utils::sym_ortho(H_(k, k), H_(k + 1, k));
+      math::sym_ortho(H_(k, k), H_(k + 1, k));
   H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 

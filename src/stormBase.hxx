@@ -96,37 +96,29 @@ template<class T>
 concept real_or_complex_floating_point =
     std::floating_point<T> || is_complex_floating_point_v<T>;
 
-/// @brief If @p y is zero, return zero,
-///   else return value of @p x divided by @p y.
-template<real_or_complex_floating_point Value>
-auto safe_divide(Value x, Value y) {
-  static constexpr Value zero{0.0};
-  return y == zero ? zero : (x / y);
-}
-
 namespace utils {
 
-/// @brief Generate the Givens rotation.
-template<real_or_complex_floating_point Value>
-auto sym_ortho(Value a, Value b) {
-  // Compute:
-  // ----------------------
-  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-  // ----------------------
-  Value cs, sn, rr;
-  rr = std::hypot(a, b);
-  if (rr > Value{0.0}) {
-    cs = a / rr;
-    sn = b / rr;
-  } else {
-    cs = 1.0;
-    sn = 0.0;
-  }
+  /// @brief Generate the Givens rotation.
+  template<real_or_complex_floating_point Value>
+  auto sym_ortho(Value a, Value b) {
+    // Compute:
+    // ----------------------
+    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+    // ----------------------
+    Value cs, sn, rr;
+    rr = std::hypot(a, b);
+    if (rr > Value{0.0}) {
+      cs = a / rr;
+      sn = b / rr;
+    } else {
+      cs = 1.0;
+      sn = 0.0;
+    }
 
-  return std::tuple(cs, sn, rr);
+    return std::tuple(cs, sn, rr);
 
-} // sym_ortho
+  } // sym_ortho
 
 } // namespace utils
 

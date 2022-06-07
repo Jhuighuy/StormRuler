@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include <cmath>
 #include <utility>
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Vector.hxx>
+#include <stormUtils/Math.hxx>
 
 namespace Storm {
 
@@ -154,7 +154,7 @@ BaseTfqmrSolver_<Vector, L1>::init(const Vector& x_vec, const Vector& b_vec,
   }
   u_vec_ <<= y_vec_;
   r_tilde_vec_ <<= u_vec_;
-  rho_ = dot_product(r_tilde_vec_, u_vec_), tau_ = std::sqrt(rho_);
+  rho_ = dot_product(r_tilde_vec_, u_vec_), tau_ = math::sqrt(rho_);
 
   return tau_;
 
@@ -210,7 +210,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, const Vector& b_vec,
   } else {
     const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_))};
-    const real_t beta{safe_divide(rho_, rho_bar)};
+    const real_t beta{math::safe_divide(rho_, rho_bar)};
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
     if (left_pre) {
@@ -252,7 +252,8 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, const Vector& b_vec,
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  const real_t alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
+  const real_t alpha{
+      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   for (size_t m{0}; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
     d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
@@ -260,7 +261,7 @@ BaseTfqmrSolver_<Vector, L1>::iterate(Vector& x_vec, const Vector& b_vec,
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {
-      const auto [cs, sn, rr] = utils::sym_ortho(tau_, omega);
+      const auto [cs, sn, rr] = math::sym_ortho(tau_, omega);
       tau_ = omega * cs;
       x_vec += std::pow(cs, 2) * d_vec_;
       d_vec_ *= std::pow(sn, 2);

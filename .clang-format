@@ -30,7 +30,7 @@ IndentPPDirectives: None
 IndentWidth: 2
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 2
-NamespaceIndentation: None
+NamespaceIndentation: Inner
 PointerAlignment: Left
 ReflowComments: true
 SpaceAfterCStyleCast: true

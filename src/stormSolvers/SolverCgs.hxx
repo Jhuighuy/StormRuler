@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include <cmath>
 #include <utility>
 
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Vector.hxx>
+#include <stormUtils/Math.hxx>
 
 namespace Storm {
 
@@ -99,7 +99,7 @@ real_t CgsSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
   r_tilde_vec_ <<= r_vec_;
   rho_ = dot_product(r_tilde_vec_, r_vec_);
 
-  return std::sqrt(rho_);
+  return math::sqrt(rho_);
 
 } // CgsSolver::init
 
@@ -132,7 +132,7 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   } else {
     const real_t rho_bar{
         std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
-    const real_t beta{safe_divide(rho_, rho_bar)};
+    const real_t beta{math::safe_divide(rho_, rho_bar)};
     u_vec_ <<= r_vec_ + beta * q_vec_;
     p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
@@ -156,7 +156,8 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  const real_t alpha{safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
+  const real_t alpha{
+      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
   q_vec_ <<= u_vec_ - alpha * v_vec_;
   v_vec_ <<= u_vec_ + q_vec_;
 

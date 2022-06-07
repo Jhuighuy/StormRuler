@@ -25,11 +25,10 @@
 
 #pragma once
 
-#include <cmath>
-
 #include <stormBase.hxx>
 #include <stormSolvers/Solver.hxx>
 #include <stormSolvers/Vector.hxx>
+#include <stormUtils/Math.hxx>
 
 namespace Storm {
 
@@ -111,7 +110,7 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
   // ----------------------
   lin_op.mul(z_vec_, p_vec_);
-  const real_t alpha{safe_divide(gamma_, dot_product(p_vec_, z_vec_))};
+  const real_t alpha{math::safe_divide(gamma_, dot_product(p_vec_, z_vec_))};
   x_vec += alpha * p_vec_;
   r_vec_ -= alpha * z_vec_;
 
@@ -136,10 +135,10 @@ real_t CgSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   // 𝛽 ← 𝛾/𝛾̅,
   // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
   // ----------------------
-  const real_t beta = safe_divide(gamma_, gamma_bar);
+  const real_t beta = math::safe_divide(gamma_, gamma_bar);
   p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
 
-  return (pre_op != nullptr) ? norm_2(r_vec_) : std::sqrt(gamma_);
+  return (pre_op != nullptr) ? norm_2(r_vec_) : math::sqrt(gamma_);
 
 } // CgSolver::iterate
 

@@ -206,6 +206,7 @@ namespace math {
   /// @name Basic operations.
   /// @{
 
+  /// @brief Component-wise @c abs of the matrix @p mat.
   constexpr auto abs(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::abs(val); }, mat);
   }
@@ -229,10 +230,12 @@ namespace math {
                  x_mat, y_mat);
   }
 
+  /// @brief Component-wise @c sqrt of the matrix @p mat.
   constexpr auto sqrt(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::sqrt(val); }, mat);
   }
 
+  /// @brief Component-wise @c cbrt of the matrix @p mat.
   constexpr auto cbrt(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::cbrt(val); }, mat);
   }
@@ -256,22 +259,27 @@ namespace math {
   /// @name Exponential functions.
   /// @{
 
+  /// @brief Component-wise @c exp of the matrix @p mat.
   constexpr auto exp(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::exp(val); }, mat);
   }
 
+  /// @brief Component-wise @c exp2 of the matrix @p mat.
   constexpr auto exp2(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::exp2(val); }, mat);
   }
 
+  /// @brief Component-wise @c log of the matrix @p mat.
   constexpr auto log(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::log(val); }, mat);
   }
 
+  /// @brief Component-wise @c log2 of the matrix @p mat.
   constexpr auto log2(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::log2(val); }, mat);
   }
 
+  /// @brief Component-wise @c log10 of the matrix @p mat.
   constexpr auto log10(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::log10(val); }, mat);
   }
@@ -281,26 +289,32 @@ namespace math {
   /// @name Trigonometric functions.
   /// @{
 
+  /// @brief Component-wise @c sin of the matrix @p mat.
   constexpr auto sin(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::sin(val); }, mat);
   }
 
+  /// @brief Component-wise @c cos of the matrix @p mat.
   constexpr auto cos(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::cos(val); }, mat);
   }
 
+  /// @brief Component-wise @c tan of the matrix @p mat.
   constexpr auto tan(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::tan(val); }, mat);
   }
 
+  /// @brief Component-wise @c asin of the matrix @p mat.
   constexpr auto asin(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::asin(val); }, mat);
   }
 
+  /// @brief Component-wise @c acos of the matrix @p mat.
   constexpr auto acos(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::acos(val); }, mat);
   }
 
+  /// @brief Component-wise @c atan of the matrix @p mat.
   constexpr auto atan(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::atan(val); }, mat);
   }
@@ -316,26 +330,32 @@ namespace math {
   /// @name Hyperbolic functions.
   /// @{
 
+  /// @brief Component-wise @p sinh of the matrix @p mat.
   constexpr auto sinh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::sinh(val); }, mat);
   }
 
+  /// @brief Component-wise @c cosh of the matrix @p mat.
   constexpr auto cosh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::cosh(val); }, mat);
   }
 
+  /// @brief Component-wise @c tanh of the matrix @p mat.
   constexpr auto tanh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::tanh(val); }, mat);
   }
 
+  /// @brief Component-wise @c asinh of the matrix @p mat.
   constexpr auto asinh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::asinh(val); }, mat);
   }
 
+  /// @brief Component-wise @c acosh of the matrix @p mat.
   constexpr auto acosh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::acosh(val); }, mat);
   }
 
+  /// @brief Component-wise @c atanh of the matrix @p mat.
   constexpr auto atanh(const is_matrix_view auto& mat) noexcept {
     return apply([](const auto& val) { return math::atanh(val); }, mat);
   }

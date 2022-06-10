@@ -89,20 +89,25 @@ concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
 template<class T>
 concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 
-constexpr real_t dot_product(const is_matrix_view auto& mat1,
-                             const is_matrix_view auto& mat2) {
-  real_t d{};
-#pragma omp parallel for reduction(+ : d) schedule(static)
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      d += mat1(row_index, col_index) * mat2(row_index, col_index);
-    }
-  }
-  return d;
-}
+/// @brief Matrix view that is not a matrix concept.
+template<class T>
+concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
-constexpr real_t norm_2(const is_matrix_view auto& mat1) {
-  return std::sqrt(dot_product(mat1, mat1));
+/// @brief Matrix concept with possible @c const or @c volatile.
+template<class T>
+concept is_maybe_cv_matrix = is_matrix<std::remove_cv_t<T>>;
+
+/// @brief Matrix view concept with possible @c const or @c volatile.
+template<class T>
+concept is_maybe_cv_matrix_view = is_matrix_view<std::remove_cv_t<T>>;
+
+constexpr auto& evaluate(is_matrix auto& mat_lhs,
+                         const is_matrix_view auto& mat_rhs) {
+  //
+}
+constexpr const auto& evaluate(const is_rw_matrix_view auto& mat_lhs,
+                               const is_matrix_view auto& mat_rhs) {
+  //
 }
 
 constexpr auto& operator<<=(is_rw_matrix_view auto& mat1,
@@ -160,5 +165,23 @@ constexpr auto& operator*=(is_rw_matrix_view auto& mat1, const auto& val2) {
 constexpr auto& operator/=(is_rw_matrix_view auto& mat1, const auto& val2) {
   return mat1 <<= mat1 / val2;
 }
+
+
+constexpr real_t dot_product(const is_matrix_view auto& mat1,
+                             const is_matrix_view auto& mat2) {
+  real_t d{};
+#pragma omp parallel for reduction(+ : d) schedule(static)
+  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+      d += mat1(row_index, col_index) * mat2(row_index, col_index);
+    }
+  }
+  return d;
+}
+
+constexpr real_t norm_2(const is_matrix_view auto& mat1) {
+  return std::sqrt(dot_product(mat1, mat1));
+}
+
 
 } // namespace Storm

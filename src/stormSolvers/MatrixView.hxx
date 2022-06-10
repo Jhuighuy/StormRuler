@@ -46,9 +46,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Matrix as a matrix view wrapper.
 /// ----------------------------------------------------------------- ///
-// clang-format off
-template<class Matrix>
-  requires(is_matrix<std::remove_const_t<Matrix>>) 
+template<is_maybe_cv_matrix Matrix>
 class MatrixAsView final {
 private:
 
@@ -71,18 +69,17 @@ public:
 
   /// @brief Get the coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+      -> decltype(auto) {
     return mat_(row_index, col_index);
   }
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept {
-    return mat_(row_index, col_index);
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+      -> decltype(auto) {
+    return std::as_const(mat_)(row_index, col_index);
   }
   /// @}
 
 }; // class MatrixAsView
-// clang-format on
 
 template<class Matrix>
 MatrixAsView(Matrix&) -> MatrixAsView<Matrix>;
@@ -92,74 +89,13 @@ struct is_matrix_view_t<MatrixAsView<Matrix>> : std::true_type {};
 
 /// @brief Wrap the matrix @p mat into a view.
 /// @{
-constexpr auto as_view(is_matrix auto& mat) noexcept {
+constexpr auto as_view(is_maybe_cv_matrix auto& mat) noexcept {
   return MatrixAsView(mat);
 }
-constexpr auto as_view(const is_matrix auto& mat) noexcept {
-  return MatrixAsView(mat);
-}
-// clang-format off
-template<is_matrix_view Matrix>
-  requires(!is_matrix_v<Matrix>) 
-constexpr auto as_view(const Matrix& mat) noexcept {
+constexpr auto as_view(const is_strictly_matrix_view auto& mat) noexcept {
   return mat;
 }
-// clang-format on
 /// @}
-
-/// @}
-
-/// @name ???
-/// @{
-
-/// ----------------------------------------------------------------- ///
-/// @brief Matrix view.
-/// ----------------------------------------------------------------- ///
-template<std::convertible_to<size_t> RowsSize,
-         std::convertible_to<size_t> ColsSize,
-         std::invocable<RowsSize, ColsSize> Indexable>
-class MatrixView final {
-private:
-
-  [[no_unique_address]] RowsSize num_rows_;
-  [[no_unique_address]] ColsSize num_cols_;
-  [[no_unique_address]] Indexable indexable_;
-
-public:
-
-  /// @brief Construct a matrix view.
-  constexpr MatrixView(RowsSize num_rows, ColsSize num_cols,
-                       Indexable&& indexable)
-      : num_rows_{num_rows}, num_cols_{num_cols},
-        indexable_(std::forward<Indexable>(indexable)) {}
-
-  /// @brief Number of the matrix rows.
-  constexpr auto num_rows() const noexcept {
-    return num_rows_;
-  }
-
-  /// @brief Number of the matrix columns.
-  constexpr auto num_cols() const noexcept {
-    return num_cols_;
-  }
-
-  /// @brief Get the coefficient at @p row_index and @p col_index.
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept {
-    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
-                  "Indices are out of range.");
-    return indexable_(row_index, col_index);
-  }
-
-}; // class MatrixView
-
-template<class RowsSize, class ColsSize, class Indexable>
-MatrixView(RowsSize, ColsSize, Indexable&&)
-    -> MatrixView<RowsSize, ColsSize, Indexable>;
-
-template<class RowsSize, class ColsSize, class Indexable>
-struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, Indexable>> :
-    std::true_type {};
 
 /// @}
 
@@ -173,8 +109,10 @@ struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, Indexable>> :
 template<std::convertible_to<size_t> RowsSize,
          std::convertible_to<size_t> ColsSize, //
          class ExprFunc, is_matrix_view... ExprArgs>
-  requires(std::invocable<ExprFunc, RowsSize, ColsSize, const ExprArgs&...>)
-class MatrixExprView {
+  requires(std::invocable<ExprFunc, RowsSize, ColsSize, ExprArgs&...> &&
+           std::invocable<ExprFunc, RowsSize, ColsSize, 
+                          std::add_const_t<ExprArgs>&...>)
+class MatrixView {
 private:
 
   [[no_unique_address]] RowsSize num_rows_;
@@ -185,11 +123,11 @@ private:
 public:
 
   /// @brief Construct a matrix extression view.
-  constexpr MatrixExprView(RowsSize num_rows, ColsSize num_cols,
-                           ExprFunc&& expr_func, ExprArgs&&... expr_args)
+  constexpr MatrixView(RowsSize num_rows, ColsSize num_cols,
+                       ExprFunc&& expr_func, ExprArgs&&... expr_args)
       : num_rows_{num_rows}, num_cols_{num_cols},
-        expr_func_(std::forward<ExprFunc>(expr_func)),
-        expr_args_(std::forward<ExprArgs>(expr_args)...) {}
+        expr_func_{std::forward<ExprFunc>(expr_func)},
+        expr_args_{std::forward<ExprArgs>(expr_args)...} {}
 
   /// @brief Number of the matrix rows.
   constexpr auto num_rows() const noexcept {
@@ -202,28 +140,42 @@ public:
   }
 
   /// @brief Get the coefficient at @p row_index and @p col_index.
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept {
+  /// @{
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept 
+      -> decltype(auto) {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Indices are out of range.");
     return std::apply(
-        [&](const is_matrix_view auto&... expr_args) -> decltype(auto) {
+        [&](auto&... expr_args) -> decltype(auto) {
           return expr_func_(row_index, col_index, expr_args...);
         },
         expr_args_);
   }
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept 
+      -> decltype(auto) {
+    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
+                  "Indices are out of range.");
+    return std::apply(
+        [&](const auto&... expr_args) -> decltype(auto) {
+          return expr_func_(row_index, col_index, expr_args...);
+        },
+        expr_args_);
+  }
+  /// @}
 
-}; // class MatrixExprView
+}; // class MatrixView
 // clang-format on
 
 template<class RowsSize, class ColsSize, class ExprFunc, class... ExprArgs>
-MatrixExprView(RowsSize, ColsSize, ExprFunc&&, ExprArgs&&...)
-    -> MatrixExprView<RowsSize, ColsSize, ExprFunc, ExprArgs...>;
+MatrixView(RowsSize, ColsSize, ExprFunc&&, ExprArgs&&...)
+    -> MatrixView<RowsSize, ColsSize, ExprFunc, ExprArgs...>;
 
 template<class RowsSize, class ColsSize, class ExprFunc, class... ExprArgs>
-struct is_matrix_view_t<
-    MatrixExprView<RowsSize, ColsSize, ExprFunc, ExprArgs...>> :
+struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, ExprFunc, ExprArgs...>> :
     std::true_type {};
+
+/// @name General views.
+/// @{
 
 /// @brief Component-wise apply a @p func
 ///   to the matrix arguments @p mat1, @p mats.
@@ -232,7 +184,7 @@ constexpr auto apply(auto func, const is_matrix_view auto& mat1,
   STORM_ASSERT_(((mat1.num_rows() == mats.num_rows()) && ...) &&
                 ((mat1.num_cols() == mats.num_cols()) && ...) &&
                 "Shapes of the matrix arguments should be the same.");
-  return MatrixExprView(
+  return MatrixView(
       mat1.num_rows(), mat1.num_cols(),
       [func](size_t row_index, size_t col_index,
              const is_matrix_view auto& mat1,
@@ -241,6 +193,8 @@ constexpr auto apply(auto func, const is_matrix_view auto& mat1,
       },
       as_view(mat1), as_view(mats)...);
 }
+
+/// @}
 
 /// @name Arithmetic operations views.
 /// @{
@@ -474,7 +428,7 @@ namespace math {
 
 /// @brief Transpose the matrix @p mat.
 constexpr auto transpose(const is_matrix_view auto& mat) noexcept {
-  return MatrixExprView(
+  return MatrixView(
       mat.num_cols(), mat.num_rows(),
       [](size_t row_index, size_t col_index, const is_matrix_view auto& mat) {
         return mat(col_index, row_index);
@@ -488,7 +442,7 @@ constexpr auto matmul(const is_matrix_view auto& mat1,
   STORM_ASSERT_(mat1.num_cols() == mat2.num_rows() &&
                 "The first matrix should have the same number of columns "
                 "as the second matrix has rows.");
-  return MatrixExprView(
+  return MatrixView(
       mat1.num_rows(), mat2.num_cols(),
       [](size_t row_index, size_t col_index, //
          const is_matrix_view auto& mat1, const is_matrix_view auto& mat2) {
@@ -516,21 +470,21 @@ constexpr auto upper_triangle(const is_matrix_view auto& mat1) noexcept;
 /// @brief Slice the matrix @p mat rows from index @p from to index @p to
 ///   (not including) with a stride @p stride.
 /// @{
-constexpr auto slice_rows(const is_matrix_view auto& mat, size_t from,
-                          size_t to, size_t stride = 1) noexcept {
+constexpr auto slice_rows(is_matrix_view auto&& mat, //
+                          size_t from, size_t to, size_t stride = 1) noexcept {
   STORM_ASSERT_((from < to && to <= mat.num_rows()) && "Invalid row range.");
   const size_t slice_num_rows{(to - from) / stride};
-  return MatrixExprView(
+  return MatrixView(
       slice_num_rows, mat.num_cols(),
       [=](size_t slice_row_index, size_t col_index,
-          const is_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
         const size_t row_index{from + slice_row_index * stride};
         return mat(row_index, col_index);
       },
-      as_view(mat));
+      std::forward<decltype(mat)>(mat));
 }
-constexpr auto slice_rows(is_matrix_view auto& mat, size_t from, size_t to,
-                          size_t stride = 1) noexcept {
+constexpr auto slice_rows(is_maybe_cv_matrix_view auto& mat, //
+                          size_t from, size_t to, size_t stride = 1) noexcept {
   return slice_rows(make_view(mat), from, to, stride);
 }
 /// @}
@@ -538,42 +492,42 @@ constexpr auto slice_rows(is_matrix_view auto& mat, size_t from, size_t to,
 /// @brief Slice the matrix @p mat columns from index @p from to index @p to
 ///   (not including) with a stride @p stride.
 /// @{
-constexpr auto slice_cols(const is_matrix_view auto& mat, size_t from,
-                          size_t to, size_t stride = 1) noexcept {
+constexpr auto slice_cols(is_matrix_view auto&& mat, //
+                          size_t from, size_t to, size_t stride = 1) noexcept {
   STORM_ASSERT_((from < to && to <= mat.num_cols()) && "Invalid column range.");
   const size_t slice_num_cols{(to - from) / stride};
-  return MatrixExprView(
+  return MatrixView(
       slice_num_cols, mat.num_cols(),
       [=](size_t row_index, size_t slice_col_index,
-          const is_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
         const size_t col_index{from + slice_col_index * stride};
         return mat(row_index, col_index);
       },
-      as_view(mat));
+      std::forward<decltype(mat)>(mat));
 }
-constexpr auto slice_cols(is_matrix_view auto& mat, size_t from, size_t to,
-                          size_t stride = 1) noexcept {
+constexpr auto slice_cols(is_maybe_cv_matrix_view auto& mat, //
+                          size_t from, size_t to, size_t stride = 1) noexcept {
   return slice_cols(as_view(mat), from, to, stride);
 }
 /// @}
 
 /// @brief Select the matrix @p mat rows with @p row_indices.
 /// @{
-constexpr auto select_rows(const is_matrix_view auto& mat,
+constexpr auto select_rows(is_matrix_view auto&& mat,
                            std::integral auto... row_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
                 "Row indices are out of range.");
   constexpr size_t_constant<sizeof...(row_indices)> slice_num_rows{};
-  return MatrixExprView(
+  return MatrixView(
       slice_num_rows, mat.num_cols(),
       [row_indices = std::array{static_cast<size_t>(row_indices)...}](
           size_t slice_row_index, size_t col_index,
-          const is_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
         return mat(row_indices[slice_row_index], col_index);
       },
-      as_view(mat));
+      std::forward<decltype(mat)>(mat));
 }
-constexpr auto select_rows(is_matrix_view auto& mat,
+constexpr auto select_rows(is_maybe_cv_matrix_view auto& mat,
                            std::integral auto... row_indices) noexcept {
   return select_rows(as_view(mat), row_indices...);
 }
@@ -581,21 +535,21 @@ constexpr auto select_rows(is_matrix_view auto& mat,
 
 /// @brief Select the matrix @p mat columns with @p col_index.
 /// @{
-constexpr auto select_cols(const is_matrix_view auto& mat,
+constexpr auto select_cols(is_matrix_view auto&& mat,
                            std::integral auto... col_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
                 "Columns indices are out of range.");
   constexpr size_t_constant<sizeof...(col_indices)> slice_num_cols{};
-  return MatrixExprView(
+  return MatrixView(
       mat.num_rows(), slice_num_cols,
       [col_indices = std::array{static_cast<size_t>(col_indices)...}](
           size_t row_index, size_t slice_col_index,
-          const is_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
         return mat(row_index, col_indices[slice_col_index]);
       },
-      as_view(mat));
+      std::forward<decltype(mat)>(mat));
 }
-constexpr auto select_cols(is_matrix_view auto& mat,
+constexpr auto select_cols(is_maybe_cv_matrix_view auto& mat,
                            std::integral auto... col_indices) noexcept {
   return select_cols(as_view(mat), col_indices...);
 }

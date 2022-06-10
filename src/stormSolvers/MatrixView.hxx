@@ -46,7 +46,7 @@ namespace Storm {
 /// ----------------------------------------------------------------- ///
 /// @brief Matrix as a matrix view wrapper.
 /// ----------------------------------------------------------------- ///
-template<is_maybe_cv_matrix Matrix>
+template<is_maybe_const_matrix Matrix>
 class MatrixAsView final {
 private:
 
@@ -89,7 +89,7 @@ struct is_matrix_view_t<MatrixAsView<Matrix>> : std::true_type {};
 
 /// @brief Wrap the matrix @p mat into a view.
 /// @{
-constexpr auto as_view(is_maybe_cv_matrix auto& mat) noexcept {
+constexpr auto as_view(is_maybe_const_matrix auto& mat) noexcept {
   return MatrixAsView(mat);
 }
 constexpr auto as_view(const is_strictly_matrix_view auto& mat) noexcept {
@@ -477,13 +477,13 @@ constexpr auto slice_rows(is_matrix_view auto&& mat, //
   return MatrixView(
       slice_num_rows, mat.num_cols(),
       [=](size_t slice_row_index, size_t col_index,
-          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_const_matrix_view auto& mat) -> decltype(auto) {
         const size_t row_index{from + slice_row_index * stride};
         return mat(row_index, col_index);
       },
       std::forward<decltype(mat)>(mat));
 }
-constexpr auto slice_rows(is_maybe_cv_matrix_view auto& mat, //
+constexpr auto slice_rows(is_maybe_const_matrix_view auto& mat, //
                           size_t from, size_t to, size_t stride = 1) noexcept {
   return slice_rows(make_view(mat), from, to, stride);
 }
@@ -499,13 +499,13 @@ constexpr auto slice_cols(is_matrix_view auto&& mat, //
   return MatrixView(
       slice_num_cols, mat.num_cols(),
       [=](size_t row_index, size_t slice_col_index,
-          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_const_matrix_view auto& mat) -> decltype(auto) {
         const size_t col_index{from + slice_col_index * stride};
         return mat(row_index, col_index);
       },
       std::forward<decltype(mat)>(mat));
 }
-constexpr auto slice_cols(is_maybe_cv_matrix_view auto& mat, //
+constexpr auto slice_cols(is_maybe_const_matrix_view auto& mat, //
                           size_t from, size_t to, size_t stride = 1) noexcept {
   return slice_cols(as_view(mat), from, to, stride);
 }
@@ -522,12 +522,12 @@ constexpr auto select_rows(is_matrix_view auto&& mat,
       slice_num_rows, mat.num_cols(),
       [row_indices = std::array{static_cast<size_t>(row_indices)...}](
           size_t slice_row_index, size_t col_index,
-          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_const_matrix_view auto& mat) -> decltype(auto) {
         return mat(row_indices[slice_row_index], col_index);
       },
       std::forward<decltype(mat)>(mat));
 }
-constexpr auto select_rows(is_maybe_cv_matrix_view auto& mat,
+constexpr auto select_rows(is_maybe_const_matrix_view auto& mat,
                            std::integral auto... row_indices) noexcept {
   return select_rows(as_view(mat), row_indices...);
 }
@@ -544,12 +544,12 @@ constexpr auto select_cols(is_matrix_view auto&& mat,
       mat.num_rows(), slice_num_cols,
       [col_indices = std::array{static_cast<size_t>(col_indices)...}](
           size_t row_index, size_t slice_col_index,
-          is_maybe_cv_matrix_view auto& mat) -> decltype(auto) {
+          is_maybe_const_matrix_view auto& mat) -> decltype(auto) {
         return mat(row_index, col_indices[slice_col_index]);
       },
       std::forward<decltype(mat)>(mat));
 }
-constexpr auto select_cols(is_maybe_cv_matrix_view auto& mat,
+constexpr auto select_cols(is_maybe_const_matrix_view auto& mat,
                            std::integral auto... col_indices) noexcept {
   return select_cols(as_view(mat), col_indices...);
 }

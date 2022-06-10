@@ -93,20 +93,16 @@ concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 template<class T>
 concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
-/// @brief Matrix concept with possible @c const or @c volatile.
+/// @brief Matrix concept with possible @c const qualifier.
 template<class T>
-concept is_maybe_cv_matrix = is_matrix<std::remove_cv_t<T>>;
+concept is_maybe_const_matrix = is_matrix<std::remove_cv_t<T>>;
 
-/// @brief Matrix view concept with possible @c const or @c volatile.
+/// @brief Matrix view concept with possible @c const qualifier.
 template<class T>
-concept is_maybe_cv_matrix_view = is_matrix_view<std::remove_cv_t<T>>;
+concept is_maybe_const_matrix_view = is_matrix_view<std::remove_cv_t<T>>;
 
-constexpr auto& evaluate(is_matrix auto& mat_lhs,
+constexpr auto& evaluate(is_rw_matrix_view auto& mat_lhs,
                          const is_matrix_view auto& mat_rhs) {
-  //
-}
-constexpr const auto& evaluate(const is_rw_matrix_view auto& mat_lhs,
-                               const is_matrix_view auto& mat_rhs) {
   //
 }
 

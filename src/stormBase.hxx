@@ -78,6 +78,10 @@ using ptrdiff_t = std::ptrdiff_t;
 /// @brief Real floating-point type.
 using real_t = double;
 
+/// @brief size_t constant.
+template<size_t N>
+using size_t_constant = std::integral_constant<size_t, N>;
+
 /// @brief Check if type is a complex floating point.
 /// @{
 template<class>

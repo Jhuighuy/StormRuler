@@ -99,7 +99,7 @@ public:
 }; // class Matrix
 
 template<class Value, size_t NumRows, size_t NumCols>
-struct is_matrix_view_t<Matrix<Value, NumRows, NumCols>> : std::true_type {};
+struct is_matrix_t<Matrix<Value, NumRows, NumCols>> : std::true_type {};
 
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(const is_matrix_view auto& mat,

@@ -34,10 +34,18 @@
 
 namespace Storm {
 
-/// @brief Check if type is a matrix view.
+/// @brief Check if type is a matrix.
 /// @{
 template<class>
-struct is_matrix_view_t : std::false_type {};
+struct is_matrix_t : std::false_type {};
+template<class T>
+inline constexpr bool is_matrix_v = is_matrix_t<T>::value;
+/// @}
+
+/// @brief Check if type is a matrix view.
+/// @{
+template<class T>
+struct is_matrix_view_t : is_matrix_t<T> {};
 template<class T>
 inline constexpr bool is_matrix_view_v = is_matrix_view_t<T>::value;
 /// @}
@@ -48,7 +56,7 @@ using matrix_coeff_t = std::remove_cv_t<decltype(std::declval<T>()(
 
 // clang-format off
 
-/// @brief Matrix view concept.
+/// @brief Matrix view-like concept.
 template<class MatrixView>
 concept is_matrix_view_like = 
     requires(const MatrixView& mat) {
@@ -58,7 +66,7 @@ concept is_matrix_view_like =
       { mat(row_index, col_index) };
     };
 
-/// @brief Matrix concept.
+/// @brief Read-write matrix view-like concept.
 template<class Matrix>
 concept is_rw_matrix_view_like = 
     is_matrix_view_like<Matrix> && 
@@ -71,11 +79,15 @@ concept is_rw_matrix_view_like =
 
 /// @brief Matrix concept.
 template<class T>
-concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
+concept is_matrix = is_matrix_v<T> && is_rw_matrix_view_like<T>;
 
-/// @brief Matrix concept.
+/// @brief Read-write matrix view concept.
 template<class T>
 concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
+
+/// @brief Matrix view concept.
+template<class T>
+concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
@@ -134,10 +146,9 @@ constexpr auto& fill_diag_with(is_rw_matrix_view auto& mat1, const auto& val2) {
 }
 
 constexpr auto& fill_randomly(is_rw_matrix_view auto& mat1, auto...) {
-  srand(1792);
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
+  for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      mat1(row_index, col_index) = real_t(rand()) / RAND_MAX;
+      mat1(row_index, col_index) = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
     }
   }
   return mat1;

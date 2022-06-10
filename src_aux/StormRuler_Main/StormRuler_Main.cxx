@@ -491,6 +491,13 @@ int main(int argc, char** argv) {
                      {2.0, 4.0, 5.0, 25.0}};
     Matrix<double> B(4, 4);
     {
+      B <<= matmul(A, A);
+      A <<= matmul(A, A);
+      std::cout << A << std::endl << std::endl;
+      std::cout << B << std::endl << std::endl;
+      std::cout << "=======" << std::endl << std::endl;
+    }
+    {
       inplace_inverse_lu(matmul(A, A), B);
       std::cout << A << std::endl << std::endl;
       std::cout << B << std::endl << std::endl;
@@ -499,12 +506,18 @@ int main(int argc, char** argv) {
       std::cout << "=======" << std::endl << std::endl;
     }
     {
-      auto AA = select_rows(A, 0, 1, 3);
+      const auto AA = as_view(A);
       AA(0, 0) = 100.0;
       std::cout << AA << std::endl << std::endl;
       std::cout << "=======" << std::endl << std::endl;
     }
 #if 1
+    {
+      auto AA = select_rows(A, 0, 1, 3);
+      AA(0, 0) = 100.0;
+      std::cout << AA << std::endl << std::endl;
+      std::cout << "=======" << std::endl << std::endl;
+    }
     {
       auto AA = slice_rows(select_cols(A, 0, 1, 3), 0, 3, 1);
       auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);

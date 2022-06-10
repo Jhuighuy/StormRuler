@@ -110,7 +110,7 @@ public:
 };
 
 template<>
-struct is_matrix_view_t<stormArray> : std::true_type {};
+struct is_matrix_t<stormArray> : std::true_type {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

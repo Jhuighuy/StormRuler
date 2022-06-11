@@ -29,9 +29,6 @@
 
 namespace Storm::math {
 
-/// @name Basic operations.
-/// @{
-
 using std::abs;
 
 /// @brief If @p y is zero, return zero,
@@ -41,8 +38,6 @@ auto safe_divide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
-
-/// @}
 
 /// @name Exponential functions.
 /// @{
@@ -57,7 +52,7 @@ using std::log2;
 
 using std::log10;
 
-/// @}
+/// @} // Exponential functions.
 
 /// @name Power functions.
 /// @{
@@ -70,7 +65,7 @@ using std::cbrt;
 
 using std::hypot;
 
-/// @}
+/// @} // Power functions.
 
 /// @name Trigonometric functions.
 /// @{
@@ -89,7 +84,7 @@ using std::atan;
 
 using std::atan2;
 
-/// @}
+/// @} // Trigonometric functions.
 
 /// @name Hyperbolic functions.
 /// @{
@@ -106,7 +101,7 @@ using std::acosh;
 
 using std::atanh;
 
-/// @}
+/// @} // Hyperbolic functions.
 
 /// @name Givens rotations.
 /// @{
@@ -133,6 +128,6 @@ auto sym_ortho(Value a, Value b) {
 
 } // sym_ortho
 
-/// @}
+/// @} // Givens rotations.
 
 } // namespace Storm::math

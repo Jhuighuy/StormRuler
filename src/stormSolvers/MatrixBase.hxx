@@ -52,9 +52,8 @@ template<class T>
 using matrix_coeff_t = std::remove_cv_t<decltype(std::declval<T>()(
     std::declval<size_t>(), std::declval<size_t>()))>;
 
-// clang-format off
-
 /// @brief Matrix view-like concept.
+// clang-format off
 template<class MatrixView>
 concept is_matrix_view_like = 
     requires(const MatrixView& mat) {
@@ -63,8 +62,10 @@ concept is_matrix_view_like =
     } && requires(const MatrixView& mat, size_t row_index, size_t col_index) {
       { mat(row_index, col_index) };
     };
+// clang-format on
 
 /// @brief Read-write matrix view-like concept.
+// clang-format off
 template<class Matrix>
 concept is_rw_matrix_view_like = 
     is_matrix_view_like<Matrix> && 
@@ -72,7 +73,6 @@ concept is_rw_matrix_view_like =
              matrix_coeff_t<Matrix> val) {
       { mat(row_index, col_index) = val };
     };
-
 // clang-format on
 
 /// @brief Matrix concept.

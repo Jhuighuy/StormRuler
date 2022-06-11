@@ -30,15 +30,59 @@
 
 namespace Storm {
 
+/// @name Matrix actions.
+/// @{
+
 /// @brief Assign the matrix @p mat2 to @p mat1.
 constexpr auto& operator<<=(decays_to_rw_matrix_view auto&& mat1,
                             const is_matrix_view auto& mat2) {
   return eval([](auto& val1, const auto& val2) { val1 = val2; }, mat1, mat2);
 }
 
+/// @name Functional actions.
+/// @{
+
+/// @brief Multiply-assign the matrix @p mat by a scalar @p scal.
+constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat, auto scal) {
+  return eval([scal](auto& val) { val *= scal; }, mat);
+}
+
+/// @brief Divide-assign the matrix @p mat by a scalar @p scal.
+constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat, auto scal) {
+  return eval([scal](auto& val) { val /= scal; }, mat);
+}
+
+/// @brief Add-assign the matrices @p mat1 and @p mat2.
+constexpr auto& operator+=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 += val2; }, mat1, mat2);
+}
+
+/// @brief Subtract-assign the matrices @p mat1 and @p mat2.
+constexpr auto& operator-=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 -= val2; }, mat1, mat2);
+}
+
+/// @brief Component-wise multiply-assign the matrices @p mat1 and @p mat2.
+constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 *= val2; }, mat1, mat2);
+}
+
+/// @brief Component-wise divide-assign the matrices @p mat1 and @p mat2.
+constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 /= val2; }, mat1, mat2);
+}
+
+/// @} // Functional actions.
+
+/// @name Filling actions.
+/// @{
 
 constexpr auto& fill_diag_with(decays_to_rw_matrix_view auto&& mat, auto scal) {
-  return mat <<= diagonal_matrix(mat.num_rows(), mat.num_cols(), scal);
+  return mat <<= make_diagonal_matrix(mat.num_rows(), mat.num_cols(), scal);
 }
 
 /// @brief Fill the matrix @p mat with a scalar @p scal.
@@ -55,5 +99,9 @@ constexpr auto& fill_randomly(decays_to_rw_matrix_view auto&& mat) noexcept {
   }
   return mat;
 }
+
+/// @} // Filling actions.
+
+/// @} // Matrix actions.
 
 } // namespace Storm

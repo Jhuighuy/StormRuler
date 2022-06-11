@@ -28,6 +28,8 @@
 #include <concepts>
 #include <type_traits>
 
+#include <iostream>
+
 #include <stormBase.hxx>
 
 namespace Storm {
@@ -103,6 +105,46 @@ concept decays_to_matrix_view = is_matrix_view<std::remove_cvref_t<T>>;
 /// @brief Matrix view that is not a matrix concept.
 template<class T>
 concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
+
+constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
+                     const is_matrix_view auto& mat_rhs) {
+  if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
+#if 1
+    //
+    auto vectorize_func{[](auto&& mat) {
+      if constexpr (!decays_to_matrix<decltype(mat)>) {
+        return forward_as_view(mat);
+      } else {
+        return make_expression(
+            mat.num_rows(), mat.num_cols(),
+            [data = mat.data()](size_t row_index,
+                                size_t col_index) -> decltype(auto) {
+              (void) col_index;
+              return data[row_index];
+            });
+      }
+    }};
+
+    auto mat_lhs_vectorized{cast_expression(mat_lhs, vectorize_func)};
+    const auto mat_rhs_vectorized{cast_expression(mat_rhs, vectorize_func)};
+
+#pragma omp parallel for schedule(static)
+    for (int row_index = 0; row_index < (int) mat_lhs.num_rows();
+         row_index += 2) {
+      func(mat_lhs_vectorized(row_index, 0), mat_rhs_vectorized(row_index, 0));
+      func(mat_lhs_vectorized(row_index + 1, 0),
+           mat_rhs_vectorized(row_index + 1, 0));
+    }
+#endif
+  } else {
+    for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
+      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+        func(mat_lhs(row_index, col_index), mat_rhs(row_index, col_index));
+      }
+    }
+  }
+  return mat_lhs;
+}
 
 constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
                      const is_matrix_view auto&... mats_rhs) {

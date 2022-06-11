@@ -127,16 +127,6 @@ constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
 // To be carefully reimplemented:
 //
 
-constexpr auto& fill_diag_with(is_rw_matrix_view auto& mat1, const auto& val2) {
-#pragma omp parallel for schedule(static)
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      mat1(row_index, col_index) = (size_t) row_index == col_index ? val2 : 0;
-    }
-  }
-  return mat1;
-}
-
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
   real_t d = 0.0;

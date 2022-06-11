@@ -66,7 +66,7 @@ public:
   constexpr DenseMatrix(
       std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
       : DenseMatrix(coeffs.size(), coeffs.begin()->size()) {
-    *this <<= MatrixView(num_rows_, num_cols_, [&](auto i, auto j) {
+    *this <<= MatrixExpr(num_rows_, num_cols_, [&](auto i, auto j) {
       return *((coeffs.begin() + i)->begin() + j);
     });
   }

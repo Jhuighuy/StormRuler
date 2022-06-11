@@ -102,6 +102,10 @@ template<class T>
 concept is_maybe_const_matrix_view = is_matrix_view<std::remove_const_t<T>>;
 
 template<class T>
+concept is_matrix_ref =
+    is_matrix<std::remove_reference_t<std::remove_const_t<T>>>;
+
+template<class T>
 concept is_matrix_view_ref =
     is_matrix_view<std::remove_reference_t<std::remove_const_t<T>>>;
 

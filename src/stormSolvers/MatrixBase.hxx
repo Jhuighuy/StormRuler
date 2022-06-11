@@ -95,11 +95,18 @@ concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
 /// @brief Matrix concept with possible @c const qualifier.
 template<class T>
-concept is_maybe_const_matrix = is_matrix<std::remove_cv_t<T>>;
+concept is_maybe_const_matrix = is_matrix<std::remove_const_t<T>>;
 
 /// @brief Matrix view concept with possible @c const qualifier.
 template<class T>
-concept is_maybe_const_matrix_view = is_matrix_view<std::remove_cv_t<T>>;
+concept is_maybe_const_matrix_view = is_matrix_view<std::remove_const_t<T>>;
+
+template<class T>
+concept is_matrix_view_ref =
+    is_matrix_view<std::remove_reference_t<std::remove_const_t<T>>>;
+
+template<class T>
+concept is_rw_matrix_view_ref = is_rw_matrix_view<std::remove_reference_t<T>>;
 
 constexpr auto& evaluate(is_rw_matrix_view auto& mat_lhs,
                          const is_matrix_view auto& mat_rhs) {
@@ -115,15 +122,6 @@ constexpr auto& operator<<=(is_rw_matrix_view auto& mat1,
     }
   }
   return mat1;
-}
-
-constexpr auto& operator+=(is_rw_matrix_view auto& mat1,
-                           const is_matrix_view auto& mat2) {
-  return mat1 <<= mat1 + mat2;
-}
-constexpr auto& operator-=(is_rw_matrix_view auto& mat1,
-                           const is_matrix_view auto& mat2) {
-  return mat1 <<= mat1 - mat2;
 }
 
 constexpr auto& fill_with(is_rw_matrix_view auto& mat1, const auto& val2) {
@@ -153,13 +151,6 @@ constexpr auto& fill_randomly(is_rw_matrix_view auto& mat1, auto...) {
     }
   }
   return mat1;
-}
-
-constexpr auto& operator*=(is_rw_matrix_view auto& mat1, const auto& val2) {
-  return mat1 <<= val2 * mat1;
-}
-constexpr auto& operator/=(is_rw_matrix_view auto& mat1, const auto& val2) {
-  return mat1 <<= mat1 / val2;
 }
 
 

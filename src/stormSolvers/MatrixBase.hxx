@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <stdlib.h>
-
 #include <concepts>
 #include <type_traits>
 
@@ -89,54 +87,45 @@ concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
 template<class T>
 concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 
+/// @brief Decays to a matrix concept.
+template<class T>
+concept decays_to_matrix = is_matrix<std::remove_cvref_t<T>>;
+
+/// @brief Decays to a read-write matrix view concept.
+template<class T>
+concept decays_to_rw_matrix_view =
+    is_rw_matrix_view<std::remove_reference_t<T>>;
+
+/// @brief Decays to a matrix view concept.
+template<class T>
+concept decays_to_matrix_view = is_matrix_view<std::remove_cvref_t<T>>;
+
 /// @brief Matrix view that is not a matrix concept.
 template<class T>
 concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
-/// @brief Matrix concept with possible @c const qualifier.
-template<class T>
-concept is_maybe_const_matrix = is_matrix<std::remove_const_t<T>>;
-
-/// @brief Matrix view concept with possible @c const qualifier.
-template<class T>
-concept is_maybe_const_matrix_view = is_matrix_view<std::remove_const_t<T>>;
-
-template<class T>
-concept is_matrix_ref =
-    is_matrix<std::remove_reference_t<std::remove_const_t<T>>>;
-
-template<class T>
-concept is_matrix_view_ref =
-    is_matrix_view<std::remove_reference_t<std::remove_const_t<T>>>;
-
-template<class T>
-concept is_rw_matrix_view_ref = is_rw_matrix_view<std::remove_reference_t<T>>;
-
-constexpr auto& evaluate(is_rw_matrix_view auto& mat_lhs,
-                         const is_matrix_view auto& mat_rhs) {
-  //
-}
-
-constexpr auto& operator<<=(is_rw_matrix_view auto& mat1,
-                            const is_matrix_view auto& mat2) {
+constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
+                     const is_matrix_view auto&... mats_rhs) {
+  if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
 #pragma omp parallel for schedule(static)
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      mat1(row_index, col_index) = mat2(row_index, col_index);
+    for (int row_index = 0; row_index < (int) mat_lhs.num_rows(); ++row_index) {
+      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+        func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
+      }
+    }
+  } else {
+    for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
+      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+        func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
+      }
     }
   }
-  return mat1;
+  return mat_lhs;
 }
 
-constexpr auto& fill_with(is_rw_matrix_view auto& mat1, const auto& val2) {
-#pragma omp parallel for schedule(static)
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      mat1(row_index, col_index) = val2;
-    }
-  }
-  return mat1;
-}
+//
+// To be carefully reimplemented:
+//
 
 constexpr auto& fill_diag_with(is_rw_matrix_view auto& mat1, const auto& val2) {
 #pragma omp parallel for schedule(static)
@@ -148,23 +137,21 @@ constexpr auto& fill_diag_with(is_rw_matrix_view auto& mat1, const auto& val2) {
   return mat1;
 }
 
-constexpr auto& fill_randomly(is_rw_matrix_view auto& mat1, auto...) {
-  for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      mat1(row_index, col_index) = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
-    }
-  }
-  return mat1;
-}
-
-
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
-  real_t d{};
+  real_t d = 0.0;
+  if (mat1.num_rows() * mat1.num_cols() > 1000) {
 #pragma omp parallel for reduction(+ : d) schedule(static)
-  for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-      d += mat1(row_index, col_index) * mat2(row_index, col_index);
+    for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
+      for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+        d += mat1(row_index, col_index) * mat2(row_index, col_index);
+      }
+    }
+  } else {
+    for (size_t row_index{0}; row_index < mat1.num_rows(); ++row_index) {
+      for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+        d += mat1(row_index, col_index) * mat2(row_index, col_index);
+      }
     }
   }
   return d;
@@ -173,6 +160,5 @@ constexpr real_t dot_product(const is_matrix_view auto& mat1,
 constexpr real_t norm_2(const is_matrix_view auto& mat1) {
   return std::sqrt(dot_product(mat1, mat1));
 }
-
 
 } // namespace Storm

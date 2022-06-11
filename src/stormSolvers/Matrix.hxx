@@ -37,7 +37,7 @@ namespace Storm {
 
 template<class Value, size_t NumRows = std::dynamic_extent,
          size_t NumCols = std::dynamic_extent>
-class Matrix {
+class DenseMatrix {
 private:
 
   std::conditional_t<
@@ -56,16 +56,16 @@ private:
 public:
 
   /// @brief Initialize an empty matrix.
-  constexpr Matrix() = default;
+  constexpr DenseMatrix() = default;
 
-  constexpr Matrix(size_t num_rows, size_t num_cols) noexcept
+  constexpr DenseMatrix(size_t num_rows, size_t num_cols) noexcept
       : num_rows_{num_rows}, num_cols_{num_cols} {
     coeffs_ = std::make_unique<Value[]>(size());
   }
 
-  constexpr Matrix(
+  constexpr DenseMatrix(
       std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
-      : Matrix(coeffs.size(), coeffs.begin()->size()) {
+      : DenseMatrix(coeffs.size(), coeffs.begin()->size()) {
     *this <<= MatrixView(num_rows_, num_cols_, [&](auto i, auto j) {
       return *((coeffs.begin() + i)->begin() + j);
     });
@@ -92,14 +92,14 @@ public:
   }
   constexpr const auto& operator()(size_t row_index,
                                    size_t col_index) const noexcept {
-    return const_cast<Matrix&>(*this)(row_index, col_index);
+    return const_cast<DenseMatrix&>(*this)(row_index, col_index);
   }
   /// @}
 
 }; // class Matrix
 
 template<class Value, size_t NumRows, size_t NumCols>
-struct is_matrix_t<Matrix<Value, NumRows, NumCols>> : std::true_type {};
+struct is_matrix_t<DenseMatrix<Value, NumRows, NumCols>> : std::true_type {};
 
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(const is_matrix_view auto& mat,
@@ -147,8 +147,8 @@ constexpr void inplace_solve_lu(const is_matrix_view auto& l_mat,
 constexpr void inplace_inverse_lu(const is_matrix_view auto& mat,
                                   is_rw_matrix_view auto& inv_mat) noexcept {
   using Value = std::decay_t<decltype(mat(0, 0))>;
-  Matrix<Value> L(mat.num_rows(), mat.num_cols());
-  Matrix<Value> U(mat.num_rows(), mat.num_cols());
+  DenseMatrix<Value> L(mat.num_rows(), mat.num_cols());
+  DenseMatrix<Value> U(mat.num_rows(), mat.num_cols());
   decompose_lu(mat, L, U);
   fill_diag_with(inv_mat, 1.0);
   for (size_t iy{0}; iy < mat.num_rows(); ++iy) {

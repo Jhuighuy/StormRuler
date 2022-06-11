@@ -27,6 +27,7 @@
 
 #include <concepts>
 #include <ostream>
+#include <random>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -43,19 +44,25 @@ namespace Storm {
 /// @name Cast to view.
 /// @{
 
+/// @brief Copy the matrix view @p mat.
+constexpr auto
+forward_as_view(const is_strictly_matrix_view auto& mat) noexcept {
+  return mat;
+}
+
 /// ----------------------------------------------------------------- ///
-/// @brief Matrix as a matrix view wrapper.
+/// @brief Matrix wrapper view.
 /// ----------------------------------------------------------------- ///
-template<is_maybe_const_matrix Matrix>
-class MatrixAsView final {
+template<decays_to_matrix Matrix>
+class MatrixWrapper final {
 private:
 
-  Matrix& mat_;
+  Matrix mat_;
 
 public:
 
   /// @brief Construct a matrix as view wrapper.
-  constexpr MatrixAsView(Matrix& mat) noexcept : mat_{mat} {}
+  constexpr MatrixWrapper(Matrix mat) noexcept : mat_{mat} {}
 
   /// @brief Number of the matrix rows.
   constexpr auto num_rows() const noexcept {
@@ -79,29 +86,17 @@ public:
   }
   /// @}
 
-}; // class MatrixAsView
+}; // class MatrixWrapper
 
 template<class Matrix>
-MatrixAsView(Matrix&) -> MatrixAsView<Matrix>;
+MatrixWrapper(Matrix&) -> MatrixWrapper<Matrix&>;
 
 template<class Matrix>
-struct is_matrix_view_t<MatrixAsView<Matrix>> : std::true_type {};
+struct is_matrix_view_t<MatrixWrapper<Matrix>> : std::true_type {};
 
 /// @brief Wrap the matrix @p mat in view a matrix view.
-constexpr auto forward_as_view(is_matrix_ref auto&& mat) noexcept {
-  return MatrixAsView{std::forward<decltype(mat)>(mat)};
-}
-
-/// @brief Forward the matrix view @p mat as an r-value reference.
-constexpr auto&& 
-forward_as_view(is_strictly_matrix_view auto&& mat) noexcept {
-  return std::forward<decltype(mat)>(mat);
-}
-
-/// @brief Copy the matrix view @p mat.
-constexpr auto
-forward_as_view(const is_strictly_matrix_view auto& mat) noexcept {
-  return mat;
+constexpr auto forward_as_view(decays_to_matrix auto&& mat) noexcept {
+  return MatrixWrapper{std::forward<decltype(mat)>(mat)};
 }
 
 /// @}
@@ -117,8 +112,7 @@ template<std::convertible_to<size_t> RowsSize,
          std::convertible_to<size_t> ColsSize, //
          class ExprFunc, is_matrix_view... ExprArgs>
   requires(std::invocable<ExprFunc, RowsSize, ColsSize, ExprArgs&...> &&
-           std::invocable<ExprFunc, RowsSize, ColsSize, 
-                          std::add_const_t<ExprArgs>&...>)
+           std::invocable<ExprFunc, RowsSize, ColsSize, const ExprArgs&...>)
 class MatrixView {
 private:
 
@@ -153,7 +147,7 @@ public:
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Indices are out of range.");
     return std::apply(
-        [&expr_func_, row_index, col_index](auto&... expr_args) -> decltype(auto) {
+        [&, row_index, col_index](auto&... expr_args) -> decltype(auto) {
           return expr_func_(row_index, col_index, expr_args...);
         },
         expr_args_);
@@ -163,7 +157,7 @@ public:
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Indices are out of range.");
     return std::apply(
-        [&expr_func_, row_index, col_index](const auto&... expr_args) -> decltype(auto) {
+        [&, row_index, col_index](const auto&... expr_args) -> decltype(auto) {
           return expr_func_(row_index, col_index, expr_args...);
         },
         expr_args_);
@@ -181,13 +175,14 @@ template<class RowsSize, class ColsSize, class ExprFunc, class... ExprArgs>
 struct is_matrix_view_t<MatrixView<RowsSize, ColsSize, ExprFunc, ExprArgs...>> :
     std::true_type {};
 
-/// @name General views.
+/// @name Functional views.
 /// @{
 
 /// @brief Component-wise apply a @p func
 ///   to the matrix arguments @p mat1, @p mats.
-constexpr auto apply(auto func, const is_matrix_view auto& mat1,
-                     const is_matrix_view auto&... mats) noexcept {
+constexpr auto map(auto func, //
+                   const is_matrix_view auto& mat1,
+                   const is_matrix_view auto&... mats) noexcept {
   STORM_ASSERT_(((mat1.num_rows() == mats.num_rows()) && ...) &&
                 ((mat1.num_cols() == mats.num_cols()) && ...) &&
                 "Shapes of the matrix arguments should be the same.");
@@ -195,7 +190,7 @@ constexpr auto apply(auto func, const is_matrix_view auto& mat1,
       mat1.num_rows(), mat1.num_cols(),
       [func](size_t row_index, size_t col_index,
              const is_matrix_view auto& mat1,
-             const is_matrix_view auto&... mats) {
+             const is_matrix_view auto&... mats) -> decltype(auto) {
         return func(mat1(row_index, col_index), mats(row_index, col_index)...);
       },
       forward_as_view(mat1), forward_as_view(mats)...);
@@ -203,41 +198,45 @@ constexpr auto apply(auto func, const is_matrix_view auto& mat1,
 
 /// @}
 
-/// @name Arithmetic operations views.
+/// @name Arithmetic views.
 /// @{
 
 /// @brief "+" the matrix @p mat.
 constexpr auto operator+(const is_matrix_view auto& mat) noexcept {
-  return apply([](const auto& val) { return +val; }, mat);
+  return map([](const auto& val) { return +val; }, mat);
 }
 
 /// @brief Negate the matrix @p mat.
 constexpr auto operator-(const is_matrix_view auto& mat) noexcept {
-  return apply([](const auto& val) { return -val; }, mat);
+  return map([](const auto& val) { return -val; }, mat);
+}
+
+/// @brief Assign the matrix @p mat2 to @p mat1.
+constexpr auto& operator<<=(decays_to_rw_matrix_view auto&& mat1,
+                            const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 = val2; }, mat1, mat2);
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
 constexpr auto operator*(auto scal, const is_matrix_view auto& mat) noexcept {
-  return apply([scal](const auto& val) { return scal * val; }, mat);
+  return map([scal](const auto& val) { return scal * val; }, mat);
 }
 constexpr auto operator*(const is_matrix_view auto& mat, auto scal) noexcept {
-  return apply([scal](const auto& val) { return val * scal; }, mat);
+  return map([scal](const auto& val) { return val * scal; }, mat);
 }
-constexpr auto& operator*=(is_rw_matrix_view_ref auto&& mat1,
-                           const auto& val2) {
-  return mat1 <<= val2 * mat1;
+constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat, auto scal) {
+  return eval([scal](auto& val) { val *= scal; }, mat);
 }
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
 /// @{
 constexpr auto operator/(const is_matrix_view auto& mat, auto scal) noexcept {
-  return apply([scal](const auto& val) { return val / scal; }, mat);
+  return map([scal](const auto& val) { return val / scal; }, mat);
 }
-constexpr auto& operator/=(is_rw_matrix_view_ref auto&& mat1,
-                           const auto& val2) {
-  return mat1 <<= mat1 / val2;
+constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat, auto scal) {
+  return eval([scal](auto& val) { val /= scal; }, mat);
 }
 /// @}
 
@@ -245,12 +244,12 @@ constexpr auto& operator/=(is_rw_matrix_view_ref auto&& mat1,
 /// @{
 constexpr auto operator+(const is_matrix_view auto& mat1,
                          const is_matrix_view auto& mat2) noexcept {
-  return apply([](const auto& val1, const auto& val2) { return val1 + val2; },
-               mat1, mat2);
+  return map([](const auto& val1, const auto& val2) { return val1 + val2; },
+             mat1, mat2);
 }
-constexpr auto& operator+=(is_rw_matrix_view_ref auto&& mat1,
+constexpr auto& operator+=(decays_to_rw_matrix_view auto&& mat1,
                            const is_matrix_view auto& mat2) {
-  return mat1 <<= mat1 + mat2;
+  return eval([](auto& val1, const auto& val2) { val1 += val2; }, mat1, mat2);
 }
 /// @}
 
@@ -258,32 +257,59 @@ constexpr auto& operator+=(is_rw_matrix_view_ref auto&& mat1,
 /// @{
 constexpr auto operator-(const is_matrix_view auto& mat1,
                          const is_matrix_view auto& mat2) noexcept {
-  return apply([](const auto& val1, const auto& val2) { return val1 - val2; },
-               mat1, mat2);
+  return map([](const auto& val1, const auto& val2) { return val1 - val2; },
+             mat1, mat2);
 }
-constexpr auto& operator-=(is_rw_matrix_view_ref auto&& mat1,
+constexpr auto& operator-=(decays_to_rw_matrix_view auto&& mat1,
                            const is_matrix_view auto& mat2) {
-  return mat1 <<= mat1 - mat2;
+  return eval([](auto& val1, const auto& val2) { val1 -= val2; }, mat1, mat2);
 }
 /// @}
 
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
+/// @{
 constexpr auto operator*(const is_matrix_view auto& mat1,
                          const is_matrix_view auto& mat2) noexcept {
-  return apply([](const auto& val1, const auto& val2) { return val1 * val2; },
-               mat1, mat2);
+  return map([](const auto& val1, const auto& val2) { return val1 * val2; },
+             mat1, mat2);
 }
+constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 *= val2; }, mat1, mat2);
+}
+/// @}
 
 /// @brief Component-wise divide the matrices @p mat1 and @p mat2.
+/// @{
 constexpr auto operator/(const is_matrix_view auto& mat1,
                          const is_matrix_view auto& mat2) noexcept {
-  return apply([](const auto& val1, const auto& val2) { return val1 / val2; },
-               mat1, mat2);
+  return map([](const auto& val1, const auto& val2) { return val1 / val2; },
+             mat1, mat2);
+}
+constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat1,
+                           const is_matrix_view auto& mat2) {
+  return eval([](auto& val1, const auto& val2) { val1 /= val2; }, mat1, mat2);
+}
+/// @}
+
+/// @brief Fill the matrix @p mat with a scalar @p scal.
+constexpr auto& fill_with(decays_to_rw_matrix_view auto&& mat, auto scal) {
+  return eval([scal](auto& val) { val = scal; }, mat);
+}
+
+/// @brief Fill the matrix @p mat with the random numbers.
+constexpr auto& fill_randomly(decays_to_rw_matrix_view auto&& mat) noexcept {
+  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
+      mat(row_index, col_index) = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
+    }
+  }
+  return mat;
 }
 
 /// @}
 
-/// @name Math operations views.
+/// @name Math functions views.
 /// @{
 
 namespace math {
@@ -293,7 +319,7 @@ namespace math {
 
   /// @brief Component-wise @c abs of the matrix @p mat.
   constexpr auto abs(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::abs(val); }, mat);
+    return map([](const auto& val) { return math::abs(val); }, mat);
   }
 
   /// @}
@@ -302,41 +328,41 @@ namespace math {
   /// @{
 
   constexpr auto pow(const is_matrix_view auto& x_mat, auto y) noexcept {
-    return apply([y](const auto& x) { return math::pow(x, y); }, x_mat);
+    return map([y](const auto& x) { return math::pow(x, y); }, x_mat);
   }
 
   constexpr auto pow(auto x, const is_matrix_view auto& y_mat) noexcept {
-    return apply([x](const auto& y) { return math::pow(x, y); }, y_mat);
+    return map([x](const auto& y) { return math::pow(x, y); }, y_mat);
   }
 
   constexpr auto pow(const is_matrix_view auto& x_mat,
                      const is_matrix_view auto& y_mat) noexcept {
-    return apply([](const auto& x, const auto& y) { return math::pow(x, y); },
-                 x_mat, y_mat);
+    return map([](const auto& x, const auto& y) { return math::pow(x, y); },
+               x_mat, y_mat);
   }
 
   /// @brief Component-wise @c sqrt of the matrix @p mat.
   constexpr auto sqrt(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::sqrt(val); }, mat);
+    return map([](const auto& val) { return math::sqrt(val); }, mat);
   }
 
   /// @brief Component-wise @c cbrt of the matrix @p mat.
   constexpr auto cbrt(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::cbrt(val); }, mat);
+    return map([](const auto& val) { return math::cbrt(val); }, mat);
   }
 
   constexpr auto hypot(const is_matrix_view auto& x_mat,
                        const is_matrix_view auto& y_mat) noexcept {
-    return apply([](const auto& x, const auto& y) { return math::hypot(x, y); },
-                 x_mat, y_mat);
+    return map([](const auto& x, const auto& y) { return math::hypot(x, y); },
+               x_mat, y_mat);
   }
 
   constexpr auto hypot(const is_matrix_view auto& x_mat,
                        const is_matrix_view auto& y_mat,
                        const is_matrix_view auto& z_mat) noexcept {
-    return apply([](const auto& x, const auto& y,
-                    const auto& z) { return math::hypot(x, y, z); },
-                 x_mat, y_mat, z_mat);
+    return map([](const auto& x, const auto& y, const auto& z) //
+               { return math::hypot(x, y, z); },
+               x_mat, y_mat, z_mat);
   }
 
   /// @}
@@ -346,27 +372,27 @@ namespace math {
 
   /// @brief Component-wise @c exp of the matrix @p mat.
   constexpr auto exp(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::exp(val); }, mat);
+    return map([](const auto& val) { return math::exp(val); }, mat);
   }
 
   /// @brief Component-wise @c exp2 of the matrix @p mat.
   constexpr auto exp2(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::exp2(val); }, mat);
+    return map([](const auto& val) { return math::exp2(val); }, mat);
   }
 
   /// @brief Component-wise @c log of the matrix @p mat.
   constexpr auto log(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::log(val); }, mat);
+    return map([](const auto& val) { return math::log(val); }, mat);
   }
 
   /// @brief Component-wise @c log2 of the matrix @p mat.
   constexpr auto log2(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::log2(val); }, mat);
+    return map([](const auto& val) { return math::log2(val); }, mat);
   }
 
   /// @brief Component-wise @c log10 of the matrix @p mat.
   constexpr auto log10(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::log10(val); }, mat);
+    return map([](const auto& val) { return math::log10(val); }, mat);
   }
 
   /// @}
@@ -376,39 +402,39 @@ namespace math {
 
   /// @brief Component-wise @c sin of the matrix @p mat.
   constexpr auto sin(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::sin(val); }, mat);
+    return map([](const auto& val) { return math::sin(val); }, mat);
   }
 
   /// @brief Component-wise @c cos of the matrix @p mat.
   constexpr auto cos(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::cos(val); }, mat);
+    return map([](const auto& val) { return math::cos(val); }, mat);
   }
 
   /// @brief Component-wise @c tan of the matrix @p mat.
   constexpr auto tan(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::tan(val); }, mat);
+    return map([](const auto& val) { return math::tan(val); }, mat);
   }
 
   /// @brief Component-wise @c asin of the matrix @p mat.
   constexpr auto asin(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::asin(val); }, mat);
+    return map([](const auto& val) { return math::asin(val); }, mat);
   }
 
   /// @brief Component-wise @c acos of the matrix @p mat.
   constexpr auto acos(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::acos(val); }, mat);
+    return map([](const auto& val) { return math::acos(val); }, mat);
   }
 
   /// @brief Component-wise @c atan of the matrix @p mat.
   constexpr auto atan(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::atan(val); }, mat);
+    return map([](const auto& val) { return math::atan(val); }, mat);
   }
 
   /// @brief Component-wise @c atan2 of the matriсes @p y_mat and @p x_mat.
   constexpr auto atan2(const is_matrix_view auto& y_mat,
                        const is_matrix_view auto& x_mat) noexcept {
-    return apply([](const auto& y, const auto& x) { return math::atan2(y, x); },
-                 y_mat, x_mat);
+    return map([](const auto& y, const auto& x) { return math::atan2(y, x); },
+               y_mat, x_mat);
   }
 
   /// @}
@@ -418,32 +444,32 @@ namespace math {
 
   /// @brief Component-wise @p sinh of the matrix @p mat.
   constexpr auto sinh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::sinh(val); }, mat);
+    return map([](const auto& val) { return math::sinh(val); }, mat);
   }
 
   /// @brief Component-wise @c cosh of the matrix @p mat.
   constexpr auto cosh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::cosh(val); }, mat);
+    return map([](const auto& val) { return math::cosh(val); }, mat);
   }
 
   /// @brief Component-wise @c tanh of the matrix @p mat.
   constexpr auto tanh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::tanh(val); }, mat);
+    return map([](const auto& val) { return math::tanh(val); }, mat);
   }
 
   /// @brief Component-wise @c asinh of the matrix @p mat.
   constexpr auto asinh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::asinh(val); }, mat);
+    return map([](const auto& val) { return math::asinh(val); }, mat);
   }
 
   /// @brief Component-wise @c acosh of the matrix @p mat.
   constexpr auto acosh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::acosh(val); }, mat);
+    return map([](const auto& val) { return math::acosh(val); }, mat);
   }
 
   /// @brief Component-wise @c atanh of the matrix @p mat.
   constexpr auto atanh(const is_matrix_view auto& mat) noexcept {
-    return apply([](const auto& val) { return math::atanh(val); }, mat);
+    return map([](const auto& val) { return math::atanh(val); }, mat);
   }
 
   /// @}
@@ -459,9 +485,8 @@ namespace math {
 constexpr auto transpose(const is_matrix_view auto& mat) noexcept {
   return MatrixView(
       mat.num_cols(), mat.num_rows(),
-      [](size_t row_index, size_t col_index, const is_matrix_view auto& mat) {
-        return mat(col_index, row_index);
-      },
+      [](size_t row_index, size_t col_index, //
+         const is_matrix_view auto& mat) { return mat(col_index, row_index); },
       forward_as_view(mat));
 }
 
@@ -498,14 +523,14 @@ constexpr auto upper_triangle(const is_matrix_view auto& mat1) noexcept;
 
 /// @brief Slice the matrix @p mat rows from index @p from to index @p to
 ///   (not including) with a stride @p stride.
-constexpr auto slice_rows(is_matrix_view_ref auto&& mat, //
+constexpr auto slice_rows(decays_to_matrix_view auto&& mat, //
                           size_t from, size_t to, size_t stride = 1) noexcept {
   STORM_ASSERT_((from < to && to <= mat.num_rows()) && "Invalid row range.");
   const size_t slice_num_rows{(to - from) / stride};
   return MatrixView(
       slice_num_rows, mat.num_cols(),
       [=](size_t slice_row_index, size_t col_index,
-          is_matrix_view_ref auto&& mat) -> decltype(auto) {
+          decays_to_matrix_view auto&& mat) -> decltype(auto) {
         const size_t row_index{from + slice_row_index * stride};
         return mat(row_index, col_index);
       },
@@ -514,14 +539,14 @@ constexpr auto slice_rows(is_matrix_view_ref auto&& mat, //
 
 /// @brief Slice the matrix @p mat columns from index @p from to index @p to
 ///   (not including) with a stride @p stride.
-constexpr auto slice_cols(is_matrix_view_ref auto&& mat, //
+constexpr auto slice_cols(decays_to_matrix_view auto&& mat, //
                           size_t from, size_t to, size_t stride = 1) noexcept {
   STORM_ASSERT_((from < to && to <= mat.num_cols()) && "Invalid column range.");
   const size_t slice_num_cols{(to - from) / stride};
   return MatrixView(
       slice_num_cols, mat.num_cols(),
       [=](size_t row_index, size_t slice_col_index,
-          is_matrix_view_ref auto&& mat) -> decltype(auto) {
+          decays_to_matrix_view auto&& mat) -> decltype(auto) {
         const size_t col_index{from + slice_col_index * stride};
         return mat(row_index, col_index);
       },
@@ -529,7 +554,7 @@ constexpr auto slice_cols(is_matrix_view_ref auto&& mat, //
 }
 
 /// @brief Select the matrix @p mat rows with @p row_indices.
-constexpr auto select_rows(is_matrix_view_ref auto&& mat,
+constexpr auto select_rows(decays_to_matrix_view auto&& mat,
                            std::integral auto... row_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
                 "Row indices are out of range.");
@@ -538,14 +563,14 @@ constexpr auto select_rows(is_matrix_view_ref auto&& mat,
       slice_num_rows, mat.num_cols(),
       [row_indices = std::array{static_cast<size_t>(row_indices)...}](
           size_t slice_row_index, size_t col_index,
-          is_matrix_view_ref auto&& mat) -> decltype(auto) {
+          decays_to_matrix_view auto&& mat) -> decltype(auto) {
         return mat(row_indices[slice_row_index], col_index);
       },
       forward_as_view(mat));
 }
 
 /// @brief Select the matrix @p mat columns with @p col_index.
-constexpr auto select_cols(is_matrix_view_ref auto&& mat,
+constexpr auto select_cols(decays_to_matrix_view auto&& mat,
                            std::integral auto... col_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
                 "Columns indices are out of range.");
@@ -554,7 +579,7 @@ constexpr auto select_cols(is_matrix_view_ref auto&& mat,
       mat.num_rows(), slice_num_cols,
       [col_indices = std::array{static_cast<size_t>(col_indices)...}](
           size_t row_index, size_t slice_col_index,
-          is_matrix_view_ref auto&& mat) -> decltype(auto) {
+          decays_to_matrix_view auto&& mat) -> decltype(auto) {
         return mat(row_index, col_indices[slice_col_index]);
       },
       forward_as_view(mat));

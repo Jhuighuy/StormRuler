@@ -212,7 +212,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, stormArray_t c, stormArray_t v,
 #if YURI
       Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
 #else
-      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
 #endif
       c_hat, c,
       [&](stormMesh_t mesh, stormArray_t c_out, stormArray_t c_in) {
@@ -482,14 +482,14 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
-#if 1
+#if 0
   {
     using namespace Storm;
-    Matrix<double> A{{10.0, 1.0, 2.0, 3.0},
-                     {4.0, 11.0, 1.0, 5.0},
-                     {1.0, 3.0, 13.0, 2.0},
-                     {2.0, 4.0, 5.0, 25.0}};
-    Matrix<double> B(4, 4);
+    DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},
+                          {4.0, 11.0, 1.0, 5.0},
+                          {1.0, 3.0, 13.0, 2.0},
+                          {2.0, 4.0, 5.0, 25.0}};
+    DenseMatrix<double> B(4, 4);
 #if 0
     {
       B <<= matmul(A, A);
@@ -509,7 +509,8 @@ int main(int argc, char** argv) {
     }
     {
       auto AA = select_rows(A, 0, 1, 3);
-      AA(0, 0) = 100.0;
+      AA(0, 0) = 1.0;
+      select_rows(AA, 0) -= select_rows(AA, 1);
       std::cout << AA << std::endl << std::endl;
       std::cout << "=======" << std::endl << std::endl;
     }
@@ -517,7 +518,7 @@ int main(int argc, char** argv) {
     {
       auto AA = select_rows(select_cols(A, 0, 1, 3), 0, 3, 1);
       auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);
-      AA *= 1488.0;
+      AA *= 1.4880;
       inplace_inverse_lu(AA, BB);
       std::cout << AA << std::endl << std::endl;
       std::cout << BB << std::endl << std::endl;

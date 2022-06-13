@@ -28,9 +28,10 @@
 #include <concepts>
 #include <type_traits>
 
-#include <iostream>
+#include <omp.h>
 
 #include <stormBase.hxx>
+#include <stormUtils/SimdBlock.hxx>
 
 namespace Storm {
 
@@ -106,62 +107,57 @@ concept decays_to_matrix_view = is_matrix_view<std::remove_cvref_t<T>>;
 template<class T>
 concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
-constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
-                     const is_matrix_view auto& mat_rhs) {
-  if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
-#if 1
-    //
-    auto vectorize_func{[](auto&& mat) {
-      if constexpr (!decays_to_matrix<decltype(mat)>) {
-        return forward_as_view(mat);
-      } else {
-        return make_expression(
-            mat.num_rows(), mat.num_cols(),
-            [data = mat.data()](size_t row_index,
-                                size_t col_index) -> decltype(auto) {
-              (void) col_index;
-              return data[row_index];
-            });
-      }
-    }};
+constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
+                     const is_matrix_view auto&... mats_rhs) noexcept {
+  // if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
+#if 0
 
-    auto mat_lhs_vectorized{cast_expression(mat_lhs, vectorize_func)};
-    const auto mat_rhs_vectorized{cast_expression(mat_rhs, vectorize_func)};
+  // When an expression is vectorizable?
+  // 1. All the subexpressions are contiguous.
+
+  auto vectorize_func{[](auto& mat) {
+    return make_expression(
+        mat.num_rows(), mat.num_cols(),
+        [data = mat.data()](size_t row_index, [[maybe_unused]] size_t col_index)
+            -> decltype(auto) {
+          STORM_ASSERT_(row_index % 4 == 0);
+          return reinterpret_cast<SimdBlock<double, 4>&>(data[row_index]);
+        });
+  }};
+
+  [&](auto&& mat_lhs_, auto&&... mats_rhs_) {
+    const size_t num_blocks{mat_lhs.num_rows() / 4};
+#pragma omp parallel for schedule(static)
+    for (size_t block_row_index = 0; block_row_index < num_blocks;
+         ++block_row_index) {
+      const size_t row_index{block_row_index * 4};
+      func(mat_lhs_(row_index, 0), mats_rhs_(row_index, 0)...);
+    }
+    for (size_t row_index = num_blocks * 4; row_index < mat_lhs.num_rows();
+         ++row_index) {
+      func(mat_lhs(row_index, 0), mats_rhs(row_index, 0)...);
+    }
+  }(transform_expression_leafs(mat_lhs, vectorize_func),
+    transform_expression_leafs(mats_rhs, vectorize_func)...);
+
+#else
 
 #pragma omp parallel for schedule(static)
-    for (int row_index = 0; row_index < (int) mat_lhs.num_rows();
-         row_index += 2) {
-      func(mat_lhs_vectorized(row_index, 0), mat_rhs_vectorized(row_index, 0));
-      func(mat_lhs_vectorized(row_index + 1, 0),
-           mat_rhs_vectorized(row_index + 1, 0));
+  for (size_t row_index = 0; row_index < mat_lhs.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
     }
+  }
+
 #endif
-  } else {
-    for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
-      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-        func(mat_lhs(row_index, col_index), mat_rhs(row_index, col_index));
-      }
-    }
-  }
-  return mat_lhs;
-}
-
-constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
-                     const is_matrix_view auto&... mats_rhs) {
-  if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
-#pragma omp parallel for schedule(static)
-    for (int row_index = 0; row_index < (int) mat_lhs.num_rows(); ++row_index) {
-      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-        func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
-      }
-    }
-  } else {
-    for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
-      for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-        func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
-      }
-    }
-  }
+  //} else {
+  //  for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
+  //    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+  //      func(mat_lhs(row_index, col_index), mats_rhs(row_index,
+  //      col_index)...);
+  //    }
+  //  }
+  //}
   return mat_lhs;
 }
 
@@ -171,20 +167,17 @@ constexpr auto& eval(auto func, decays_to_rw_matrix_view auto&& mat_lhs,
 
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
-  real_t d = 0.0;
-  if (mat1.num_rows() * mat1.num_cols() > 1000) {
-#pragma omp parallel for reduction(+ : d) schedule(static)
-    for (int row_index = 0; row_index < (int) mat1.num_rows(); ++row_index) {
-      for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-        d += mat1(row_index, col_index) * mat2(row_index, col_index);
-      }
+  std::vector<real_t> partial(omp_get_max_threads(), 0.0);
+#pragma omp parallel for schedule(static)
+  for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+      partial[omp_get_thread_num()] +=
+          mat1(row_index, col_index) * mat2(row_index, col_index);
     }
-  } else {
-    for (size_t row_index{0}; row_index < mat1.num_rows(); ++row_index) {
-      for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
-        d += mat1(row_index, col_index) * mat2(row_index, col_index);
-      }
-    }
+  }
+  real_t d{0.0};
+  for (auto p : partial) {
+    d += p;
   }
   return d;
 }

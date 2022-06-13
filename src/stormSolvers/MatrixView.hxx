@@ -78,9 +78,9 @@ public:
   }
   /// @}
 
-  /// @brief Cast matrix with a function @p cast_func.
-  constexpr auto cast(auto cast_func) const noexcept {
-    return forward_as_view(cast_func(mat_));
+  /// @brief Transform a matrix expression leafs.
+  constexpr auto transform_leafs(auto func) const noexcept {
+    return forward_as_view(func(mat_));
   }
 
 }; // class MatrixWrapper
@@ -96,7 +96,7 @@ struct is_matrix_view_t<MatrixWrapper<Matrix>> : std::true_type {};
 template<std::convertible_to<size_t> RowsSize,
          std::convertible_to<size_t> ColsSize, //
          class ExprFunc, is_strictly_matrix_view... ExprArgs>
-  requires std::invocable<ExprFunc, RowsSize, ColsSize, ExprArgs&&...>
+  requires std::invocable<ExprFunc, RowsSize, ColsSize, ExprArgs...>
 class MatrixExpression {
   static_assert(!std::is_reference_v<RowsSize> &&
                 !std::is_reference_v<ColsSize> &&
@@ -151,12 +151,12 @@ public:
   }
   /// @}
 
-  /// @brief Cast matrix with a function @p cast_func.
-  constexpr auto cast(auto cast_func) const noexcept {
+  /// @brief Transform a matrix expression leafs.
+  constexpr auto transform_leafs(auto func) const noexcept {
     return std::apply(
-        [&](const auto&... expr_args) {
-          return forward_as_view(cast_func(make_expression(
-              num_rows_, num_cols_, expr_func_, expr_args.cast(cast_func)...)));
+        [&, func](const auto&... expr_args) {
+          return make_expression(num_rows_, num_cols_, expr_func_,
+                                 expr_args.transform_leafs(func)...);
         },
         expr_args_);
   }
@@ -180,9 +180,16 @@ struct is_matrix_view_t<
 /// @{
 
 /// @brief Wrap the matrix @p mat in view a matrix view.
-constexpr auto forward_as_view(decays_to_matrix auto&& mat) noexcept {
-  return MatrixWrapper<std::remove_reference_t<decltype(mat)>>{mat};
+/// @{
+template<is_matrix Matrix>
+constexpr auto forward_as_view(Matrix& mat) noexcept {
+  return MatrixWrapper<Matrix>{mat};
 }
+template<is_matrix Matrix>
+constexpr auto forward_as_view(const Matrix& mat) noexcept {
+  return MatrixWrapper<const Matrix>{mat};
+}
+/// @}
 
 /// @brief Copy the matrix view @p mat.
 constexpr auto
@@ -195,7 +202,7 @@ forward_as_view(const is_strictly_matrix_view auto& mat) noexcept {
 /// @name Abstract expression views.
 /// @{
 
-/// @brief Abstract matrix expression.
+/// @brief Make an abstract matrix expression.
 template<class Tag = void>
 constexpr auto
 make_expression(std::convertible_to<size_t> auto num_rows,
@@ -205,12 +212,19 @@ make_expression(std::convertible_to<size_t> auto num_rows,
                           expr_func, forward_as_view(expr_args)...);
 }
 
-/// @brief Transform a matrix expression.
-constexpr auto cast_expression(decays_to_matrix_view auto&& mat, auto func) {
-  return [&](auto&& mat) { return mat.cast(func); }(forward_as_view(mat));
+/// @brief Transform a matrix expression leafs.
+/// @{
+constexpr auto transform_expression_leafs(decays_to_matrix auto& mat,
+                                          auto func) {
+  return forward_as_view(func(mat));
 }
-
+constexpr auto
+transform_expression_leafs(const is_strictly_matrix_view auto& mat, auto func) {
+  return mat.transform_leafs(func);
+}
 /// @}
+
+/// @} // Abstract expression views.
 
 /// @name Generating views.
 /// @{
@@ -270,7 +284,7 @@ constexpr auto map(auto func, //
              const is_matrix_view auto&... mats) -> decltype(auto) {
         return func(mat1(row_index, col_index), mats(row_index, col_index)...);
       },
-      forward_as_view(mat1), forward_as_view(mats)...);
+      mat1, mats...);
 }
 
 /// @brief "+" the matrix @p mat.
@@ -503,7 +517,7 @@ constexpr auto slice_rows(decays_to_matrix_view auto&& mat, //
         const size_t row_index{from + slice_row_index * stride};
         return mat(row_index, col_index);
       },
-      forward_as_view(mat));
+      mat);
 }
 
 /// @brief Slice the matrix @p mat columns from index @p from to index @p to
@@ -519,7 +533,7 @@ constexpr auto slice_cols(decays_to_matrix_view auto&& mat, //
         const size_t col_index{from + slice_col_index * stride};
         return mat(row_index, col_index);
       },
-      forward_as_view(mat));
+      mat);
 }
 
 /// @brief Select the matrix @p mat rows with @p row_indices.
@@ -535,7 +549,7 @@ constexpr auto select_rows(decays_to_matrix_view auto&& mat,
           decays_to_matrix_view auto&& mat) -> decltype(auto) {
         return mat(row_indices[slice_row_index], col_index);
       },
-      forward_as_view(mat));
+      mat);
 }
 
 /// @brief Select the matrix @p mat columns with @p col_index.
@@ -551,7 +565,7 @@ constexpr auto select_cols(decays_to_matrix_view auto&& mat,
           decays_to_matrix_view auto&& mat) -> decltype(auto) {
         return mat(row_index, col_indices[slice_col_index]);
       },
-      forward_as_view(mat));
+      mat);
 }
 
 constexpr auto diag(const is_matrix_view auto& mat) noexcept;

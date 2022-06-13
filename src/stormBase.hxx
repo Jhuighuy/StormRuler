@@ -67,6 +67,8 @@
 #define STORM_ASSERT_(x) STORM_ENSURE_(x)
 #endif
 
+#define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
+
 namespace Storm {
 
 /// @brief Size type.

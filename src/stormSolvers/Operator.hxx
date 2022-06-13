@@ -59,15 +59,11 @@ public:
     std::cout << "move ctor!!!" << std::endl;
     RefCounter = std::move(oth.RefCounter);
     oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
+    oth.MyData = nullptr, oth.MySize = 0;
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
-  stormArray(const stormArray& oth) : Mesh(oth.Mesh), Array(oth.Array) {
-    std::cout << "copy ctor!!!" << std::endl;
-    RefCounter = oth.RefCounter;
-    *RefCounter += 1;
-    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
-  }
+  stormArray(const stormArray& oth) = delete;
 
   ~stormArray() {
     if (RefCounter) {
@@ -81,11 +77,7 @@ public:
     new (this) stormArray(std::forward<stormArray>(oth));
     return *this;
   }
-  stormArray& operator=(const stormArray& oth) {
-    this->~stormArray();
-    new (this) stormArray(oth);
-    return *this;
-  }
+  stormArray& operator=(const stormArray& oth) = delete;
 
   auto data() const noexcept {
     return MyData;

@@ -102,7 +102,8 @@ endif()
 # Warning and diagnostics options (C/C++).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
-    -Wpedantic -Wno-unused-function -Wno-unused-parameter -Wno-comment)
+    -Wpedantic -Wno-unused-function -Wno-unused-parameter -Wno-comment 
+    -Wno-unknown-pragmas)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
        CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
@@ -126,7 +127,7 @@ endif()
 # Optimization options (C/C++).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_DEBUG_OPTIONS -g -O0)
-  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
+  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native) #-fopt-info-vec-missed)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
        CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   list(APPEND CXX_DEBUG_OPTIONS -g -O0)

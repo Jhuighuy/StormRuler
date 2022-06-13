@@ -26,7 +26,7 @@ module StormRuler_Array
 
 use StormRuler_Consts, only: ip, dp
 
-use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
+use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer, c_ptr, c_size_t
 
 #$use 'StormRuler_Macros.fi'
 #$let NUM_ARGUMENTS = 10
@@ -35,6 +35,18 @@ use, intrinsic :: iso_c_binding, only: c_loc, c_f_pointer
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface 
+  subroutine MyFree(ptr) bind(C, name='free')
+    import :: c_ptr
+    type(c_ptr), intent(in), value :: ptr
+  end subroutine MyFree
+  function MyAlignedAlloc(size, align) bind(C, name='aligned_alloc')
+    import :: c_size_t, c_ptr
+    integer(c_size_t), intent(in), value :: size, align
+    type(c_ptr) :: MyAlignedAlloc
+  end function MyAlignedAlloc
+end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !! 
 !! Fortran-style array with inplace reshapes.
@@ -88,7 +100,9 @@ subroutine AllocArrayShape(array, shape)
   integer(ip), intent(in) :: shape(:)
 
   allocate(array%mShape, mold=shape); array%mShape = shape
-  allocate(array%mData(product(array%mShape)))
+  associate(sz => product(array%mShape))
+    call c_f_pointer(cptr=MyAlignedAlloc(32_c_size_t, (sz / 4 + 1)*4*8_c_size_t), fptr=array%mData, shape=[sz])
+  end associate
 
 end subroutine AllocArrayShape
 
@@ -115,8 +129,8 @@ subroutine FreeArray$N(@{array$$}@)
   class(tArray), intent(inout) :: @{array$$}@
 
 #$do I = 1, N
+  call MyFree(c_loc(array$I%mData)); array$I%mData => null()
   deallocate(array$I%mShape)
-  deallocate(array$I%mData)
 #$end do
 
 end subroutine FreeArray$N

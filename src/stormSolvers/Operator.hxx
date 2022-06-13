@@ -37,47 +37,55 @@
 
 namespace Storm {
 
-class stormArray {
+class StormArray {
 public:
 
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
-  std::shared_ptr<int> RefCounter;
   real_t* MyData = nullptr;
   size_t MySize = 0;
 
 public:
 
-  stormArray() = default;
+  StormArray() = default;
 
-  stormArray(stormMesh_t mesh, stormArray_t array) : Mesh(mesh), Array(array) {
-    RefCounter = std::make_shared<int>(2);
+  StormArray(stormMesh_t mesh, stormArray_t array) : Mesh{mesh}, Array{array} {
     stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
   }
 
-  stormArray(stormArray&& oth) : Mesh(oth.Mesh), Array(oth.Array) {
-    std::cout << "move ctor!!!" << std::endl;
-    RefCounter = std::move(oth.RefCounter);
-    oth.Mesh = nullptr, oth.Array = nullptr, oth.RefCounter = nullptr;
-    oth.MyData = nullptr, oth.MySize = 0;
-    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
-  }
+  StormArray(StormArray&& oth)
+      : Mesh{std::exchange(oth.Mesh, nullptr)},     //
+        Array{std::exchange(oth.Array, nullptr)},   //
+        MyData{std::exchange(oth.MyData, nullptr)}, //
+        MySize{std::exchange(oth.MySize, 0)} {}
 
-  stormArray(const stormArray& oth) = delete;
-
-  ~stormArray() {
-    if (RefCounter) {
-      *RefCounter -= 1;
-      if (*RefCounter == 0) stormFree(Array);
-    }
-  }
-
-  stormArray& operator=(stormArray&& oth) {
-    this->~stormArray();
-    new (this) stormArray(std::forward<stormArray>(oth));
+  StormArray& operator=(StormArray&& oth) {
+    if (Array != nullptr) { stormFree(Array); }
+    Mesh = std::exchange(oth.Mesh, nullptr);
+    Array = std::exchange(oth.Array, nullptr);
+    MyData = std::exchange(oth.MyData, nullptr);
+    MySize = std::exchange(oth.MySize, 0);
     return *this;
   }
-  stormArray& operator=(const stormArray& oth) = delete;
+
+  StormArray(const StormArray& oth) = delete;
+  StormArray& operator=(const StormArray& oth) = delete;
+
+  ~StormArray() {
+    if (Array != nullptr) { stormFree(Array); }
+  }
+
+  void assign(const StormArray& like, bool copy = true) {
+    Mesh = like.Mesh;
+    if (Array != nullptr) { stormFree(Array); }
+    Array = stormAllocLike(like.Array);
+    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
+    STORM_ENSURE_(!copy);
+  }
+
+  operator stormArray_t() const noexcept {
+    return Array;
+  }
 
   auto data() const noexcept {
     return MyData;
@@ -98,17 +106,10 @@ public:
     STORM_ASSERT_(j == 0);
     return MyData[i];
   }
-
-  void assign(const stormArray& like, bool copy = true) {
-    Mesh = like.Mesh;
-    Array = stormAllocLike(like.Array);
-    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
-    if (copy) stormSet(Mesh, Array, like.Array);
-  }
 };
 
 template<>
-struct is_matrix_t<stormArray> : std::true_type {};
+struct is_matrix_t<StormArray> : std::true_type {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

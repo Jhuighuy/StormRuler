@@ -35,10 +35,7 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
 use StormRuler_IO_VTK!, only: ...
 
-use StormRuler_BLAS, only: Norm_2, Dot, &
-  & Fill, Fill_Random, Set, Scale, Add, Sub, Mul, &
-  & Integrate, FuncProd, SpFuncProd
-use StormRuler_BLAS, only: tMatVecFunc
+use StormRuler_BLAS, only: Mul, SpFuncProd
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_CosWall, &
@@ -422,90 +419,6 @@ end subroutine cIO_Flush
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFill(meshPtr, xPtr, alpha) bind(C, name='stormFill')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr
-  real(c_double), intent(in), value :: alpha
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr)
-
-  call Fill(mesh, xArr, alpha)
-
-end subroutine stormFill
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormRandFill(meshPtr, xPtr, a, b) bind(C, name='stormRandFill')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr
-  real(c_double), intent(in), value :: a, b
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr)
-
-  call Fill_Random(mesh, xArr, a, b)
-
-end subroutine stormRandFill
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormSet(meshPtr, yPtr, xPtr) bind(C, name='stormSet')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, yPtr
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, yArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
-
-  call Set(mesh, yArr, xArr)
-
-end subroutine stormSet
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormScale(meshPtr, yPtr, xPtr, alpha) bind(C, name='stormScale')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, yPtr
-  real(c_double), intent(in), value :: alpha
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, yArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
-
-  call Scale(mesh, yArr, xArr, alpha)
-
-end subroutine stormScale
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormAdd(meshPtr, zPtr, yPtr, xPtr, alpha, beta) bind(C, name='stormAdd')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, yPtr, zPtr
-  real(c_double), intent(in), value :: alpha, beta
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, yArr, zArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr); call Unwrap(zPtr, zArr)
-
-  call Add(mesh, zArr, yArr, xArr, alpha, beta)
-
-end subroutine stormAdd
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 subroutine stormMul(meshPtr, zPtr, yPtr, xPtr) bind(C, name='stormMul')
   type(c_ptr), intent(in), value :: meshPtr
   type(c_ptr), intent(in), value :: xPtr, yPtr, zPtr
@@ -523,17 +436,6 @@ end subroutine stormMul
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
-#$macro WrapMapFunc ^(?P<cFunc>\w+)\s+(?P<Func>\w+)\s+(?P<env>\w+)\s*$
-pure function $Func(x) result(y)
-  real(dp), intent(in) :: x(:)
-  real(dp) :: y(size(x))
-
-  y(:) = x(:)
-  call $cFunc(size(x, kind=c_size_t), y, x, $env)
-
-end function $Func
-#$end macro
-
 #$macro WrapSpMapFunc ^(?P<cSpFunc>\w+)\s+(?P<SpFunc>\w+)\s+(?P<env>\w+)\s*$
 pure function $SpFunc(r, x) result(y)
   real(dp), intent(in) :: r(:), x(:)
@@ -544,56 +446,6 @@ pure function $SpFunc(r, x) result(y)
 
 end function $SpFunc
 #$end macro
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-real(c_double) function stormIntegrate(meshPtr, xPtr, cFuncPtr, env) &
-    & bind(C, name='stormIntegrate')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr
-  type(c_funptr), intent(in), value :: cFuncPtr
-  type(*), intent(in) :: env
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr
-
-  procedure(ctMapFunc), pointer :: cFunc
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr)
-
-  call c_f_procpointer(cptr=cFuncPtr, fptr=cFunc)
-
-  stormIntegrate = Integrate(mesh, xArr, Func)
-
-contains
-  @WrapMapFunc cFunc Func env
-end function stormIntegrate
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormFuncProd(meshPtr, yPtr, xPtr, cFuncPtr, env) &
-    & bind(C, name='stormFuncProd')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, yPtr
-  type(c_funptr), intent(in), value :: cFuncPtr
-  type(*), intent(in) :: env
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, yArr
-
-  procedure(ctMapFunc), pointer :: cFunc
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr)
-
-  call c_f_procpointer(cptr=cFuncPtr, fptr=cFunc)
-
-  call FuncProd(mesh, yArr, xArr, Func)
-
-contains
-  @WrapMapFunc cFunc Func env
-end subroutine stormFuncProd
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!

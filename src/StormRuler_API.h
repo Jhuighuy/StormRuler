@@ -137,18 +137,6 @@ STORM_API void stormFree(stormArray_t x);
 STORM_API void stormArrayUnwrap(stormMesh_t mesh, stormArray_t x,
                                 stormReal_t** data, stormSize_t* size);
 
-/// @{
-#if STORM_C11_
-STORM_INL void stormSwapP(stormOpaque_t* pX, stormOpaque_t* pY) {
-  stormOpaque_t z = *pX;
-  *pX = *pY, *pY = z;
-}
-#define stormSwap(x, y) stormSwapP((stormOpaque_t*) &(x), (stormOpaque_t*) &(y))
-#elif STORM_CXX14_
-#define stormSwap(x, y) std::swap(x, y)
-#endif
-/// @}
-
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
@@ -164,42 +152,8 @@ STORM_API void SR_IO_Flush(stormIOList_t IO, stormMesh_t mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-STORM_API stormSize_t stormSize(stormMesh_t mesh, stormArray_t x);
-
-STORM_API void stormFill(stormMesh_t mesh, stormArray_t x, stormReal_t alpha);
-
-STORM_API void stormRandFill(stormMesh_t mesh, stormArray_t x,
-                             _STORM_DEFAULT_(stormReal_t a, -1.0),
-                             _STORM_DEFAULT_(stormReal_t b, +1.0));
-
-STORM_API void stormSet(stormMesh_t mesh, stormArray_t y, stormArray_t x);
-
-STORM_API void stormScale(stormMesh_t mesh, stormArray_t y, stormArray_t x,
-                          stormReal_t alpha);
-
-STORM_API void stormAdd(stormMesh_t mesh, stormArray_t z, stormArray_t y,
-                        stormArray_t x, _STORM_DEFAULT_(stormReal_t alpha, 1.0),
-                        _STORM_DEFAULT_(stormReal_t beta, 1.0));
-
-// No need to import this from Fortran.
-STORM_INL void stormSub(stormMesh_t mesh, stormArray_t z, stormArray_t y,
-                        stormArray_t x, _STORM_DEFAULT_(stormReal_t alpha, 1.0),
-                        _STORM_DEFAULT_(stormReal_t beta, 1.0)) {
-  stormAdd(mesh, z, y, x, -alpha, beta);
-}
-
 STORM_API void stormMul(stormMesh_t mesh, stormArray_t z, stormArray_t y,
                         stormArray_t x);
-
-typedef void (*stormMapFunc_t)(stormSize_t size, stormReal_t* y,
-                               const stormReal_t* x, stormOpaque_t env);
-
-STORM_API stormReal_t stormIntegrate(stormMesh_t mesh, stormArray_t x,
-                                     stormMapFunc_t f, stormOpaque_t env);
-
-STORM_API void stormFuncProd(stormMesh_t mesh, stormArray_t y, stormArray_t x,
-                             stormMapFunc_t f,
-                             _STORM_DEFAULT_(stormOpaque_t env, STORM_NULL));
 
 typedef void (*stormSpMapFunc_t)(stormSize_t dim, const stormReal_t* r,
                                  stormSize_t size, stormReal_t* y,

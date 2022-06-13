@@ -159,10 +159,6 @@ contains
   ! Parallel mesh walkthough subroutines.
   ! ----------------------
   procedure :: RunCellKernel => RunMeshCellSimpleKernel
-  procedure :: RunCellKernel_Block => RunMeshBlockCellKernel
-  procedure :: RunCellKernel_Sum => RunMeshSumCellKernel
-  procedure :: RunCellKernel_Min => RunMeshMinCellKernel
-  procedure :: RunCellKernel_Max => RunMeshMaxCellKernel
 
   ! ----------------------
   ! Field wrappers.
@@ -193,21 +189,6 @@ abstract interface
   end subroutine tKernelFunc
 end interface
 
-abstract interface
-  subroutine tBlockKernelFunc(firstCell, lastCell)
-    import ip
-    integer(ip), intent(in) :: firstCell, lastCell
-  end subroutine tBlockKernelFunc
-end interface
-
-abstract interface
-  function tReduceKernelFunc(cell) result(r)
-    import ip, dp
-    integer(ip), intent(in) :: cell
-    real(dp) :: r
-  end function tReduceKernelFunc
-end interface
-
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
@@ -229,108 +210,6 @@ subroutine RunMeshCellSimpleKernel(mesh, Kernel)
   !$omp end parallel do
 
 end subroutine RunMeshCellSimpleKernel
-
-!! ----------------------------------------------------------------- !!
-!! Launch a block-kernel.
-!! ----------------------------------------------------------------- !!
-subroutine RunMeshBlockCellKernel(mesh, BlockKernel)
-  class(tMesh), intent(in) :: mesh
-  procedure(tBlockKernelFunc) :: BlockKernel
-
-#$if not HAS_OpenMP
-
-  call BlockKernel(1, mesh%NumCells)
-
-#$else
-
-  integer(ip) :: i, thread
-  integer(ip), allocatable :: ranges(:)
-
-  ! ----------------------
-  ! Compute block range for each thread.
-  ! ----------------------
-  allocate(ranges(omp_get_max_threads()))
-  associate(size => mesh%NumCells)
-    ranges(:) = size/omp_get_max_threads()
-    associate(remainder => ranges(:mod(size, omp_get_max_threads())))
-      remainder(:) = remainder(:) + 1
-    end associate
-  end associate
-  ranges = [1, ranges]
-  do i = 1, omp_get_max_threads()
-    ranges(i + 1) = ranges(i) + ranges(i + 1) 
-  end do
-
-  ! ----------------------
-  ! Lauch threads.
-  ! ----------------------
-  !$omp parallel default(none) shared(ranges) private(thread)
-  thread = omp_get_thread_num() + 1
-  call BlockKernel(ranges(thread), ranges(thread + 1) - 1)
-  !$omp end parallel
-
-#$endif
-end subroutine RunMeshBlockCellKernel
-
-!! ----------------------------------------------------------------- !!
-!! Launch a SUM-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function RunMeshSumCellKernel(mesh, Kernel) result(sum)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: sum
-
-  integer :: cell
-
-  sum = 0.0_dp
-  !$omp parallel do default(none) shared(mesh) &
-  !$omp & schedule(static) reduction(+:sum)
-  do cell = 1, mesh%NumCells
-    sum = sum + Kernel(cell)
-  end do
-  !$omp end parallel do
-
-end function RunMeshSumCellKernel
-
-!! ----------------------------------------------------------------- !!
-!! Launch a min-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function RunMeshMinCellKernel(mesh, Kernel) result(minValue)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: minValue
-
-  integer :: cell
-
-  minValue = +huge(minValue)
-  !$omp parallel do default(none) shared(mesh) &
-  !$omp & schedule(static) reduction(min:minValue)
-  do cell = 1, mesh%NumCells
-    minValue = min(minValue, Kernel(cell))
-  end do
-  !$omp end parallel do
-
-end function RunMeshMinCellKernel
-
-!! ----------------------------------------------------------------- !!
-!! Launch a max-reduction cell kernel.
-!! ----------------------------------------------------------------- !!
-function RunMeshMaxCellKernel(mesh, Kernel) result(maxValue)
-  class(tMesh), intent(in) :: mesh
-  procedure(tReduceKernelFunc) :: Kernel
-  real(dp) :: maxValue
-
-  integer :: cell
-
-  maxValue = -huge(maxValue)
-  !$omp parallel do default(none) shared(mesh) &
-  !$omp & schedule(static) reduction(max:maxValue)
-  do cell = 1, mesh%NumCells
-    maxValue = max(maxValue, Kernel(cell))
-  end do
-  !$omp end parallel do
-
-end function RunMeshMaxCellKernel
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

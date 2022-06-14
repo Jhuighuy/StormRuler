@@ -31,6 +31,7 @@
 #include <type_traits>
 
 #include <stormBase.hxx>
+#include <stormSolvers/MatrixView.hxx>
 
 namespace Storm {
 
@@ -79,23 +80,41 @@ private:
 public:
 
   /// @brief Default constructor.
-  constexpr Mat() = default;
+  constexpr Mat() {
+    for (auto& a : Coeffs_)
+      a.fill({});
+  }
 
   /// @brief Construct the matrix with the initializer list.
-  constexpr Mat(std::initializer_list<Value> initializer) {
+  constexpr explicit Mat(std::initializer_list<Value> initializer) {
     STORM_ASSERT_(initializer.size() == SizeX * SizeY);
-    std::copy(initializer.begin(), initializer.end(), data());
+    std::copy(initializer.begin(), initializer.end(), Coeffs_[0].data());
   }
 
-  /// @brief Get pointer to the beginning of the vector data.
-  /// @{
-  constexpr Value* data() noexcept {
-    return Coeffs_[0].data();
+  constexpr auto& operator=(const Value& v) noexcept {
+    for (size_t ix = 0; ix < SizeX; ++ix) {
+      for (size_t iy = 0; iy < SizeY; ++iy) {
+        (*this)(ix, iy) = v;
+      }
+    }
+    return *this;
   }
-  constexpr const Value* data() const noexcept {
-    return Coeffs_[0].data();
+
+  constexpr auto& operator=(const is_matrix_view auto& other) noexcept {
+    for (size_t ix = 0; ix < SizeX; ++ix) {
+      for (size_t iy = 0; iy < SizeY; ++iy) {
+        (*this)(ix, iy) = other(ix, iy);
+      }
+    }
+    return *this;
   }
-  /// @}
+
+  auto num_rows() const noexcept {
+    return std::integral_constant<size_t, SizeX>{};
+  }
+  auto num_cols() const noexcept {
+    return std::integral_constant<size_t, SizeY>{};
+  }
 
   /// @brief Get reference to the component at the index.
   /// @{
@@ -110,5 +129,31 @@ public:
   /// @}
 
 }; // class Mat
+
+template<class Value, size_t SizeX, size_t SizeY>
+struct is_matrix_t<Mat<Value, SizeX, SizeY>> : std::true_type {};
+
+template<class Value, size_t SizeX, size_t SizeY>
+constexpr auto& eval(auto func, Mat<Value, SizeX, SizeY>& mat_lhs,
+                     const is_matrix_view auto&... mats_rhs) noexcept {
+  for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
+    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
+    }
+  }
+  return mat_lhs;
+}
+
+template<class Value, size_t SizeX, size_t SizeY>
+constexpr real_t dot_product(Mat<Value, SizeX, SizeY> m1,
+                             Mat<Value, SizeX, SizeY> m2) {
+  Value d{};
+  for (size_t ix = 0; ix < SizeX; ++ix) {
+    for (size_t iy = 0; iy < SizeY; ++iy) {
+      d += m1(ix, iy) * m2(ix, iy);
+    }
+  }
+  return d;
+}
 
 } // namespace Storm

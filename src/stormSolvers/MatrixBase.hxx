@@ -28,7 +28,6 @@
 #include <concepts>
 #include <type_traits>
 
-#include <glm/glm.hpp>
 #include <omp.h>
 
 #include <stormBase.hxx>
@@ -91,22 +90,24 @@ concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
 template<class T>
 concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
 
+/// @brief Matrix view that is not a matrix concept.
+template<class T>
+concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
+
 /// @brief Decays to a matrix concept.
 template<class T>
-concept decays_to_matrix = is_matrix<std::remove_cvref_t<T>>;
+concept decays_to_matrix = is_matrix<std::remove_cvref_t<T>> &&
+    !std::is_rvalue_reference_v<T>; // to avoid dangling rvalue references
+
+/// @brief Decays to a matrix view concept.
+template<class T>
+concept decays_to_matrix_view =
+    decays_to_matrix<T> || is_strictly_matrix_view<std::remove_cvref_t<T>>;
 
 /// @brief Decays to a read-write matrix view concept.
 template<class T>
 concept decays_to_rw_matrix_view =
-    is_rw_matrix_view<std::remove_reference_t<T>>;
-
-/// @brief Decays to a matrix view concept.
-template<class T>
-concept decays_to_matrix_view = is_matrix_view<std::remove_cvref_t<T>>;
-
-/// @brief Matrix view that is not a matrix concept.
-template<class T>
-concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
+    decays_to_matrix<T> || is_rw_matrix_view<std::remove_reference_t<T>>;
 
 constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
                      const is_matrix_view auto&... mats_rhs) noexcept {
@@ -160,9 +161,6 @@ constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
 
 constexpr real_t dot_product(real_t v1, real_t v2) {
   return v1 * v2;
-}
-real_t dot_product(glm::dvec2 v1, glm::dvec2 v2) {
-  return glm::dot(v1, v2);
 }
 
 constexpr real_t dot_product(const is_matrix_view auto& mat1,

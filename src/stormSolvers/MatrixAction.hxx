@@ -50,8 +50,9 @@ constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat,
 }
 
 /// @brief Divide-assign the matrix @p mat by a scalar @p scal.
+/// @todo `scal` should really be auto!
 constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat,
-                           auto scal) noexcept {
+                           real_t scal) noexcept {
   return eval([scal](auto& val) { val /= scal; }, mat);
 }
 

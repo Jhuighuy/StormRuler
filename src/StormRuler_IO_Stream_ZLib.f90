@@ -34,12 +34,25 @@ use StormRuler_Helpers, only: ErrorStop, I2S
 use StormRuler_IO_Writer, only: tBinaryWriter
 use StormRuler_IO_Stream, only: tOutputStream
 
-use StormRuler_Libs, only: compress2
+use, intrinsic :: iso_c_binding, only: c_int8_t, c_int, c_long
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 implicit none
+
+interface
+  function compress2(comprBytes, numComprBytes, &
+      & bytes, numBytes, level) bind(C, name='compress2')
+    import :: c_int8_t, c_int, c_long
+    integer(c_int8_t), intent(inout) :: comprBytes(*)
+    integer(c_long), intent(inout) :: numComprBytes
+    integer(c_int8_t), intent(in) :: bytes(*)
+    integer(c_long), intent(in), value :: numBytes
+    integer(c_int), intent(in), value :: level
+    integer(c_int) :: compress2
+  end function compress2
+end interface
 
 !! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
 !! Output stream that compresses bytes with ZLib.

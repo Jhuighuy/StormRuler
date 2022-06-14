@@ -121,15 +121,6 @@ _STORM_OPAQUE_(stormArray);
 STORM_API stormArray_t SR_Alloc(stormMesh_t mesh, stormInt_t numVars,
                                 stormInt_t rank);
 
-STORM_API stormArray_t stormAllocOnMesh(stormMesh_t mesh, stormSize_t size,
-                                        const stormSize_t* shape);
-#if STORM_CXX14_
-STORM_INL stormArray_t stormAllocOnMesh(stormMesh_t mesh,
-                                        const std::vector<stormSize_t>& shape) {
-  return stormAllocOnMesh(mesh, shape.size(), shape.data());
-} // stormAllocOnMesh
-#endif
-
 STORM_API stormArray_t stormAllocLike(stormArray_t array);
 
 STORM_API void stormFree(stormArray_t x);

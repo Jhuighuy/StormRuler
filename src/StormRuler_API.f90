@@ -264,32 +264,6 @@ end function cAlloc
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function stormAllocOnMesh(meshPtr, rank, &
-    & shape) result(yPtr) bind(C, name='stormAllocOnMesh')
-  type(c_ptr), intent(in), value :: meshPtr
-  integer(c_size_t), intent(in), value :: rank
-  integer(c_size_t), intent(in) :: shape(rank)
-  type(c_ptr) :: yPtr
-
-  integer(ip) :: trueShape(rank + 1)
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: yArr
-
-  call Unwrap(meshPtr, mesh)
-
-  trueShape(:rank) = shape
-  trueShape(rank + 1) = mesh%NumAllCells
-
-  allocate(yArr)
-  call AllocArray(yArr, shape=trueShape)
-
-  yPtr = Wrap(yArr)
-
-end function stormAllocOnMesh
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 function stormAllocLike(xPtr) result(yPtr) bind(C, name='stormAllocLike')
   type(c_ptr), intent(in), value :: xPtr
   type(c_ptr) :: yPtr

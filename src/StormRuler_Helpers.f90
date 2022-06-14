@@ -137,81 +137,6 @@ integer(ip) pure function IndexOf(value, array)
 end function IndexOf
 
 !! ----------------------------------------------------------------- !!
-!! Find value index in the sorted array.
-!! ----------------------------------------------------------------- !!
-integer(ip) pure function SortedIndexOf(value, array) result(pivot)
-  integer(ip), intent(in) :: value, array(:)
-  
-  integer(ip) :: first, last
-
-  first = 1
-  if (value < array(first)) then
-    pivot = 0; return  
-  end if
-
-  last = size(array)
-  if (value > array(last)) then
-    pivot = 0; return  
-  end if
-  
-  do while (first + 1 < last)
-    pivot = (first + last)/2
-    if (array(pivot) == value) then
-      return
-    else if (array(pivot) > value) then
-      last = pivot
-    else if (array(pivot) < value) then
-      first = pivot
-    end if
-  end do
-  pivot = 0
-
-end function SortedIndexOf
-
-!! ----------------------------------------------------------------- !!
-!! Check if two sorted arrays inetersect.
-!! ----------------------------------------------------------------- !!
-logical pure function ArraysIntersect(left, right) result(intersects)
-  integer(ip), intent(in) :: left(:), right(:)
-
-  integer(ip) :: i, j
-
-  i = 1; j = 1; intersects = .false.
-  do while((i <= size(left)).and.(j <= size(right)))
-    if (left(i) == right(j)) then
-      intersects = .true.; return
-    else if (left(i) < right(j)) then
-      i = i + 1
-    else if (left(i) > right(j)) then
-      j = j + 1
-    end if
-  end do
-
-end function ArraysIntersect
-
-!! ----------------------------------------------------------------- !!
-!! Bubble-sort the integer array.
-!! ----------------------------------------------------------------- !!
-subroutine BubbleSort(array)
-  integer(ip), intent(inout) :: array(:)
-  
-  logical :: swapped
-  integer(ip) :: i, j
- 
-  do j = size(array) - 1, 1, -1
-    swapped = .false.
-    do i = 1, j
-      if (array(i) > array(i+1)) then
-        call Swap(array(i), array(i+1))
-        swapped = .true.
-      end if
-    end do
-    if (.not.swapped) exit
-  end do
-
-end subroutine BubbleSort
-
-!! ----------------------------------------------------------------- !!
 !! Insert value into the allocatable array.
 !! ----------------------------------------------------------------- !!
 subroutine InsertTo(array, value)
@@ -265,30 +190,6 @@ end subroutine InverseCompressMapping
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 !! ----------------------------------------------------------------- !!
-!! Ensure the value is positive.
-!! ----------------------------------------------------------------- !!
-subroutine EnsurePositive(value)
-  real(dp), intent(in) :: value
-  
-  if (ieee_is_nan(value).or.(value <= 0)) then
-    call ErrorStop('unexpected negative, zero or NaN value: '//R2S(value))
-  end if
-
-end subroutine EnsurePositive
-
-!! ----------------------------------------------------------------- !!
-!! Ensure the value is positive or zero.
-!! ----------------------------------------------------------------- !!
-subroutine EnsureNonNegative(value)
-  real(dp), intent(in) :: value
-  
-  if (ieee_is_nan(value).or.(value < 0)) then
-    call ErrorStop('unexpected negative or NaN value: '//R2S(value))
-  end if
-
-end subroutine EnsureNonNegative
-
-!! ----------------------------------------------------------------- !!
 !! Compute pseudo-inverse: 𝑎⁺ ← 1/𝑎 𝗶𝗳 𝑎 ≠ 0 𝗲𝗹𝘀𝗲 0.
 !! ----------------------------------------------------------------- !!
 pure real(dp) elemental function SafeInverse(a)
@@ -307,18 +208,6 @@ real(dp) function SafeDivide(a, b)
   SafeDivide = SafeInverse(b)*a
 
 end function SafeDivide
-
-!! ----------------------------------------------------------------- !!
-!! Solve a small dense linear SLAE: 𝓐𝒙 = 𝒃.
-!! ----------------------------------------------------------------- !!
-pure function DenseSolve(A, b) result(x)
-  real(dp), intent(in) :: A(:,:), b(:)
-  real(dp) :: x(size(b))
-
-  !! TODO: real implementation is missing!
-  x(:) = b(:)/A(1,1)
-
-end function DenseSolve
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

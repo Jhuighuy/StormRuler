@@ -42,7 +42,6 @@ use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs_InOutLet
 use StormRuler_FDM_Operators, only: &
   & FDM_Gradient, FDM_Divergence, FDM_DivGrad, FDM_DivWGrad
-use StormRuler_FDM_RhieChow, only: FDM_RhieChow_Correction
 use StormRuler_FDM_Convection, only: FDM_Convection_Central
 
 use, intrinsic :: iso_c_binding, only: c_char, c_int, &
@@ -663,24 +662,6 @@ subroutine stormConvection(meshPtr, vPtr, lambda, uPtr, aPtr) &
   call FDM_Convection_Central(mesh, vArr, lambda, uArr, aArr)
 
 end subroutine stormConvection
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormRhieChowCorrection(meshPtr, vPtr, lambda, tau, &
-    & pPtr, rhoPtr) bind(C, name='stormRhieChowCorrection')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value ::  vPtr, pPtr, rhoPtr
-  real(c_double), intent(in), value :: lambda, tau
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: vArr, pArr, rhoArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(vPtr, vArr); call Unwrap(pPtr, pArr); call Unwrap(rhoPtr, rhoArr)
-
-  call FDM_RhieChow_Correction(mesh, vArr, lambda, tau, pArr, rhoArr)
-
-end subroutine stormRhieChowCorrection
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

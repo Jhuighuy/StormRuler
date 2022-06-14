@@ -201,10 +201,6 @@ STORM_API void stormConvection(stormMesh_t mesh, stormArray_t v,
                                stormReal_t lambda, stormArray_t u,
                                stormArray_t aVec);
 
-STORM_API void stormRhieChowCorrection(stormMesh_t mesh, stormArray_t v,
-                                       stormReal_t lambda, stormReal_t tau,
-                                       stormArray_t p, stormArray_t rho);
-
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 

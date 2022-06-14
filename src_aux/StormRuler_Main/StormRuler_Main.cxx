@@ -220,9 +220,7 @@ NavierStokes_Step(stormMesh_t mesh, //
     // rhs <<= p - DIV(v_hat) + ???
     rhs <<= p;
     stormDivergence(mesh, rhs, 1.0, v_hat);
-    SetBCs_w(mesh, rho);
     SetBCs_w(mesh, rho_inv);
-    stormRhieChowCorrection(mesh, rhs, 1.0, tau, p, rho);
 
     p_hat <<= p;
     stormLinSolve2(

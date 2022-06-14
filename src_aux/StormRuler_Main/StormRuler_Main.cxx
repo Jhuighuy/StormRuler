@@ -42,11 +42,12 @@
 #define YURI 0
 
 #include <StormRuler_API.h>
-#include <stormSolvers/LegacyTensor.hxx>
-#include <stormSolvers/Mat.hxx>
-#include <stormSolvers/Matrix.hxx>
-#include <stormSolvers/PreconditionerFactory.hxx>
-#include <stormSolvers/SolverFactory.hxx>
+
+#include <Storm/Blass/Mat.hpp>
+#include <Storm/Blass/Matrix.hpp>
+
+#include <Storm/Solvers/PreconditionerFactory.hpp>
+#include <Storm/Solvers/SolverFactory.hpp>
 
 using namespace Storm;
 

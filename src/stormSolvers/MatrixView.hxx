@@ -299,10 +299,11 @@ constexpr auto operator-(const is_matrix_view auto& mat) noexcept {
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
-constexpr auto operator*(auto scal, const is_matrix_view auto& mat) noexcept {
+/// @todo `scal` should really be auto!
+constexpr auto operator*(real_t scal, const is_matrix_view auto& mat) noexcept {
   return map([scal](const auto& val) { return scal * val; }, mat);
 }
-constexpr auto operator*(const is_matrix_view auto& mat, auto scal) noexcept {
+constexpr auto operator*(const is_matrix_view auto& mat, real_t scal) noexcept {
   return map([scal](const auto& val) { return val * scal; }, mat);
 }
 /// @}

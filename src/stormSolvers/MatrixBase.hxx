@@ -28,6 +28,7 @@
 #include <concepts>
 #include <type_traits>
 
+#include <glm/glm.hpp>
 #include <omp.h>
 
 #include <stormBase.hxx>
@@ -109,7 +110,6 @@ concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
 
 constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
                      const is_matrix_view auto&... mats_rhs) noexcept {
-  // if (mat_lhs.num_rows() * mat_lhs.num_cols() > 1000) {
 #if 0
 
   // When an expression is vectorizable?
@@ -150,20 +150,20 @@ constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
   }
 
 #endif
-  //} else {
-  //  for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
-  //    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-  //      func(mat_lhs(row_index, col_index), mats_rhs(row_index,
-  //      col_index)...);
-  //    }
-  //  }
-  //}
+
   return mat_lhs;
 }
 
 //
 // To be carefully reimplemented:
 //
+
+constexpr real_t dot_product(real_t v1, real_t v2) {
+  return v1 * v2;
+}
+real_t dot_product(glm::dvec2 v1, glm::dvec2 v2) {
+  return glm::dot(v1, v2);
+}
 
 constexpr real_t dot_product(const is_matrix_view auto& mat1,
                              const is_matrix_view auto& mat2) {
@@ -172,7 +172,7 @@ constexpr real_t dot_product(const is_matrix_view auto& mat1,
   for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
       partial[omp_get_thread_num()] +=
-          mat1(row_index, col_index) * mat2(row_index, col_index);
+          dot_product(mat1(row_index, col_index), mat2(row_index, col_index));
     }
   }
   real_t d{0.0};

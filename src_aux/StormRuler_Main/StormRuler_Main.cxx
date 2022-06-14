@@ -35,6 +35,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <glm/glm.hpp>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -49,19 +51,20 @@
 
 using namespace Storm;
 
+template<class T>
 void stormLinSolve2(const SolverType& method,
                     const PreconditionerType& preMethod, //
-                    StormArray& x, const StormArray& b, auto matVec,
+                    StormArray<T>& x, const StormArray<T>& b, auto matVec,
                     bool uniform = true) {
   size_t numMatVecs = 0;
-  auto symOp = make_symmetric_operator<StormArray>(
-      [&](StormArray& y, const StormArray& x) {
+  auto symOp = make_symmetric_operator<StormArray<T>>(
+      [&](StormArray<T>& y, const StormArray<T>& x) {
         numMatVecs += 1;
         matVec(y, x);
       });
 
-  auto solver = MakeIterativeSolver<StormArray>(method);
-  solver->pre_op = make_preconditioner<StormArray>(preMethod);
+  auto solver = MakeIterativeSolver<StormArray<T>>(method);
+  solver->pre_op = make_preconditioner<StormArray<T>>(preMethod);
 
   if (uniform) {
     solver->solve(x, b, *symOp);
@@ -74,10 +77,11 @@ void stormLinSolve2(const SolverType& method,
 
 } // stormLinSolve2
 
+template<class T>
 void stormNonlinSolve2(const SolverType& method, //
-                       StormArray& x, const StormArray& b, auto matVec) {
-  auto op = make_symmetric_operator<StormArray>(matVec);
-  auto solver = std::make_unique<JfnkSolver<StormArray>>();
+                       StormArray<T>& x, const StormArray<T>& b, auto matVec) {
+  auto op = make_symmetric_operator<StormArray<T>>(matVec);
+  auto solver = std::make_unique<JfnkSolver<StormArray<T>>>();
   solver->absolute_error_tolerance = 1.0e-4;
   solver->relative_error_tolerance = 1.0e-4;
   solver->solve(x, b, *op);
@@ -115,9 +119,11 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   // stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
-static void CahnHilliard_Step(stormMesh_t mesh,                         //
-                              const StormArray& c, const StormArray& v, //
-                              StormArray& c_hat, StormArray& w_hat) {
+static void
+CahnHilliard_Step(stormMesh_t mesh, //
+                  const StormArray<real_t>& c,
+                  const StormArray<glm::dvec2 /*Vec2D<real_t>*/>& v, //
+                  StormArray<real_t>& c_hat, StormArray<real_t>& w_hat) {
   SetBCs_c(mesh, c, c);
   SetBCs_v(mesh, v);
 
@@ -125,7 +131,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,                         //
     return 2.0 * c * (c - 1.0) * (2.0 * c - 1.0);
   };
 
-  StormArray f;
+  StormArray<real_t> f;
   f.assign(c, false);
 
   f <<= map(dF_dc, c);
@@ -134,7 +140,7 @@ static void CahnHilliard_Step(stormMesh_t mesh,                         //
   stormLinSolve2(
       Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
       c_hat, c,
-      [&](StormArray& c_hat, const StormArray& c_in) {
+      [&](StormArray<real_t>& c_hat, const StormArray<real_t>& c_in) {
         // w_hat <<= f + 2.0 * sigma * (c_in - c) - Gamma * DIVGRAD(c_in);
         w_hat <<= f + 2.0 * sigma * (c_in - c);
         SetBCs_c(mesh, c_in, c);
@@ -160,55 +166,55 @@ static void CahnHilliard_Step(stormMesh_t mesh,                         //
 static double mu_1 = 0.08, mu_2 = 1.08;
 static double rho_1 = 1.0, rho_2 = 50.0;
 
-static void NavierStokes_Step(stormMesh_t mesh,                         //
-                              const StormArray& p, const StormArray& v, //
-                              const StormArray& c, const StormArray& w,
-                              StormArray& p_hat, StormArray& v_hat,
-                              StormArray& rho) {
-  StormArray mu, rho_inv;
+static void
+NavierStokes_Step(stormMesh_t mesh, //
+                  const StormArray<real_t>& p,
+                  const StormArray<glm::dvec2 /*Vec2D<real_t>*/>& v, //
+                  const StormArray<real_t>& c, const StormArray<real_t>& w,
+                  StormArray<real_t>& p_hat,
+                  StormArray<glm::dvec2 /*Vec2D<real_t>*/>& v_hat,
+                  StormArray<real_t>& rho) {
+  StormArray<real_t> mu, rho_inv;
   mu.assign(rho, false);
   rho_inv.assign(rho, false);
-
 
   rho <<= map([](real_t c) { return rho_1 + (rho_2 - rho_1) * c; }, c);
   mu <<= map([](real_t c) { return mu_1 + (mu_2 - mu_1) * c; }, c);
   rho_inv <<= map([](real_t rho) { return 1.0 / rho; }, rho);
 
   {
-    StormArray rhs;
+    StormArray<glm::dvec2 /*Vec2D<real_t>*/> rhs;
     rhs.assign(v, false);
 
     // rhs <<= v + (tau * Sigma / math::sqrt(Gamma)) * rho_inv * c * GRAD(w);
     SetBCs_w(mesh, w);
     SetBCs_v(mesh, v);
-    fill_with(rhs, 0.0);
+    fill_with(rhs, glm::dvec2{0.0, 0.0});
     stormGradient(mesh, rhs, tau, w);
-    stormMul(mesh, rhs, c, rhs);
-    stormMul(mesh, rhs, rho_inv, rhs);
-    rhs *= Sigma / std::sqrt(Gamma);
+    rhs *= (Sigma / std::sqrt(Gamma)) * c * rho_inv;
     rhs += v;
 
     v_hat <<= v;
     stormNonlinSolve2( //
         Storm::SolverType::Jfnk, v_hat, v,
-        [&](StormArray& v_hat, const StormArray& v) {
-          StormArray tmp;
+        [&](StormArray<glm::dvec2 /*Vec2D<real_t>*/>& v_hat,
+            const StormArray<glm::dvec2 /*Vec2D<real_t>*/>& v) {
+          StormArray<glm::dvec2 /*Vec2D<real_t>*/> tmp;
           tmp.assign(v, false);
 
           // v_hat <<= v - CONV(v, v) + tau * mu * rho_inv * DIVGRAD(v);
           v_hat <<= v;
           SetBCs_v(mesh, v);
           stormConvection(mesh, v_hat, -tau, v, v);
-          fill_with(tmp, 0.0);
+          fill_with(tmp, glm::dvec2{0.0, 0.0});
           stormDivGrad(mesh, tmp, tau, v);
-          stormMul(mesh, tmp, mu, tmp);
-          stormMul(mesh, tmp, rho_inv, tmp);
+          tmp *= mu * rho_inv;
           v_hat -= tmp;
         });
   }
 
   {
-    StormArray rhs;
+    StormArray<real_t> rhs;
     rhs.assign(p, false);
 
     // rhs <<= p - DIV(v_hat) + ???
@@ -222,7 +228,7 @@ static void NavierStokes_Step(stormMesh_t mesh,                         //
     stormLinSolve2(
         Storm::SolverType::Cg, Storm::PreconditionerType::None /*"extr"*/, //
         p_hat, rhs,
-        [&](StormArray& p_hat, const StormArray& p) {
+        [&](StormArray<real_t>& p_hat, const StormArray<real_t>& p) {
           // p_hat <<= p - tau * DIVGRAD(rho_inv, p)
           p_hat <<= p;
           SetBCs_p(mesh, p);
@@ -232,15 +238,14 @@ static void NavierStokes_Step(stormMesh_t mesh,                         //
   }
 
   {
-    StormArray tmp;
+    StormArray<glm::dvec2 /*Vec2D<real_t>*/> tmp;
     tmp.assign(v, false);
 
     // v_hat -= tau * rho_inv * GRAD(p_hat)
-    fill_with(tmp, 0.0);
+    fill_with(tmp, glm::dvec2{0.0, 0.0});
     SetBCs_p(mesh, p_hat);
     stormGradient(mesh, tmp, tau, p_hat);
-    stormMul(mesh, tmp, rho_inv, tmp);
-    v_hat += tmp;
+    v_hat += rho_inv * tmp;
   }
 
 } // NavierStokes_Step
@@ -312,14 +317,17 @@ int main(int argc, char** argv) {
 
   stormMesh_t mesh = SR_InitMesh();
 
-  StormArray c(mesh, SR_Alloc(mesh, 1, 0)), c_hat(mesh, SR_Alloc(mesh, 1, 0));
-  StormArray w_hat(mesh, SR_Alloc(mesh, 1, 0));
-  StormArray p(mesh, SR_Alloc(mesh, 1, 0)), p_hat(mesh, SR_Alloc(mesh, 1, 0));
-  StormArray v(mesh, SR_Alloc(mesh, 1, 1)), v_hat(mesh, SR_Alloc(mesh, 1, 1));
-  StormArray rho(mesh, SR_Alloc(mesh, 1, 0));
+  StormArray<real_t> c(mesh, SR_Alloc(mesh, 1, 0)),
+      c_hat(mesh, SR_Alloc(mesh, 1, 0));
+  StormArray<real_t> w_hat(mesh, SR_Alloc(mesh, 1, 0));
+  StormArray<real_t> p(mesh, SR_Alloc(mesh, 1, 0)),
+      p_hat(mesh, SR_Alloc(mesh, 1, 0));
+  StormArray<glm::dvec2 /*Vec2D<real_t>*/> v(mesh, SR_Alloc(mesh, 1, 1)),
+      v_hat(mesh, SR_Alloc(mesh, 1, 1));
+  StormArray<real_t> rho(mesh, SR_Alloc(mesh, 1, 0));
 
   stormSpFuncProd(mesh, c, c, Initial_Data, STORM_NULL);
-  fill_with(v, 0.0);
+  fill_with(v, glm::dvec2{0.0, 0.0});
   fill_with(p, 0.0);
 
   double total_time = 0.0;

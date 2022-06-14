@@ -35,10 +35,6 @@ use StormRuler_Array, only: tArray, AllocArray
 
 implicit none
 
-interface Mul
-  module procedure Mul
-end interface Mul
-
 interface SpFuncProd
   module procedure SpFuncProd
 end interface SpFuncProd
@@ -58,67 +54,6 @@ end interface
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
 
 contains
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-!! Compute a product: 𝒛 ← 𝒚𝒙.
-!! • Scalar multiplier case:
-!!   Shape of 𝒙, 𝒛 is [1, NumVars]×[1, NumAllCells],
-!!   Shape of 𝒚 is [1, NumAllCells].
-!! • Diagonal multiplier case:
-!!   Shape of 𝒙, 𝒚, 𝒛 is [1, NumVars]×[1, NumAllCells].
-!! • Matrix multiplier case:
-!!   Shape of 𝒙, 𝒛 is [1, NumVars]×[1, NumAllCells],
-!!   Shape of 𝒚 is [1, NumVars]×[1, NumVars]×[1, NumAllCells].
-!! -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- !!
-subroutine Mul(mesh, zArr, yArr, xArr)
-  class(tMesh), intent(in) :: mesh
-  class(tArray), intent(in) :: xArr, yArr
-  class(tArray), intent(inout) :: zArr
-
-  real(dp), pointer :: x(:,:), z(:,:)
-  real(dp), pointer :: yScal(:), yDiag(:,:), yMat(:,:,:)
-
-  call xArr%Get(x); call zArr%Get(z)
-  if (yArr%Rank() == xArr%Rank() - 1) then
-    call yArr%Get(yScal)
-
-    call mesh%RunCellKernel(MulScal_Kernel)
-
-  else if (yArr%Rank() == xArr%Rank()) then
-    call yArr%Get(yDiag)
-
-    call mesh%RunCellKernel(Mul_Kernel)
-  
-  else if (yArr%Rank() == xArr%Rank() + 1) then
-    call yArr%Get(yMat)
-
-    call mesh%RunCellKernel(MulMat_Kernel)
-  
-  end if
-
-contains
-  subroutine MulScal_Kernel(cell)
-    integer(ip), intent(in) :: cell
-
-    z(:,cell) = yScal(cell)*x(:,cell)
-    
-  end subroutine MulScal_Kernel
-  subroutine Mul_Kernel(cell)
-    integer(ip), intent(in) :: cell
-
-    z(:,cell) = yDiag(:,cell)*x(:,cell)
-    
-  end subroutine Mul_Kernel
-  subroutine MulMat_Kernel(cell)
-    integer(ip), intent(in) :: cell
-
-    z(:,cell) = matmul(yMat(:,:,cell), x(:,cell))
-    
-  end subroutine MulMat_Kernel
-end subroutine Mul
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

@@ -152,9 +152,6 @@ STORM_API void SR_IO_Flush(stormIOList_t IO, stormMesh_t mesh,
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
-STORM_API void stormMul(stormMesh_t mesh, stormArray_t z, stormArray_t y,
-                        stormArray_t x);
-
 typedef void (*stormSpMapFunc_t)(stormSize_t dim, const stormReal_t* r,
                                  stormSize_t size, stormReal_t* y,
                                  const stormReal_t* x, stormOpaque_t env);

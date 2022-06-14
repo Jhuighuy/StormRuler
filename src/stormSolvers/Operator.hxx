@@ -37,12 +37,13 @@
 
 namespace Storm {
 
+template<class T>
 class StormArray {
 public:
 
   stormMesh_t Mesh = nullptr;
   stormArray_t Array = nullptr;
-  real_t* MyData = nullptr;
+  T* MyData = nullptr;
   size_t MySize = 0;
 
 public:
@@ -50,7 +51,8 @@ public:
   StormArray() = default;
 
   StormArray(stormMesh_t mesh, stormArray_t array) : Mesh{mesh}, Array{array} {
-    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
+    stormArrayUnwrap(Mesh, Array, (real_t**) &MyData, &MySize),
+        MySize /= (sizeof(T) / sizeof(real_t));
   }
 
   StormArray(StormArray&& oth)
@@ -79,7 +81,8 @@ public:
     Mesh = like.Mesh;
     if (Array != nullptr) { stormFree(Array); }
     Array = stormAllocLike(like.Array);
-    stormArrayUnwrap(Mesh, Array, &MyData, &MySize);
+    stormArrayUnwrap(Mesh, Array, (real_t**) &MyData, &MySize),
+        MySize /= (sizeof(T) / sizeof(real_t));
     STORM_ENSURE_(!copy);
   }
 
@@ -108,8 +111,8 @@ public:
   }
 };
 
-template<>
-struct is_matrix_t<StormArray> : std::true_type {};
+template<class T>
+struct is_matrix_t<StormArray<T>> : std::true_type {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

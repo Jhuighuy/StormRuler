@@ -35,7 +35,7 @@ use StormRuler_Array, only: tArray, AllocArray, FreeArray
 use StormRuler_IO, only: tIOList => IOList
 use StormRuler_IO_VTK!, only: ...
 
-use StormRuler_BLAS, only: Mul, SpFuncProd
+use StormRuler_BLAS, only: SpFuncProd
 
 use StormRuler_FDM_BCs, only: &
   & FDM_ApplyBCs, FDM_ApplyBCs_SlipWall, FDM_ApplyBCs_CosWall, &
@@ -85,13 +85,6 @@ interface Free
 end interface
 
 abstract interface
-  pure subroutine ctMapFunc(size, Fx, x, env) bind(C)
-    import :: c_size_t, c_double
-    integer(c_size_t), intent(in), value :: size
-    real(c_double), intent(in) :: x(*)
-    real(c_double), intent(inout) :: Fx(*)
-    type(*), intent(in) :: env
-  end subroutine ctMapFunc
   pure subroutine ctSpMapFunc(dim, r, size, Fx, x, env) bind(C)
     import :: c_size_t, c_double
     integer(c_size_t), intent(in), value :: dim, size
@@ -99,15 +92,6 @@ abstract interface
     real(c_double), intent(inout) :: Fx(*)
     type(*), intent(in) :: env
   end subroutine ctSpMapFunc
-end interface
-
-abstract interface
-  subroutine ctMatVecFunc(meshPtr, AxPtr, xPtr, env) bind(C)
-    import :: c_ptr
-    type(c_ptr), intent(in), value :: meshPtr
-    type(c_ptr), intent(in), value :: AxPtr, xPtr
-    type(*), intent(in) :: env
-  end subroutine ctMatVecFunc
 end interface
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
@@ -413,25 +397,6 @@ subroutine cIO_Flush(ioListPtr, meshPtr, filenamePtr) bind(C, name='SR_IO_Flush'
   deallocate(io_List)
 
 end subroutine cIO_Flush
-
-!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
-!! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!
-
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-!! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormMul(meshPtr, zPtr, yPtr, xPtr) bind(C, name='stormMul')
-  type(c_ptr), intent(in), value :: meshPtr
-  type(c_ptr), intent(in), value :: xPtr, yPtr, zPtr
-
-  class(tMesh), pointer :: mesh
-  class(tArray), pointer :: xArr, yArr, zArr
-
-  call Unwrap(meshPtr, mesh)
-  call Unwrap(xPtr, xArr); call Unwrap(yPtr, yArr); call Unwrap(zPtr, zArr)
-
-  call Mul(mesh, zArr, yArr, xArr)
-
-end subroutine stormMul
 
 !! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< !!
 !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> !!

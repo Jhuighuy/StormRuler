@@ -115,15 +115,15 @@ public:
     return mat_->num_cols();
   }
 
-  /// @copydoc BaseMatrixView::operator()
+  /// @copydoc BaseMatrixView::operator[]
   /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return (*mat_)(row_index, col_index);
+    return (*mat_)[row_index, col_index];
   }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return std::as_const(*mat_)(row_index, col_index);
+    return std::as_const(*mat_)[row_index, col_index];
   }
   /// @}
 
@@ -190,8 +190,8 @@ public:
     return num_cols_;
   }
 
-  /// @copydoc BaseMatrixView::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
+  /// @copydoc BaseMatrixView::operator[]
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Indices are out of range.");
     return func_(row_index, col_index);
@@ -374,15 +374,15 @@ public:
   }
   /// @}
 
-  /// @copydoc BaseMatrixView::operator()
+  /// @copydoc BaseMatrixView::operator[]
   /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return mat_(row_indices_[row_index], col_indices_[col_index]);
+    return mat_[row_indices_[row_index], col_indices_[col_index]];
   }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return mat_(row_indices_[row_index], col_indices_[col_index]);
+    return mat_[row_indices_[row_index], col_indices_[col_index]];
   }
   /// @}
 
@@ -506,12 +506,12 @@ public:
     return std::get<0>(mats_).num_cols();
   }
 
-  /// @copydoc BaseMatrixView::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  /// @copydoc BaseMatrixView::operator[]
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return std::apply(
         [&, row_index, col_index](const auto&... mats) -> decltype(auto) {
-          return func_(mats(row_index, col_index)...);
+          return func_(mats[row_index, col_index]...);
         },
         mats_);
   }
@@ -775,13 +775,13 @@ public:
     return mat_.num_rows();
   }
 
-  /// @copydoc BaseMatrixView::operator()
+  /// @copydoc BaseMatrixView::operator[]
   /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
     return mat_(col_index, row_index);
   }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return mat_(col_index, row_index);
   }
@@ -825,7 +825,7 @@ public:
     return mat2_.num_cols();
   }
 
-  /// @copydoc BaseMatrixView::operator()
+  /// @copydoc BaseMatrixView::operator[]
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{mat1_.num_cols()};
@@ -862,7 +862,7 @@ std::ostream& operator<<(std::ostream& out, matrix auto&& mat) {
   for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
     out << "( ";
     for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
-      out << mat(row_index, col_index) << " ";
+      out << mat[row_index, col_index] << " ";
     }
     out << ")" << std::endl;
   }

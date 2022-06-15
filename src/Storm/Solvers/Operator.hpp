@@ -103,11 +103,11 @@ public:
     return std::integral_constant<size_t, 1>{};
   }
 
-  const auto& operator()(size_t i, size_t j) const noexcept {
+  const auto& operator[](size_t i, size_t j) const noexcept {
     STORM_ASSERT_(j == 0);
     return MyData[i];
   }
-  auto& operator()(size_t i, size_t j) noexcept {
+  auto& operator[](size_t i, size_t j) noexcept {
     STORM_ASSERT_(j == 0);
     return MyData[i];
   }

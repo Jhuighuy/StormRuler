@@ -48,7 +48,7 @@ concept matrix =
       { mat.num_cols() } -> std::convertible_to<size_t>;
     } && //
     requires(Matrix& mat, size_t row_index, size_t col_index) {
-      { mat(row_index, col_index) };
+      { mat[row_index, col_index] };
     };
 // clang-format on
 
@@ -56,8 +56,9 @@ template<class Matrix>
 concept matrix_object_ = matrix<Matrix> && std::is_object_v<Matrix>;
 
 template<matrix Matrix>
-using matrix_reference_t = decltype(std::declval<Matrix>()(
-    std::declval<size_t>(), std::declval<size_t>()));
+using matrix_reference_t =
+    decltype(std::declval<Matrix>()[std::declval<size_t>(),
+                                    std::declval<size_t>()]);
 
 constexpr auto& eval(auto func, matrix auto&& mat_lhs,
                      matrix auto&&... mats_rhs) noexcept {
@@ -96,7 +97,7 @@ constexpr auto& eval(auto func, matrix auto&& mat_lhs,
 #pragma omp parallel for schedule(static)
   for (size_t row_index = 0; row_index < mat_lhs.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
+      func(mat_lhs[row_index, col_index], mats_rhs[row_index, col_index]...);
     }
   }
 
@@ -119,7 +120,7 @@ constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
   for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
       partial[omp_get_thread_num()] +=
-          dot_product(mat1(row_index, col_index), mat2(row_index, col_index));
+          dot_product(mat1[row_index, col_index], mat2[row_index, col_index]);
     }
   }
   real_t d{0.0};

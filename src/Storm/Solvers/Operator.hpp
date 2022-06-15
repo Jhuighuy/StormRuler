@@ -34,7 +34,7 @@
 
 #include <Storm/Utils/Object.hpp>
 
-#include <Storm/Blass/Matrix.hpp>
+#include <Storm/Blass/MatrixView.hpp>
 #include <Storm/Blass/Vector.hpp>
 
 namespace Storm {
@@ -112,9 +112,6 @@ public:
     return MyData[i];
   }
 };
-
-template<class T>
-struct is_matrix_t<StormArray<T>> : std::true_type {};
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

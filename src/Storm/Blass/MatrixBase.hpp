@@ -23,6 +23,7 @@
 /// OTHER DEALINGS IN THE SOFTWARE.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 
+// This header should really be <Matrix.hpp>
 #pragma once
 
 #include <concepts>
@@ -36,82 +37,30 @@
 
 namespace Storm {
 
-/// @brief Check if type is a matrix.
-/// @{
-template<class>
-struct is_matrix_t : std::false_type {};
-template<class T>
-inline constexpr bool is_matrix_v = is_matrix_t<T>::value;
-/// @}
-
-/// @brief Check if type is a matrix view.
-/// @{
-template<class T>
-struct is_matrix_view_t : is_matrix_t<T> {};
-template<class T>
-inline constexpr bool is_matrix_view_v = is_matrix_view_t<T>::value;
-/// @}
-
-template<class T>
-using matrix_coeff_t = std::remove_cv_t<decltype(std::declval<T>()(
-    std::declval<size_t>(), std::declval<size_t>()))>;
-
-/// @brief Matrix view-like concept.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Matrix concept.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 // clang-format off
-template<class MatrixView>
-concept is_matrix_view_like = 
-    requires(const MatrixView& mat) {
+template<class Matrix>
+concept matrix = 
+    requires(Matrix& mat) {
       { mat.num_rows() } -> std::convertible_to<size_t>;
       { mat.num_cols() } -> std::convertible_to<size_t>;
-    } && requires(const MatrixView& mat, size_t row_index, size_t col_index) {
+    } && //
+    requires(Matrix& mat, size_t row_index, size_t col_index) {
       { mat(row_index, col_index) };
     };
 // clang-format on
 
-/// @brief Read-write matrix view-like concept.
-// clang-format off
 template<class Matrix>
-concept is_rw_matrix_view_like = 
-    is_matrix_view_like<Matrix> && 
-    requires(Matrix& mat, size_t row_index, size_t col_index, 
-             matrix_coeff_t<Matrix> val) {
-      { mat(row_index, col_index) = val };
-    };
-// clang-format on
+concept matrix_object_ = matrix<Matrix> && std::is_object_v<Matrix>;
 
-/// @brief Matrix concept.
-template<class T>
-concept is_matrix = is_matrix_v<T> && is_rw_matrix_view_like<T>;
+template<matrix Matrix>
+using matrix_reference_t = decltype(std::declval<Matrix>()(
+    std::declval<size_t>(), std::declval<size_t>()));
 
-/// @brief Read-write matrix view concept.
-template<class T>
-concept is_rw_matrix_view = is_matrix_view_v<T> && is_rw_matrix_view_like<T>;
-
-/// @brief Matrix view concept.
-template<class T>
-concept is_matrix_view = is_matrix_view_v<T> && is_matrix_view_like<T>;
-
-/// @brief Matrix view that is not a matrix concept.
-template<class T>
-concept is_strictly_matrix_view = is_matrix_view<T> && !is_matrix<T>;
-
-/// @brief Decays to a matrix concept.
-template<class T>
-concept decays_to_matrix = is_matrix<std::remove_cvref_t<T>> &&
-    !std::is_rvalue_reference_v<T>; // to avoid dangling rvalue references
-
-/// @brief Decays to a matrix view concept.
-template<class T>
-concept decays_to_matrix_view =
-    decays_to_matrix<T> || is_strictly_matrix_view<std::remove_cvref_t<T>>;
-
-/// @brief Decays to a read-write matrix view concept.
-template<class T>
-concept decays_to_rw_matrix_view =
-    decays_to_matrix<T> || is_rw_matrix_view<std::remove_reference_t<T>>;
-
-constexpr auto& eval(auto func, decays_to_matrix auto&& mat_lhs,
-                     const is_matrix_view auto&... mats_rhs) noexcept {
+constexpr auto& eval(auto func, matrix auto&& mat_lhs,
+                     matrix auto&&... mats_rhs) noexcept {
 #if 0
 
   // When an expression is vectorizable?
@@ -164,8 +113,7 @@ constexpr real_t dot_product(real_t v1, real_t v2) {
   return v1 * v2;
 }
 
-constexpr real_t dot_product(const is_matrix_view auto& mat1,
-                             const is_matrix_view auto& mat2) {
+constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
   std::vector<real_t> partial(omp_get_max_threads(), 0.0);
 #pragma omp parallel for schedule(static)
   for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
@@ -181,7 +129,7 @@ constexpr real_t dot_product(const is_matrix_view auto& mat1,
   return d;
 }
 
-constexpr real_t norm_2(const is_matrix_view auto& mat1) {
+constexpr real_t norm_2(matrix auto&& mat1) {
   return std::sqrt(dot_product(mat1, mat1));
 }
 

@@ -67,9 +67,11 @@ public:
   constexpr DenseMatrix(
       std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
       : DenseMatrix(coeffs.size(), coeffs.begin()->size()) {
-    *this <<= make_expression(num_rows_, num_cols_, [&](auto i, auto j) {
-      return *((coeffs.begin() + i)->begin() + j);
-    });
+    for (size_t i{0}; i < num_rows_; ++i) {
+      for (size_t j{0}; j < num_cols_; ++j) {
+        (*this)(i, j) = (coeffs.begin()[i]).begin()[j];
+      }
+    }
   }
 
   constexpr auto num_rows() const noexcept {
@@ -99,13 +101,9 @@ public:
 
 }; // class Matrix
 
-template<class Value, size_t NumRows, size_t NumCols>
-struct is_matrix_t<DenseMatrix<Value, NumRows, NumCols>> : std::true_type {};
-
 /// @brief Perform a LU decomposition of a square matrix @p mat.
-constexpr void decompose_lu(const is_matrix_view auto& mat,
-                            is_rw_matrix_view auto& l_mat,
-                            is_rw_matrix_view auto& u_mat) noexcept {
+constexpr void decompose_lu(matrix auto&& mat, //
+                            matrix auto&& l_mat, matrix auto&& u_mat) noexcept {
   const auto size{mat.num_rows()};
   fill_diag_with(l_mat, 1.0);
   fill_with(u_mat, 0.0);
@@ -126,8 +124,8 @@ constexpr void decompose_lu(const is_matrix_view auto& mat,
   }
 }
 
-constexpr void inplace_solve_lu(const is_matrix_view auto& l_mat,
-                                const is_matrix_view auto& u_mat, auto& vec) {
+constexpr void inplace_solve_lu(matrix auto&& l_mat, matrix auto&& u_mat,
+                                auto& vec) {
   const auto size{l_mat.num_rows()};
   for (size_t ix{0}; ix < size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
@@ -145,8 +143,8 @@ constexpr void inplace_solve_lu(const is_matrix_view auto& l_mat,
 }
 
 /// @brief Inverse a square matrix @p mat using the LU decomposition.
-constexpr void inplace_inverse_lu(const is_matrix_view auto& mat,
-                                  is_rw_matrix_view auto& inv_mat) noexcept {
+constexpr void inplace_inverse_lu(matrix auto&& mat,
+                                  matrix auto&& inv_mat) noexcept {
   using Value = std::decay_t<decltype(mat(0, 0))>;
   DenseMatrix<Value> L(mat.num_rows(), mat.num_cols());
   DenseMatrix<Value> U(mat.num_rows(), mat.num_cols());

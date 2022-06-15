@@ -84,6 +84,10 @@ using real_t = double;
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
 
+template<class T>
+concept convertible_to_size_t_object =
+    std::convertible_to<T, size_t> && std::is_object_v<T>;
+
 /// @brief Check if type is a complex floating point.
 /// @{
 template<class>

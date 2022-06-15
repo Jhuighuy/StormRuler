@@ -35,8 +35,7 @@ namespace Storm {
 /// @{
 
 /// @brief Assign the matrix @p mat2 to @p mat1.
-constexpr auto& operator<<=(decays_to_rw_matrix_view auto&& mat1,
-                            const is_matrix_view auto& mat2) noexcept {
+constexpr auto& operator<<=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
   return eval([](auto& val1, const auto& val2) { val1 = val2; }, mat1, mat2);
 }
 
@@ -45,39 +44,33 @@ constexpr auto& operator<<=(decays_to_rw_matrix_view auto&& mat1,
 
 /// @brief Multiply-assign the matrix @p mat by a scalar @p scal.
 /// @todo `scal` should really be auto!
-constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat,
-                           real_t scal) noexcept {
+constexpr auto& operator*=(matrix auto&& mat, real_t scal) noexcept {
   return eval([scal](auto& val) { val *= scal; }, mat);
 }
 
 /// @brief Divide-assign the matrix @p mat by a scalar @p scal.
 /// @todo `scal` should really be auto!
-constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat,
-                           real_t scal) noexcept {
+constexpr auto& operator/=(matrix auto&& mat, real_t scal) noexcept {
   return eval([scal](auto& val) { val /= scal; }, mat);
 }
 
 /// @brief Add-assign the matrices @p mat1 and @p mat2.
-constexpr auto& operator+=(decays_to_rw_matrix_view auto&& mat1,
-                           const is_matrix_view auto& mat2) noexcept {
+constexpr auto& operator+=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
   return eval([](auto& val1, const auto& val2) { val1 += val2; }, mat1, mat2);
 }
 
 /// @brief Subtract-assign the matrices @p mat1 and @p mat2.
-constexpr auto& operator-=(decays_to_rw_matrix_view auto&& mat1,
-                           const is_matrix_view auto& mat2) noexcept {
+constexpr auto& operator-=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
   return eval([](auto& val1, const auto& val2) { val1 -= val2; }, mat1, mat2);
 }
 
 /// @brief Component-wise multiply-assign the matrices @p mat1 and @p mat2.
-constexpr auto& operator*=(decays_to_rw_matrix_view auto&& mat1,
-                           const is_matrix_view auto& mat2) noexcept {
+constexpr auto& operator*=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
   return eval([](auto& val1, const auto& val2) { val1 *= val2; }, mat1, mat2);
 }
 
 /// @brief Component-wise divide-assign the matrices @p mat1 and @p mat2.
-constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat1,
-                           const is_matrix_view auto& mat2) noexcept {
+constexpr auto& operator/=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
   return eval([](auto& val1, const auto& val2) { val1 /= val2; }, mat1, mat2);
 }
 
@@ -86,19 +79,17 @@ constexpr auto& operator/=(decays_to_rw_matrix_view auto&& mat1,
 /// @name Filling actions.
 /// @{
 
-constexpr auto& fill_diag_with(decays_to_rw_matrix_view auto&& mat,
-                               auto scal) noexcept {
+constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept {
   return mat <<= make_diagonal_matrix(mat.num_rows(), mat.num_cols(), scal);
 }
 
 /// @brief Fill the matrix @p mat with a scalar @p scal.
-constexpr auto& fill_with(decays_to_rw_matrix_view auto&& mat,
-                          auto scal) noexcept {
+constexpr auto& fill_with(matrix auto&& mat, auto scal) noexcept {
   return eval([scal](auto& val) { val = scal; }, mat);
 }
 
 /// @brief Fill the matrix @p mat with the random numbers.
-constexpr auto& fill_randomly(decays_to_rw_matrix_view auto&& mat) noexcept {
+constexpr auto& fill_randomly(matrix auto&& mat) noexcept {
   for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
       mat(row_index, col_index) = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;

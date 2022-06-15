@@ -101,7 +101,7 @@ public:
     return *this;
   }
 
-  constexpr auto& operator=(const is_matrix_view auto& other) noexcept {
+  constexpr auto& operator=(matrix auto&& other) noexcept {
     for (size_t ix = 0; ix < SizeX; ++ix) {
       for (size_t iy = 0; iy < SizeY; ++iy) {
         (*this)(ix, iy) = other(ix, iy);
@@ -132,11 +132,8 @@ public:
 }; // class Mat
 
 template<class Value, size_t SizeX, size_t SizeY>
-struct is_matrix_t<Mat<Value, SizeX, SizeY>> : std::true_type {};
-
-template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto& eval(auto func, Mat<Value, SizeX, SizeY>& mat_lhs,
-                     const is_matrix_view auto&... mats_rhs) noexcept {
+                     matrix auto&&... mats_rhs) noexcept {
   for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
       func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);

@@ -394,7 +394,7 @@ public:
     return row_indices_.size(); 
   }
   constexpr auto num_rows() const noexcept {
-    return mat_.num_rows();
+    return Storm::num_rows(mat_);
   }
   /// @}
 
@@ -405,7 +405,7 @@ public:
     return col_indices_.size(); 
   }
   constexpr auto num_cols() const noexcept {
-    return mat_.num_cols();
+    return Storm::num_cols(mat_);
   }
   /// @}
 
@@ -850,12 +850,12 @@ public:
   }
 
   /// @copydoc BaseMatrixView::operator[]
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{mat1_.num_cols()};
-    auto val{mat1_(row_index, 0) * mat2_(0, col_index)};
+    auto val{mat1_[row_index, 0] * mat2_[0, col_index]};
     for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
-      val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
+      val += mat1_[row_index, cross_index] * mat2_[cross_index, col_index];
     }
     return val;
   }

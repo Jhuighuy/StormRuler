@@ -69,7 +69,7 @@ public:
       : DenseMatrix(coeffs.size(), coeffs.begin()->size()) {
     for (size_t i{0}; i < num_rows_; ++i) {
       for (size_t j{0}; j < num_cols_; ++j) {
-        (*this)(i, j) = (coeffs.begin()[i]).begin()[j];
+        (*this)[i, j] = (coeffs.begin()[i]).begin()[j];
       }
     }
   }
@@ -88,14 +88,14 @@ public:
 
   /// @brief Get the coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr auto& operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr auto& operator[](size_t row_index, size_t col_index) noexcept {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Matrix index out range.");
     return coeffs_[row_index * num_cols_ + col_index];
   }
-  constexpr const auto& operator()(size_t row_index,
+  constexpr const auto& operator[](size_t row_index,
                                    size_t col_index) const noexcept {
-    return const_cast<DenseMatrix&>(*this)(row_index, col_index);
+    return const_cast<DenseMatrix&>(*this)[row_index, col_index];
   }
   /// @}
 
@@ -109,16 +109,16 @@ constexpr void decompose_lu(matrix auto&& mat, //
   fill_with(u_mat, 0.0);
   for (size_t ix{0}; ix < size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
-      l_mat(ix, iy) = mat(ix, iy);
+      l_mat[ix, iy] = mat[ix, iy];
       for (size_t iz{0}; iz < iy; ++iz) {
-        l_mat(ix, iy) -= l_mat(ix, iz) * u_mat(iz, iy);
+        l_mat[ix, iy] -= l_mat[ix, iz] * u_mat[iz, iy];
       }
-      l_mat(ix, iy) /= u_mat(iy, iy);
+      l_mat[ix, iy] /= u_mat[iy, iy];
     }
     for (size_t iy{ix}; iy < size; ++iy) {
-      u_mat(ix, iy) = mat(ix, iy);
+      u_mat[ix, iy] = mat[ix, iy];
       for (size_t iz{0}; iz < ix; ++iz) {
-        u_mat(ix, iy) -= l_mat(ix, iz) * u_mat(iz, iy);
+        u_mat[ix, iy] -= l_mat[ix, iz] * u_mat[iz, iy];
       }
     }
   }
@@ -129,29 +129,29 @@ constexpr void inplace_solve_lu(matrix auto&& l_mat, matrix auto&& u_mat,
   const auto size{l_mat.num_rows()};
   for (size_t ix{0}; ix < size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
-      vec(ix) -= l_mat(ix, iy) * vec(iy);
+      vec(ix) -= l_mat[ix, iy] * vec(iy);
     }
-    vec(ix) /= l_mat(ix, ix);
+    vec(ix) /= l_mat[ix, ix];
   }
   for (size_t rix{0}; rix < size; ++rix) {
     size_t ix{size - 1 - rix};
     for (size_t iy{ix + 1}; iy < size; ++iy) {
-      vec(ix) -= u_mat(ix, iy) * vec(iy);
+      vec(ix) -= u_mat[ix, iy] * vec(iy);
     }
-    vec(ix) /= u_mat(ix, ix);
+    vec(ix) /= u_mat[ix, ix];
   }
 }
 
 /// @brief Inverse a square matrix @p mat using the LU decomposition.
 constexpr void inplace_inverse_lu(matrix auto&& mat,
                                   matrix auto&& inv_mat) noexcept {
-  using Value = std::decay_t<decltype(mat(0, 0))>;
+  using Value = std::decay_t<decltype(mat[0, 0])>;
   DenseMatrix<Value> L(mat.num_rows(), mat.num_cols());
   DenseMatrix<Value> U(mat.num_rows(), mat.num_cols());
   decompose_lu(mat, L, U);
   fill_diag_with(inv_mat, 1.0);
   for (size_t iy{0}; iy < mat.num_rows(); ++iy) {
-    auto inv_mat_col = [&](size_t ix) -> Value& { return inv_mat(ix, iy); };
+    auto inv_mat_col = [&](size_t ix) -> Value& { return inv_mat[ix, iy]; };
     inplace_solve_lu(L, U, inv_mat_col);
   }
 }

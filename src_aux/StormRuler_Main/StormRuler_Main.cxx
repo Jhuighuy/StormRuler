@@ -265,7 +265,7 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 
 int main(int argc, char** argv) {
   srand(23543253);
-#if 0
+#if 1
   {
     using namespace Storm;
     DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
     }
     {
       auto AA = select_rows(A, 0, 1, 3);
-      AA(0, 0) = 1.0;
+      AA[0, 0] = 1.0;
       select_rows(AA, 0) -= select_rows(AA, 1);
       std::cout << AA << std::endl << std::endl;
       std::cout << "=======" << std::endl << std::endl;

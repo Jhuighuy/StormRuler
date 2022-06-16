@@ -383,7 +383,7 @@ private:
   STORM_NO_UNIQUE_ADDRESS_ StrideType stride_;
 
   constexpr static auto compute_size_(auto from, auto to, auto stride) {
-    return static_cast<size_t>((from - to) / stride);
+    return static_cast<size_t>((to - from) / stride);
   }
   template<class FromType_, class ToType_, class StrideType_, //
            FromType_ From, ToType_ To, StrideType_ Stride>
@@ -391,7 +391,7 @@ private:
   compute_size_(std::integral_constant<FromType_, From>,
                 std::integral_constant<ToType_, To>,
                 std::integral_constant<StrideType_, Stride>) {
-    return size_t_constant<(From - To) / Stride>{};
+    return size_t_constant<(To - From) / Stride>{};
   }
 
 public:

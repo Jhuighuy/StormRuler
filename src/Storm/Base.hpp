@@ -67,7 +67,17 @@
 #define STORM_ASSERT_(x) STORM_ENSURE_(x)
 #endif
 
+#ifdef _MSC_VER
+#define STORM_FORCE_INLINE_ inline __forceinline
+#else
 #define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
+#endif
+
+#ifdef _MSC_VER
+#define STORM_NO_UNIQUE_ADDRESS_ [[msvc::no_unique_address]]
+#else
+#define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
+#endif
 
 namespace Storm {
 
@@ -80,13 +90,16 @@ using ptrdiff_t = std::ptrdiff_t;
 /// @brief Real floating-point type.
 using real_t = double;
 
-/// @brief size_t constant.
+template<class>
+constexpr inline bool always_false{false};
+
+template<class T1, class T2>
+concept different_from =
+    !std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+
+/// @brief @c size_t compile-time constant.
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
-
-template<class T>
-concept convertible_to_size_t_object =
-    std::convertible_to<T, size_t> && std::is_object_v<T>;
 
 /// @brief Check if type is a complex floating point.
 /// @{

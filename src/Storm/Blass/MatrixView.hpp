@@ -25,12 +25,13 @@
 
 #pragma once
 
+#include <array>
 #include <concepts>
-#include <ostream>
-#include <random>
 #include <tuple>
 #include <type_traits>
 #include <utility>
+
+#include <ostream>
 
 #include <Storm/Base.hpp>
 
@@ -114,7 +115,8 @@ inline constexpr bool enable_matrix_view_v{enable_matrix_view<T>::value};
 
 /// @brief Matrix view concept.
 template<class MatrixView>
-concept matrix_view = matrix<MatrixView> && enable_matrix_view_v<MatrixView>;
+concept matrix_view = matrix<MatrixView> && enable_matrix_view_v<MatrixView> &&
+    std::movable<MatrixView>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
 template<class Matrix>
@@ -140,10 +142,19 @@ private:
 
   Matrix* mat_;
 
+  static void fun_(Matrix&); // not defined
+  static void fun_(Matrix&&) = delete;
+
 public:
 
   /// @brief Construct a matrix reference view.
-  constexpr MatrixRefView(Matrix& mat) noexcept : mat_{&mat} {}
+  // clang-format off
+  template<different_from<MatrixRefView> OtherMatrix>
+    requires std::convertible_to<OtherMatrix, Matrix&> &&
+             requires { fun_(std::declval<OtherMatrix>()); }
+  constexpr MatrixRefView(OtherMatrix&& mat) noexcept 
+      : mat_{std::addressof(static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
+  // clang-format on
 
   /// @copydoc BaseMatrixView::shape
   constexpr auto shape() const noexcept {
@@ -164,19 +175,55 @@ public:
 
 }; // class MatrixRefView
 
+/// ----------------------------------------------------------------- ///
+/// @brief Matrix owning view.
+/// ----------------------------------------------------------------- ///
+template<matrix Matrix>
+class MatrixOwningView : public BaseMatrixView<MatrixOwningView<Matrix>> {
+private:
+
+  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_{};
+
+public:
+
+  // clang-format off
+  MatrixOwningView() requires std::default_initializable<Matrix> = default;
+  // clang-format on
+
+}; // class MatrixOwningView
+
 template<class Matrix>
 MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 
+// clang-format off
+template<class Matrix>
+concept matrix_ref_viewable_ = 
+    requires(Matrix&& mat) { MatrixRefView{std::forward<Matrix>(mat)}; };
+// clang-format on
+
+// clang-format off
+template<class Matrix>
+concept matrix_ownable_ = 
+    requires(Matrix&& mat) { MatrixOwningView{std::forward<Matrix>(mat)}; };
+// clang-format on
+
 /// @brief Forward the viewable matrix as a matrix view.
+// clang-format off
 template<viewable_matrix Matrix>
+  requires matrix_view<std::decay_t<Matrix>> || 
+           matrix_ref_viewable_<Matrix> || matrix_ownable_<Matrix>
 constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept {
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
-  } else {
-    /// @todo Owning view?
+  } else if constexpr (matrix_ref_viewable_<Matrix>) {
     return MatrixRefView{std::forward<Matrix>(mat)};
+  } else if constexpr (matrix_ownable_<Matrix>) {
+    return MatrixOwningView{std::forward<Matrix>(mat)};
+  } else {
+    static_assert(always_false<Matrix>, "owning?");
   }
 }
+// clang-format on
 
 /// @brief Suitable matrix view type for a vieable matrix.
 template<viewable_matrix Matrix>
@@ -197,11 +244,12 @@ using forward_as_matrix_view_t =
 template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
   requires std::is_object_v<Shape> && std::is_object_v<Func>
 class GenerateMatrixView :
-    public BaseMatrixView<GenerateMatrixView<Shape, Func>> {
+  public BaseMatrixView<GenerateMatrixView<Shape, Func>> {
+  // clang-format on
 private:
 
-  [[no_unique_address]] Shape shape_;
-  [[no_unique_address]] Func func_;
+  STORM_NO_UNIQUE_ADDRESS_ Shape shape_;
+  STORM_NO_UNIQUE_ADDRESS_ Func func_;
 
 public:
 
@@ -222,7 +270,6 @@ public:
   }
 
 }; // class GenerateMatrixView
-// clang-format on
 
 template<class Shape, class Func>
 GenerateMatrixView(Shape, Func) -> GenerateMatrixView<Shape, Func>;
@@ -291,7 +338,7 @@ template<size_t Size>
 class SelectedIndices {
 private:
 
-  [[no_unique_address]] std::array<size_t, Size> selected_indices_;
+  STORM_NO_UNIQUE_ADDRESS_ std::array<size_t, Size> selected_indices_;
 
 public:
 
@@ -323,11 +370,12 @@ template<std::convertible_to<size_t> FromType,
   requires std::is_object_v<FromType> && std::is_object_v<ToType> && 
            std::is_object_v<StrideType> 
 class SlicedIndices {
+  // clang-format on
 private:
 
-  [[no_unique_address]] FromType from_;
-  [[no_unique_address]] ToType to_;
-  [[no_unique_address]] StrideType stride_;
+  STORM_NO_UNIQUE_ADDRESS_ FromType from_;
+  STORM_NO_UNIQUE_ADDRESS_ ToType to_;
+  STORM_NO_UNIQUE_ADDRESS_ StrideType stride_;
 
   constexpr static auto compute_size_(auto from, auto to, auto stride) {
     return (from - to) / stride;
@@ -357,8 +405,8 @@ public:
   }
 
 }; // class SlicedIndices
-// clang-format on
 
+// do we need this CTAD?
 template<class FromType, class ToType, class StrideType>
 SlicedIndices(FromType, ToType, StrideType)
     -> SlicedIndices<FromType, ToType, StrideType>;
@@ -371,11 +419,12 @@ template<matrix Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
     public BaseMatrixView<SubmatrixView<Matrix, RowIndices, ColIndices>> {
+  // clang-format on
 private:
 
-  [[no_unique_address]] Matrix mat_;
-  [[no_unique_address]] RowIndices row_indices_;
-  [[no_unique_address]] ColIndices col_indices_;
+  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
+  STORM_NO_UNIQUE_ADDRESS_ RowIndices row_indices_;
+  STORM_NO_UNIQUE_ADDRESS_ ColIndices col_indices_;
 
 public:
 
@@ -389,6 +438,7 @@ public:
 
   /// @copydoc BaseMatrixView::num_rows
   /// @{
+  // clang-format off
   constexpr auto num_rows() const noexcept 
       requires requires { std::declval<RowIndices>().size(); } { 
     return row_indices_.size(); 
@@ -396,10 +446,12 @@ public:
   constexpr auto num_rows() const noexcept {
     return Storm::num_rows(mat_);
   }
+  // clang-format on
   /// @}
 
   /// @copydoc BaseMatrixView::num_cols
   /// @{
+  // clang-format off
   constexpr auto num_cols() const noexcept 
       requires requires { std::declval<ColIndices>().size(); } { 
     return col_indices_.size(); 
@@ -407,6 +459,7 @@ public:
   constexpr auto num_cols() const noexcept {
     return Storm::num_cols(mat_);
   }
+  // clang-format on
   /// @}
 
   /// @copydoc BaseMatrixView::shape
@@ -427,7 +480,6 @@ public:
   /// @}
 
 }; // class SubmatrixView
-// clang-format on
 
 template<class Matrix, class RowIndices, class ColIndices>
 SubmatrixView(Matrix&&, RowIndices, ColIndices)
@@ -524,17 +576,17 @@ template<std::copy_constructible Func, matrix... Matrices>
            std::regular_invocable<Func, matrix_reference_t<Matrices>...>
 class MapMatrixView :
     public BaseMatrixView<MapMatrixView<Func, Matrices...>> {
+  // clang-format on
 private:
 
-  [[no_unique_address]] Func func_;
-  [[no_unique_address]] std::tuple<Matrices...> mats_;
+  STORM_NO_UNIQUE_ADDRESS_ Func func_;
+  STORM_NO_UNIQUE_ADDRESS_ std::tuple<Matrices...> mats_;
 
 public:
 
   /// @brief Construct a map view.
   constexpr MapMatrixView(Func func, Matrices... mats) noexcept
-      : func_{std::move(func)}, mats_{std::move(mats)...} {
-  }
+      : func_{std::move(func)}, mats_{std::move(mats)...} {}
 
   /// @copydoc BaseMatrixView::shape
   constexpr auto shape() const noexcept {
@@ -552,7 +604,6 @@ public:
   }
 
 }; // class MapMatrixView
-// clang-format on
 
 template<class Func, class... Matrices>
 MapMatrixView(Func, Matrices&&...)
@@ -791,7 +842,7 @@ template<matrix Matrix>
 class MatrixTransposeView : public BaseMatrixView<MatrixTransposeView<Matrix>> {
 private:
 
-  [[no_unique_address]] Matrix mat_;
+  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
 
 public:
 
@@ -835,8 +886,8 @@ class MatrixProductView :
     public BaseMatrixView<MatrixProductView<Matrix1, Matrix2>> {
 private:
 
-  [[no_unique_address]] Matrix1 mat1_;
-  [[no_unique_address]] Matrix2 mat2_;
+  STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
+  STORM_NO_UNIQUE_ADDRESS_ Matrix2 mat2_;
 
 public:
 

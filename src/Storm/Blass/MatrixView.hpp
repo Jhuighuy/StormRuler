@@ -49,6 +49,7 @@ template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
 class BaseMatrixView {
+  // clang-format on
 private:
 
   auto& self_() noexcept {
@@ -75,6 +76,11 @@ public:
     return Storm::num_cols(self_());
   }
 
+  /// @brief Number of the matrix coefficients.
+  constexpr auto size() const noexcept {
+    return num_rows() * num_cols();
+  }
+
   /// @brief Get the vector coefficient at @p row_index.
   /// @{
   constexpr auto operator[](size_t row_index) noexcept -> decltype(auto) {
@@ -98,7 +104,6 @@ public:
   /// @}
 
 }; // class BaseMatrixView
-// clang-format on
 
 /// @brief Types, enabled to be a matrix view.
 /// @{
@@ -115,8 +120,10 @@ inline constexpr bool enable_matrix_view_v{enable_matrix_view<T>::value};
 
 /// @brief Matrix view concept.
 template<class MatrixView>
-concept matrix_view = matrix<MatrixView> && enable_matrix_view_v<MatrixView> &&
-    std::movable<MatrixView>;
+concept matrix_view =
+    matrix<MatrixView> && enable_matrix_view_v<MatrixView> /*&&
+std::movable<MatrixView>*/
+    ;
 
 /// @brief Matrix that can be safely casted into a matrix view.
 template<class Matrix>
@@ -213,17 +220,15 @@ template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> || 
            matrix_ref_viewable_<Matrix> || matrix_ownable_<Matrix>
 constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept {
+  // clang-format on
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
   } else if constexpr (matrix_ref_viewable_<Matrix>) {
     return MatrixRefView{std::forward<Matrix>(mat)};
   } else if constexpr (matrix_ownable_<Matrix>) {
     return MatrixOwningView{std::forward<Matrix>(mat)};
-  } else {
-    static_assert(always_false<Matrix>, "owning?");
   }
 }
-// clang-format on
 
 /// @brief Suitable matrix view type for a vieable matrix.
 template<viewable_matrix Matrix>
@@ -378,7 +383,7 @@ private:
   STORM_NO_UNIQUE_ADDRESS_ StrideType stride_;
 
   constexpr static auto compute_size_(auto from, auto to, auto stride) {
-    return (from - to) / stride;
+    return static_cast<size_t>((from - to) / stride);
   }
   template<class FromType_, class ToType_, class StrideType_, //
            FromType_ From, ToType_ To, StrideType_ Stride>
@@ -405,11 +410,6 @@ public:
   }
 
 }; // class SlicedIndices
-
-// do we need this CTAD?
-template<class FromType, class ToType, class StrideType>
-SlicedIndices(FromType, ToType, StrideType)
-    -> SlicedIndices<FromType, ToType, StrideType>;
 
 /// ----------------------------------------------------------------- ///
 /// @brief Submatrix view.
@@ -440,26 +440,26 @@ public:
   /// @{
   // clang-format off
   constexpr auto num_rows() const noexcept 
-      requires requires { std::declval<RowIndices>().size(); } { 
-    return row_indices_.size(); 
+      requires requires { std::declval<RowIndices>().size(); } {
+    // clang-format on
+    return row_indices_.size();
   }
   constexpr auto num_rows() const noexcept {
     return Storm::num_rows(mat_);
   }
-  // clang-format on
   /// @}
 
   /// @copydoc BaseMatrixView::num_cols
   /// @{
   // clang-format off
   constexpr auto num_cols() const noexcept 
-      requires requires { std::declval<ColIndices>().size(); } { 
-    return col_indices_.size(); 
+      requires requires { std::declval<ColIndices>().size(); } {
+    // clang-format on
+    return col_indices_.size();
   }
   constexpr auto num_cols() const noexcept {
     return Storm::num_cols(mat_);
   }
-  // clang-format on
   /// @}
 
   /// @copydoc BaseMatrixView::shape
@@ -515,7 +515,8 @@ constexpr auto slice_rows(viewable_matrix auto&& mat,
                           std::convertible_to<size_t> auto rows_to,
                           std::convertible_to<size_t> auto row_stride =
                               size_t_constant<1>{}) noexcept {
-  STORM_ASSERT_(rows_from < rows_to && rows_to <= mat.num_rows() &&
+  STORM_ASSERT_(rows_from < rows_to &&
+                static_cast<size_t>(rows_to) <= mat.num_rows() &&
                 "Invalid row range.");
   return SubmatrixView(std::forward<decltype(mat)>(mat),
                        SlicedIndices(rows_from, rows_to, row_stride),
@@ -537,7 +538,8 @@ constexpr auto slice_cols(viewable_matrix auto&& mat,
                           std::convertible_to<size_t> auto cols_to,
                           std::convertible_to<size_t> auto col_stride =
                               size_t_constant<1>{}) noexcept {
-  STORM_ASSERT_(cols_from < cols_to && cols_to <= mat.num_cols() &&
+  STORM_ASSERT_(cols_from < cols_to &&
+                static_cast<size_t>(cols_to) <= mat.num_cols() &&
                 "Invalid column range.");
   return SubmatrixView(std::forward<decltype(mat)>(mat), //
                        AllIndices{},

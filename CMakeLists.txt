@@ -103,7 +103,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
     -Wpedantic -Wno-unused-function -Wno-unused-parameter -Wno-comment 
-    -Wno-unknown-pragmas)
+    -Wno-unknown-pragmas -fconcepts-diagnostics-depth=2)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
        CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 

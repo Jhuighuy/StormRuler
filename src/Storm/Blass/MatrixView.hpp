@@ -49,6 +49,53 @@ template<class Derived>
            std::same_as<Derived, std::remove_cv_t<Derived>>
 class BaseMatrixView {
 private:
+
+  auto& self_() noexcept {
+    return static_cast<Derived&>(*this);
+  }
+  const auto& self_() const noexcept {
+    return static_cast<const Derived&>(*this);
+  }
+
+public:
+
+  /// @brief Shape of the matrix.
+  constexpr auto shape() const noexcept {
+    return Storm::shape(self_());
+  }
+
+  /// @brief Number of the matrix rows.
+  constexpr auto num_rows() const noexcept {
+    return Storm::num_rows(self_());
+  }
+
+  /// @brief Number of the matrix columns.
+  constexpr auto num_cols() const noexcept {
+    return Storm::num_cols(self_());
+  }
+
+  /// @brief Get the vector coefficient at @p row_index.
+  /// @{
+  constexpr auto operator[](size_t row_index) noexcept -> decltype(auto) {
+    return self_()[row_index, 0];
+  }
+  constexpr auto operator[](size_t row_index) const noexcept -> decltype(auto) {
+    return self_()[row_index, 0];
+  }
+  /// @}
+
+  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
+  /// @{
+  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+      -> decltype(auto) {
+    return self_()[row_index, col_index];
+  }
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+      -> decltype(auto) {
+    return self_()[row_index, col_index];
+  }
+  /// @}
+
 }; // class BaseMatrixView
 // clang-format on
 
@@ -65,23 +112,16 @@ template<class T>
 inline constexpr bool enable_matrix_view_v{enable_matrix_view<T>::value};
 /// @}
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Matrix view concept.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class MatrixView>
 concept matrix_view = matrix<MatrixView> && enable_matrix_view_v<MatrixView>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Matrix that can be safely casted into a matrix view.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Matrix>
 concept viewable_matrix = matrix<Matrix> &&
     matrix_view<std::remove_cvref_t<Matrix>> ||
     (!matrix_view<std::remove_cvref_t<Matrix>> &&
      std::is_lvalue_reference_v<Matrix>);
-
-template<class MatrixView>
-concept matrix_view_object_ = matrix_view<std::remove_cv_t<MatrixView>>;
 
 /// @name Matrix views.
 /// @{
@@ -94,7 +134,7 @@ concept matrix_view_object_ = matrix_view<std::remove_cv_t<MatrixView>>;
 /// ----------------------------------------------------------------- ///
 /// @brief Matrix reference view.
 /// ----------------------------------------------------------------- ///
-template<matrix_object_ Matrix>
+template<matrix Matrix>
 class MatrixRefView : public BaseMatrixView<MatrixRefView<Matrix>> {
 private:
 
@@ -105,14 +145,9 @@ public:
   /// @brief Construct a matrix reference view.
   constexpr MatrixRefView(Matrix& mat) noexcept : mat_{&mat} {}
 
-  /// @copydoc BaseMatrixView::num_rows
-  constexpr auto num_rows() const noexcept {
-    return mat_->num_rows();
-  }
-
-  /// @copydoc BaseMatrixView::num_cols
-  constexpr auto num_cols() const noexcept {
-    return mat_->num_cols();
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return Storm::shape(*mat_);
   }
 
   /// @copydoc BaseMatrixView::operator[]
@@ -129,22 +164,21 @@ public:
 
 }; // class MatrixRefView
 
-/// @brief Copy the matrix view @p mat.
-template<class MatrixView>
-constexpr auto
-forward_as_matrix_view(const BaseMatrixView<MatrixView>& mat) noexcept {
-  return static_cast<const MatrixView&>(mat);
+template<class Matrix>
+MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
+
+/// @brief Forward the viewable matrix as a matrix view.
+template<viewable_matrix Matrix>
+constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept {
+  if constexpr (matrix_view<std::decay_t<Matrix>>) {
+    return std::forward<Matrix>(mat);
+  } else {
+    /// @todo Owning view?
+    return MatrixRefView{std::forward<Matrix>(mat)};
+  }
 }
 
-/// @brief Wrap the matrix @p mat in view a matrix view.
-/// @{
-template<matrix_object_ Matrix>
-requires(!matrix_view_object_<std::decay_t<Matrix>>) //
-    constexpr auto forward_as_matrix_view(Matrix& mat) noexcept {
-  return MatrixRefView<Matrix>{mat};
-}
-/// @}
-
+/// @brief Suitable matrix view type for a vieable matrix.
 template<viewable_matrix Matrix>
 using forward_as_matrix_view_t =
     decltype(forward_as_matrix_view(std::declval<Matrix>()));
@@ -160,49 +194,38 @@ using forward_as_matrix_view_t =
 /// @brief Matrix generating view.
 /// ----------------------------------------------------------------- ///
 // clang-format off
-template<convertible_to_size_t_object NumRowsType,
-         convertible_to_size_t_object NumColsType,
-         std::regular_invocable<size_t, size_t> Func>
-  requires std::is_object_v<Func>
-class MatrixGeneratingView :
-    public BaseMatrixView<
-        MatrixGeneratingView<NumRowsType, NumColsType, Func>> {
+template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
+  requires std::is_object_v<Shape> && std::is_object_v<Func>
+class GenerateMatrixView :
+    public BaseMatrixView<GenerateMatrixView<Shape, Func>> {
 private:
 
-  [[no_unique_address]] NumRowsType num_rows_;
-  [[no_unique_address]] NumColsType num_cols_;
+  [[no_unique_address]] Shape shape_;
   [[no_unique_address]] Func func_;
 
 public:
 
   /// @brief Construct a generating view.
-  constexpr MatrixGeneratingView( //
-      NumRowsType num_rows, NumColsType num_cols, Func func) noexcept
-      : num_rows_{num_rows}, num_cols_{num_cols}, func_{std::move(func)} {}
+  constexpr GenerateMatrixView(Shape shape, Func func) noexcept
+      : shape_{shape}, func_{std::move(func)} {}
 
-  /// @copydoc BaseMatrixView::num_rows
-  constexpr auto num_rows() const noexcept {
-    return num_rows_;
-  }
-
-  /// @copydoc BaseMatrixView::num_cols
-  constexpr auto num_cols() const noexcept {
-    return num_cols_;
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return shape_;
   }
 
   /// @copydoc BaseMatrixView::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
-                  "Indices are out of range.");
+    STORM_ASSERT_(row_index < this->num_rows() &&
+                  col_index < this->num_cols() && "Indices are out of range.");
     return func_(row_index, col_index);
   }
 
-}; // class MatrixGeneratingView
+}; // class GenerateMatrixView
 // clang-format on
 
-template<class NumRowsType, class NumColsType, class Func>
-MatrixGeneratingView(NumRowsType, NumColsType, Func)
-    -> MatrixGeneratingView<NumRowsType, NumColsType, Func>;
+template<class Shape, class Func>
+GenerateMatrixView(Shape, Func) -> GenerateMatrixView<Shape, Func>;
 
 /// @brief Generate a constant matrix with @p num_rows and @p num_cols.
 /// @{
@@ -210,8 +233,8 @@ template<class Value>
 constexpr auto make_constant_matrix( //
     std::convertible_to<size_t> auto num_rows,
     std::convertible_to<size_t> auto num_cols, Value scal) {
-  return MatrixGeneratingView(
-      num_rows, num_cols,
+  return GenerateMatrixView(
+      std::pair(num_rows, num_cols),
       [scal](size_t row_index, size_t col_index) { return scal; });
 }
 template<size_t NumRows, size_t NumCols, class Value>
@@ -227,17 +250,19 @@ template<class Value, class Tag = void>
 constexpr auto make_diagonal_matrix( //
     std::convertible_to<size_t> auto num_rows,
     std::convertible_to<size_t> auto num_cols, Value scal) {
-  return MatrixGeneratingView(num_rows, num_cols,
-                              [scal](size_t row_index, size_t col_index) {
-                                constexpr Value zero{};
-                                return row_index == col_index ? scal : zero;
-                              });
+  return GenerateMatrixView(std::pair(num_rows, num_cols),
+                            [scal](size_t row_index, size_t col_index) {
+                              constexpr Value zero{};
+                              return row_index == col_index ? scal : zero;
+                            });
 }
 template<size_t NumRows, size_t NumCols, class Value>
 constexpr auto make_diagonal_matrix(Value scal) {
   return make_diagonal_matrix<Value>(size_t_constant<NumRows>{}, //
                                      size_t_constant<NumCols>{}, scal);
 }
+/// @}
+
 /// @} // Generating views.
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -245,7 +270,9 @@ constexpr auto make_diagonal_matrix(Value scal) {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @{
 
+/// ----------------------------------------------------------------- ///
 /// @brief All indices range.
+/// ----------------------------------------------------------------- ///
 class AllIndices {
 public:
 
@@ -257,7 +284,9 @@ public:
 
 }; // AllIndices
 
+/// ----------------------------------------------------------------- ///
 /// @brief Selected indices range.
+/// ----------------------------------------------------------------- ///
 template<size_t Size>
 class SelectedIndices {
 private:
@@ -284,10 +313,15 @@ public:
 template<size_t Size>
 SelectedIndices(std::array<size_t, Size>) -> SelectedIndices<Size>;
 
+/// ----------------------------------------------------------------- ///
 /// @brief Sliced indices range.
-template<convertible_to_size_t_object FromType,
-         convertible_to_size_t_object ToType,
-         convertible_to_size_t_object StrideType>
+/// ----------------------------------------------------------------- ///
+// clang-format off
+template<std::convertible_to<size_t> FromType,
+         std::convertible_to<size_t> ToType,
+         std::convertible_to<size_t> StrideType>
+  requires std::is_object_v<FromType> && std::is_object_v<ToType> && 
+           std::is_object_v<StrideType> 
 class SlicedIndices {
 private:
 
@@ -323,6 +357,7 @@ public:
   }
 
 }; // class SlicedIndices
+// clang-format on
 
 template<class FromType, class ToType, class StrideType>
 SlicedIndices(FromType, ToType, StrideType)
@@ -373,6 +408,11 @@ public:
     return mat_.num_cols();
   }
   /// @}
+
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return std::pair(num_rows(), num_cols());
+  }
 
   /// @copydoc BaseMatrixView::operator[]
   /// @{
@@ -496,21 +536,16 @@ public:
       : func_{std::move(func)}, mats_{std::move(mats)...} {
   }
 
-  /// @copydoc BaseMatrixView::num_rows
-  constexpr auto num_rows() const noexcept {
-    return std::get<0>(mats_).num_rows();
-  }
-
-  /// @copydoc BaseMatrixView::num_cols
-  constexpr auto num_cols() const noexcept {
-    return std::get<0>(mats_).num_cols();
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return Storm::shape(std::get<0>(mats_));
   }
 
   /// @copydoc BaseMatrixView::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return std::apply(
-        [&, row_index, col_index](const auto&... mats) -> decltype(auto) {
+        [&](const auto&... mats) {
           return func_(mats[row_index, col_index]...);
         },
         mats_);
@@ -528,8 +563,7 @@ MapMatrixView(Func, Matrices&&...)
 constexpr auto map(auto func, //
                    viewable_matrix auto&& mat1,
                    viewable_matrix auto&&... mats) noexcept {
-  STORM_ASSERT_(((mat1.num_rows() == mats.num_rows()) && ...) &&
-                ((mat1.num_cols() == mats.num_cols()) && ...) &&
+  STORM_ASSERT_(((shape(mat1) == shape(mats)) && ...) &&
                 "Shapes of the matrix arguments should be the same.");
   return MapMatrixView(func, //
                        std::forward<decltype(mat1)>(mat1),
@@ -765,14 +799,9 @@ public:
   constexpr explicit MatrixTransposeView(Matrix mat) noexcept
       : mat_{std::move(mat)} {}
 
-  /// @copydoc BaseMatrixView::num_rows
-  constexpr auto num_rows() const noexcept {
-    return mat_.num_cols();
-  }
-
-  /// @copydoc BaseMatrixView::num_cols
-  constexpr auto num_cols() const noexcept {
-    return mat_.num_rows();
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return std::pair(num_cols(mat_), num_rows(mat_));
   }
 
   /// @copydoc BaseMatrixView::operator[]
@@ -815,14 +844,9 @@ public:
   constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2) noexcept
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {}
 
-  /// @copydoc BaseMatrixView::num_rows
-  constexpr auto num_rows() const noexcept {
-    return mat1_.num_rows();
-  }
-
-  /// @copydoc BaseMatrixView::num_cols
-  constexpr auto num_cols() const noexcept {
-    return mat2_.num_cols();
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return std::pair(mat1_.num_rows(), mat2_.num_cols());
   }
 
   /// @copydoc BaseMatrixView::operator[]

@@ -37,23 +37,60 @@
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief Matrix concept.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+// clang-format off
+template<class Shape>
+concept matrix_shape = 
+  requires(Shape& shape) {
+    std::tuple_size_v<Shape>;
+  };
+// clang-format on
+
+// clang-format off
+template<class T>
+concept has_shape_ = 
+    requires(T& x) { { x.shape() } -> matrix_shape; };
+template<class T>
+concept has_num_rows_ = 
+    requires(T& x) { { x.num_rows() } -> std::convertible_to<size_t>; };
+template<class T>
+concept has_num_cols_ = 
+    requires(T& x) { { x.num_cols() } -> std::convertible_to<size_t>; };
+// clang-format on
+
+/// @brief Get the object shape.
+// clang-format off
+template<class T>
+  requires has_shape_<T> || has_num_rows_<T>
+auto shape(T&& x) noexcept {
+  if constexpr (has_shape_<T>) {
+    return x.shape();
+  } else if constexpr (has_num_rows_<T> && has_num_cols_<T>) {
+    return std::pair(x.num_rows(), x.num_cols());
+  } else {
+    return std::pair(x.num_rows(), size_t_constant<1>{});
+  }
+}
+// clang-format on
+
+/// @brief Get the number of rows the object has.
+constexpr auto num_rows(auto&& x) noexcept {
+  return std::get<0>(shape(x));
+}
+
+/// @brief Get the number of columns the object has.
+constexpr auto num_cols(auto&& x) noexcept {
+  return std::get<1>(shape(x));
+}
+
+/// @brief Matrix: has shape and two subscripts.
 // clang-format off
 template<class Matrix>
 concept matrix = 
-    requires(Matrix& mat) {
-      { mat.num_rows() } -> std::convertible_to<size_t>;
-      { mat.num_cols() } -> std::convertible_to<size_t>;
-    } && //
+    requires(Matrix& mat) { { shape(mat) } -> matrix_shape; } &&
     requires(Matrix& mat, size_t row_index, size_t col_index) {
-      { mat[row_index, col_index] };
+      mat[row_index, col_index];
     };
 // clang-format on
-
-template<class Matrix>
-concept matrix_object_ = matrix<Matrix> && std::is_object_v<Matrix>;
 
 template<matrix Matrix>
 using matrix_reference_t =
@@ -95,8 +132,8 @@ constexpr auto& eval(auto func, matrix auto&& mat_lhs,
 #else
 
 #pragma omp parallel for schedule(static)
-  for (size_t row_index = 0; row_index < mat_lhs.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+  for (size_t row_index = 0; row_index < num_rows(mat_lhs); ++row_index) {
+    for (size_t col_index{0}; col_index < num_cols(mat_lhs); ++col_index) {
       func(mat_lhs[row_index, col_index], mats_rhs[row_index, col_index]...);
     }
   }
@@ -117,8 +154,8 @@ constexpr real_t dot_product(real_t v1, real_t v2) {
 constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
   std::vector<real_t> partial(omp_get_max_threads(), 0.0);
 #pragma omp parallel for schedule(static)
-  for (size_t row_index = 0; row_index < mat1.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat1.num_cols(); ++col_index) {
+  for (size_t row_index = 0; row_index < num_rows(mat1); ++row_index) {
+    for (size_t col_index{0}; col_index < num_cols(mat1); ++col_index) {
       partial[omp_get_thread_num()] +=
           dot_product(mat1[row_index, col_index], mat2[row_index, col_index]);
     }

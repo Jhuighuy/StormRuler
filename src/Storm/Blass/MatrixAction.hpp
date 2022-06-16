@@ -90,8 +90,8 @@ constexpr auto& fill_with(matrix auto&& mat, auto scal) noexcept {
 
 /// @brief Fill the matrix @p mat with the random numbers.
 constexpr auto& fill_randomly(matrix auto&& mat) noexcept {
-  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
+  for (size_t row_index{0}; row_index < num_rows(mat); ++row_index) {
+    for (size_t col_index{0}; col_index < num_cols(mat); ++col_index) {
       mat[row_index, col_index] = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
     }
   }

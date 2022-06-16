@@ -99,9 +99,6 @@ public:
   auto num_rows() const noexcept {
     return MySize;
   }
-  auto num_cols() const noexcept {
-    return std::integral_constant<size_t, 1>{};
-  }
 
   const auto& operator[](size_t i, size_t j) const noexcept {
     STORM_ASSERT_(j == 0);

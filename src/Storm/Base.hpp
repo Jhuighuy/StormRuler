@@ -83,6 +83,9 @@
 
 namespace Storm {
 
+/// @brief Contains the implementation details.
+namespace Detail_ {}
+
 /// @brief Size type.
 using size_t = std::size_t;
 
@@ -92,33 +95,33 @@ using ptrdiff_t = std::ptrdiff_t;
 /// @brief Real floating-point type.
 using real_t = double;
 
-template<class>
-constexpr inline bool always_false{false};
+namespace Detail_ {
+  template<class>
+  constexpr inline bool always_false{false};
+} // namespace Detail_
 
-template<class T1, class T2>
-concept different_from =
-    !std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+namespace Detail_ {
+  template<class T1, class T2>
+  concept different_from_ =
+      !std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+} // namespace Detail_
 
 /// @brief @c size_t compile-time constant.
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
 
-/// @brief Check if type is a complex floating point.
-/// @{
-template<class>
-struct is_complex_floating_point_t : std::false_type {};
-template<class T>
-struct is_complex_floating_point_t<std::complex<T>> :
-    std::bool_constant<std::is_floating_point_v<T>> {};
-template<class T>
-inline constexpr bool is_complex_floating_point_v =
-    is_complex_floating_point_t<T>::value;
-/// @}
+namespace Detail_ {
+  template<class T>
+  inline constexpr bool is_complex_floating_point_v_{false};
+  template<class T>
+  inline constexpr bool is_complex_floating_point_v_<std::complex<T>>{
+      std::is_floating_point_v<T>};
+} // namespace Detail_
 
-/// @brief Concept for the real or complex floaing point numbers,
+/// @brief Real or complex floaing point numbers,
 ///   e.g. @c real_t or @c std::complex<real_t>.
 template<class T>
 concept real_or_complex_floating_point =
-    std::floating_point<T> || is_complex_floating_point_v<T>;
+    std::floating_point<T> || Detail_::is_complex_floating_point_v_<T>;
 
 } // namespace Storm

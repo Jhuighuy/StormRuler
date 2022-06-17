@@ -45,32 +45,34 @@ concept matrix_shape =
   };
 // clang-format on
 
-// clang-format off
-template<class T>
-concept has_shape_ = 
-    requires(T& x) { { x.shape() } -> matrix_shape; };
-template<class T>
-concept has_num_rows_ = 
-    requires(T& x) { { x.num_rows() } -> std::convertible_to<size_t>; };
-template<class T>
-concept has_num_cols_ = 
-    requires(T& x) { { x.num_cols() } -> std::convertible_to<size_t>; };
-// clang-format on
+namespace Detail_ {
+  // clang-format off
+  template<class T>
+  concept has_shape_ = 
+      requires(T& x) { { x.shape() } -> matrix_shape; };
+  template<class T>
+  concept has_num_rows_ = 
+      requires(T& x) { { x.num_rows() } -> std::convertible_to<size_t>; };
+  template<class T>
+  concept has_num_cols_ = 
+      requires(T& x) { { x.num_cols() } -> std::convertible_to<size_t>; };
+  // clang-format on
+} // namespace Detail_
 
 /// @brief Get the object shape.
 // clang-format off
 template<class T>
-  requires has_shape_<T> || has_num_rows_<T>
+  requires Detail_::has_shape_<T> || Detail_::has_num_rows_<T>
 auto shape(T&& x) noexcept {
-  if constexpr (has_shape_<T>) {
+  // clang-format on
+  if constexpr (Detail_::has_shape_<T>) {
     return x.shape();
-  } else if constexpr (has_num_rows_<T> && has_num_cols_<T>) {
+  } else if constexpr (Detail_::has_num_rows_<T> && Detail_::has_num_cols_<T>) {
     return std::pair(x.num_rows(), x.num_cols());
   } else {
     return std::pair(x.num_rows(), size_t_constant<1>{});
   }
 }
-// clang-format on
 
 /// @brief Get the number of rows the object has.
 constexpr auto num_rows(auto&& x) noexcept {

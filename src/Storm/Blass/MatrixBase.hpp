@@ -37,11 +37,15 @@
 
 namespace Storm {
 
+/// @brief Matrix shape.
 // clang-format off
 template<class Shape>
 concept matrix_shape = 
   requires(Shape& shape) {
     std::tuple_size_v<Shape>;
+    requires std::derived_from<std::tuple_size<Shape>, size_t_constant<2>>;
+    { std::get<0>(shape) } -> std::convertible_to<size_t>;
+    { std::get<1>(shape) } -> std::convertible_to<size_t>;
   };
 // clang-format on
 

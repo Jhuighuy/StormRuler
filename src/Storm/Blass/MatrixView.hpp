@@ -111,7 +111,7 @@ template<class T>
 inline constexpr bool enable_matrix_view_v{false};
 // clang-format off
 template<class T>
-  requires std::is_base_of_v<BaseMatrixView<T>, T>
+  requires std::derived_from<T, BaseMatrixView<T>>
 inline constexpr bool enable_matrix_view_v<T>{true};
 // clang-format on
 /// @}
@@ -698,7 +698,6 @@ constexpr auto operator/(viewable_matrix auto&& mat1,
   return map(std::divides<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
-// These are broken until we have all the correctly-forwarded functions.
 namespace math {
 
   /// @brief Component-wise @c abs of the matrix @p mat.
@@ -964,7 +963,7 @@ public:
   /// @copydoc BaseMatrixView::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    const auto cross_size{mat1_.num_cols()};
+    const auto cross_size{num_cols(mat1_)};
     auto val{mat1_[row_index, 0] * mat2_[0, col_index]};
     for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
       val += mat1_[row_index, cross_index] * mat2_[cross_index, col_index];
@@ -982,7 +981,7 @@ MatrixProductView(Matrix1&&, Matrix2&&)
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 constexpr auto matmul(viewable_matrix auto&& mat1,
                       viewable_matrix auto&& mat2) noexcept {
-  STORM_ASSERT_(mat1.num_cols() == mat2.num_rows() &&
+  STORM_ASSERT_(num_cols(mat1) == num_rows(mat2) &&
                 "The first matrix should have the same number of columns "
                 "as the second matrix has rows.");
   return MatrixProductView(STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));

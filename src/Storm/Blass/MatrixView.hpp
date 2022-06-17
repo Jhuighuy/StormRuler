@@ -127,13 +127,12 @@ concept matrix_view =     //
 /// @brief Matrix that can be safely casted into a matrix view.
 // clang-format off
 template<class Matrix>
-concept viewable_matrix =
-    matrix<Matrix> &&
-    (matrix_view<std::remove_cvref_t<Matrix>> &&
-         std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
-    (!matrix_view<std::remove_cvref_t<Matrix>> &&
-     (std::is_lvalue_reference_v<Matrix> ||
-      std::movable<std::remove_reference_t<Matrix>>) );
+concept viewable_matrix = matrix<Matrix> &&
+    ((matrix_view<std::remove_cvref_t<Matrix>> &&
+      std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
+     (!matrix_view<std::remove_cvref_t<Matrix>> &&
+      (std::is_lvalue_reference_v<Matrix> ||
+       std::movable<std::remove_reference_t<Matrix>>)));
 // clang-format on
 
 /// @name Matrix views.
@@ -656,22 +655,35 @@ constexpr auto operator-(viewable_matrix auto&& mat) noexcept {
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
-/// @todo `scal` should really be auto!
-constexpr auto operator*(real_t scal, viewable_matrix auto&& mat) noexcept {
-  return map([scal](auto&& m) { return scal * STORM_FORWARD_(m); },
-             STORM_FORWARD_(mat));
+// clang-format off
+template<class Scalar>
+  requires (!matrix<Scalar>)
+constexpr auto operator*(Scalar scal, viewable_matrix auto&& mat) noexcept {
+  // clang-format on
+  return map(
+      [scal = std::move(scal)](auto&& m) { return scal * STORM_FORWARD_(m); },
+      STORM_FORWARD_(mat));
 }
-constexpr auto operator*(viewable_matrix auto&& mat, real_t scal) noexcept {
-  return map([scal](auto&& m) { return STORM_FORWARD_(m) * scal; },
-             STORM_FORWARD_(mat));
+// clang-format off
+template<class Scalar>
+  requires (!matrix<Scalar>)
+constexpr auto operator*(viewable_matrix auto&& mat, Scalar scal) noexcept {
+  // clang-format on
+  return map(
+      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) * scal; },
+      STORM_FORWARD_(mat));
 }
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
-/// @todo `scal` should really be auto!
-constexpr auto operator/(viewable_matrix auto&& mat, real_t scal) noexcept {
-  return map([scal](auto&& m) { return STORM_FORWARD_(m) / scal; },
-             STORM_FORWARD_(mat));
+// clang-format off
+template<class Scalar>
+  requires (!matrix<Scalar>)
+constexpr auto operator/(viewable_matrix auto&& mat, Scalar scal) noexcept {
+  // clang-format on
+  return map(
+      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) / scal; },
+      STORM_FORWARD_(mat));
 }
 
 /// @brief Add the matrices @p mat1 and @p mat2.
@@ -708,14 +720,28 @@ namespace math {
   /// @name Power functions.
   /// @{
 
-  constexpr auto pow(viewable_matrix auto&& x_mat, auto y) noexcept {
-    return map([y](auto&& x) { return math::pow(STORM_FORWARD_(x), y); },
-               STORM_FORWARD_(x_mat));
+  // clang-format off
+  template<class Scalar>
+    requires (!matrix<Scalar>)
+  constexpr auto pow(viewable_matrix auto&& x_mat, Scalar y) noexcept {
+    // clang-format on
+    return map( //
+        [y = std::move(y)](auto&& x) {
+          return math::pow(STORM_FORWARD_(x), y);
+        },
+        STORM_FORWARD_(x_mat));
   }
 
-  constexpr auto pow(auto x, viewable_matrix auto&& y_mat) noexcept {
-    return map([x](auto&& y) { return math::pow(x, STORM_FORWARD_(y)); },
-               STORM_FORWARD_(y_mat));
+  // clang-format off
+  template<class Scalar>
+    requires (!matrix<Scalar>)
+  constexpr auto pow(Scalar x, viewable_matrix auto&& y_mat) noexcept {
+    // clang-format on
+    return map( //
+        [x = std::move(x)](auto&& y) {
+          return math::pow(x, STORM_FORWARD_(y));
+        },
+        STORM_FORWARD_(y_mat));
   }
 
   /// @brief Component-wise @c atan2 of the matriсes @p x_mat and @p y_mat.

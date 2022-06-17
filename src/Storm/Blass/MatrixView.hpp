@@ -509,8 +509,9 @@ SubmatrixView(Matrix&&, RowIndices, ColIndices)
     -> SubmatrixView<forward_as_matrix_view_t<Matrix>, RowIndices, ColIndices>;
 
 /// @brief Select the matrix @p mat rows with @p row_indices view.
-constexpr auto select_rows(viewable_matrix auto&& mat,
-                           std::integral auto... row_indices) noexcept {
+constexpr auto
+select_rows(viewable_matrix auto&& mat,
+            std::convertible_to<size_t> auto... row_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
                 "Row indices are out of range.");
   return SubmatrixView(
@@ -520,8 +521,9 @@ constexpr auto select_rows(viewable_matrix auto&& mat,
 }
 
 /// @brief Select the matrix @p mat columns with @p col_index view.
-constexpr auto select_cols(viewable_matrix auto&& mat,
-                           std::integral auto... col_indices) noexcept {
+constexpr auto
+select_cols(viewable_matrix auto&& mat,
+            std::convertible_to<size_t> auto... col_indices) noexcept {
   STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
                 "Columns indices are out of range.");
   return SubmatrixView(
@@ -918,11 +920,11 @@ public:
   /// @{
   constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return mat_(col_index, row_index);
+    return mat_[col_index, row_index];
   }
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return mat_(col_index, row_index);
+    return mat_[col_index, row_index];
   }
   /// @}
 

@@ -27,6 +27,7 @@
 
 #include <array>
 #include <concepts>
+#include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -126,11 +127,16 @@ std::movable<MatrixView>*/
     ;
 
 /// @brief Matrix that can be safely casted into a matrix view.
+// clang-format off
 template<class Matrix>
-concept viewable_matrix = matrix<Matrix> &&
-    matrix_view<std::remove_cvref_t<Matrix>> ||
+concept viewable_matrix =
+    matrix<Matrix> &&
+    (matrix_view<std::remove_cvref_t<Matrix>> &&
+         std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
     (!matrix_view<std::remove_cvref_t<Matrix>> &&
-     std::is_lvalue_reference_v<Matrix>);
+     (std::is_lvalue_reference_v<Matrix> ||
+      std::movable<std::remove_reference_t<Matrix>>) );
+// clang-format on
 
 /// @name Matrix views.
 /// @{
@@ -193,9 +199,25 @@ private:
 
 public:
 
-  // clang-format off
-  MatrixOwningView() requires std::default_initializable<Matrix> = default;
-  // clang-format on
+  /// @brief Construct an owning view.
+  constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
+
+  /// @copydoc BaseMatrixView::shape
+  constexpr auto shape() const noexcept {
+    return Storm::shape(mat_);
+  }
+
+  /// @copydoc BaseMatrixView::operator[]
+  /// @{
+  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+      -> decltype(auto) {
+    return mat_[row_index, col_index];
+  }
+  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+      -> decltype(auto) {
+    return mat_[row_index, col_index];
+  }
+  /// @}
 
 }; // class MatrixOwningView
 
@@ -205,13 +227,13 @@ MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 // clang-format off
 template<class Matrix>
 concept matrix_ref_viewable_ = 
-    requires(Matrix&& mat) { MatrixRefView{std::forward<Matrix>(mat)}; };
+    requires { MatrixRefView{std::declval<Matrix>()}; };
 // clang-format on
 
 // clang-format off
 template<class Matrix>
 concept matrix_ownable_ = 
-    requires(Matrix&& mat) { MatrixOwningView{std::forward<Matrix>(mat)}; };
+    requires { MatrixOwningView{std::declval<Matrix>()}; };
 // clang-format on
 
 /// @brief Forward the viewable matrix as a matrix view.
@@ -491,7 +513,7 @@ constexpr auto select_rows(viewable_matrix auto&& mat,
   STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
                 "Row indices are out of range.");
   return SubmatrixView(
-      std::forward<decltype(mat)>(mat),
+      STORM_FORWARD_(mat),
       SelectedIndices(std::array{static_cast<size_t>(row_indices)...}),
       AllIndices{});
 }
@@ -502,7 +524,7 @@ constexpr auto select_cols(viewable_matrix auto&& mat,
   STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
                 "Columns indices are out of range.");
   return SubmatrixView(
-      std::forward<decltype(mat)>(mat), //
+      STORM_FORWARD_(mat), //
       AllIndices{},
       SelectedIndices(std::array{static_cast<size_t>(col_indices)...}));
 }
@@ -518,15 +540,14 @@ constexpr auto slice_rows(viewable_matrix auto&& mat,
   STORM_ASSERT_(rows_from < rows_to &&
                 static_cast<size_t>(rows_to) <= mat.num_rows() &&
                 "Invalid row range.");
-  return SubmatrixView(std::forward<decltype(mat)>(mat),
+  return SubmatrixView(STORM_FORWARD_(mat),
                        SlicedIndices(rows_from, rows_to, row_stride),
                        AllIndices{});
 }
 template<size_t RowsFrom, size_t RowsTo, size_t RowStride = 1>
 constexpr auto slice_rows(viewable_matrix auto&& mat) {
-  return slice_rows(std::forward<decltype(mat)>(mat),
-                    size_t_constant<RowsFrom>{}, size_t_constant<RowsTo>{},
-                    size_t_constant<RowStride>{});
+  return slice_rows(STORM_FORWARD_(mat), size_t_constant<RowsFrom>{},
+                    size_t_constant<RowsTo>{}, size_t_constant<RowStride>{});
 }
 /// @}
 
@@ -541,15 +562,14 @@ constexpr auto slice_cols(viewable_matrix auto&& mat,
   STORM_ASSERT_(cols_from < cols_to &&
                 static_cast<size_t>(cols_to) <= mat.num_cols() &&
                 "Invalid column range.");
-  return SubmatrixView(std::forward<decltype(mat)>(mat), //
+  return SubmatrixView(STORM_FORWARD_(mat), //
                        AllIndices{},
                        SlicedIndices(cols_from, cols_to, col_stride));
 }
 template<size_t ColsFrom, size_t ColsTo, size_t ColStride = 1>
 constexpr auto slice_cols(viewable_matrix auto&& mat) {
-  return slice_cols(std::forward<decltype(mat)>(mat),
-                    size_t_constant<ColsFrom>{}, size_t_constant<ColsTo>{},
-                    size_t_constant<ColStride>{});
+  return slice_cols(STORM_FORWARD_(mat), size_t_constant<ColsFrom>{},
+                    size_t_constant<ColsTo>{}, size_t_constant<ColStride>{});
 }
 /// @}
 
@@ -618,112 +638,128 @@ constexpr auto map(auto func, //
                    viewable_matrix auto&&... mats) noexcept {
   STORM_ASSERT_(((shape(mat1) == shape(mats)) && ...) &&
                 "Shapes of the matrix arguments should be the same.");
-  return MapMatrixView(func, //
-                       std::forward<decltype(mat1)>(mat1),
-                       std::forward<decltype(mats)>(mats)...);
+  return MapMatrixView(func, STORM_FORWARD_(mat1), STORM_FORWARD_(mats)...);
 }
 
 /// @brief "+" the matrix @p mat.
 constexpr auto operator+(viewable_matrix auto&& mat) noexcept {
-  return map([](const auto& val) { return +val; }, mat);
+  return map([](auto&& m) { return +STORM_FORWARD_(m); }, STORM_FORWARD_(mat));
 }
 
 /// @brief Negate the matrix @p mat.
 constexpr auto operator-(viewable_matrix auto&& mat) noexcept {
-  return map([](const auto& val) { return -val; }, mat);
+  return map(std::negate<>{}, STORM_FORWARD_(mat));
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
 /// @todo `scal` should really be auto!
 constexpr auto operator*(real_t scal, viewable_matrix auto&& mat) noexcept {
-  return map([scal](const auto& val) { return scal * val; }, mat);
+  return map([scal](auto&& m) { return scal * STORM_FORWARD_(m); },
+             STORM_FORWARD_(mat));
 }
 constexpr auto operator*(viewable_matrix auto&& mat, real_t scal) noexcept {
-  return map([scal](const auto& val) { return val * scal; }, mat);
+  return map([scal](auto&& m) { return STORM_FORWARD_(m) * scal; },
+             STORM_FORWARD_(mat));
 }
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
 /// @todo `scal` should really be auto!
 constexpr auto operator/(viewable_matrix auto&& mat, real_t scal) noexcept {
-  return map([scal](const auto& val) { return val / scal; }, mat);
+  return map([scal](auto&& m) { return STORM_FORWARD_(m) / scal; },
+             STORM_FORWARD_(mat));
 }
 
 /// @brief Add the matrices @p mat1 and @p mat2.
 constexpr auto operator+(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map([](const auto& val1, const auto& val2) { return val1 + val2; },
-             mat1, mat2);
+  return map(std::plus<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Subtract the matrices @p mat1 and @p mat2.
 constexpr auto operator-(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map([](const auto& val1, const auto& val2) { return val1 - val2; },
-             mat1, mat2);
+  return map(std::minus<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
 constexpr auto operator*(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map([](const auto& val1, const auto& val2) { return val1 * val2; },
-             mat1, mat2);
+  return map(std::multiplies<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Component-wise divide the matrices @p mat1 and @p mat2.
 constexpr auto operator/(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map([](const auto& val1, const auto& val2) { return val1 / val2; },
-             mat1, mat2);
+  return map(std::divides<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
+// These are broken until we have all the correctly-forwarded functions.
 namespace math {
 
   /// @brief Component-wise @c abs of the matrix @p mat.
   constexpr auto abs(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::abs(val); }, mat);
+    return map([](auto&& m) { return math::abs(STORM_FORWARD_(m)); }, mat);
   }
 
   /// @name Power functions.
   /// @{
 
   constexpr auto pow(viewable_matrix auto&& x_mat, auto y) noexcept {
-    return map([y](const auto& x) { return math::pow(x, y); }, x_mat);
+    return map([y](auto&& x) { return math::pow(STORM_FORWARD_(x), y); },
+               STORM_FORWARD_(x_mat));
   }
 
   constexpr auto pow(auto x, viewable_matrix auto&& y_mat) noexcept {
-    return map([x](const auto& y) { return math::pow(x, y); }, y_mat);
+    return map([x](auto&& y) { return math::pow(x, STORM_FORWARD_(y)); },
+               STORM_FORWARD_(y_mat));
   }
 
+  /// @brief Component-wise @c atan2 of the matriсes @p x_mat and @p y_mat.
   constexpr auto pow(viewable_matrix auto&& x_mat,
                      viewable_matrix auto&& y_mat) noexcept {
-    return map([](const auto& x, const auto& y) { return math::pow(x, y); },
-               x_mat, y_mat);
+    return map(
+        [](auto&& x, auto&& y) {
+          return math::pow(STORM_FORWARD_(x), STORM_FORWARD_(y));
+        },
+        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
   }
 
   /// @brief Component-wise @c sqrt of the matrix @p mat.
   constexpr auto sqrt(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::sqrt(val); }, mat);
+    return map([](auto&& m) { return math::sqrt(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c cbrt of the matrix @p mat.
   constexpr auto cbrt(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::cbrt(val); }, mat);
+    return map([](auto&& m) { return math::cbrt(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
+  /// @brief Component-wise @c hypot of the matriсes
+  ///   @p x_mat and @p y_mat.
   constexpr auto hypot(viewable_matrix auto&& x_mat,
                        viewable_matrix auto&& y_mat) noexcept {
-    return map([](const auto& x, const auto& y) { return math::hypot(x, y); },
-               x_mat, y_mat);
+    return map(
+        [](auto&& x, auto&& y) {
+          return math::hypot(STORM_FORWARD_(x), STORM_FORWARD_(y));
+        },
+        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
   }
 
+  /// @brief Component-wise @c hypot of the matriсes
+  ///   @p x_mat, @p y_mat and @p y_mat.
   constexpr auto hypot(viewable_matrix auto&& x_mat,
                        viewable_matrix auto&& y_mat,
                        viewable_matrix auto&& z_mat) noexcept {
-    return map([](const auto& x, const auto& y, const auto& z) //
-               { return math::hypot(x, y, z); },
-               x_mat, y_mat, z_mat);
+    return map(
+        [](auto&& x, auto&& y, auto&& z) {
+          return math::hypot( //
+              STORM_FORWARD_(x), STORM_FORWARD_(y), STORM_FORWARD_(z));
+        },
+        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat), STORM_FORWARD_(z_mat));
   }
 
   /// @} // Power functions.
@@ -733,27 +769,32 @@ namespace math {
 
   /// @brief Component-wise @c exp of the matrix @p mat.
   constexpr auto exp(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::exp(val); }, mat);
+    return map([](auto&& m) { return math::exp(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c exp2 of the matrix @p mat.
   constexpr auto exp2(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::exp2(val); }, mat);
+    return map([](auto&& m) { return math::exp2(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c log of the matrix @p mat.
   constexpr auto log(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::log(val); }, mat);
+    return map([](auto&& m) { return math::log(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c log2 of the matrix @p mat.
   constexpr auto log2(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::log2(val); }, mat);
+    return map([](auto&& m) { return math::log2(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c log10 of the matrix @p mat.
   constexpr auto log10(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::log10(val); }, mat);
+    return map([](auto&& m) { return math::log10(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @} // Exponential functions.
@@ -763,39 +804,48 @@ namespace math {
 
   /// @brief Component-wise @c sin of the matrix @p mat.
   constexpr auto sin(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::sin(val); }, mat);
+    return map([](auto&& m) { return math::sin(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c cos of the matrix @p mat.
   constexpr auto cos(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::cos(val); }, mat);
+    return map([](auto&& m) { return math::cos(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c tan of the matrix @p mat.
   constexpr auto tan(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::tan(val); }, mat);
+    return map([](auto&& m) { return math::tan(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c asin of the matrix @p mat.
   constexpr auto asin(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::asin(val); }, mat);
+    return map([](auto&& m) { return math::asin(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c acos of the matrix @p mat.
   constexpr auto acos(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::acos(val); }, mat);
+    return map([](auto&& m) { return math::acos(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c atan of the matrix @p mat.
   constexpr auto atan(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::atan(val); }, mat);
+    return map([](auto&& m) { return math::atan(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c atan2 of the matriсes @p y_mat and @p x_mat.
   constexpr auto atan2(viewable_matrix auto&& y_mat,
                        viewable_matrix auto&& x_mat) noexcept {
-    return map([](const auto& y, const auto& x) { return math::atan2(y, x); },
-               y_mat, x_mat);
+    return map(
+        [](auto&& y, auto&& x) {
+          return math::atan2(STORM_FORWARD_(y), STORM_FORWARD_(x));
+        },
+        STORM_FORWARD_(y_mat), STORM_FORWARD_(x_mat));
   }
 
   /// @} // Trigonometric functions.
@@ -805,32 +855,38 @@ namespace math {
 
   /// @brief Component-wise @p sinh of the matrix @p mat.
   constexpr auto sinh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::sinh(val); }, mat);
+    return map([](auto&& m) { return math::sinh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c cosh of the matrix @p mat.
   constexpr auto cosh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::cosh(val); }, mat);
+    return map([](auto&& m) { return math::cosh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c tanh of the matrix @p mat.
   constexpr auto tanh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::tanh(val); }, mat);
+    return map([](auto&& m) { return math::tanh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c asinh of the matrix @p mat.
   constexpr auto asinh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::asinh(val); }, mat);
+    return map([](auto&& m) { return math::asinh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c acosh of the matrix @p mat.
   constexpr auto acosh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::acosh(val); }, mat);
+    return map([](auto&& m) { return math::acosh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @brief Component-wise @c atanh of the matrix @p mat.
   constexpr auto atanh(viewable_matrix auto&& mat) noexcept {
-    return map([](const auto& val) { return math::atanh(val); }, mat);
+    return map([](auto&& m) { return math::atanh(STORM_FORWARD_(m)); },
+               STORM_FORWARD_(mat));
   }
 
   /// @} // Hyperbolic functions.
@@ -877,7 +933,7 @@ MatrixTransposeView(Matrix&&)
 
 /// @brief Transpose the matrix @p mat.
 constexpr auto transpose(viewable_matrix auto&& mat) noexcept {
-  return MatrixTransposeView(std::forward<decltype(mat)>(mat));
+  return MatrixTransposeView(STORM_FORWARD_(mat));
 }
 
 /// ----------------------------------------------------------------- ///
@@ -926,8 +982,7 @@ constexpr auto matmul(viewable_matrix auto&& mat1,
   STORM_ASSERT_(mat1.num_cols() == mat2.num_rows() &&
                 "The first matrix should have the same number of columns "
                 "as the second matrix has rows.");
-  return MatrixProductView(std::forward<decltype(mat1)>(mat1),
-                           std::forward<decltype(mat2)>(mat2));
+  return MatrixProductView(STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @} // Functional views.

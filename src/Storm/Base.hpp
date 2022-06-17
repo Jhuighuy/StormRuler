@@ -31,9 +31,9 @@
 
 #include <complex>
 #include <concepts>
-#include <source_location>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 #include <StormRuler_API.h>
 
@@ -60,6 +60,8 @@
       std::abort();                                                    \
     }                                                                  \
   } while (false)
+
+#define STORM_FORWARD_(x) std::forward<decltype(x)>(x)
 
 #ifdef NDEBUG
 #define STORM_ASSERT_(x) STORM_ASSUME_(x)

@@ -96,14 +96,22 @@ using ptrdiff_t = std::ptrdiff_t;
 using real_t = double;
 
 namespace Detail_ {
+
   template<class>
   constexpr inline bool always_false{false};
-} // namespace Detail_
 
-namespace Detail_ {
   template<class T1, class T2>
   concept different_from_ =
       !std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+
+  template<class T>
+  using with_ref_ = T&;
+
+  // clang-format off
+  template<class T>
+  concept can_reference_ = requires { typename with_ref_<T>; };
+  // clang-format on
+
 } // namespace Detail_
 
 /// @brief @c size_t compile-time constant.

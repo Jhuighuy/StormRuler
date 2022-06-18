@@ -269,7 +269,9 @@ using forward_as_matrix_view_t =
 /// ----------------------------------------------------------------- ///
 // clang-format off
 template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
-  requires std::is_object_v<Shape> && std::is_object_v<Func>
+  requires std::is_object_v<Shape> && 
+           std::is_object_v<Func> &&
+           Detail_::can_reference_<std::invoke_result_t<Func, size_t, size_t>>
 class GenerateMatrixView :
   public BaseMatrixView<GenerateMatrixView<Shape, Func>> {
   // clang-format on
@@ -597,7 +599,9 @@ constexpr auto upper_triangle(viewable_matrix auto&& mat) noexcept;
 // clang-format off
 template<std::copy_constructible Func, matrix... Matrices>
   requires std::is_object_v<Func> &&
-           std::regular_invocable<Func, matrix_reference_t<Matrices>...>
+           std::regular_invocable<Func, matrix_reference_t<Matrices>...> &&
+           Detail_::can_reference_<
+              std::invoke_result_t<Func, matrix_reference_t<Matrices>...>>
 class MapMatrixView :
     public BaseMatrixView<MapMatrixView<Func, Matrices...>> {
   // clang-format on
@@ -983,7 +987,7 @@ public:
 
   /// @copydoc BaseMatrixView::shape
   constexpr auto shape() const noexcept {
-    return std::pair(mat1_.num_rows(), mat2_.num_cols());
+    return std::pair(num_rows(mat1_), num_cols(mat2_));
   }
 
   /// @copydoc BaseMatrixView::operator[]

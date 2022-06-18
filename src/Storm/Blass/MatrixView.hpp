@@ -41,6 +41,49 @@
 
 namespace Storm {
 
+// clang-format off
+template<class Derived>
+  requires std::is_class_v<Derived> &&
+           std::same_as<Derived, std::remove_cv_t<Derived>>
+class MatrixViewInterface;
+// clang-format on
+
+namespace Detail_ {
+  // clang-format off
+  template<class T, class U>
+    requires (!std::same_as<T, MatrixViewInterface<U>>)
+  void is_derived_from_matrix_view_interface_func_(
+      const T&, const MatrixViewInterface<U>&); // not defined
+  template<class T>
+  concept is_derived_from_matrix_view_interface_ =
+      requires(T x) { is_derived_from_matrix_view_interface_func_(x, x); };
+  // clang-format on
+} // namespace Detail_
+
+/// @brief Types, enabled to be a matrix view.
+template<class T>
+inline constexpr bool enable_matrix_view_v{
+    Detail_::is_derived_from_matrix_view_interface_<T>};
+
+/// @brief Matrix view concept.
+/// @todo In order to add the `movable` constraint, we
+///   need to box the functor inside the `MapMatrixView`.
+template<class MatrixView>
+concept matrix_view =     //
+    matrix<MatrixView> && // std::movable<MatrixView> &&
+    enable_matrix_view_v<MatrixView>;
+
+/// @brief Matrix that can be safely casted into a matrix view.
+// clang-format off
+template<class Matrix>
+concept viewable_matrix = matrix<Matrix> &&
+    ((matrix_view<std::remove_cvref_t<Matrix>> &&
+      std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
+     (!matrix_view<std::remove_cvref_t<Matrix>> &&
+      (std::is_lvalue_reference_v<Matrix> ||
+       std::movable<std::remove_reference_t<Matrix>>)));
+// clang-format on
+
 /// ----------------------------------------------------------------- ///
 /// @brief Base class for all matrix views.
 /// ----------------------------------------------------------------- ///
@@ -48,14 +91,18 @@ namespace Storm {
 template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
-class BaseMatrixView {
+class MatrixViewInterface {
   // clang-format on
 private:
 
   auto& self_() noexcept {
+    static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
+    static_assert(matrix_view<Derived>);
     return static_cast<Derived&>(*this);
   }
   const auto& self_() const noexcept {
+    static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
+    static_assert(matrix_view<Derived>);
     return static_cast<const Derived&>(*this);
   }
 
@@ -103,37 +150,7 @@ public:
   }
   /// @}
 
-}; // class BaseMatrixView
-
-/// @brief Types, enabled to be a matrix view.
-/// @{
-template<class T>
-inline constexpr bool enable_matrix_view_v{false};
-// clang-format off
-template<class T>
-  requires std::derived_from<T, BaseMatrixView<T>>
-inline constexpr bool enable_matrix_view_v<T>{true};
-// clang-format on
-/// @}
-
-/// @brief Matrix view concept.
-/// @todo In order to add the `movable` constraint, we
-///   need to box the functor inside the `MapMatrixView`.
-template<class MatrixView>
-concept matrix_view =     //
-    matrix<MatrixView> && // std::movable<MatrixView> &&
-    enable_matrix_view_v<MatrixView>;
-
-/// @brief Matrix that can be safely casted into a matrix view.
-// clang-format off
-template<class Matrix>
-concept viewable_matrix = matrix<Matrix> &&
-    ((matrix_view<std::remove_cvref_t<Matrix>> &&
-      std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
-     (!matrix_view<std::remove_cvref_t<Matrix>> &&
-      (std::is_lvalue_reference_v<Matrix> ||
-       std::movable<std::remove_reference_t<Matrix>>)));
-// clang-format on
+}; // class MatrixViewInterface
 
 /// @name Matrix views.
 /// @{
@@ -147,7 +164,7 @@ concept viewable_matrix = matrix<Matrix> &&
 /// @brief Matrix reference view.
 /// ----------------------------------------------------------------- ///
 template<matrix Matrix>
-class MatrixRefView : public BaseMatrixView<MatrixRefView<Matrix>> {
+class MatrixRefView : public MatrixViewInterface<MatrixRefView<Matrix>> {
 private:
 
   Matrix* mat_;
@@ -166,12 +183,12 @@ public:
       : mat_{std::addressof(static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
   // clang-format on
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return Storm::shape(*mat_);
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   /// @{
   constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -191,7 +208,7 @@ public:
 // clang-format off
 template<matrix Matrix>
   requires std::movable<Matrix>
-class MatrixOwningView : public BaseMatrixView<MatrixOwningView<Matrix>> {
+class MatrixOwningView : public MatrixViewInterface<MatrixOwningView<Matrix>> {
   // clang-format on
 private:
 
@@ -202,12 +219,12 @@ public:
   /// @brief Construct an owning view.
   constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return Storm::shape(mat_);
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   /// @{
   constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -273,7 +290,7 @@ template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
            std::is_object_v<Func> &&
            Detail_::can_reference_<std::invoke_result_t<Func, size_t, size_t>>
 class GenerateMatrixView :
-  public BaseMatrixView<GenerateMatrixView<Shape, Func>> {
+  public MatrixViewInterface<GenerateMatrixView<Shape, Func>> {
   // clang-format on
 private:
 
@@ -286,12 +303,12 @@ public:
   constexpr GenerateMatrixView(Shape shape, Func func) noexcept
       : shape_{shape}, func_{std::move(func)} {}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return shape_;
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(row_index < this->num_rows() &&
                   col_index < this->num_cols() && "Indices are out of range.");
@@ -442,7 +459,7 @@ public:
 template<matrix Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
-    public BaseMatrixView<SubmatrixView<Matrix, RowIndices, ColIndices>> {
+    public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
   // clang-format on
 private:
 
@@ -460,7 +477,7 @@ public:
         row_indices_{std::move(row_indices)}, //
         col_indices_{std::move(col_indices)} {}
 
-  /// @copydoc BaseMatrixView::num_rows
+  /// @copydoc MatrixViewInterface::num_rows
   /// @{
   // clang-format off
   constexpr auto num_rows() const noexcept 
@@ -473,7 +490,7 @@ public:
   }
   /// @}
 
-  /// @copydoc BaseMatrixView::num_cols
+  /// @copydoc MatrixViewInterface::num_cols
   /// @{
   // clang-format off
   constexpr auto num_cols() const noexcept 
@@ -486,12 +503,12 @@ public:
   }
   /// @}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_rows(), num_cols());
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   /// @{
   constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -603,7 +620,7 @@ template<std::copy_constructible Func, matrix... Matrices>
            Detail_::can_reference_<
               std::invoke_result_t<Func, matrix_reference_t<Matrices>...>>
 class MapMatrixView :
-    public BaseMatrixView<MapMatrixView<Func, Matrices...>> {
+    public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
   // clang-format on
 private:
 
@@ -616,12 +633,12 @@ public:
   constexpr MapMatrixView(Func func, Matrices... mats) noexcept
       : func_{std::move(func)}, mats_{std::move(mats)...} {}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return Storm::shape(std::get<0>(mats_));
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return std::apply(
@@ -929,7 +946,8 @@ namespace math {
 /// @brief Matrix transpose view.
 /// ----------------------------------------------------------------- ///
 template<matrix Matrix>
-class MatrixTransposeView : public BaseMatrixView<MatrixTransposeView<Matrix>> {
+class MatrixTransposeView :
+    public MatrixViewInterface<MatrixTransposeView<Matrix>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -940,12 +958,12 @@ public:
   constexpr explicit MatrixTransposeView(Matrix mat) noexcept
       : mat_{std::move(mat)} {}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_cols(mat_), num_rows(mat_));
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   /// @{
   constexpr auto operator[](size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -973,7 +991,7 @@ constexpr auto transpose(viewable_matrix auto&& mat) noexcept {
 /// ----------------------------------------------------------------- ///
 template<matrix Matrix1, matrix Matrix2>
 class MatrixProductView :
-    public BaseMatrixView<MatrixProductView<Matrix1, Matrix2>> {
+    public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
@@ -985,12 +1003,12 @@ public:
   constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2) noexcept
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {}
 
-  /// @copydoc BaseMatrixView::shape
+  /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_rows(mat1_), num_cols(mat2_));
   }
 
-  /// @copydoc BaseMatrixView::operator[]
+  /// @copydoc MatrixViewInterface::operator[]
   constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{num_cols(mat1_)};

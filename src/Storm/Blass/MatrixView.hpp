@@ -343,11 +343,11 @@ template<class Value, class Tag = void>
 constexpr auto make_diagonal_matrix( //
     std::convertible_to<size_t> auto num_rows,
     std::convertible_to<size_t> auto num_cols, Value scal) {
-  return GenerateMatrixView(std::pair(num_rows, num_cols),
-                            [scal](size_t row_index, size_t col_index) {
-                              constexpr Value zero{};
-                              return row_index == col_index ? scal : zero;
-                            });
+  return GenerateMatrixView( //
+      std::pair(num_rows, num_cols),
+      [scal](size_t row_index, size_t col_index) {
+        return row_index == col_index ? scal : Value{};
+      });
 }
 template<size_t NumRows, size_t NumCols, class Value>
 constexpr auto make_diagonal_matrix(Value scal) {
@@ -671,7 +671,7 @@ constexpr auto operator+(viewable_matrix auto&& mat) noexcept {
 
 /// @brief Negate the matrix @p mat.
 constexpr auto operator-(viewable_matrix auto&& mat) noexcept {
-  return map(std::negate<>{}, STORM_FORWARD_(mat));
+  return map(std::negate{}, STORM_FORWARD_(mat));
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
@@ -710,25 +710,25 @@ constexpr auto operator/(viewable_matrix auto&& mat, Scalar scal) noexcept {
 /// @brief Add the matrices @p mat1 and @p mat2.
 constexpr auto operator+(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map(std::plus<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+  return map(std::plus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Subtract the matrices @p mat1 and @p mat2.
 constexpr auto operator-(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map(std::minus<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+  return map(std::minus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
 constexpr auto operator*(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map(std::multiplies<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+  return map(std::multiplies{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 /// @brief Component-wise divide the matrices @p mat1 and @p mat2.
 constexpr auto operator/(viewable_matrix auto&& mat1,
                          viewable_matrix auto&& mat2) noexcept {
-  return map(std::divides<>{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+  return map(std::divides{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
 }
 
 namespace math {

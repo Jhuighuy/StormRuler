@@ -95,7 +95,7 @@ public:
   constexpr auto& operator=(const Value& v) noexcept {
     for (size_t ix = 0; ix < SizeX; ++ix) {
       for (size_t iy = 0; iy < SizeY; ++iy) {
-        (*this)[ix, iy] = v;
+        (*this)(ix, iy) = v;
       }
     }
     return *this;
@@ -104,7 +104,7 @@ public:
   constexpr auto& operator=(matrix auto&& other) noexcept {
     for (size_t ix = 0; ix < SizeX; ++ix) {
       for (size_t iy = 0; iy < SizeY; ++iy) {
-        (*this)[ix, iy] = other[ix, iy];
+        (*this)(ix, iy) = other(ix, iy);
       }
     }
     return *this;
@@ -119,11 +119,11 @@ public:
 
   /// @brief Get reference to the component at the index.
   /// @{
-  constexpr Value& operator[](size_t ix, size_t iy) noexcept {
+  constexpr Value& operator()(size_t ix, size_t iy) noexcept {
     STORM_ASSERT_(ix < SizeX && iy < SizeY);
     return (Coeffs_[ix])[iy];
   }
-  constexpr const Value& operator[](size_t ix, size_t iy) const noexcept {
+  constexpr const Value& operator()(size_t ix, size_t iy) const noexcept {
     STORM_ASSERT_(ix < SizeX && iy < SizeY);
     return (Coeffs_[ix])[iy];
   }
@@ -136,7 +136,7 @@ constexpr auto& eval(auto func, Mat<Value, SizeX, SizeY>& mat_lhs,
                      matrix auto&&... mats_rhs) noexcept {
   for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
     for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
-      func(mat_lhs[row_index, col_index], mats_rhs[row_index, col_index]...);
+      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
     }
   }
   return mat_lhs;
@@ -148,7 +148,7 @@ constexpr real_t dot_product(Mat<Value, SizeX, SizeY> m1,
   Value d{};
   for (size_t ix = 0; ix < SizeX; ++ix) {
     for (size_t iy = 0; iy < SizeY; ++iy) {
-      d += m1[ix, iy] * m2[ix, iy];
+      d += m1(ix, iy) * m2(ix, iy);
     }
   }
   return d;

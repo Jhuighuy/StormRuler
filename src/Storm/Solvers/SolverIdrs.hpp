@@ -192,9 +192,9 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   /// @todo:
   /// slice(gamma_, {k, s}) =
   ///    solve(slice(mu_, {k, s}, {k, s}), slice(phi_, {k, s}));
-  for (size_t i = k; i < s; ++i) {
+  for (size_t i{k}; i < s; ++i) {
     gamma_(i) = phi_(i);
-    for (size_t j = k; j < i; ++j) {
+    for (size_t j{k}; j < i; ++j) {
       gamma_(i) -= mu_(i, j) * gamma_(j);
     }
     gamma_(i) /= mu_(i, i);

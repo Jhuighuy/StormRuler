@@ -92,7 +92,7 @@ constexpr auto& fill_with(matrix auto&& mat, auto scal) noexcept {
 constexpr auto& fill_randomly(matrix auto&& mat) noexcept {
   for (size_t row_index{0}; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index{0}; col_index < num_cols(mat); ++col_index) {
-      mat[row_index, col_index] = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
+      mat(row_index, col_index) = 2.0 * (real_t(rand()) / RAND_MAX) - 1.0;
     }
   }
   return mat;

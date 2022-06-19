@@ -30,6 +30,7 @@
 #include <type_traits>
 
 #include <omp.h>
+#include <ranges>
 
 #include <Storm/Base.hpp>
 
@@ -88,24 +89,59 @@ constexpr auto num_cols(auto&& x) noexcept {
   return std::get<1>(shape(x));
 }
 
+namespace Detail_ {
+  // clang-format off
+  template<class T>
+  concept has_data_ = 
+      requires(T& x) { 
+        x.data(); 
+        requires std::derived_from<
+            std::is_pointer<
+                decltype(std::declval<T>().data())>, std::true_type>;
+      };
+  // clang-format on
+} // namespace Detail_
+
+/// @brief Get the object data.
+constexpr auto data(Detail_::has_data_ auto&& x) noexcept {
+  return x.data();
+}
+
 /// @brief Matrix: has shape and two subscripts.
 // clang-format off
 template<class Matrix>
 concept matrix = 
     requires(Matrix& mat) { { shape(mat) } -> matrix_shape; } &&
     requires(Matrix& mat, size_t row_index, size_t col_index) {
-      mat[row_index, col_index];
+      mat(row_index, col_index);
     };
 // clang-format on
 
 template<matrix Matrix>
-using matrix_reference_t =
-    decltype(std::declval<Matrix>()[std::declval<size_t>(),
-                                    std::declval<size_t>()]);
+using matrix_reference_t = decltype( //
+    std::declval<Matrix>()(std::declval<size_t>(), std::declval<size_t>()));
+
+/// @brief Contiguous matrix: has pointer to data.
+// clang-format off
+template<class Matrix>
+concept contiguous_matrix =
+    matrix<Matrix> && requires(Matrix& mat) {
+      { data(mat) } -> 
+          std::same_as<std::add_pointer_t<matrix_reference_t<Matrix>>>;
+    };
+// clang-format on
+
+template<class Matrix>
+constexpr inline bool enable_flattenable_matrix_v{false};
+
+template<class Matrix>
+concept flattenable_matrix =
+    contiguous_matrix<Matrix> || enable_flattenable_matrix_v<Matrix>;
 
 constexpr auto& eval(auto func, matrix auto&& mat_lhs,
                      matrix auto&&... mats_rhs) noexcept {
 #if 0
+#elif 0
 
   // When an expression is vectorizable?
   // 1. All the subexpressions are contiguous.
@@ -140,7 +176,7 @@ constexpr auto& eval(auto func, matrix auto&& mat_lhs,
 #pragma omp parallel for schedule(static)
   for (size_t row_index = 0; row_index < num_rows(mat_lhs); ++row_index) {
     for (size_t col_index{0}; col_index < num_cols(mat_lhs); ++col_index) {
-      func(mat_lhs[row_index, col_index], mats_rhs[row_index, col_index]...);
+      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
     }
   }
 
@@ -163,7 +199,7 @@ constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
   for (size_t row_index = 0; row_index < num_rows(mat1); ++row_index) {
     for (size_t col_index{0}; col_index < num_cols(mat1); ++col_index) {
       partial[omp_get_thread_num()] +=
-          dot_product(mat1[row_index, col_index], mat2[row_index, col_index]);
+          dot_product(mat1(row_index, col_index), mat2(row_index, col_index));
     }
   }
   real_t d{0.0};

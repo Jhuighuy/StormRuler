@@ -130,23 +130,23 @@ public:
 
   /// @brief Get the vector coefficient at @p row_index.
   /// @{
-  constexpr auto operator[](size_t row_index) noexcept -> decltype(auto) {
-    return self_()[row_index, 0];
+  constexpr auto operator()(size_t row_index) noexcept -> decltype(auto) {
+    return self_()(row_index, 0);
   }
-  constexpr auto operator[](size_t row_index) const noexcept -> decltype(auto) {
-    return self_()[row_index, 0];
+  constexpr auto operator()(size_t row_index) const noexcept -> decltype(auto) {
+    return self_()(row_index, 0);
   }
   /// @}
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return self_()[row_index, col_index];
+    return self_()(row_index, col_index);
   }
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return self_()[row_index, col_index];
+    return self_()(row_index, col_index);
   }
   /// @}
 
@@ -169,8 +169,8 @@ private:
 
   Matrix* mat_;
 
-  static void fun_(Matrix&); // not defined
-  static void fun_(Matrix&&) = delete;
+  static void funс_(Matrix&); // not defined
+  static void funс_(Matrix&&) = delete;
 
 public:
 
@@ -178,7 +178,7 @@ public:
   // clang-format off
   template<Detail_::different_from_<MatrixRefView> OtherMatrix>
     requires std::convertible_to<OtherMatrix, Matrix&> &&
-             requires { fun_(std::declval<OtherMatrix>()); }
+             requires { funс_(std::declval<OtherMatrix>()); }
   constexpr MatrixRefView(OtherMatrix&& mat) noexcept 
       : mat_{std::addressof(static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
   // clang-format on
@@ -188,15 +188,15 @@ public:
     return Storm::shape(*mat_);
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
+  /// @copydoc MatrixViewInterface::operator()
   /// @{
-  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return (*mat_)[row_index, col_index];
+    return (*mat_)(row_index, col_index);
   }
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return std::as_const(*mat_)[row_index, col_index];
+    return std::as_const(*mat_)(row_index, col_index);
   }
   /// @}
 
@@ -224,15 +224,15 @@ public:
     return Storm::shape(mat_);
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
+  /// @copydoc MatrixViewInterface::operator()
   /// @{
-  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return mat_[row_index, col_index];
+    return mat_(row_index, col_index);
   }
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return mat_[row_index, col_index];
+    return mat_(row_index, col_index);
   }
   /// @}
 
@@ -308,8 +308,8 @@ public:
     return shape_;
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept {
+  /// @copydoc MatrixViewInterface::operator()
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(row_index < this->num_rows() &&
                   col_index < this->num_cols() && "Indices are out of range.");
     return func_(row_index, col_index);
@@ -508,15 +508,15 @@ public:
     return std::pair(num_rows(), num_cols());
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
+  /// @copydoc MatrixViewInterface::operator()
   /// @{
-  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return mat_[row_indices_[row_index], col_indices_[col_index]];
+    return mat_(row_indices_[row_index], col_indices_[col_index]);
   }
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return mat_[row_indices_[row_index], col_indices_[col_index]];
+    return mat_(row_indices_[row_index], col_indices_[col_index]);
   }
   /// @}
 
@@ -638,12 +638,12 @@ public:
     return Storm::shape(std::get<0>(mats_));
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  /// @copydoc MatrixViewInterface::operator()
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return std::apply(
         [&](const auto&... mats) {
-          return func_(mats[row_index, col_index]...);
+          return func_(mats(row_index, col_index)...);
         },
         mats_);
   }
@@ -963,13 +963,13 @@ public:
     return std::pair(num_cols(mat_), num_rows(mat_));
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
+  /// @copydoc MatrixViewInterface::operator()
   /// @{
-  constexpr auto operator[](size_t row_index, size_t col_index) noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
     return mat_[col_index, row_index];
   }
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     return mat_[col_index, row_index];
   }
@@ -1008,8 +1008,8 @@ public:
     return std::pair(num_rows(mat1_), num_cols(mat2_));
   }
 
-  /// @copydoc MatrixViewInterface::operator[]
-  constexpr auto operator[](size_t row_index, size_t col_index) const noexcept
+  /// @copydoc MatrixViewInterface::operator()
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{num_cols(mat1_)};
     auto val{mat1_[row_index, 0] * mat2_[0, col_index]};

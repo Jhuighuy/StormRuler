@@ -89,8 +89,6 @@ void stormNonlinSolve2(const SolverType& method, //
 } // stormNonLinSolve2
 
 static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0, Sigma = 10.0;
-// using MY_VEC_2 = glm::dvec2;
-using MY_VEC_2 = Vec2D<real_t>;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -123,7 +121,7 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
 
 static void CahnHilliard_Step(stormMesh_t mesh, //
                               const StormArray<real_t>& c,
-                              const StormArray<MY_VEC_2>& v, //
+                              const StormArray<Vec2D<real_t>>& v, //
                               StormArray<real_t>& c_hat,
                               StormArray<real_t>& w_hat) {
   SetBCs_c(mesh, c, c);
@@ -140,7 +138,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
   c_hat <<= c;
   stormLinSolve2(
-      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
       c_hat, c,
       [&](StormArray<real_t>& c_hat, const StormArray<real_t>& c_in) {
         // w_hat <<= f + 2.0 * sigma * (c_in - c) - Gamma * DIVGRAD(c_in);
@@ -170,11 +168,11 @@ static double rho_1 = 1.0, rho_2 = 50.0;
 
 static void NavierStokes_Step(stormMesh_t mesh, //
                               const StormArray<real_t>& p,
-                              const StormArray<MY_VEC_2>& v, //
+                              const StormArray<Vec2D<real_t>>& v, //
                               const StormArray<real_t>& c,
                               const StormArray<real_t>& w,
                               StormArray<real_t>& p_hat,
-                              StormArray<MY_VEC_2>& v_hat,
+                              StormArray<Vec2D<real_t>>& v_hat,
                               StormArray<real_t>& rho) {
   StormArray<real_t> mu, rho_inv;
   mu.assign(rho, false);
@@ -185,13 +183,13 @@ static void NavierStokes_Step(stormMesh_t mesh, //
   rho_inv <<= map([](real_t rho) { return 1.0 / rho; }, rho);
 
   {
-    StormArray<MY_VEC_2> rhs;
+    StormArray<Vec2D<real_t>> rhs;
     rhs.assign(v, false);
 
     // rhs <<= v + (tau * Sigma / math::sqrt(Gamma)) * rho_inv * c * GRAD(w);
     SetBCs_w(mesh, w);
     SetBCs_v(mesh, v);
-    fill_with(rhs, MY_VEC_2{0.0, 0.0});
+    fill_with(rhs, Vec2D<real_t>{0.0, 0.0});
     stormGradient(mesh, rhs, tau, w);
     rhs *= (Sigma / std::sqrt(Gamma)) * c * rho_inv;
     rhs += v;
@@ -199,15 +197,16 @@ static void NavierStokes_Step(stormMesh_t mesh, //
     v_hat <<= v;
     stormNonlinSolve2( //
         Storm::SolverType::Jfnk, v_hat, v,
-        [&](StormArray<MY_VEC_2>& v_hat, const StormArray<MY_VEC_2>& v) {
-          StormArray<MY_VEC_2> tmp;
+        [&](StormArray<Vec2D<real_t>>& v_hat,
+            const StormArray<Vec2D<real_t>>& v) {
+          StormArray<Vec2D<real_t>> tmp;
           tmp.assign(v, false);
 
           // v_hat <<= v - CONV(v, v) + tau * mu * rho_inv * DIVGRAD(v);
           v_hat <<= v;
           SetBCs_v(mesh, v);
           stormConvection(mesh, v_hat, -tau, v, v);
-          fill_with(tmp, MY_VEC_2{0.0, 0.0});
+          fill_with(tmp, Vec2D<real_t>{0.0, 0.0});
           stormDivGrad(mesh, tmp, tau, v);
           tmp *= mu * rho_inv;
           v_hat -= tmp;
@@ -237,11 +236,11 @@ static void NavierStokes_Step(stormMesh_t mesh, //
   }
 
   {
-    StormArray<MY_VEC_2> tmp;
+    StormArray<Vec2D<real_t>> tmp;
     tmp.assign(v, false);
 
     // v_hat -= tau * rho_inv * GRAD(p_hat)
-    fill_with(tmp, MY_VEC_2{0.0, 0.0});
+    fill_with(tmp, Vec2D<real_t>{0.0, 0.0});
     SetBCs_p(mesh, p_hat);
     stormGradient(mesh, tmp, tau, p_hat);
     v_hat += rho_inv * tmp;
@@ -264,8 +263,8 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 int main(int argc, char** argv) {
-  srand(23543253);
-#if 1
+  srand(0);
+#if 0
   {
     using namespace Storm;
     DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},
@@ -321,12 +320,12 @@ int main(int argc, char** argv) {
   StormArray<real_t> w_hat(mesh, SR_Alloc(mesh, 1, 0));
   StormArray<real_t> p(mesh, SR_Alloc(mesh, 1, 0)),
       p_hat(mesh, SR_Alloc(mesh, 1, 0));
-  StormArray<MY_VEC_2> v(mesh, SR_Alloc(mesh, 1, 1)),
+  StormArray<Vec2D<real_t>> v(mesh, SR_Alloc(mesh, 1, 1)),
       v_hat(mesh, SR_Alloc(mesh, 1, 1));
   StormArray<real_t> rho(mesh, SR_Alloc(mesh, 1, 0));
 
   stormSpFuncProd(mesh, c, c, Initial_Data, STORM_NULL);
-  fill_with(v, MY_VEC_2{0.0, 0.0});
+  fill_with(v, Vec2D<real_t>{0.0, 0.0});
   fill_with(p, 0.0);
 
   double total_time = 0.0;

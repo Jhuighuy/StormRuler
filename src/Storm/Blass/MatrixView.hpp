@@ -286,8 +286,7 @@ using forward_as_matrix_view_t =
 /// ----------------------------------------------------------------- ///
 // clang-format off
 template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
-  requires std::is_object_v<Shape> && 
-           std::is_object_v<Func> &&
+  requires std::is_object_v<Shape> && std::is_object_v<Func> &&
            Detail_::can_reference_<std::invoke_result_t<Func, size_t, size_t>>
 class GenerateMatrixView :
   public MatrixViewInterface<GenerateMatrixView<Shape, Func>> {

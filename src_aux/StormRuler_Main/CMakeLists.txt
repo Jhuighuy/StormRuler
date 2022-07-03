@@ -45,10 +45,10 @@ file(GLOB CXX_SOURCES "./*.c*")
 
 add_executable(StormRuler_Main ${CXX_SOURCES})
 
-# Require C++23.
+# Require C++20.
 set_target_properties(
   StormRuler_Main PROPERTIES 
-  CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)
+  CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
 
 # Link with the main library.
 target_link_libraries(StormRuler_Main PUBLIC StormRuler)

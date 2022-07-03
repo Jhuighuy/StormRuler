@@ -967,11 +967,11 @@ public:
   /// @{
   constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
-    return mat_[col_index, row_index];
+    return mat_(col_index, row_index);
   }
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
-    return mat_[col_index, row_index];
+    return mat_(col_index, row_index);
   }
   /// @}
 
@@ -1012,9 +1012,9 @@ public:
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{num_cols(mat1_)};
-    auto val{mat1_[row_index, 0] * mat2_[0, col_index]};
+    auto val{mat1_(row_index, 0) * mat2_(0, col_index)};
     for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
-      val += mat1_[row_index, cross_index] * mat2_[cross_index, col_index];
+      val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
     }
     return val;
   }
@@ -1044,7 +1044,7 @@ std::ostream& operator<<(std::ostream& out, matrix auto&& mat) {
   for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
     out << "( ";
     for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
-      out << mat[row_index, col_index] << " ";
+      out << mat(row_index, col_index) << " ";
     }
     out << ")" << std::endl;
   }

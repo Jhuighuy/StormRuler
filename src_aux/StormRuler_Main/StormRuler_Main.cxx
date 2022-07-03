@@ -44,7 +44,7 @@
 #include <StormRuler_API.h>
 
 #include <Storm/Blass/Mat.hpp>
-#include <Storm/Blass/Matrix.hpp>
+//#include <Storm/Blass/Matrix.hpp>
 
 #include <Storm/Solvers/PreconditionerFactory.hpp>
 #include <Storm/Solvers/SolverFactory.hpp>
@@ -138,7 +138,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
   c_hat <<= c;
   stormLinSolve2(
-      Storm::SolverType::Idrs, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::BiCgStab, Storm::PreconditionerType::None /*"extr"*/,
       c_hat, c,
       [&](StormArray<real_t>& c_hat, const StormArray<real_t>& c_in) {
         // w_hat <<= f + 2.0 * sigma * (c_in - c) - Gamma * DIVGRAD(c_in);

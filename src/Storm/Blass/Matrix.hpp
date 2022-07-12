@@ -88,12 +88,12 @@ public:
 
   /// @brief Get the coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr auto& operator[](size_t row_index, size_t col_index) noexcept {
+  constexpr auto& operator()(size_t row_index, size_t col_index) noexcept {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Matrix index out range.");
     return coeffs_[row_index * num_cols_ + col_index];
   }
-  constexpr const auto& operator[](size_t row_index,
+  constexpr const auto& operator()(size_t row_index,
                                    size_t col_index) const noexcept {
     return const_cast<DenseMatrix&>(*this)[row_index, col_index];
   }

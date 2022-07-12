@@ -46,6 +46,7 @@
 #include <Storm/Blass/Mat.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
+#include <Storm/NVT/NVT.h>
 #include <Storm/Solvers/PreconditionerFactory.hpp>
 #include <Storm/Solvers/SolverFactory.hpp>
 
@@ -262,6 +263,32 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 
 } // Initial_Data
 
+void Init_For_NVT(NVT& NVT_obj) {
+  //Количество компонент
+  int n_comp = 2;
+  //Критическая температура
+  std::vector<double> T_crit{304.2, 617.6};
+  //Критическое давление
+  std::vector<double> P_crit{73.7646e5, 21.0756e5};
+  //Ацентрические факторы
+  std::vector<double> ac_factors{0.225, 0.49};
+  //Параметры парного взаимодействия
+  std::vector<std::vector<double>> k_ij{{0, 0.1141}, {0.1141, 0}};
+  //Количества компонент
+  std::vector<double> N_parts{2549.336, 159.335375};
+  //Объем
+  double V = 1.0;
+  //Температура
+  double T = 295.15;
+  //Давление
+  double P_init = 4e6;
+  //Количество узлов по phi
+  int N_mesh = 101;
+
+  NVT_obj.NVT_set_param(T_crit, P_crit, ac_factors, k_ij, N_parts, V, T, P_init,
+                        N_mesh);
+}
+
 int main(int argc, char** argv) {
   srand(0);
 #if 0
@@ -313,6 +340,10 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
+  NVT nvt_class = NVT();
+
+  Init_For_NVT(nvt_class);
+
   stormMesh_t mesh = SR_InitMesh();
 
   StormArray<real_t> c(mesh, SR_Alloc(mesh, 1, 0)),
@@ -327,6 +358,9 @@ int main(int argc, char** argv) {
   stormSpFuncProd(mesh, c, c, Initial_Data, STORM_NULL);
   fill_with(v, Vec2D<real_t>{0.0, 0.0});
   fill_with(p, 0.0);
+
+  // Calculate NVT beforehand
+
 
   double total_time = 0.0;
 

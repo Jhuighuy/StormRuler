@@ -1,6 +1,7 @@
 #include "NVT.h"
 
-double NVT::F_RR(const vector<double>& z, const vector<double>& K, double nu) {
+double NVT::F_RR(const std::vector<double>& z, const std::vector<double>& K,
+                 double nu) {
   double sum = 0.0;
   // for (auto [z_i, K_i])
   for (int i = 0; i < n_comp; ++i) {
@@ -9,7 +10,8 @@ double NVT::F_RR(const vector<double>& z, const vector<double>& K, double nu) {
   return sum;
 };
 
-double NVT::dF_RR(const vector<double>& z, const vector<double>& K, double nu) {
+double NVT::dF_RR(const std::vector<double>& z, const std::vector<double>& K,
+                  double nu) {
   double sum = 0.0;
   for (int i = 0; i < n_comp; ++i) {
     sum += z[i] * (K[i] - 1) * (K[i] - 1) /
@@ -18,14 +20,14 @@ double NVT::dF_RR(const vector<double>& z, const vector<double>& K, double nu) {
   return -sum;
 };
 
-double NVT::RR(const vector<double>& z, const vector<double>& K,
+double NVT::RR(const std::vector<double>& z, const std::vector<double>& K,
                double nu_init) {
   //Сначала проверка наличия корня, если его нет, то выдаем 0
   double const F_0 = F_RR(z, K, 0);
   double const F_1 = F_RR(z, K, 1);
   if (F_0 * F_1 > 0.0) {
-    if (abs(F_0) < eps) return 0.0;
-    if (abs(F_1) < eps) return 1.0;
+    if (std::abs(F_0) < eps) return 0.0;
+    if (std::abs(F_1) < eps) return 1.0;
     return 0.0;
   }
 
@@ -63,7 +65,7 @@ double NVT::Find_Beta(double nu, double a_L, double b_L, double a_V, double b_V,
   double beta_tmp;
   double F = P_EoS(beta * v_ovrl / nu, a_V, b_V) -
              P_EoS((1 - beta) * v_ovrl / (1 - nu), a_L, b_L);
-  while (abs(F) > eps && (step < step_max)) {
+  while (std::abs(F) > eps && (step < step_max)) {
     /*beta_tmp = beta - F / (v_ovrl / nu *  dP_EoS(beta * v_ovrl / nu, a_V, b_V)
        + v_ovrl / (1 - nu) * dP_EoS((1 - beta) * v_ovrl / (1 - nu), a_L,
        b_L));*/
@@ -119,11 +121,11 @@ double NVT::dP_EoS(double v, double a, double b) {
 //         n_sum);
 // }
 
-double NVT::mu_i(const vector<double>& n, int i) {
+double NVT::mu_i(const std::vector<double>& n, int i) {
   double dn = 1e-3;
 
-  vector<double> n_dn_right;
-  vector<double> n_dn_left;
+  std::vector<double> n_dn_right;
+  std::vector<double> n_dn_left;
   n_dn_right = n;
   n_dn_left = n;
   double n_sum_right, n_sum_left;
@@ -140,11 +142,12 @@ double NVT::mu_i(const vector<double>& n, int i) {
   return tmp;
 }
 
-void NVT::dmu_matrix(const vector<double>& n, Storm::DenseMatrix<double>& M) {
+void NVT::dmu_matrix(const std::vector<double>& n,
+                     Storm::DenseMatrix<double>& M) {
   double dn = 1e-3;
   for (int i = 0; i < n_comp; ++i) {
-    vector<double> n_dn_right(n);
-    vector<double> n_dn_left(n);
+    std::vector<double> n_dn_right(n);
+    std::vector<double> n_dn_left(n);
     n_dn_right[i] = n[i] * (1.0 + dn);
     n_dn_left[i] = n[i] * (1.0 - dn);
     double tmp;
@@ -157,10 +160,10 @@ void NVT::dmu_matrix(const vector<double>& n, Storm::DenseMatrix<double>& M) {
   }
 }
 
-double NVT::mu_i_ex(const vector<double>& n, int i) {
+double NVT::mu_i_ex(const std::vector<double>& n, int i) {
   double tmp = mu_i(n, i);
   // return mu_i(n, i, n_sum, a, b) - R * T * log(n[i]);
-  return tmp - R * T * log(n[i]);
+  return tmp - R * T * std::log(n[i]);
 }
 
 double NVT::x_Kz(double z, double K, double nu) {
@@ -171,8 +174,8 @@ double NVT::y_Kz(double z, double K, double nu) {
   return z * K / (1.0 + nu * (K - 1.0));
 }
 
-void NVT::K_eq_Right(const vector<double>& z, const vector<double>& K,
-                     double nu, double beta, vector<double>& K_right) {
+void NVT::K_eq_Right(const std::vector<double>& z, const std::vector<double>& K,
+                     double nu, double beta, std::vector<double>& K_right) {
   double n_L = 0.0;
   double n_V = 0.0;
 
@@ -204,7 +207,7 @@ void NVT::K_eq_Right(const vector<double>& z, const vector<double>& K,
   Find_n_vecs(n_L, n_V);
 
   //Строим правую часть
-  double ln_n = log(n_L / n_V);
+  double ln_n = std::log(n_L / n_V);
   double mu_ex_L, mu_ex_V;
   for (int i = 0; i < n_comp; ++i) {
     // mu_ex_V = mu_i_ex(n_vec_V, i, n_V, a_V, b_V);
@@ -236,8 +239,8 @@ void NVT::Find_Phases() {
   Find_xyab();
   beta = Find_Beta(nu, a_L, b_L, a_V, b_V, beta);*/
 
-  vector<double> K_next(K);
-  vector<double> K_right(n_comp, 0.0);
+  std::vector<double> K_next(K);
+  std::vector<double> K_right(n_comp, 0.0);
   // K_eq_Right(z, K, nu, beta, K_right);
   // for (size_t i{0}; i < n_comp; ++i) {
   //     K_next[i] = exp(K_right[i]);
@@ -262,7 +265,7 @@ void NVT::Find_Phases() {
     K_eq_Right(z, K, nu, beta, K_right);
     //Новые K_i
     for (int i = 0; i < n_comp; ++i) {
-      K_next[i] = exp(K_right[i]);
+      K_next[i] = std::exp(K_right[i]);
     }
     iter++;
     norm = norm_vec_diff(K_next, K);
@@ -280,13 +283,14 @@ void NVT::Find_Phases() {
   }
 }
 
-double NVT::norm_vec_diff(const vector<double>& v1, const vector<double>& v2) {
+double NVT::norm_vec_diff(const std::vector<double>& v1,
+                          const std::vector<double>& v2) {
   double norm = 0.0;
   int size = v1.size();
   for (int i = 0; i < size; ++i) {
     norm += (v1[i] - v2[i]) * (v1[i] - v2[i]);
   }
-  return sqrt(norm);
+  return std::sqrt(norm);
 }
 
 void NVT::Find_xyab() {
@@ -310,7 +314,7 @@ void NVT::Find_xyab() {
   return;
 }
 
-double NVT::Helm(const vector<double>& n) {
+double NVT::Helm(const std::vector<double>& n) {
   double sum = 0.0, n_sum = 0.0;
   double a = 0, b = 0;
   // vector<double> n_new{ 7.549988305190146e3, 0.148737034710701e3,
@@ -318,7 +322,7 @@ double NVT::Helm(const vector<double>& n) {
   // 0.214008571376308; b = 2.769115505782897e-5;
   for (int i = 0; i < n_comp; ++i) {
     n_sum += n[i];
-    sum += n[i] * (log(n[i]) - 1.0);
+    sum += n[i] * (std::log(n[i]) - 1.0);
   }
   for (int i = 0; i < n_comp; ++i) {
     b += b_coeff[i] * n[i];
@@ -328,12 +332,12 @@ double NVT::Helm(const vector<double>& n) {
   }
   b /= n_sum;
   a /= (n_sum * n_sum);
-  double tmp = R * T * sum - n_sum * R * T * log(1.0 - b * n_sum) +
-               log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a *
+  double tmp = R * T * sum - n_sum * R * T * std::log(1.0 - b * n_sum) +
+               std::log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a *
                    n_sum / b / (m2 - m1);
-  return R * T * sum - n_sum * R * T * log(1.0 - b * n_sum) +
-         log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a * n_sum / b /
-             (m2 - m1);
+  return R * T * sum - n_sum * R * T * std::log(1.0 - b * n_sum) +
+         std::log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a * n_sum /
+             b / (m2 - m1);
 }
 
 // double NVT::Calc_P_E(const vector<double>& n, double n_sum, double a, double
@@ -375,10 +379,11 @@ void NVT::Find_n_vecs(double& n_L, double& n_V) {
   }
 }
 
-NVT::NVT(vector<double>& T_crit, vector<double>& P_crit,
-         vector<double>& ac_facs, vector<vector<double>>& k_ij,
-         vector<double> N_parts, double V1, double T1, double P_init,
-         double N_mesh) {
+NVT::NVT_set_param(std::vector<double>& T_crit, std::vector<double>& P_crit,
+                   std::vector<double>& ac_facs,
+                   std::vector<std::vector<double>>& k_ij,
+                   std::vector<double> N_parts, double V1, double T1,
+                   double P_init, double N_mesh) {
   T = T1;
   V = V1;
   N = 0.0;
@@ -392,40 +397,39 @@ NVT::NVT(vector<double>& T_crit, vector<double>& P_crit,
   m2 = 1.0 + sqrt(2.0);
   Omega_a = 0.45724;
   Omega_b = 0.0778;
-  vector<double> a_ind(n_comp);
-  vector<double> kappa(n_comp);
+  std::vector<double> a_ind(n_comp);
+  std::vector<double> kappa(n_comp);
   // vector<double> c_coeff(n_comp);
-  b_coeff = vector<double>(n_comp);
-  a_coeff = vector<vector<double>>();
-  c_coeff = vector<double>(n_comp);
+  b_coeff = std::vector<double>(n_comp);
+  a_coeff = std::vector<std::vector<double>>();
+  c_coeff = std::vector<double>(n_comp);
   double A, B;
   for (int i = 0; i < n_comp; ++i) {
-    // if (ac_facs[i] < 0.49) {
-    //     kappa[i] = 0.37464 + 1.54226 * ac_facs[i] - 0.26992 * ac_facs[i] *
-    //     ac_facs[i];
-    // }
-    // else {
-    //     kappa[i] = 0.37964 + 1.48503 * ac_facs[i] - 0.16442 * ac_facs[i] *
-    //     ac_facs[i] +
-    //          0.01667 * ac_facs[i] * ac_facs[i] * ac_facs[i];
-    // }
-    kappa[i] =
-        0.37464 + 1.54226 * ac_facs[i] - 0.26992 * ac_facs[i] * ac_facs[i];
-    a_ind[i] = (1.0 + kappa[i] * (1.0 - sqrt(T / T_crit[i])));
+    if (ac_facs[i] < 0.49) {
+      kappa[i] =
+          0.37464 + 1.54226 * ac_facs[i] - 0.26992 * ac_facs[i] * ac_facs[i];
+    } else {
+      kappa[i] = 0.37964 + 1.48503 * ac_facs[i] -
+                 0.16442 * ac_facs[i] * ac_facs[i] +
+                 0.01667 * ac_facs[i] * ac_facs[i] * ac_facs[i];
+    }
+    // kappa[i] =
+    //     0.37464 + 1.54226 * ac_facs[i] - 0.26992 * ac_facs[i] * ac_facs[i];
+    a_ind[i] = (1.0 + kappa[i] * (1.0 - std::sqrt(T / T_crit[i])));
     a_ind[i] = a_ind[i] * a_ind[i] * Omega_a * R * R * T_crit[i] * T_crit[i] /
                P_crit[i];
     b_coeff[i] = Omega_b * R * T_crit[i] / P_crit[i];
     A = -1e-16 / (1.2326 + 1.3757 * ac_facs[i]);
     B = 1e-16 / (0.9051 + 1.5410 * ac_facs[i]);
-    c_coeff[i] = sqrt(a_ind[i] * pow(b_coeff[i], 2.0 / 3.0) *
-                      (A * (1.0 - T / T_crit[i]) + B));
+    c_coeff[i] = std::sqrt(a_ind[i] * std::pow(b_coeff[i], 2.0 / 3.0) *
+                           (A * (1.0 - T / T_crit[i]) + B));
     // c_coeff[i] = a_ind[i] * pow(b_coeff[i], 2.0 / 3.0) * (A * (1.0 - T /
     // T_crit[i]) + B);
   }
   for (int i = 0; i < n_comp; ++i) {
-    vector<double> tmp(n_comp);
+    std::vector<double> tmp(n_comp);
     for (int j = 0; j < n_comp; ++j) {
-      tmp[j] = sqrt(a_ind[i] * a_ind[j]) * (1.0 - k_ij[i][j]);
+      tmp[j] = std::sqrt(a_ind[i] * a_ind[j]) * (1.0 - k_ij[i][j]);
     }
     a_coeff.push_back(tmp);
   }
@@ -437,25 +441,25 @@ NVT::NVT(vector<double>& T_crit, vector<double>& P_crit,
   nu = 0.75;
   beta = 0.75;
 
-  K = vector<double>(n_comp);
-  z = vector<double>(n_comp);
-  x = vector<double>(n_comp);
-  y = vector<double>(n_comp);
-  mu = vector<double>(n_comp);
-  n_vec_L = vector<double>(n_comp);
-  n_vec_V = vector<double>(n_comp);
-  ksi_right = vector<double>(N_phi);
-  psi_vec = vector<double>(N_phi);
-  ksi_vecs = vector<vector<double>>();
+  K = std::vector<double>(n_comp);
+  z = std::vector<double>(n_comp);
+  x = std::vector<double>(n_comp);
+  y = std::vector<double>(n_comp);
+  mu = std::vector<double>(n_comp);
+  n_vec_L = std::vector<double>(n_comp);
+  n_vec_V = std::vector<double>(n_comp);
+  ksi_right = std::vector<double>(N_phi);
+  psi_vec = std::vector<double>(N_phi);
+  ksi_vecs = std::vector<std::vector<double>>();
   for (int i = 0; i < N_phi; ++i) {
-    vector<double> tmp(n_comp);
+    std::vector<double> tmp(n_comp);
     ksi_vecs.push_back(tmp);
   }
-  phi = vector<double>(N_phi);
+  phi = std::vector<double>(N_phi);
   for (int i = 0; i < N_phi; ++i) {
     phi[i] = i * (1.0 / (N_phi - 1));
   }
-  dWdphi = vector<double>(N_phi);
+  dWdphi = std::vector<double>(N_phi);
 
   //н у для K_i
   for (int i = 0; i < n_comp; ++i) {
@@ -470,7 +474,10 @@ NVT::NVT(vector<double>& T_crit, vector<double>& P_crit,
   // beta = Find_Beta(nu, a_L, b_L, a_V, b_V, beta);
 }
 
-double NVT::Test_RR(const vector<double>& K_test, double nu_init) {
+
+NVT::NVT() {}
+
+double NVT::Test_RR(const std::vector<double>& K_test, double nu_init) {
   return RR(z, K_test, nu_init);
 }
 
@@ -494,7 +501,7 @@ void NVT::Test_Find_Phases() {
 void NVT::Find_Psi_Ksi(int N) {
   // phi in [0,1]; phi[i] = i / (N - 1)
 
-  vector<double> eta(n_comp);
+  std::vector<double> eta(n_comp);
   double tmp;
   double ksi_V = 0.0, ksi_L = 0.0;
   for (int i = 0; i < n_comp; ++i) {
@@ -516,10 +523,10 @@ void NVT::Find_Psi_Ksi(int N) {
   psi_vec[N - 1] = 0.0;
 
   Storm::DenseMatrix<double> Theta(n_comp, n_comp);
-  vector<double> df(n_comp);
-  vector<double> theta_i(n_comp);
+  std::vector<double> df(n_comp);
+  std::vector<double> theta_i(n_comp);
   double theta_sum;
-  vector<double> ksi_new(n_comp);
+  std::vector<double> ksi_new(n_comp);
   double psi_new;
 
   int max_iter = 10;
@@ -571,7 +578,7 @@ void NVT::Find_Psi_Ksi(int N) {
 
       norm = norm_vec_diff(ksi_new, ksi_vecs[i]);
       iter++;
-      swap(ksi_new, ksi_vecs[i]);
+      std::swap(ksi_new, ksi_vecs[i]);
     }
     // ksi уже лежат в ksi_vecs
     ;
@@ -579,9 +586,9 @@ void NVT::Find_Psi_Ksi(int N) {
   }
 }
 
-void NVT::Fill_D1_InvD2(const vector<double>& ksi, vector<double>& D1,
+void NVT::Fill_D1_InvD2(const std::vector<double>& ksi, std::vector<double>& D1,
                         Storm::DenseMatrix<double>& InvD2) {
-  vector<double> n_loc(ksi);
+  std::vector<double> n_loc(ksi);
   for (int i = 0; i < n_comp; ++i) {
     n_loc[i] /= c_coeff[i];
   }
@@ -600,7 +607,7 @@ void NVT::ComputeCahnHillard() {
   double Pr = 0.5 * (Pressure_Eq(n_vec_L) + Pressure_Eq(n_vec_V));
 
   //Считаем интеграл sigma по формуле трапеций
-  vector<double> n_loc(n_comp);
+  std::vector<double> n_loc(n_comp);
   double I;
   double I_pred = 0.0;
   sigma = 0.0;
@@ -628,7 +635,7 @@ void NVT::ComputeCahnHillard() {
            (ksi_right[N_phi - 1] - ksi_right[0]) / sigma;
 
   //Считаем dW/dphi
-  double tmp = lambda * sqrt(lambda / sigma);
+  double tmp = lambda * std::sqrt(lambda / sigma);
   for (int i = 0; i < N_phi; ++i) {
     dWdphi[i] = tmp * psi_vec[i];
   }
@@ -643,11 +650,11 @@ double NVT::Pressure_Eq(const vector<double>& n) {
 }
 
 void NVT::Print_CH_params() {
-  std::cout << "Sigma = " << sigma << endl;
-  std::cout << "Lambda = " << lambda << endl;
-  std::cout << "dWdPhi: " << endl;
+  std::cout << "Sigma = " << sigma << std::endl;
+  std::cout << "Lambda = " << lambda << std::endl;
+  std::cout << "dWdPhi: " << std::endl;
   for (auto el : dWdphi) {
-    cout << el << endl;
+    std::cout << el << std::endl;
   }
 }
 

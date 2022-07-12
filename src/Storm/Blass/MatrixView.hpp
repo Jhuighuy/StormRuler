@@ -97,12 +97,12 @@ private:
 
   auto& self_() noexcept {
     static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
-    static_assert(matrix_view<Derived>);
+    // static_assert(matrix_view<Derived>);
     return static_cast<Derived&>(*this);
   }
   const auto& self_() const noexcept {
     static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
-    static_assert(matrix_view<Derived>);
+    // static_assert(matrix_view<Derived>);
     return static_cast<const Derived&>(*this);
   }
 

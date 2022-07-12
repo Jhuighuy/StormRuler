@@ -8,9 +8,9 @@
 // using namespace std;
 
 /**
- * Класс NVT-расчета, где лежат все данные и разные шаги алгоритма
+ * Класс Nvt-расчета, где лежат все данные и разные шаги алгоритма
  */
-class NVT {
+class Nvt {
 private:
 
   std::vector<double> z; ///< мольные фракции компонентов двухфазной смеси Ni/N,
@@ -161,7 +161,7 @@ public:
       a_coeff; ///< Матрица коэффициентов a уравнения состояния
   std::vector<double> b_coeff; ///< Вектор коэффициентов b уравнения состояния
 
-  NVT(); ///< конструктор по умолчанию
+  Nvt(); ///< конструктор по умолчанию
 
   void NVT_set_param(std::vector<double>& T_crit, std::vector<double>& P_crit,
                      std::vector<double>& ac_facs,

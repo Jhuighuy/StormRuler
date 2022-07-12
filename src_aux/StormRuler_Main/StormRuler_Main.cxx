@@ -46,7 +46,7 @@
 #include <Storm/Blass/Mat.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
-#include <Storm/NVT/NVT.h>
+#include <Storm/NVT/Nvt.hpp>
 #include <Storm/Solvers/PreconditionerFactory.hpp>
 #include <Storm/Solvers/SolverFactory.hpp>
 
@@ -89,14 +89,14 @@ void stormNonlinSolve2(const SolverType& method, //
 
 } // stormNonLinSolve2
 
-static double tau = 1.0e-2, Gamma = 4.0e-4, sigma = 1.0, Sigma = 10.0;
+static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
-  stormApplyBCs_CosWall(
-      mesh, c_hat, c,
-      0.01 / std::sqrt(Gamma) * 6.0 * std::cos(M_PI / 2 - M_PI / 18), 1);
-  stormApplyBCs(mesh, c_hat, 4, SR_DIRICHLET(1.0));
+  // stormApplyBCs_CosWall(
+  //     mesh, c_hat, c,
+  //     0.01 / std::sqrt(Gamma) * 6.0 * std::cos(M_PI / 2 - M_PI / 18), 1);
+  //  stormApplyBCs(mesh, c_hat, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
 static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
@@ -105,19 +105,19 @@ static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
 
 static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
-  stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
-  stormApplyBCs(mesh, p, 4,
-                SR_DIRICHLET(0.75 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
-                             (2.0 * 0.01 * 26)));
+  // stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
+  // stormApplyBCs(mesh, p, 4,
+  //               SR_DIRICHLET(0.75 * Sigma * std::cos(M_PI / 2 - M_PI / 18) /
+  //                            (2.0 * 0.01 * 26)));
 } // SetBCs_p
 
 static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
-  stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
+  // stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
   // stormApplyBCs_InOutLet(mesh, v, 2);
-  stormApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
-  // stormApplyBCs_InOutLet(mesh, v, 4);
+  // stormApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
+  stormApplyBCs_InOutLet(mesh, v, 4);
 } // SetBCs_v
 
 static void CahnHilliard_Step(stormMesh_t mesh, //
@@ -155,7 +155,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
       },
       false);
 
-  c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
+  // c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
 
   // w_hat = dF_dc(c_hat) - Gamma * DIVGRAD(c_hat)
   w_hat <<= map(dF_dc, c_hat);
@@ -164,7 +164,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
 } // CahnHilliard_Step
 
-static double mu_1 = 0.08, mu_2 = 1.08;
+static double mu_1 = 0.08, mu_2 = 0.08;
 static double rho_1 = 1.0, rho_2 = 50.0;
 
 static void NavierStokes_Step(stormMesh_t mesh, //
@@ -203,7 +203,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
           StormArray<Vec2D<real_t>> tmp;
           tmp.assign(v, false);
 
-          // v_hat <<= v - CONV(v, v) + tau * mu * rho_inv * DIVGRAD(v);
+          // v_hat <<= v + tau * CONV(v, v) - tau * mu * rho_inv * DIVGRAD(v);
           v_hat <<= v;
           SetBCs_v(mesh, v);
           stormConvection(mesh, v_hat, -tau, v, v);
@@ -213,6 +213,12 @@ static void NavierStokes_Step(stormMesh_t mesh, //
           v_hat -= tmp;
         });
   }
+
+  v_hat <<= map(
+      [](const Vec2D<real_t>& v) {
+        return v + 0.3 * tau * Vec2D<real_t>{0.0, -1.0};
+      },
+      v_hat);
 
   {
     StormArray<real_t> rhs;
@@ -253,19 +259,19 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
                   stormReal_t* c, const stormReal_t* _, void* env) {
   const static stormReal_t L = 1.0;
   bool in = false;
-  // if (fabs(r[0]-0*L) <= L*0.101 && fabs(2*L-r[1]) <= L*0.665) {
-  //   in = true;
-  // }
-  if (fabs(2 * L - r[1]) <= L * 0.4) { in = true; }
+  if (fabs(r[0] - 0 * L) <= L * 0.101 && fabs(2 * L - r[1]) <= L * 0.665) {
+    in = true;
+  }
+  // if (fabs(2 * L - r[1]) <= L * 0.4) { in = true; }
 
   *c = 0.0;
   if (in) { *c = 1.0; }
 
 } // Initial_Data
 
-void Init_For_NVT(NVT& NVT_obj) {
+void Init_For_NVT(Nvt& NVT_obj) {
   //Количество компонент
-  int n_comp = 2;
+  // int n_comp = 2;
   //Критическая температура
   std::vector<double> T_crit{304.2, 617.6};
   //Критическое давление
@@ -290,7 +296,7 @@ void Init_For_NVT(NVT& NVT_obj) {
 }
 
 int main(int argc, char** argv) {
-  srand(0);
+  srand(2321312);
 #if 0
   {
     using namespace Storm;
@@ -340,7 +346,7 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
-  NVT nvt_class = NVT();
+  Nvt nvt_class = Nvt();
 
   Init_For_NVT(nvt_class);
 
@@ -359,12 +365,12 @@ int main(int argc, char** argv) {
   fill_with(v, Vec2D<real_t>{0.0, 0.0});
   fill_with(p, 0.0);
 
-  // Calculate NVT beforehand
+  // Calculate Nvt beforehand
 
 
   double total_time = 0.0;
 
-  for (int time = 0; time <= 0 * 20 + 1 * 200000; ++time) {
+  for (int time = 0; time <= 200000; ++time) {
     for (int frac = 0; time != 0 && frac < 10; ++frac) {
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);

@@ -1,6 +1,6 @@
-#include "NVT.h"
+#include <Storm/NVT/Nvt.hpp>
 
-double NVT::F_RR(const std::vector<double>& z, const std::vector<double>& K,
+double Nvt::F_RR(const std::vector<double>& z, const std::vector<double>& K,
                  double nu) {
   double sum = 0.0;
   // for (auto [z_i, K_i])
@@ -10,7 +10,7 @@ double NVT::F_RR(const std::vector<double>& z, const std::vector<double>& K,
   return sum;
 };
 
-double NVT::dF_RR(const std::vector<double>& z, const std::vector<double>& K,
+double Nvt::dF_RR(const std::vector<double>& z, const std::vector<double>& K,
                   double nu) {
   double sum = 0.0;
   for (int i = 0; i < n_comp; ++i) {
@@ -20,7 +20,7 @@ double NVT::dF_RR(const std::vector<double>& z, const std::vector<double>& K,
   return -sum;
 };
 
-double NVT::RR(const std::vector<double>& z, const std::vector<double>& K,
+double Nvt::RR(const std::vector<double>& z, const std::vector<double>& K,
                double nu_init) {
   //Сначала проверка наличия корня, если его нет, то выдаем 0
   double const F_0 = F_RR(z, K, 0);
@@ -52,7 +52,7 @@ double NVT::RR(const std::vector<double>& z, const std::vector<double>& K,
   return nu;
 };
 
-double NVT::Find_Beta(double nu, double a_L, double b_L, double a_V, double b_V,
+double Nvt::Find_Beta(double nu, double a_L, double b_L, double a_V, double b_V,
                       double beta_init) {
   //Простые случаи
   if (nu <= eps) return 0.0;
@@ -93,17 +93,17 @@ double NVT::Find_Beta(double nu, double a_L, double b_L, double a_V, double b_V,
   return beta;
 };
 
-double NVT::P_EoS(double v, double a, double b) {
+double Nvt::P_EoS(double v, double a, double b) {
   return R * T / (v - b) - a / (v + m1 * b) / (v + m2 * b);
 };
 
-double NVT::dP_EoS(double v, double a, double b) {
+double Nvt::dP_EoS(double v, double a, double b) {
   return -R * T / (v - b) / (v - b) + a / (b * (m2 - m1)) *
                                           (1.0 / (v + m1 * b) / (v + m1 * b) -
                                            1.0 / (v + m2 * b) / (v + m2 * b));
 };
 
-// double NVT::mu_i(const vector<double>& n, int i, double n_sum, double a,
+// double Nvt::mu_i(const vector<double>& n, int i, double n_sum, double a,
 // double b) {
 //     double sum = 0.0;
 //     for (int j = 0; j < n_comp; ++j) {
@@ -121,14 +121,14 @@ double NVT::dP_EoS(double v, double a, double b) {
 //         n_sum);
 // }
 
-double NVT::mu_i(const std::vector<double>& n, int i) {
+double Nvt::mu_i(const std::vector<double>& n, int i) {
   double dn = 1e-3;
 
   std::vector<double> n_dn_right;
   std::vector<double> n_dn_left;
   n_dn_right = n;
   n_dn_left = n;
-  double n_sum_right, n_sum_left;
+  // double n_sum_right, n_sum_left;
   n_dn_right[i] = n[i] * (1.0 + dn);
   n_dn_left[i] = n[i] * (1.0 - dn);
   // n_sum_right = n_sum + n[i] * dn;
@@ -142,7 +142,7 @@ double NVT::mu_i(const std::vector<double>& n, int i) {
   return tmp;
 }
 
-void NVT::dmu_matrix(const std::vector<double>& n,
+void Nvt::dmu_matrix(const std::vector<double>& n,
                      Storm::DenseMatrix<double>& M) {
   double dn = 1e-3;
   for (int i = 0; i < n_comp; ++i) {
@@ -150,31 +150,28 @@ void NVT::dmu_matrix(const std::vector<double>& n,
     std::vector<double> n_dn_left(n);
     n_dn_right[i] = n[i] * (1.0 + dn);
     n_dn_left[i] = n[i] * (1.0 - dn);
-    double tmp;
     for (int j = 0; j < n_comp; ++j) {
-      tmp = (mu_i(n_dn_right, j) - mu_i(n_dn_left, j)) /
-            (n_dn_right[i] - n_dn_left[i]) / c_coeff[i] / c_coeff[j];
       M(i, j) = (mu_i(n_dn_right, j) - mu_i(n_dn_left, j)) /
                 (n_dn_right[i] - n_dn_left[i]) / c_coeff[i] / c_coeff[j];
     }
   }
 }
 
-double NVT::mu_i_ex(const std::vector<double>& n, int i) {
+double Nvt::mu_i_ex(const std::vector<double>& n, int i) {
   double tmp = mu_i(n, i);
   // return mu_i(n, i, n_sum, a, b) - R * T * log(n[i]);
   return tmp - R * T * std::log(n[i]);
 }
 
-double NVT::x_Kz(double z, double K, double nu) {
+double Nvt::x_Kz(double z, double K, double nu) {
   return z / (1.0 + nu * (K - 1.0));
 }
 
-double NVT::y_Kz(double z, double K, double nu) {
+double Nvt::y_Kz(double z, double K, double nu) {
   return z * K / (1.0 + nu * (K - 1.0));
 }
 
-void NVT::K_eq_Right(const std::vector<double>& z, const std::vector<double>& K,
+void Nvt::K_eq_Right(const std::vector<double>& z, const std::vector<double>& K,
                      double nu, double beta, std::vector<double>& K_right) {
   double n_L = 0.0;
   double n_V = 0.0;
@@ -225,7 +222,7 @@ void NVT::K_eq_Right(const std::vector<double>& z, const std::vector<double>& K,
   return;
 }
 
-void NVT::Find_Phases() {
+void Nvt::Find_Phases() {
   // if (n_iter == 0) {
   //     //Находим н.п. для K[i] по формулам и отдельно для них nu и beta
   // }
@@ -283,7 +280,7 @@ void NVT::Find_Phases() {
   }
 }
 
-double NVT::norm_vec_diff(const std::vector<double>& v1,
+double Nvt::norm_vec_diff(const std::vector<double>& v1,
                           const std::vector<double>& v2) {
   double norm = 0.0;
   int size = v1.size();
@@ -293,7 +290,7 @@ double NVT::norm_vec_diff(const std::vector<double>& v1,
   return std::sqrt(norm);
 }
 
-void NVT::Find_xyab() {
+void Nvt::Find_xyab() {
   //По значениям K_i, z_i ищутся x_i, y_i, a_L, a_V, b_L, b_V
   for (int i = 0; i < n_comp; ++i) {
     x[i] = x_Kz(z[i], K[i], nu);
@@ -314,7 +311,7 @@ void NVT::Find_xyab() {
   return;
 }
 
-double NVT::Helm(const std::vector<double>& n) {
+double Nvt::Helm(const std::vector<double>& n) {
   double sum = 0.0, n_sum = 0.0;
   double a = 0, b = 0;
   // vector<double> n_new{ 7.549988305190146e3, 0.148737034710701e3,
@@ -332,15 +329,12 @@ double NVT::Helm(const std::vector<double>& n) {
   }
   b /= n_sum;
   a /= (n_sum * n_sum);
-  double tmp = R * T * sum - n_sum * R * T * std::log(1.0 - b * n_sum) +
-               std::log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a *
-                   n_sum / b / (m2 - m1);
   return R * T * sum - n_sum * R * T * std::log(1.0 - b * n_sum) +
          std::log((1.0 + m1 * b * n_sum) / (1.0 + m2 * b * n_sum)) * a * n_sum /
              b / (m2 - m1);
 }
 
-// double NVT::Calc_P_E(const vector<double>& n, double n_sum, double a, double
+// double Nvt::Calc_P_E(const vector<double>& n, double n_sum, double a, double
 // b) {
 //     double sum = 0.0;
 //     //Нужные mu уже лежат в соответствующем поле
@@ -350,11 +344,11 @@ double NVT::Helm(const std::vector<double>& n) {
 //     return -f(n, n_sum, a, b) + sum;
 // }
 //
-// void NVT::Build_Ksi_Mesh() {
+// void Nvt::Build_Ksi_Mesh() {
 //
 // }
 
-void NVT::Find_n_vecs(double& n_L, double& n_V) {
+void Nvt::Find_n_vecs(double& n_L, double& n_V) {
   // double n_V, n_L;
   if ((nu <= eps) || (beta <= eps)) {
     n_V = 0.0;
@@ -379,11 +373,12 @@ void NVT::Find_n_vecs(double& n_L, double& n_V) {
   }
 }
 
-NVT::NVT_set_param(std::vector<double>& T_crit, std::vector<double>& P_crit,
-                   std::vector<double>& ac_facs,
-                   std::vector<std::vector<double>>& k_ij,
-                   std::vector<double> N_parts, double V1, double T1,
-                   double P_init, double N_mesh) {
+void Nvt::NVT_set_param(std::vector<double>& T_crit,
+                        std::vector<double>& P_crit,
+                        std::vector<double>& ac_facs,
+                        std::vector<std::vector<double>>& k_ij,
+                        std::vector<double> N_parts, double V1, double T1,
+                        double P_init, double N_mesh) {
   T = T1;
   V = V1;
   N = 0.0;
@@ -475,30 +470,30 @@ NVT::NVT_set_param(std::vector<double>& T_crit, std::vector<double>& P_crit,
 }
 
 
-NVT::NVT() {}
+Nvt::Nvt() {}
 
-double NVT::Test_RR(const std::vector<double>& K_test, double nu_init) {
+double Nvt::Test_RR(const std::vector<double>& K_test, double nu_init) {
   return RR(z, K_test, nu_init);
 }
 
-double NVT::Test_Beta(double nu_test, double a_L_test, double b_L_test,
+double Nvt::Test_Beta(double nu_test, double a_L_test, double b_L_test,
                       double a_V_test, double b_V_test, double beta_init) {
   return Find_Beta(nu_test, a_L_test, b_L_test, a_V_test, b_V_test, beta_init);
 }
 
-void NVT::Print_K_values() {
+void Nvt::Print_K_values() {
   std::cout << "K-values: ";
   for (auto el : K) {
     std::cout << el << ' ';
   }
-  std::cout << endl;
+  std::cout << std::endl;
 }
 
-void NVT::Test_Find_Phases() {
+void Nvt::Test_Find_Phases() {
   Find_Phases();
 }
 
-void NVT::Find_Psi_Ksi(int N) {
+void Nvt::Find_Psi_Ksi(int N) {
   // phi in [0,1]; phi[i] = i / (N - 1)
 
   std::vector<double> eta(n_comp);
@@ -527,7 +522,6 @@ void NVT::Find_Psi_Ksi(int N) {
   std::vector<double> theta_i(n_comp);
   double theta_sum;
   std::vector<double> ksi_new(n_comp);
-  double psi_new;
 
   int max_iter = 10;
 
@@ -553,6 +547,7 @@ void NVT::Find_Psi_Ksi(int N) {
     }
 
     //Запускаем итерационный процесс
+    double psi_new{};
     int iter = 0;
     double norm = 10 * eps;
     while ((norm > eps) && (iter < max_iter)) {
@@ -565,7 +560,6 @@ void NVT::Find_Psi_Ksi(int N) {
         }
         theta_sum += theta_i[j];
       }
-      psi_new = 0.0;
       for (int j = 0; j < n_comp; ++j) {
         ksi_new[j] = ksi_vecs[i][j];
         for (int k = 0; k < n_comp; ++k) {
@@ -586,7 +580,7 @@ void NVT::Find_Psi_Ksi(int N) {
   }
 }
 
-void NVT::Fill_D1_InvD2(const std::vector<double>& ksi, std::vector<double>& D1,
+void Nvt::Fill_D1_InvD2(const std::vector<double>& ksi, std::vector<double>& D1,
                         Storm::DenseMatrix<double>& InvD2) {
   std::vector<double> n_loc(ksi);
   for (int i = 0; i < n_comp; ++i) {
@@ -602,7 +596,7 @@ void NVT::Fill_D1_InvD2(const std::vector<double>& ksi, std::vector<double>& D1,
   return;
 }
 
-void NVT::ComputeCahnHillard() {
+void Nvt::ComputeCahnHillard() {
   //Посчитаем равновесное давление по хим потенциалам и фазам
   double Pr = 0.5 * (Pressure_Eq(n_vec_L) + Pressure_Eq(n_vec_V));
 
@@ -641,7 +635,7 @@ void NVT::ComputeCahnHillard() {
   }
 }
 
-double NVT::Pressure_Eq(const vector<double>& n) {
+double Nvt::Pressure_Eq(const std::vector<double>& n) {
   double res = -Helm(n);
   for (int i = 0; i < n_comp; ++i) {
     res += n[i] * mu[i];
@@ -649,7 +643,7 @@ double NVT::Pressure_Eq(const vector<double>& n) {
   return res;
 }
 
-void NVT::Print_CH_params() {
+void Nvt::Print_CH_params() {
   std::cout << "Sigma = " << sigma << std::endl;
   std::cout << "Lambda = " << lambda << std::endl;
   std::cout << "dWdPhi: " << std::endl;
@@ -658,7 +652,7 @@ void NVT::Print_CH_params() {
   }
 }
 
-void NVT::Test_CH() {
+void Nvt::Test_CH() {
   Find_Psi_Ksi(N_phi);
   ComputeCahnHillard();
 }

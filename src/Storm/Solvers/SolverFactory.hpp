@@ -122,7 +122,7 @@ class SolverType final : public Enum<SolverType> {
 
 /// @brief Make iterative solver of the specified @p solver_type.
 template<VectorLike InVector, VectorLike OutVector = InVector>
-auto MakeIterativeSolver(SolverType solver_type = SolverType::Default)
+auto make_iterative_solver(SolverType solver_type = SolverType::Default)
     -> std::unique_ptr<IterativeSolver<InVector, OutVector>> {
   // Try the Krylov subspace square solver first:
   if constexpr (std::same_as<InVector, OutVector>) {
@@ -196,6 +196,6 @@ auto MakeIterativeSolver(SolverType solver_type = SolverType::Default)
 
   throw std::invalid_argument("Invalid iterative solver type specified.");
 
-} // MakeIterativeSolver
+} // make_iterative_solver
 
 } // namespace Storm

@@ -52,18 +52,18 @@ namespace Detail_ {
   // clang-format off
   template<class T, class U>
     requires (!std::same_as<T, MatrixViewInterface<U>>)
-  void is_derived_from_matrix_view_interface_func_(
+  void is_derived_from_matrix_view_interface_impl_(
       const T&, const MatrixViewInterface<U>&); // not defined
   template<class T>
   concept is_derived_from_matrix_view_interface_ =
-      requires(T x) { is_derived_from_matrix_view_interface_func_(x, x); };
+      requires(T x) { is_derived_from_matrix_view_interface_impl_(x, x); };
   // clang-format on
 } // namespace Detail_
 
 /// @brief Types, enabled to be a matrix view.
 template<class T>
-inline constexpr bool enable_matrix_view_v{
-    Detail_::is_derived_from_matrix_view_interface_<T>};
+inline constexpr bool enable_matrix_view_v =
+    Detail_::is_derived_from_matrix_view_interface_<T>;
 
 /// @brief Matrix view concept.
 /// @todo In order to add the `movable` constraint, we

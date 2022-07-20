@@ -26,8 +26,8 @@
 #pragma once
 
 #include <array>
+#include <initializer_list>
 #include <memory>
-#include <span>
 #include <type_traits>
 
 #include <Storm/Base.hpp>
@@ -36,37 +36,75 @@
 
 namespace Storm {
 
-template<class Value, size_t NumRows = std::dynamic_extent,
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// @brief Dense matrix.
+/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+template<class Value, //
+         size_t NumRows = std::dynamic_extent,
          size_t NumCols = std::dynamic_extent>
 class DenseMatrix {
 private:
 
-  std::conditional_t<
-      NumRows == std::dynamic_extent || NumCols == std::dynamic_extent,
-      std::unique_ptr<Value[]>, std::array<Value, NumRows * NumCols>>
-      coeffs_{};
-  [[no_unique_address]] std::conditional_t<
-      NumRows == std::dynamic_extent, size_t,
-      std::integral_constant<size_t, NumRows>>
+  STORM_NO_UNIQUE_ADDRESS_
+  std::conditional_t<NumRows == std::dynamic_extent, size_t,
+                     std::integral_constant<size_t, NumRows>>
       num_rows_{};
-  [[no_unique_address]] std::conditional_t<
-      NumCols == std::dynamic_extent, size_t,
-      std::integral_constant<size_t, NumCols>>
+  STORM_NO_UNIQUE_ADDRESS_
+  std::conditional_t<NumCols == std::dynamic_extent, size_t,
+                     std::integral_constant<size_t, NumCols>>
       num_cols_{};
+  STORM_NO_UNIQUE_ADDRESS_
+  std::conditional_t<NumRows == std::dynamic_extent || //
+                         NumCols == std::dynamic_extent,
+                     std::unique_ptr<Value[]>,
+                     std::array<Value, NumRows * NumCols>>
+      coeffs_{};
 
 public:
 
-  /// @brief Initialize an empty matrix.
-  constexpr DenseMatrix() = default;
+  /// @brief Construct a dense matrix.
+  /// @{
+  constexpr DenseMatrix() //
+      requires(NumRows != std::dynamic_extent &&
+               NumCols != std::dynamic_extent) = default;
+  constexpr explicit DenseMatrix(size_t num_rows) //
+      requires(NumRows == std::dynamic_extent &&  //
+               NumCols != std::dynamic_extent)
+      : num_rows_{num_rows}, //
+        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+  constexpr explicit DenseMatrix(size_t num_cols) //
+      requires(NumRows != std::dynamic_extent &&  //
+               NumCols == std::dynamic_extent)
+      : num_cols_{num_cols}, //
+        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+  constexpr DenseMatrix(size_t num_rows, size_t num_cols) //
+      requires(NumRows == std::dynamic_extent &&          //
+               NumCols == std::dynamic_extent)
+      : num_rows_{num_rows}, num_cols_{num_cols}, //
+        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+  /// @}
 
-  constexpr DenseMatrix(size_t num_rows, size_t num_cols) noexcept
-      : num_rows_{num_rows}, num_cols_{num_cols} {
-    coeffs_ = std::make_unique<Value[]>(size());
-  }
-
+  /// @brief Construct a dense matrix with coefficients.
   constexpr DenseMatrix(
-      std::initializer_list<std::initializer_list<Value>> coeffs) noexcept
-      : DenseMatrix(coeffs.size(), coeffs.begin()->size()) {
+      std::initializer_list<std::initializer_list<Value>> coeffs) //
+      noexcept(NumRows != std::dynamic_extent &&
+               NumCols != std::dynamic_extent) {
+    if constexpr (NumRows == std::dynamic_extent) {
+      num_rows_ = coeffs.size();
+    } else {
+      STORM_ASSERT_(num_rows_ == coeffs.size() && //
+                    "Invalid number of rows.");
+    }
+    if constexpr (NumCols == std::dynamic_extent) {
+      num_cols_ = coeffs.begin()->size();
+    } else {
+      STORM_ASSERT_(num_rows_ == coeffs.begin()->size() &&
+                    "Invalid number of columns.");
+    }
+    if constexpr (NumRows == std::dynamic_extent ||
+                  NumCols == std::dynamic_extent) {
+      coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+    }
     for (size_t i{0}; i < num_rows_; ++i) {
       for (size_t j{0}; j < num_cols_; ++j) {
         (*this)(i, j) = (coeffs.begin()[i]).begin()[j];
@@ -74,21 +112,20 @@ public:
     }
   }
 
+  /// @brief Number of the matrix rows.
   constexpr auto num_rows() const noexcept {
     return num_rows_;
   }
 
+  /// @brief Number of the matrix columns.
   constexpr auto num_cols() const noexcept {
     return num_cols_;
   }
 
-  constexpr auto size() const noexcept {
-    return num_rows_ * num_cols_;
-  }
-
-  /// @brief Get the coefficient at @p row_index and @p col_index.
+  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
-  constexpr auto& operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr auto& operator()(size_t row_index, //
+                             size_t col_index) noexcept {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Matrix index out range.");
     return coeffs_[row_index * num_cols_ + col_index];

@@ -64,7 +64,7 @@ void stormLinSolve2(const SolverType& method,
         matVec(y, x);
       });
 
-  auto solver = MakeIterativeSolver<StormArray<T>>(method);
+  auto solver = make_iterative_solver<StormArray<T>>(method);
   solver->pre_op = make_preconditioner<StormArray<T>>(preMethod);
 
   if (uniform) {
@@ -72,9 +72,6 @@ void stormLinSolve2(const SolverType& method,
   } else {
     solve_non_uniform(*solver, x, b, *symOp);
   }
-
-  std::cout << "num matvecs = " << numMatVecs << " " << method.ToString()
-            << std::endl;
 
 } // stormLinSolve2
 
@@ -324,7 +321,7 @@ int main(int argc, char** argv) {
     }
     {
       auto AA = select_rows(A, 0, 1, 3);
-      AA[0, 0] = 1.0;
+      AA(0, 0) = 1.0;
       select_rows(AA, 0) -= select_rows(AA, 1);
       std::cout << AA << std::endl << std::endl;
       std::cout << "=======" << std::endl << std::endl;

@@ -55,7 +55,7 @@ private:
   mutable Vector r_vec_, p_vec_;
   const Operator<Vector>* LinOp_;
 
-  void Build(const Vector& x_vec, const Vector& b_vec,
+  void build(const Vector& x_vec, const Vector& b_vec,
              const Operator<Vector>& lin_op) override;
 
   void mul(Vector& y_vec, const Vector& x_vec) const override;
@@ -67,7 +67,7 @@ private:
 }; // class ChebyshevPreconditioner
 
 template<VectorLike Vector>
-void ChebyshevPreconditioner<Vector>::Build(const Vector& x_vec,
+void ChebyshevPreconditioner<Vector>::build(const Vector& x_vec,
                                             const Vector& b_vec,
                                             const Operator<Vector>& lin_op) {
   r_vec_.assign(x_vec, false);

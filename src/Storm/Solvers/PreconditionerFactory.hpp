@@ -32,7 +32,9 @@
 #include <Storm/Utils/Enum.hpp>
 
 #include <Storm/Solvers/Preconditioner.hpp>
+// clang-format off
 #include <Storm/Solvers/PreconditionerChebyshev.hpp>
+// clang-format on
 
 namespace Storm {
 

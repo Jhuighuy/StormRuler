@@ -75,6 +75,7 @@ public:
 
   PreconditionerSide pre_side{PreconditionerSide::Right};
   std::unique_ptr<Preconditioner<InVector>> pre_op{nullptr};
+  std::string name;
 
 protected:
 
@@ -124,7 +125,7 @@ bool IterativeSolver<InVector, OutVector>::solve(
     InVector& x_vec, const OutVector& b_vec,
     const Operator<InVector, OutVector>& any_op) {
   // Initialize the solver.
-  if (pre_op != nullptr) { pre_op->Build(x_vec, b_vec, any_op); }
+  if (pre_op != nullptr) { pre_op->build(x_vec, b_vec, any_op); }
   const real_t initial_error{init(x_vec, b_vec, any_op, pre_op.get())};
   absolute_error = initial_error;
   if (absolute_error_tolerance > 0.0 &&
@@ -146,6 +147,8 @@ bool IterativeSolver<InVector, OutVector>::solve(
 
   // Exit the solver.
   finalize(x_vec, b_vec, any_op, pre_op.get());
+  std::cout << "done:\t" << iteration << "\t" << absolute_error << "\t"
+            << relative_error << name << std::endl;
   return converged;
 
 } // IterativeSolver::Solve

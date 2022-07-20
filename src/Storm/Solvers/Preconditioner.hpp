@@ -78,8 +78,10 @@ public:
   /// @param x_vec Solution vector, 𝒙.
   /// @param b_vec Right-hand-side vector, 𝒃.
   /// @param any_op Operator to build the preconditioner upon.
-  virtual void Build(const Vector& x_vec, const Vector& b_vec,
+  virtual void build(const Vector& x_vec, const Vector& b_vec,
                      const Operator<Vector>& any_op) {}
+
+  virtual void add_secant(const Vector& y_vec, const Vector& s_vec) {}
 
 }; // class Preconditioner
 

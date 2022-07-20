@@ -65,8 +65,9 @@ public:
   /// @brief Construct a dense matrix.
   /// @{
   constexpr DenseMatrix() //
-      requires(NumRows != std::dynamic_extent &&
-               NumCols != std::dynamic_extent) = default;
+                          /*requires(NumRows != std::dynamic_extent &&
+                                   NumCols != std::dynamic_extent)*/
+      = default;
   constexpr explicit DenseMatrix(size_t num_rows) //
       requires(NumRows == std::dynamic_extent &&  //
                NumCols != std::dynamic_extent)
@@ -112,6 +113,26 @@ public:
     }
   }
 
+  constexpr void assign(size_t num_rows)         //
+      requires(NumRows == std::dynamic_extent && //
+               NumCols != std::dynamic_extent) {
+    num_rows_ = num_rows;
+    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+  }
+  constexpr void assign(size_t num_cols)         //
+      requires(NumRows != std::dynamic_extent && //
+               NumCols == std::dynamic_extent) {
+    num_cols_ = num_cols;
+    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+  }
+  constexpr void assign(size_t num_rows,
+                        size_t num_cols)         //
+      requires(NumRows == std::dynamic_extent && //
+               NumCols == std::dynamic_extent) {
+    num_rows_ = num_rows, num_cols_ = num_cols;
+    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+  }
+
   /// @brief Number of the matrix rows.
   constexpr auto num_rows() const noexcept {
     return num_rows_;
@@ -125,18 +146,21 @@ public:
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
   constexpr auto& operator()(size_t row_index, //
-                             size_t col_index) noexcept {
+                             size_t col_index = 0) noexcept {
     STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
                   "Matrix index out range.");
     return coeffs_[row_index * num_cols_ + col_index];
   }
   constexpr const auto& operator()(size_t row_index,
-                                   size_t col_index) const noexcept {
+                                   size_t col_index = 0) const noexcept {
     return const_cast<DenseMatrix&>(*this)(row_index, col_index);
   }
   /// @}
 
-}; // class Matrix
+}; // class DenseMatrix
+
+template<class Value, size_t NumRows = std::dynamic_extent>
+using DenseVector = DenseMatrix<Value, NumRows, 1>;
 
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(matrix auto&& mat, //

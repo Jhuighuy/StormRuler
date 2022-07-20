@@ -31,7 +31,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/LegacyTensor.hpp>
+#include <Storm/Blass/MatrixDense.hpp>
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
@@ -212,8 +212,8 @@ class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
   real_t alpha_, rho_, omega_;
-  stormVector<real_t> gamma_, gamma_bar_, gamma_bbar_, sigma_;
-  stormMatrix<real_t> tau_;
+  DenseVector<real_t> gamma_, gamma_bar_, gamma_bbar_, sigma_;
+  DenseMatrix<real_t> tau_;
   Vector r_tilde_vec_, z_vec_;
   std::vector<Vector> r_vecs_, u_vecs_;
 

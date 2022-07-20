@@ -31,7 +31,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/LegacyTensor.hpp>
+#include <Storm/Blass/MatrixDense.hpp>
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
@@ -46,8 +46,8 @@ template<VectorLike Vector, bool Flexible, bool Loose = false>
 class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
 private:
 
-  stormVector<real_t> beta_, cs_, sn_;
-  stormMatrix<real_t> H_;
+  DenseVector<real_t> beta_, cs_, sn_;
+  DenseMatrix<real_t> H_;
   std::vector<Vector> q_vecs_;
   std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
       z_vecs_;

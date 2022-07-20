@@ -136,7 +136,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
   c_hat <<= c;
   stormLinSolve2(
-      Storm::SolverType::BiCgStabL, Storm::PreconditionerType::None /*"extr"*/,
+      Storm::SolverType::Gmres, Storm::PreconditionerType::None /*"extr"*/,
       c_hat, c,
       [&](StormArray<real_t>& c_hat, const StormArray<real_t>& c_in) {
         // w_hat <<= f + 2.0 * sigma * (c_in - c) - Gamma * DIVGRAD(c_in);

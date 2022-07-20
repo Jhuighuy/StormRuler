@@ -31,7 +31,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/LegacyTensor.hpp>
+#include <Storm/Blass/MatrixDense.hpp>
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
@@ -59,8 +59,8 @@ class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
   real_t omega_;
-  stormVector<real_t> phi_, gamma_;
-  stormMatrix<real_t> mu_;
+  DenseVector<real_t> phi_, gamma_;
+  DenseMatrix<real_t> mu_;
   Vector r_vec_, v_vec_, z_vec_;
   std::vector<Vector> p_vecs_, u_vecs_, g_vecs_;
 

@@ -35,7 +35,6 @@
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
-#include <Storm/Solvers/Subspace.hpp>
 
 namespace Storm {
 
@@ -63,7 +62,7 @@ private:
   stormVector<real_t> phi_, gamma_;
   stormMatrix<real_t> mu_;
   Vector r_vec_, v_vec_, z_vec_;
-  Subspace<Vector> p_vecs_, u_vecs_, g_vecs_;
+  std::vector<Vector> p_vecs_, u_vecs_, g_vecs_;
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
@@ -102,9 +101,18 @@ real_t IdrsSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
   v_vec_.assign(x_vec, false);
   if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
 
-  p_vecs_.assign(s, x_vec, false);
-  u_vecs_.assign(s, x_vec, false);
-  g_vecs_.assign(s, x_vec, false);
+  p_vecs_.resize(s);
+  u_vecs_.resize(s);
+  g_vecs_.resize(s);
+  for (Vector& p_vec : p_vecs_) {
+    p_vec.assign(x_vec, false);
+  }
+  for (Vector& u_vec : u_vecs_) {
+    u_vec.assign(x_vec, false);
+  }
+  for (Vector& g_vec : g_vecs_) {
+    g_vec.assign(x_vec, false);
+  }
 
   // Initialize:
   // ----------------------
@@ -155,19 +163,19 @@ void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
   const bool first_iteration{this->iteration == 0};
   if (first_iteration) {
     omega_ = mu_(0, 0) = 1.0;
-    p_vecs_(0) <<= r_vec_ / phi_(0);
+    p_vecs_[0] <<= r_vec_ / phi_(0);
     for (size_t i{1}; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
-      fill_randomly(p_vecs_(i));
+      fill_randomly(p_vecs_[i]);
       for (size_t j{0}; j < i; ++j) {
         mu_(i, j) = 0.0;
-        p_vecs_(i) -= dot_product(p_vecs_(i), p_vecs_(j)) * p_vecs_(j);
+        p_vecs_[i] -= dot_product(p_vecs_[i], p_vecs_[j]) * p_vecs_[j];
       }
-      p_vecs_(i) /= norm_2(p_vecs_(i));
+      p_vecs_[i] /= norm_2(p_vecs_[i]);
     }
   } else {
     for (size_t i{0}; i < s; ++i) {
-      phi_(i) = dot_product(p_vecs_(i), r_vec_);
+      phi_(i) = dot_product(p_vecs_[i], r_vec_);
     }
   }
 
@@ -220,22 +228,22 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   //   𝒈ₖ ← 𝓐𝒖ₖ.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  v_vec_ <<= r_vec_ - gamma_(k) * g_vecs_(k);
+  v_vec_ <<= r_vec_ - gamma_(k) * g_vecs_[k];
   for (size_t i{k + 1}; i < s; ++i) {
-    v_vec_ -= gamma_(i) * g_vecs_(i);
+    v_vec_ -= gamma_(i) * g_vecs_[i];
   }
   if (right_pre) {
     std::swap(z_vec_, v_vec_);
     pre_op->mul(v_vec_, z_vec_);
   }
-  u_vecs_(k) <<= omega_ * v_vec_ + gamma_(k) * u_vecs_(k);
+  u_vecs_[k] <<= omega_ * v_vec_ + gamma_(k) * u_vecs_[k];
   for (size_t i{k + 1}; i < s; ++i) {
-    u_vecs_(k) += gamma_(i) * u_vecs_(i);
+    u_vecs_[k] += gamma_(i) * u_vecs_[i];
   }
   if (left_pre) {
-    pre_op->mul(g_vecs_(k), z_vec_, lin_op, u_vecs_(k));
+    pre_op->mul(g_vecs_[k], z_vec_, lin_op, u_vecs_[k]);
   } else {
-    lin_op.mul(g_vecs_(k), u_vecs_(k));
+    lin_op.mul(g_vecs_[k], u_vecs_[k]);
   }
 
   // Biorthogonalize the new vectors 𝒈ₖ and 𝒖ₖ:
@@ -248,9 +256,9 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // ----------------------
   for (size_t i{0}; i < k; ++i) {
     const real_t alpha{
-        math::safe_divide(dot_product(p_vecs_(i), g_vecs_(k)), mu_(i, i))};
-    u_vecs_(k) -= alpha * u_vecs_(i);
-    g_vecs_(k) -= alpha * g_vecs_(i);
+        math::safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i))};
+    u_vecs_[k] -= alpha * u_vecs_[i];
+    g_vecs_[k] -= alpha * g_vecs_[i];
   }
 
   // Compute the new column of 𝜇:
@@ -260,7 +268,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
   for (size_t i{k}; i < s; ++i) {
-    mu_(i, k) = dot_product(p_vecs_(i), g_vecs_(k));
+    mu_(i, k) = dot_product(p_vecs_[i], g_vecs_[k]);
   }
 
   // Update the solution and the residual:
@@ -270,8 +278,8 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
   const real_t beta{math::safe_divide(phi_(k), mu_(k, k))};
-  x_vec += beta * u_vecs_(k);
-  r_vec_ -= beta * g_vecs_(k);
+  x_vec += beta * u_vecs_[k];
+  r_vec_ -= beta * g_vecs_[k];
 
   // Update 𝜑:
   // ----------------------

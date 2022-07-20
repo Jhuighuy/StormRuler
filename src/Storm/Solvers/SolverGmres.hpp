@@ -35,7 +35,6 @@
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
-#include <Storm/Solvers/Subspace.hpp>
 
 namespace Storm {
 
@@ -49,8 +48,9 @@ private:
 
   stormVector<real_t> beta_, cs_, sn_;
   stormMatrix<real_t> H_;
-  Subspace<Vector> q_vecs_;
-  Subspace<Vector, Flexible ? std::dynamic_extent : 1> z_vecs_;
+  std::vector<Vector> q_vecs_;
+  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
+      z_vecs_;
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
@@ -141,12 +141,14 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
   cs_.assign(m), sn_.assign(m);
   H_.assign(m + 1, m);
 
-  q_vecs_.assign(m + 1, x_vec, false);
+  q_vecs_.resize(m + 1);
+  for (Vector& q_vec : q_vecs_) {
+    q_vec.assign(x_vec, false);
+  }
   if (pre_op != nullptr) {
-    if constexpr (Flexible) {
-      z_vecs_.assign(m, x_vec, false);
-    } else {
-      z_vecs_.assign(x_vec, false);
+    if constexpr (Flexible) { z_vecs_.resize(m); }
+    for (Vector& z_vec : z_vecs_) {
+      z_vec.assign(x_vec, false);
     }
   }
 
@@ -165,13 +167,13 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
   // 𝛽₀ ← ‖𝒒₀‖,
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
-  lin_op.Residual(q_vecs_(0), b_vec, x_vec);
+  lin_op.Residual(q_vecs_[0], b_vec, x_vec);
   if (left_pre) {
-    std::swap(z_vecs_(0), q_vecs_(0));
-    pre_op->mul(q_vecs_(0), z_vecs_(0));
+    std::swap(z_vecs_[0], q_vecs_[0]);
+    pre_op->mul(q_vecs_[0], z_vecs_[0]);
   }
-  beta_(0) = norm_2(q_vecs_(0));
-  q_vecs_(0) /= beta_(0);
+  beta_(0) = norm_2(q_vecs_[0]);
+  q_vecs_[0] /= beta_(0);
 
   return beta_(0);
 
@@ -195,13 +197,13 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
   // 𝛽₀ ← ‖𝒒₀‖,
   // 𝒒₀ ← 𝒒₀/𝛽₀.
   // ----------------------
-  lin_op.Residual(q_vecs_(0), b_vec, x_vec);
+  lin_op.Residual(q_vecs_[0], b_vec, x_vec);
   if (left_pre) {
-    std::swap(z_vecs_(0), q_vecs_(0));
-    pre_op->mul(q_vecs_(0), z_vecs_(0));
+    std::swap(z_vecs_[0], q_vecs_[0]);
+    pre_op->mul(q_vecs_[0], z_vecs_[0]);
   }
-  beta_(0) = norm_2(q_vecs_(0));
-  q_vecs_(0) /= beta_(0);
+  beta_(0) = norm_2(q_vecs_[0]);
+  q_vecs_[0] /= beta_(0);
 
 } // BaseGmresSolver_::inner_init
 
@@ -237,19 +239,19 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
   // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
   // ----------------------
   if (left_pre) {
-    pre_op->mul(q_vecs_(k + 1), z_vecs_(0), lin_op, q_vecs_(k));
+    pre_op->mul(q_vecs_[k + 1], z_vecs_[0], lin_op, q_vecs_[k]);
   } else if (right_pre) {
     const size_t j{Flexible ? k : 0};
-    lin_op.mul(q_vecs_(k + 1), z_vecs_(j), *pre_op, q_vecs_(k));
+    lin_op.mul(q_vecs_[k + 1], z_vecs_[j], *pre_op, q_vecs_[k]);
   } else {
-    lin_op.mul(q_vecs_(k + 1), q_vecs_(k));
+    lin_op.mul(q_vecs_[k + 1], q_vecs_[k]);
   }
   for (size_t i{0}; i <= k; ++i) {
-    H_(i, k) = dot_product(q_vecs_(k + 1), q_vecs_(i));
-    q_vecs_(k + 1) -= H_(i, k) * q_vecs_(i);
+    H_(i, k) = dot_product(q_vecs_[k + 1], q_vecs_[i]);
+    q_vecs_[k + 1] -= H_(i, k) * q_vecs_[i];
   }
-  H_(k + 1, k) = norm_2(q_vecs_(k + 1));
-  q_vecs_(k + 1) /= H_(k + 1, k);
+  H_(k + 1, k) = norm_2(q_vecs_[k + 1]);
+  q_vecs_[k + 1] /= H_(k + 1, k);
 
   // Eliminate the last element in 𝐻
   // and and update the rotation matrix:
@@ -325,19 +327,19 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
   // ----------------------
   if (!right_pre) {
     for (size_t i{0}; i <= k; ++i) {
-      x_vec += beta_(i) * q_vecs_(i);
+      x_vec += beta_(i) * q_vecs_[i];
     }
   } else if constexpr (Flexible) {
     for (size_t i{0}; i <= k; ++i) {
-      x_vec += beta_(i) * z_vecs_(i);
+      x_vec += beta_(i) * z_vecs_[i];
     }
   } else {
-    q_vecs_(0) *= beta_(0);
+    q_vecs_[0] *= beta_(0);
     for (size_t i{1}; i <= k; ++i) {
-      q_vecs_(0) += beta_(i) * q_vecs_(i);
+      q_vecs_[0] += beta_(i) * q_vecs_[i];
     }
-    pre_op->mul(z_vecs_(0), q_vecs_(0));
-    x_vec += z_vecs_(0);
+    pre_op->mul(z_vecs_[0], q_vecs_[0]);
+    x_vec += z_vecs_[0];
   }
 
 } // BaseGmresSolver_::inner_finalize

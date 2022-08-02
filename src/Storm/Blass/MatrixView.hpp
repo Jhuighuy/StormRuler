@@ -41,47 +41,50 @@
 
 namespace Storm {
 
+template<class>
+inline constexpr size_t tensor_rank{1};
+
 // clang-format off
 template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
-class MatrixViewInterface;
+class TensorViewInterface;
 // clang-format on
 
 namespace Detail_ {
   // clang-format off
   template<class T, class U>
-    requires (!std::same_as<T, MatrixViewInterface<U>>)
-  void is_derived_from_matrix_view_interface_impl_(
-      const T&, const MatrixViewInterface<U>&); // not defined
+    requires (!std::same_as<T, TensorViewInterface<U>>)
+  void is_derived_from_tensor_view_interface_impl_(
+      const T&, const TensorViewInterface<U>&); // not defined
   template<class T>
-  concept is_derived_from_matrix_view_interface_ =
-      requires(T x) { is_derived_from_matrix_view_interface_impl_(x, x); };
+  concept is_derived_from_tensor_view_interface_ =
+      requires(T x) { is_derived_from_tensor_view_interface_impl_(x, x); };
   // clang-format on
 } // namespace Detail_
 
-/// @brief Types, enabled to be a matrix view.
+/// @brief Types, enabled to be a tensor view.
 template<class T>
-inline constexpr bool enable_matrix_view_v =
-    Detail_::is_derived_from_matrix_view_interface_<T>;
+inline constexpr bool enable_tensor_view_v =
+    Detail_::is_derived_from_tensor_view_interface_<T>;
 
-/// @brief Matrix view concept.
+/// @brief Tensor view concept.
 /// @todo In order to add the `movable` constraint, we
-///   need to box the functor inside the `MapMatrixView`.
-template<class MatrixView>
-concept matrix_view =     //
-    matrix<MatrixView> && // std::movable<MatrixView> &&
-    enable_matrix_view_v<MatrixView>;
+///   need to box the functor inside the `MapTensorView`.
+template<class TensorView>
+concept tensor_view =     //
+    matrix<TensorView> && // std::movable<TensorView> &&
+    enable_tensor_view_v<TensorView>;
 
-/// @brief Matrix that can be safely casted into a matrix view.
+/// @brief Tensor that can be safely casted into a tensor view.
 // clang-format off
-template<class Matrix>
-concept viewable_matrix = matrix<Matrix> &&
-    ((matrix_view<std::remove_cvref_t<Matrix>> &&
-      std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
-     (!matrix_view<std::remove_cvref_t<Matrix>> &&
-      (std::is_lvalue_reference_v<Matrix> ||
-       std::movable<std::remove_reference_t<Matrix>>)));
+template<class Tensor>
+concept viewable_tensor = matrix<Tensor> &&
+    ((tensor_view<std::remove_cvref_t<Tensor>> &&
+      std::constructible_from<std::remove_cvref_t<Tensor>, Tensor>) ||
+     (!tensor_view<std::remove_cvref_t<Tensor>> &&
+      (std::is_lvalue_reference_v<Tensor> ||
+       std::movable<std::remove_reference_t<Tensor>>)));
 // clang-format on
 
 /// ----------------------------------------------------------------- ///
@@ -91,24 +94,24 @@ concept viewable_matrix = matrix<Matrix> &&
 template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
-class MatrixViewInterface {
+class TensorViewInterface {
   // clang-format on
 private:
 
   auto& self_() noexcept {
-    static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
-    // static_assert(matrix_view<Derived>);
+    static_assert(std::derived_from<Derived, TensorViewInterface<Derived>>);
+    // static_assert(tensor_view<Derived>);
     return static_cast<Derived&>(*this);
   }
   const auto& self_() const noexcept {
-    static_assert(std::derived_from<Derived, MatrixViewInterface<Derived>>);
-    // static_assert(matrix_view<Derived>);
+    static_assert(std::derived_from<Derived, TensorViewInterface<Derived>>);
+    // static_assert(tensor_view<Derived>);
     return static_cast<const Derived&>(*this);
   }
 
 public:
 
-  /// @brief Shape of the matrix.
+  /// @brief Shape of the tensor.
   constexpr auto shape() const noexcept {
     return Storm::shape(self_());
   }
@@ -128,31 +131,23 @@ public:
     return num_rows() * num_cols();
   }
 
-  /// @brief Get the vector coefficient at @p row_index.
+  /// @brief Get the tensor coefficient at @p row_index.
   /// @{
-  constexpr auto operator()(size_t row_index) noexcept -> decltype(auto) {
-    return self_()(row_index, 0);
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) noexcept
+      -> decltype(auto) {
+    return self_()(STORM_FORWARD_(indices)...);
   }
-  constexpr auto operator()(size_t row_index) const noexcept -> decltype(auto) {
-    return self_()(row_index, 0);
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) const noexcept
+      -> decltype(auto) {
+    return self_()(STORM_FORWARD_(indices)...);
   }
   /// @}
 
-  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
-  /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
-      -> decltype(auto) {
-    return self_()(row_index, col_index);
-  }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
-      -> decltype(auto) {
-    return self_()(row_index, col_index);
-  }
-  /// @}
+}; // class TensorViewInterface
 
-}; // class MatrixViewInterface
-
-/// @name Matrix views.
+/// @name Tensor views.
 /// @{
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -161,118 +156,123 @@ public:
 /// @{
 
 /// ----------------------------------------------------------------- ///
-/// @brief Matrix reference view.
+/// @brief Tensor reference view.
 /// ----------------------------------------------------------------- ///
-template<matrix Matrix>
-class MatrixRefView : public MatrixViewInterface<MatrixRefView<Matrix>> {
+template<matrix Tensor>
+class TensorRefView : public TensorViewInterface<TensorRefView<Tensor>> {
 private:
 
-  Matrix* mat_;
+  Tensor* p_ten_;
 
-  static void funс_(Matrix&); // not defined
-  static void funс_(Matrix&&) = delete;
+  static void funс_(Tensor&); // not defined
+  static void funс_(Tensor&&) = delete;
 
 public:
 
   /// @brief Construct a matrix reference view.
   // clang-format off
-  template<Detail_::different_from_<MatrixRefView> OtherMatrix>
-    requires std::convertible_to<OtherMatrix, Matrix&> &&
-             requires { funс_(std::declval<OtherMatrix>()); }
-  constexpr MatrixRefView(OtherMatrix&& mat) noexcept 
-      : mat_{std::addressof(static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
-  // clang-format on
+  template<Detail_::different_from_<TensorRefView> OtherTensor>
+    requires std::convertible_to<OtherTensor, Tensor&> &&
+        requires { funс_(std::declval<OtherTensor>()); }
+  constexpr TensorRefView(OtherTensor&& ten) noexcept 
+      : p_ten_{std::addressof(static_cast<Tensor&>(std::forward<OtherTensor>(ten)))} {
+    // clang-format on
+  }
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
-    return Storm::shape(*mat_);
+    return Storm::shape(*p_ten_);
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) noexcept
       -> decltype(auto) {
-    return (*mat_)(row_index, col_index);
+    return (*p_ten_)(STORM_FORWARD_(indices)...);
   }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) const noexcept
       -> decltype(auto) {
-    return std::as_const(*mat_)(row_index, col_index);
+    return std::as_const(*p_ten_)(STORM_FORWARD_(indices)...);
   }
   /// @}
 
-}; // class MatrixRefView
+}; // class TensorRefView
 
 /// ----------------------------------------------------------------- ///
-/// @brief Matrix owning view.
+/// @brief Tensor owning view.
 /// ----------------------------------------------------------------- ///
 // clang-format off
-template<matrix Matrix>
-  requires std::movable<Matrix>
-class MatrixOwningView : public MatrixViewInterface<MatrixOwningView<Matrix>> {
+template<matrix Tensor>
+  requires std::movable<Tensor>
+class TensorOwningView : public TensorViewInterface<TensorOwningView<Tensor>> {
   // clang-format on
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_{};
+  STORM_NO_UNIQUE_ADDRESS_ Tensor ten_{};
 
 public:
 
   /// @brief Construct an owning view.
-  constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
+  constexpr TensorOwningView(Tensor&& ten) noexcept : ten_{std::move(ten)} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
-    return Storm::shape(mat_);
+    return Storm::shape(ten_);
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   /// @{
-  constexpr auto operator()(size_t row_index, size_t col_index) noexcept
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) noexcept
       -> decltype(auto) {
-    return mat_(row_index, col_index);
+    return ten_(STORM_FORWARD_(indices)...);
   }
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) const noexcept
       -> decltype(auto) {
-    return mat_(row_index, col_index);
+    return ten_(STORM_FORWARD_(indices)...);
   }
   /// @}
 
-}; // class MatrixOwningView
+}; // class TensorOwningView
 
-template<class Matrix>
-MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
+template<class Tensor>
+TensorRefView(Tensor&) -> TensorRefView<Tensor>;
 
 namespace Detail_ {
   // clang-format off
-  template<class Matrix>
-  concept matrix_ref_viewable_ = 
-      requires { MatrixRefView{std::declval<Matrix>()}; };
-  template<class Matrix>
-  concept matrix_ownable_ = 
-      requires { MatrixOwningView{std::declval<Matrix>()}; };
+  template<class Tensor>
+  concept tensor_ref_viewable_ = 
+      requires { TensorRefView{std::declval<Tensor>()}; };
+  template<class Tensor>
+  concept tensor_ownable_ = 
+      requires { TensorOwningView{std::declval<Tensor>()}; };
   // clang-format on
 } // namespace Detail_
 
-/// @brief Forward the viewable matrix as a matrix view.
+/// @brief Forward the viewable tensor as a tensor view.
 // clang-format off
-template<viewable_matrix Matrix>
-  requires matrix_view<std::decay_t<Matrix>> || 
-           Detail_::matrix_ref_viewable_<Matrix> || 
-           Detail_::matrix_ownable_<Matrix>
-constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept {
+template<viewable_tensor Tensor>
+  requires tensor_view<std::decay_t<Tensor>> || 
+           Detail_::tensor_ref_viewable_<Tensor> || 
+           Detail_::tensor_ownable_<Tensor>
+constexpr auto forward_as_tensor_view(Tensor&& ten) noexcept {
   // clang-format on
-  if constexpr (matrix_view<std::decay_t<Matrix>>) {
-    return std::forward<Matrix>(mat);
-  } else if constexpr (Detail_::matrix_ref_viewable_<Matrix>) {
-    return MatrixRefView{std::forward<Matrix>(mat)};
-  } else if constexpr (Detail_::matrix_ownable_<Matrix>) {
-    return MatrixOwningView{std::forward<Matrix>(mat)};
+  if constexpr (tensor_view<std::decay_t<Tensor>>) {
+    return std::forward<Tensor>(ten);
+  } else if constexpr (Detail_::tensor_ref_viewable_<Tensor>) {
+    return TensorRefView{std::forward<Tensor>(ten)};
+  } else if constexpr (Detail_::tensor_ownable_<Tensor>) {
+    return TensorOwningView{std::forward<Tensor>(ten)};
   }
 }
 
-/// @brief Suitable matrix view type for a vieable matrix.
-template<viewable_matrix Matrix>
-using forward_as_matrix_view_t =
-    decltype(forward_as_matrix_view(std::declval<Matrix>()));
+/// @brief Suitable tensor view type for a viewable tensor.
+template<viewable_tensor Tensor>
+using forward_as_tensor_view_t =
+    decltype(forward_as_tensor_view(std::declval<Tensor>()));
 
 /// @} // Forwarding views.
 
@@ -282,14 +282,14 @@ using forward_as_matrix_view_t =
 /// @{
 
 /// ----------------------------------------------------------------- ///
-/// @brief Matrix generating view.
+/// @brief Tensor generating view.
 /// ----------------------------------------------------------------- ///
 // clang-format off
 template<matrix_shape Shape, std::regular_invocable<size_t, size_t> Func>
   requires std::is_object_v<Shape> && std::is_object_v<Func> &&
            Detail_::can_reference_<std::invoke_result_t<Func, size_t, size_t>>
-class GenerateMatrixView :
-  public MatrixViewInterface<GenerateMatrixView<Shape, Func>> {
+class GenerateTensorView :
+  public TensorViewInterface<GenerateTensorView<Shape, Func>> {
   // clang-format on
 private:
 
@@ -299,50 +299,50 @@ private:
 public:
 
   /// @brief Construct a generating view.
-  constexpr GenerateMatrixView(Shape shape, Func func) noexcept
+  constexpr GenerateTensorView(Shape shape, Func func) noexcept
       : shape_{shape}, func_{std::move(func)} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
     return shape_;
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(row_index < this->num_rows() &&
                   col_index < this->num_cols() && "Indices are out of range.");
     return func_(row_index, col_index);
   }
 
-}; // class GenerateMatrixView
+}; // class GenerateTensorView
 
 template<class Shape, class Func>
-GenerateMatrixView(Shape, Func) -> GenerateMatrixView<Shape, Func>;
+GenerateTensorView(Shape, Func) -> GenerateTensorView<Shape, Func>;
 
-/// @brief Generate a constant matrix with @p num_rows and @p num_cols.
+/// @brief Generate a constant tensor with @p extents.
 /// @{
 template<class Value>
-constexpr auto make_constant_matrix( //
-    std::convertible_to<size_t> auto num_rows,
-    std::convertible_to<size_t> auto num_cols, Value scal) {
-  return GenerateMatrixView(
-      std::pair(num_rows, num_cols),
-      [scal](size_t row_index, size_t col_index) { return scal; });
+constexpr auto
+make_constant_matrix(Value scal, std::convertible_to<size_t> auto... extents) {
+  return GenerateTensorView(
+      std::tuple(extents...),
+      [scal]([[maybe_unused]] std::same_as<size_t> auto... indices) {
+        return scal;
+      });
 }
-template<size_t NumRows, size_t NumCols, class Value>
+template<size_t... Extents, class Value>
 constexpr auto make_constant_matrix(Value scal) {
-  return make_constant_matrix<Value>(size_t_constant<NumRows>{}, //
-                                     size_t_constant<NumCols>{}, scal);
+  return make_constant_matrix<Value>(size_t_constant<Extents>{}..., scal);
 }
 /// @}
 
 /// @brief Generate a diagonal matrix with @p num_rows and @p num_cols.
 /// @{
-template<class Value, class Tag = void>
+template<class Value>
 constexpr auto make_diagonal_matrix( //
     std::convertible_to<size_t> auto num_rows,
     std::convertible_to<size_t> auto num_cols, Value scal) {
-  return GenerateMatrixView( //
+  return GenerateTensorView( //
       std::pair(num_rows, num_cols),
       [scal](size_t row_index, size_t col_index) {
         return row_index == col_index ? scal : Value{};
@@ -458,7 +458,7 @@ public:
 template<matrix Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
-    public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
+    public TensorViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
   // clang-format on
 private:
 
@@ -469,14 +469,14 @@ private:
 public:
 
   /// @brief Construct a matrix rows view.
-  constexpr SubmatrixView(Matrix mat, //
+  constexpr SubmatrixView(Matrix ten, //
                           RowIndices row_indices,
                           ColIndices col_indices) noexcept
-      : mat_{std::move(mat)},                 //
+      : mat_{std::move(ten)},                 //
         row_indices_{std::move(row_indices)}, //
         col_indices_{std::move(col_indices)} {}
 
-  /// @copydoc MatrixViewInterface::num_rows
+  /// @copydoc TensorViewInterface::num_rows
   /// @{
   // clang-format off
   constexpr auto num_rows() const noexcept 
@@ -489,7 +489,7 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::num_cols
+  /// @copydoc TensorViewInterface::num_cols
   /// @{
   // clang-format off
   constexpr auto num_cols() const noexcept 
@@ -502,12 +502,12 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_rows(), num_cols());
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   /// @{
   constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -523,84 +523,91 @@ public:
 
 template<class Matrix, class RowIndices, class ColIndices>
 SubmatrixView(Matrix&&, RowIndices, ColIndices)
-    -> SubmatrixView<forward_as_matrix_view_t<Matrix>, RowIndices, ColIndices>;
+    -> SubmatrixView<forward_as_tensor_view_t<Matrix>, RowIndices, ColIndices>;
 
-/// @brief Select the matrix @p mat rows with @p row_indices view.
+/// @brief Select the matrix @p ten rows with @p row_indices view.
 constexpr auto
-select_rows(viewable_matrix auto&& mat,
+select_rows(viewable_tensor auto&& ten,
             std::convertible_to<size_t> auto... row_indices) noexcept {
-  STORM_ASSERT_((static_cast<size_t>(row_indices) < mat.num_rows()) && ... &&
+  STORM_ASSERT_((static_cast<size_t>(row_indices) < ten.num_rows()) && ... &&
                 "Row indices are out of range.");
   return SubmatrixView(
-      STORM_FORWARD_(mat),
+      STORM_FORWARD_(ten),
       SelectedIndices(std::array{static_cast<size_t>(row_indices)...}),
       AllIndices{});
 }
 
-/// @brief Select the matrix @p mat columns with @p col_index view.
+/// @brief Select the matrix @p ten columns with @p col_index view.
 constexpr auto
-select_cols(viewable_matrix auto&& mat,
+select_cols(viewable_tensor auto&& ten,
             std::convertible_to<size_t> auto... col_indices) noexcept {
-  STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
+  STORM_ASSERT_((static_cast<size_t>(col_indices) < ten.num_cols()) && ... &&
                 "Columns indices are out of range.");
   return SubmatrixView(
-      STORM_FORWARD_(mat), //
+      STORM_FORWARD_(ten), //
       AllIndices{},
       SelectedIndices(std::array{static_cast<size_t>(col_indices)...}));
 }
 
-/// @brief Slice the matrix @p mat rows from index @p rows_from
+/// @brief Slice the matrix @p ten rows from index @p rows_from
 ///   to index @p rows_to (not including) with a stride @p row_stride view.
 /// @{
-constexpr auto slice_rows(viewable_matrix auto&& mat,
+constexpr auto slice_rows(viewable_tensor auto&& ten,
                           std::convertible_to<size_t> auto rows_from,
                           std::convertible_to<size_t> auto rows_to,
                           std::convertible_to<size_t> auto row_stride =
                               size_t_constant<1>{}) noexcept {
   STORM_ASSERT_(rows_from < rows_to &&
-                static_cast<size_t>(rows_to) <= mat.num_rows() &&
+                static_cast<size_t>(rows_to) <= ten.num_rows() &&
                 "Invalid row range.");
-  return SubmatrixView(STORM_FORWARD_(mat),
+  return SubmatrixView(STORM_FORWARD_(ten),
                        SlicedIndices(rows_from, rows_to, row_stride),
                        AllIndices{});
 }
 template<size_t RowsFrom, size_t RowsTo, size_t RowStride = 1>
-constexpr auto slice_rows(viewable_matrix auto&& mat) {
-  return slice_rows(STORM_FORWARD_(mat), size_t_constant<RowsFrom>{},
+constexpr auto slice_rows(viewable_tensor auto&& ten) {
+  return slice_rows(STORM_FORWARD_(ten), size_t_constant<RowsFrom>{},
                     size_t_constant<RowsTo>{}, size_t_constant<RowStride>{});
 }
 /// @}
 
-/// @brief Slice the matrix @p mat columns from index @p cols_from
+/// @brief Slice the matrix @p ten columns from index @p cols_from
 ///   to index @p cols_to (not including) with a stride @p col_stride view.
 /// @{
-constexpr auto slice_cols(viewable_matrix auto&& mat,
+constexpr auto slice_cols(viewable_tensor auto&& ten,
                           std::convertible_to<size_t> auto cols_from,
                           std::convertible_to<size_t> auto cols_to,
                           std::convertible_to<size_t> auto col_stride =
                               size_t_constant<1>{}) noexcept {
   STORM_ASSERT_(cols_from < cols_to &&
-                static_cast<size_t>(cols_to) <= mat.num_cols() &&
+                static_cast<size_t>(cols_to) <= ten.num_cols() &&
                 "Invalid column range.");
-  return SubmatrixView(STORM_FORWARD_(mat), //
+  return SubmatrixView(STORM_FORWARD_(ten), //
                        AllIndices{},
                        SlicedIndices(cols_from, cols_to, col_stride));
 }
 template<size_t ColsFrom, size_t ColsTo, size_t ColStride = 1>
-constexpr auto slice_cols(viewable_matrix auto&& mat) {
-  return slice_cols(STORM_FORWARD_(mat), size_t_constant<ColsFrom>{},
+constexpr auto slice_cols(viewable_tensor auto&& ten) {
+  return slice_cols(STORM_FORWARD_(ten), size_t_constant<ColsFrom>{},
                     size_t_constant<ColsTo>{}, size_t_constant<ColStride>{});
 }
 /// @}
 
-/// @todo Implement me!
-constexpr auto diag(viewable_matrix auto&& mat) noexcept;
+constexpr auto slice(viewable_tensor auto&& ten, //
+                     std::vector<size_t> rows, size_t cols = 0) noexcept {
+  return select_cols(
+      slice_rows(STORM_FORWARD_(ten), rows[0], rows[1], size_t_constant<1>{}),
+      cols);
+}
 
 /// @todo Implement me!
-constexpr auto lower_triangle(viewable_matrix auto&& mat) noexcept;
+constexpr auto diag(viewable_tensor auto&& ten) noexcept;
 
 /// @todo Implement me!
-constexpr auto upper_triangle(viewable_matrix auto&& mat) noexcept;
+constexpr auto lower_triangle(viewable_tensor auto&& ten) noexcept;
+
+/// @todo Implement me!
+constexpr auto upper_triangle(viewable_tensor auto&& ten) noexcept;
 
 /// @} // Slicing views.
 
@@ -610,131 +617,131 @@ constexpr auto upper_triangle(viewable_matrix auto&& mat) noexcept;
 /// @{
 
 /// ----------------------------------------------------------------- ///
-/// @brief Component-wise product of function to matrices view.
+/// @brief Coefficient-wise product of function to tensor view.
 /// ----------------------------------------------------------------- ///
 // clang-format off
-template<std::copy_constructible Func, matrix... Matrices>
+template<std::copy_constructible Func, matrix... Tensors>
   requires std::is_object_v<Func> &&
-           std::regular_invocable<Func, matrix_reference_t<Matrices>...> &&
+           std::regular_invocable<Func, matrix_reference_t<Tensors>...> &&
            Detail_::can_reference_<
-              std::invoke_result_t<Func, matrix_reference_t<Matrices>...>>
-class MapMatrixView :
-    public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
+              std::invoke_result_t<Func, matrix_reference_t<Tensors>...>>
+class MapTensorView :
+    public TensorViewInterface<MapTensorView<Func, Tensors...>> {
   // clang-format on
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ std::tuple<Matrices...> mats_;
+  STORM_NO_UNIQUE_ADDRESS_ std::tuple<Tensors...> tens_;
 
 public:
 
   /// @brief Construct a map view.
-  constexpr MapMatrixView(Func func, Matrices... mats) noexcept
-      : func_{std::move(func)}, mats_{std::move(mats)...} {}
+  constexpr MapTensorView(Func func, Tensors... tens) noexcept
+      : func_{std::move(func)}, tens_{std::move(tens)...} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
-    return Storm::shape(std::get<0>(mats_));
+    return Storm::shape(std::get<0>(tens_));
   }
 
-  /// @copydoc MatrixViewInterface::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  /// @copydoc TensorViewInterface::operator()
+  constexpr auto
+  operator()(std::convertible_to<size_t> auto&&... indices) const noexcept
       -> decltype(auto) {
     return std::apply(
-        [&](const auto&... mats) {
-          return func_(mats(row_index, col_index)...);
+        [&](const auto&... tens) {
+          return func_(tens(STORM_FORWARD_(indices)...)...);
         },
-        mats_);
+        tens_);
   }
 
-}; // class MapMatrixView
+}; // class MapTensorView
 
-template<class Func, class... Matrices>
-MapMatrixView(Func, Matrices&&...)
-    -> MapMatrixView<Func, forward_as_matrix_view_t<Matrices>...>;
+template<class Func, class... Tensors>
+MapTensorView(Func, Tensors&&...)
+    -> MapTensorView<Func, forward_as_tensor_view_t<Tensors>...>;
 
-/// @brief Make a component-wise product of function @p func
-///   to matrices @p mat1, @p mats view.
+/// @brief Make a coefficient-wise product of function @p func
+///   to tensors @p ten1, @p tens.
 constexpr auto map(auto func, //
-                   viewable_matrix auto&& mat1,
-                   viewable_matrix auto&&... mats) noexcept {
-  STORM_ASSERT_(((shape(mat1) == shape(mats)) && ...) &&
-                "Shapes of the matrix arguments should be the same.");
-  return MapMatrixView(func, STORM_FORWARD_(mat1), STORM_FORWARD_(mats)...);
+                   viewable_tensor auto&& ten1,
+                   viewable_tensor auto&&... tens) noexcept {
+  STORM_ASSERT_((shape(ten1) == shape(tens)) && ... &&
+                "Shapes of the tensor arguments should be the same.");
+  return MapTensorView(func, STORM_FORWARD_(ten1), STORM_FORWARD_(tens)...);
 }
 
-/// @brief "+" the matrix @p mat.
-constexpr auto operator+(viewable_matrix auto&& mat) noexcept {
-  return map([](auto&& m) { return +STORM_FORWARD_(m); }, STORM_FORWARD_(mat));
+/// @brief "+" the tensor @p ten.
+constexpr auto operator+(viewable_tensor auto&& ten) noexcept {
+  return map([](auto&& t) { return +STORM_FORWARD_(t); }, STORM_FORWARD_(ten));
 }
 
-/// @brief Negate the matrix @p mat.
-constexpr auto operator-(viewable_matrix auto&& mat) noexcept {
-  return map(std::negate{}, STORM_FORWARD_(mat));
+/// @brief Negate the tensor @p ten.
+constexpr auto operator-(viewable_tensor auto&& ten) noexcept {
+  return map(std::negate{}, STORM_FORWARD_(ten));
 }
 
-/// @brief Multiply the matrix @p mat by a scalar @p scal.
+/// @brief Multiply the tensor @p ten by a scalar @p scal.
 /// @{
 // clang-format off
 template<class Scalar>
   requires (!matrix<Scalar>)
-constexpr auto operator*(Scalar scal, viewable_matrix auto&& mat) noexcept {
+constexpr auto operator*(Scalar scal, viewable_tensor auto&& ten) noexcept {
   // clang-format on
   return map(
-      [scal = std::move(scal)](auto&& m) { return scal * STORM_FORWARD_(m); },
-      STORM_FORWARD_(mat));
+      [scal = std::move(scal)](auto&& t) { return scal * STORM_FORWARD_(t); },
+      STORM_FORWARD_(ten));
 }
 // clang-format off
 template<class Scalar>
   requires (!matrix<Scalar>)
-constexpr auto operator*(viewable_matrix auto&& mat, Scalar scal) noexcept {
+constexpr auto operator*(viewable_tensor auto&& ten, Scalar scal) noexcept {
   // clang-format on
   return map(
-      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) * scal; },
-      STORM_FORWARD_(mat));
+      [scal = std::move(scal)](auto&& t) { return STORM_FORWARD_(t) * scal; },
+      STORM_FORWARD_(ten));
 }
 /// @}
 
-/// @brief Divide the matrix @p mat by a scalar @p scal.
+/// @brief Divide the tensor @p ten by a scalar @p scal.
 // clang-format off
 template<class Scalar>
   requires (!matrix<Scalar>)
-constexpr auto operator/(viewable_matrix auto&& mat, Scalar scal) noexcept {
+constexpr auto operator/(viewable_tensor auto&& ten, Scalar scal) noexcept {
   // clang-format on
   return map(
-      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) / scal; },
-      STORM_FORWARD_(mat));
+      [scal = std::move(scal)](auto&& t) { return STORM_FORWARD_(t) / scal; },
+      STORM_FORWARD_(ten));
 }
 
-/// @brief Add the matrices @p mat1 and @p mat2.
-constexpr auto operator+(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::plus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+/// @brief Add the tensors @p ten1 and @p ten2.
+constexpr auto operator+(viewable_tensor auto&& ten1,
+                         viewable_tensor auto&& ten2) noexcept {
+  return map(std::plus{}, STORM_FORWARD_(ten1), STORM_FORWARD_(ten2));
 }
 
-/// @brief Subtract the matrices @p mat1 and @p mat2.
-constexpr auto operator-(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::minus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+/// @brief Subtract the tensors @p ten1 and @p ten2.
+constexpr auto operator-(viewable_tensor auto&& ten1,
+                         viewable_tensor auto&& ten2) noexcept {
+  return map(std::minus{}, STORM_FORWARD_(ten1), STORM_FORWARD_(ten2));
 }
 
-/// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
-constexpr auto operator*(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::multiplies{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+/// @brief Coefficient-wise multiply the matrices @p ten1 and @p ten2.
+constexpr auto operator*(viewable_tensor auto&& ten1,
+                         viewable_tensor auto&& ten2) noexcept {
+  return map(std::multiplies{}, STORM_FORWARD_(ten1), STORM_FORWARD_(ten2));
 }
 
-/// @brief Component-wise divide the matrices @p mat1 and @p mat2.
-constexpr auto operator/(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::divides{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
+/// @brief Coefficient-wise divide the matrices @p ten1 and @p ten2.
+constexpr auto operator/(viewable_tensor auto&& ten1,
+                         viewable_tensor auto&& ten2) noexcept {
+  return map(std::divides{}, STORM_FORWARD_(ten1), STORM_FORWARD_(ten2));
 }
 
 namespace math {
 
-  /// @brief Component-wise @c abs of the matrix @p mat.
-  constexpr auto abs(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::abs(STORM_FORWARD_(m)); }, mat);
+  constexpr auto abs(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::abs(STORM_FORWARD_(t)); }, ten);
   }
 
   /// @name Power functions.
@@ -743,71 +750,63 @@ namespace math {
   // clang-format off
   template<class Scalar>
     requires (!matrix<Scalar>)
-  constexpr auto pow(viewable_matrix auto&& x_mat, Scalar y) noexcept {
+  constexpr auto pow(viewable_tensor auto&& ten_x, Scalar y) noexcept {
     // clang-format on
     return map( //
         [y = std::move(y)](auto&& x) {
           return math::pow(STORM_FORWARD_(x), y);
         },
-        STORM_FORWARD_(x_mat));
+        STORM_FORWARD_(ten_x));
   }
 
   // clang-format off
   template<class Scalar>
     requires (!matrix<Scalar>)
-  constexpr auto pow(Scalar x, viewable_matrix auto&& y_mat) noexcept {
+  constexpr auto pow(Scalar x, viewable_tensor auto&& ten_y) noexcept {
     // clang-format on
     return map( //
         [x = std::move(x)](auto&& y) {
           return math::pow(x, STORM_FORWARD_(y));
         },
-        STORM_FORWARD_(y_mat));
+        STORM_FORWARD_(ten_y));
   }
 
-  /// @brief Component-wise @c atan2 of the matriсes @p x_mat and @p y_mat.
-  constexpr auto pow(viewable_matrix auto&& x_mat,
-                     viewable_matrix auto&& y_mat) noexcept {
+  constexpr auto pow(viewable_tensor auto&& ten_x,
+                     viewable_tensor auto&& ten_y) noexcept {
     return map(
         [](auto&& x, auto&& y) {
           return math::pow(STORM_FORWARD_(x), STORM_FORWARD_(y));
         },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
+        STORM_FORWARD_(ten_x), STORM_FORWARD_(ten_y));
   }
 
-  /// @brief Component-wise @c sqrt of the matrix @p mat.
-  constexpr auto sqrt(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sqrt(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto sqrt(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::sqrt(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c cbrt of the matrix @p mat.
-  constexpr auto cbrt(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cbrt(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto cbrt(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::cbrt(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c hypot of the matriсes
-  ///   @p x_mat and @p y_mat.
-  constexpr auto hypot(viewable_matrix auto&& x_mat,
-                       viewable_matrix auto&& y_mat) noexcept {
+  constexpr auto hypot(viewable_tensor auto&& ten_x,
+                       viewable_tensor auto&& ten_y) noexcept {
     return map(
         [](auto&& x, auto&& y) {
           return math::hypot(STORM_FORWARD_(x), STORM_FORWARD_(y));
         },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
+        STORM_FORWARD_(ten_x), STORM_FORWARD_(ten_y));
   }
-
-  /// @brief Component-wise @c hypot of the matriсes
-  ///   @p x_mat, @p y_mat and @p y_mat.
-  constexpr auto hypot(viewable_matrix auto&& x_mat,
-                       viewable_matrix auto&& y_mat,
-                       viewable_matrix auto&& z_mat) noexcept {
+  constexpr auto hypot(viewable_tensor auto&& ten_x,
+                       viewable_tensor auto&& ten_y,
+                       viewable_tensor auto&& ten_z) noexcept {
     return map(
         [](auto&& x, auto&& y, auto&& z) {
           return math::hypot( //
               STORM_FORWARD_(x), STORM_FORWARD_(y), STORM_FORWARD_(z));
         },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat), STORM_FORWARD_(z_mat));
+        STORM_FORWARD_(ten_x), STORM_FORWARD_(ten_y), STORM_FORWARD_(ten_z));
   }
 
   /// @} // Power functions.
@@ -815,34 +814,29 @@ namespace math {
   /// @name Exponential functions.
   /// @{
 
-  /// @brief Component-wise @c exp of the matrix @p mat.
-  constexpr auto exp(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::exp(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto exp(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::exp(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c exp2 of the matrix @p mat.
-  constexpr auto exp2(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::exp2(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto exp2(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::exp2(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c log of the matrix @p mat.
-  constexpr auto log(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto log(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::log(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c log2 of the matrix @p mat.
-  constexpr auto log2(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log2(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto log2(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::log2(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c log10 of the matrix @p mat.
-  constexpr auto log10(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log10(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto log10(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::log10(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
   /// @} // Exponential functions.
@@ -850,50 +844,43 @@ namespace math {
   /// @name Trigonometric functions.
   /// @{
 
-  /// @brief Component-wise @c sin of the matrix @p mat.
-  constexpr auto sin(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sin(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto sin(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::sin(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c cos of the matrix @p mat.
-  constexpr auto cos(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cos(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto cos(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::cos(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c tan of the matrix @p mat.
-  constexpr auto tan(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::tan(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto tan(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::tan(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c asin of the matrix @p mat.
-  constexpr auto asin(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::asin(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto asin(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::asin(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c acos of the matrix @p mat.
-  constexpr auto acos(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::acos(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto acos(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::acos(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c atan of the matrix @p mat.
-  constexpr auto atan(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::atan(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto atan(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::atan(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c atan2 of the matriсes @p y_mat and @p x_mat.
-  constexpr auto atan2(viewable_matrix auto&& y_mat,
-                       viewable_matrix auto&& x_mat) noexcept {
+  constexpr auto atan2(viewable_tensor auto&& ten_y,
+                       viewable_tensor auto&& ten_x) noexcept {
     return map(
         [](auto&& y, auto&& x) {
           return math::atan2(STORM_FORWARD_(y), STORM_FORWARD_(x));
         },
-        STORM_FORWARD_(y_mat), STORM_FORWARD_(x_mat));
+        STORM_FORWARD_(ten_y), STORM_FORWARD_(ten_x));
   }
 
   /// @} // Trigonometric functions.
@@ -901,40 +888,34 @@ namespace math {
   /// @name Hyperbolic functions.
   /// @{
 
-  /// @brief Component-wise @p sinh of the matrix @p mat.
-  constexpr auto sinh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sinh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto sinh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::sinh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c cosh of the matrix @p mat.
-  constexpr auto cosh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cosh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto cosh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::cosh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c tanh of the matrix @p mat.
-  constexpr auto tanh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::tanh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto tanh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::tanh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c asinh of the matrix @p mat.
-  constexpr auto asinh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::asinh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto asinh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::asinh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c acosh of the matrix @p mat.
-  constexpr auto acosh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::acosh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto acosh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::acosh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
-  /// @brief Component-wise @c atanh of the matrix @p mat.
-  constexpr auto atanh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::atanh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
+  constexpr auto atanh(viewable_tensor auto&& ten) noexcept {
+    return map([](auto&& t) { return math::atanh(STORM_FORWARD_(t)); },
+               STORM_FORWARD_(ten));
   }
 
   /// @} // Hyperbolic functions.
@@ -946,7 +927,7 @@ namespace math {
 /// ----------------------------------------------------------------- ///
 template<matrix Matrix>
 class MatrixTransposeView :
-    public MatrixViewInterface<MatrixTransposeView<Matrix>> {
+    public TensorViewInterface<MatrixTransposeView<Matrix>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -954,15 +935,15 @@ private:
 public:
 
   /// @brief Construct a matrix transpose view.
-  constexpr explicit MatrixTransposeView(Matrix mat) noexcept
-      : mat_{std::move(mat)} {}
+  constexpr explicit MatrixTransposeView(Matrix ten) noexcept
+      : mat_{std::move(ten)} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_cols(mat_), num_rows(mat_));
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   /// @{
   constexpr auto operator()(size_t row_index, size_t col_index) noexcept
       -> decltype(auto) {
@@ -978,11 +959,11 @@ public:
 
 template<class Matrix>
 MatrixTransposeView(Matrix&&)
-    -> MatrixTransposeView<forward_as_matrix_view_t<Matrix>>;
+    -> MatrixTransposeView<forward_as_tensor_view_t<Matrix>>;
 
-/// @brief Transpose the matrix @p mat.
-constexpr auto transpose(viewable_matrix auto&& mat) noexcept {
-  return MatrixTransposeView(STORM_FORWARD_(mat));
+/// @brief Transpose the matrix @p ten.
+constexpr auto transpose(viewable_tensor auto&& ten) noexcept {
+  return MatrixTransposeView(STORM_FORWARD_(ten));
 }
 
 /// ----------------------------------------------------------------- ///
@@ -990,7 +971,7 @@ constexpr auto transpose(viewable_matrix auto&& mat) noexcept {
 /// ----------------------------------------------------------------- ///
 template<matrix Matrix1, matrix Matrix2>
 class MatrixProductView :
-    public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
+    public TensorViewInterface<MatrixProductView<Matrix1, Matrix2>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
@@ -1002,12 +983,12 @@ public:
   constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2) noexcept
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @copydoc TensorViewInterface::shape
   constexpr auto shape() const noexcept {
     return std::pair(num_rows(mat1_), num_cols(mat2_));
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @copydoc TensorViewInterface::operator()
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
       -> decltype(auto) {
     const auto cross_size{num_cols(mat1_)};
@@ -1022,12 +1003,12 @@ public:
 
 template<class Matrix1, class Matrix2>
 MatrixProductView(Matrix1&&, Matrix2&&)
-    -> MatrixProductView<forward_as_matrix_view_t<Matrix1>,
-                         forward_as_matrix_view_t<Matrix2>>;
+    -> MatrixProductView<forward_as_tensor_view_t<Matrix1>,
+                         forward_as_tensor_view_t<Matrix2>>;
 
 /// @brief Multiply the matrices @p mat1 and @p mat2.
-constexpr auto matmul(viewable_matrix auto&& mat1,
-                      viewable_matrix auto&& mat2) noexcept {
+constexpr auto matmul(viewable_tensor auto&& mat1,
+                      viewable_tensor auto&& mat2) noexcept {
   STORM_ASSERT_(num_cols(mat1) == num_rows(mat2) &&
                 "The first matrix should have the same number of columns "
                 "as the second matrix has rows.");
@@ -1036,14 +1017,14 @@ constexpr auto matmul(viewable_matrix auto&& mat1,
 
 /// @} // Functional views.
 
-/// @} // Matrix views.
+/// @} // Tensor views.
 
-/// @brief Print a @p mat.
-std::ostream& operator<<(std::ostream& out, matrix auto&& mat) {
-  for (size_t row_index{0}; row_index < mat.num_rows(); ++row_index) {
+/// @brief Print a @p ten.
+std::ostream& operator<<(std::ostream& out, matrix auto&& ten) {
+  for (size_t row_index{0}; row_index < ten.num_rows(); ++row_index) {
     out << "( ";
-    for (size_t col_index{0}; col_index < mat.num_cols(); ++col_index) {
-      out << mat(row_index, col_index) << " ";
+    for (size_t col_index{0}; col_index < ten.num_cols(); ++col_index) {
+      out << ten(row_index, col_index) << " ";
     }
     out << ")" << std::endl;
   }

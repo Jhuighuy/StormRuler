@@ -38,101 +38,97 @@
 
 namespace Storm {
 
-/// ----------------------------------------------------------------- ///
-/// @brief Base class for @c GMRES, @c FGMRES,
-///   @c LGMRES and @c LFGMRES.
-/// ----------------------------------------------------------------- ///
-template<VectorLike Vector, bool Flexible, bool Loose = false>
-class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
-private:
+namespace Detail_ {
+  template<VectorLike Vector, bool Flexible, bool Loose = false>
+  class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
+  private:
 
-  DenseVector<real_t> beta_, cs_, sn_;
-  DenseMatrix<real_t> H_;
-  std::vector<Vector> q_vecs_;
-  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
-      z_vecs_;
+    DenseVector<real_t> beta_, cs_, sn_;
+    DenseMatrix<real_t> H_;
+    std::vector<Vector> q_vecs_;
+    std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
+        z_vecs_;
 
-  real_t outer_init(const Vector& x_vec, const Vector& b_vec,
-                    const Operator<Vector>& lin_op,
-                    const Preconditioner<Vector>* pre_op) override;
-
-  void inner_init(const Vector& x_vec, const Vector& b_vec,
-                  const Operator<Vector>& lin_op,
-                  const Preconditioner<Vector>* pre_op) override;
-
-  real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
-                       const Operator<Vector>& lin_op,
-                       const Preconditioner<Vector>* pre_op) override;
-
-  void inner_finalize(Vector& x_vec, const Vector& b_vec,
+    real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                       const Operator<Vector>& lin_op,
                       const Preconditioner<Vector>* pre_op) override;
 
-protected:
+    void inner_init(const Vector& x_vec, const Vector& b_vec,
+                    const Operator<Vector>& lin_op,
+                    const Preconditioner<Vector>* pre_op) override;
 
-  BaseGmresSolver_() = default;
+    real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
+                         const Operator<Vector>& lin_op,
+                         const Preconditioner<Vector>* pre_op) override;
 
-}; // class BaseGmresSolver_
+    void inner_finalize(Vector& x_vec, const Vector& b_vec,
+                        const Operator<Vector>& lin_op,
+                        const Preconditioner<Vector>* pre_op) override;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c GMRES (Generalized Minimal Residual)
-///   linear operator equation solver.
-///
-/// @c GMRES is typically more robust than the @c BiCG type solvers,
-///   but it may be slower than the @c BiCG solvers for the
-///   well-conditioned moderate sized problems.
-///
-/// @c GMRES is algebraically equivalent to @c MINRES method
-///   in the self-adjoint operator unpreconditioned case,
-///   however, the need for restarts may lead to the much slower
-///   @c GMRES convergence rate.
-///
-/// @c GMRES may be applied to the singular problems, and the square
-///   least squares problems, although, similarly to @c MINRES,
-///   convergeance to minimum norm solution is not guaranteed.
-///
-/// References:
-/// @verbatim
-/// [1] Saad, Yousef and Martin H. Schultz.
-///     “GMRES: A generalized minimal residual algorithm for solving
-///      nonsymmetric linear systems.”
-///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+  protected:
+
+    BaseGmresSolver_() = default;
+
+  }; // class BaseGmresSolver_
+} // namespace Detail_
+
+/**
+ * @brief The GMRES (Generalized Minimal Residual) linear operator equation
+ * solver.
+ *
+ * GMRES is typically more robust than the BiCG type solvers, but it may be
+ * slower than the BiCG solvers for the well-conditioned moderate sized
+ * problems.
+ *
+ * GMRES is algebraically equivalent to MINRES method in the self-adjoint
+ * operator unpreconditioned case, however, the need for restarts may lead to
+ * the much slower GMRES convergence rate.
+ *
+ * GMRES may be applied to the singular problems, and the square least squares
+ * problems, although, similarly to MINRES, convergeance to minimum norm
+ * solution is not guaranteed.
+ *
+ * References:
+ * @verbatim
+ * [1] Saad, Yousef and Martin H. Schultz.
+ *     “GMRES: A generalized minimal residual algorithm for solving nonsymmetric
+ *      linear systems.”
+ *     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
+ * @endverbatim
+ */
 template<VectorLike Vector>
-class GmresSolver final : public BaseGmresSolver_<Vector, false> {};
+class GmresSolver final : public Detail_::BaseGmresSolver_<Vector, false> {};
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c FGMRES (Flexible Generalized Minimal Residual)
-///   linear operator equation solver.
-///
-/// @c FGMRES is typically more robust than the @c BiCG type solvers,
-///   but it may be slower than the @c BiCG solvers for the
-///   well-conditioned moderate sized problems.
-///
-/// @c FGMRES does the same amount of operations per iteration
-///   as @c GMRES, but also allows usage of the variable (or flexible)
-///   preconditioners with the price of doubleing of the memory
-///   usage. For the static preconditioners, @c FGMRES requires
-///   one preconditioner-vector product less than @c GMRES.
-///   @c FGMRES supports only the right preconditioning.
-///
-/// @c FGMRES may be applied to the singular problems, and the square
-///   least squares problems, although, similarly to @c MINRES,
-///   convergeance to minimum norm solution is not guaranteed.
-///
-/// References:
-/// @verbatim
-/// [1] Saad, Yousef.
-///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
-///     SIAM J. Sci. Comput. 14 (1993): 461-469.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
+ * equation solver.
+ *
+ * FGMRES is typically more robust than the BiCG type solvers, but it may be
+ * slower than the BiCG solvers for the well-conditioned moderate sized
+ * problems.
+ *
+ * FGMRES does the same amount of operations per iteration as GMRES, but also
+ * allows usage of the variable (or flexible) preconditioners with the price of
+ * doubleing of the memory usage. For the static preconditioners, FGMRES
+ * requires one preconditioner-vector product less than GMRES.
+ * FGMRES supports only the right preconditioning.
+ *
+ * FGMRES may be applied to the singular problems, and the square least squares
+ * problems, although, similarly to MINRES, convergeance to minimum norm
+ * solution is not guaranteed.
+ *
+ * References:
+ * @verbatim
+ * [1] Saad, Yousef.
+ *     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
+ *     SIAM J. Sci. Comput. 14 (1993): 461-469.
+ * @endverbatim
+ */
 template<VectorLike Vector>
-class FgmresSolver final : public BaseGmresSolver_<Vector, true> {};
+class FgmresSolver final : public Detail_::BaseGmresSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-real_t BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
+real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
     const Vector& x_vec, const Vector& b_vec, //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
   const size_t m{this->num_inner_iterations};
@@ -180,7 +176,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 } // BaseGmresSolver_::outer_init
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-void BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
+void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
     const Vector& x_vec, const Vector& b_vec, //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
   // Force right preconditioning for the flexible GMRES.
@@ -208,7 +204,7 @@ void BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
 } // BaseGmresSolver_::inner_init
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
+real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) {
   const size_t k{this->inner_iteration};
@@ -286,7 +282,7 @@ real_t BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
 } // BaseGmresSolver_::inner_iterate
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-void BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
+void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
     Vector& x_vec, const Vector& b_vec, //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
   const size_t k{this->inner_iteration};

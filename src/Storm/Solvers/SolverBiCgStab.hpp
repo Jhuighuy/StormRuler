@@ -1,27 +1,24 @@
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person
-/// obtaining a copy of this software and associated documentation
-/// files (the "Software"), to deal in the Software without
-/// restriction, including without limitation the rights  to use,
-/// copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the
-/// Software is furnished to do so, subject to the following
-/// conditions:
-///
-/// The above copyright notice and this permission notice shall be
-/// included in all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-/// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-/// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-/// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-/// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-/// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-/// OTHER DEALINGS IN THE SOFTWARE.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * Copyright (C) 2022 Oleg Butakov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #pragma once
 
@@ -38,24 +35,22 @@
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c BiCGStab (Biconjugate Gradients Stabilized)
-///   linear operator equation solver.
-///
-/// @c BiCGStab, like the other @c BiCG type solvers, requires
-///   two operator multiplications per iteration.
-///
-/// @c BiCGStab typically converges much smoother, than
-///   @c CGS. @todo Breakdowns?
-///
-/// References:
-/// @verbatim
-/// [1] Henk A. van der Vorst.
-///     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG
-///      for the Solution of Nonsymmetric Linear Systems.”
-///     SIAM J. Sci. Comput. 13 (1992): 631-644.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * @brief The BiCGStab (Biconjugate Gradients Stabilized) linear operator
+ * equation solver.
+ *
+ * BiCGStab, like the other BiCG type solvers, requires two operator
+ * multiplications per iteration. BiCGStab typically converges much smoother,
+ * than CGS.
+ *
+ * References:
+ * @verbatim
+ * [1] Henk A. van der Vorst.
+ *     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the
+ *      Solution of Nonsymmetric Linear Systems.”
+ *     SIAM J. Sci. Comput. 13 (1992): 631-644.
+ * @endverbatim
+ */
 template<VectorLike Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
@@ -192,21 +187,21 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
 
 } // BiCgStabSolver::iterate
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c BiCGStab(l) (Biconjugate Gradients Stabilized)
-///   linear operator equation solver.
-///
-/// @c BiCGStab(l), like the other @c BiCG type solvers, requires
-///   two operator multiplications per iteration.
-///
-/// References:
-/// @verbatim
-/// [1] Gerard L. G. Sleijpen and Diederik R. Fokkema.
-///     “BiCGStab(l) for Linear Equations involving
-///      Unsymmetric Matrices with Complex Spectrum.”
-///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * @brief The BiCGStab(l) (Biconjugate Gradients Stabilized)
+ *   linear operator equation solver.
+ *
+ * BiCGStab(l), like the other BiCG type solvers, requires two operator
+ * multiplications per iteration.
+ *
+ * References:
+ * @verbatim
+ * [1] Gerard L. G. Sleijpen and Diederik R. Fokkema.
+ *     “BiCGStab(l) for Linear Equations involving Unsymmetric Matrices with
+ *     Complex Spectrum.”
+ *     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
+ * @endverbatim
+ */
 template<VectorLike Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:

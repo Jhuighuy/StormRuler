@@ -1,27 +1,24 @@
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person
-/// obtaining a copy of this software and associated documentation
-/// files (the "Software"), to deal in the Software without
-/// restriction, including without limitation the rights  to use,
-/// copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the
-/// Software is furnished to do so, subject to the following
-/// conditions:
-///
-/// The above copyright notice and this permission notice shall be
-/// included in all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-/// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-/// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-/// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-/// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-/// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-/// OTHER DEALINGS IN THE SOFTWARE.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * Copyright (C) 2022 Oleg Butakov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #pragma once
 
@@ -38,22 +35,22 @@
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @brief The @c IDR(s) (Induced Dimension Reduction)
-///   linear operator equation solver.
-///
-/// References:
-/// @verbatim
-/// [1] Peter Sonneveld, Martin B. van Gijzen.
-///     “IDR(s): A Family of Simple and Fast Algorithms for Solving
-///      Large Nonsymmetric Systems of Linear Equations.”
-///     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
-/// [2] Martin B. van Gijzen, Peter Sonneveld.
-///     “Algorithm 913: An Elegant IDR(s) Variant that Efficiently
-///      Exploits Biorthogonality Properties.”
-///     ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
-/// @endverbatim
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/**
+ * @brief The IDR(s) (Induced Dimension Reduction) linear operator equation
+ * solver.
+ *
+ * References:
+ * @verbatim
+ * [1] Peter Sonneveld, Martin B. van Gijzen.
+ *     “IDR(s): A Family of Simple and Fast Algorithms for Solving Large
+ *      Nonsymmetric Systems of Linear Equations.”
+ *     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
+ * [2] Martin B. van Gijzen, Peter Sonneveld.
+ *     “Algorithm 913: An Elegant IDR(s) Variant that Efficiently Exploits
+ *      Biorthogonality Properties.”
+ *      ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
+ * @endverbatim
+ */
 template<VectorLike Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:

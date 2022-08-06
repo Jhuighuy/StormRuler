@@ -1,24 +1,22 @@
-/**
- * Copyright (C) 2022 Oleg Butakov
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+/// Copyright (C) 2022 Oleg Butakov
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -35,22 +33,20 @@
 
 namespace Storm {
 
-/**
- * @brief The IDR(s) (Induced Dimension Reduction) linear operator equation
- * solver.
- *
- * References:
- * @verbatim
- * [1] Peter Sonneveld, Martin B. van Gijzen.
- *     “IDR(s): A Family of Simple and Fast Algorithms for Solving Large
- *      Nonsymmetric Systems of Linear Equations.”
- *     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
- * [2] Martin B. van Gijzen, Peter Sonneveld.
- *     “Algorithm 913: An Elegant IDR(s) Variant that Efficiently Exploits
- *      Biorthogonality Properties.”
- *      ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
- * @endverbatim
- */
+/// @brief The IDR(s) (Induced Dimension Reduction) linear operator equation
+/// solver.
+///
+/// References:
+/// @verbatim
+/// [1] Peter Sonneveld, Martin B. van Gijzen.
+///     “IDR(s): A Family of Simple and Fast Algorithms for Solving Large
+///      Nonsymmetric Systems of Linear Equations.”
+///     SIAM J. Sci. Comput. 31 (2008): 1035-1062.
+/// [2] Martin B. van Gijzen, Peter Sonneveld.
+///     “Algorithm 913: An Elegant IDR(s) Variant that Efficiently Exploits
+///      Biorthogonality Properties.”
+///      ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
+/// @endverbatim
 template<VectorLike Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
@@ -85,10 +81,10 @@ template<VectorLike Vector>
 real_t IdrsSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
                                       const Operator<Vector>& lin_op,
                                       const Preconditioner<Vector>* pre_op) {
-  const size_t s{this->num_inner_iterations};
+  const size_t s = this->num_inner_iterations;
 
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
   phi_.assign(s);
   gamma_.assign(s);
@@ -135,7 +131,7 @@ template<VectorLike Vector>
 void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
                                     const Preconditioner<Vector>* pre_op) {
-  const size_t s{this->num_inner_iterations};
+  const size_t s = this->num_inner_iterations;
 
   // Build shadow space and initialize 𝜑:
   // ----------------------
@@ -157,21 +153,21 @@ void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
   //   𝗲𝗻𝗱 𝗳𝗼𝗿
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  const bool first_iteration{this->iteration == 0};
+  const bool first_iteration = this->iteration == 0;
   if (first_iteration) {
     omega_ = mu_(0, 0) = 1.0;
     p_vecs_[0] <<= r_vec_ / phi_(0);
-    for (size_t i{1}; i < s; ++i) {
+    for (size_t i = 1; i < s; ++i) {
       mu_(i, i) = 1.0, phi_(i) = 0.0;
       fill_randomly(p_vecs_[i]);
-      for (size_t j{0}; j < i; ++j) {
+      for (size_t j = 0; j < i; ++j) {
         mu_(i, j) = 0.0;
         p_vecs_[i] -= dot_product(p_vecs_[i], p_vecs_[j]) * p_vecs_[j];
       }
       p_vecs_[i] /= norm_2(p_vecs_[i]);
     }
   } else {
-    for (size_t i{0}; i < s; ++i) {
+    for (size_t i = 0; i < s; ++i) {
       phi_(i) = dot_product(p_vecs_[i], r_vec_);
     }
   }
@@ -182,13 +178,13 @@ template<VectorLike Vector>
 real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
                                          const Operator<Vector>& lin_op,
                                          const Preconditioner<Vector>* pre_op) {
-  const size_t s{this->num_inner_iterations};
-  const size_t k{this->inner_iteration};
+  const size_t s = this->num_inner_iterations;
+  const size_t k = this->inner_iteration;
 
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
-  const bool right_pre{(pre_op != nullptr) &&
-                       (this->pre_side == PreconditionerSide::Right)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
+  const bool right_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Right);
 
   // Compute 𝛾:
   // ----------------------
@@ -197,9 +193,9 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   /// @todo:
   /// slice(gamma_, {k, s}) =
   ///    solve(slice(mu_, {k, s}, {k, s}), slice(phi_, {k, s}));
-  for (size_t i{k}; i < s; ++i) {
+  for (size_t i = k; i < s; ++i) {
     gamma_(i) = phi_(i);
-    for (size_t j{k}; j < i; ++j) {
+    for (size_t j = k; j < i; ++j) {
       gamma_(i) -= mu_(i, j) * gamma_(j);
     }
     gamma_(i) /= mu_(i, i);
@@ -226,7 +222,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   v_vec_ <<= r_vec_ - gamma_(k) * g_vecs_[k];
-  for (size_t i{k + 1}; i < s; ++i) {
+  for (size_t i = k + 1; i < s; ++i) {
     v_vec_ -= gamma_(i) * g_vecs_[i];
   }
   if (right_pre) {
@@ -234,7 +230,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     pre_op->mul(v_vec_, z_vec_);
   }
   u_vecs_[k] <<= omega_ * v_vec_ + gamma_(k) * u_vecs_[k];
-  for (size_t i{k + 1}; i < s; ++i) {
+  for (size_t i = k + 1; i < s; ++i) {
     u_vecs_[k] += gamma_(i) * u_vecs_[i];
   }
   if (left_pre) {
@@ -251,9 +247,9 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   //   𝒈ₖ ← 𝒈ₖ - 𝛼⋅𝒈ᵢ.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (size_t i{0}; i < k; ++i) {
-    const real_t alpha{
-        math::safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i))};
+  for (size_t i = 0; i < k; ++i) {
+    const real_t alpha =
+        math::safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i));
     u_vecs_[k] -= alpha * u_vecs_[i];
     g_vecs_[k] -= alpha * g_vecs_[i];
   }
@@ -264,7 +260,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   //   𝜇ᵢₖ ← <𝒑ᵢ⋅𝒈ₖ>.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  for (size_t i{k}; i < s; ++i) {
+  for (size_t i = k; i < s; ++i) {
     mu_(i, k) = dot_product(p_vecs_[i], g_vecs_[k]);
   }
 
@@ -274,7 +270,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  const real_t beta{math::safe_divide(phi_(k), mu_(k, k))};
+  const real_t beta = math::safe_divide(phi_(k), mu_(k, k));
   x_vec += beta * u_vecs_[k];
   r_vec_ -= beta * g_vecs_[k];
 
@@ -284,7 +280,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // ----------------------
   /// @todo:
   /// slice(phi_, {k + 1, s}) -= beta * slice(mu_, {k + 1, s}, k);
-  for (size_t i{k + 1}; i < s; ++i) {
+  for (size_t i = k + 1; i < s; ++i) {
     phi_(i) -= beta * mu_(i, k);
   }
 

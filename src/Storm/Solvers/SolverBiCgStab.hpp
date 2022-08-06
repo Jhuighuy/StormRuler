@@ -1,24 +1,22 @@
-/**
- * Copyright (C) 2022 Oleg Butakov
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+/// Copyright (C) 2022 Oleg Butakov
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -35,22 +33,20 @@
 
 namespace Storm {
 
-/**
- * @brief The BiCGStab (Biconjugate Gradients Stabilized) linear operator
- * equation solver.
- *
- * BiCGStab, like the other BiCG type solvers, requires two operator
- * multiplications per iteration. BiCGStab typically converges much smoother,
- * than CGS.
- *
- * References:
- * @verbatim
- * [1] Henk A. van der Vorst.
- *     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the
- *      Solution of Nonsymmetric Linear Systems.”
- *     SIAM J. Sci. Comput. 13 (1992): 631-644.
- * @endverbatim
- */
+/// @brief The BiCGStab (Biconjugate Gradients Stabilized) linear operator
+/// equation solver.
+///
+/// BiCGStab, like the other BiCG type solvers, requires two operator
+/// multiplications per iteration. BiCGStab typically converges much smoother,
+/// than CGS.
+///
+/// References:
+/// @verbatim
+/// [1] Henk A. van der Vorst.
+///     “Bi-CGSTAB: A Fast and Smoothly Converging Variant of Bi-CG for the
+///      Solution of Nonsymmetric Linear Systems.”
+///     SIAM J. Sci. Comput. 13 (1992): 631-644.
+/// @endverbatim
 template<VectorLike Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
@@ -72,8 +68,8 @@ template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
                                     const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
   p_vec_.assign(x_vec, false);
   r_vec_.assign(x_vec, false);
@@ -108,10 +104,10 @@ template<VectorLike Vector>
 real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                        const Operator<Vector>& lin_op,
                                        const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
-  const bool right_pre{(pre_op != nullptr) &&
-                       (this->pre_side == PreconditionerSide::Right)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
+  const bool right_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Right);
 
   // Continue the iterations:
   // ----------------------
@@ -124,12 +120,12 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   //   𝒑 ← 𝒓 + 𝛽⋅(𝒑 - 𝜔⋅𝒗).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  const bool first_iteration{this->iteration == 0};
+  const bool first_iteration = this->iteration == 0;
   if (first_iteration) {
     p_vec_ <<= r_vec_;
   } else {
-    const real_t rho_bar{
-        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
+    const real_t rho_bar =
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_));
     const real_t beta{math::safe_divide(alpha_ * rho_, omega_ * rho_bar)};
     p_vec_ <<= r_vec_ + beta * (p_vec_ - omega_ * v_vec_);
   }
@@ -187,21 +183,19 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
 
 } // BiCgStabSolver::iterate
 
-/**
- * @brief The BiCGStab(l) (Biconjugate Gradients Stabilized)
- *   linear operator equation solver.
- *
- * BiCGStab(l), like the other BiCG type solvers, requires two operator
- * multiplications per iteration.
- *
- * References:
- * @verbatim
- * [1] Gerard L. G. Sleijpen and Diederik R. Fokkema.
- *     “BiCGStab(l) for Linear Equations involving Unsymmetric Matrices with
- *     Complex Spectrum.”
- *     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
- * @endverbatim
- */
+/// @brief The BiCGStab(l) (Biconjugate Gradients Stabilized)
+///   linear operator equation solver.
+///
+/// BiCGStab(l), like the other BiCG type solvers, requires two operator
+/// multiplications per iteration.
+///
+/// References:
+/// @verbatim
+/// [1] Gerard L. G. Sleijpen and Diederik R. Fokkema.
+///     “BiCGStab(l) for Linear Equations involving Unsymmetric Matrices with
+///     Complex Spectrum.”
+///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
+/// @endverbatim
 template<VectorLike Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
@@ -233,7 +227,7 @@ real_t
 BiCgStabLSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
                                     const Preconditioner<Vector>* pre_op) {
-  const size_t l{this->num_inner_iterations};
+  const size_t l = this->num_inner_iterations;
 
   gamma_.assign(l + 1);
   gamma_bar_.assign(l + 1);
@@ -282,8 +276,8 @@ real_t
 BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
                                        const Operator<Vector>& lin_op,
                                        const Preconditioner<Vector>* pre_op) {
-  const size_t l{this->num_inner_iterations};
-  const size_t j{this->inner_iteration};
+  const size_t l = this->num_inner_iterations;
+  const size_t j = this->inner_iteration;
 
   // BiCG part:
   // ----------------------
@@ -307,14 +301,14 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   //   𝒓ᵢ ← 𝒓ᵢ - 𝛼⋅𝒖ᵢ₊₁.
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  const bool first_iteration{this->iteration == 0};
+  const bool first_iteration = this->iteration == 0;
   if (first_iteration) {
     u_vecs_[0] <<= r_vecs_[0];
   } else {
-    const real_t rho_bar{
-        std::exchange(rho_, dot_product(r_tilde_vec_, r_vecs_[j]))};
-    const real_t beta{math::safe_divide(alpha_ * rho_, rho_bar)};
-    for (size_t i{0}; i <= j; ++i) {
+    const real_t rho_bar =
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vecs_[j]));
+    const real_t beta = math::safe_divide(alpha_ * rho_, rho_bar);
+    for (size_t i = 0; i <= j; ++i) {
       u_vecs_[i] <<= r_vecs_[i] - beta * u_vecs_[i];
     }
   }
@@ -324,7 +318,7 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     lin_op.mul(u_vecs_[j + 1], u_vecs_[j]);
   }
   alpha_ = math::safe_divide(rho_, dot_product(r_tilde_vec_, u_vecs_[j + 1]));
-  for (size_t i{0}; i <= j; ++i) {
+  for (size_t i = 0; i <= j; ++i) {
     r_vecs_[i] -= alpha_ * u_vecs_[i + 1];
   }
 
@@ -356,8 +350,8 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     //   𝛾̅ⱼ ← <𝒓₀⋅𝒓ⱼ>/𝜎ⱼ,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    for (size_t j{1}; j <= l; ++j) {
-      for (size_t i{1}; i < j; ++i) {
+    for (size_t j = 1; j <= l; ++j) {
+      for (size_t i = 1; i < j; ++i) {
         tau_(i, j) =
             math::safe_divide(dot_product(r_vecs_[i], r_vecs_[j]), sigma_(i));
         r_vecs_[j] -= tau_(i, j) * r_vecs_[i];
@@ -383,15 +377,15 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     omega_ = gamma_(l) = gamma_bar_(l), rho_ *= -omega_;
-    for (size_t j{l - 1}; j != 0; --j) {
+    for (size_t j = l - 1; j != 0; --j) {
       gamma_(j) = gamma_bar_(j);
-      for (size_t i{j + 1}; i <= l; ++i) {
+      for (size_t i = j + 1; i <= l; ++i) {
         gamma_(j) -= tau_(j, i) * gamma_(i);
       }
     }
-    for (size_t j{1}; j < l; ++j) {
+    for (size_t j = 1; j < l; ++j) {
       gamma_bbar_(j) = gamma_(j + 1);
-      for (size_t i{j + 1}; i < l; ++i) {
+      for (size_t i = j + 1; i < l; ++i) {
         gamma_bbar_(j) += tau_(j, i) * gamma_(i + 1);
       }
     }
@@ -410,7 +404,7 @@ BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     x_vec += gamma_(1) * r_vecs_[0];
     r_vecs_[0] -= gamma_bar_(l) * r_vecs_[l];
     u_vecs_[0] -= gamma_(l) * u_vecs_[l];
-    for (size_t j{1}; j < l; ++j) {
+    for (size_t j = 1; j < l; ++j) {
       x_vec += gamma_bbar_(j) * r_vecs_[j];
       r_vecs_[0] -= gamma_bar_(j) * r_vecs_[j];
       u_vecs_[0] -= gamma_(j) * u_vecs_[j];

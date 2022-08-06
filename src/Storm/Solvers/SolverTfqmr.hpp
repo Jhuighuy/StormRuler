@@ -1,24 +1,22 @@
-/**
- * Copyright (C) 2022 Oleg Butakov
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+/// Copyright (C) 2022 Oleg Butakov
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -57,62 +55,59 @@ namespace Detail_ {
   }; // class BaseTfqmrSolver_
 } // namespace Detail_
 
-/**
- * @brief The TFQMR (Transpose-Free Quasi-Minimal Residual) linear operator
- * equation solver.
- *
- * TFQMR, like the other BiCG type methods, normally requires two
- * operator-vector products per iteration. But, unlike the other BiCG type
- * methods, TFQMR does not implicitly contain the residual norm estimate,
- * only the rough upper bound is avariable, so at the latter iterations an extra
- * operator-vector product per iteration may be required for the explicit
- * residual estimation.
- *
- * TFQMR typically converges much smoother, than CGS and BiCGStab.
- * @todo Breakdowns?
- *
- * References:
- * @verbatim
- * [1] Freund, Roland W.
- *     “A Transpose-Free Quasi-Minimal Residual Algorithm for Non-Hermitian
- *      Linear Systems.”
- *     SIAM J. Sci. Comput. 14 (1993): 470-482.
- * [2] Freund, Roland W.
- *     “Transpose-Free Quasi-Minimal Residual Methods for Non-Hermitian Linear
- *      Systems.” (1994).
- * @endverbatim
- */
+/// @brief The TFQMR (Transpose-Free Quasi-Minimal Residual) linear operator
+/// equation solver.
+///
+/// TFQMR, like the other BiCG type methods, normally requires two
+/// operator-vector products per iteration. But, unlike the other BiCG type
+/// methods, TFQMR does not implicitly contain the residual norm estimate,
+/// only the rough upper bound is avariable, so at the latter iterations an
+/// extra operator-vector product per iteration may be required for the explicit
+/// residual estimation.
+///
+/// TFQMR typically converges much smoother, than CGS and BiCGStab.
+/// @todo Breakdowns?
+///
+/// References:
+/// @verbatim
+/// [1] Freund, Roland W.
+///     “A Transpose-Free Quasi-Minimal Residual Algorithm for Non-Hermitian
+///      Linear Systems.”
+///     SIAM J. Sci. Comput. 14 (1993): 470-482.
+/// [2] Freund, Roland W.
+///     “Transpose-Free Quasi-Minimal Residual Methods for Non-Hermitian Linear
+///      Systems.” (1994).
+/// @endverbatim
 template<VectorLike Vector>
 class TfqmrSolver final : public Detail_::BaseTfqmrSolver_<Vector, false> {};
 
-/**
- * @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
- * operator equation solver.
- *
- * TFQMR1, like the other BiCG type solvers, requires two operator-vector
- * products per iteration. Unlike TFQMR, TFQMR1 implicitly contains the residual
- * norm estimate, so no extra operator-vector products are required.
- *
- * TFQMR1 typically converges much smoother, than CGS and BiCGStab and is
- * slightly faster than TFQMR.
- * @todo Breakdowns?
- *
- * References:
- * @verbatim
- * [1] H.M Bücker,
- *     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm
- *      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
- * @endverbatim
- */
+/// @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
+/// operator equation solver.
+///
+/// TFQMR1, like the other BiCG type solvers, requires two operator-vector
+/// products per iteration. Unlike TFQMR, TFQMR1 implicitly contains the
+/// residual norm estimate, so no extra operator-vector products are required.
+///
+/// TFQMR1 typically converges much smoother, than CGS and BiCGStab and is
+/// slightly faster than TFQMR.
+/// @todo Breakdowns?
+///
+/// References:
+/// @verbatim
+/// [1] H.M Bücker,
+///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm
+///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
+/// @endverbatim
 template<VectorLike Vector>
 class Tfqmr1Solver final : public Detail_::BaseTfqmrSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
 real_t Detail_::BaseTfqmrSolver_<Vector, L1>::init(
     const Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
-    const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+    const Preconditioner<Vector>* pre_op) //
+{
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
   d_vec_.assign(x_vec, false);
   r_tilde_vec_.assign(x_vec, false);
@@ -159,11 +154,12 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::init(
 template<VectorLike Vector, bool L1>
 real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
-    const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
-  const bool right_pre{(pre_op != nullptr) &&
-                       (this->pre_side == PreconditionerSide::Right)};
+    const Preconditioner<Vector>* pre_op) //
+{
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
+  const bool right_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Right);
 
   // Continue the iterations:
   // ----------------------
@@ -192,7 +188,7 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
   //   𝒗 ← 𝒔 + 𝛽⋅𝒗.
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  const bool first_iteration{this->iteration == 0};
+  const bool first_iteration = this->iteration == 0;
   if (first_iteration) {
     if (left_pre) {
       pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
@@ -203,9 +199,9 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
     }
     v_vec_ <<= s_vec_;
   } else {
-    const real_t rho_bar{
-        std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_))};
-    const real_t beta{math::safe_divide(rho_, rho_bar)};
+    const real_t rho_bar =
+        std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_));
+    const real_t beta = math::safe_divide(rho_, rho_bar);
     v_vec_ <<= s_vec_ + beta * v_vec_;
     y_vec_ <<= u_vec_ + beta * y_vec_;
     if (left_pre) {
@@ -247,12 +243,12 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
   //   𝗲𝗻𝗱 𝗶𝗳
   // 𝗲𝗻𝗱 𝗳𝗼𝗿
   // ----------------------
-  const real_t alpha{
-      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
-  for (size_t m{0}; m <= 1; ++m) {
+  const real_t alpha =
+      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
+  for (size_t m = 0; m <= 1; ++m) {
     u_vec_ -= alpha * s_vec_;
     d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
-    const real_t omega{norm_2(u_vec_)};
+    const real_t omega = norm_2(u_vec_);
     if constexpr (L1) {
       if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
     } else {
@@ -281,7 +277,7 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
   //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  real_t tauTilde{tau_};
+  real_t tauTilde = tau_;
   if constexpr (!L1) {
     const size_t k{this->iteration};
     tauTilde *= std::sqrt(2.0 * k + 3.0);

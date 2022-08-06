@@ -1,24 +1,22 @@
-/**
- * Copyright (C) 2022 Oleg Butakov
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+/// Copyright (C) 2022 Oleg Butakov
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -34,21 +32,20 @@
 
 namespace Storm {
 
-/**
- * @brief The CGS (Conjugate Gradients Squared) linear operator equation solver.
- *
- * CGS, like the other BiCG type solvers, requires two operator multiplications
- * per iteration.
- *
- * @warning CGS convergence behavior may be very erratic.
- *
- * References:
- * @verbatim
- * [1] Sonneveld, Peter.
- *     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.”
- *     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
- * @endverbatim
- */
+/// @brief The CGS (Conjugate Gradients Squared) linear operator equation
+/// solver.
+///
+/// CGS, like the other BiCG type solvers, requires two operator multiplications
+/// per iteration.
+///
+/// @warning CGS convergence behavior may be very erratic.
+///
+/// References:
+/// @verbatim
+/// [1] Sonneveld, Peter.
+///     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.”
+///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
+/// @endverbatim
 template<VectorLike Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
@@ -70,8 +67,8 @@ template<VectorLike Vector>
 real_t CgsSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                const Operator<Vector>& lin_op,
                                const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
   p_vec_.assign(x_vec, false);
   q_vec_.assign(x_vec, false);
@@ -106,10 +103,10 @@ template<VectorLike Vector>
 real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                   const Operator<Vector>& lin_op,
                                   const Preconditioner<Vector>* pre_op) {
-  const bool left_pre{(pre_op != nullptr) &&
-                      (this->pre_side == PreconditionerSide::Left)};
-  const bool right_pre{(pre_op != nullptr) &&
-                       (this->pre_side == PreconditionerSide::Right)};
+  const bool left_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
+  const bool right_pre =
+      (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Right);
 
   // Continue the iterations:
   // ----------------------
@@ -124,14 +121,14 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   //   𝒑 ← 𝒖 + 𝛽⋅(𝒒 + 𝛽⋅𝒑).
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
-  const bool first_iteration{this->iteration == 0};
+  const bool first_iteration = this->iteration == 0;
   if (first_iteration) {
     u_vec_ <<= r_vec_;
     p_vec_ <<= u_vec_;
   } else {
-    const real_t rho_bar{
-        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_))};
-    const real_t beta{math::safe_divide(rho_, rho_bar)};
+    const real_t rho_bar =
+        std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_));
+    const real_t beta = math::safe_divide(rho_, rho_bar);
     u_vec_ <<= r_vec_ + beta * q_vec_;
     p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
   }
@@ -155,8 +152,8 @@ real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   } else {
     lin_op.mul(v_vec_, p_vec_);
   }
-  const real_t alpha{
-      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_))};
+  const real_t alpha =
+      math::safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
   q_vec_ <<= u_vec_ - alpha * v_vec_;
   v_vec_ <<= u_vec_ + q_vec_;
 

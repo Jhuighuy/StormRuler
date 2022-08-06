@@ -1,27 +1,22 @@
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
-/// Permission is hereby granted, free of charge, to any person
-/// obtaining a copy of this software and associated documentation
-/// files (the "Software"), to deal in the Software without
-/// restriction, including without limitation the rights  to use,
-/// copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the
-/// Software is furnished to do so, subject to the following
-/// conditions:
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
 ///
-/// The above copyright notice and this permission notice shall be
-/// included in all copies or substantial portions of the Software.
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
 ///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-/// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-/// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-/// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-/// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-/// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-/// OTHER DEALINGS IN THE SOFTWARE.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -72,66 +67,63 @@ namespace Detail_ {
   }; // class BaseGmresSolver_
 } // namespace Detail_
 
-/**
- * @brief The GMRES (Generalized Minimal Residual) linear operator equation
- * solver.
- *
- * GMRES is typically more robust than the BiCG type solvers, but it may be
- * slower than the BiCG solvers for the well-conditioned moderate sized
- * problems.
- *
- * GMRES is algebraically equivalent to MINRES method in the self-adjoint
- * operator unpreconditioned case, however, the need for restarts may lead to
- * the much slower GMRES convergence rate.
- *
- * GMRES may be applied to the singular problems, and the square least squares
- * problems, although, similarly to MINRES, convergeance to minimum norm
- * solution is not guaranteed.
- *
- * References:
- * @verbatim
- * [1] Saad, Yousef and Martin H. Schultz.
- *     “GMRES: A generalized minimal residual algorithm for solving nonsymmetric
- *      linear systems.”
- *     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
- * @endverbatim
- */
+/// @brief The GMRES (Generalized Minimal Residual) linear operator equation
+/// solver.
+///
+/// GMRES is typically more robust than the BiCG type solvers, but it may be
+/// slower than the BiCG solvers for the well-conditioned moderate sized
+/// problems.
+///
+/// GMRES is algebraically equivalent to MINRES method in the self-adjoint
+/// operator unpreconditioned case, however, the need for restarts may lead to
+/// the much slower GMRES convergence rate.
+///
+/// GMRES may be applied to the singular problems, and the square least squares
+/// problems, although, similarly to MINRES, convergeance to minimum norm
+/// solution is not guaranteed.
+///
+/// References:
+/// @verbatim
+/// [1] Saad, Yousef and Martin H. Schultz.
+///     “GMRES: A generalized minimal residual algorithm for solving
+///      nonsymmetric linear systems.”
+///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
+/// @endverbatim
 template<VectorLike Vector>
 class GmresSolver final : public Detail_::BaseGmresSolver_<Vector, false> {};
 
-/**
- * @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
- * equation solver.
- *
- * FGMRES is typically more robust than the BiCG type solvers, but it may be
- * slower than the BiCG solvers for the well-conditioned moderate sized
- * problems.
- *
- * FGMRES does the same amount of operations per iteration as GMRES, but also
- * allows usage of the variable (or flexible) preconditioners with the price of
- * doubleing of the memory usage. For the static preconditioners, FGMRES
- * requires one preconditioner-vector product less than GMRES.
- * FGMRES supports only the right preconditioning.
- *
- * FGMRES may be applied to the singular problems, and the square least squares
- * problems, although, similarly to MINRES, convergeance to minimum norm
- * solution is not guaranteed.
- *
- * References:
- * @verbatim
- * [1] Saad, Yousef.
- *     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
- *     SIAM J. Sci. Comput. 14 (1993): 461-469.
- * @endverbatim
- */
+/// @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
+/// equation solver.
+///
+/// FGMRES is typically more robust than the BiCG type solvers, but it may be
+/// slower than the BiCG solvers for the well-conditioned moderate sized
+/// problems.
+///
+/// FGMRES does the same amount of operations per iteration as GMRES, but also
+/// allows usage of the variable (or flexible) preconditioners with the price of
+/// doubleing of the memory usage. For the static preconditioners, FGMRES
+/// requires one preconditioner-vector product less than GMRES.
+/// FGMRES supports only the right preconditioning.
+///
+/// FGMRES may be applied to the singular problems, and the square least squares
+/// problems, although, similarly to MINRES, convergeance to minimum norm
+/// solution is not guaranteed.
+///
+/// References:
+/// @verbatim
+/// [1] Saad, Yousef.
+///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
+///     SIAM J. Sci. Comput. 14 (1993): 461-469.
+/// @endverbatim
 template<VectorLike Vector>
 class FgmresSolver final : public Detail_::BaseGmresSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
-    const Vector& x_vec, const Vector& b_vec, //
-    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
-  const size_t m{this->num_inner_iterations};
+    const Vector& x_vec, const Vector& b_vec,                             //
+    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
+{
+  const size_t m = this->num_inner_iterations;
 
   beta_.assign(m + 1);
   cs_.assign(m), sn_.assign(m);
@@ -150,8 +142,8 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 
   /// @todo Refactor without duplication a code from
   ///   inner_init method.
-  const bool left_pre{(pre_op != nullptr) && (!Flexible) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+  const bool left_pre = (pre_op != nullptr) && (!Flexible) &&
+                        (this->pre_side == PreconditionerSide::Left);
 
   // Initialize:
   // ----------------------
@@ -177,11 +169,12 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
-    const Vector& x_vec, const Vector& b_vec, //
-    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
+    const Vector& x_vec, const Vector& b_vec,                             //
+    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
+{
   // Force right preconditioning for the flexible GMRES.
-  const bool left_pre{(pre_op != nullptr) && (!Flexible) &&
-                      (this->pre_side == PreconditionerSide::Left)};
+  const bool left_pre = (pre_op != nullptr) && (!Flexible) &&
+                        (this->pre_side == PreconditionerSide::Left);
 
   // Initialize:
   // ----------------------
@@ -206,16 +199,17 @@ void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
 template<VectorLike Vector, bool Flexible, bool Loose>
 real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
-    const Preconditioner<Vector>* pre_op) {
-  const size_t k{this->inner_iteration};
+    const Preconditioner<Vector>* pre_op) //
+{
+  const size_t k = this->inner_iteration;
 
   // Force right preconditioning for the flexible GMRES.
-  const bool left_pre{
+  const bool left_pre =
       (pre_op != nullptr) &&
-      (!Flexible && (this->pre_side == PreconditionerSide::Left))};
-  const bool right_pre{
+      (!Flexible && (this->pre_side == PreconditionerSide::Left));
+  const bool right_pre =
       (pre_op != nullptr) &&
-      (Flexible || (this->pre_side == PreconditionerSide::Right))};
+      (Flexible || (this->pre_side == PreconditionerSide::Right));
 
   // Compute the new 𝒒ₖ₊₁ vector:
   // ----------------------
@@ -242,7 +236,7 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
   } else {
     lin_op.mul(q_vecs_[k + 1], q_vecs_[k]);
   }
-  for (size_t i{0}; i <= k; ++i) {
+  for (size_t i = 0; i <= k; ++i) {
     H_(i, k) = dot_product(q_vecs_[k + 1], q_vecs_[i]);
     q_vecs_[k + 1] -= H_(i, k) * q_vecs_[i];
   }
@@ -261,7 +255,7 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
   // 𝐻ₖₖ ← 𝑐𝑠ₖ⋅𝐻ₖₖ + 𝑠𝑛ₖ⋅𝐻ₖ₊₁,ₖ,
   // 𝐻ₖ₊₁,ₖ ← 𝟢.
   // ----------------------
-  for (size_t i{0}; i < k; ++i) {
+  for (size_t i = 0; i < k; ++i) {
     const real_t chi = cs_(i) * H_(i, k) + sn_(i) * H_(i + 1, k);
     H_(i + 1, k) = -sn_(i) * H_(i, k) + cs_(i) * H_(i + 1, k);
     H_(i, k) = chi;
@@ -283,19 +277,20 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
 
 template<VectorLike Vector, bool Flexible, bool Loose>
 void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
-    Vector& x_vec, const Vector& b_vec, //
-    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) {
-  const size_t k{this->inner_iteration};
+    Vector& x_vec, const Vector& b_vec,                                   //
+    const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
+{
+  const size_t k = this->inner_iteration;
 
-  const bool right_pre{
+  const bool right_pre =
       (pre_op != nullptr) &&
-      (Flexible || (this->pre_side == PreconditionerSide::Right))};
+      (Flexible || (this->pre_side == PreconditionerSide::Right));
 
   // Finalize the 𝛽-solution:
   // ----------------------
   // 𝛽₀:ₖ ← (𝐻₀:ₖ,₀:ₖ)⁻¹𝛽₀:ₖ.
   // ----------------------
-  for (size_t i{k}; i != SIZE_MAX; --i) {
+  for (size_t i = k; i != SIZE_MAX; --i) {
     for (size_t j{i + 1}; j <= k; ++j) {
       beta_(i) -= H_(i, j) * beta_(j);
     }
@@ -322,16 +317,16 @@ void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
   // 𝗲𝗻𝗱 𝗶𝗳
   // ----------------------
   if (!right_pre) {
-    for (size_t i{0}; i <= k; ++i) {
+    for (size_t i = 0; i <= k; ++i) {
       x_vec += beta_(i) * q_vecs_[i];
     }
   } else if constexpr (Flexible) {
-    for (size_t i{0}; i <= k; ++i) {
+    for (size_t i = 0; i <= k; ++i) {
       x_vec += beta_(i) * z_vecs_[i];
     }
   } else {
     q_vecs_[0] *= beta_(0);
-    for (size_t i{1}; i <= k; ++i) {
+    for (size_t i = 1; i <= k; ++i) {
       q_vecs_[0] += beta_(i) * q_vecs_[i];
     }
     pre_op->mul(z_vecs_[0], q_vecs_[0]);

@@ -34,88 +34,30 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Blass/MatrixShape.hpp>
 #include <Storm/Utils/SimdBlock.hpp>
 
 namespace Storm {
-
-/// @brief Matrix shape.
-// clang-format off
-template<class Shape>
-concept matrix_shape = 
-    requires(Shape& shape) {
-      std::tuple_size_v<Shape>;
-      requires std::derived_from<std::tuple_size<Shape>, size_t_constant<2>>;
-      { std::get<0>(shape) } -> std::convertible_to<size_t>;
-      { std::get<1>(shape) } -> std::convertible_to<size_t>;
-    };
-// clang-format on
-
-namespace Detail_ {
-  // clang-format off
-  template<class T>
-  concept has_shape_ = 
-      requires(T& x) { { x.shape() } -> matrix_shape; };
-  template<class T>
-  concept has_num_rows_ = 
-      requires(T& x) { { x.num_rows() } -> std::convertible_to<size_t>; };
-  template<class T>
-  concept has_num_cols_ = 
-      requires(T& x) { { x.num_cols() } -> std::convertible_to<size_t>; };
-  // clang-format on
-} // namespace Detail_
-
-/// @brief Get the object shape.
-// clang-format off
-template<class T>
-  requires Detail_::has_shape_<T> || Detail_::has_num_rows_<T>
-auto shape(T&& x) noexcept {
-  // clang-format on
-  if constexpr (Detail_::has_shape_<T>) {
-    return x.shape();
-  } else if constexpr (Detail_::has_num_rows_<T> && Detail_::has_num_cols_<T>) {
-    return std::pair(x.num_rows(), x.num_cols());
-  } else {
-    return std::pair(x.num_rows(), size_t_constant<1>{});
-  }
-}
-
-/// @brief Get the number of rows the object has.
-constexpr auto num_rows(auto&& x) noexcept {
-  return std::get<0>(shape(x));
-}
-
-/// @brief Get the number of columns the object has.
-constexpr auto num_cols(auto&& x) noexcept {
-  return std::get<1>(shape(x));
-}
-
-namespace Detail_ {
-  // clang-format off
-  template<class T>
-  concept has_data_ = 
-      requires(T& x) { 
-        x.data(); 
-        requires std::derived_from<
-            std::is_pointer<
-                decltype(std::declval<T>().data())>, std::true_type>;
-      };
-  // clang-format on
-} // namespace Detail_
-
-/// @brief Get the object data.
-constexpr auto data(Detail_::has_data_ auto&& x) noexcept {
-  return x.data();
-}
 
 /// @brief Matrix: has shape and two subscripts.
 // clang-format off
 template<class Matrix>
 concept matrix = 
-    requires(Matrix& mat) { { shape(mat) } -> matrix_shape; } &&
+    requires(Matrix& mat) { { mat.shape() } -> matrix_shape; } &&
     requires(Matrix& mat, size_t row_index, size_t col_index) {
       mat(row_index, col_index);
     };
 // clang-format on
+
+/// @brief Number of the matrix rows.
+constexpr auto num_rows(const matrix auto& mat) noexcept {
+  return mat.shape().num_rows();
+}
+
+/// @brief Number of the matrix columns.
+constexpr auto num_cols(const matrix auto& mat) noexcept {
+  return mat.shape().num_cols();
+}
 
 template<matrix Matrix>
 using matrix_reference_t = decltype( //

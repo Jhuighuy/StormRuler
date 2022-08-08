@@ -80,7 +80,7 @@ constexpr auto& operator/=(matrix auto&& mat1, matrix auto&& mat2) noexcept {
 /// @{
 
 constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept {
-  return mat <<= make_diagonal_matrix(mat.num_rows(), mat.num_cols(), scal);
+  return mat <<= make_diagonal_matrix(num_rows(mat), num_cols(mat), scal);
 }
 
 /// @brief Fill the matrix @p mat with a scalar @p scal.

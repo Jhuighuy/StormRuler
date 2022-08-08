@@ -142,6 +142,9 @@ public:
   constexpr auto num_cols() const noexcept {
     return num_cols_;
   }
+  auto shape() const noexcept {
+    return MatrixShape(num_rows(), num_cols());
+  }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
@@ -165,7 +168,7 @@ using DenseVector = DenseMatrix<Value, NumRows, 1>;
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(matrix auto&& mat, //
                             matrix auto&& l_mat, matrix auto&& u_mat) noexcept {
-  const auto size{mat.num_rows()};
+  const auto size{num_rows(mat)};
   fill_diag_with(l_mat, 1.0);
   fill_with(u_mat, 0.0);
   for (size_t ix{0}; ix < size; ++ix) {
@@ -187,7 +190,7 @@ constexpr void decompose_lu(matrix auto&& mat, //
 
 constexpr void inplace_solve_lu(matrix auto&& l_mat, matrix auto&& u_mat,
                                 auto& vec) {
-  const auto size{l_mat.num_rows()};
+  const auto size{num_rows(l_mat)};
   for (size_t ix{0}; ix < size; ++ix) {
     for (size_t iy{0}; iy < ix; ++iy) {
       vec(ix) -= l_mat(ix, iy) * vec(iy);
@@ -207,11 +210,11 @@ constexpr void inplace_solve_lu(matrix auto&& l_mat, matrix auto&& u_mat,
 constexpr void inplace_inverse_lu(matrix auto&& mat,
                                   matrix auto&& inv_mat) noexcept {
   using Value = std::decay_t<decltype(mat(0, 0))>;
-  DenseMatrix<Value> L(mat.num_rows(), mat.num_cols());
-  DenseMatrix<Value> U(mat.num_rows(), mat.num_cols());
+  DenseMatrix<Value> L(num_rows(mat), num_cols(mat));
+  DenseMatrix<Value> U(num_rows(mat), num_cols(mat));
   decompose_lu(mat, L, U);
   fill_diag_with(inv_mat, 1.0);
-  for (size_t iy{0}; iy < mat.num_rows(); ++iy) {
+  for (size_t iy{0}; iy < num_rows(mat); ++iy) {
     auto inv_mat_col = [&](size_t ix) -> Value& { return inv_mat(ix, iy); };
     inplace_solve_lu(L, U, inv_mat_col);
   }

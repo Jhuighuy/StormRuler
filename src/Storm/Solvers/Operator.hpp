@@ -99,6 +99,9 @@ public:
   auto num_rows() const noexcept {
     return MySize;
   }
+  auto shape() const noexcept {
+    return VectorShape{MySize};
+  }
 
   const auto& operator()(size_t i, size_t j = 0) const noexcept {
     STORM_ASSERT_(j == 0);

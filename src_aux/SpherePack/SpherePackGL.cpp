@@ -30,6 +30,7 @@
 
 #include <Storm/Base.hpp>
 #include <Storm/Blass/MatrixDense.hpp>
+#include <Storm/Blass/MatrixViewFunctional.hpp>
 
 /// @todo Change `g_view_rotation_{x|y}` to `g_view_rotation.{x|y}`
 

@@ -32,7 +32,7 @@
 
 namespace Storm {
 
-namespace Detail_ {
+namespace detail_ {
   template<VectorLike Vector, bool L1>
   class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
   private:
@@ -53,7 +53,7 @@ namespace Detail_ {
     BaseTfqmrSolver_() = default;
 
   }; // class BaseTfqmrSolver_
-} // namespace Detail_
+} // namespace detail_
 
 /// @brief The TFQMR (Transpose-Free Quasi-Minimal Residual) linear operator
 /// equation solver.
@@ -79,7 +79,7 @@ namespace Detail_ {
 ///      Systems.” (1994).
 /// @endverbatim
 template<VectorLike Vector>
-class TfqmrSolver final : public Detail_::BaseTfqmrSolver_<Vector, false> {};
+class TfqmrSolver final : public detail_::BaseTfqmrSolver_<Vector, false> {};
 
 /// @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
 /// operator equation solver.
@@ -99,10 +99,10 @@ class TfqmrSolver final : public Detail_::BaseTfqmrSolver_<Vector, false> {};
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 template<VectorLike Vector>
-class Tfqmr1Solver final : public Detail_::BaseTfqmrSolver_<Vector, true> {};
+class Tfqmr1Solver final : public detail_::BaseTfqmrSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool L1>
-real_t Detail_::BaseTfqmrSolver_<Vector, L1>::init(
+real_t detail_::BaseTfqmrSolver_<Vector, L1>::init(
     const Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {
@@ -152,7 +152,7 @@ real_t Detail_::BaseTfqmrSolver_<Vector, L1>::init(
 } // BaseTfqmrSolver_::init
 
 template<VectorLike Vector, bool L1>
-real_t Detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
+real_t detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {

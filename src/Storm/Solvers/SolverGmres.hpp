@@ -33,7 +33,7 @@
 
 namespace Storm {
 
-namespace Detail_ {
+namespace detail_ {
   template<VectorLike Vector, bool Flexible, bool Loose = false>
   class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
   private:
@@ -65,7 +65,7 @@ namespace Detail_ {
     BaseGmresSolver_() = default;
 
   }; // class BaseGmresSolver_
-} // namespace Detail_
+} // namespace detail_
 
 /// @brief The GMRES (Generalized Minimal Residual) linear operator equation
 /// solver.
@@ -90,7 +90,7 @@ namespace Detail_ {
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 template<VectorLike Vector>
-class GmresSolver final : public Detail_::BaseGmresSolver_<Vector, false> {};
+class GmresSolver final : public detail_::BaseGmresSolver_<Vector, false> {};
 
 /// @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
 /// equation solver.
@@ -116,10 +116,10 @@ class GmresSolver final : public Detail_::BaseGmresSolver_<Vector, false> {};
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 template<VectorLike Vector>
-class FgmresSolver final : public Detail_::BaseGmresSolver_<Vector, true> {};
+class FgmresSolver final : public detail_::BaseGmresSolver_<Vector, true> {};
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
+real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {
@@ -168,7 +168,7 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 } // BaseGmresSolver_::outer_init
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
+void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {
@@ -197,7 +197,7 @@ void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
 } // BaseGmresSolver_::inner_init
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
+real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {
@@ -276,7 +276,7 @@ real_t Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
 } // BaseGmresSolver_::inner_iterate
 
 template<VectorLike Vector, bool Flexible, bool Loose>
-void Detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
+void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
     Vector& x_vec, const Vector& b_vec,                                   //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {

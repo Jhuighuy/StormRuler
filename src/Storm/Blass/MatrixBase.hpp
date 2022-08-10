@@ -43,9 +43,9 @@ namespace Storm {
 // clang-format off
 template<class Matrix>
 concept matrix = 
-    requires(Matrix& mat) { { mat.shape() } -> matrix_shape; } &&
+    requires(Matrix& mat) { { mat.shape() } noexcept -> matrix_shape; } &&
     requires(Matrix& mat, size_t row_index, size_t col_index) {
-      mat(row_index, col_index);
+      { mat(row_index, col_index) } noexcept;
     };
 // clang-format on
 
@@ -62,6 +62,11 @@ constexpr auto num_cols(const matrix auto& mat) noexcept {
 template<matrix Matrix>
 using matrix_reference_t = decltype( //
     std::declval<Matrix>()(std::declval<size_t>(), std::declval<size_t>()));
+
+template<matrix Matrix>
+using const_matrix_reference_t = decltype( //
+    std::declval<std::add_const_t<Matrix>>()(std::declval<size_t>(),
+                                             std::declval<size_t>()));
 
 /// @brief Contiguous matrix: has pointer to data.
 // clang-format off

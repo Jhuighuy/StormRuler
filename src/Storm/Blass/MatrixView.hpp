@@ -43,7 +43,7 @@ template<class Derived>
 class MatrixViewInterface;
 // clang-format on
 
-namespace Detail_ {
+namespace detail_ {
   // clang-format off
   template<class T, class U>
     requires(!std::same_as<T, MatrixViewInterface<U>>)
@@ -53,12 +53,12 @@ namespace Detail_ {
   concept is_derived_from_matrix_view_interface_ =
       requires(T x) { is_derived_from_matrix_view_interface_impl_(x, x); };
   // clang-format on
-} // namespace Detail_
+} // namespace detail_
 
 /// @brief Types, enabled to be a matrix view.
 template<class T>
 inline constexpr bool enable_matrix_view_v =
-    Detail_::is_derived_from_matrix_view_interface_<T>;
+    detail_::is_derived_from_matrix_view_interface_<T>;
 
 /// @brief Matrix view concept.
 /// @todo In order to add the `movable` constraint, we
@@ -148,7 +148,7 @@ public:
 
   /// @brief Construct a matrix reference view.
   // clang-format off
-  template<Detail_::different_from_<MatrixRefView> OtherMatrix>
+  template<detail_::different_from_<MatrixRefView> OtherMatrix>
     requires std::convertible_to<OtherMatrix, Matrix&> &&
              requires { funс_(std::declval<OtherMatrix>()); }
   constexpr MatrixRefView(OtherMatrix&& mat) noexcept 
@@ -212,7 +212,7 @@ public:
 template<class Matrix>
 MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 
-namespace Detail_ {
+namespace detail_ {
   // clang-format off
   template<class Matrix>
   concept matrix_can_ref_view_ = 
@@ -221,21 +221,21 @@ namespace Detail_ {
   concept matrix_can_owning_view_ = 
       requires { MatrixOwningView{std::declval<Matrix>()}; };
   // clang-format on
-} // namespace Detail_
+} // namespace detail_
 
 /// @brief Forward the viewable matrix @p mat as a matrix view.
 // clang-format off
 template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> || 
-           Detail_::matrix_can_ref_view_<Matrix> || 
-           Detail_::matrix_can_owning_view_<Matrix>
+           detail_::matrix_can_ref_view_<Matrix> || 
+           detail_::matrix_can_owning_view_<Matrix>
 constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept {
   // clang-format on
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
-  } else if constexpr (Detail_::matrix_can_ref_view_<Matrix>) {
+  } else if constexpr (detail_::matrix_can_ref_view_<Matrix>) {
     return MatrixRefView{std::forward<Matrix>(mat)};
-  } else if constexpr (Detail_::matrix_can_owning_view_<Matrix>) {
+  } else if constexpr (detail_::matrix_can_owning_view_<Matrix>) {
     return MatrixOwningView{std::forward<Matrix>(mat)};
   }
 }
@@ -251,11 +251,11 @@ using forward_as_matrix_view_t =
 /// @{
 
 /// @brief Matrix generating view.
+/// @todo This is completely overengineered.
 // clang-format off
 template<class Shape, std::copy_constructible Func>
   requires is_matrix_shape_v<Shape> && std::is_object_v<Func> &&
-           std::regular_invocable<Func, size_t, size_t> &&
-           Detail_::can_reference_<std::invoke_result_t<Func, size_t, size_t>>
+           std::regular_invocable<Func, size_t, size_t>
 class MakeMatrixView : public MatrixViewInterface<MakeMatrixView<Shape, Func>> {
   // clang-format on
 private:
@@ -360,6 +360,7 @@ constexpr auto make_diagonal_matrix(Value diagonal,
 
 /// @} // Generating views.
 
+#pragma region NOT THAT GOOD
 /// @name Slicing views.
 /// @{
 
@@ -402,7 +403,7 @@ public:
 template<size_t Size>
 SelectedIndices(std::array<size_t, Size>) -> SelectedIndices<Size>;
 
-namespace Detail_ {
+namespace detail_ {
   constexpr static size_t range_size_(size_t from, //
                                       size_t to,   //
                                       size_t stride) noexcept {
@@ -416,7 +417,7 @@ namespace Detail_ {
     static_assert(Stride != 0 && "Stride cannot be zero.");
     return size_t_constant<(To - From) / Stride>{};
   }
-} // namespace Detail_
+} // namespace detail_
 
 /// @brief Sliced indices range.
 template<matrix_extent From, matrix_extent To, matrix_extent Stride>
@@ -433,7 +434,7 @@ public:
       : from_{from}, to_{to}, stride_{stride} {}
 
   constexpr auto size() const noexcept {
-    return Detail_::range_size_(from_, to_, stride_);
+    return detail_::range_size_(from_, to_, stride_);
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
@@ -586,441 +587,7 @@ constexpr auto lower_triangle(viewable_matrix auto&& mat) noexcept;
 constexpr auto upper_triangle(viewable_matrix auto&& mat) noexcept;
 
 /// @} // Slicing views.
-
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @name Functional views.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-/// @{
-
-/// @brief Component-wise product of function to matrices view.
-// clang-format off
-template<std::copy_constructible Func, matrix... Matrices>
-  requires std::is_object_v<Func> &&
-           std::regular_invocable<Func, matrix_reference_t<Matrices>...> &&
-           Detail_::can_reference_<
-              std::invoke_result_t<Func, matrix_reference_t<Matrices>...>>
-class MapMatrixView :
-    public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
-  // clang-format on
-private:
-
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ std::tuple<Matrices...> mats_;
-
-public:
-
-  /// @brief Construct a map view.
-  constexpr MapMatrixView(Func func, Matrices... mats) noexcept
-      : func_{std::move(func)}, mats_{std::move(mats)...} {
-    STORM_ASSERT_( //
-        std::apply(
-            [](const auto& first_mat, const auto&... rest_mats) {
-              return ((first_mat.shape() == rest_mats.shape()) && ...);
-            },
-            mats_) &&
-        "Shapes of the matrix arguments should be the same.");
-  }
-
-  /// @copydoc MatrixViewInterface::shape
-  constexpr auto shape() const noexcept {
-    return std::get<0>(mats_).shape();
-  }
-
-  /// @copydoc MatrixViewInterface::operator()
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept {
-    return std::apply(
-        [&](const Matrices&... mats) {
-          return func_(mats(row_index, col_index)...);
-        },
-        mats_);
-  }
-
-}; // class MapMatrixView
-
-template<class Func, class... Matrices>
-MapMatrixView(Func, Matrices&&...)
-    -> MapMatrixView<Func, forward_as_matrix_view_t<Matrices>...>;
-
-/// @brief Make a component-wise product of function @p func
-///   to matrices @p mats.
-constexpr auto map(auto func, viewable_matrix auto&&... mats) noexcept {
-  return MapMatrixView(func, STORM_FORWARD_(mats)...);
-}
-
-/// @brief "+" the matrix @p mat.
-constexpr auto operator+(viewable_matrix auto&& mat) noexcept {
-  return map([](auto&& m) { return +STORM_FORWARD_(m); }, STORM_FORWARD_(mat));
-}
-
-/// @brief Negate the matrix @p mat.
-constexpr auto operator-(viewable_matrix auto&& mat) noexcept {
-  return map(std::negate{}, STORM_FORWARD_(mat));
-}
-
-/// @brief Multiply the matrix @p mat by a scalar @p scal.
-/// @{
-// clang-format off
-template<class Scalar>
-  requires (!matrix<Scalar>)
-constexpr auto operator*(Scalar scal, viewable_matrix auto&& mat) noexcept {
-  // clang-format on
-  return map(
-      [scal = std::move(scal)](auto&& m) { return scal * STORM_FORWARD_(m); },
-      STORM_FORWARD_(mat));
-}
-// clang-format off
-template<class Scalar>
-  requires (!matrix<Scalar>)
-constexpr auto operator*(viewable_matrix auto&& mat, Scalar scal) noexcept {
-  // clang-format on
-  return map(
-      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) * scal; },
-      STORM_FORWARD_(mat));
-}
-/// @}
-
-/// @brief Divide the matrix @p mat by a scalar @p scal.
-// clang-format off
-template<class Scalar>
-  requires (!matrix<Scalar>)
-constexpr auto operator/(viewable_matrix auto&& mat, Scalar scal) noexcept {
-  // clang-format on
-  return map(
-      [scal = std::move(scal)](auto&& m) { return STORM_FORWARD_(m) / scal; },
-      STORM_FORWARD_(mat));
-}
-
-/// @brief Add the matrices @p mat1 and @p mat2.
-constexpr auto operator+(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::plus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
-}
-
-/// @brief Subtract the matrices @p mat1 and @p mat2.
-constexpr auto operator-(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::minus{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
-}
-
-/// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
-constexpr auto operator*(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::multiplies{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
-}
-
-/// @brief Component-wise divide the matrices @p mat1 and @p mat2.
-constexpr auto operator/(viewable_matrix auto&& mat1,
-                         viewable_matrix auto&& mat2) noexcept {
-  return map(std::divides{}, STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
-}
-
-namespace math {
-
-  /// @brief Component-wise @c abs of the matrix @p mat.
-  constexpr auto abs(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::abs(STORM_FORWARD_(m)); }, mat);
-  }
-
-  /// @name Power functions.
-  /// @{
-
-  // clang-format off
-  template<class Scalar>
-    requires (!matrix<Scalar>)
-  constexpr auto pow(viewable_matrix auto&& x_mat, Scalar y) noexcept {
-    // clang-format on
-    return map( //
-        [y = std::move(y)](auto&& x) {
-          return math::pow(STORM_FORWARD_(x), y);
-        },
-        STORM_FORWARD_(x_mat));
-  }
-
-  // clang-format off
-  template<class Scalar>
-    requires (!matrix<Scalar>)
-  constexpr auto pow(Scalar x, viewable_matrix auto&& y_mat) noexcept {
-    // clang-format on
-    return map( //
-        [x = std::move(x)](auto&& y) {
-          return math::pow(x, STORM_FORWARD_(y));
-        },
-        STORM_FORWARD_(y_mat));
-  }
-
-  /// @brief Component-wise @c atan2 of the matriсes @p x_mat and @p y_mat.
-  constexpr auto pow(viewable_matrix auto&& x_mat,
-                     viewable_matrix auto&& y_mat) noexcept {
-    return map(
-        [](auto&& x, auto&& y) {
-          return math::pow(STORM_FORWARD_(x), STORM_FORWARD_(y));
-        },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
-  }
-
-  /// @brief Component-wise @c sqrt of the matrix @p mat.
-  constexpr auto sqrt(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sqrt(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c cbrt of the matrix @p mat.
-  constexpr auto cbrt(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cbrt(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c hypot of the matriсes
-  ///   @p x_mat and @p y_mat.
-  constexpr auto hypot(viewable_matrix auto&& x_mat,
-                       viewable_matrix auto&& y_mat) noexcept {
-    return map(
-        [](auto&& x, auto&& y) {
-          return math::hypot(STORM_FORWARD_(x), STORM_FORWARD_(y));
-        },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat));
-  }
-
-  /// @brief Component-wise @c hypot of the matriсes
-  ///   @p x_mat, @p y_mat and @p y_mat.
-  constexpr auto hypot(viewable_matrix auto&& x_mat,
-                       viewable_matrix auto&& y_mat,
-                       viewable_matrix auto&& z_mat) noexcept {
-    return map(
-        [](auto&& x, auto&& y, auto&& z) {
-          return math::hypot( //
-              STORM_FORWARD_(x), STORM_FORWARD_(y), STORM_FORWARD_(z));
-        },
-        STORM_FORWARD_(x_mat), STORM_FORWARD_(y_mat), STORM_FORWARD_(z_mat));
-  }
-
-  /// @} // Power functions.
-
-  /// @name Exponential functions.
-  /// @{
-
-  /// @brief Component-wise @c exp of the matrix @p mat.
-  constexpr auto exp(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::exp(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c exp2 of the matrix @p mat.
-  constexpr auto exp2(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::exp2(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c log of the matrix @p mat.
-  constexpr auto log(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c log2 of the matrix @p mat.
-  constexpr auto log2(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log2(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c log10 of the matrix @p mat.
-  constexpr auto log10(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::log10(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @} // Exponential functions.
-
-  /// @name Trigonometric functions.
-  /// @{
-
-  /// @brief Component-wise @c sin of the matrix @p mat.
-  constexpr auto sin(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sin(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c cos of the matrix @p mat.
-  constexpr auto cos(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cos(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c tan of the matrix @p mat.
-  constexpr auto tan(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::tan(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c asin of the matrix @p mat.
-  constexpr auto asin(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::asin(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c acos of the matrix @p mat.
-  constexpr auto acos(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::acos(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c atan of the matrix @p mat.
-  constexpr auto atan(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::atan(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c atan2 of the matriсes @p y_mat and @p x_mat.
-  constexpr auto atan2(viewable_matrix auto&& y_mat,
-                       viewable_matrix auto&& x_mat) noexcept {
-    return map(
-        [](auto&& y, auto&& x) {
-          return math::atan2(STORM_FORWARD_(y), STORM_FORWARD_(x));
-        },
-        STORM_FORWARD_(y_mat), STORM_FORWARD_(x_mat));
-  }
-
-  /// @} // Trigonometric functions.
-
-  /// @name Hyperbolic functions.
-  /// @{
-
-  /// @brief Component-wise @p sinh of the matrix @p mat.
-  constexpr auto sinh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::sinh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c cosh of the matrix @p mat.
-  constexpr auto cosh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::cosh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c tanh of the matrix @p mat.
-  constexpr auto tanh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::tanh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c asinh of the matrix @p mat.
-  constexpr auto asinh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::asinh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c acosh of the matrix @p mat.
-  constexpr auto acosh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::acosh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @brief Component-wise @c atanh of the matrix @p mat.
-  constexpr auto atanh(viewable_matrix auto&& mat) noexcept {
-    return map([](auto&& m) { return math::atanh(STORM_FORWARD_(m)); },
-               STORM_FORWARD_(mat));
-  }
-
-  /// @} // Hyperbolic functions.
-
-} // namespace math
-
-/// ----------------------------------------------------------------- ///
-/// @brief Matrix transpose view.
-/// ----------------------------------------------------------------- ///
-template<matrix Matrix>
-class MatrixTransposeView :
-    public MatrixViewInterface<MatrixTransposeView<Matrix>> {
-private:
-
-  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
-
-public:
-
-  /// @brief Construct a matrix transpose view.
-  constexpr explicit MatrixTransposeView(Matrix mat) noexcept
-      : mat_{std::move(mat)} {}
-
-  /// @copydoc MatrixViewInterface::shape
-  constexpr auto shape() const noexcept {
-    return MatrixShape(num_cols(mat_), num_rows(mat_));
-  }
-
-  /// @copydoc MatrixViewInterface::operator()
-  /// @{
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) noexcept {
-    return mat_(col_index, row_index);
-  }
-  constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept {
-    return mat_(col_index, row_index);
-  }
-  /// @}
-
-}; // MatrixTransposeView
-
-template<class Matrix>
-MatrixTransposeView(Matrix&&)
-    -> MatrixTransposeView<forward_as_matrix_view_t<Matrix>>;
-
-/// @brief Transpose the matrix @p mat.
-constexpr auto transpose(viewable_matrix auto&& mat) noexcept {
-  return MatrixTransposeView(STORM_FORWARD_(mat));
-}
-
-/// ----------------------------------------------------------------- ///
-/// @brief Matrix product view.
-/// ----------------------------------------------------------------- ///
-template<matrix Matrix1, matrix Matrix2>
-class MatrixProductView :
-    public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
-private:
-
-  STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
-  STORM_NO_UNIQUE_ADDRESS_ Matrix2 mat2_;
-
-public:
-
-  /// @brief Construct a matrix product view.
-  constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2) noexcept
-      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
-    STORM_ASSERT_(num_cols(mat1_) == num_rows(mat2) &&
-                  "The first matrix should have the same number of columns "
-                  "as the second matrix has rows.");
-  }
-
-  /// @copydoc MatrixViewInterface::shape
-  constexpr auto shape() const noexcept {
-    return MatrixShape(num_rows(mat1_), num_cols(mat2_));
-  }
-
-  /// @copydoc MatrixViewInterface::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
-    // This is a default very slow implementation.
-    const auto cross_size{num_cols(mat1_)};
-    auto val{mat1_(row_index, 0) * mat2_(0, col_index)};
-    for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
-      val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
-    }
-    return val;
-  }
-
-}; // class MatrixProductView
-
-template<class Matrix1, class Matrix2>
-MatrixProductView(Matrix1&&, Matrix2&&)
-    -> MatrixProductView<forward_as_matrix_view_t<Matrix1>,
-                         forward_as_matrix_view_t<Matrix2>>;
-
-/// @brief Multiply the matrices @p mat1 and @p mat2.
-constexpr auto matmul(viewable_matrix auto&& mat1,
-                      viewable_matrix auto&& mat2) noexcept {
-  return MatrixProductView(STORM_FORWARD_(mat1), STORM_FORWARD_(mat2));
-}
-
-/// @} // Functional views.
+#pragma endregion
 
 /// @} // Matrix views.
 
@@ -1037,5 +604,7 @@ std::ostream& operator<<(std::ostream& out, matrix auto&& mat) {
 }
 
 } // namespace Storm
+
+//#include "MatrixViewFunctional.hpp"
 
 #include "MatrixAction.hpp"

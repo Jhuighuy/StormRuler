@@ -125,7 +125,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
   SetBCs_c(mesh, c, c);
   SetBCs_v(mesh, v);
 
-  constexpr auto dF_dc = [](real_t c) {
+  constexpr auto dF_dc = [](real_t c) noexcept {
     return 2.0 * c * (c - 1.0) * (2.0 * c - 1.0);
   };
 
@@ -176,9 +176,9 @@ static void NavierStokes_Step(stormMesh_t mesh, //
   mu.assign(rho, false);
   rho_inv.assign(rho, false);
 
-  rho <<= map([](real_t c) { return rho_1 + (rho_2 - rho_1) * c; }, c);
-  mu <<= map([](real_t c) { return mu_1 + (mu_2 - mu_1) * c; }, c);
-  rho_inv <<= map([](real_t rho) { return 1.0 / rho; }, rho);
+  rho <<= map([](real_t c) noexcept { return rho_1 + (rho_2 - rho_1) * c; }, c);
+  mu <<= map([](real_t c) noexcept { return mu_1 + (mu_2 - mu_1) * c; }, c);
+  rho_inv <<= map([](real_t rho) noexcept { return 1.0 / rho; }, rho);
 
   {
     StormArray<Vec2D<real_t>> rhs;
@@ -212,7 +212,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
   }
 
   v_hat <<= map(
-      [](const Vec2D<real_t>& v) {
+      [](const Vec2D<real_t>& v) noexcept {
         return v + 0.3 * tau * Vec2D<real_t>{0.0, -1.0};
       },
       v_hat);

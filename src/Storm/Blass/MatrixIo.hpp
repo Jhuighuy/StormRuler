@@ -20,11 +20,22 @@
 
 #pragma once
 
-// clang-format off
-#include <Storm/Blass/MatrixViewMaking.hpp>
-#include <Storm/Blass/MatrixViewSlicing.hpp>
-#include <Storm/Blass/MatrixViewFunctional.hpp>
-// clang-format on
+#include <ostream>
 
-#include "MatrixAction.hpp"
-#include "MatrixIo.hpp"
+#include <Storm/Blass/MatrixBase.hpp>
+
+namespace Storm {
+
+/// @brief Print a @p mat.
+std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
+  for (size_t row_index{0}; row_index < num_rows(mat); ++row_index) {
+    out << "( ";
+    for (size_t col_index{0}; col_index < num_cols(mat); ++col_index) {
+      out << mat(row_index, col_index) << " ";
+    }
+    out << ")" << std::endl;
+  }
+  return out;
+}
+
+} // namespace Storm

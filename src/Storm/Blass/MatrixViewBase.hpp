@@ -131,6 +131,18 @@ public:
   }
   /// @}
 
+  /// @brief Traverse the matrix expression tree with a @p visitor.
+  /// The tree would be traversed from leafs to root.
+  constexpr void traverse_tree(const auto& visitor) const {
+    self_().traverse_tree(visitor);
+  }
+
+  /// @brief Transform the matrix expression tree with a @p transformer.
+  /// The tree would be traversed and transformed from leafs to root.
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    return self_().transform_tree(transformer);
+  }
+
 }; // class MatrixViewInterface
 
 /// @brief Matrix reference view.
@@ -173,7 +185,21 @@ public:
   }
   /// @}
 
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    p_mat_->tranverse_tree(visitor);
+  }
+
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    static_cast<void>(transformer);
+    STORM_NOT_IMPLEMENTED_();
+  }
+
 }; // class MatrixRefView
+
+template<class Matrix>
+MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 
 /// @brief Matrix owning view.
 // clang-format off
@@ -208,10 +234,18 @@ public:
   }
   /// @}
 
-}; // class MatrixOwningView
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    mat_.tranverse_tree(visitor);
+  }
 
-template<class Matrix>
-MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    static_cast<void>(transformer);
+    STORM_NOT_IMPLEMENTED_();
+  }
+
+}; // class MatrixOwningView
 
 namespace detail_ {
   // clang-format off

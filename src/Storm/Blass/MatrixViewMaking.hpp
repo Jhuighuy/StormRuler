@@ -59,6 +59,16 @@ public:
     return func_(row_index, col_index);
   }
 
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    visitor(*this);
+  }
+
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    return transformer(*this);
+  }
+
 }; // class MakeMatrixView
 
 template<class Shape, class Func>

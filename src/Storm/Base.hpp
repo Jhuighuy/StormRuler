@@ -37,6 +37,21 @@
 
 #include <StormRuler_API.h>
 
+/// @todo Reimplement me with std::source_location.
+#if (!defined(__PRETTY_FUNCTION__) && !defined(__GNUC__))
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+#define STORM_FATAL_ERROR_(error_message)                                      \
+  do {                                                                         \
+    std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", __FILE__, \
+                 __LINE__, __PRETTY_FUNCTION__, error_message);                \
+    std::fflush(stderr);                                                       \
+    std::abort();                                                              \
+  } while (false)
+
+#define STORM_NOT_IMPLEMENTED_() STORM_FATAL_ERROR_("not implemented")
+
 #ifdef _MSC_VER
 #define STORM_ASSUME_(x) __assume(x)
 #else
@@ -46,22 +61,10 @@
   } while (false)
 #endif
 
-/// @todo Reimplement me with std::source_location.
-#if (!defined(__PRETTY_FUNCTION__) && !defined(__GNUC__))
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
-
-#define STORM_ENSURE_(x)                                               \
-  do {                                                                 \
-    if (!(x)) {                                                        \
-      std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", \
-                   __FILE__, __LINE__, __PRETTY_FUNCTION__, #x);       \
-      std::fflush(stderr);                                             \
-      std::abort();                                                    \
-    }                                                                  \
+#define STORM_ENSURE_(x)                  \
+  do {                                    \
+    if (!(x)) { STORM_FATAL_ERROR_(#x); } \
   } while (false)
-
-#define STORM_FORWARD_(x) std::forward<decltype(x)>(x)
 
 #ifdef NDEBUG
 #define STORM_ASSERT_(x) STORM_ASSUME_(x)
@@ -80,6 +83,8 @@
 #else
 #define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
 #endif
+
+#define STORM_FORWARD_(x) std::forward<decltype(x)>(x)
 
 namespace Storm {
 

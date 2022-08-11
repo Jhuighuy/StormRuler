@@ -75,6 +75,26 @@ public:
         mats_);
   }
 
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    std::apply(
+        [&](const Matrices&... mats) { //
+          (mats.tranverse_tree(visitor), ...);
+        },
+        mats_);
+    visitor(*this);
+  }
+
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    return std::apply(
+        [&](const Matrices&... mats) {
+          return transformer(
+              MapMatrixView(func_, mats.transform_tree(transformer)...));
+        },
+        mats_);
+  }
+
 }; // class MapMatrixView
 
 template<class Func, class... Matrices>
@@ -133,7 +153,7 @@ template<viewable_matrix Matrix>
 /// @brief Negate the matrix @p mat.
 template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto operator-(Matrix&& mat) {
-  return MapMatrixView(std::negate<>{}, std::forward<Matrix>(mat));
+  return MapMatrixView(std::negate{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
@@ -357,7 +377,7 @@ namespace math {
 
 /// @brief Matrix transpose view.
 template<matrix_view Matrix>
-class MatrixTransposeView :
+class MatrixTransposeView final :
     public MatrixViewInterface<MatrixTransposeView<Matrix>> {
 private:
 
@@ -385,6 +405,17 @@ public:
   }
   /// @}
 
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    mat_.tranverse_tree(visitor);
+    visitor(*this);
+  }
+
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    return transformer(MatrixTransposeView(mat_.transform_tree(transformer)));
+  }
+
 }; // MatrixTransposeView
 
 template<class Matrix>
@@ -399,7 +430,7 @@ template<viewable_matrix Matrix>
 
 /// @brief Matrix product view.
 template<matrix_view Matrix1, matrix_view Matrix2>
-class MatrixProductView :
+class MatrixProductView final :
     public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
 private:
 
@@ -430,6 +461,18 @@ public:
       val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
     }
     return val;
+  }
+
+  /// @copydoc MatrixViewInterface::traverse_tree
+  constexpr void traverse_tree(const auto& visitor) const {
+    mat1_.tranverse_tree(visitor), mat2_.tranverse_tree(visitor);
+    visitor(*this);
+  }
+
+  /// @copydoc MatrixViewInterface::transform_tree
+  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
+    return transformer(MatrixProductView(mat1_.transform_tree(transformer),
+                                         mat2_.transform_tree(transformer)));
   }
 
 }; // class MatrixProductView

@@ -132,7 +132,9 @@ public:
   /// @}
 
   /// @brief Traverse the matrix expression tree with a @p visitor.
-  /// The tree would be traversed from leafs to root.
+  /// @tparam LeafsToRoot If true, the tree would be traversed from leafs to
+  /// root, otherwise from root to leafs.
+  template<bool LeafsToRoot = true>
   constexpr void traverse_tree(const auto& visitor) const {
     self_().traverse_tree(visitor);
   }
@@ -141,6 +143,18 @@ public:
   /// The tree would be traversed and transformed from leafs to root.
   [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
     return self_().transform_tree(transformer);
+  }
+
+protected:
+
+  template<bool LeafsToRoot>
+  constexpr void traverse_self_(const auto& visitor,
+                                const matrix auto&... child_nodes) const {
+    if constexpr (LeafsToRoot) {
+      (visitor(child_nodes), ...), visitor(self_());
+    } else {
+      visitor(self_()), (visitor(child_nodes), ...);
+    }
   }
 
 }; // class MatrixViewInterface
@@ -192,8 +206,7 @@ public:
 
   /// @copydoc MatrixViewInterface::transform_tree
   [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    static_cast<void>(transformer);
-    STORM_NOT_IMPLEMENTED_();
+    return transformer(*p_mat_);
   }
 
 }; // class MatrixRefView
@@ -241,8 +254,7 @@ public:
 
   /// @copydoc MatrixViewInterface::transform_tree
   [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    static_cast<void>(transformer);
-    STORM_NOT_IMPLEMENTED_();
+    return transformer(mat_);
   }
 
 }; // class MatrixOwningView

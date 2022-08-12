@@ -301,9 +301,8 @@ struct A {
 };
 
 int main(int argc, char** argv) {
-  make_constant_matrix(1, 11, A());
   srand(2321312);
-#if 1
+#if 0
   {
     using namespace Storm;
     DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},

@@ -36,8 +36,8 @@ namespace Storm {
 /// @brief Component-wise product of function to matrices view.
 // clang-format off
 template<std::copy_constructible Func, matrix_view... Matrices>
-  requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
-           std::regular_invocable<Func, matrix_reference_t<Matrices>...>
+  requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) /*&&
+           std::regular_invocable<Func, matrix_element_t<Matrices>...>*/
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
   // clang-format on
@@ -90,7 +90,7 @@ public:
     return std::apply(
         [&](const Matrices&... mats) {
           return transformer(
-              MapMatrixView(func_, mats.transform_tree(transformer)...));
+              Storm::MapMatrixView(func_, mats.transform_tree(transformer)...));
         },
         mats_);
   }
@@ -139,7 +139,7 @@ template<viewable_matrix Matrix>
   // Since operator "+" does nothing on artimetic types,
   // simply forward matrices with artimetic elements as matrix views.
   if constexpr (std::is_arithmetic_v<
-                    std::remove_cvref_t<matrix_reference_t<Matrix>>>) {
+                    std::remove_cvref_t<matrix_element_t<Matrix>>>) {
     return forward_as_matrix_view(std::forward<Matrix>(mat));
   } else {
     return MapMatrixView(
@@ -413,7 +413,8 @@ public:
 
   /// @copydoc MatrixViewInterface::transform_tree
   [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer(MatrixTransposeView(mat_.transform_tree(transformer)));
+    return transformer(
+        Storm::MatrixTransposeView(mat_.transform_tree(transformer)));
   }
 
 }; // MatrixTransposeView
@@ -471,8 +472,9 @@ public:
 
   /// @copydoc MatrixViewInterface::transform_tree
   [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer(MatrixProductView(mat1_.transform_tree(transformer),
-                                         mat2_.transform_tree(transformer)));
+    return transformer( //
+        Storm::MatrixProductView(mat1_.transform_tree(transformer),
+                                 mat2_.transform_tree(transformer)));
   }
 
 }; // class MatrixProductView

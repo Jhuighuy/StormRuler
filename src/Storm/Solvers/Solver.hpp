@@ -30,7 +30,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#define FMT_HEADER_ONLY 1
 #include <spdlog/spdlog.h>
 
 #include <Storm/Base.hpp>
@@ -150,8 +149,8 @@ bool IterativeSolver<InVector, OutVector>::solve(
 
   // Exit the solver.
   finalize(x_vec, b_vec, any_op, pre_op.get());
-  spdlog::info("done:\t{}\t{}\t{}\t{}", iteration, absolute_error,
-               relative_error, name);
+  spdlog::info("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
+               iteration, absolute_error, relative_error);
   return converged;
 
 } // IterativeSolver::Solve

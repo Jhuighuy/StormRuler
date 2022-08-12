@@ -27,10 +27,11 @@
 namespace Storm {
 
 /// @brief Print a @p mat.
+/// @todo This is too trivial implementation, we need something fancier :)
 std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
-  for (size_t row_index{0}; row_index < num_rows(mat); ++row_index) {
+  for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     out << "( ";
-    for (size_t col_index{0}; col_index < num_cols(mat); ++col_index) {
+    for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
       out << mat(row_index, col_index) << " ";
     }
     out << ")" << std::endl;

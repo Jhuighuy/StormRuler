@@ -71,9 +71,6 @@ public:
 
 }; // class MakeMatrixView
 
-template<class Shape, class Func>
-MakeMatrixView(Shape, Func) -> MakeMatrixView<Shape, Func>;
-
 /// @brief Generate a constant matrix with @p num_rows and @p num_cols.
 /// @param value Matrix element value.
 template<std::copyable Value>

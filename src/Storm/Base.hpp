@@ -25,12 +25,15 @@
 
 #pragma once
 
+#define FMT_HEADER_ONLY 1
+
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 
 #include <complex>
 #include <concepts>
+#include <source_location>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -103,7 +106,7 @@ using real_t = double;
 namespace detail_ {
 
   template<class>
-  constexpr inline bool always_false{false};
+  constexpr inline bool always_false_ = false;
 
   consteval bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
@@ -119,18 +122,18 @@ namespace detail_ {
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
 
-namespace Detail_ {
+namespace detail_ {
+  template<class>
+  inline constexpr bool is_complex_floating_point_v_ = false;
   template<class T>
-  inline constexpr bool is_complex_floating_point_v_{false};
-  template<class T>
-  inline constexpr bool is_complex_floating_point_v_<std::complex<T>>{
-      std::is_floating_point_v<T>};
-} // namespace Detail_
+  inline constexpr bool is_complex_floating_point_v_<std::complex<T>> =
+      std::is_floating_point_v<T>;
+} // namespace detail_
 
 /// @brief Real or complex floaing point numbers,
 ///   e.g. @c real_t or @c std::complex<real_t>.
 template<class T>
 concept real_or_complex_floating_point =
-    std::floating_point<T> || Detail_::is_complex_floating_point_v_<T>;
+    std::floating_point<T> || detail_::is_complex_floating_point_v_<T>;
 
 } // namespace Storm

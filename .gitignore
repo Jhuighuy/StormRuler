@@ -48,6 +48,7 @@
 !*.hh
 !*.hpp
 !*.hxx
+!*.inl
 
 # Lua and MATLAB.
 !*.lua

@@ -18,7 +18,14 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
-#pragma once
+#ifndef STORM_INSIDE_MATRIX_VIEW_HPP_
+#error Do not include this header directly, \
+       use <Storm/Blass/MatrixView.hpp> instead.
+#endif
+
+#include <array>
+#include <concepts>
+#include <utility>
 
 namespace Storm {
 

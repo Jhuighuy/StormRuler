@@ -18,26 +18,26 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
-#pragma once
+#ifndef STORM_INSIDE_MATRIX_VIEW_HPP_
+#error Do not include this header directly, \
+       use <Storm/Blass/MatrixView.hpp> instead.
+#endif
 
 #include <concepts>
 #include <functional>
 #include <tuple>
 #include <type_traits>
-
-#include <Storm/Base.hpp>
+#include <utility>
 
 #include <Storm/Utils/Math.hpp>
-
-#include <Storm/Blass/MatrixViewBase.hpp>
 
 namespace Storm {
 
 /// @brief Component-wise product of function to matrices view.
 // clang-format off
 template<std::copy_constructible Func, matrix_view... Matrices>
-  requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) /*&&
-           std::regular_invocable<Func, matrix_element_t<Matrices>...>*/
+  requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
+           std::regular_invocable<Func, matrix_element_t<Matrices>...>
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
   // clang-format on

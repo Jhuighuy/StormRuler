@@ -35,7 +35,6 @@
 #include <Storm/Utils/Object.hpp>
 
 #include <Storm/Blass/MatrixView.hpp>
-#include <Storm/Blass/MatrixViewFunctional.hpp>
 #include <Storm/Blass/Vector.hpp>
 
 namespace Storm {

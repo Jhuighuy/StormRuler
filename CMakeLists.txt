@@ -305,6 +305,3 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 
 message(STATUS "Adding StormRuler main executable.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
-
-message(STATUS "Adding SpherePack utility executable.")
-add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/SpherePack")

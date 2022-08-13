@@ -85,7 +85,7 @@ public:
     Array = stormAllocLike(like.Array);
     stormArrayUnwrap(Mesh, Array, (real_t**) &MyData, &MySize),
         MySize /= (sizeof(T) / sizeof(real_t));
-    STORM_ENSURE_(!copy);
+    STORM_ENSURE_(!copy, "");
   }
 
   operator stormArray_t() const noexcept {
@@ -104,11 +104,11 @@ public:
   }
 
   const auto& operator()(size_t i, size_t j = 0) const noexcept {
-    STORM_ASSERT_(j == 0);
+    STORM_ENSURE_(j == 0, "");
     return MyData[i];
   }
   auto& operator()(size_t i, size_t j = 0) noexcept {
-    STORM_ASSERT_(j == 0);
+    STORM_ASSERT_(j == 0, "");
     return MyData[i];
   }
 };
@@ -192,7 +192,7 @@ public:
   template<operator_like<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
-    STORM_ASSERT_(MatVecFunc_);
+    STORM_ASSERT_(MatVecFunc_, "");
   }
   template<operator_like<InVector, OutVector> MatVecFunc,
            operator_like<OutVector, InVector> ConjMatVecFunc>
@@ -200,7 +200,7 @@ public:
                               ConjMatVecFunc&& conjMatVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
         ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
-    STORM_ASSERT_(MatVecFunc_ && ConjMatVecFunc_);
+    STORM_ASSERT_(MatVecFunc_ && ConjMatVecFunc_, "");
   }
   /// @}
 

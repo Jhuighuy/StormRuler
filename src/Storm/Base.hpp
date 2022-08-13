@@ -28,69 +28,109 @@
 #define FMT_HEADER_ONLY 1
 #endif
 
-#include <StormRuler_API.h>
-
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-
 #include <complex>
 #include <concepts>
+#include <cstdint>
+#include <cstdlib>
 #include <source_location>
-#include <tuple>
 #include <type_traits>
 
-/// @todo Reimplement me with std::source_location.
-#if (!defined(__PRETTY_FUNCTION__) && !defined(__GNUC__))
-#define __PRETTY_FUNCTION__ __FUNCSIG__
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
+#include <StormRuler_API.h>
+
+// Detect the C++ version.
+#if __cplusplus < 202002L
+#error Storm requires C++20 support!
 #endif
-
-#define STORM_FATAL_ERROR_(error_message)                                      \
-  do {                                                                         \
-    std::fprintf(stderr, "\nAssertion failed:\n%s:%d %s: \"%s\".\n", __FILE__, \
-                 __LINE__, __PRETTY_FUNCTION__, error_message);                \
-    std::fflush(stderr);                                                       \
-    std::abort();                                                              \
-  } while (false)
-
-#define STORM_NOT_IMPLEMENTED_() STORM_FATAL_ERROR_("not implemented")
-
-#ifdef _MSC_VER
-#define STORM_ASSUME_(x) __assume(x)
+#if __cplusplus > 202002L
+#define STORM_CPP23_ 1
 #else
-#define STORM_ASSUME_(x)                   \
-  do {                                     \
-    if (!(x)) { __builtin_unreachable(); } \
-  } while (false)
+#define STORM_CPP23_ 0
 #endif
 
-#define STORM_ENSURE_(x)                  \
-  do {                                    \
-    if (!(x)) { STORM_FATAL_ERROR_(#x); } \
-  } while (false)
-
-#ifdef NDEBUG
-#define STORM_ASSERT_(x) STORM_ASSUME_(x)
-#else
-#define STORM_ASSERT_(x) STORM_ENSURE_(x)
-#endif
-
+// Force (kindly ask) the compiler to inline the function.
 #ifdef _MSC_VER
 #define STORM_FORCE_INLINE_ inline __forceinline
 #else
 #define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
 #endif
 
+// Cross-compiler version of `[[no_unique_address]]`.
 #ifdef _MSC_VER
 #define STORM_NO_UNIQUE_ADDRESS_ [[msvc::no_unique_address]]
 #else
 #define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
 #endif
 
+// Assume the expression is always true.
+#ifdef _MSC_VER
+#define STORM_ASSUME_(expression) __assume(expression)
+#else
+#define STORM_ASSUME_(expression)                   \
+  do {                                              \
+    if (!(expression)) { __builtin_unreachable(); } \
+  } while (false)
+#endif
+
+// Report a trace message.
+#define STORM_TRACE_(message, ...) \
+  (spdlog::trace(message __VA_OPT__(, ) __VA_ARGS__))
+
+// Report a debug message.
+#define STORM_DEBUG_(message, ...) \
+  (spdlog::debug(message __VA_OPT__(, ) __VA_ARGS__))
+
+// Report a debug message.
+#define STORM_INFO_(message, ...) \
+  (spdlog::info(message __VA_OPT__(, ) __VA_ARGS__))
+
+// Report a warning.
+#define STORM_WARNING_(message, ...) \
+  (spdlog::warn(message __VA_OPT__(, ) __VA_ARGS__))
+
+// Report an error.
+#define STORM_ERROR_(message, ...) \
+  (spdlog::error(message __VA_OPT__(, ) __VA_ARGS__))
+
+// Report a critical error.
+#define STORM_CRITICAL_(message, ...) \
+  (spdlog::critical(message __VA_OPT__(, ) __VA_ARGS__))
+
+#ifndef __FUNCSIG__
+#define __FUNCSIG__ __PRETTY_FUNCTION__
+#endif
+
+// Report a fatal error and exit the application.
+#define STORM_FATAL_ERROR_(message, ...)                              \
+  do {                                                                \
+    STORM_CRITICAL_("Fatal error:");                                  \
+    STORM_CRITICAL_("{}:{} {}: {}", __FILE__, __LINE__, __FUNCSIG__,  \
+                    fmt::format(message __VA_OPT__(, ) __VA_ARGS__)); \
+    spdlog::shutdown(), std::abort();                                 \
+  } while (false)
+
+// Check the expression, exit with fatal error if it fails.
+#define STORM_ENSURE_(expression, message, ...)                                \
+  do {                                                                         \
+    if (!(expression)) { /**/                                                  \
+      STORM_FATAL_ERROR_(#expression ", " message __VA_OPT__(, ) __VA_ARGS__); \
+    }                                                                          \
+  } while (false)
+
+// Check the expression in the debug mode, exit with fatal error if it fails.
+#ifdef NDEBUG
+#define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
+#else
+#define STORM_ASSERT_(expression, message, ...) \
+  STORM_ENSURE_(expression, message __VA_OPT__(, ) __VA_ARGS__)
+#endif
+
 namespace Storm {
 
 /// @brief Contains the implementation details.
-namespace Detail_ {}
+namespace detail_ {}
 
 /// @brief Size type.
 using size_t = std::size_t;
@@ -119,19 +159,5 @@ namespace detail_ {
 /// @brief @c size_t compile-time constant.
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
-
-namespace detail_ {
-  template<class>
-  inline constexpr bool is_complex_floating_point_v_ = false;
-  template<class T>
-  inline constexpr bool is_complex_floating_point_v_<std::complex<T>> =
-      std::is_floating_point_v<T>;
-} // namespace detail_
-
-/// @brief Real or complex floaing point numbers,
-///   e.g. @c real_t or @c std::complex<real_t>.
-template<class T>
-concept real_or_complex_floating_point =
-    std::floating_point<T> || detail_::is_complex_floating_point_v_<T>;
 
 } // namespace Storm

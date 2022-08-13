@@ -62,7 +62,7 @@ public:
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
-    STORM_ASSERT_(index < Size && "Index is out of range.");
+    STORM_ASSERT_(index < Size, "Index is out of range.");
     return selected_indices_[index];
   }
 
@@ -87,7 +87,7 @@ public:
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
-    STORM_ASSERT_(index < size() && "Index is out of range.");
+    STORM_ASSERT_(index < size(), "Index is out of range.");
     return from_ + stride_ * index;
   }
 

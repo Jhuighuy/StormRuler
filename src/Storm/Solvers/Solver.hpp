@@ -37,8 +37,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <spdlog/spdlog.h>
-
 namespace Storm {
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
@@ -149,8 +147,8 @@ bool IterativeSolver<InVector, OutVector>::solve(
 
   // Exit the solver.
   finalize(x_vec, b_vec, any_op, pre_op.get());
-  spdlog::info("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
-               iteration, absolute_error, relative_error);
+  STORM_INFO_("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
+              iteration, absolute_error, relative_error);
   return converged;
 
 } // IterativeSolver::Solve

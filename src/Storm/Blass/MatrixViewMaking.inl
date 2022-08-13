@@ -56,8 +56,8 @@ public:
   /// @copydoc MatrixViewInterface::operator()
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(row_index < shape_.num_rows && //
-                  col_index < shape_.num_cols && "Indices are out of range.");
+    STORM_ASSERT_(row_index < shape_.num_rows && col_index < shape_.num_cols,
+                  "Indices are out of range.");
     return func_(row_index, col_index);
   }
 

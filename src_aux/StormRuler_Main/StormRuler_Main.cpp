@@ -303,7 +303,7 @@ struct A {
 
 int main(int argc, char** argv) {
   srand(2321312);
-#if 1
+#if 0
   {
     using namespace Storm;
     DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},

@@ -88,7 +88,7 @@ public:
 
   /// @brief Construct the matrix with the initializer list.
   constexpr explicit Mat(std::initializer_list<Value> initializer) {
-    STORM_ASSERT_(initializer.size() == SizeX * SizeY);
+    STORM_ASSERT_(initializer.size() == SizeX * SizeY, "");
     std::copy(initializer.begin(), initializer.end(), Coeffs_[0].data());
   }
 
@@ -123,11 +123,11 @@ public:
   /// @brief Get reference to the component at the index.
   /// @{
   constexpr Value& operator()(size_t ix, size_t iy) noexcept {
-    STORM_ASSERT_(ix < SizeX && iy < SizeY);
+    STORM_ASSERT_(ix < SizeX && iy < SizeY, "");
     return (Coeffs_[ix])[iy];
   }
   constexpr const Value& operator()(size_t ix, size_t iy) const noexcept {
-    STORM_ASSERT_(ix < SizeX && iy < SizeY);
+    STORM_ASSERT_(ix < SizeX && iy < SizeY, "");
     return (Coeffs_[ix])[iy];
   }
   /// @}

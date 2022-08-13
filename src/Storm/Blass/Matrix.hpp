@@ -94,13 +94,12 @@ public:
     if constexpr (NumRows == std::dynamic_extent) {
       num_rows_ = coeffs.size();
     } else {
-      STORM_ASSERT_(num_rows_ == coeffs.size() && //
-                    "Invalid number of rows.");
+      STORM_ASSERT_(num_rows_ == coeffs.size(), "Invalid number of rows.");
     }
     if constexpr (NumCols == std::dynamic_extent) {
       num_cols_ = coeffs.begin()->size();
     } else {
-      STORM_ASSERT_(num_rows_ == coeffs.begin()->size() &&
+      STORM_ASSERT_(num_rows_ == coeffs.begin()->size(),
                     "Invalid number of columns.");
     }
     if constexpr (NumRows == std::dynamic_extent ||
@@ -152,7 +151,7 @@ public:
   /// @{
   constexpr auto& operator()(size_t row_index, //
                              size_t col_index = 0) noexcept {
-    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_ &&
+    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_,
                   "Matrix index out range.");
     return coeffs_[row_index * num_cols_ + col_index];
   }

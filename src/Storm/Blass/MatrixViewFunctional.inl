@@ -56,7 +56,7 @@ public:
             [](const auto& first_mat, const auto&... rest_mats) {
               return ((first_mat.shape() == rest_mats.shape()) && ...);
             },
-            mats_) &&
+            mats_),
         "Shapes of the matrix arguments are mismatched.");
   }
 
@@ -443,7 +443,7 @@ public:
   /// @brief Construct a matrix product view.
   constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2)
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
-    STORM_ASSERT_(num_cols(mat1_) == num_rows(mat2) &&
+    STORM_ASSERT_(num_cols(mat1_) == num_rows(mat2),
                   "Shapes of the matrix product arguments are invalid.");
   }
 

@@ -58,7 +58,7 @@ public:
       : selected_indices_(selected_indices) {}
 
   constexpr auto size() const noexcept {
-    return size_t_constant<Size>{};
+    return Size;
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
@@ -71,38 +71,19 @@ public:
 template<size_t Size>
 SelectedIndices(std::array<size_t, Size>) -> SelectedIndices<Size>;
 
-namespace detail_ {
-  constexpr static size_t range_size_(size_t from, //
-                                      size_t to,   //
-                                      size_t stride) noexcept {
-    STORM_ASSERT_(stride != 0 && "Stride cannot be zero.");
-    return (to - from) / stride;
-  }
-  template<size_t From, size_t To, size_t Stride>
-  constexpr static auto range_size_(size_t_constant<From>, //
-                                    size_t_constant<To>,
-                                    size_t_constant<Stride>) noexcept {
-    static_assert(Stride != 0 && "Stride cannot be zero.");
-    return size_t_constant<(To - From) / Stride>{};
-  }
-} // namespace detail_
-
 /// @brief Sliced indices range.
-template<matrix_extent From, matrix_extent To, matrix_extent Stride>
 class SlicedIndices {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ From from_;
-  STORM_NO_UNIQUE_ADDRESS_ To to_;
-  STORM_NO_UNIQUE_ADDRESS_ Stride stride_;
+  size_t from_, to_, stride_;
 
 public:
 
-  constexpr SlicedIndices(From from, To to, Stride stride) noexcept
+  constexpr SlicedIndices(size_t from, size_t to, size_t stride) noexcept
       : from_{from}, to_{to}, stride_{stride} {}
 
   constexpr auto size() const noexcept {
-    return detail_::range_size_(from_, to_, stride_);
+    return (from_ - to_) / stride_;
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
@@ -156,8 +137,8 @@ public:
         col_indices_{std::move(col_indices)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  constexpr auto shape() const noexcept {
-    return MatrixShape{num_rows_(), num_cols_()};
+  constexpr matrix_shape_t shape() const noexcept {
+    return {num_rows_(), num_cols_()};
   }
 
   /// @copydoc MatrixViewInterface::operator()
@@ -205,10 +186,9 @@ select_cols(viewable_matrix auto&& mat,
 /// @brief Slice the matrix @p mat rows from index @p rows_from
 ///   to index @p rows_to (not including) with a stride @p row_stride view.
 /// @{
-constexpr auto
-slice_rows(viewable_matrix auto&& mat, //
-           matrix_extent auto rows_from, matrix_extent auto rows_to,
-           matrix_extent auto row_stride = size_t_constant<1>{}) noexcept {
+constexpr auto slice_rows(viewable_matrix auto&& mat, //
+                          size_t rows_from, size_t rows_to,
+                          size_t row_stride = 1) noexcept {
   STORM_ASSERT_(rows_from < rows_to &&
                 static_cast<size_t>(rows_to) <= num_rows(mat) &&
                 "Invalid row range.");
@@ -226,11 +206,9 @@ constexpr auto slice_rows(viewable_matrix auto&& mat) {
 /// @brief Slice the matrix @p mat columns from index @p cols_from
 ///   to index @p cols_to (not including) with a stride @p col_stride view.
 /// @{
-constexpr auto slice_cols(viewable_matrix auto&& mat,
-                          std::convertible_to<size_t> auto cols_from,
-                          std::convertible_to<size_t> auto cols_to,
-                          std::convertible_to<size_t> auto col_stride =
-                              size_t_constant<1>{}) noexcept {
+constexpr auto slice_cols(viewable_matrix auto&& mat, //
+                          size_t cols_from, size_t cols_to,
+                          size_t col_stride = 1) noexcept {
   STORM_ASSERT_(cols_from < cols_to &&
                 static_cast<size_t>(cols_to) <= num_cols(mat) &&
                 "Invalid column range.");

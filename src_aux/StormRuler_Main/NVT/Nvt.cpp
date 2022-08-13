@@ -1,3 +1,4 @@
+#define STORM_HEADER_ONLY
 #include "Nvt.hpp"
 
 double Nvt::F_RR(const std::vector<double>& z, const std::vector<double>& K,

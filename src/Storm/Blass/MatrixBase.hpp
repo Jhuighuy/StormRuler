@@ -21,37 +21,46 @@
 // This header should really be <Matrix.hpp>
 #pragma once
 
+#include <compare>
 #include <concepts>
 #include <type_traits>
 
 #include <omp.h>
-#include <ranges>
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Blass/MatrixShape.hpp>
-#include <Storm/Utils/SimdBlock.hpp>
-
 namespace Storm {
+
+/// @brief Matrix shape.
+struct matrix_shape_t {
+  /// @brief Number of the matrix rows.
+  size_t num_rows = 0;
+
+  /// @brief Number of the matrix columns.
+  size_t num_cols = 0;
+
+  /// @brief Compare the matrix shapes.
+  constexpr auto operator<=>(const matrix_shape_t&) const = default;
+}; // struct matrix_shape_t
 
 /// @brief Matrix: has shape and two subscripts.
 // clang-format off
 template<class Matrix>
 concept matrix = 
     requires(Matrix& mat) { 
-      { mat.shape() } noexcept -> matrix_shape;
+      { mat.shape() } noexcept -> std::same_as<matrix_shape_t>;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
     };
 // clang-format on
 
 /// @brief Number of the matrix rows.
-constexpr auto num_rows(const matrix auto& mat) noexcept {
-  return mat.shape().num_rows();
+constexpr size_t num_rows(const matrix auto& mat) noexcept {
+  return mat.shape().num_rows;
 }
 
 /// @brief Number of the matrix columns.
-constexpr auto num_cols(const matrix auto& mat) noexcept {
-  return mat.shape().num_cols();
+constexpr size_t num_cols(const matrix auto& mat) noexcept {
+  return mat.shape().num_cols;
 }
 
 /// @brief Matrix element type.

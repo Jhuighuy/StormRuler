@@ -20,6 +20,10 @@
 
 #pragma once
 
+#ifndef STORM_HEADER_ONLY
+#error #define STORM_HEADER_ONLY before including Storm!
+#endif
+
 #ifdef STORM_HEADER_ONLY
 #define FMT_HEADER_ONLY 1
 #endif

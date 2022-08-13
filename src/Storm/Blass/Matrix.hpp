@@ -32,6 +32,7 @@
 #include <array>
 #include <initializer_list>
 #include <memory>
+#include <span>
 #include <type_traits>
 
 namespace Storm {
@@ -142,8 +143,9 @@ public:
   constexpr auto num_cols() const noexcept {
     return num_cols_;
   }
-  auto shape() const noexcept {
-    return MatrixShape(num_rows(), num_cols());
+
+  constexpr matrix_shape_t shape() const noexcept {
+    return {num_rows(), num_cols()};
   }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.

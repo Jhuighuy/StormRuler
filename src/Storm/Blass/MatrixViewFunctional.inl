@@ -61,7 +61,7 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
     return std::get<0>(mats_).shape();
   }
 
@@ -389,8 +389,8 @@ public:
   constexpr explicit MatrixTransposeView(Matrix mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
-    return MatrixShape(num_cols(mat_), num_rows(mat_));
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+    return {num_cols(mat_), num_rows(mat_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()
@@ -448,8 +448,8 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
-    return MatrixShape(num_rows(mat1_), num_cols(mat2_));
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+    return {num_rows(mat1_), num_cols(mat2_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()

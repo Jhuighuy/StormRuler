@@ -101,7 +101,7 @@ protected:
 public:
 
   /// @brief Shape of the matrix.
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
     return self_().shape();
   }
 
@@ -181,7 +181,7 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
     return p_mat_->shape();
   }
 
@@ -229,7 +229,7 @@ public:
   constexpr MatrixOwningView(Matrix&& mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
     return mat_.shape();
   }
 

@@ -39,7 +39,6 @@
 #include <source_location>
 #include <tuple>
 #include <type_traits>
-#include <utility>
 
 /// @todo Reimplement me with std::source_location.
 #if (!defined(__PRETTY_FUNCTION__) && !defined(__GNUC__))
@@ -87,8 +86,6 @@
 #else
 #define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
 #endif
-
-#define STORM_FORWARD_(x) std::forward<decltype(x)>(x)
 
 namespace Storm {
 

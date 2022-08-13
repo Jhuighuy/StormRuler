@@ -95,7 +95,7 @@ public:
 
 /// @brief Submatrix view.
 // clang-format off
-template<matrix Matrix, class RowIndices, class ColIndices>
+template<matrix_view Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
     public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
@@ -108,7 +108,7 @@ private:
 
   // clang-format off
   constexpr auto num_rows_() const noexcept 
-      requires requires { std::declval<RowIndices>().size(); } {
+      requires requires { row_indices_.size(); } {
     // clang-format on
     return row_indices_.size();
   }
@@ -118,7 +118,7 @@ private:
 
   // clang-format off
   constexpr auto num_cols_() const noexcept 
-      requires requires { std::declval<ColIndices>().size(); } {
+      requires requires { col_indices_.size(); } {
     // clang-format on
     return col_indices_.size();
   }
@@ -160,68 +160,48 @@ SubmatrixView(Matrix&&, RowIndices, ColIndices)
     -> SubmatrixView<forward_as_matrix_view_t<Matrix>, RowIndices, ColIndices>;
 
 /// @brief Select the matrix @p mat rows with @p row_indices view.
-constexpr auto
-select_rows(viewable_matrix auto&& mat,
-            std::convertible_to<size_t> auto... row_indices) noexcept {
-  STORM_ASSERT_((static_cast<size_t>(row_indices) < num_rows(mat)) && ... &&
-                "Row indices are out of range.");
-  return SubmatrixView(
-      STORM_FORWARD_(mat),
-      SelectedIndices(std::array{static_cast<size_t>(row_indices)...}),
-      AllIndices{});
+template<viewable_matrix Matrix, //
+         std::convertible_to<size_t>... RowIndices>
+[[nodiscard]] constexpr auto select_rows(Matrix&& mat,
+                                         RowIndices&&... row_indices) {
+  return SubmatrixView(std::forward<Matrix>(mat),
+                       SelectedIndices(std::array{static_cast<size_t>(
+                           std::forward<RowIndices>(row_indices))...}),
+                       AllIndices{});
 }
 
 /// @brief Select the matrix @p mat columns with @p col_index view.
-constexpr auto
-select_cols(viewable_matrix auto&& mat,
-            std::convertible_to<size_t> auto... col_indices) noexcept {
-  STORM_ASSERT_((static_cast<size_t>(col_indices) < mat.num_cols()) && ... &&
-                "Columns indices are out of range.");
-  return SubmatrixView(
-      STORM_FORWARD_(mat), //
-      AllIndices{},
-      SelectedIndices(std::array{static_cast<size_t>(col_indices)...}));
+template<viewable_matrix Matrix, //
+         std::convertible_to<size_t>... ColIndices>
+[[nodiscard]] constexpr auto select_cols(Matrix&& mat,
+                                         ColIndices&&... col_indices) {
+  return SubmatrixView(std::forward<Matrix>(mat), //
+                       AllIndices{},
+                       SelectedIndices(std::array{static_cast<size_t>(
+                           std::forward<ColIndices>(col_indices))...}));
 }
 
 /// @brief Slice the matrix @p mat rows from index @p rows_from
 ///   to index @p rows_to (not including) with a stride @p row_stride view.
-/// @{
-constexpr auto slice_rows(viewable_matrix auto&& mat, //
-                          size_t rows_from, size_t rows_to,
-                          size_t row_stride = 1) noexcept {
-  STORM_ASSERT_(rows_from < rows_to &&
-                static_cast<size_t>(rows_to) <= num_rows(mat) &&
-                "Invalid row range.");
-  return SubmatrixView(STORM_FORWARD_(mat),
+template<viewable_matrix Matrix>
+[[nodiscard]] constexpr auto slice_rows(Matrix&& mat, //
+                                        size_t rows_from, size_t rows_to,
+                                        size_t row_stride = 1) {
+  return SubmatrixView(std::forward<Matrix>(mat),
                        SlicedIndices(rows_from, rows_to, row_stride),
                        AllIndices{});
 }
-template<size_t RowsFrom, size_t RowsTo, size_t RowStride = 1>
-constexpr auto slice_rows(viewable_matrix auto&& mat) {
-  return slice_rows(STORM_FORWARD_(mat), size_t_constant<RowsFrom>{},
-                    size_t_constant<RowsTo>{}, size_t_constant<RowStride>{});
-}
-/// @}
 
 /// @brief Slice the matrix @p mat columns from index @p cols_from
 ///   to index @p cols_to (not including) with a stride @p col_stride view.
-/// @{
-constexpr auto slice_cols(viewable_matrix auto&& mat, //
-                          size_t cols_from, size_t cols_to,
-                          size_t col_stride = 1) noexcept {
-  STORM_ASSERT_(cols_from < cols_to &&
-                static_cast<size_t>(cols_to) <= num_cols(mat) &&
-                "Invalid column range.");
-  return SubmatrixView(STORM_FORWARD_(mat), //
+template<viewable_matrix Matrix>
+[[nodiscard]] constexpr auto slice_cols(Matrix&& mat, //
+                                        size_t cols_from, size_t cols_to,
+                                        size_t col_stride = 1) {
+  return SubmatrixView(std::forward<Matrix>(mat), //
                        AllIndices{},
                        SlicedIndices(cols_from, cols_to, col_stride));
 }
-template<size_t ColsFrom, size_t ColsTo, size_t ColStride = 1>
-constexpr auto slice_cols(viewable_matrix auto&& mat) {
-  return slice_cols(STORM_FORWARD_(mat), size_t_constant<ColsFrom>{},
-                    size_t_constant<ColsTo>{}, size_t_constant<ColStride>{});
-}
-/// @}
 
 /// @todo Implement me!
 constexpr auto diag(viewable_matrix auto&& mat) noexcept;

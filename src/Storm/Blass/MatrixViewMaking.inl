@@ -49,15 +49,15 @@ public:
       : shape_{shape}, func_{std::move(func)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
     return shape_;
   }
 
   /// @copydoc MatrixViewInterface::operator()
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(row_index < shape_.num_rows && col_index < shape_.num_cols &&
-                  "Indices are out of range.");
+    STORM_ASSERT_(row_index < shape_.num_rows && //
+                  col_index < shape_.num_cols && "Indices are out of range.");
     return func_(row_index, col_index);
   }
 
@@ -75,27 +75,30 @@ public:
 
 /// @brief Generate a constant matrix of @p shape.
 /// @param value Matrix element value.
-template<std::copyable Value>
+template<std::copyable Element>
 [[nodiscard]] constexpr auto //
-make_constant_matrix(matrix_shape_t shape, Value value) {
+make_constant_matrix(matrix_shape_t shape, Element value) {
   return MakeMatrixView( //
-      shape, [value = std::move(value)](size_t, size_t) -> const Value& {
+      shape,
+      [value = std::move(value)]( //
+          [[maybe_unused]] size_t row_index,
+          [[maybe_unused]] size_t col_index) noexcept -> const Element& {
         return value;
       });
 }
 
-/// @brief Generate a diagonal matrix with @p num_rows, @p num_cols.
+/// @brief Generate a diagonal matrix of @p shape.
 /// @param diagonal Matrix diagonal element value.
 /// @param off_diagonal Matrix off-diagonal element value.
-template<std::copyable Value>
+template<std::copyable Element>
 [[nodiscard]] constexpr auto
 make_diagonal_matrix(matrix_shape_t shape, //
-                     Value diagonal, Value off_diagonal = Value{}) {
-  // clang-format on
+                     Element diagonal, Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,
-      [diagonal = std::move(diagonal), off_diagonal = std::move(off_diagonal)](
-          size_t row_index, size_t col_index) -> const Value& {
+      [diagonal = std::move(diagonal), //
+       off_diagonal = std::move(off_diagonal)](
+          size_t row_index, size_t col_index) noexcept -> const Element& {
         return (row_index == col_index) ? diagonal : off_diagonal;
       });
 }

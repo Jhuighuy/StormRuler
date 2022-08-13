@@ -20,13 +20,13 @@
 
 #pragma once
 
-#include <utility>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Blass/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
+
+#include <utility>
 
 namespace Storm {
 

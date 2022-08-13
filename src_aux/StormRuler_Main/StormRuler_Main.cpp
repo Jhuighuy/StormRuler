@@ -25,15 +25,7 @@
 
 #define _USE_MATH_DEFINES 1
 #define _GNU_SOURCE 1
-
-#include <algorithm>
-#include <cstring>
-#include <fstream>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#define STORM_HEADER_ONLY 1
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -46,9 +38,18 @@
 #include <Storm/Blass/Mat.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
-#include <Storm/NVT/Nvt.hpp>
+#include "NVT/Nvt.hpp"
 #include <Storm/Solvers/PreconditionerFactory.hpp>
 #include <Storm/Solvers/SolverFactory.hpp>
+
+#include <algorithm>
+#include <cstring>
+#include <fstream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 using namespace Storm;
 
@@ -302,7 +303,7 @@ struct A {
 
 int main(int argc, char** argv) {
   srand(2321312);
-#if 0
+#if 1
   {
     using namespace Storm;
     DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},

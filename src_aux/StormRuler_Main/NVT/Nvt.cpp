@@ -1,4 +1,4 @@
-#include <Storm/NVT/Nvt.hpp>
+#include "Nvt.hpp"
 
 double Nvt::F_RR(const std::vector<double>& z, const std::vector<double>& K,
                  double nu) {

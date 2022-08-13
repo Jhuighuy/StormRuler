@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <Storm/Base.hpp>
+
 #include <boost/core/noncopyable.hpp>
 
 namespace Storm {

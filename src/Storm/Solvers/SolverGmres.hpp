@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <span>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Math.hpp>

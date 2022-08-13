@@ -25,10 +25,6 @@
 
 #pragma once
 
-#include <concepts>
-#include <memory>
-#include <stdexcept>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Enum.hpp>
@@ -46,6 +42,10 @@
 #include <Storm/Solvers/SolverRichardson.hpp>
 #include <Storm/Solvers/SolverNewton.hpp>
 // clang-format on
+
+#include <concepts>
+#include <memory>
+#include <stdexcept>
 
 namespace Storm {
 

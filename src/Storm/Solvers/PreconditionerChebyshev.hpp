@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include <cmath>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Solvers/Preconditioner.hpp>
+
+#include <cmath>
 
 namespace Storm {
 

@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <stdexcept>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Enum.hpp>
@@ -35,6 +33,8 @@
 // clang-format off
 #include <Storm/Solvers/PreconditionerChebyshev.hpp>
 // clang-format on
+
+#include <stdexcept>
 
 namespace Storm {
 

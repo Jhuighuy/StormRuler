@@ -25,10 +25,11 @@
 
 #pragma once
 
+#include <Storm/Base.hpp>
+
+#include <compare>
 #include <concepts>
 #include <string_view>
-
-#include <Storm/Base.hpp>
 
 namespace Storm {
 

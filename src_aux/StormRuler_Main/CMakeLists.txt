@@ -37,7 +37,7 @@ project(StormRuler_Main
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 # Locate the C++ sources.
-file(GLOB CXX_SOURCES "./*.c*")
+file(GLOB_RECURSE CXX_SOURCES "./*.cpp")
 
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main executable library.

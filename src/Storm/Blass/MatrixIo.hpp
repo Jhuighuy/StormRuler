@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include <ostream>
-
 #include <Storm/Blass/MatrixBase.hpp>
+
+#include <ostream>
 
 namespace Storm {
 

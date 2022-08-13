@@ -25,14 +25,14 @@
 
 #pragma once
 
+#include <Storm/Base.hpp>
+
+#include <Storm/Blass/MatrixView.hpp>
+
 #include <array>
 #include <initializer_list>
 #include <memory>
 #include <type_traits>
-
-#include <Storm/Base.hpp>
-
-#include <Storm/Blass/MatrixView.hpp>
 
 namespace Storm {
 

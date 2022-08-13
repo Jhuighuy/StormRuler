@@ -27,6 +27,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <cmath>
+
 namespace Storm::math {
 
 using std::abs;

@@ -27,12 +27,12 @@
 #error #include <Storm/Utils/SimdBlock.hpp> instead
 #endif
 
-#include <immintrin.h>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Math.hpp>
 #include <Storm/Utils/SimdBlock.hpp>
+
+#include <immintrin.h>
 
 namespace Storm {
 

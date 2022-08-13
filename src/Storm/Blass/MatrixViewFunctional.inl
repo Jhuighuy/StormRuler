@@ -23,13 +23,13 @@
        use <Storm/Blass/MatrixView.hpp> instead.
 #endif
 
+#include <Storm/Utils/Math.hpp>
+
 #include <concepts>
 #include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
-
-#include <Storm/Utils/Math.hpp>
 
 namespace Storm {
 

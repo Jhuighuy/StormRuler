@@ -20,15 +20,15 @@
 
 #pragma once
 
-#include <concepts>
-#include <type_traits>
-#include <utility>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Math.hpp>
 
 #include <Storm/Blass/MatrixBase.hpp>
+
+#include <concepts>
+#include <type_traits>
+#include <utility>
 
 namespace Storm {
 

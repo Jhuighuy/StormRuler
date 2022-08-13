@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <stdexcept>
-
-#include <spdlog/spdlog.h>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Object.hpp>
 
 #include <Storm/Solvers/Operator.hpp>
 #include <Storm/Solvers/Preconditioner.hpp>
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+
+#include <spdlog/spdlog.h>
 
 namespace Storm {
 

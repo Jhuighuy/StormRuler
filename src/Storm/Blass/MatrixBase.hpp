@@ -59,12 +59,6 @@ template<matrix Matrix>
 using matrix_element_t = decltype( //
     std::declval<Matrix>()(std::declval<size_t>(), std::declval<size_t>()));
 
-/// @brief Const matrix element type.
-template<matrix Matrix>
-using const_matrix_element_t = decltype( //
-    std::declval<std::add_const_t<Matrix>>()(std::declval<size_t>(),
-                                             std::declval<size_t>()));
-
 // ========================================================================== //
 // ========================================================================== //
 

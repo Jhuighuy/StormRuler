@@ -25,17 +25,17 @@
 
 #pragma once
 
-#include <cmath>
-#include <functional>
-#include <memory>
-#include <stdexcept>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Object.hpp>
 
 #include <Storm/Blass/MatrixView.hpp>
 #include <Storm/Blass/Vector.hpp>
+
+#include <cmath>
+#include <functional>
+#include <memory>
+#include <stdexcept>
 
 namespace Storm {
 

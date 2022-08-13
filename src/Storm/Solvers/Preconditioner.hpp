@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Enum.hpp>
 
 #include <Storm/Solvers/Operator.hpp>
+
+#include <iostream>
 
 namespace Storm {
 

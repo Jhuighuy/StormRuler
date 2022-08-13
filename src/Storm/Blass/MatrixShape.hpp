@@ -20,11 +20,11 @@
 
 #pragma once
 
+#include <Storm/Base.hpp>
+
 #include <concepts>
 #include <span>
 #include <type_traits>
-
-#include <Storm/Base.hpp>
 
 namespace Storm {
 

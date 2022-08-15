@@ -26,7 +26,7 @@ module StormRuler_API
 
 use StormRuler_Consts, only: bp, ip, dp
 
-use StormRuler_Helpers, only: PrintBanner, RgbToInt
+use StormRuler_Helpers, only: RgbToInt
 
 use StormRuler_Mesh, only: tMesh, InitMeshStencil, InitMeshFromImage
 
@@ -188,8 +188,6 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
   type(c_ptr) :: meshPtr
 
   class(tMesh), pointer :: gMesh
-
-  call PrintBanner()
 
 #$if False
   block

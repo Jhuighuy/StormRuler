@@ -50,22 +50,32 @@
 #define STORM_CPP23_ 0
 #endif
 
-// Force (kindly ask) the compiler to inline the function.
+// Detect the C++ compiler.
+/// @todo Implement me!
+#define STORM_COMPILER_GCC_ 1
+#define STORM_COMPILER_CLANG_ 0
 #ifdef _MSC_VER
+#define STORM_COMPILER_MSVC_ 1
+#else
+#define STORM_COMPILER_MSVC_ 0
+#endif
+
+// Force (kindly ask) the compiler to inline the function.
+#if STORM_COMPILER_MSVC_
 #define STORM_FORCE_INLINE_ inline __forceinline
 #else
 #define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
 #endif
 
 // Cross-compiler version of `[[no_unique_address]]`.
-#ifdef _MSC_VER
+#if STORM_COMPILER_MSVC_
 #define STORM_NO_UNIQUE_ADDRESS_ [[msvc::no_unique_address]]
 #else
 #define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
 #endif
 
 // Assume the expression is always true.
-#ifdef _MSC_VER
+#if STORM_COMPILER_MSVC_
 #define STORM_ASSUME_(expression) __assume(expression)
 #else
 #define STORM_ASSUME_(expression)                   \
@@ -76,47 +86,47 @@
 
 // Report a trace message.
 #define STORM_TRACE_(message, ...) \
-  (spdlog::trace(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::trace(message __VA_OPT__(, __VA_ARGS__)))
 
 // Report a debug message.
 #define STORM_DEBUG_(message, ...) \
-  (spdlog::debug(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::debug(message __VA_OPT__(, __VA_ARGS__)))
 
-// Report a debug message.
+// Report an info message.
 #define STORM_INFO_(message, ...) \
-  (spdlog::info(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::info(message __VA_OPT__(, __VA_ARGS__)))
 
 // Report a warning.
 #define STORM_WARNING_(message, ...) \
-  (spdlog::warn(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::warn(message __VA_OPT__(, __VA_ARGS__)))
 
 // Report an error.
 #define STORM_ERROR_(message, ...) \
-  (spdlog::error(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::error(message __VA_OPT__(, __VA_ARGS__)))
 
 // Report a critical error.
 #define STORM_CRITICAL_(message, ...) \
-  (spdlog::critical(message __VA_OPT__(, ) __VA_ARGS__))
+  (spdlog::critical(message __VA_OPT__(, __VA_ARGS__)))
 
 #ifndef __FUNCSIG__
 #define __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
 
 // Report a fatal error and exit the application.
-#define STORM_FATAL_ERROR_(message, ...)                              \
-  do {                                                                \
-    STORM_CRITICAL_("Fatal error:");                                  \
-    STORM_CRITICAL_("{}:{} {}: {}", __FILE__, __LINE__, __FUNCSIG__,  \
-                    fmt::format(message __VA_OPT__(, ) __VA_ARGS__)); \
-    spdlog::shutdown(), std::abort();                                 \
+#define STORM_FATAL_ERROR_(message, ...)                             \
+  do {                                                               \
+    STORM_CRITICAL_("Fatal error:");                                 \
+    STORM_CRITICAL_("{}:{} {}: {}", __FILE__, __LINE__, __FUNCSIG__, \
+                    fmt::format(message __VA_OPT__(, __VA_ARGS__))); \
+    spdlog::shutdown(), std::abort();                                \
   } while (false)
 
 // Check the expression, exit with fatal error if it fails.
-#define STORM_ENSURE_(expression, message, ...)                                \
-  do {                                                                         \
-    if (!(expression)) { /**/                                                  \
-      STORM_FATAL_ERROR_(#expression ", " message __VA_OPT__(, ) __VA_ARGS__); \
-    }                                                                          \
+#define STORM_ENSURE_(expression, message, ...)                               \
+  do {                                                                        \
+    if (!(expression)) {                                                      \
+      STORM_FATAL_ERROR_(#expression ": " message __VA_OPT__(, __VA_ARGS__)); \
+    }                                                                         \
   } while (false)
 
 // Check the expression in the debug mode, exit with fatal error if it fails.
@@ -124,7 +134,7 @@
 #define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
 #else
 #define STORM_ASSERT_(expression, message, ...) \
-  STORM_ENSURE_(expression, message __VA_OPT__(, ) __VA_ARGS__)
+  STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
 #endif
 
 namespace Storm {

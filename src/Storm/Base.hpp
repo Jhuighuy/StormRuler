@@ -52,12 +52,23 @@
 
 // Detect the C++ compiler.
 /// @todo Implement me!
+#ifdef __GNUC__
 #define STORM_COMPILER_GCC_ 1
+#else
+#define STORM_COMPILER_GCC_ 0
+#endif
+#ifdef __clang__
+#define STORM_COMPILER_CLANG_ 1
+#else
 #define STORM_COMPILER_CLANG_ 0
+#endif
 #ifdef _MSC_VER
 #define STORM_COMPILER_MSVC_ 1
 #else
 #define STORM_COMPILER_MSVC_ 0
+#endif
+#if (STORM_COMPILER_GCC_ + STORM_COMPILER_CLANG_ + STORM_COMPILER_MSVC_) != 1
+#warning Storm has detected multiple compilers, something is terribly wrong...
 #endif
 
 // Force (kindly ask) the compiler to inline the function.
@@ -139,7 +150,13 @@
 
 namespace Storm {
 
-/// @brief Contains the implementation details.
+/// Library for the math functions.
+namespace math {}
+
+/// A small metaprogramming library.
+namespace meta {}
+
+/// @brief Contains the internal implementation details.
 namespace detail_ {}
 
 /// @brief Size type.

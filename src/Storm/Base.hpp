@@ -133,11 +133,12 @@
   } while (false)
 
 // Check the expression, exit with fatal error if it fails.
-#define STORM_ENSURE_(expression, message, ...)                               \
-  do {                                                                        \
-    if (!(expression)) {                                                      \
-      STORM_FATAL_ERROR_(#expression ": " message __VA_OPT__(, __VA_ARGS__)); \
-    }                                                                         \
+#define STORM_ENSURE_(expression, message, ...)              \
+  do {                                                       \
+    if (!(expression)) {                                     \
+      STORM_CRITICAL_("\"{}\" failed!", #expression);        \
+      STORM_FATAL_ERROR_(message __VA_OPT__(, __VA_ARGS__)); \
+    }                                                        \
   } while (false)
 
 // Check the expression in the debug mode, exit with fatal error if it fails.

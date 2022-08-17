@@ -118,6 +118,16 @@ public:
     return static_cast<ptrdiff_t>(i1.value_ - i2.value_);
   }
 
+  /// @brief Read @p index from the input @p stream.
+  friend std::istream& operator>>(std::istream& stream, Index& i) {
+    return stream >> i.value_;
+  }
+
+  /// @brief Write @p index to the output @p stream.
+  friend std::ostream& operator<<(std::ostream& stream, Index i) {
+    return stream << i.value_;
+  }
+
 }; // class Index
 
 namespace detail_ {

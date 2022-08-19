@@ -22,18 +22,13 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Mallard/Indices.hpp>
+#include <Storm/Mallard/Mesh.hpp>
 
 #include <array>
 #include <ranges>
 #include <tuple>
 
 namespace Storm::shapes {
-
-/// @brief Mesh spatial dimensionality.
-template<class Mesh>
-inline constexpr size_t mesh_dim_v = fast_vector_size_v<std::remove_cvref_t<
-    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>>;
 
 /// @brief Shape concept.
 // clang-format off
@@ -142,7 +137,7 @@ namespace detail_ {
 
 /// @brief Compute the shape "volume" (length in 1D, area in 2D, volume in 3D).
 // clang-format off
-template<shape Shape, class Mesh>
+template<shape Shape, mesh Mesh>
   requires (detail_::has_volume_<Shape, Mesh> || 
             (complex_shape<Shape> && 
              detail_::can_volume_<piece_t<Shape>, Mesh>))
@@ -165,7 +160,7 @@ template<shape Shape, class Mesh>
 
 /// @brief Compute the shape barycenter.
 // clang-format off
-template<shape Shape, class Mesh>
+template<shape Shape, mesh Mesh>
   requires (detail_::has_barycenter_<Shape, Mesh> || 
             (complex_shape<Shape> &&
              detail_::can_volume_<piece_t<Shape>, Mesh> &&
@@ -192,7 +187,7 @@ template<shape Shape, class Mesh>
 
 /// @brief Compute the shape normal.
 // clang-format off
-template<shape Shape, class Mesh>
+template<shape Shape, mesh Mesh>
   requires (detail_::has_normal_<Shape, Mesh> || 
             (complex_shape<Shape> &&
              detail_::can_volume_<piece_t<Shape>, Mesh> &&
@@ -245,20 +240,22 @@ public:
   }
 
   /// @brief Segment "volume" (length).
-  [[nodiscard]] constexpr real_t volume(const auto& mesh) const noexcept {
+  template<mesh Mesh>
+  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     return glm::length(v2 - v1);
   }
 
   /// @brief Segment barycenter.
-  [[nodiscard]] constexpr auto barycenter(const auto& mesh) const noexcept {
+  template<mesh Mesh>
+  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     return (v1 + v2) / 2.0;
   }
 
   /// @brief Segment normal.
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> == 2)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
     // clang-format on
@@ -306,7 +303,7 @@ public:
 
   /// @brief Triangle "volume" (area).
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
   [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
     // clang-format on
@@ -321,7 +318,7 @@ public:
 
   /// @brief Triangle barycenter.
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
   [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
     // clang-format on
@@ -332,7 +329,7 @@ public:
 
   /// @brief Triangle normal.
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> == 3)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
     // clang-format on
@@ -440,7 +437,7 @@ public:
 
   /// @brief Tetrahedron volume.
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
     // clang-format on
@@ -451,7 +448,7 @@ public:
 
   /// @brief Tetrahedron barycenter.
   // clang-format off
-  template<class Mesh>
+  template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
     // clang-format on

@@ -45,6 +45,11 @@ using EdgeIndex = EntityIndex<1>;
 
 namespace Storm::shapes {
 
+/// @todo Mesh spatial dimensionality.
+template<class Mesh>
+inline constexpr size_t mesh_dim_v = fast_vector_size_v<std::remove_cvref_t<
+    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>>;
+
 /// @brief Shape concept.
 // clang-format off
 template<class Shape>
@@ -112,28 +117,19 @@ template<size_t Index, shape Shape>
   }
 }
 
-/// @brief Simplex shape concept.
-// clang-format off
-template<class Shape>
-concept simplex_shape = shape<Shape> && 
-    !requires { std::declval<Shape>().simplices(); };
-// clang-format on
-
 /// @brief Complex shape concept.
 // clang-format off
 template<class Shape>
 concept complex_shape = shape<Shape> && 
     requires {
-      { std::declval<Shape>().simplices() } -> std::ranges::range;
-    } && 
-    simplex_shape<std::ranges::range_value_t<
-        decltype(std::declval<Shape>().simplices())>>;
+      { std::declval<Shape>().pieces() } -> std::ranges::range;
+    };
 // clang-format on
 
-/// @brief Simplex type of a complex.
+/// @brief Piece type of a complex.
 template<complex_shape Shape>
-using simplex_t =
-    std::ranges::range_value_t<decltype(std::declval<Shape>().simplices())>;
+using piece_t =
+    std::ranges::range_value_t<decltype(std::declval<Shape>().pieces())>;
 
 namespace detail_ {
   // clang-format off
@@ -166,19 +162,19 @@ namespace detail_ {
 template<shape Shape, class Mesh>
   requires (detail_::has_volume_<Shape, Mesh> || 
             (complex_shape<Shape> && 
-             detail_::can_volume_<simplex_t<Shape>, Mesh>))
+             detail_::can_volume_<piece_t<Shape>, Mesh>))
 [[nodiscard]] constexpr auto volume(const Shape& shape,
                                     const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_volume_<Shape, Mesh>) {
     return shape.volume(mesh);
   } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_volume_<simplex_t<Shape>, Mesh>) {
+                       detail_::can_volume_<piece_t<Shape>, Mesh>) {
     // Compute the complex volume.
-    const auto simplices = shape.simplices();
-    auto vol = volume(simplices.front(), mesh);
-    for (const auto& simplex : simplices | std::views::drop(1)) {
-      vol += volume(simplex, mesh);
+    const auto pieces = shape.pieces();
+    auto vol = volume(pieces.front(), mesh);
+    for (const auto& piece : pieces | std::views::drop(1)) {
+      vol += volume(piece, mesh);
     }
     return vol;
   }
@@ -188,33 +184,24 @@ template<shape Shape, class Mesh>
 // clang-format off
 template<shape Shape, class Mesh>
   requires (detail_::has_barycenter_<Shape, Mesh> || 
-            simplex_shape<Shape> || 
             (complex_shape<Shape> &&
-             detail_::can_volume_<simplex_t<Shape>, Mesh> &&
-             detail_::can_barycenter_<simplex_t<Shape>, Mesh>))
+             detail_::can_volume_<piece_t<Shape>, Mesh> &&
+             detail_::can_barycenter_<piece_t<Shape>, Mesh>))
 [[nodiscard]] constexpr auto barycenter(const Shape& shape,
                                         const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_barycenter_<Shape, Mesh>) {
     return shape.barycenter(mesh);
-  } else if constexpr (simplex_shape<Shape>) {
-    // Compute the simplex barycenter.
-    const auto nodes = shape.nodes();
-    auto sum_center = mesh.position(nodes.front());
-    for (const NodeIndex& node : nodes | std::views::drop(1)) {
-      sum_center += mesh.position(node);
-    }
-    return sum_center / static_cast<real_t>(nodes.size());
   } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_volume_<simplex_t<Shape>, Mesh> &&
-                       detail_::can_barycenter_<simplex_t<Shape>, Mesh>) {
+                       detail_::can_volume_<piece_t<Shape>, Mesh> &&
+                       detail_::can_barycenter_<piece_t<Shape>, Mesh>) {
     // Compute the complex barycenter.
-    const auto simplices = shape.simplices();
-    auto vol = volume(simplices.front(), mesh);
-    auto vol_center = vol * barycenter(simplices.front(), mesh);
-    for (const auto& simplex : simplices | std::views::drop(1)) {
-      const auto dv = volume(simplex, mesh);
-      vol += dv, vol_center += dv * barycenter(simplex, mesh);
+    const auto pieces = shape.pieces();
+    auto vol = volume(pieces.front(), mesh);
+    auto vol_center = vol * barycenter(pieces.front(), mesh);
+    for (const auto& piece : pieces | std::views::drop(1)) {
+      const auto dv = volume(piece, mesh);
+      vol += dv, vol_center += dv * barycenter(piece, mesh);
     }
     return vol_center / vol;
   }
@@ -225,21 +212,21 @@ template<shape Shape, class Mesh>
 template<shape Shape, class Mesh>
   requires (detail_::has_normal_<Shape, Mesh> || 
             (complex_shape<Shape> &&
-             detail_::can_volume_<simplex_t<Shape>, Mesh> &&
-             detail_::can_normal_<simplex_t<Shape>, Mesh>))
+             detail_::can_volume_<piece_t<Shape>, Mesh> &&
+             detail_::can_normal_<piece_t<Shape>, Mesh>))
 [[nodiscard]] constexpr auto normal(const Shape& shape,
                                     const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_normal_<Shape, Mesh>) {
     return shape.normal(mesh);
   } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_normal_<simplex_t<Shape>, Mesh>) {
+                       detail_::can_normal_<piece_t<Shape>, Mesh>) {
     // Compute the complex barycenter.
-    const auto simplices = shape.simplices();
+    const auto pieces = shape.pieces();
     auto vol_normal =
-        volume(simplices.front(), mesh) * normal(simplices.front(), mesh);
-    for (const auto& simplex : simplices | std::views::drop(1)) {
-      vol_normal += volume(simplex, mesh) * normal(simplex, mesh);
+        volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
+    for (const auto& piece : pieces | std::views::drop(1)) {
+      vol_normal += volume(piece, mesh) * normal(piece, mesh);
     }
     return glm::normalize(vol_normal);
   }
@@ -269,19 +256,32 @@ public:
   constexpr Seg(NodeIndex i1, NodeIndex i2) noexcept : n1{i1}, n2{i2} {}
   /// @}
 
-  /// @brief Segment area ("volume").
-  [[nodiscard]] constexpr real_t volume(const auto& mesh) const noexcept {
-    STORM_FATAL_ERROR_("not implemented");
-  }
-
-  /// @brief Segment normal.
-  [[nodiscard]] constexpr glm::dvec3 normal(const auto& mesh) const noexcept {
-    STORM_FATAL_ERROR_("not implemented");
-  }
-
   /// @brief Segment nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2};
+  }
+
+  /// @brief Segment "volume" (length).
+  [[nodiscard]] constexpr real_t volume(const auto& mesh) const noexcept {
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    return glm::length(v2 - v1);
+  }
+
+  /// @brief Segment barycenter.
+  [[nodiscard]] constexpr auto barycenter(const auto& mesh) const noexcept {
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    return (v1 + v2) / 2.0;
+  }
+
+  /// @brief Segment normal.
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> == 2)
+  [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    return glm::normalize(
+        glm::cross(glm::dvec3(v2 - v1, 0.0), glm::dvec3(0.0, 0.0, 1.0)));
   }
 
 }; // class Seg
@@ -311,16 +311,6 @@ public:
       : n1{i1}, n2{i2}, n3{i3} {}
   /// @}
 
-  /// @brief Triangle area ("volume").
-  [[nodiscard]] constexpr real_t volume(const auto& mesh) const noexcept {
-    STORM_FATAL_ERROR_("not implemented");
-  }
-
-  /// @brief Triangle normal.
-  [[nodiscard]] constexpr glm::dvec3 normal(const auto& mesh) const noexcept {
-    STORM_FATAL_ERROR_("not implemented");
-  }
-
   /// @brief Triangle nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2, n3};
@@ -329,6 +319,45 @@ public:
   /// @brief Triangle edges.
   [[nodiscard]] constexpr auto edges() const noexcept {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n1}};
+  }
+
+  /// @brief Triangle "volume" (area).
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> >= 2)
+  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const auto v3{mesh.position(n3)};
+    if constexpr (mesh_dim_v<Mesh> == 2) {
+      return glm::length(glm::cross( //
+                 glm::dvec3(v2 - v1, 0.0), glm::dvec3(v3 - v1, 0.0))) /
+             2.0;
+    } else {
+      return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
+    }
+  }
+
+  /// @brief Triangle barycenter.
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> >= 2)
+  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const auto v3{mesh.position(n3)};
+    return (v1 + v2 + v3) / 3.0;
+  }
+
+  /// @brief Triangle normal.
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> == 3)
+  [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const auto v3{mesh.position(n3)};
+    return glm::normalize(glm::cross(v2 - v1, v3 - v1));
   }
 
 }; // class Triangle
@@ -367,8 +396,8 @@ public:
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n4}, Seg{n4, n1}};
   }
 
-  /// @brief Quadrangle simplices.
-  [[nodiscard]] constexpr auto simplices() const noexcept {
+  /// @brief Quadrangle pieces.
+  [[nodiscard]] constexpr auto pieces() const noexcept {
     return std::array{Triangle{n1, n2, n3}, Triangle{n3, n4, n1}};
   }
 
@@ -411,11 +440,6 @@ public:
       : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
   /// @}
 
-  /// @brief Tetrahedron volume.
-  [[nodiscard]] constexpr real_t volume(const auto& mesh) const noexcept {
-    STORM_FATAL_ERROR_("not implemented");
-  }
-
   /// @brief Tetrahedron nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2, n3, n4};
@@ -431,6 +455,28 @@ public:
   [[nodiscard]] constexpr auto faces() const noexcept {
     return std::tuple{Triangle{n1, n3, n2}, Triangle{n1, n2, n4},
                       Triangle{n2, n3, n4}, Triangle{n3, n1, n4}};
+  }
+
+  /// @brief Tetrahedron volume.
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> >= 3)
+  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
+    return glm::abs(glm::dot(v2 - v1, glm::cross(v3 - v1, v4 - v1))) / 6.0;
+  }
+
+  /// @brief Tetrahedron barycenter.
+  // clang-format off
+  template<class Mesh>
+    requires (mesh_dim_v<Mesh> >= 3)
+  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
+    // clang-format on
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
+    return (v1 + v2 + v3 + v4) / 4.0;
   }
 
 }; // class Tetrahedron
@@ -491,8 +537,8 @@ public:
                       Triangle{n4, n1, n5}};
   }
 
-  /// @brief Pyramid simplices.
-  [[nodiscard]] constexpr auto simplices() const noexcept {
+  /// @brief Pyramid pieces.
+  [[nodiscard]] constexpr auto pieces() const noexcept {
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n4, n1, n5}};
   }
 
@@ -559,8 +605,8 @@ public:
                       Triangle{n4, n5, n6}};
   }
 
-  /// @brief Pentahedron simplices.
-  [[nodiscard]] constexpr auto simplices() const noexcept {
+  /// @brief Pentahedron pieces.
+  [[nodiscard]] constexpr auto pieces() const noexcept {
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n1, n4, n5},
                       Tetrahedron{n4, n6, n3, n5}};
   }
@@ -628,8 +674,8 @@ public:
                       Quadrangle{n1, n5, n8, n4}, Quadrangle{n5, n6, n7, n8}};
   }
 
-  /// @brief Hexahedron simplices.
-  [[nodiscard]] constexpr auto simplices() const noexcept {
+  /// @brief Hexahedron pieces.
+  [[nodiscard]] constexpr auto pieces() const noexcept {
     return std::array{Tetrahedron{n1, n4, n2, n5}, Tetrahedron{n4, n3, n2, n7},
                       Tetrahedron{n5, n6, n7, n2}, Tetrahedron{n5, n7, n8, n4},
                       Tetrahedron{n5, n4, n2, n7}};

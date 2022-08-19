@@ -27,8 +27,11 @@
 
 namespace Storm {
 
-template<class, size_t>
-using FastVector = glm::dvec3;
+template<class T, size_t N>
+using FastVector = glm::vec<N, T>;
+
+template<class T>
+inline constexpr size_t fast_vector_size_v = sizeof(T) / sizeof(real_t);
 
 #if 0
 template<class Element, size_t NumRows>

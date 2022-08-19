@@ -72,7 +72,7 @@ concept shape1D = shape<Shape> &&
 /// @brief 2D Shape concept.
 // clang-format off
 template<class Shape>
-concept shape2D = shape<Shape> &&
+concept shape3D = shape<Shape> &&
   requires { 
     std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
   } && !requires { std::declval<Shape>().faces(); };
@@ -81,31 +81,31 @@ concept shape2D = shape<Shape> &&
 /// @brief 3D Shape concept.
 // clang-format off
 template<class Shape>
-concept shape3D = shape<Shape> &&
+concept shape4D = shape<Shape> &&
   requires { 
     std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
   } && requires { 
-    std::apply([](shape2D auto&&...) {}, std::declval<Shape>().faces());
+    std::apply([](shape3D auto&&...) {}, std::declval<Shape>().faces());
   };
 // clang-format on
 
 /// @brief Shape topological dimensionality.
 // clang-format off
 template<shape Shape>
-  requires (shape1D<Shape> || shape2D<Shape> || shape3D<Shape>)
+  requires (shape1D<Shape> || shape3D<Shape> || shape4D<Shape>)
 inline constexpr size_t shape_dim_v = []() {
   // clang-format on
   if constexpr (shape1D<Shape>) return 1;
-  if constexpr (shape2D<Shape>) return 2;
-  if constexpr (shape3D<Shape>) return 3;
+  if constexpr (shape3D<Shape>) return 2;
+  if constexpr (shape4D<Shape>) return 3;
 }();
 
 /// @brief Get the shape parts.
 // clang-format off
 template<size_t Index, shape Shape>
   requires ((Index == 0) ||
-            (Index == 1 && (shape2D<Shape> || shape3D<Shape>)) ||
-            (Index == 2 && shape3D<Shape>))
+            (Index == 1 && (shape3D<Shape> || shape4D<Shape>)) ||
+            (Index == 2 && shape4D<Shape>))
 [[nodiscard]] constexpr auto parts(const Shape& shape) noexcept {
   // clang-format on
   if constexpr (Index == 0) {
@@ -233,13 +233,13 @@ template<shape Shape, class Mesh>
 /// @brief Segmental shape.
 /// @verbatim
 ///
-///  n1 @ f0
+///  n1 @ f1
 ///      \
-///       \         e0 = (n1,n2)
-///        v e0     f0 = (n1)
-///         \       f1 = (n2)
+///       \         e3 = (n1,n2)
+///        v e3     f1 = (n1)
+///         \       f2 = (n2)
 ///          \
-///        n2 @ f1
+///        n2 @ f2
 ///
 /// @endverbatim
 class Seg final {
@@ -287,14 +287,14 @@ public:
 /// Triangular shape.
 /// @verbatim
 ///           n3
-///           @           e0 = f0 = (n1,n2)
-///          / \          e1 = f1 = (n2,n3)
-///         /   \         e2 = f2 = (n3,n1)
-///  e2/f2 v     ^ e1/f1
+///           @           e3 = f1 = (n1,n2)
+///          / \          e2 = f2 = (n2,n3)
+///         /   \         e3 = f3 = (n3,n1)
+///  e3/f3 v     ^ e2/f2
 ///       /       \
 ///      /         \
 ///  n1 @----->-----@ n2
-///         e0/f0
+///         e3/f1
 /// @endverbatim
 class Triangle final {
 public:
@@ -360,13 +360,13 @@ public:
 
 /// @brief Quadrangular shape.
 /// @verbatim
-///               e2/f2
-///       n4 @-----<-----@ n3    e0 = f0 = (n1,n2)
-///         /           /        e1 = f2 = (n2,n3)
-///  e3/f3 v           ^ e1/f1   e2 = f2 = (n3,n4)
-///       /           /          e3 = f3 = (n4,n1)
+///               e3/f3
+///       n4 @-----<-----@ n3    e3 = f1 = (n1,n2)
+///         /           /        e2 = f3 = (n2,n3)
+///  e4/f4 v           ^ e2/f2   e3 = f3 = (n3,n4)
+///       /           /          e4 = f4 = (n4,n1)
 ///   n1 @----->-----@ n2     split = ((n1,n2,n3),(n3,n4,n1))
-///          e0/f0
+///          e3/f1
 /// @endverbatim
 class Quadrangle final {
 public:
@@ -401,26 +401,26 @@ public:
 
 /// @brief Tetrahedral shape.
 /// @verbatim
-///                    f3
+///                    f4
 ///               n4   ^
 ///                @   |
-///         f1    /|\. |     f2         e0 = (n1,n2)
-///         ^    / | `\.     ^          e1 = (n2,n3)
-///          \  /  |   `\.  /           e2 = (n3,n1)
-///           \`   |   | `\/            e3 = (n1,n4)
-///           ,\   |   o  /`\           e4 = (n2,n4)
-///       e3 ^  *  |     *   `^.e5      e5 = (n3,n4)
-///         /   e4 ^           `\       f0 = (n1,n3,n2)
-///     n1 @-------|--<----------@ n3   f1 = (n1,n2,n4)
-///         \      |  e2       ,/       f2 = (n2,n3,n4)
-///          \     |     o   ,/`        f3 = (n3,n1,n4)
-///           \    ^ e4  | ,/`
-///         e0 v   |     ,^ e1
+///         f2    /|\. |     f3         e3 = (n1,n2)
+///         ^    / | `\.     ^          e2 = (n2,n3)
+///          \  /  |   `\.  /           e3 = (n3,n1)
+///           \`   |   | `\/            e4 = (n1,n4)
+///           ,\   |   o  /`\           e5 = (n2,n4)
+///       e4 ^  *  |     *   `^.e6      e6 = (n3,n4)
+///         /   e5 ^           `\       f1 = (n1,n3,n2)
+///     n1 @-------|--<----------@ n3   f2 = (n1,n2,n4)
+///         \      |  e3       ,/       f3 = (n2,n3,n4)
+///          \     |     o   ,/`        f4 = (n3,n1,n4)
+///           \    ^ e5  | ,/`
+///         e3 v   |     ,^ e2
 ///             \  |   ,/`
 ///              \ | ,/` |
 ///               \|/`   |
 ///                @ n2  v
-///                      f0
+///                      f1
 /// @endverbatim
 class Tetrahedron final {
 public:
@@ -479,26 +479,26 @@ public:
 
 /// @brief Pyramidal shape.
 /// @verbatim
-///                                n5                      e0 = (n1,n2)
-///                  f3           ,@                       e1 = (n2,n3)
-///                   ^        ,/`/|\     f1               e2 = (n3,n4)
-///                    \    ,/`  / | \    ^                e3 = (n4,n1)
-///                     \,/`    /  |  \  /                 e4 = (n1,n5)
-///                e7 ,/`\     /   |   \/                  e5 = (n2,n5)
-///                ,^`    o   /    |   /\                  e6 = (n3,n5)
-///             ,/`          /     |  *  \                 e7 = (n4,n5)
-///  f4 <------------*      /   e6 ^   o--\---------> f2   f0 = (n1,n4,n3,n2)
-///       ,/`              /       |       \               f1 = (n1,n2,n5)
-///   n4 @-----<----------/--------@  n3    ^ e5           f2 = (n2,n3,n5)
-///       `\.  e2        /          `\.      \             f3 = (n3,n4,n5)
-///          `>.        ^ e4           `\. e1 \            f4 = (n4,n1,n5)
-///          e3 `\.    /       o          `<.  \       split = ((n1,n2,n3,n5),
+///                                n5                      e3 = (n1,n2)
+///                  f4           ,@                       e2 = (n2,n3)
+///                   ^        ,/`/|\     f2               e3 = (n3,n4)
+///                    \    ,/`  / | \    ^                e4 = (n4,n1)
+///                     \,/`    /  |  \  /                 e5 = (n1,n5)
+///                e8 ,/`\     /   |   \/                  e6 = (n2,n5)
+///                ,^`    o   /    |   /\                  e7 = (n3,n5)
+///             ,/`          /     |  *  \                 e8 = (n4,n5)
+///  f5 <------------*      /   e7 ^   o--\---------> f3   f1 = (n1,n4,n3,n2)
+///       ,/`              /       |       \               f2 = (n1,n2,n5)
+///   n4 @-----<----------/--------@  n3    ^ e6           f3 = (n2,n3,n5)
+///       `\.  e3        /          `\.      \             f4 = (n3,n4,n5)
+///          `>.        ^ e5           `\. e2 \            f5 = (n4,n1,n5)
+///          e4 `\.    /       o          `<.  \       split = ((n1,n2,n3,n5),
 ///                `\./        |             `\.\               (n3,n4,n1,n5))
 ///               n1 @-------------------->-----@ n2
-///                            |          e0
+///                            |          e3
 ///                            |
 ///                            v
-///                            f0
+///                            f1
 /// @endverbatim
 class Pyramid final {
 public:
@@ -542,30 +542,30 @@ public:
 
 /// @brief Pentahedral shape (triangular prism).
 /// @verbatim
-///                 f4
-///                 ^  f2
+///                 f5
+///                 ^  f3
 ///                 |  ^
-///             e8  |  |
-///      n4 @---<---|-------------@ n6        e0 = (n1,n2)
-///         |\      *  |        ,/|           e1 = (n2,n3)
-///         | \        o      ,/` |           e2 = (n3,n1)
-///         |  \         e7 ,^`   |           e3 = (n1,n4)
-///         |   v e6      ,/`     |           e4 = (n2,n5)
-///      e3 ^    \      ,/`       ^ e5        e5 = (n3,n6)
-///         |     \   ,/`         |           e6 = (n4,n5)
-///         |      \ /`        *-------> f1   e7 = (n5,n6)
-///  f0 <-------*   @ n5          |           e8 = (n6,n4)
-///         |       |             |           f0 = (n1,n2,n5,n4)
-///      n1 @-------|---------<---@ n3        f1 = (n2,n3,n6,n5)
-///          \      |        e2 ,/            f2 = (n3,n1,n4,n6)
-///           \     |     o   ,/`             f3 = (n1,n3,n2)
-///            \    ^ e4  | ,/`               f4 = (n4,n5,n6)
-///          e0 v   |     ,^ e1            split = ((n1,n2,n3,n5),
+///             e9  |  |
+///      n4 @---<---|-------------@ n6        e3 = (n1,n2)
+///         |\      *  |        ,/|           e2 = (n2,n3)
+///         | \        o      ,/` |           e3 = (n3,n1)
+///         |  \         e8 ,^`   |           e4 = (n1,n4)
+///         |   v e7      ,/`     |           e5 = (n2,n5)
+///      e4 ^    \      ,/`       ^ e6        e6 = (n3,n6)
+///         |     \   ,/`         |           e7 = (n4,n5)
+///         |      \ /`        *-------> f2   e8 = (n5,n6)
+///  f1 <-------*   @ n5          |           e9 = (n6,n4)
+///         |       |             |           f1 = (n1,n2,n5,n4)
+///      n1 @-------|---------<---@ n3        f2 = (n2,n3,n6,n5)
+///          \      |        e3 ,/            f3 = (n3,n1,n4,n6)
+///           \     |     o   ,/`             f4 = (n1,n3,n2)
+///            \    ^ e5  | ,/`               f5 = (n4,n5,n6)
+///          e3 v   |     ,^ e2            split = ((n1,n2,n3,n5),
 ///              \  |   ,/|                         (n3,n1,n4,n5),
 ///               \ | ,/` |                         (n4,n6,n3,n5))
 ///                \|/`   |
 ///                 @ n2  v
-///                       f3
+///                       f4
 /// @endverbatim
 class Pentahedron final {
 public:
@@ -611,29 +611,29 @@ public:
 
 /// @brief Hexahedral shape.
 /// @verbatim
-///                      f5
-///                      ^       f2
+///                      f6
+///                      ^       f3
 ///                      |       ^
-///                   e9 |      /
-///            n7 @---<--|----------@ n6         e0 = (n1,n2)
-///              /|      |    /    /|            e1 = (n2,n3)
-///             / |      |   o    / |            e2 = (n3,n4)
-///        e10 v  |      *    e8 ^  ^ e5         e3 = (n4,n1)
-///           /   ^ e6          /   |            e4 = (n1,n5)
-///          /    |      e11   /  *-------> f1   e5 = (n2,n6)
-///      n8 @------------->---@ n5  |            e6 = (n3,n7)
-///  f3 <---|--o  |           |     |            e7 = (n4,n8)
-///         |  n3 @---<-------|-----@ n2         e8 = (n5,n6)
-///         |    /    e1      |    /             e9 = (n6,n7)
-///      e7 ^   /          e4 ^   /             e10 = (n7,n8)
-///         |  v e2  *        |  ^ e0           e11 = (n8,n5)
-///         | /     /    o    | /                f0 = (n1,n4,n3,n2)
-///         |/     /     |    |/                 f1 = (n1,n2,n6,n5)
-///      n4 @-----/-->--------@ n1               f2 = (n2,n3,n7,n6)
-///              /   e3  |                       f3 = (n3,n4,n8,n7)
-///             /        v                       f4 = (n1,n5,n8,n4)
-///            v         f0                      f5 = (n5,n6,n7,n8)
-///            f4
+///                   e10 |      /
+///            n7 @---<--|----------@ n6         e3 = (n1,n2)
+///              /|      |    /    /|            e2 = (n2,n3)
+///             / |      |   o    / |            e3 = (n3,n4)
+///        e11 v  |      *    e9 ^  ^ e6         e4 = (n4,n1)
+///           /   ^ e7          /   |            e5 = (n1,n5)
+///          /    |      e12   /  *-------> f2   e6 = (n2,n6)
+///      n8 @------------->---@ n5  |            e7 = (n3,n7)
+///  f4 <---|--o  |           |     |            e8 = (n4,n8)
+///         |  n3 @---<-------|-----@ n2         e9 = (n5,n6)
+///         |    /    e2      |    /            e10 = (n6,n7)
+///      e8 ^   /          e5 ^   /             e11 = (n7,n8)
+///         |  v e3  *        |  ^ e3           e12 = (n8,n5)
+///         | /     /    o    | /                f1 = (n1,n4,n3,n2)
+///         |/     /     |    |/                 f2 = (n1,n2,n6,n5)
+///      n4 @-----/-->--------@ n1               f3 = (n2,n3,n7,n6)
+///              /   e4  |                       f4 = (n3,n4,n8,n7)
+///             /        v                       f5 = (n1,n5,n8,n4)
+///            v         f1                      f6 = (n5,n6,n7,n8)
+///            f5
 /// @endverbatim
 class Hexahedron final {
 public:

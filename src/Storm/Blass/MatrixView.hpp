@@ -75,7 +75,7 @@ concept viewable_matrix = matrix<Matrix> &&
        std::movable<std::remove_reference_t<Matrix>>)));
 // clang-format on
 
-/// @brief Base class for all matrix views.
+/// @brief CRTP interface to a matrix views.
 // clang-format off
 template<class Derived>
   requires std::is_class_v<Derived> &&

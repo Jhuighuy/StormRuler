@@ -174,7 +174,7 @@ namespace detail_ {
   template<class>
   constexpr inline bool always_false_ = false;
 
-  consteval bool in_range_(auto t, auto min, auto max) {
+  constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
   }
 

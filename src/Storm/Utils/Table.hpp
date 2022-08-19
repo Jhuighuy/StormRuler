@@ -49,21 +49,31 @@ public:
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
     return std::ranges::subrange( //
-        col_indices_.begin() + row_offsets_[row_index],
-        col_indices_.begin() + row_offsets_[row_index + 1]);
+        col_indices_.begin() + (size_t) row_offsets_[row_index],
+        col_indices_.begin() + (size_t) row_offsets_[row_index + 1]);
   }
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) const noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
     return std::ranges::subrange( //
-        col_indices_.cbegin() + row_offsets_[row_index],
-        col_indices_.cbegin() + row_offsets_[row_index + 1]);
+        col_indices_.cbegin() + (size_t) row_offsets_[row_index],
+        col_indices_.cbegin() + (size_t) row_offsets_[row_index + 1]);
   }
   /// @}
 
-  constexpr void emplace() {
+  void insert(RowIndex rowIndex, ColIndex columnIndex) {
+    STORM_ASSERT_(rowIndex < size(), "");
+    col_indices_.insert(col_indices_.begin() +
+                            (size_t) row_offsets_[rowIndex + 1],
+                        columnIndex);
+    std::for_each(row_offsets_.begin() + (size_t) rowIndex + 1,
+                  row_offsets_.end(),
+                  [](RowOffsetIndex_& offset) { offset += 1; });
+  }
+
+  constexpr void emplace_back() {
     row_offsets_.emplace_back(col_indices_.size());
   }
-  constexpr void emplace(auto&& range) {
+  constexpr void emplace_back(auto&& range) {
     col_indices_.insert(col_indices_.end(), range.begin(), range.end());
     row_offsets_.emplace_back(col_indices_.size());
   }

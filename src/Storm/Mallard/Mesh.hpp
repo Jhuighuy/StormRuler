@@ -26,74 +26,59 @@
 #include <Storm/Utils/Meta.hpp>
 #include <Storm/Utils/Table.hpp>
 
+#include <Storm/Mallard/Shape.hpp>
+
+#include <algorithm>
 #include <fstream>
+#include <optional>
 #include <ranges>
 #include <tuple>
+#include <vector>
 
 namespace Storm {
 
-enum class ShapeType {};
-
+#if 0
 namespace detail_ {
-  struct label_tag_t_;
+  struct LabelTag_;
   template<size_t I>
-  struct topological_index_tag_t_;
+  struct TopologicalIndexTag_;
 } // namespace detail_
 
 /// @brief Label index type.
-using Label = Index<detail_::label_tag_t_>;
+using Label = Index<detail_::LabelTag_>;
 
 /// @brief Topological index type.
 template<size_t I>
-using EntityIndex = Index<detail_::topological_index_tag_t_<I>>;
+using EntityIndex = Index<detail_::TopologicalIndexTag_<I>>;
 
 /// @brief Node index type.
 using NodeIndex = EntityIndex<0>;
 
 /// @brief Edge index type.
 using EdgeIndex = EntityIndex<1>;
-
-struct Triangle {
-  std::vector<NodeIndex> Indices;
-
-  const auto& node_indices() const {
-    return Indices;
-  }
-  real_t compute_volume(auto&&) const {
-    return {};
-  }
-  glm::dvec3 compute_center_position(auto&&) {
-    return {};
-  }
-};
+#endif
 
 /// @brief Hybrid unstructured multidimensional mesh.
-/// @tparam SpDim Spatial dimensionality.
-/// @tparam TpDim Topological dimensionality.
-/// @tparam Table ??
-template<size_t SpDim, size_t TpDim, //
+/// @tparam Dim Spatial dimensionality.
+/// @tparam TopologicalDim Topological dimensionality.
+/// @tparam Table Connectivity table class.
+template<size_t Dim, size_t TopologicalDim = Dim,
          template<class, class> class Table = VoidCsrTable>
-class BaseBaseBaseMesh {
+class UnstructuredMesh {
 public:
 
   /// @brief Spatial vector type.
-  using SpVec = FastVector<real_t, SpDim>;
-
-  /// @brief Node index type.
-  using NodeIndex = EntityIndex<0>;
-
-  /// @brief Edge index type.
-  using EdgeIndex = EntityIndex<1>;
+  using Vec = FastVector<real_t, Dim>;
 
   /// @brief Face index type.
-  using FaceIndex = EntityIndex<TpDim - 1>;
+  using FaceIndex = EntityIndex<TopologicalDim - 1>;
 
   /// @brief Cell index type.
-  using CellIndex = EntityIndex<TpDim>;
+  using CellIndex = EntityIndex<TopologicalDim>;
 
 private:
 
-  using EntityIndices_ = meta::make_list_t<EntityIndex, TpDim + 1>;
+  using EntityIndices_ = meta::make_seq_t<EntityIndex, 0, TopologicalDim + 1>;
 
   // clang-format off
 
@@ -119,7 +104,7 @@ private:
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
-        meta::pair_list_t<real_t, meta::rest_t<EntityIndices_>>
+        meta::pair_list_t<real_t, meta::drop_first_t<EntityIndices_>>
       >
     >
   > entity_volumes_tuple_{};
@@ -127,26 +112,26 @@ private:
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<SpVec, EntityIndices_>
+      meta::pair_list_t<Vec, EntityIndices_>
     >
   > entity_positions_tuple_{};
 
   // You don't belong here, huh?
-  IndexedVector<SpVec, FaceIndex> face_normals_{};
+  IndexedVector<Vec, FaceIndex> face_normals_{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<Table>,
-      meta::cartesian_product_t<EntityIndices_>
+      meta::cartesian_product_t<EntityIndices_, EntityIndices_>
     >
-  > entity_connectivity_hypertuple_{};
+  > connectivity_tuple_{};
 
   // clang-format on
 
 public:
 
   /// @brief Initialize the mesh.
-  constexpr BaseBaseBaseMesh() {
+  constexpr UnstructuredMesh() {
     // Initialize the default label (0).
     std::apply([](auto&... ranges) { (ranges.emplace_back(0), ...); },
                label_ranges_tuple_);
@@ -204,13 +189,13 @@ public:
 
   /// @brief Position of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr SpVec //
+  [[nodiscard]] constexpr Vec //
   position(EntityIndex<I> index) const noexcept {
     return std::get<I>(entity_positions_tuple_)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
-  [[nodiscard]] constexpr SpVec //
+  [[nodiscard]] constexpr Vec //
   normal(FaceIndex face_index) const noexcept {
     return face_normals_[face_index];
   }
@@ -218,49 +203,121 @@ public:
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
   template<size_t J, size_t I>
   [[nodiscard]] constexpr auto //
-  adjacent(EntityIndex<I> index, meta::type<EntityIndex<J>> = {}) noexcept {
+  adjacent(EntityIndex<I> index,
+           meta::type<EntityIndex<J>> = {}) const noexcept {
     using T = Table<EntityIndex<I>, EntityIndex<J>>;
-    return std::get<T>(entity_connectivity_hypertuple_)[index];
+    return std::get<T>(connectivity_tuple_)[index];
   }
 
-  template<size_t I, class Data>
-  constexpr EntityIndex<I> insert(Data&& data,
-                                  meta::type<EntityIndex<I>> = {}) {
-    const EntityIndex<I> index{num_entities<I>()};
+  /// @brief Find an entity by it's @p node_indices.
+  template<size_t I, class Range>
+  [[nodiscard]] constexpr std::optional<EntityIndex<I>>
+  find(const Range& node_indices, meta::type<EntityIndex<I>> = {}) const {
+    // Select the entities that are adjacent to the first node in the list.
+    auto adj = adjacent<I>(node_indices.front());
+    std::vector<EntityIndex<I>> found(adj.begin(), adj.end());
+    std::ranges::sort(found);
 
-    // Assign the label.
+    // For the other node indices, select the adjacent enitites,
+    // and intersect with the recently found.
+    for (std::vector<EntityIndex<I>> temp, update;
+         NodeIndex node_index : node_indices | std::views::drop(1)) {
+      if (found.empty()) { break; }
+      adj = adjacent<I>(node_index);
+      temp.assign(adj.begin(), adj.end());
+      std::ranges::sort(temp);
+      std::ranges::set_intersection(found, temp, std::back_inserter(update));
+      found.swap(update), update.clear();
+    }
+
+    // Return the result.
+    switch (found.size()) {
+      case 0: return std::nullopt;
+      case 1: return found.front();
+      default:
+        throw std::range_error(
+            "For the specified node list more than one entity found!");
+    }
+  }
+
+  /// @brief Insert a new or find an existing entity of shape @p shape.
+  /// @returns Index of the entity.
+  template<size_t I, class Shape>
+  constexpr EntityIndex<I> //
+  insert(const Shape& shape, meta::type<EntityIndex<I>> = {}) {
+    // If an edge or or face is inserted, check if it exists first.
+    if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
+                    std::is_same_v<EntityIndex<I>, CellIndex>) ) {
+      if (const auto found_entity_index = find<I>(shape.nodes());
+          found_entity_index.has_value()) {
+        return *found_entity_index;
+      }
+    }
+    const EntityIndex<I> entity_index{num_entities<I>()};
+
+    // Assign the default label.
+    /// @todo Label!
     std::get<I>(label_ranges_tuple_).back() += 1;
     std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      static_assert(std::constructible_from<SpVec, Data&&>,
+      static_assert(std::constructible_from<Vec, const Shape&>,
                     "Invalid node position type.");
-      std::get<I>(entity_positions_tuple_)
-          .emplace_back(std::forward<Data>(data));
+      // Assign the node position.
+      std::get<I>(entity_positions_tuple_).emplace_back(shape);
     } else {
       static_assert(true, //
-                    "Here should be some check...");
+                    "Here should be some concepts check...");
+      // Assign the entity volume, center position (and normal).
       std::get<I>(entity_volumes_tuple_)
-          .emplace_back(data.compute_volume(*this));
+          .emplace_back(shapes::volume(*this, shape));
       std::get<I>(entity_positions_tuple_)
-          .emplace_back(data.compute_center_position(*this));
+          .emplace_back(shapes::barycenter_position(*this, shape));
       if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-        face_normals_.emplace_back(data.compute_normal(*this));
+        face_normals_.emplace_back(shapes::normal(*this, shape));
       }
     }
 
     // Assign the topological properties.
-    /// @todo This should be implemented correctly.
+    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      // Allocate the empty rows.
+      using T = Table<EntityIndex<I>, EntityIndex<J>>;
+      std::get<T>(connectivity_tuple_).emplace_back();
+    });
     if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      using T = Table<EntityIndex<I>, EntityIndex<0>>;
-      std::get<T>(entity_connectivity_hypertuple_).emplace(data.node_indices());
+      // Connnect the entity with it's nodes.
+      using T = Table<EntityIndex<I>, NodeIndex>;
+      using U = Table<NodeIndex, EntityIndex<I>>;
+      for (NodeIndex node_index : shape.nodes()) {
+        std::get<T>(connectivity_tuple_).insert(entity_index, node_index);
+        std::get<U>(connectivity_tuple_).insert(node_index, entity_index);
+      }
     }
+    meta::for_each<meta::make_seq_t<EntityIndex, 1, I>>(
+        [&]<size_t J>(meta::type<EntityIndex<J>>) {
+          // Connect the entity with it's parts (possibly creating them).
+          using T = Table<EntityIndex<I>, EntityIndex<J>>;
+          using U = Table<EntityIndex<J>, EntityIndex<I>>;
+          const auto process_part = [&](const auto& part) {
+            const EntityIndex<J> part_index = insert<J>(part);
+            std::get<T>(connectivity_tuple_).insert(entity_index, part_index);
+            std::get<U>(connectivity_tuple_).insert(part_index, entity_index);
+          };
+          std::apply([&](const auto&... parts) { (process_part(parts), ...); },
+                     shapes::parts<J>(shape));
+        });
 
-    return index;
+    // Connect the entity with it's siblings.
+    /// @todo Implement me!
+    using T = Table<EntityIndex<I>, EntityIndex<I>>;
+    std::get<T>(connectivity_tuple_).insert(entity_index, entity_index);
+
+    STORM_INFO_("inserting ({}, {})", I, (size_t) entity_index);
+    return entity_index;
   }
 
-  void read_from_triangle(std::string const& path) {
+  void read_from_triangle(const auto& path) {
     std::string line;
 
     std::ifstream nodeStream(path + std::string("node"));
@@ -270,7 +327,7 @@ public:
     std::getline(nodeStream, line);
     for (size_t i{0}; i < numNodes; ++i) {
       NodeIndex nodeIndex{0};
-      SpVec nodeCoords(0.0);
+      glm::dvec3 nodeCoords(0.0);
       nodeStream >> nodeIndex >> nodeCoords.x >> nodeCoords.y;
       std::getline(nodeStream, line);
       STORM_ENSURE_(nodeIndex == insert<0>(nodeCoords), "");
@@ -301,16 +358,16 @@ public:
     cellStream >> numCells;
     std::getline(cellStream, line);
     for (size_t i{0}; i < numCells; ++i) {
-      CellIndex cellIndex{0};
-      std::vector<NodeIndex> cellNodes(3);
-      cellStream >> cellIndex >> cellNodes[0] >> cellNodes[1] >> cellNodes[2];
-      insert<2>(Triangle{cellNodes});
+      size_t cellIndex{0};
+      shapes::Triangle cell;
+      cellStream >> cellIndex >> cell.n1 >> cell.n2 >> cell.n3;
+      insert<2>(cell);
       // STORM_ENSURE_(cellIndex == insert<2>(Triangle{cellNodes}), "");
       std::getline(cellStream, line);
     }
 #endif
   }
 
-}; // class BaseBaseBaseMesh
+}; // class UnstructuredMesh
 
 } // namespace Storm

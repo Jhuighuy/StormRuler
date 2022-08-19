@@ -242,9 +242,14 @@ public:
 
   /// @brief Insert a new or find an existing entity of shape @p shape.
   /// @returns Index of the entity.
+  // clang-format off
   template<size_t I, class Shape>
-  constexpr EntityIndex<I> //
+    requires ((I == 0 && std::constructible_from<Vec, const Shape&>) ||
+              (I != 0 && shapes::shape<Shape>))
+  constexpr EntityIndex<I>
   insert(const Shape& shape, meta::type<EntityIndex<I>> = {}) {
+    // clang-format on
+
     // If an edge or or face is inserted, check if it exists first.
     if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
                     std::is_same_v<EntityIndex<I>, CellIndex>) ) {
@@ -262,20 +267,16 @@ public:
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      static_assert(std::constructible_from<Vec, const Shape&>,
-                    "Invalid node position type.");
       // Assign the node position.
       std::get<I>(entity_positions_tuple_).emplace_back(shape);
     } else {
-      static_assert(true, //
-                    "Here should be some concepts check...");
       // Assign the entity volume, center position (and normal).
       std::get<I>(entity_volumes_tuple_)
-          .emplace_back(shapes::volume(*this, shape));
+          .emplace_back(shapes::volume(shape, *this));
       std::get<I>(entity_positions_tuple_)
-          .emplace_back(shapes::barycenter_position(*this, shape));
+          .emplace_back(shapes::barycenter(shape, *this));
       if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-        face_normals_.emplace_back(shapes::normal(*this, shape));
+        face_normals_.emplace_back(shapes::normal(shape, *this));
       }
     }
 

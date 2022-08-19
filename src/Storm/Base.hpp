@@ -157,6 +157,9 @@ namespace math {}
 /// A small metaprogramming library.
 namespace meta {}
 
+/// Shapes collection.
+namespace shapes {}
+
 /// @brief Contains the internal implementation details.
 namespace detail_ {}
 
@@ -170,9 +173,6 @@ using ptrdiff_t = std::ptrdiff_t;
 using real_t = double;
 
 namespace detail_ {
-
-  template<class>
-  constexpr inline bool always_false_ = false;
 
   constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;

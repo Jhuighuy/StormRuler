@@ -26,6 +26,7 @@
 #include <Storm/Utils/Meta.hpp>
 #include <Storm/Utils/Table.hpp>
 
+#include <Storm/Mallard/Indices.hpp>
 #include <Storm/Mallard/Shape.hpp>
 
 #include <algorithm>
@@ -37,35 +38,6 @@
 #include <vector>
 
 namespace Storm {
-
-#if 0
-namespace detail_ {
-  struct LabelTag_;
-  template<size_t I>
-  struct TopologicalIndexTag_;
-} // namespace detail_
-
-/// @brief Label index type.
-using Label = Index<detail_::LabelTag_>;
-
-/// @brief Topological index type.
-template<size_t I>
-using EntityIndex = Index<detail_::TopologicalIndexTag_<I>>;
-
-/// @brief Node index type.
-using NodeIndex = EntityIndex<0>;
-
-/// @brief Edge index type.
-using EdgeIndex = EntityIndex<1>;
-#endif
-
-/// @brief Face index type.
-template<class Mesh>
-using FaceIndex = typename Mesh::FaceIndex;
-
-/// @brief Cell index type.
-template<class Mesh>
-using CellIndex = typename Mesh::CellIndex;
 
 namespace detail_ {
   inline constexpr size_t face_inner_cell_ = 0;

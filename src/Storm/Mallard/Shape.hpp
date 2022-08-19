@@ -22,26 +22,11 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Mallard/Mesh.hpp>
+#include <Storm/Mallard/Indices.hpp>
 
 #include <array>
 #include <ranges>
 #include <tuple>
-
-#if 1 // this should not be here..
-namespace Storm {
-namespace detail_ {
-  struct LabelTag_;
-  template<size_t I>
-  struct TopologicalIndexTag_;
-} // namespace detail_
-using Label = Index<detail_::LabelTag_>;
-template<size_t I>
-using EntityIndex = Index<detail_::TopologicalIndexTag_<I>>;
-using NodeIndex = EntityIndex<0>;
-using EdgeIndex = EntityIndex<1>;
-} // namespace Storm
-#endif
 
 namespace Storm::shapes {
 

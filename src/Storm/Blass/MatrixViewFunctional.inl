@@ -37,7 +37,7 @@ namespace Storm {
 // clang-format off
 template<std::copy_constructible Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
-           std::regular_invocable<Func, matrix_element_t<Matrices>...>
+           std::regular_invocable<Func,  matrix_element_decltype_t<Matrices>...>
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
   // clang-format on

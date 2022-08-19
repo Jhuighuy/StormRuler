@@ -455,6 +455,9 @@ using cartesian_product_t = decltype(cartesian_product(Lists{}...));
 //                              Other utilities                               //
 ////////////////////////////////////////////////////////////////////////////////
 
+template<class>
+inline constexpr bool always_false = false;
+
 /// @brief Get the template parameter name as a string.
 /// @tparam T Template parameter.
 template<class T>

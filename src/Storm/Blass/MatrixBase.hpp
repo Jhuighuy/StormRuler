@@ -63,10 +63,21 @@ constexpr size_t num_cols(const matrix auto& mat) noexcept {
   return mat.shape().num_cols;
 }
 
+/// @brief Matrix element type, as declared.
+template<matrix Matrix>
+using matrix_element_decltype_t = decltype( //
+    std::declval<Matrix>()(std::declval<size_t>(), std::declval<size_t>()));
+
 /// @brief Matrix element type.
 template<matrix Matrix>
-using matrix_element_t = decltype( //
-    std::declval<Matrix>()(std::declval<size_t>(), std::declval<size_t>()));
+using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
+
+/// @brief Matrix element reference type.
+// clang-format off
+template<matrix Matrix>
+  requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>> 
+using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
+/// @}
 
 // ========================================================================== //
 // ========================================================================== //

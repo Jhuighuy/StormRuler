@@ -28,8 +28,8 @@
 #include <ranges>
 #include <tuple>
 
-namespace Storm {
 #if 1 // this should not be here..
+namespace Storm {
 namespace detail_ {
   struct LabelTag_;
   template<size_t I>
@@ -40,12 +40,12 @@ template<size_t I>
 using EntityIndex = Index<detail_::TopologicalIndexTag_<I>>;
 using NodeIndex = EntityIndex<0>;
 using EdgeIndex = EntityIndex<1>;
-#endif
 } // namespace Storm
+#endif
 
 namespace Storm::shapes {
 
-/// @todo Mesh spatial dimensionality.
+/// @brief Mesh spatial dimensionality.
 template<class Mesh>
 inline constexpr size_t mesh_dim_v = fast_vector_size_v<std::remove_cvref_t<
     decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>>;
@@ -121,9 +121,7 @@ template<size_t Index, shape Shape>
 // clang-format off
 template<class Shape>
 concept complex_shape = shape<Shape> && 
-    requires {
-      { std::declval<Shape>().pieces() } -> std::ranges::range;
-    };
+    requires { { std::declval<Shape>().pieces() } -> std::ranges::range; };
 // clang-format on
 
 /// @brief Piece type of a complex.

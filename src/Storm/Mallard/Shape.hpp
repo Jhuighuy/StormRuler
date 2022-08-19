@@ -72,7 +72,7 @@ concept shape1D = shape<Shape> &&
 /// @brief 2D Shape concept.
 // clang-format off
 template<class Shape>
-concept shape3D = shape<Shape> &&
+concept shape2D = shape<Shape> &&
   requires { 
     std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
   } && !requires { std::declval<Shape>().faces(); };
@@ -81,31 +81,31 @@ concept shape3D = shape<Shape> &&
 /// @brief 3D Shape concept.
 // clang-format off
 template<class Shape>
-concept shape4D = shape<Shape> &&
+concept shape3D = shape<Shape> &&
   requires { 
     std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
   } && requires { 
-    std::apply([](shape3D auto&&...) {}, std::declval<Shape>().faces());
+    std::apply([](shape2D auto&&...) {}, std::declval<Shape>().faces());
   };
 // clang-format on
 
 /// @brief Shape topological dimensionality.
 // clang-format off
 template<shape Shape>
-  requires (shape1D<Shape> || shape3D<Shape> || shape4D<Shape>)
+  requires (shape1D<Shape> || shape2D<Shape> || shape3D<Shape>)
 inline constexpr size_t shape_dim_v = []() {
   // clang-format on
   if constexpr (shape1D<Shape>) return 1;
-  if constexpr (shape3D<Shape>) return 2;
-  if constexpr (shape4D<Shape>) return 3;
+  if constexpr (shape2D<Shape>) return 2;
+  if constexpr (shape3D<Shape>) return 3;
 }();
 
 /// @brief Get the shape parts.
 // clang-format off
 template<size_t Index, shape Shape>
   requires ((Index == 0) ||
-            (Index == 1 && (shape3D<Shape> || shape4D<Shape>)) ||
-            (Index == 2 && shape4D<Shape>))
+            (Index == 1 && (shape2D<Shape> || shape3D<Shape>)) ||
+            (Index == 2 && shape3D<Shape>))
 [[nodiscard]] constexpr auto parts(const Shape& shape) noexcept {
   // clang-format on
   if constexpr (Index == 0) {

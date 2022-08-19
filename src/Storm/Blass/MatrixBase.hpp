@@ -77,6 +77,7 @@ using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
 template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>> 
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
+// clang-format on
 /// @}
 
 // ========================================================================== //

@@ -280,8 +280,8 @@ public:
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
     // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    return glm::normalize(
-        glm::cross(glm::dvec3(v2 - v1, 0.0), glm::dvec3(0.0, 0.0, 1.0)));
+    const glm::dvec2 d = glm::normalize(v2 - v1);
+    return glm::vec2(-d.y, d.x);
   }
 
 }; // class Seg
@@ -330,9 +330,7 @@ public:
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)};
     if constexpr (mesh_dim_v<Mesh> == 2) {
-      return glm::length(glm::cross( //
-                 glm::dvec3(v2 - v1, 0.0), glm::dvec3(v3 - v1, 0.0))) /
-             2.0;
+      return glm::abs(glm::determinant(glm::dmat2(v2 - v1, v3 - v1))) / 2.0;
     } else {
       return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
     }

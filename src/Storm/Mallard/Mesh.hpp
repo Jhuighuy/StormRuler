@@ -29,6 +29,7 @@
 #include <Storm/Mallard/Shape.hpp>
 
 #include <algorithm>
+#include <compare>
 #include <fstream>
 #include <optional>
 #include <ranges>
@@ -57,6 +58,14 @@ using NodeIndex = EntityIndex<0>;
 /// @brief Edge index type.
 using EdgeIndex = EntityIndex<1>;
 #endif
+
+/// @brief Face index type.
+template<class Mesh>
+using FaceIndex = typename Mesh::FaceIndex;
+
+/// @brief Cell index type.
+template<class Mesh>
+using CellIndex = typename Mesh::CellIndex;
 
 namespace detail_ {
   inline constexpr size_t face_inner_cell_ = 0;
@@ -391,12 +400,12 @@ EdgeView(Mesh&, EdgeIndex) -> EdgeView<Mesh>;
 template<class Mesh>
 class FaceView;
 template<class Mesh>
-FaceView(Mesh&, typename Mesh::FaceIndex) -> FaceView<Mesh>;
+FaceView(Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
 
 template<class Mesh>
 class CellView;
 template<class Mesh>
-CellView(Mesh&, typename Mesh::CellIndex) -> CellView<Mesh>;
+CellView(Mesh&, CellIndex<Mesh>) -> CellView<Mesh>;
 
 namespace detail_ {
   constexpr auto to_node_view_(auto& mesh) noexcept {
@@ -409,15 +418,13 @@ namespace detail_ {
   }
   template<class Mesh>
   constexpr auto to_face_view_(Mesh& mesh) noexcept {
-    return std::views::transform([&](typename Mesh::FaceIndex face_index) {
-      return FaceView(mesh, face_index);
-    });
+    return std::views::transform(
+        [&](FaceIndex<Mesh> face_index) { return FaceView(mesh, face_index); });
   }
   template<class Mesh>
   constexpr auto to_cell_view_(Mesh& mesh) noexcept {
-    return std::views::transform([&](typename Mesh::CellIndex cell_index) {
-      return CellView(mesh, cell_index);
-    });
+    return std::views::transform(
+        [&](CellIndex<Mesh> cell_index) { return CellView(mesh, cell_index); });
   }
 } // namespace detail_
 
@@ -500,13 +507,13 @@ public:
 
   /// @brief Range of the adjacent faces.
   [[nodiscard]] constexpr auto faces() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<typename Mesh::FaceIndex>) |
+    return p_mesh_->adjacent(index_, meta::type_v<FaceIndex<Mesh>>) |
            detail_::to_face_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent cells.
   [[nodiscard]] constexpr auto cells() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<typename Mesh::CellIndex>) |
+    return p_mesh_->adjacent(index_, meta::type_v<CellIndex<Mesh>>) |
            detail_::to_cell_view_(*p_mesh_);
   }
 
@@ -591,19 +598,16 @@ public:
 
 /// @brief Face view.
 template<class Mesh>
-class FaceView final : public EntityView<Mesh, typename Mesh::FaceIndex> {
+class FaceView final : public EntityView<Mesh, FaceIndex<Mesh>> {
 public:
 
-  /// @brief Face index type.
-  using FaceIndex = typename Mesh::FaceIndex;
-
   /// @brief Construct a face view.
-  constexpr FaceView(Mesh& mesh, FaceIndex index) noexcept
-      : EntityView<Mesh, FaceIndex>(mesh, index) {}
+  constexpr FaceView(Mesh& mesh, FaceIndex<Mesh> index) noexcept
+      : EntityView<Mesh, FaceIndex<Mesh>>(mesh, index) {}
 
   /// @brief Copy-construct a face view.
   constexpr FaceView(const FaceView<std::remove_const_t<Mesh>>& other) noexcept
-      : EntityView<Mesh, FaceIndex>(other) {}
+      : EntityView<Mesh, FaceIndex<Mesh>>(other) {}
 
   /// @brief Face area (or length in 2D).
   [[nodiscard]] constexpr real_t area() const noexcept {
@@ -638,19 +642,16 @@ public:
 
 /// @brief Mesh cell view.
 template<class Mesh>
-class CellView final : public EntityView<Mesh, typename Mesh::CellIndex> {
+class CellView final : public EntityView<Mesh, CellIndex<Mesh>> {
 public:
 
-  /// @brief Cell index type.
-  using CellIndex = typename Mesh::CellIndex;
-
   /// @brief Construct a cell view.
-  constexpr CellView(Mesh& mesh, CellIndex index) noexcept
-      : EntityView<Mesh, CellIndex>(mesh, index) {}
+  constexpr CellView(Mesh& mesh, CellIndex<Mesh> index) noexcept
+      : EntityView<Mesh, CellIndex<Mesh>>(mesh, index) {}
 
   /// @brief Copy-construct a cell view.
   constexpr CellView(const CellView<std::remove_const_t<Mesh>>& other) noexcept
-      : EntityView<Mesh, CellIndex>(other) {}
+      : EntityView<Mesh, CellIndex<Mesh>>(other) {}
 
   /// @brief Cell volume (or area in 2D).
   [[nodiscard]] constexpr real_t volume() const noexcept {
@@ -666,38 +667,50 @@ public:
 
 /// @brief Range of the @p mesh nodes.
 [[nodiscard]] constexpr auto nodes(auto& mesh) noexcept {
-  return mesh.nodes() | detail_::to_node_view_(mesh);
+  return mesh.entities(meta::type_v<NodeIndex>) | //
+         detail_::to_node_view_(mesh);
 }
 /// @brief Range of the @p mesh nodes with a @p label.
 [[nodiscard]] constexpr auto nodes(auto& mesh, Label label) noexcept {
-  return mesh.nodes(label) | detail_::to_node_view_(mesh);
+  return mesh.entities(meta::type_v<NodeIndex>, label) |
+         detail_::to_node_view_(mesh);
 }
 
 /// @brief Range of the @p mesh edges.
 [[nodiscard]] constexpr auto edges(auto& mesh) noexcept {
-  return mesh.edges() | detail_::to_edge_view_(mesh);
+  return mesh.entities(meta::type_v<EdgeIndex>) | //
+         detail_::to_edge_view_(mesh);
 }
 /// @brief Range of the @p mesh edges with @p label.
 [[nodiscard]] constexpr auto edges(auto& mesh, Label label) noexcept {
-  return mesh.edges(label) | detail_::to_edge_view_(mesh);
+  return mesh.entities(meta::type_v<EdgeIndex>, label) |
+         detail_::to_edge_view_(mesh);
 }
 
 /// @brief Range of the @p mesh faces.
-[[nodiscard]] constexpr auto faces(auto& mesh) noexcept {
-  return mesh.faces() | detail_::to_face_view_(mesh);
+template<class Mesh>
+[[nodiscard]] constexpr auto faces(Mesh& mesh) noexcept {
+  return mesh.entities(meta::type_v<FaceIndex<Mesh>>) |
+         detail_::to_face_view_(mesh);
 }
 /// @brief Range of the @p mesh faces with @p label.
-[[nodiscard]] constexpr auto faces(auto& mesh, Label label) noexcept {
-  return mesh.faces(label) | detail_::to_face_view_(mesh);
+template<class Mesh>
+[[nodiscard]] constexpr auto faces(Mesh& mesh, Label label) noexcept {
+  return mesh.entities(meta::type_v<FaceIndex<Mesh>>, label) |
+         detail_::to_face_view_(mesh);
 }
 
 /// @brief Range of the @p mesh cells.
+template<class Mesh>
 [[nodiscard]] constexpr auto cells(auto& mesh) noexcept {
-  return mesh.cells() | detail_::to_cell_view_(mesh);
+  return mesh.entities(meta::type_v<CellIndex<Mesh>>) |
+         detail_::to_cell_view_(mesh);
 }
 /// @brief Range of the @p mesh cells with @p label.
+template<class Mesh>
 [[nodiscard]] constexpr auto cells(auto& mesh, Label label) noexcept {
-  return mesh.cells(label) | detail_::to_cell_view_(mesh);
+  return mesh.entities(meta::type_v<CellIndex<Mesh>>, label) |
+         detail_::to_cell_view_(mesh);
 }
 
 /// @brief Range of the interior @p mesh nodes.
@@ -722,22 +735,28 @@ public:
 
 /// @brief Range of the boundary @p mesh nodes.
 [[nodiscard]] constexpr auto bnd_nodes(auto& mesh) noexcept {
-  return nodes(mesh) | std::views::drop(mesh.nodes(Label{0}).size());
+  return nodes(mesh) | std::views::drop(mesh.num_entities( //
+                           meta::type_v<NodeIndex>, Label{0}));
 }
 
 /// @brief Range of the boundary @p mesh edges.
 [[nodiscard]] constexpr auto bnd_edges(auto& mesh) noexcept {
-  return edges(mesh) | std::views::drop(mesh.edges(Label{0}).size());
+  return edges(mesh) | std::views::drop(mesh.num_entities( //
+                           meta::type_v<EdgeIndex>, Label{0}));
 }
 
 /// @brief Range of the boundary @p mesh faces.
-[[nodiscard]] constexpr auto bnd_faces(auto& mesh) noexcept {
-  return faces(mesh) | std::views::drop(mesh.faces(Label{0}).size());
+template<class Mesh>
+[[nodiscard]] constexpr auto bnd_faces(Mesh& mesh) noexcept {
+  return faces(mesh) | std::views::drop(mesh.num_entities(
+                           meta::type_v<FaceIndex<Mesh>>, Label{0}));
 }
 
 /// @brief Range of the boundary @p mesh cells.
-[[nodiscard]] constexpr auto bnd_cells(auto& mesh) noexcept {
-  return cells(mesh) | std::views::drop(mesh.cells(Label{0}).size());
+template<class Mesh>
+[[nodiscard]] constexpr auto bnd_cells(Mesh& mesh) noexcept {
+  return cells(mesh) | std::views::drop(mesh.num_entities(
+                           meta::type_v<CellIndex<Mesh>>, Label{0}));
 }
 
 } // namespace Storm

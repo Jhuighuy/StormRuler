@@ -35,17 +35,26 @@
 
 #include <StormRuler_API.h>
 
+#include <Storm/Utils/Banner.hpp>
+
+#include <Storm/Blass/FastVector.hpp>
 #include <Storm/Blass/Mat.hpp>
+
+#include <Storm/Mallard/Entity.hpp>
+#include <Storm/Mallard/MeshUnstructured.hpp>
+#include <Storm/Mallard/Shape.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
 #include "NVT/Nvt.hpp"
 #include <Storm/Solvers/PreconditionerFactory.hpp>
 #include <Storm/Solvers/SolverFactory.hpp>
+#include <Storm/Utils/Table.hpp>
 
 #include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <math.h>
+#include <ranges>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -293,16 +302,18 @@ void Init_For_NVT(Nvt& NVT_obj) {
                         N_mesh);
 }
 
-struct A {
-  A() {}
-  // A(A&&) = default;
-  // A(const A&) = delete;
-  // A& operator=(A&&) = default;
-  // A& operator=(const A&) = delete;
-};
-
 int main(int argc, char** argv) {
-  srand(2321312);
+  print_banner();
+
+  UnstructuredMesh<2, 2> mesh1{};
+  mesh1.read_from_triangle("test/mesh/rectangle.1.");
+
+  NodeView node(mesh1, NodeIndex{13});
+  node.for_each_cell([](auto cell_view) {});
+
+  STORM_INFO_("mesh loaded");
+  return 0;
+
 #if 0
   {
     using namespace Storm;

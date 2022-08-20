@@ -41,6 +41,17 @@ concept shape =
         decltype(std::declval<Shape>().nodes())>, NodeIndex>;
 // clang-format on
 
+/// @brief Shape type.
+enum class shape_type {
+  segment,
+  triangle,
+  quadrangle,
+  tetrahedron,
+  pyramid,
+  pentahedron,
+  hexahedron,
+}; // enum class shape_type
+
 /// @brief 1D Shape concept.
 // clang-format off
 template<class Shape>

@@ -101,7 +101,10 @@ template<size_t Index, shape Shape>
 // clang-format off
 template<class Shape>
 concept complex_shape = shape<Shape> && 
-    requires { { std::declval<Shape>().pieces() } -> std::ranges::range; };
+    requires { 
+      { std::declval<Shape>().pieces() } -> std::ranges::range; 
+    } && 
+    shape<std::ranges::range_value_t<decltype(std::declval<Shape>().pieces())>>;
 // clang-format on
 
 /// @brief Piece type of a complex.

@@ -34,22 +34,22 @@ namespace Storm {
 
 template<mesh Mesh>
 class NodeView;
-template<mesh Mesh>
+template<class Mesh>
 NodeView(Mesh&, NodeIndex) -> NodeView<Mesh>;
 
 template<mesh Mesh>
 class EdgeView;
-template<mesh Mesh>
+template<class Mesh>
 EdgeView(Mesh&, EdgeIndex) -> EdgeView<Mesh>;
 
 template<mesh Mesh>
 class FaceView;
-template<mesh Mesh>
+template<class Mesh>
 FaceView(Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
 
 template<mesh Mesh>
 class CellView;
-template<mesh Mesh>
+template<class Mesh>
 CellView(Mesh&, CellIndex<Mesh>) -> CellView<Mesh>;
 
 namespace detail_ {
@@ -61,12 +61,12 @@ namespace detail_ {
     return std::views::transform(
         [&](EdgeIndex edge_index) { return EdgeView(mesh, edge_index); });
   }
-  template<mesh Mesh>
+  template<class Mesh>
   constexpr auto to_face_view_(Mesh& mesh) noexcept {
     return std::views::transform(
         [&](FaceIndex<Mesh> face_index) { return FaceView(mesh, face_index); });
   }
-  template<mesh Mesh>
+  template<class Mesh>
   constexpr auto to_cell_view_(Mesh& mesh) noexcept {
     return std::views::transform(
         [&](CellIndex<Mesh> cell_index) { return CellView(mesh, cell_index); });

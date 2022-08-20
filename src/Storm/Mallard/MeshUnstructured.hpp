@@ -358,4 +358,9 @@ public:
 
 }; // class UnstructuredMesh
 
+template<size_t Dim, size_t TopologicalDim, //
+         template<class, class> class Table>
+inline constexpr bool
+    enable_mesh_v<UnstructuredMesh<Dim, TopologicalDim, Table>> = true;
+
 } // namespace Storm

@@ -52,17 +52,28 @@ using FaceIndex = typename Mesh::FaceIndex;
 template<class Mesh>
 using CellIndex = typename Mesh::CellIndex;
 
-namespace detail_ {
-  inline constexpr size_t face_inner_cell_ = 0;
-  inline constexpr size_t face_outer_cell_ = 1;
-} // namespace detail_
+/// @brief Types, enabled to be a mesh.
+template<class>
+inline constexpr bool enable_mesh_v = false;
 
+/// @brief Mesh concept.
+// clang-format off
 template<class Mesh>
-concept mesh = true;
+concept mesh = enable_mesh_v<Mesh> &&
+    requires {
+      typename FaceIndex<Mesh>;
+      typename CellIndex<Mesh>;
+    };
+// clang-format on
 
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
 inline constexpr size_t mesh_dim_v = fast_vector_size_v<std::remove_cvref_t<
     decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>>;
+
+namespace detail_ {
+  inline constexpr size_t face_inner_cell_ = 0;
+  inline constexpr size_t face_outer_cell_ = 1;
+} // namespace detail_
 
 } // namespace Storm

@@ -25,7 +25,9 @@
 #include <concepts>
 #include <type_traits>
 
+#if _OPENMP
 #include <omp.h>
+#endif
 
 #include <Storm/Base.hpp>
 
@@ -154,6 +156,8 @@ constexpr real_t dot_product(real_t v1, real_t v2) {
 }
 
 constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
+  real_t d{0.0};
+#if _OPENMP
   std::vector<real_t> partial(omp_get_max_threads(), 0.0);
 #pragma omp parallel for schedule(static)
   for (size_t row_index = 0; row_index < num_rows(mat1); ++row_index) {
@@ -162,10 +166,16 @@ constexpr real_t dot_product(matrix auto&& mat1, matrix auto&& mat2) {
           dot_product(mat1(row_index, col_index), mat2(row_index, col_index));
     }
   }
-  real_t d{0.0};
   for (auto p : partial) {
     d += p;
   }
+#else
+  for (size_t row_index = 0; row_index < num_rows(mat1); ++row_index) {
+    for (size_t col_index = 0; col_index < num_cols(mat1); ++col_index) {
+      d += dot_product(mat1(row_index, col_index), mat2(row_index, col_index));
+    }
+  }
+#endif
   return d;
 }
 

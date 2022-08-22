@@ -32,7 +32,6 @@
 #include <concepts>
 #include <cstdint>
 #include <cstdlib>
-#include <source_location>
 #include <type_traits>
 
 #include <fmt/format.h>

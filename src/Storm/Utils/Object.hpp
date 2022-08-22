@@ -27,14 +27,10 @@
 
 #include <Storm/Base.hpp>
 
-#include <boost/core/noncopyable.hpp>
-
 namespace Storm {
 
-/// ----------------------------------------------------------------- ///
 /// @brief A base object.
-/// ----------------------------------------------------------------- ///
-class Object : public boost::noncopyable {
+class Object : public detail_::noncopyable_ {
 public:
 
   /// @brief Object destructor

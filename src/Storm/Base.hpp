@@ -173,6 +173,13 @@ using real_t = double;
 
 namespace detail_ {
 
+  struct noncopyable_ {
+    noncopyable_(noncopyable_&&) = default;
+    noncopyable_& operator=(noncopyable_&&) = default;
+    noncopyable_(const noncopyable_&) = delete;
+    noncopyable_& operator=(const noncopyable_&) = delete;
+  }; // struct noncopyable_
+
   constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
   }

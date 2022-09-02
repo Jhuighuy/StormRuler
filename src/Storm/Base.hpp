@@ -123,7 +123,7 @@
 #endif
 
 // Report a fatal error and exit the application.
-#define STORM_FATAL_ERROR_(message, ...)                             \
+#define STORM_TERMINATE_(message, ...)                               \
   do {                                                               \
     STORM_CRITICAL_("Fatal error:");                                 \
     STORM_CRITICAL_("{}:{} {}: {}", __FILE__, __LINE__, __FUNCSIG__, \
@@ -132,12 +132,12 @@
   } while (false)
 
 // Check the expression, exit with fatal error if it fails.
-#define STORM_ENSURE_(expression, message, ...)              \
-  do {                                                       \
-    if (!(expression)) {                                     \
-      STORM_CRITICAL_("\"{}\" failed!", #expression);        \
-      STORM_FATAL_ERROR_(message __VA_OPT__(, __VA_ARGS__)); \
-    }                                                        \
+#define STORM_ENSURE_(expression, message, ...)            \
+  do {                                                     \
+    if (!(expression)) {                                   \
+      STORM_CRITICAL_("\"{}\" failed!", #expression);      \
+      STORM_TERMINATE_(message __VA_OPT__(, __VA_ARGS__)); \
+    }                                                      \
   } while (false)
 
 // Check the expression in the debug mode, exit with fatal error if it fails.
@@ -147,6 +147,14 @@
 #define STORM_ASSERT_(expression, message, ...) \
   STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
 #endif
+
+#define STORM_THROW_(error, message, ...)                        \
+  do {                                                           \
+    throw error(fmt::format(message __VA_OPT__(, __VA_ARGS__))); \
+  } while (false)
+
+#define STORM_THROW_IO_(message, ...) \
+  STORM_THROW_(Storm::IoError, message __VA_OPT__(, __VA_ARGS__))
 
 namespace Storm {
 
@@ -174,14 +182,19 @@ using real_t = double;
 namespace detail_ {
 
   struct noncopyable_ {
+    noncopyable_() = default;
     noncopyable_(noncopyable_&&) = default;
     noncopyable_& operator=(noncopyable_&&) = default;
     noncopyable_(const noncopyable_&) = delete;
     noncopyable_& operator=(const noncopyable_&) = delete;
   }; // struct noncopyable_
 
-  constexpr bool in_range_(auto t, auto min, auto max) {
+  [[nodiscard]] constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
+  }
+
+  [[nodiscard]] constexpr bool one_of_(auto x, auto... vals) {
+    return ((x == vals) || ...);
   }
 
   template<class T1, class T2>
@@ -193,5 +206,8 @@ namespace detail_ {
 /// @brief @c size_t compile-time constant.
 template<size_t N>
 using size_t_constant = std::integral_constant<size_t, N>;
+
+using Error = std::runtime_error;
+using IoError = std::runtime_error;
 
 } // namespace Storm

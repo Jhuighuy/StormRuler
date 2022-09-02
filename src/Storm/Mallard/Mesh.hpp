@@ -66,10 +66,14 @@ concept mesh = enable_mesh_v<Mesh> &&
     };
 // clang-format on
 
+/// @brief Mesh spatial vector type.
+template<mesh Mesh>
+using mesh_vec_t = std::remove_cvref_t< //
+    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>;
+
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
-inline constexpr size_t mesh_dim_v = fast_vector_size_v<std::remove_cvref_t<
-    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>>;
+inline constexpr size_t mesh_dim_v = fast_vector_size_v<mesh_vec_t<Mesh>>;
 
 namespace detail_ {
   inline constexpr size_t face_inner_cell_ = 0;

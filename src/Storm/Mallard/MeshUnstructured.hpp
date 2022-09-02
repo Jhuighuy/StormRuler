@@ -30,7 +30,6 @@
 #include <Storm/Mallard/Shape.hpp>
 
 #include <algorithm>
-#include <fstream>
 #include <optional>
 #include <ranges>
 #include <tuple>
@@ -299,62 +298,9 @@ public:
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
     std::get<T>(connectivity_tuple_).insert(entity_index, entity_index);
 
-    STORM_INFO_("inserting ({}, {})", I, (size_t) entity_index);
+    // STORM_INFO_("inserting ({}, {})", I, (size_t) entity_index);
     return entity_index;
   }
-
-#if 1
-  void read_from_triangle(const auto& path) {
-    std::string line;
-
-    std::ifstream nodeStream(path + std::string("node"));
-    STORM_ENSURE_(nodeStream.is_open(), "");
-    size_t numNodes{0}, dim{0};
-    nodeStream >> numNodes >> dim;
-    std::getline(nodeStream, line);
-    for (size_t i{0}; i < numNodes; ++i) {
-      NodeIndex nodeIndex{0};
-      glm::dvec3 nodeCoords(0.0);
-      nodeStream >> nodeIndex >> nodeCoords.x >> nodeCoords.y;
-      std::getline(nodeStream, line);
-      STORM_ENSURE_(nodeIndex == insert<0>(nodeCoords), "");
-    }
-
-#if 0
-    std::ifstream faceStream(path + std::string("edge"));
-    STORM_ENSURE_(faceStream.is_open(), "");
-    size_t numFaces{0};
-    faceStream >> numFaces;
-    std::getline(faceStream, line);
-    for (size_t i{0}; i < numFaces; ++i) {
-      FaceIndex faceIndex{0};
-      std::vector<NodeIndex> faceNodes(2);
-      size_t faceMark{0};
-      faceStream >> faceIndex >> faceNodes[0] >> faceNodes[1] >> faceMark;
-      STORM_ENSURE_(faceIndex == insert_face({ShapeType::Segment, faceNodes},
-                                             FaceMark(faceMark)),
-                    "");
-      std::getline(faceStream, line);
-    }
-#endif
-
-#if 1
-    std::ifstream cellStream(path + std::string("ele"));
-    STORM_ENSURE_(cellStream.is_open(), "");
-    size_t numCells{0};
-    cellStream >> numCells;
-    std::getline(cellStream, line);
-    for (size_t i{0}; i < numCells; ++i) {
-      size_t cellIndex{0};
-      shapes::Triangle cell;
-      cellStream >> cellIndex >> cell.n1 >> cell.n2 >> cell.n3;
-      insert<2>(cell);
-      // STORM_ENSURE_(cellIndex == insert<2>(Triangle{cellNodes}), "");
-      std::getline(cellStream, line);
-    }
-#endif
-  }
-#endif
 
 }; // class UnstructuredMesh
 

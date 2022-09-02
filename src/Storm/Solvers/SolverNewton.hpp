@@ -69,14 +69,14 @@ template<VectorLike Vector>
 real_t NewtonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                   const Operator<Vector>& any_op,
                                   const Preconditioner<Vector>* pre_op) {
-  STORM_FATAL_ERROR_("Newton solver was not implemented yet.");
+  STORM_TERMINATE_("Newton solver was not implemented yet.");
 } // NewtonSolver::init
 
 template<VectorLike Vector>
 real_t NewtonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                      const Operator<Vector>& any_op,
                                      const Preconditioner<Vector>* pre_op) {
-  STORM_FATAL_ERROR_("Newton solver was not implemented yet.");
+  STORM_TERMINATE_("Newton solver was not implemented yet.");
 } // NewtonSolver::iterate
 
 /// @brief The first-order JFNK (Jacobian free-Newton-Krylov) nonlinear operator

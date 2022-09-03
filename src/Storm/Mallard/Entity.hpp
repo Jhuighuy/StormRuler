@@ -138,30 +138,30 @@ public:
 
   /// @brief Entity label.
   [[nodiscard]] constexpr auto label() const noexcept {
-    return p_mesh_->label(index_);
+    return mesh().label(index_);
   }
 
   /// @brief Range of the adjacent nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<NodeIndex>) |
+    return mesh().adjacent(index_, meta::type_v<NodeIndex>) |
            detail_::to_node_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent edges.
   [[nodiscard]] constexpr auto edges() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<EdgeIndex>) |
+    return mesh().adjacent(index_, meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent faces.
   [[nodiscard]] constexpr auto faces() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<FaceIndex<Mesh>>) |
+    return mesh().adjacent(index_, meta::type_v<FaceIndex<Mesh>>) |
            detail_::to_face_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent cells.
   [[nodiscard]] constexpr auto cells() const noexcept {
-    return p_mesh_->adjacent(index_, meta::type_v<CellIndex<Mesh>>) |
+    return mesh().adjacent(index_, meta::type_v<CellIndex<Mesh>>) |
            detail_::to_cell_view_(*p_mesh_);
   }
 

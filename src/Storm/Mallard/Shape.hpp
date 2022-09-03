@@ -25,6 +25,7 @@
 #include <Storm/Mallard/Mesh.hpp>
 
 #include <array>
+#include <initializer_list>
 #include <ranges>
 #include <tuple>
 
@@ -34,8 +35,8 @@ namespace Storm::shapes {
 // clang-format off
 template<class Shape>
 concept shape = 
-    requires {
-      { std::declval<Shape>().nodes() } -> std::ranges::range;
+    requires(Shape shape) {
+      { shape.nodes() } -> std::ranges::range;
     } && 
     std::same_as<std::ranges::range_value_t<
         decltype(std::declval<Shape>().nodes())>, NodeIndex>;
@@ -46,6 +47,8 @@ enum class shape_type {
   segment,
   triangle,
   quadrangle,
+  triangle_strip,
+  polygon,
   tetrahedron,
   pyramid,
   pentahedron,
@@ -56,27 +59,27 @@ enum class shape_type {
 // clang-format off
 template<class Shape>
 concept shape1D = shape<Shape> &&
-  !requires { std::declval<Shape>().edges(); } &&
-  !requires { std::declval<Shape>().faces(); };
+  !requires(Shape shape) { shape.edges(); } &&
+  !requires(Shape shape) { shape.faces(); };
 // clang-format on
 
 /// @brief 2D Shape concept.
 // clang-format off
 template<class Shape>
 concept shape2D = shape<Shape> &&
-  requires { 
-    std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
-  } && !requires { std::declval<Shape>().faces(); };
+  requires(Shape shape) { 
+    std::apply([](shape1D auto&&...) {}, shape.edges());
+  } && !requires(Shape shape) { shape.faces(); };
 // clang-format on
 
 /// @brief 3D Shape concept.
 // clang-format off
 template<class Shape>
 concept shape3D = shape<Shape> &&
-  requires { 
-    std::apply([](shape1D auto&&...) {}, std::declval<Shape>().edges());
-  } && requires { 
-    std::apply([](shape2D auto&&...) {}, std::declval<Shape>().faces());
+  requires(Shape shape) { 
+    std::apply([](shape1D auto&&...) {}, shape.edges());
+  } && requires(Shape shape) { 
+    std::apply([](shape2D auto&&...) {}, shape.faces());
   };
 // clang-format on
 
@@ -112,9 +115,8 @@ template<size_t Index, shape Shape>
 // clang-format off
 template<class Shape, class Mesh>
 concept complex_shape = shape<Shape> && mesh<Mesh> && 
-    requires { 
-      { std::declval<Shape>().pieces(
-            std::declval<Mesh>()) } -> std::ranges::range; 
+    requires(Shape shape, const Mesh& mesh) { 
+      { shape.pieces(mesh) } -> std::ranges::range; 
     } && 
     shape<std::ranges::range_value_t<decltype(
         std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
@@ -133,25 +135,25 @@ namespace detail_ {
   // clang-format off
   template<class Shape, class Mesh>
   concept has_volume_ =
-      requires { std::declval<Shape>().volume(std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { shape.volume(mesh); };
   template<class Shape, class Mesh>
   concept has_barycenter_ =
-      requires { std::declval<Shape>().barycenter(std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { shape.barycenter(mesh); };
   template<class Shape, class Mesh>
   concept has_normal_ =
-      requires { std::declval<Shape>().normal(std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { shape.normal(mesh); };
   // clang-format on
 
   // clang-format off
   template<class Shape, class Mesh>
   concept can_volume_ =
-      requires { volume(std::declval<Shape>(), std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { volume(shape, mesh); };
   template<class Shape, class Mesh>
   concept can_barycenter_ =
-      requires { barycenter(std::declval<Shape>(), std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { barycenter(shape, mesh); };
   template<class Shape, class Mesh>
   concept can_normal_ =
-      requires { normal(std::declval<Shape>(), std::declval<Mesh>()); };
+      requires(Shape shape, const Mesh& mesh) { normal(shape, mesh); };
   // clang-format on
 } // namespace detail_
 
@@ -288,6 +290,7 @@ public:
 
 /// Triangular shape.
 /// @verbatim
+///
 ///           n3
 ///           @           e1 = f1 = (n1,n2)
 ///          / \          e2 = f2 = (n2,n3)
@@ -297,6 +300,7 @@ public:
 ///      /         \
 ///  n1 @----->-----@ n2
 ///         e1/f1
+///
 /// @endverbatim
 class Triangle final {
 public:
@@ -330,7 +334,8 @@ public:
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)};
     if constexpr (mesh_dim_v<Mesh> == 2) {
-      return glm::abs(glm::determinant(glm::dmat2(v2 - v1, v3 - v1))) / 2.0;
+      const glm::dmat2 d{v2 - v1, v3 - v1};
+      return glm::abs(glm::determinant(d)) / 2.0;
     } else {
       return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
     }
@@ -362,6 +367,7 @@ public:
 
 /// @brief Quadrangular shape.
 /// @verbatim
+///
 ///               e4/f4
 ///       n1 @-----<-----@ n4    e1 = f1 = (n1,n2)
 ///         /           /        e2 = f2 = (n2,n3)
@@ -369,6 +375,7 @@ public:
 ///       /           /          e4 = f4 = (n4,n1)
 ///   n2 @----->-----@ n3     split = ((n1,n2,n3),(n3,n4,n1))
 ///          e2/f2
+///
 /// @endverbatim
 class Quadrangle final {
 public:
@@ -402,32 +409,139 @@ public:
     // clang-format on
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Triangle{n1, n2, n3}, Triangle{n3, n4, n1}};
+    // return std::array{Triangle{n1, n2, n4}, Triangle{n2, n3, n4}};
   }
 
 }; // class Quadrangle
 
+/// @brief Triangle strip shape.
+/// @verbatim
+///
+///           n2      n4      n6      n8
+///           @---<---@---<---@---<---@
+///          / \     / \     / \     /
+///         v   \   /   \   /   \   ^
+///        /     \ /     \ /     \ /
+///       @--->---@--->---@--->---@
+///       n1      n3      n5      n9
+///
+/// @endverbatim
+class TriangleStrip final {
+public:
+
+  /// @brief Triangle strip nodes.
+  std::vector<NodeIndex> n{};
+
+  /// @brief Construct a triangle strip.
+  /// @{
+  constexpr TriangleStrip() = default;
+  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {
+    STORM_ASSERT_(n.size() >= 3, "Triangle strip requires at least 3 nodes!");
+  }
+  /// @}
+
+  /// @brief Triangle strip nodes.
+  [[nodiscard]] constexpr const auto& nodes() const noexcept {
+    return n;
+  }
+
+  /// @brief Triangle strip edges.
+  template<class T = void>
+  [[nodiscard]] constexpr auto edges() const noexcept {
+    static_assert(meta::always_false<T>,
+                  "TriangleStrip::edges is not implemented yet!");
+    return std::vector<Seg>{};
+  }
+
+  /// @brief Triangle strip pieces.
+  template<mesh Mesh>
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
+    static_cast<void>(mesh); /// @todo Convexity check!
+    return std::views::iota(size_t{2}, n.size()) |
+           std::views::transform([&](size_t i) {
+             return Triangle{n[i - 2], n[i - 1], n[i]};
+           });
+  }
+
+}; // class TriangleStrip
+
+/// @brief Arbitrary polygon shape.
+/// @verbatim
+///
+///            n5
+///           .@---<--@ n4
+///         ./`      /
+///        v        ^
+///     ./`        /
+///  n6 @         @ n3
+///     |          \
+///     v           ^ e2/f2
+///     |            \
+///     @------>------@
+///     n1     |     n2
+///          e1/f1
+///
+/// @endverbatim
+class Polygon final {
+public:
+
+  /// @brief Polygon nodes.
+  std::vector<NodeIndex> n{};
+
+  /// @brief Construct a polygon.
+  /// @{
+  constexpr Polygon() = default;
+  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {
+    STORM_ASSERT_(n.size() >= 3, "Polygon requires at least 3 nodes!");
+  }
+  /// @}
+
+  /// @brief Polygon nodes.
+  [[nodiscard]] constexpr const auto& nodes() const noexcept {
+    return n;
+  }
+
+  /// @brief Polygon edges.
+  [[nodiscard]] constexpr auto edges() const noexcept {
+    return std::views::iota(size_t{1}, n.size()) |
+           std::views::transform([&](size_t i) {
+             return Seg{n[i - 1], n[i]};
+           });
+  }
+
+  /// @brief Polygon pieces.
+  template<mesh Mesh>
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const {
+    static_assert(meta::always_false<Mesh>,
+                  "Polygon::pieces is not implemented yet!");
+    static_cast<void>(mesh); /// @todo Convexity check!
+    return std::vector<Triangle>{};
+  }
+
+}; // class Polygon
+
 /// @brief Tetrahedral shape.
 /// @verbatim
-///                    f4
-///               n4   ^
-///                @   |
-///         f2    /|\. |     f3         e1 = (n1,n2)
-///         ^    / | `\.     ^          e2 = (n2,n3)
-///          \  /  |   `\.  /           e3 = (n3,n1)
-///           \`   |   | `\/            e4 = (n1,n4)
-///           ,\   |   o  /`\           e5 = (n2,n4)
-///       e4 ^  *  |     *   `^.e6      e6 = (n3,n4)
-///         /   e5 ^           `\       f1 = (n1,n3,n2)
-///     n1 @-------|--<----------@ n3   f2 = (n1,n2,n4)
-///         \      |  e3       ,/       f3 = (n2,n3,n4)
-///          \     |     o   ,/`        f4 = (n3,n1,n4)
-///           \    ^ e5  | ,/`
-///         e1 v   |     ,^ e2
-///             \  |   ,/`
-///              \ | ,/` |
-///               \|/`   |
-///                @ n2  v
-///                      f1
+///                 f4
+///            n4   ^
+///             @   |
+///      f2    /|\. |     f3         e1 = (n1,n2)
+///      ^    / | `\.     ^          e2 = (n2,n3)
+///       \  /  |   `\.  /           e3 = (n3,n1)
+///        \`   |   | `\/            e4 = (n1,n4)
+///        ,\   |   o  /`\           e5 = (n2,n4)
+///    e4 ^  *  |     *   `^.e6      e6 = (n3,n4)
+///      /   e5 ^           `\       f1 = (n1,n3,n2)
+///  n1 @-------|--<----------@ n3   f2 = (n1,n2,n4)
+///      \      |  e3       ,/       f3 = (n2,n3,n4)
+///       \     |     o   ,/`        f4 = (n3,n1,n4)
+///        \    ^ e5  | ,/`
+///      e1 v   |     ,^ e2
+///          \  |   ,/`
+///           \ | ,/` |
+///            \|/`   |
+///             @ n2  v
+///                   f1
 /// @endverbatim
 class Tetrahedron final {
 public:
@@ -631,7 +745,7 @@ public:
 ///                      f6
 ///                      ^       f3
 ///                      |       ^
-///                   e10 |      /
+///                  e10 |      /
 ///            n7 @---<--|----------@ n6         e1 = (n1,n2)
 ///              /|      |    /    /|            e2 = (n2,n3)
 ///             / |      |   o    / |            e3 = (n3,n4)

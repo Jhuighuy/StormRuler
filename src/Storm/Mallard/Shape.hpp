@@ -110,18 +110,24 @@ template<size_t Index, shape Shape>
 
 /// @brief Complex shape concept.
 // clang-format off
-template<class Shape>
-concept complex_shape = shape<Shape> && 
+template<class Shape, class Mesh>
+concept complex_shape = shape<Shape> && mesh<Mesh> && 
     requires { 
-      { std::declval<Shape>().pieces() } -> std::ranges::range; 
+      { std::declval<Shape>().pieces(
+            std::declval<Mesh>()) } -> std::ranges::range; 
     } && 
-    shape<std::ranges::range_value_t<decltype(std::declval<Shape>().pieces())>>;
+    shape<std::ranges::range_value_t<decltype(
+        std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
 // clang-format on
 
 /// @brief Piece type of a complex.
-template<complex_shape Shape>
+// clang-format off
+template<class Shape, class Mesh>
+  requires complex_shape<Shape, Mesh>
 using piece_t =
-    std::ranges::range_value_t<decltype(std::declval<Shape>().pieces())>;
+    std::ranges::range_value_t<decltype(
+        std::declval<Shape>().pieces(std::declval<Mesh>()))>;
+// clang-format on
 
 namespace detail_ {
   // clang-format off
@@ -153,17 +159,17 @@ namespace detail_ {
 // clang-format off
 template<shape Shape, mesh Mesh>
   requires (detail_::has_volume_<Shape, Mesh> || 
-            (complex_shape<Shape> && 
-             detail_::can_volume_<piece_t<Shape>, Mesh>))
+            (complex_shape<Shape, Mesh> && 
+             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>))
 [[nodiscard]] constexpr auto volume(const Shape& shape,
                                     const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_volume_<Shape, Mesh>) {
     return shape.volume(mesh);
-  } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_volume_<piece_t<Shape>, Mesh>) {
+  } else if constexpr (complex_shape<Shape, Mesh> &&
+                       detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>) {
     // Compute the complex volume.
-    const auto pieces = shape.pieces();
+    const auto pieces = shape.pieces(mesh);
     auto vol = volume(pieces.front(), mesh);
     for (const auto& piece : pieces | std::views::drop(1)) {
       vol += volume(piece, mesh);
@@ -176,19 +182,19 @@ template<shape Shape, mesh Mesh>
 // clang-format off
 template<shape Shape, mesh Mesh>
   requires (detail_::has_barycenter_<Shape, Mesh> || 
-            (complex_shape<Shape> &&
-             detail_::can_volume_<piece_t<Shape>, Mesh> &&
-             detail_::can_barycenter_<piece_t<Shape>, Mesh>))
+            (complex_shape<Shape, Mesh> &&
+             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
+             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>))
 [[nodiscard]] constexpr auto barycenter(const Shape& shape,
                                         const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_barycenter_<Shape, Mesh>) {
     return shape.barycenter(mesh);
-  } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_volume_<piece_t<Shape>, Mesh> &&
-                       detail_::can_barycenter_<piece_t<Shape>, Mesh>) {
+  } else if constexpr (complex_shape<Shape, Mesh> &&
+                       detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
+                       detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>) {
     // Compute the complex barycenter.
-    const auto pieces = shape.pieces();
+    const auto pieces = shape.pieces(mesh);
     auto vol = volume(pieces.front(), mesh);
     auto vol_center = vol * barycenter(pieces.front(), mesh);
     for (const auto& piece : pieces | std::views::drop(1)) {
@@ -203,18 +209,18 @@ template<shape Shape, mesh Mesh>
 // clang-format off
 template<shape Shape, mesh Mesh>
   requires (detail_::has_normal_<Shape, Mesh> || 
-            (complex_shape<Shape> &&
-             detail_::can_volume_<piece_t<Shape>, Mesh> &&
-             detail_::can_normal_<piece_t<Shape>, Mesh>))
+            (complex_shape<Shape, Mesh> &&
+             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
+             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>))
 [[nodiscard]] constexpr auto normal(const Shape& shape,
                                     const Mesh& mesh) {
   // clang-format on
   if constexpr (detail_::has_normal_<Shape, Mesh>) {
     return shape.normal(mesh);
-  } else if constexpr (complex_shape<Shape> &&
-                       detail_::can_normal_<piece_t<Shape>, Mesh>) {
+  } else if constexpr (complex_shape<Shape, Mesh> &&
+                       detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>) {
     // Compute the complex barycenter.
-    const auto pieces = shape.pieces();
+    const auto pieces = shape.pieces(mesh);
     auto vol_normal =
         volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
     for (const auto& piece : pieces | std::views::drop(1)) {
@@ -229,8 +235,8 @@ template<shape Shape, mesh Mesh>
 ///
 ///  n1 @ f1
 ///      \
-///       \         e3 = (n1,n2)
-///        v e3     f1 = (n1)
+///       \         e1 = (n1,n2)
+///        v e1     f1 = (n1)
 ///         \       f2 = (n2)
 ///          \
 ///        n2 @ f2
@@ -283,14 +289,14 @@ public:
 /// Triangular shape.
 /// @verbatim
 ///           n3
-///           @           e3 = f1 = (n1,n2)
+///           @           e1 = f1 = (n1,n2)
 ///          / \          e2 = f2 = (n2,n3)
 ///         /   \         e3 = f3 = (n3,n1)
 ///  e3/f3 v     ^ e2/f2
 ///       /       \
 ///      /         \
 ///  n1 @----->-----@ n2
-///         e3/f1
+///         e1/f1
 /// @endverbatim
 class Triangle final {
 public:
@@ -356,13 +362,13 @@ public:
 
 /// @brief Quadrangular shape.
 /// @verbatim
-///               e3/f3
-///       n4 @-----<-----@ n3    e3 = f1 = (n1,n2)
-///         /           /        e2 = f3 = (n2,n3)
-///  e4/f4 v           ^ e2/f2   e3 = f3 = (n3,n4)
+///               e4/f4
+///       n1 @-----<-----@ n4    e1 = f1 = (n1,n2)
+///         /           /        e2 = f2 = (n2,n3)
+///  e1/f1 v           ^ e3/f3   e3 = f3 = (n3,n4)
 ///       /           /          e4 = f4 = (n4,n1)
-///   n1 @----->-----@ n2     split = ((n1,n2,n3),(n3,n4,n1))
-///          e3/f1
+///   n2 @----->-----@ n3     split = ((n1,n2,n3),(n3,n4,n1))
+///          e2/f2
 /// @endverbatim
 class Quadrangle final {
 public:
@@ -389,7 +395,12 @@ public:
   }
 
   /// @brief Quadrangle pieces.
-  [[nodiscard]] constexpr auto pieces() const noexcept {
+  // clang-format off
+  template<mesh Mesh>
+    requires (mesh_dim_v<Mesh> >= 2)
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
+    // clang-format on
+    static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Triangle{n1, n2, n3}, Triangle{n3, n4, n1}};
   }
 
@@ -400,7 +411,7 @@ public:
 ///                    f4
 ///               n4   ^
 ///                @   |
-///         f2    /|\. |     f3         e3 = (n1,n2)
+///         f2    /|\. |     f3         e1 = (n1,n2)
 ///         ^    / | `\.     ^          e2 = (n2,n3)
 ///          \  /  |   `\.  /           e3 = (n3,n1)
 ///           \`   |   | `\/            e4 = (n1,n4)
@@ -411,7 +422,7 @@ public:
 ///         \      |  e3       ,/       f3 = (n2,n3,n4)
 ///          \     |     o   ,/`        f4 = (n3,n1,n4)
 ///           \    ^ e5  | ,/`
-///         e3 v   |     ,^ e2
+///         e1 v   |     ,^ e2
 ///             \  |   ,/`
 ///              \ | ,/` |
 ///               \|/`   |
@@ -475,7 +486,7 @@ public:
 
 /// @brief Pyramidal shape.
 /// @verbatim
-///                                n5                      e3 = (n1,n2)
+///                                n5                      e1 = (n1,n2)
 ///                  f4           ,@                       e2 = (n2,n3)
 ///                   ^        ,/`/|\     f2               e3 = (n3,n4)
 ///                    \    ,/`  / | \    ^                e4 = (n4,n1)
@@ -491,7 +502,7 @@ public:
 ///          e4 `\.    /       o          `<.  \       split = ((n1,n2,n3,n5),
 ///                `\./        |             `\.\               (n3,n4,n1,n5))
 ///               n1 @-------------------->-----@ n2
-///                            |          e3
+///                            |          e1
 ///                            |
 ///                            v
 ///                            f1
@@ -530,7 +541,12 @@ public:
   }
 
   /// @brief Pyramid pieces.
-  [[nodiscard]] constexpr auto pieces() const noexcept {
+  // clang-format off
+  template<mesh Mesh>
+    requires (mesh_dim_v<Mesh> >= 3)
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
+    // clang-format on
+    static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n4, n1, n5}};
   }
 
@@ -542,7 +558,7 @@ public:
 ///                 ^  f3
 ///                 |  ^
 ///             e9  |  |
-///      n4 @---<---|-------------@ n6        e3 = (n1,n2)
+///      n4 @---<---|-------------@ n6        e1 = (n1,n2)
 ///         |\      *  |        ,/|           e2 = (n2,n3)
 ///         | \        o      ,/` |           e3 = (n3,n1)
 ///         |  \         e8 ,^`   |           e4 = (n1,n4)
@@ -556,7 +572,7 @@ public:
 ///          \      |        e3 ,/            f3 = (n3,n1,n4,n6)
 ///           \     |     o   ,/`             f4 = (n1,n3,n2)
 ///            \    ^ e5  | ,/`               f5 = (n4,n5,n6)
-///          e3 v   |     ,^ e2            split = ((n1,n2,n3,n5),
+///          e1 v   |     ,^ e2            split = ((n1,n2,n3,n5),
 ///              \  |   ,/|                         (n3,n1,n4,n5),
 ///               \ | ,/` |                         (n4,n6,n3,n5))
 ///                \|/`   |
@@ -598,7 +614,12 @@ public:
   }
 
   /// @brief Pentahedron pieces.
-  [[nodiscard]] constexpr auto pieces() const noexcept {
+  // clang-format off
+  template<mesh Mesh>
+    requires (mesh_dim_v<Mesh> >= 3)
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
+    // clang-format on
+    static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n1, n4, n5},
                       Tetrahedron{n4, n6, n3, n5}};
   }
@@ -611,7 +632,7 @@ public:
 ///                      ^       f3
 ///                      |       ^
 ///                   e10 |      /
-///            n7 @---<--|----------@ n6         e3 = (n1,n2)
+///            n7 @---<--|----------@ n6         e1 = (n1,n2)
 ///              /|      |    /    /|            e2 = (n2,n3)
 ///             / |      |   o    / |            e3 = (n3,n4)
 ///        e11 v  |      *    e9 ^  ^ e6         e4 = (n4,n1)
@@ -622,7 +643,7 @@ public:
 ///         |  n3 @---<-------|-----@ n2         e9 = (n5,n6)
 ///         |    /    e2      |    /            e10 = (n6,n7)
 ///      e8 ^   /          e5 ^   /             e11 = (n7,n8)
-///         |  v e3  *        |  ^ e3           e12 = (n8,n5)
+///         |  v e3  *        |  ^ e1           e12 = (n8,n5)
 ///         | /     /    o    | /                f1 = (n1,n4,n3,n2)
 ///         |/     /     |    |/                 f2 = (n1,n2,n6,n5)
 ///      n4 @-----/-->--------@ n1               f3 = (n2,n3,n7,n6)
@@ -667,7 +688,12 @@ public:
   }
 
   /// @brief Hexahedron pieces.
-  [[nodiscard]] constexpr auto pieces() const noexcept {
+  // clang-format off
+  template<mesh Mesh>
+    requires (mesh_dim_v<Mesh> >= 3)
+  [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
+    // clang-format on
+    static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n4, n2, n5}, Tetrahedron{n4, n3, n2, n7},
                       Tetrahedron{n5, n6, n7, n2}, Tetrahedron{n5, n7, n8, n4},
                       Tetrahedron{n5, n4, n2, n7}};

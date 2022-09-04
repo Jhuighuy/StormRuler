@@ -25,6 +25,7 @@
 #include <Storm/Utils/Meta.hpp>
 
 #include <Storm/Mallard/Mesh.hpp>
+#include <Storm/Mallard/Shape.hpp>
 
 #include <compare>
 #include <concepts>
@@ -232,6 +233,11 @@ public:
   constexpr EdgeView(const EdgeView<std::remove_const_t<Mesh>>& other) noexcept
       : EntityView<Mesh, EdgeIndex>(other) {}
 
+  /// @brief Edge shape type.
+  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+    return this->mesh().shape_type(this->index());
+  }
+
   /// @brief Edge length.
   [[nodiscard]] constexpr real_t length() const noexcept {
     return this->mesh().volume(this->index());
@@ -256,6 +262,11 @@ public:
   /// @brief Copy-construct a face view.
   constexpr FaceView(const FaceView<std::remove_const_t<Mesh>>& other) noexcept
       : EntityView<Mesh, FaceIndex<Mesh>>(other) {}
+
+  /// @brief Face shape type.
+  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+    return this->mesh().shape_type(this->index());
+  }
 
   /// @brief Face area (or length in 2D).
   [[nodiscard]] constexpr real_t area() const noexcept {
@@ -301,6 +312,11 @@ public:
   constexpr CellView(const CellView<std::remove_const_t<Mesh>>& other) noexcept
       : EntityView<Mesh, CellIndex<Mesh>>(other) {}
 
+  /// @brief Cell shape type.
+  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+    return this->mesh().shape_type(this->index());
+  }
+
   /// @brief Cell volume (or area in 2D).
   [[nodiscard]] constexpr real_t volume() const noexcept {
     return this->mesh().volume(this->index());
@@ -314,23 +330,23 @@ public:
 }; // class CellView
 
 /// @brief Range of the @p mesh nodes.
-[[nodiscard]] constexpr auto nodes(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto nodes(mesh auto& mesh) noexcept {
   return mesh.entities(meta::type_v<NodeIndex>) | //
          detail_::to_node_view_(mesh);
 }
 /// @brief Range of the @p mesh nodes with a @p label.
-[[nodiscard]] constexpr auto nodes(auto& mesh, Label label) noexcept {
+[[nodiscard]] constexpr auto nodes(mesh auto& mesh, Label label) noexcept {
   return mesh.entities(meta::type_v<NodeIndex>, label) |
          detail_::to_node_view_(mesh);
 }
 
 /// @brief Range of the @p mesh edges.
-[[nodiscard]] constexpr auto edges(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto edges(mesh auto& mesh) noexcept {
   return mesh.entities(meta::type_v<EdgeIndex>) | //
          detail_::to_edge_view_(mesh);
 }
 /// @brief Range of the @p mesh edges with @p label.
-[[nodiscard]] constexpr auto edges(auto& mesh, Label label) noexcept {
+[[nodiscard]] constexpr auto edges(mesh auto& mesh, Label label) noexcept {
   return mesh.entities(meta::type_v<EdgeIndex>, label) |
          detail_::to_edge_view_(mesh);
 }
@@ -350,45 +366,45 @@ template<mesh Mesh>
 
 /// @brief Range of the @p mesh cells.
 template<mesh Mesh>
-[[nodiscard]] constexpr auto cells(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto cells(Mesh& mesh) noexcept {
   return mesh.entities(meta::type_v<CellIndex<Mesh>>) |
          detail_::to_cell_view_(mesh);
 }
 /// @brief Range of the @p mesh cells with @p label.
 template<mesh Mesh>
-[[nodiscard]] constexpr auto cells(auto& mesh, Label label) noexcept {
+[[nodiscard]] constexpr auto cells(Mesh& mesh, Label label) noexcept {
   return mesh.entities(meta::type_v<CellIndex<Mesh>>, label) |
          detail_::to_cell_view_(mesh);
 }
 
 /// @brief Range of the interior @p mesh nodes.
-[[nodiscard]] constexpr auto int_nodes(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto int_nodes(mesh auto& mesh) noexcept {
   return nodes(mesh, Label{0});
 }
 
 /// @brief Range of the interior @p mesh edges.
-[[nodiscard]] constexpr auto int_edges(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto int_edges(mesh auto& mesh) noexcept {
   return edges(mesh, Label{0});
 }
 
 /// @brief Range of the interior @p mesh faces.
-[[nodiscard]] constexpr auto int_faces(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto int_faces(mesh auto& mesh) noexcept {
   return faces(mesh, Label{0});
 }
 
 /// @brief Range of the interior @p mesh cells.
-[[nodiscard]] constexpr auto int_cells(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto int_cells(mesh auto& mesh) noexcept {
   return cells(mesh, Label{0});
 }
 
 /// @brief Range of the boundary @p mesh nodes.
-[[nodiscard]] constexpr auto bnd_nodes(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto bnd_nodes(mesh auto& mesh) noexcept {
   return nodes(mesh) | std::views::drop(mesh.num_entities( //
                            meta::type_v<NodeIndex>, Label{0}));
 }
 
 /// @brief Range of the boundary @p mesh edges.
-[[nodiscard]] constexpr auto bnd_edges(auto& mesh) noexcept {
+[[nodiscard]] constexpr auto bnd_edges(mesh auto& mesh) noexcept {
   return edges(mesh) | std::views::drop(mesh.num_entities( //
                            meta::type_v<EdgeIndex>, Label{0}));
 }

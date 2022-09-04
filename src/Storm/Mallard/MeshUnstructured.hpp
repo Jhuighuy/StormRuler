@@ -127,8 +127,11 @@ public:
   /// @brief Initialize the mesh.
   constexpr UnstructuredMesh() {
     // Initialize the default label (0).
-    std::apply([](auto&... ranges) { (ranges.emplace_back(0), ...); },
-               label_ranges_tuple_);
+    std::apply(
+        [](auto&... ranges) {
+          ((ranges.emplace_back(0), ranges.emplace_back(0)), ...);
+        },
+        label_ranges_tuple_);
   }
 
   /// @brief Number of entity labels.

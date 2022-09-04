@@ -25,35 +25,38 @@
 #include <Storm/Mallard/Mesh.hpp>
 
 #include <array>
+#include <cstdint>
 #include <initializer_list>
 #include <ranges>
 #include <tuple>
 
 namespace Storm::shapes {
 
+/// @brief Shape type.
+enum class Type : std::uint8_t {
+  segment,        ///< Segment shape type.
+  triangle,       ///< Triangle shape type.
+  triangle_strip, ///< Triangle strip shape type.
+  quadrangle,     ///< Quadrangle shape type.
+  polygon,        ///< Polygon shape type.
+  tetrahedron,    ///< Tetrahedron shape type.
+  pyramid,        ///< Pyramid shape type.
+  pentahedron,    ///< Pentahedron shape type.
+  hexahedron,     ///< Hexahedron shape type.
+  count_,
+}; // enum class shape_type
+
 /// @brief Shape concept.
 // clang-format off
 template<class Shape>
 concept shape = 
     requires(Shape shape) {
+      { shape.type() } noexcept -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::range;
     } && 
     std::same_as<std::ranges::range_value_t<
         decltype(std::declval<Shape>().nodes())>, NodeIndex>;
 // clang-format on
-
-/// @brief Shape type.
-enum class shape_type {
-  segment,
-  triangle,
-  quadrangle,
-  triangle_strip,
-  polygon,
-  tetrahedron,
-  pyramid,
-  pentahedron,
-  hexahedron,
-}; // enum class shape_type
 
 /// @brief 1D Shape concept.
 // clang-format off
@@ -256,6 +259,11 @@ public:
   constexpr Seg(NodeIndex i1, NodeIndex i2) noexcept : n1{i1}, n2{i2} {}
   /// @}
 
+  /// @brief Segment type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::segment;
+  }
+
   /// @brief Segment nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2};
@@ -314,6 +322,11 @@ public:
   constexpr Triangle(NodeIndex i1, NodeIndex i2, NodeIndex i3) noexcept
       : n1{i1}, n2{i2}, n3{i3} {}
   /// @}
+
+  /// @brief Triangle type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::triangle;
+  }
 
   /// @brief Triangle nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
@@ -391,6 +404,11 @@ public:
       : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
   /// @}
 
+  /// @brief Quadrangle type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::quadrangle;
+  }
+
   /// @brief Quadrangle nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2, n3, n4};
@@ -435,10 +453,19 @@ public:
   /// @brief Construct a triangle strip.
   /// @{
   constexpr TriangleStrip() = default;
-  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {
-    STORM_ASSERT_(n.size() >= 3, "Triangle strip requires at least 3 nodes!");
-  }
+  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {}
   /// @}
+
+  /// @brief Triangle strip type.
+  /// May fallback to triangle or quadrangle types.
+  [[nodiscard]] constexpr auto type() const noexcept {
+    STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
+    switch (n.size()) {
+      case 3: return Type::triangle;
+      case 4: return Type::quadrangle;
+      default: return Type::triangle_strip;
+    }
+  }
 
   /// @brief Triangle strip nodes.
   [[nodiscard]] constexpr const auto& nodes() const noexcept {
@@ -491,10 +518,19 @@ public:
   /// @brief Construct a polygon.
   /// @{
   constexpr Polygon() = default;
-  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {
-    STORM_ASSERT_(n.size() >= 3, "Polygon requires at least 3 nodes!");
-  }
+  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {}
   /// @}
+
+  /// @brief Polygon type.
+  /// May fallback to triangle or quadrangle types.
+  [[nodiscard]] constexpr auto type() const noexcept {
+    STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
+    switch (n.size()) {
+      case 3: return Type::triangle;
+      case 4: return Type::quadrangle;
+      default: return Type::polygon;
+    }
+  }
 
   /// @brief Polygon nodes.
   [[nodiscard]] constexpr const auto& nodes() const noexcept {
@@ -556,6 +592,11 @@ public:
                         NodeIndex i3, NodeIndex i4) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
   /// @}
+
+  /// @brief Tetrahedron type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::tetrahedron;
+  }
 
   /// @brief Tetrahedron nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
@@ -636,6 +677,11 @@ public:
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5} {}
   /// @}
 
+  /// @brief Pyramid type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::pyramid;
+  }
+
   /// @brief Pyramid nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
     return std::array{n1, n2, n3, n4, n5};
@@ -707,6 +753,11 @@ public:
                         NodeIndex i5, NodeIndex i6) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6} {}
   /// @}
+
+  /// @brief Pentahedron type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::pentahedron;
+  }
 
   /// @brief Pentahedron nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
@@ -781,6 +832,11 @@ public:
                        NodeIndex i7, NodeIndex i8) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6}, n7{i7}, n8{i8} {}
   /// @}
+
+  /// @brief Hexahedron type.
+  [[nodiscard]] constexpr static auto type() noexcept {
+    return Type::hexahedron;
+  }
 
   /// @brief Hexahedron nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {

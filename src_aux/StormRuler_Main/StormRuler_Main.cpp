@@ -42,7 +42,9 @@
 
 #include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>
+#include <Storm/Mallard/ReaderTetgen.hpp>
 #include <Storm/Mallard/Shape.hpp>
+//#include <Storm/Mallard/ShapeVD.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
 #include "NVT/Nvt.hpp"
@@ -306,7 +308,7 @@ int main(int argc, char** argv) {
   print_banner();
 
   UnstructuredMesh<2, 2> mesh1{};
-  mesh1.read_from_triangle("test/mesh/rectangle.1.");
+  read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
 
   NodeView node(mesh1, NodeIndex{13});
   node.for_each_cell([](auto cell_view) {});

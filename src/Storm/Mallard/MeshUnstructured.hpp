@@ -88,6 +88,16 @@ private:
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
+        meta::pair_list_t<shapes::Type, meta::drop_first_t<EntityIndices_>>
+      >
+    >
+  > entity_shape_types_tuple_{};
+
+  meta::as_std_tuple_t<
+    meta::prepend_t<
+      meta::empty_t,
+      meta::transform_t<
+        meta::pair_cast_fn<IndexedVector>,
         meta::pair_list_t<real_t, meta::drop_first_t<EntityIndices_>>
       >
     >
@@ -138,6 +148,7 @@ public:
   template<size_t I>
   [[nodiscard]] constexpr size_t
   num_entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
+    STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& label_ranges = std::get<I>(label_ranges_tuple_);
     return label_ranges[label + 1] - label_ranges[label];
   }
@@ -153,6 +164,7 @@ public:
   template<size_t I>
   [[nodiscard]] constexpr auto
   entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
+    STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& label_ranges = std::get<I>(label_ranges_tuple_);
     return std::views::iota(label_ranges[label], label_ranges[label + 1]);
   }
@@ -161,13 +173,23 @@ public:
   template<size_t I>
   [[nodiscard]] constexpr Label //
   label(EntityIndex<I> index) const noexcept {
+    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_labels_tuple_)[index];
+  }
+
+  /// @brief Shape type of the entitity at @p index.
+  template<size_t I>
+  [[nodiscard]] constexpr shapes::Type
+  shape_type(EntityIndex<I> index) const noexcept {
+    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
+    return std::get<I>(entity_shape_types_tuple_)[index];
   }
 
   /// @brief "Volume" of the entitity at @p index.
   template<size_t I>
   [[nodiscard]] constexpr real_t //
   volume(EntityIndex<I> index) const noexcept {
+    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_volumes_tuple_)[index];
   }
 
@@ -175,12 +197,15 @@ public:
   template<size_t I>
   [[nodiscard]] constexpr Vec //
   position(EntityIndex<I> index) const noexcept {
+    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_positions_tuple_)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
   [[nodiscard]] constexpr Vec //
   normal(FaceIndex face_index) const noexcept {
+    STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
+                  "Face index is out of range!");
     return face_normals_[face_index];
   }
 
@@ -189,6 +214,7 @@ public:
   [[nodiscard]] constexpr auto //
   adjacent(EntityIndex<I> index,
            meta::type<EntityIndex<J>> = {}) const noexcept {
+    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     using T = Table<EntityIndex<I>, EntityIndex<J>>;
     return std::get<T>(connectivity_tuple_)[index];
   }
@@ -254,7 +280,8 @@ public:
       // Assign the node position.
       std::get<I>(entity_positions_tuple_).emplace_back(shape);
     } else {
-      // Assign the entity volume, center position (and normal).
+      // Assign the entity shape type, volume, center position (and normal).
+      std::get<I>(entity_shape_types_tuple_).emplace_back(shape.type());
       std::get<I>(entity_volumes_tuple_)
           .emplace_back(shapes::volume(shape, *this));
       std::get<I>(entity_positions_tuple_)

@@ -41,8 +41,9 @@
 #include <Storm/Blass/Mat.hpp>
 
 #include <Storm/Mallard/Entity.hpp>
+#include <Storm/Mallard/IoTetgen.hpp>
+#include <Storm/Mallard/IoVtk.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>
-#include <Storm/Mallard/ReaderTetgen.hpp>
 #include <Storm/Mallard/Shape.hpp>
 //#include <Storm/Mallard/ShapeVD.hpp>
 //#include <Storm/Blass/Matrix.hpp>
@@ -309,6 +310,7 @@ int main(int argc, char** argv) {
 
   UnstructuredMesh<2, 2> mesh1{};
   read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
+  write_mesh_to_vtk(mesh1, "out/test.vtk");
 
   NodeView node(mesh1, NodeIndex{13});
   node.for_each_cell([](auto cell_view) {});

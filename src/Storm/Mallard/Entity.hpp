@@ -33,6 +33,69 @@
 
 namespace Storm {
 
+/// @brief Number of the @p mesh node labels.
+[[nodiscard]] constexpr size_t num_node_labels(const mesh auto& mesh) noexcept {
+  return mesh.num_labels(meta::type_v<NodeIndex>);
+}
+/// @brief Number of the @p mesh edge labels.
+[[nodiscard]] constexpr size_t num_edge_labels(const mesh auto& mesh) noexcept {
+  return mesh.num_labels(meta::type_v<EdgeIndex>);
+}
+/// @brief Number of the @p mesh face labels.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_face_labels(const Mesh& mesh) noexcept {
+  return mesh.num_labels(meta::type_v<FaceIndex<Mesh>>);
+}
+/// @brief Number of the @p mesh cell labels.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_cell_labels(const Mesh& mesh) noexcept {
+  return mesh.num_labels(meta::type_v<CellIndex<Mesh>>);
+}
+
+/// @brief Number of the @p mesh nodes.
+[[nodiscard]] constexpr size_t num_nodes(const mesh auto& mesh) noexcept {
+  return mesh.num_entities(meta::type_v<NodeIndex>);
+}
+/// @brief Number of the @p mesh nodes with a @p label.
+[[nodiscard]] constexpr size_t num_nodes(const mesh auto& mesh,
+                                         Label label) noexcept {
+  return mesh.num_entities(label, meta::type_v<NodeIndex>);
+}
+
+/// @brief Number of the @p mesh edges.
+[[nodiscard]] constexpr size_t num_edges(const mesh auto& mesh) noexcept {
+  return mesh.num_entities(meta::type_v<EdgeIndex>);
+}
+/// @brief Number of the @p mesh edges with a @p label.
+[[nodiscard]] constexpr size_t num_edges(const mesh auto& mesh,
+                                         Label label) noexcept {
+  return mesh.num_entities(label, meta::type_v<EdgeIndex>);
+}
+
+/// @brief Number of the @p mesh faces.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_faces(const Mesh& mesh) noexcept {
+  return mesh.num_entities(meta::type_v<FaceIndex<Mesh>>);
+}
+/// @brief Number of the @p mesh faces with a @p label.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_faces(const Mesh& mesh,
+                                         Label label) noexcept {
+  return mesh.num_entities(label, meta::type_v<FaceIndex<Mesh>>);
+}
+
+/// @brief Number of the @p mesh cells.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_cells(const Mesh& mesh) noexcept {
+  return mesh.num_entities(meta::type_v<CellIndex<Mesh>>);
+}
+/// @brief Number of the @p mesh cells with a @p label.
+template<mesh Mesh>
+[[nodiscard]] constexpr size_t num_cells(const Mesh& mesh,
+                                         Label label) noexcept {
+  return mesh.num_entities(label, meta::type_v<CellIndex<Mesh>>);
+}
+
 template<mesh Mesh>
 class NodeView;
 template<class Mesh>

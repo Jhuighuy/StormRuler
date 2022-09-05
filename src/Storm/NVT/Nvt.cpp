@@ -656,3 +656,105 @@ void Nvt::Test_CH() {
   Find_Psi_Ksi(N_phi);
   ComputeCahnHillard();
 }
+
+void Nvt::Update_N(stormInt_t i_comp, stormReal_t Q, stormReal_t P_form, stormReal_t dt){
+  //Construct cubic equation Z^3 + E_2 Z^2 + E_1 Z + E_0 = 0
+  double a = a_coeff[i_comp][i_comp];
+  double b = b_coeff[i_comp];
+
+  double A = a * P_form / (R * R * T * T);
+  double B = b * P_form / (R * T);
+
+  double E2 = (m1 + m2 - 1.0) * B - 1.0;
+  double E1 = A - (2.0 * (m1 + m2) - 1.0) * B * B - (m1 + m2) * B;
+  double E0 = - (A * B + m1 * m2 * B * B * (B+1.0));
+
+  std::complex<double> root1,root2,root3;
+  //root1 is always real and the one we need
+  solve_cubic_real(root1, root2, root3, E2, E1, E0);
+  double Z_root = root1.real();
+  double n = P_form / (Z_root * R * T);
+
+  double Ni_new = z[i_comp] * N + n * Q;
+  //N += Ni_new;
+  double tmp;
+  for (int i = 0; i < n_comp; ++i) {
+    if (i == i_comp) {
+      tmp = Ni_new;
+    }
+    else tmp = 0.0;
+    z[i] = (z[i] * N + tmp) / (N + Ni_new);
+  }
+  N += Ni_new;
+
+  return;
+}
+
+void Nvt::solve_cubic_real(std::complex<double>& x1, std::complex<double>& x2, std::complex<double>& x3,
+    double a, double b, double c)
+{
+    double PI = 3.14159265359;
+    double eps = 1e-12;
+    double Q = (3.0 * b - a * a) / 9.0;
+    std::cout << "Q = " << Q << std::endl;
+    double R = (9.0 * a * b - 27.0 * c - 2.0 * a * a * a) / 54.0;
+    std::cout << "R = " << R << std::endl;
+    double D = R * R + Q * Q * Q;
+    if (D > eps)
+    {
+        double A = std::cbrt(std::abs(R) + std::sqrt(D));
+        double t1;
+        if (R >= 0)
+        {
+            t1 = A - Q / A;
+        }
+        else
+        {
+            t1 = Q / A - A;
+        }
+        x1 = t1 - a / 3.0;
+        double x2re = -0.5 * t1 - a / 3.0;
+        double x2im = std::sqrt(3.0) * 0.5 * (A + Q / A);
+        x2 = std::complex<double>(x2re, x2im);
+        x3 = std::complex<double>(x2re, -x2im);
+
+    }
+    else
+    {
+        double theta;
+        if (std::abs(Q) <= eps)
+        {
+            Q = 0.0;
+            theta = 0.0;
+        }
+        else
+        {
+            theta = std::acos(R / sqrt(-Q * Q * Q));
+            
+
+        }
+        double phi1 = theta / 3.0;
+        double phi2 = phi1 - 2 * PI / 3.0;
+        double phi3 = phi1 + 2 * PI / 3.0;
+        x1 = 2.0 * std::sqrt(-Q) * std::cos(phi1) - a / 3.0;
+        x2 = 2.0 * std::sqrt(-Q) * std::cos(phi2) - a / 3.0;
+        x3 = 2.0 * std::sqrt(-Q) * std::cos(phi3) - a / 3.0;
+
+        return;
+    }
+
+    return;
+}
+
+// int main()
+// {
+//     std::cout << "Hello World!\n";
+
+//     std::complex<double> x1, x2, x3;
+//     solve_cubic_real(x1, x2, x3, 4.0, 5.0, -3.0);
+
+//     std::cout.precision(14);
+//     std::cout << "x1 = " << x1 << ", x2 = " << x2 << ", x3 = " << x3 << std::endl;
+
+
+// }

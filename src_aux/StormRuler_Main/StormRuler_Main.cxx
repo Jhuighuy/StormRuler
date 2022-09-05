@@ -117,7 +117,10 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
   // stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
   // stormApplyBCs_InOutLet(mesh, v, 2);
   // stormApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
-  stormApplyBCs_InOutLet(mesh, v, 4);
+
+  stormReal_t R = 0.1 * 0.5;
+  stormReal_t qFlux = 10.0 * 0.5 * M_PI * R * R * R * R;
+  stormApplyBCs_InOutLet(mesh, v, 4, qFlux);
 } // SetBCs_v
 
 static void CahnHilliard_Step(stormMesh_t mesh, //

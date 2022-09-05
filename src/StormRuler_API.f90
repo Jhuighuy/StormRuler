@@ -517,11 +517,12 @@ end subroutine stormApplyBCs_CosWall
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask) &
+subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask, qFlux) &
     & bind(C, name='stormApplyBCs_InOutLet')
   type(c_ptr), intent(in), value :: meshPtr
   integer(c_int), intent(in), value :: markMask
   type(c_ptr), intent(in), value :: uPtr
+  real(dp), intent(in), value :: qFlux
 
   class(tMesh), pointer :: mesh
   class(tArray), pointer :: uArr
@@ -541,7 +542,7 @@ subroutine stormApplyBCs_InOutLet(meshPtr, uPtr, markMask) &
       !! TODO: fix me!
       real(dp), pointer :: u(:,:)
       call uArr%Get(u)
-      call FDM_ApplyBCs_InOutLet(mesh, mark, u)
+      call FDM_ApplyBCs_InOutLet(mesh, mark, u, qFlux)
     end block
   end do
 

@@ -3,6 +3,7 @@
 #include <Storm/Blass/Matrix.hpp>
 #include <iostream>
 #include <vector>
+#include <complex>
 
 
 // using namespace std;
@@ -154,6 +155,12 @@ private:
 
   double Pressure_Eq(const std::vector<double>& n);
 
+  /**
+   * Solve cubic equation with real coeffecients
+   */
+  void solve_cubic_real(std::complex<double>& x1, std::complex<double>& x2, std::complex<double>& x3,
+    double a, double b, double c);
+
 
 public:
 
@@ -168,6 +175,11 @@ public:
                      std::vector<std::vector<double>>& k_ij,
                      std::vector<double> N_parts, double V1, double T1,
                      double P_init, double N_mesh);
+
+  /**
+   * Update component i quantity according to flux and pressure
+   */
+  void Update_N(stormInt_t i_comp, stormReal_t Q, stormReal_t P_form, stormReal_t dt);
 
   double Test_RR(const std::vector<double>& K_test, double nu_init);
   double Test_Beta(double nu_test, double a_L_test, double b_L_test,

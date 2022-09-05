@@ -156,9 +156,10 @@ subroutine FDM_ApplyBCs_CosWall(mesh, mark, phi_hat, phi, a)
 
 end subroutine FDM_ApplyBCs_CosWall
 
-subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v)
+subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v, Q)
   class(tMesh), intent(in) :: mesh
   integer(ip), intent(in) :: mark
+  real(dp), intent(in) :: Q !Flux on the boundary
   real(dp), intent(inout) :: v(:,:)
 
   integer(ip) :: dim
@@ -191,6 +192,9 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v)
 
     RRR = merge(0.1_dp, 10.0_dp, mark == 2)
     !RRR = merge(0.1_dp, 0.101_dp, mark == 2)
+    !RRR = 2.0_dp * Q / Pi / (R**4)
+
+    !RRR = 10 = dp/dz / (4 eta)?
 
     v(:,bndCell) = 0.0_dp
     v(2,bndCell) = -RRR*( R**2 - RR**2 )

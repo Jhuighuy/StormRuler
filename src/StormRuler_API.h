@@ -173,7 +173,7 @@ STORM_API void stormApplyBCs_CosWall(stormMesh_t mesh, stormArray_t phiBar,
                                      stormInt_t iBC);
 
 STORM_API void stormApplyBCs_InOutLet(stormMesh_t mesh, stormArray_t u,
-                                      stormInt_t iBC);
+                                      stormInt_t iBC, stormReal_t Q);
 
 STORM_API void stormGradient(stormMesh_t mesh, stormArray_t vVec,
                              stormReal_t lambda, stormArray_t u);

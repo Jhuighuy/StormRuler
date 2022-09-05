@@ -62,28 +62,28 @@ concept shape =
 // clang-format off
 template<class Shape>
 concept shape1D = shape<Shape> &&
-  !requires(Shape shape) { shape.edges(); } &&
-  !requires(Shape shape) { shape.faces(); };
+    !requires(Shape shape) { shape.edges(); } &&
+    !requires(Shape shape) { shape.faces(); };
 // clang-format on
 
 /// @brief 2D Shape concept.
 // clang-format off
 template<class Shape>
 concept shape2D = shape<Shape> &&
-  requires(Shape shape) { 
-    std::apply([](shape1D auto&&...) {}, shape.edges());
-  } && !requires(Shape shape) { shape.faces(); };
+    requires(Shape shape) { 
+      std::apply([](shape1D auto&&...) {}, shape.edges());
+    } && !requires(Shape shape) { shape.faces(); };
 // clang-format on
 
 /// @brief 3D Shape concept.
 // clang-format off
 template<class Shape>
 concept shape3D = shape<Shape> &&
-  requires(Shape shape) { 
-    std::apply([](shape1D auto&&...) {}, shape.edges());
-  } && requires(Shape shape) { 
-    std::apply([](shape2D auto&&...) {}, shape.faces());
-  };
+    requires(Shape shape) { 
+      std::apply([](shape1D auto&&...) {}, shape.edges());
+    } && requires(Shape shape) { 
+      std::apply([](shape2D auto&&...) {}, shape.faces());
+    };
 // clang-format on
 
 /// @brief Shape topological dimensionality.

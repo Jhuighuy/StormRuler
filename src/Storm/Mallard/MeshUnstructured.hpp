@@ -42,7 +42,7 @@ namespace Storm {
 /// @tparam TopologicalDim Topological dimensionality.
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
-         template<class, class> class Table = VoidCsrTable>
+         template<class, class> class Table = VoidMcsrTable>
 class UnstructuredMesh {
 private:
 
@@ -298,15 +298,15 @@ public:
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       // Allocate the empty rows.
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
-      std::get<T>(connectivity_tuple_).emplace_back();
+      std::get<T>(connectivity_tuple_).push_back();
     });
     if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
       // Connnect the entity with it's nodes.
       using T = Table<EntityIndex<I>, NodeIndex>;
       using U = Table<NodeIndex, EntityIndex<I>>;
       for (NodeIndex node_index : shape.nodes()) {
-        std::get<T>(connectivity_tuple_).insert(entity_index, node_index);
-        std::get<U>(connectivity_tuple_).insert(node_index, entity_index);
+        std::get<T>(connectivity_tuple_).connect(entity_index, node_index);
+        std::get<U>(connectivity_tuple_).connect(node_index, entity_index);
       }
     }
     meta::for_each<meta::make_seq_t<EntityIndex, 1, I>>(
@@ -316,8 +316,8 @@ public:
           using U = Table<EntityIndex<J>, EntityIndex<I>>;
           const auto process_part = [&](const auto& part) {
             const EntityIndex<J> part_index = insert<J>(part);
-            std::get<T>(connectivity_tuple_).insert(entity_index, part_index);
-            std::get<U>(connectivity_tuple_).insert(part_index, entity_index);
+            std::get<T>(connectivity_tuple_).connect(entity_index, part_index);
+            std::get<U>(connectivity_tuple_).connect(part_index, entity_index);
           };
           std::apply([&](const auto&... parts) { (process_part(parts), ...); },
                      shapes::parts<J>(shape));
@@ -326,7 +326,7 @@ public:
     // Connect the entity with it's siblings.
     /// @todo Implement me!
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
-    std::get<T>(connectivity_tuple_).insert(entity_index, entity_index);
+    std::get<T>(connectivity_tuple_).connect(entity_index, entity_index);
 
     // STORM_INFO_("inserting ({}, {})", I, (size_t) entity_index);
     return entity_index;

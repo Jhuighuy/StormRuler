@@ -26,6 +26,7 @@
 #include <Storm/Mallard/Mesh.hpp>
 
 #include <Storm/Vulture/OpenGL.hpp>
+#include <Storm/Vulture/Window.hpp>
 
 #include <concepts>
 #include <cstddef> // std::byte

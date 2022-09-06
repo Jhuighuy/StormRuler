@@ -22,8 +22,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Containers.hpp>
-
 #include <algorithm>
 #include <array>
 #include <concepts>
@@ -33,12 +31,8 @@
 #include <string_view>
 #include <vector>
 
-#include <glm/glm.hpp>
-// clang-format off
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-// clang-format on
-
+#include <glm/glm.hpp>
 
 namespace Storm::gl {
 
@@ -119,19 +113,19 @@ private:
 
     switch (severity) {
       default:
-        STORM_DEBUG_("OpenGL: {} {} {:#X}: {}", //
+        STORM_DEBUG_("OpenGL: {} {} {:#x}: {}", //
                      debug_error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_LOW_ARB:
-        STORM_INFO_("OpenGL: {} {} {:#X}: {}", //
+        STORM_INFO_("OpenGL: {} {} {:#x}: {}", //
                     debug_error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-        STORM_WARNING_("OpenGL: {} {} {:#X}: {}", //
+        STORM_WARNING_("OpenGL: {} {} {:#x}: {}", //
                        debug_error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_HIGH_ARB:
-        STORM_ERROR_("OpenGL: {} {} {:#X}: {}", //
+        STORM_ERROR_("OpenGL: {} {} {:#x}: {}", //
                      debug_error_source, debug_type, id, message);
         break;
     }
@@ -485,7 +479,7 @@ public:
   /// @brief Push back the vertex array.
   void push_vertex_array(const HostDeviceBuffer& vertex_array) {
     STORM_INFO_("Pushing the vertex array: "
-                "value_type = {:#X}, value_length = {}, num_values = {}.",
+                "value_type = {:#x}, value_length = {}, num_values = {}.",
                 vertex_array.value_type(), vertex_array.value_length(),
                 vertex_array.num_values());
     p_vertex_arrays_.push_back(&vertex_array);
@@ -494,7 +488,7 @@ public:
   /// @brief Set the index array.
   void set_index_array(const HostDeviceBuffer& index_array) {
     STORM_INFO_("Setting the index array: "
-                "value_type = {:#X}, num_values = {}.",
+                "value_type = {:#x}, num_values = {}.",
                 index_array.value_type(), index_array.num_values());
     p_index_array_ = &index_array;
   }
@@ -523,6 +517,8 @@ public:
 
   /// @brief Draw the mesh.
   void draw(GLenum mode = GL_TRIANGLES) noexcept {
+    STORM_ASSERT_(mode == GL_LINES || mode == GL_TRIANGLES,
+                  "Unsupported draw mode {:#x}!", mode);
     BindVertexArray bind_vertex_array{vertex_array_};
     if (p_index_array_ != nullptr) {
       glDrawElements(mode, //
@@ -555,19 +551,18 @@ public:
   }
 
   /// @brief Load the shader of type @p shader_type from @p shader_source.
-  void load(GLenum shader_type, std::string_view shader_source) {
+  void load(GLenum type, std::string_view source) {
     // Create a shader.
-    STORM_ASSERT_(shader_type == GL_VERTEX_SHADER ||
-                      shader_type == GL_GEOMETRY_SHADER ||
-                      shader_type == GL_FRAGMENT_SHADER,
-                  "Invalid shader type!");
+    STORM_ASSERT_(type == GL_VERTEX_SHADER || //
+                      type == GL_GEOMETRY_SHADER || type == GL_FRAGMENT_SHADER,
+                  "Unsupported shader type {:#x}!", type);
     unload();
-    set_id(glCreateShader(shader_type));
+    set_id(glCreateShader(type));
 
     // Upload the shader source code.
-    const auto shader_source_data = shader_source.data();
-    const auto shader_source_size = static_cast<GLint>(shader_source.size());
-    glShaderSource(id(), 1, &shader_source_data, &shader_source_size);
+    const auto source_data = source.data();
+    const auto source_size = static_cast<GLint>(source.size());
+    glShaderSource(id(), 1, &source_data, &source_size);
 
     // Try to compile the shader and check result.
     glCompileShader(id());

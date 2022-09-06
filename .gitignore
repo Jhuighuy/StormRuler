@@ -45,6 +45,9 @@
 !*.lua
 !*.m
 
+# GLSL
+!*.glsl
+
 # Scripts.
 !*.sh
 !*.bat

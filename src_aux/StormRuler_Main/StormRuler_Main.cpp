@@ -45,6 +45,7 @@
 #include <Storm/Mallard/IoVtk.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>
 #include <Storm/Mallard/Shape.hpp>
+#include <Storm/Mallard/Visualizer.hpp>
 //#include <Storm/Mallard/ShapeVD.hpp>
 //#include <Storm/Blass/Matrix.hpp>
 
@@ -309,13 +310,18 @@ int main(int argc, char** argv) {
   print_banner();
 
   UnstructuredMesh<2, 2> mesh1{};
-  read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
+  read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
   write_mesh_to_vtk(mesh1, "out/test.vtk");
+  STORM_INFO_("mesh has {} edges", num_edges(mesh1));
+  STORM_INFO_("mesh has {} faces", num_faces(mesh1));
 
   NodeView node(mesh1, NodeIndex{13});
-  node.for_each_cell([](auto cell_view) {});
+  node.for_each_cell(
+      [](auto cell_view) { STORM_WARNING_("{}", (size_t) cell_view.index()); });
 
   STORM_INFO_("mesh loaded");
+
+  visualize_mesh(mesh1);
   return 0;
 
 #if 0
@@ -367,6 +373,7 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
+#if 0
   Nvt nvt_class = Nvt();
 
   Init_For_NVT(nvt_class);
@@ -419,6 +426,7 @@ int main(int argc, char** argv) {
     SR_IO_Add(io, rho, "density");
     SR_IO_Flush(io, mesh, filename);
   }
+#endif
 
   return 0;
 }

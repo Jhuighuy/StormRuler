@@ -296,6 +296,28 @@ else()
   endif()
 endif()
 
+# Find OpenGL, GLEW and GLFW.
+if(StormRuler_NO_OpenGL)
+  message(STATUS "StormRuler OpenGL was disabled by user.")
+else()
+  find_package(OpenGL)
+  if(OpenGL_FOUND)
+    message(STATUS "OpenGL enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE OpenGL::GL)
+    target_link_libraries(StormRuler_BASE INTERFACE OpenGL::GLU)
+  endif()
+  find_package(GLEW)
+  if(GLEW_FOUND)
+    message(STATUS "GLEW enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE GLEW::GLEW)
+  endif()
+  find_package(glfw3 3.3)
+  if(glfw3_FOUND)
+    message(STATUS "GLFW enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE glfw)
+  endif()
+endif()
+
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 ## Main shared library and the executable.
 ## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##

@@ -43,11 +43,14 @@ public:
   constexpr Index() = default;
 
   /// @brief Construct an index with value.
-  constexpr explicit Index(size_t value) noexcept : value_{value} {}
+  template<std::integral Integral>
+  constexpr explicit Index(Integral value) noexcept
+      : value_{static_cast<size_t>(value)} {}
 
   /// @brief Cast to the underlying value.
-  [[nodiscard]] constexpr explicit operator size_t() const noexcept {
-    return value_;
+  template<std::integral Integral>
+  [[nodiscard]] constexpr explicit operator Integral() const noexcept {
+    return static_cast<Integral>(value_);
   }
 
   /// @brief Cast into another tagged index.

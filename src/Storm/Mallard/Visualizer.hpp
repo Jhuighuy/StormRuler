@@ -79,28 +79,42 @@ void visualize_mesh(const Mesh& mesh) {
   (void) vertex_shader.load(GL_VERTEX_SHADER, R"(
       #version 330 core
       layout(location = 0) in vec3 positionMS;
+      uniform vec2 pos;
+      uniform float scale;
       void main() {
-        gl_Position = vec4(positionMS, 1.0);
+        gl_Position = vec4(positionMS - vec3(1.0, 0.5, 0.0), 1.0);
+        gl_Position.xy += pos;
+        gl_Position.xyz *= scale;
+        gl_Position.x /= 16.0 / 9.0;
       }
     )");
+
   gl::Shader fragment_shader{};
   (void) fragment_shader.load(GL_FRAGMENT_SHADER, R"(
       #version 330 core
       out vec4 color;
+      uniform vec3 col;
       void main() {
-        color = vec4(1.0, 1.0, 1.0, 1.0);
+        color = vec4(col, 1.0);
       }
     )");
 
   gl::Program program;
   (void) program.load(std::move(vertex_shader), std::move(fragment_shader));
 
-  gl::Mesh gl_mesh;
-  gl_mesh.push_attribs( //
+  const gl::HostDeviceBuffer mesh_nodes(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
         return node.position();
       }));
-  gl_mesh.set_element_indices(
+  const gl::HostDeviceBuffer mesh_edges(
+      edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
+        return edge.nodes() |
+               std::views::transform([](NodeView<const Mesh> node) {
+                 return static_cast<size_t>(node.index());
+               });
+      }) |
+      std::views::join);
+  const gl::HostDeviceBuffer mesh_cells(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         return cell.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
@@ -108,16 +122,42 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-  gl_mesh.build();
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  gl::Mesh edge_mesh;
+  edge_mesh.push_vertex_array(mesh_nodes);
+  edge_mesh.set_index_array(mesh_edges);
+  edge_mesh.build();
+
+  gl::Mesh cell_mesh;
+  cell_mesh.push_vertex_array(mesh_nodes);
+  cell_mesh.set_index_array(mesh_cells);
+  cell_mesh.build();
+
+  float scale = 1.01;
+  glm::vec2 pos{};
+  glm::vec3 col{0.1f, 0.1f, 0.9f};
 
   while (!glfwWindowShouldClose(window)) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { pos.y += 0.05; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { pos.x -= 0.05; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { pos.y -= 0.05; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { pos.x += 0.05; }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) { scale *= 1.01; }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) { scale /= 1.01; }
+
     // render frame
     {
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT);
       gl::BindProgram bind_program{program};
-      gl_mesh.draw();
+      glUniform2f(glGetUniformLocation(program, "pos"), pos.x, pos.y);
+      glUniform1f(glGetUniformLocation(program, "scale"), scale);
+      col = glm::vec3{0.9f, 0.9f, 0.9f};
+      glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+      cell_mesh.draw();
+      col = glm::vec3{0.1f, 0.1f, 0.9f};
+      glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+      edge_mesh.draw(GL_LINES);
     }
     glfwSwapBuffers(window);
     glfwPollEvents();

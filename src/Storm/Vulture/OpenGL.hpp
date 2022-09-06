@@ -28,7 +28,6 @@
 #include <array>
 #include <concepts>
 #include <cstddef> // std::byte
-#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -120,16 +119,16 @@ private:
 
     switch (severity) {
       case GL_DEBUG_SEVERITY_LOW_ARB:          //
-        STORM_INFO_("OpenGL: {} {} {:#x}: {}", //
+        STORM_INFO_("OpenGL: {} {} {:#X}: {}", //
                     debug_error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-        STORM_WARNING_("OpenGL: {} {} {:#x}: {}", //
+        STORM_WARNING_("OpenGL: {} {} {:#X}: {}", //
                        debug_error_source, debug_type, id, message);
         break;
       default:
       case GL_DEBUG_SEVERITY_HIGH_ARB:
-        STORM_ERROR_("OpenGL: {} {} {:#x}: {}", //
+        STORM_ERROR_("OpenGL: {} {} {:#X}: {}", //
                      debug_error_source, debug_type, id, message);
         break;
     }
@@ -137,30 +136,30 @@ private:
 
 }; // class DebugOutput
 
-/// @brief OpenGL object.
-class Object {
+/// @brief OpenGL ID holder.
+class IdHolder {
 private:
 
   GLuint id_ = 0;
 
 public:
 
-  /// @brief Construct an object.
-  Object() = default;
+  /// @brief Construct an ID holder.
+  IdHolder() = default;
 
-  /// @brief Move-construct an object.
-  constexpr Object(Object&& other) noexcept
+  /// @brief Move-construct an ID holder.
+  constexpr IdHolder(IdHolder&& other) noexcept
       : id_{std::exchange(other.id_, 0)} {}
   /// @brief Move-assign operator.
-  constexpr Object& operator=(Object&& other) noexcept {
+  constexpr IdHolder& operator=(IdHolder&& other) noexcept {
     id_ = std::exchange(other.id_, 0);
     return *this;
   }
 
-  Object(const Object&) = delete;
-  Object& operator=(const Object&) = delete;
+  IdHolder(const IdHolder&) = delete;
+  IdHolder& operator=(const IdHolder&) = delete;
 
-  /// @brief Get the object ID.
+  /// @brief Get the ID.
   [[nodiscard]] GLuint id() const noexcept {
     return id_;
   }
@@ -169,40 +168,40 @@ public:
     id_ = id;
   }
 
-  /// @brief Cast to object ID operator.
+  /// @brief Cast to ID operator.
   [[nodiscard]] operator GLuint() const noexcept {
     return id_;
   }
 
-}; // class Object
+}; // class IdHolder
 
-/// @brief OpenGL buffer.
-class Buffer final : public Object {
+/// @brief OpenGL device buffer.
+class DeviceBuffer : public IdHolder {
 public:
 
   /// @brief Construct a buffer.
-  Buffer() noexcept {
+  DeviceBuffer() noexcept {
     GLuint buffer_id;
     glGenBuffers(1, &buffer_id);
     set_id(buffer_id);
   }
 
   /// @brief Move-construct a buffer.
-  Buffer(Buffer&&) = default;
+  DeviceBuffer(DeviceBuffer&&) = default;
 
   /// @brief Move-assign the buffer.
-  Buffer& operator=(Buffer&&) = default;
+  DeviceBuffer& operator=(DeviceBuffer&&) = default;
 
   /// @brief Destruct the buffer.
-  ~Buffer() noexcept {
+  ~DeviceBuffer() noexcept {
     const GLuint buffer_id = id();
     glDeleteBuffers(1, &buffer_id);
   }
 
-}; // class Buffer
+}; // class DeviceBuffer
 
 /// @brief OpenGL vertex array.
-class VertexArray final : public Object {
+class VertexArray final : public IdHolder {
 public:
 
   /// @brief Construct a vertex array.
@@ -272,6 +271,11 @@ concept vertex_attrib_valid_type =
     std::convertible_to<Type,
       typename VertexAttribTypeTraits<Type>::storage_type>;
 // clang-format on
+
+/// @brief Vertex attribute range.
+template<class Range>
+concept vertex_attrib_type_range = std::ranges::range<Range> &&
+    vertex_attrib_valid_type<std::ranges::range_value_t<Range>>;
 
 /// @brief Type that would be stored in an OpenGL buffer.
 template<class Type>
@@ -359,120 +363,69 @@ struct VertexAttribTypeTraits<glm::mat<Rows, Cols, Type, Qualifier>> {
   }
 };
 
-/// @brief OpenGL mesh.
-class Mesh final {
+/// @brief OpenGL host buffer.
+class HostBuffer {
 private:
 
-  struct HostBuffer {
-    GLenum value_type{};
-    GLint value_length{};
-    GLsizei value_stride{};
-    std::vector<std::byte> host_data{};
-    [[nodiscard]] GLsizei num_values() const noexcept {
-      return host_data.size() / value_stride;
-    }
-  };
-
-  struct HostDeviceBuffer : HostBuffer {
-    Buffer device_buffer{};
-  };
-
-  VertexArray vertex_array_{};
-  std::optional<HostDeviceBuffer> element_hd_buffer_{};
-  std::vector<HostDeviceBuffer> vertex_hd_buffers_{};
+  GLenum value_type_{};
+  GLint value_length_{};
+  GLsizei value_stride_{};
+  std::vector<std::byte> host_data_{};
 
 public:
 
-  /// @brief Push back the vertex attributes range.
-  // clang-format off
-  template<std::ranges::range Range>
-    requires vertex_attrib_valid_type<std::ranges::range_value_t<Range>>
-  void push_attribs(Range&& values) {
-    // clang-format on
-    HostDeviceBuffer vertex_hd_buffer(
-        make_host_buffer_(std::forward<Range>(values)));
-    STORM_INFO_("Pushing the vertex index array: "
-                "value_type = {:#x}, value_length = {}, num_values = {}.",
-                vertex_hd_buffer.value_type, vertex_hd_buffer.value_length,
-                vertex_hd_buffer.num_values());
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_hd_buffer.device_buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertex_hd_buffer.host_data.size(),
-                 vertex_hd_buffer.host_data.data(), GL_STATIC_DRAW);
-    vertex_hd_buffers_.push_back(std::move(vertex_hd_buffer));
+  /// @brief Construct an empty host buffer.
+  HostBuffer() = default;
+
+  /// @brief Construct a host buffer with values.
+  template<vertex_attrib_type_range Range>
+  explicit HostBuffer(Range&& values) {
+    assign(std::forward<Range>(values));
   }
 
-  /// @brief Set the element indices range.
-  // clang-format off
-  template<std::ranges::range Range>
-    requires vertex_attrib_valid_type<std::ranges::range_value_t<Range>>
-  void set_element_indices(Range&& indices) {
-    // clang-format on
-    HostDeviceBuffer element_hd_buffer(
-        make_host_buffer_(std::forward<Range>(indices)));
-    STORM_INFO_("Setting the element index array: "
-                "value_type = {:#x}, num_values = {}.",
-                element_hd_buffer.value_type, element_hd_buffer.num_values());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_hd_buffer.device_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_hd_buffer.host_data.size(),
-                 element_hd_buffer.host_data.data(), GL_STATIC_DRAW);
-    element_hd_buffer_ = std::move(element_hd_buffer);
+  /// @brief Buffer value type.
+  [[nodiscard]] GLenum value_type() const noexcept {
+    return value_type_;
   }
 
-  /// @brief Build the mesh.
-  void build() noexcept {
-    STORM_INFO_("Building the mesh: "
-                "it has {} vertex buffers and {} index buffers",
-                vertex_hd_buffers_.size(),
-                element_hd_buffer_.has_value() ? 1 : 0);
-    BindVertexArray bind_vertex_array{vertex_array_};
-    if (element_hd_buffer_.has_value()) {
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_hd_buffer_->device_buffer);
-    }
-    for (size_t i = 0; i < vertex_hd_buffers_.size(); ++i) {
-      const auto index = static_cast<GLuint>(i);
-      glBindBuffer(GL_ARRAY_BUFFER, vertex_hd_buffers_[i].device_buffer);
-      glVertexAttribPointer(index, //
-                            vertex_hd_buffers_[i].value_length,
-                            vertex_hd_buffers_[i].value_type,
-                            /*normalized*/ GL_FALSE, //
-                            vertex_hd_buffers_[i].value_stride,
-                            /*offset*/ nullptr);
-      glEnableVertexAttribArray(index);
-    }
+  /// @brief Buffer value length.
+  [[nodiscard]] GLint value_length() const noexcept {
+    return value_length_;
   }
 
-  /// @brief Draw the mesh.
-  void draw(GLenum mode = GL_TRIANGLES) noexcept {
-    BindVertexArray bind_vertex_array{vertex_array_};
-    if (element_hd_buffer_.has_value()) {
-      glDrawElements(mode, //
-                     element_hd_buffer_->num_values(),
-                     element_hd_buffer_->value_type,
-                     /*indices*/ nullptr);
-    } else {
-      glDrawArrays(mode, //
-                   /*first*/ 0, vertex_hd_buffers_.front().num_values());
-    }
+  /// @brief Buffer value stride.
+  [[nodiscard]] GLsizei value_stride() const noexcept {
+    return value_stride_;
   }
 
-private:
+  /// @brief Buffer size in bytes.
+  [[nodiscard]] size_t size() const noexcept {
+    return host_data_.size();
+  }
 
-  // clang-format off
-  template<std::ranges::range Range>
-    requires vertex_attrib_valid_type<std::ranges::range_value_t<Range>>
-  [[nodiscard]] static HostBuffer make_host_buffer_(Range&& values) {
-    // clang-format on
+  /// @brief Pointer to the host buffer data.
+  [[nodiscard]] const std::byte* data() const noexcept {
+    return host_data_.data();
+  }
+
+  /// @brief Buffer size in values.
+  [[nodiscard]] GLsizei num_values() const noexcept {
+    return host_data_.size() / value_stride_;
+  }
+
+  /// @brief Assign the buffer values.
+  template<vertex_attrib_type_range Range>
+  void assign(Range&& values) {
     using Type = std::ranges::range_value_t<Range>;
     using StorageType = vertex_attrib_storage_type_t<Type>;
-    // Create the host buffer.
-    HostBuffer buffer{
-        .value_type = vertex_attrib_type<Type>,
-        .value_length = vertex_attrib_length<Type>,
-        .value_stride = sizeof(StorageType),
-    };
+    // Assign the type properties.
+    value_type_ = vertex_attrib_type<Type>;
+    value_length_ = vertex_attrib_length<Type>;
+    value_stride_ = sizeof(StorageType);
     // Copy range bytes into the host buffer.
+    host_data_.clear();
     if constexpr (std::ranges::sized_range<Range>) {
-      buffer.host_data.reserve(sizeof(StorageType) * values.size());
+      host_data_.reserve(sizeof(StorageType) * values.size());
     }
     std::ranges::copy( //
         values | std::views::transform([](const Type& value) {
@@ -482,14 +435,97 @@ private:
           } union_cast = {.value = static_cast<StorageType>(value)};
           return union_cast.value_bytes;
         }) | std::views::join,
-        std::back_inserter(buffer.host_data));
-    return buffer;
+        std::back_inserter(host_data_));
+  }
+
+}; // class HostBuffer
+
+/// @brief OpenGL host buffer.
+class HostDeviceBuffer final : public HostBuffer, public DeviceBuffer {
+public:
+
+  /// @brief Construct a host-device buffer.
+  template<vertex_attrib_type_range Range>
+  explicit HostDeviceBuffer(Range&& values) {
+    assign(std::forward<Range>(values));
+  }
+
+  /// @brief Assign the buffer values.
+  template<vertex_attrib_type_range Range>
+  void assign(Range&& values) {
+    HostBuffer::assign(values);
+    glBindBuffer(GL_ARRAY_BUFFER, id());
+    glBufferData(GL_ARRAY_BUFFER, size(), data(), GL_STATIC_DRAW);
+  }
+
+}; // class HostDeviceBuffer
+
+/// @brief OpenGL mesh.
+class Mesh final {
+private:
+
+  VertexArray vertex_array_{};
+  std::vector<const HostDeviceBuffer*> p_vertex_arrays_{};
+  const HostDeviceBuffer* p_index_array_{};
+
+public:
+
+  /// @brief Push back the vertex array.
+  void push_vertex_array(const HostDeviceBuffer& vertex_array) {
+    STORM_INFO_("Pushing the vertex array: "
+                "value_type = {:#X}, value_length = {}, num_values = {}.",
+                vertex_array.value_type(), vertex_array.value_length(),
+                vertex_array.num_values());
+    p_vertex_arrays_.push_back(&vertex_array);
+  }
+
+  /// @brief Set the index array.
+  void set_index_array(const HostDeviceBuffer& index_array) {
+    STORM_INFO_("Setting the index array: "
+                "value_type = {:#X}, num_values = {}.",
+                index_array.value_type(), index_array.num_values());
+    p_index_array_ = &index_array;
+  }
+
+  /// @brief Build the mesh.
+  void build() noexcept {
+    STORM_INFO_("Building the mesh: "
+                "it has {} vertex buffers and {} index buffers",
+                p_vertex_arrays_.size(), p_index_array_ != nullptr ? 1 : 0);
+    BindVertexArray bind_vertex_array{vertex_array_};
+    if (p_index_array_ != nullptr) {
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *p_index_array_);
+    }
+    for (size_t i = 0; i < p_vertex_arrays_.size(); ++i) {
+      const auto index = static_cast<GLuint>(i);
+      glBindBuffer(GL_ARRAY_BUFFER, *p_vertex_arrays_[i]);
+      glVertexAttribPointer(index, //
+                            p_vertex_arrays_[i]->value_length(),
+                            p_vertex_arrays_[i]->value_type(),
+                            /*normalized*/ GL_FALSE, //
+                            p_vertex_arrays_[i]->value_stride(),
+                            /*offset*/ nullptr);
+      glEnableVertexAttribArray(index);
+    }
+  }
+
+  /// @brief Draw the mesh.
+  void draw(GLenum mode = GL_TRIANGLES) noexcept {
+    BindVertexArray bind_vertex_array{vertex_array_};
+    if (p_index_array_ != nullptr) {
+      glDrawElements(mode, //
+                     p_index_array_->num_values(), p_index_array_->value_type(),
+                     /*indices*/ nullptr);
+    } else {
+      glDrawArrays(mode, //
+                   /*first*/ 0, p_vertex_arrays_.front()->num_values());
+    }
   }
 
 }; // class Mesh
 
 /// @brief OpenGL shader.
-class Shader final : public Object {
+class Shader final : public IdHolder {
 public:
 
   /// @brief Construct a shader.
@@ -548,7 +584,7 @@ public:
 }; // class Shader
 
 /// @brief OpenGL shader program.
-class Program final : public Object {
+class Program final : public IdHolder {
 public:
 
   /// @brief Construct a program.

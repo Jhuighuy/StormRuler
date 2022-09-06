@@ -118,7 +118,11 @@ private:
     }
 
     switch (severity) {
-      case GL_DEBUG_SEVERITY_LOW_ARB:          //
+      default:
+        STORM_DEBUG_("OpenGL: {} {} {:#X}: {}", //
+                     debug_error_source, debug_type, id, message);
+        break;
+      case GL_DEBUG_SEVERITY_LOW_ARB:
         STORM_INFO_("OpenGL: {} {} {:#X}: {}", //
                     debug_error_source, debug_type, id, message);
         break;
@@ -126,7 +130,6 @@ private:
         STORM_WARNING_("OpenGL: {} {} {:#X}: {}", //
                        debug_error_source, debug_type, id, message);
         break;
-      default:
       case GL_DEBUG_SEVERITY_HIGH_ARB:
         STORM_ERROR_("OpenGL: {} {} {:#X}: {}", //
                      debug_error_source, debug_type, id, message);
@@ -150,7 +153,7 @@ public:
   /// @brief Move-construct an ID holder.
   constexpr IdHolder(IdHolder&& other) noexcept
       : id_{std::exchange(other.id_, 0)} {}
-  /// @brief Move-assign operator.
+  /// @brief Move-assign the ID holder.
   constexpr IdHolder& operator=(IdHolder&& other) noexcept {
     id_ = std::exchange(other.id_, 0);
     return *this;
@@ -440,9 +443,18 @@ public:
 
 }; // class HostBuffer
 
-/// @brief OpenGL host buffer.
+/// @brief OpenGL host-device buffer.
 class HostDeviceBuffer final : public HostBuffer, public DeviceBuffer {
 public:
+
+  /// @brief Construct an empty host-device buffer.
+  HostDeviceBuffer() = default;
+
+  /// @brief Move-construct a host-device buffer.
+  HostDeviceBuffer(HostDeviceBuffer&&) = default;
+
+  /// @brief Move-assign the host-device buffer.
+  HostDeviceBuffer& operator=(HostDeviceBuffer&&) = default;
 
   /// @brief Construct a host-device buffer.
   template<vertex_attrib_type_range Range>
@@ -543,10 +555,10 @@ public:
   }
 
   /// @brief Load the shader of type @p shader_type from @p shader_source.
-  [[nodiscard]] bool load(GLenum shader_type,
-                          std::string_view shader_source) noexcept {
+  void load(GLenum shader_type, std::string_view shader_source) {
     // Create a shader.
     STORM_ASSERT_(shader_type == GL_VERTEX_SHADER ||
+                      shader_type == GL_GEOMETRY_SHADER ||
                       shader_type == GL_FRAGMENT_SHADER,
                   "Invalid shader type!");
     unload();
@@ -566,13 +578,11 @@ public:
     glGetShaderInfoLog(id(), static_cast<GLsizei>(info_log.size()),
                        &info_log_length, info_log.data());
     if (status != GL_TRUE) {
-      STORM_ERROR_("Failed to compile shader: {}", info_log.c_str());
-      return false;
+      STORM_THROW_GL_("Failed to compile shader: {}", info_log.c_str());
     }
     if (info_log_length != 0) {
       STORM_WARNING_("Shader compilation message: {}", info_log.c_str());
     }
-    return true;
   }
 
   /// @brief Unload the shader.
@@ -601,18 +611,18 @@ public:
     unload();
   }
 
-  /// @brief Load the program from @p vertex_shader @p fragment_shader.
-  [[nodiscard]] bool load(const Shader& vertex_shader,
-                          const Shader& fragment_shader) noexcept {
+  /// @brief Load the program from shaders.
+  template<std::same_as<Shader>... Shader>
+  void load(const Shader&... shaders) {
     // Create a program.
     unload();
     set_id(glCreateProgram());
 
-    // Attach the vertex and fragment shaders.
-    STORM_ASSERT_(vertex_shader != 0, "Invalid vertex shader!");
-    glAttachShader(id(), vertex_shader);
-    STORM_ASSERT_(fragment_shader != 0, "Invalid fragment shader!");
-    glAttachShader(id(), fragment_shader);
+    // Attach the shaders.
+    const auto attach_shader = [&](const auto& shader) {
+      glAttachShader(id(), shader);
+    };
+    (attach_shader(shaders), ...);
 
     // Try to link the program and check result.
     glLinkProgram(id());
@@ -623,13 +633,11 @@ public:
     glGetProgramInfoLog(id(), static_cast<GLsizei>(info_log.size()),
                         &info_log_length, info_log.data());
     if (status != GL_TRUE) {
-      STORM_ERROR_("Failed to link program: {}", info_log.c_str());
-      return false;
+      STORM_THROW_GL_("Failed to link program: {}", info_log.c_str());
     }
     if (info_log_length != 0) {
       STORM_WARNING_("Program linking message: {}", info_log.c_str());
     }
-    return true;
   }
 
   /// @brief Unload the program.

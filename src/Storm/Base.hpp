@@ -156,6 +156,9 @@
 #define STORM_THROW_IO_(message, ...) \
   STORM_THROW_(Storm::IoError, message __VA_OPT__(, __VA_ARGS__))
 
+#define STORM_THROW_GL_(message, ...) \
+  STORM_THROW_(Storm::GlError, message __VA_OPT__(, __VA_ARGS__))
+
 namespace Storm {
 
 /// Library for the math functions.
@@ -209,5 +212,6 @@ using size_t_constant = std::integral_constant<size_t, N>;
 
 using Error = std::runtime_error;
 using IoError = std::runtime_error;
+using GlError = std::runtime_error;
 
 } // namespace Storm

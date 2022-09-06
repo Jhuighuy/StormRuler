@@ -76,7 +76,7 @@ void visualize_mesh(const Mesh& mesh) {
   // Initialize.
   gl::DebugOutput debug_output{};
   gl::Shader vertex_shader{};
-  (void) vertex_shader.load(GL_VERTEX_SHADER, R"(
+  vertex_shader.load(GL_VERTEX_SHADER, R"(
       #version 330 core
       layout(location = 0) in vec3 positionMS;
       uniform vec2 pos;
@@ -90,7 +90,7 @@ void visualize_mesh(const Mesh& mesh) {
     )");
 
   gl::Shader fragment_shader{};
-  (void) fragment_shader.load(GL_FRAGMENT_SHADER, R"(
+  fragment_shader.load(GL_FRAGMENT_SHADER, R"(
       #version 330 core
       out vec4 color;
       uniform vec3 col;
@@ -100,7 +100,7 @@ void visualize_mesh(const Mesh& mesh) {
     )");
 
   gl::Program program;
-  (void) program.load(std::move(vertex_shader), std::move(fragment_shader));
+  program.load(std::move(vertex_shader), std::move(fragment_shader));
 
   const gl::HostDeviceBuffer mesh_nodes(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {

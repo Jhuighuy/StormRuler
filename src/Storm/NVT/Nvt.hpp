@@ -180,6 +180,8 @@ public:
    * Update component i quantity according to flux and pressure
    */
   void Update_N(stormInt_t i_comp, stormReal_t Q, stormReal_t P_form, stormReal_t dt);
+  void Load_N(std::vector<double>& N_load);
+  stormReal_t Concentration(stormInt_t i_comp, stormReal_t P_form);
 
   double Test_RR(const std::vector<double>& K_test, double nu_init);
   double Test_Beta(double nu_test, double a_L_test, double b_L_test,

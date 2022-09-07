@@ -89,7 +89,12 @@ void stormNonlinSolve2(const SolverType& method, //
 
 } // stormNonLinSolve2
 
-static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0;
+//tau - time step
+//Gamma - lambda^2
+//sigma - const stab (num meth)
+//Sigma - ??
+//Try Sigma = 1??
+static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0;//10.0;
 
 static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
@@ -274,6 +279,7 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 
 void Init_For_NVT(Nvt& NVT_obj) {
   //Количество компонент
+  // 0 - CO2, 1 - C10
   // int n_comp = 2;
   //Критическая температура
   std::vector<double> T_crit{304.2, 617.6};
@@ -290,7 +296,7 @@ void Init_For_NVT(Nvt& NVT_obj) {
   //Температура
   double T = 295.15;
   //Давление
-  double P_init = 4e6;
+  double P_init = 5e6;
   //Количество узлов по phi
   int N_mesh = 101;
 
@@ -299,61 +305,62 @@ void Init_For_NVT(Nvt& NVT_obj) {
 }
 
 int main(int argc, char** argv) {
-  srand(2321312);
-#if 0
-  {
-    using namespace Storm;
-    DenseMatrix<double> A{{10.0, 1.0, 2.0, 3.0},
-                          {4.0, 11.0, 1.0, 5.0},
-                          {1.0, 3.0, 13.0, 2.0},
-                          {2.0, 4.0, 5.0, 25.0}};
-    DenseMatrix<double> B(4, 4);
-#if 0
-    {
-      B <<= matmul(A, A);
-      A <<= matmul(A, A);
-      std::cout << A << std::endl << std::endl;
-      std::cout << B << std::endl << std::endl;
-      std::cout << "=======" << std::endl << std::endl;
-    }
-#endif
-    {
-      inplace_inverse_lu(matmul(A, A), B);
-      std::cout << A << std::endl << std::endl;
-      std::cout << B << std::endl << std::endl;
-      std::cout << matmul(B, matmul(A, A)) << std::endl << std::endl;
-      std::cout << matmul(matmul(A, A), B) << std::endl << std::endl;
-      std::cout << "=======" << std::endl << std::endl;
-    }
-    {
-      auto AA = select_rows(A, 0, 1, 3);
-      AA[0, 0] = 1.0;
-      select_rows(AA, 0) -= select_rows(AA, 1);
-      std::cout << AA << std::endl << std::endl;
-      std::cout << "=======" << std::endl << std::endl;
-    }
-#if 1
-    {
-      auto AA = slice_rows(select_cols(A, 0, 1, 3), 0, 3, 1);
-      auto BB = select_rows(select_cols(B, 0, 1, 3), 0, 1, 3);
-      AA *= 1.4880;
-      inplace_inverse_lu(AA, BB);
-      std::cout << AA << std::endl << std::endl;
-      std::cout << BB << std::endl << std::endl;
-      std::cout << matmul(BB, AA) << std::endl << std::endl;
-      std::cout << matmul(AA, BB) << std::endl << std::endl;
-      std::cout << "=======" << std::endl << std::endl;
-    }
-#endif
-  }
-  return 0;
-#endif
 
+  // //mesh file name
+   const char* mesh_filename = "./test/Domain-100-Tube.ppm";
+
+
+  // //global parameters of the task
+  // [[maybe_unused]] const stormReal_t R_area = 5e-3;      //main reservoir radius
+  // [[maybe_unused]] const stormReal_t L_to_R = 2.0;       //Length to radius ration (main reservoir)
+  // [[maybe_unused]] const stormReal_t R_to_r = 10.0;      //Main reservoir radius to small reservoir radius
+  // [[maybe_unused]] const stormReal_t TaskTime = 10000.0; //Total soultion time
+  // [[maybe_unused]] const stormReal_t P_form = 5e6;       //Formation pressure (initial?)
+  // [[maybe_unused]] const stormReal_t Ving_to_V = 0.1;    //V_injection to total volume
+  // [[maybe_unused]] const stormReal_t TimesScale = 100.0; //Time factor ratio (= TaskTime / TimeRelax = TimeRelax / dt)
+  // [[maybe_unused]] const stormReal_t Lambda_to_h = 5.0;  //Interface width in cells
+  // [[maybe_unused]] const stormInt_t N_mesh_R = 120;      //Number of cells for the main radius
+  // [[maybe_unused]] const stormInt_t Wall_N_r = 2;        //Wall mesh size in r dimension
+  // [[maybe_unused]] const stormInt_t Wall_N_l = 8;        //Wall mesh size in l dimension
+
+  // //Calculate dependable parameters
+  // [[maybe_unused]] stormReal_t R_small = R_area / R_to_r;
+  // [[maybe_unused]] stormReal_t L_area = R_area * L_to_R;
+  // [[maybe_unused]] stormReal_t L_small = L_area / R_to_r;
+  // [[maybe_unused]] stormReal_t V_main = M_PI * R_area * R_area * L_area;
+  // [[maybe_unused]] stormReal_t V_small = M_PI * R_small * R_small * L_small;
+  // [[maybe_unused]] stormReal_t V_ing = V_main * Ving_to_V;
+  // [[maybe_unused]] stormReal_t tau_relax = TaskTime / TimesScale;
+  // //[[maybe_unused]] tau = tau_relax / TimesScale;
+  // [[maybe_unused]] stormReal_t Qflux = V_ing / TaskTime;
+  // //[[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
+   stormReal_t dR = 0.01;
+  // [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
+  // [[maybe_unused]] stormReal_t Mu = Lambda * Lambda / tau_relax;
+
+  //Initialize NVT
   Nvt nvt_class = Nvt();
 
   Init_For_NVT(nvt_class);
 
-  stormMesh_t mesh = SR_InitMesh();
+  // //Calculate initial concetrations and quantities
+  // //CO2
+  // [[maybe_unused]] stormReal_t n_conc_CO2 = nvt_class.Concentration(0, P_form);
+  // [[maybe_unused]] stormReal_t N_CO2 = n_conc_CO2 * V_main;
+  // //[[maybe_unused]] //C10
+  // [[maybe_unused]] stormReal_t n_conc_C10 = nvt_class.Concentration(1, P_form);
+  // [[maybe_unused]] stormReal_t N_C10 = n_conc_C10 * V_small;
+
+  // //need to give these N to NVT!!!
+  // std::vector<double> N_load;
+  // N_load.push_back(N_CO2 / (V_main + V_small));
+  // N_load.push_back(N_C10 / (V_main + V_small));
+  // nvt_class.Load_N(N_load);
+
+  //Formation pressure
+  
+  //make name a function parameter!
+  stormMesh_t mesh = SR_InitMesh(mesh_filename, dR, dR);
 
   StormArray<real_t> c(mesh, SR_Alloc(mesh, 1, 0)),
       c_hat(mesh, SR_Alloc(mesh, 1, 0));

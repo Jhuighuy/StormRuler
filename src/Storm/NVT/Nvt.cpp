@@ -658,6 +658,25 @@ void Nvt::Test_CH() {
 }
 
 void Nvt::Update_N(stormInt_t i_comp, stormReal_t Q, stormReal_t P_form, stormReal_t dt){
+
+  double n = Concentration(i_comp, P_form);
+
+  double Ni_new = z[i_comp] * N + n * Q;
+  //N += Ni_new;
+  double tmp;
+  for (int i = 0; i < n_comp; ++i) {
+    if (i == i_comp) {
+      tmp = Ni_new;
+    }
+    else tmp = 0.0;
+    z[i] = (z[i] * N + tmp) / (N + Ni_new);
+  }
+  N += Ni_new;
+
+  return;
+}
+
+stormReal_t Nvt::Concentration(stormInt_t i_comp, stormReal_t P_form) {
   //Construct cubic equation Z^3 + E_2 Z^2 + E_1 Z + E_0 = 0
   double a = a_coeff[i_comp][i_comp];
   double b = b_coeff[i_comp];
@@ -673,21 +692,9 @@ void Nvt::Update_N(stormInt_t i_comp, stormReal_t Q, stormReal_t P_form, stormRe
   //root1 is always real and the one we need
   solve_cubic_real(root1, root2, root3, E2, E1, E0);
   double Z_root = root1.real();
-  double n = P_form / (Z_root * R * T);
+  stormReal_t n = P_form / (Z_root * R * T);
 
-  double Ni_new = z[i_comp] * N + n * Q;
-  //N += Ni_new;
-  double tmp;
-  for (int i = 0; i < n_comp; ++i) {
-    if (i == i_comp) {
-      tmp = Ni_new;
-    }
-    else tmp = 0.0;
-    z[i] = (z[i] * N + tmp) / (N + Ni_new);
-  }
-  N += Ni_new;
-
-  return;
+  return n;
 }
 
 void Nvt::solve_cubic_real(std::complex<double>& x1, std::complex<double>& x2, std::complex<double>& x3,
@@ -744,6 +751,10 @@ void Nvt::solve_cubic_real(std::complex<double>& x1, std::complex<double>& x2, s
     }
 
     return;
+}
+
+void Nvt::Load_N(std::vector<double>& N_load) {
+  
 }
 
 // int main()

@@ -183,11 +183,17 @@ end subroutine Free_$klass
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
+function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
   use StormRuler_IO, only: Load_PPM
+  real(c_double), intent(in), value :: hx, hy
+  character(c_char), intent(in) :: namePtr(*)
   type(c_ptr) :: meshPtr
 
   class(tMesh), pointer :: gMesh
+
+  character(len=:), pointer :: name
+
+  call Unwrap(namePtr, name)
 
   call PrintBanner()
 
@@ -204,9 +210,14 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
   block
 
     real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
+    !real(dp) :: dx, dy
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToMark(:)
 
+    !dx = hx
+    !dy = hy
+
+    !colour is an int: white - 1, red - 2 and so on
     colorToMark = &
       & [ RgbToInt([255, 255, 255]), RgbToInt([255, 0, 0]), &
       &   RgbToInt([  0, 255,   0]), RgbToInt([0, 0, 255]), &
@@ -214,9 +225,11 @@ function cInitMesh() result(meshPtr) bind(C, name='SR_InitMesh')
 
     allocate(gMesh)
 
+    !call Load_PPM(name, pixels)
     call Load_PPM('test/Domain-100-Tube.ppm', pixels)
     !call Load_PPM('test/Domain-200-Ellipse.ppm', pixels)
     call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
+    !look inside
     call InitMeshFromImage(gMesh, pixels, 0, colorToMark, 2, .true.)
 
     !call Load_PPM('test/Domain-500-Cube.ppm', pixels)

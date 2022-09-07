@@ -25,9 +25,11 @@
 #include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/Mesh.hpp>
 
-#include <Storm/Vulture/OpenGL.hpp>
+#include <Storm/Vulture/GlBuffer.hpp>
+#include <Storm/Vulture/GlDebug.hpp>
+#include <Storm/Vulture/GlShader.hpp>
+#include <Storm/Vulture/GlWindow.hpp>
 #include <Storm/Vulture/Scene.hpp>
-#include <Storm/Vulture/Window.hpp>
 
 #include <concepts>
 #include <cstddef> // std::byte
@@ -38,11 +40,8 @@
 #include <type_traits>
 #include <vector>
 
-#include <glm/glm.hpp>
-// clang-format off
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-// clang-format on
+#include <glm/glm.hpp>
 
 namespace Storm::Vulture {
 
@@ -159,10 +158,10 @@ void visualize_mesh(const Mesh& mesh) {
                        GL_FALSE, &vp[0][0]);
     glm::vec3 col{0.9f, 0.9f, 0.9f};
     glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-    cell_renderer.draw(camera);
+    cell_renderer.draw(camera, program);
     col = glm::vec3{0.1f, 0.1f, 0.9f};
     glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-    edge_renderer.draw(camera, GL_LINES);
+    edge_renderer.draw(camera, program, GL_LINES);
 
     window.update();
   }

@@ -22,7 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Vulture/OpenGL.hpp>
+#include <Storm/Vulture/GlBuffer.hpp>
+#include <Storm/Vulture/GlShader.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -186,7 +187,7 @@ public:
   /// @{
   void draw(const Camera& camera, const gl::Program& program,
             GLenum mode = GL_TRIANGLES) const {
-    gl::BindProgram bind_program{program};
+    // gl::BindProgram bind_program{program};
     mesh_.draw(mode);
   }
   void draw(const Camera& camera, GLenum mode = GL_TRIANGLES) const {

@@ -22,155 +22,19 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Vulture/GlBase.hpp>
+
 #include <algorithm>
 #include <array>
 #include <concepts>
 #include <cstddef> // std::byte
 #include <ranges>
-#include <string>
-#include <string_view>
 #include <vector>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
 namespace Storm::Vulture::gl {
-
-/// @brief RAII OpenGL debug output.
-class DebugOutput {
-public:
-
-  /// @brief Enable OpenGL debug output.
-  /// Sticks to GL_ARB_debug_output extension since debug output
-  /// is inside OpenGL since 4.3, and we are using 3.3.
-  DebugOutput() noexcept {
-    if (GLEW_ARB_debug_output != GL_TRUE) { return; }
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    glDebugMessageCallbackARB(&on_message_, nullptr);
-    STORM_INFO_("OpenGL debug output enabled.");
-  }
-
-  /// @brief Disable OpenGL debug output.
-  ~DebugOutput() noexcept {
-    if (GLEW_ARB_debug_output != GL_TRUE) { return; }
-    glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    STORM_INFO_("OpenGL debug output disabled.");
-  }
-
-private:
-
-  static void on_message_(GLenum source, GLenum type, GLuint id,
-                          GLenum severity, [[maybe_unused]] GLsizei length,
-                          const GLchar* message,
-                          [[maybe_unused]] const void* user_param) {
-    const char* debug_error_source;
-    switch (source) {
-      case GL_DEBUG_SOURCE_API_ARB: //
-        debug_error_source = "API call";
-        break;
-      case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-        debug_error_source = "window system API all";
-        break;
-      case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-        debug_error_source = "shader compiler";
-        break;
-      case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-        debug_error_source = "third party API";
-        break;
-      case GL_DEBUG_SOURCE_APPLICATION_ARB:
-        debug_error_source = "application";
-        break;
-      case GL_DEBUG_SOURCE_OTHER_ARB: //
-        debug_error_source = "other";
-        break;
-      default: //
-        debug_error_source = "unknown source";
-        break;
-    }
-
-    const char* debug_type;
-    switch (type) {
-      default:
-      case GL_DEBUG_TYPE_OTHER_ARB: //
-        debug_type = "other issue";
-        break;
-      case GL_DEBUG_TYPE_ERROR_ARB: //
-        debug_type = "error";
-        break;
-      case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-        debug_type = "deprecated behavior";
-        break;
-      case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-        debug_type = "undefined behavior";
-        break;
-      case GL_DEBUG_TYPE_PORTABILITY_ARB: //
-        debug_type = "portability issue";
-        break;
-      case GL_DEBUG_TYPE_PERFORMANCE_ARB: //
-        debug_type = "performance issue";
-        break;
-    }
-
-    switch (severity) {
-      default:
-        STORM_DEBUG_("OpenGL: {} {} {:#x}: {}", //
-                     debug_error_source, debug_type, id, message);
-        break;
-      case GL_DEBUG_SEVERITY_LOW_ARB:
-        STORM_INFO_("OpenGL: {} {} {:#x}: {}", //
-                    debug_error_source, debug_type, id, message);
-        break;
-      case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-        STORM_WARNING_("OpenGL: {} {} {:#x}: {}", //
-                       debug_error_source, debug_type, id, message);
-        break;
-      case GL_DEBUG_SEVERITY_HIGH_ARB:
-        STORM_ERROR_("OpenGL: {} {} {:#x}: {}", //
-                     debug_error_source, debug_type, id, message);
-        break;
-    }
-  }
-
-}; // class DebugOutput
-
-/// @brief OpenGL ID holder.
-class IdHolder {
-private:
-
-  GLuint id_ = 0;
-
-public:
-
-  /// @brief Construct an ID holder.
-  IdHolder() = default;
-
-  /// @brief Move-construct an ID holder.
-  constexpr IdHolder(IdHolder&& other) noexcept
-      : id_{std::exchange(other.id_, 0)} {}
-  /// @brief Move-assign the ID holder.
-  constexpr IdHolder& operator=(IdHolder&& other) noexcept {
-    id_ = std::exchange(other.id_, 0);
-    return *this;
-  }
-
-  IdHolder(const IdHolder&) = delete;
-  IdHolder& operator=(const IdHolder&) = delete;
-
-  /// @brief Get the ID.
-  [[nodiscard]] GLuint id() const noexcept {
-    return id_;
-  }
-  /// @brief Set a new ID.
-  void set_id(GLuint id) noexcept {
-    id_ = id;
-  }
-
-  /// @brief Cast to ID operator.
-  [[nodiscard]] operator GLuint() const noexcept {
-    return id_;
-  }
-
-}; // class IdHolder
 
 /// @brief OpenGL device buffer.
 class DeviceBuffer : public IdHolder {
@@ -322,7 +186,6 @@ MAKE_SCALAR_BASE_TYPE_(GLint, GL_INT)
 MAKE_SCALAR_BASE_TYPE_(GLuint, GL_UNSIGNED_INT)
 MAKE_SCALAR_CAST_TYPE_(std::signed_integral, GLint)
 MAKE_SCALAR_CAST_TYPE_(std::unsigned_integral, GLuint)
-MAKE_SCALAR_CAST_TYPE_(index, GLuint)
 
 // Scalar floating-point types.
 MAKE_SCALAR_BASE_TYPE_(GLfloat, GL_FLOAT)
@@ -531,134 +394,5 @@ public:
   }
 
 }; // class Mesh
-
-/// @brief OpenGL shader.
-class Shader final : public IdHolder {
-public:
-
-  /// @brief Construct a shader.
-  Shader() = default;
-
-  /// @brief Move-construct a shader.
-  Shader(Shader&&) = default;
-
-  /// @brief Move-assign the shader.
-  Shader& operator=(Shader&&) = default;
-
-  /// @brief Destruct the shader.
-  ~Shader() noexcept {
-    unload();
-  }
-
-  /// @brief Load the shader of type @p shader_type from @p shader_source.
-  void load(GLenum type, std::string_view source) {
-    // Create a shader.
-    STORM_ASSERT_(type == GL_VERTEX_SHADER || //
-                      type == GL_GEOMETRY_SHADER || type == GL_FRAGMENT_SHADER,
-                  "Unsupported shader type {:#x}!", type);
-    unload();
-    set_id(glCreateShader(type));
-
-    // Upload the shader source code.
-    const auto source_data = source.data();
-    const auto source_size = static_cast<GLint>(source.size());
-    glShaderSource(id(), 1, &source_data, &source_size);
-
-    // Try to compile the shader and check result.
-    glCompileShader(id());
-    GLint status;
-    glGetShaderiv(id(), GL_COMPILE_STATUS, &status);
-    std::string info_log(1024, '\0');
-    GLsizei info_log_length;
-    glGetShaderInfoLog(id(), static_cast<GLsizei>(info_log.size()),
-                       &info_log_length, info_log.data());
-    if (status != GL_TRUE) {
-      STORM_THROW_GL_("Failed to compile shader: {}", info_log.c_str());
-    }
-    if (info_log_length != 0) {
-      STORM_WARNING_("Shader compilation message: {}", info_log.c_str());
-    }
-  }
-
-  /// @brief Unload the shader.
-  void unload() noexcept {
-    glDeleteShader(id());
-    set_id(0);
-  }
-
-}; // class Shader
-
-/// @brief OpenGL shader program.
-class Program final : public IdHolder {
-public:
-
-  /// @brief Construct a program.
-  Program() = default;
-
-  /// @brief Move-construct a program.
-  Program(Program&&) = default;
-
-  /// @brief Move-assign the program.
-  Program& operator=(Program&&) = default;
-
-  /// @brief Destruct the program.
-  ~Program() noexcept {
-    unload();
-  }
-
-  /// @brief Load the program from shaders.
-  template<std::same_as<Shader>... Shader>
-  void load(const Shader&... shaders) {
-    // Create a program.
-    unload();
-    set_id(glCreateProgram());
-
-    // Attach the shaders.
-    const auto attach_shader = [&](const auto& shader) {
-      glAttachShader(id(), shader);
-    };
-    (attach_shader(shaders), ...);
-
-    // Try to link the program and check result.
-    glLinkProgram(id());
-    GLint status;
-    glGetProgramiv(id(), GL_LINK_STATUS, &status);
-    std::string info_log(1024, '\0');
-    GLsizei info_log_length;
-    glGetProgramInfoLog(id(), static_cast<GLsizei>(info_log.size()),
-                        &info_log_length, info_log.data());
-    if (status != GL_TRUE) {
-      STORM_THROW_GL_("Failed to link program: {}", info_log.c_str());
-    }
-    if (info_log_length != 0) {
-      STORM_WARNING_("Program linking message: {}", info_log.c_str());
-    }
-  }
-
-  /// @brief Unload the program.
-  void unload() noexcept {
-    glUseProgram(0);
-    glDeleteProgram(id());
-    set_id(0);
-  }
-
-}; // class Program
-
-/// @brief RAII binder of an OpenGL program.
-class BindProgram final {
-public:
-
-  /// @brief Bind the @p program.
-  explicit BindProgram(const Program& program) {
-    STORM_ASSERT_(program != 0, "Invalid program!");
-    glUseProgram(program);
-  }
-
-  /// @brief Unbind the program.
-  ~BindProgram() {
-    glUseProgram(0);
-  }
-
-}; // class BindProgram
 
 } // namespace Storm::Vulture::gl

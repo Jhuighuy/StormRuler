@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Vulture/GlBase.hpp>
+
 #include <algorithm>
 #include <concepts>
 #include <functional>
@@ -29,11 +31,8 @@
 #include <utility>
 #include <vector>
 
-#include <glm/glm.hpp>
-// clang-format off
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-// clang-format on
+#include <glm/glm.hpp>
 
 namespace Storm::Vulture::gl {
 

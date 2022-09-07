@@ -209,13 +209,13 @@ function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
 #$else
   block
 
-    real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
-    !real(dp) :: dx, dy
+    !real(dp), parameter :: dx = 0.01_dp, dy = 0.01_dp
+    real(dp) :: dx, dy
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToMark(:)
 
-    !dx = hx
-    !dy = hy
+    dx = hx
+    dy = hy
 
     !colour is an int: white - 1, red - 2 and so on
     colorToMark = &
@@ -225,8 +225,8 @@ function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
 
     allocate(gMesh)
 
-    !call Load_PPM(name, pixels)
-    call Load_PPM('test/Domain-100-Tube.ppm', pixels)
+    call Load_PPM(name, pixels)
+    !call Load_PPM('test/Domain-100-Tube.ppm', pixels)
     !call Load_PPM('test/Domain-200-Ellipse.ppm', pixels)
     call InitMeshStencil(gMesh, [Dx,Dy], 'D2Q4')
     !look inside

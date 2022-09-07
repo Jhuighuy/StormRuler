@@ -34,7 +34,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-namespace Storm::gl {
+namespace Storm::Vulture::gl {
 
 /// @brief RAII OpenGL debug output.
 class DebugOutput {
@@ -516,7 +516,7 @@ public:
   }
 
   /// @brief Draw the mesh.
-  void draw(GLenum mode = GL_TRIANGLES) {
+  void draw(GLenum mode = GL_TRIANGLES) const {
     STORM_ASSERT_(mode == GL_LINES || mode == GL_TRIANGLES,
                   "Unsupported draw mode {:#x}!", mode);
     BindVertexArray bind_vertex_array{vertex_array_};
@@ -661,4 +661,4 @@ public:
 
 }; // class BindProgram
 
-} // namespace Storm::gl
+} // namespace Storm::Vulture::gl

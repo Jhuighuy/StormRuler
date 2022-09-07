@@ -321,7 +321,7 @@ int main(int argc, char** argv) {
 
   STORM_INFO_("mesh loaded");
 
-  visualize_mesh(mesh1);
+  Vulture::visualize_mesh(mesh1);
   return 0;
 
 #if 0

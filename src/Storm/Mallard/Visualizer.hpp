@@ -26,6 +26,7 @@
 #include <Storm/Mallard/Mesh.hpp>
 
 #include <Storm/Vulture/OpenGL.hpp>
+#include <Storm/Vulture/Scene.hpp>
 #include <Storm/Vulture/Window.hpp>
 
 #include <concepts>
@@ -43,13 +44,13 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-namespace Storm {
+namespace Storm::Vulture {
 
 template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
   gl::Framework framework{};
 
-  constexpr static const char* window_title = "Strom::Volture Visualizer";
+  constexpr static const char* window_title = "Strom::Vulture Visualizer";
   constexpr static size_t window_width = 1600;
   constexpr static size_t window_height = 900;
   gl::Window window{};
@@ -63,13 +64,10 @@ void visualize_mesh(const Mesh& mesh) {
   vertex_shader.load(GL_VERTEX_SHADER, R"(
       #version 330 core
       layout(location = 0) in vec3 positionMS;
-      uniform vec2 pos;
-      uniform float scale;
+      uniform mat4 view_projection;
       void main() {
         gl_Position = vec4(positionMS - vec3(1.0, 0.5, 0.0), 1.0);
-        gl_Position.xy += pos;
-        gl_Position.xyz *= scale;
-        gl_Position.x /= 16.0 / 9.0;
+        gl_Position = view_projection * gl_Position;
       }
     )");
 
@@ -107,41 +105,67 @@ void visualize_mesh(const Mesh& mesh) {
       }) |
       std::views::join);
 
-  gl::Mesh edge_mesh;
-  edge_mesh.push_vertex_array(mesh_nodes);
-  edge_mesh.set_index_array(mesh_edges);
-  edge_mesh.build();
+  scene::MeshRenderer edge_renderer{};
+  edge_renderer.mesh().push_vertex_array(mesh_nodes);
+  edge_renderer.mesh().set_index_array(mesh_edges);
+  edge_renderer.mesh().build();
 
-  gl::Mesh cell_mesh;
-  cell_mesh.push_vertex_array(mesh_nodes);
-  cell_mesh.set_index_array(mesh_cells);
-  cell_mesh.build();
+  scene::MeshRenderer cell_renderer{};
+  cell_renderer.mesh().push_vertex_array(mesh_nodes);
+  cell_renderer.mesh().set_index_array(mesh_cells);
+  cell_renderer.mesh().build();
 
-  float scale = 1.01;
-  glm::vec2 pos{};
-  glm::vec3 col{0.1f, 0.1f, 0.9f};
-  window.on_key_down([&]() { pos.y += 0.05; }, gl::Key::w);
-  window.on_key_down([&]() { pos.x -= 0.05; }, gl::Key::a);
-  window.on_key_down([&]() { pos.y -= 0.05; }, gl::Key::s);
-  window.on_key_down([&]() { pos.x += 0.05; }, gl::Key::d);
-  window.on_key_down([&]() { scale *= 1.01; }, gl::Key::q);
-  window.on_key_down([&]() { scale /= 1.01; }, gl::Key::e);
+  // Setup camera.
+  scene::Camera camera{};
+  camera.transform().translate(glm::vec3{0.0f, 0.0f, 1.0f});
+  camera.set_perspective(16.0 / 9.0);
+  window.on_key_down(
+      [&]() {
+        camera.transform().translate(glm::vec3{0.0, +0.05, 0.0});
+      },
+      gl::Key::w);
+  window.on_key_down(
+      [&]() {
+        camera.transform().translate(glm::vec3{-0.05, 0.0, 0.0});
+      },
+      gl::Key::a);
+  window.on_key_down(
+      [&]() {
+        camera.transform().translate(glm::vec3{0.0, -0.05, 0.0});
+      },
+      gl::Key::s);
+  window.on_key_down(
+      [&]() {
+        camera.transform().translate(glm::vec3{+0.05, 0.0, 0.0});
+      },
+      gl::Key::d);
+  window.on_key_down(
+      [&]() { //
+        camera.transform().translate(glm::vec3{0.0, 0.0, +0.05});
+      },
+      gl::Key::q);
+  window.on_key_down(
+      [&]() { //
+        camera.transform().translate(glm::vec3{0.0, 0.0, -0.05});
+      },
+      gl::Key::e);
 
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     gl::BindProgram bind_program{program};
-    glUniform2f(glGetUniformLocation(program, "pos"), pos.x, pos.y);
-    glUniform1f(glGetUniformLocation(program, "scale"), scale);
-    col = glm::vec3{0.9f, 0.9f, 0.9f};
+    const auto vp = camera.view_projection_matrix();
+    glUniformMatrix4fv(glGetUniformLocation(program, "view_projection"), 1,
+                       GL_FALSE, &vp[0][0]);
+    glm::vec3 col{0.9f, 0.9f, 0.9f};
     glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-    cell_mesh.draw();
+    cell_renderer.draw(camera);
     col = glm::vec3{0.1f, 0.1f, 0.9f};
     glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-    edge_mesh.draw(GL_LINES);
+    edge_renderer.draw(camera, GL_LINES);
 
     window.update();
   }
 }
 
-} // namespace Storm
+} // namespace Storm::Vulture

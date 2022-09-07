@@ -35,7 +35,7 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-namespace Storm::gl {
+namespace Storm::Vulture::gl {
 
 /// @brief Input modifiers.
 enum class Modifiers : int {
@@ -275,6 +275,22 @@ public:
     return underlying_;
   }
 
+  /// @brief Get window width.
+  [[nodiscard]] size_t width() const {
+    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    int width;
+    glfwGetWindowSize(underlying_, &width, nullptr);
+    return static_cast<size_t>(width);
+  }
+
+  /// @brief Get window height.
+  [[nodiscard]] size_t height() const {
+    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    int height;
+    glfwGetWindowSize(underlying_, nullptr, &height);
+    return static_cast<size_t>(height);
+  }
+
   /// @brief Load the window.
   void load(Framework& framework, //
             const char* title, size_t width, size_t height) {
@@ -494,4 +510,4 @@ public:
 
 }; // class BindWindow
 
-} // namespace Storm::gl
+} // namespace Storm::Vulture::gl

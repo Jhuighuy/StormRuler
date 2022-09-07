@@ -47,31 +47,13 @@ namespace Storm {
 
 template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
-  glfwInit();
+  gl::Framework framework{};
 
+  constexpr static const char* window_title = "Strom::Volture Visualizer";
   constexpr static size_t window_width = 1600;
   constexpr static size_t window_height = 900;
-  constexpr static const char* window_title = "Mallard Mesh Visualizer";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-  glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
-  glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-  const auto window = glfwCreateWindow(window_width, window_height,
-                                       window_title, nullptr, nullptr);
-  if (window == nullptr) {
-    STORM_ERROR_("Failed to create a GLFW window!");
-    return;
-  }
-  glfwMakeContextCurrent(window);
-
-  glewExperimental = GL_TRUE;
-  if (GLenum status = glewInit(); status != GLEW_OK) {
-    STORM_ERROR_("Failed to initialize GLEW: {}!", glewGetErrorString(status));
-    return;
-  }
+  gl::Window window{};
+  window.load(framework, window_title, window_width, window_height);
   glViewport(0, 0, window_width, window_height);
 
   // Initialize.

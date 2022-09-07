@@ -187,8 +187,56 @@ enum class MouseButton : int {
   middle = GLFW_MOUSE_BUTTON_MIDDLE,
 }; // enum class MouseButton
 
+/// @brief OpenGL framework.
+class Framework final {
+private:
+
+  friend class Window;
+  bool loaded_ = false;
+  bool glew_loaded_ = false;
+
+public:
+
+  /// @brief Construct a framework.
+  Framework() = default;
+
+  /// @brief Move-construct a framework.
+  Framework(Framework&&) = default;
+  /// @brief Move-assign the framework.
+  Framework& operator=(Framework&& window) = default;
+
+  Framework(const Framework&) = delete;
+  Framework& operator=(const Framework& window) = delete;
+
+  /// @brief Destroy the framefowork.
+  ~Framework() {
+    unload();
+  }
+
+  /// @brief Load the framework.
+  void load() {
+    if (loaded_) { return; }
+    glfwSetErrorCallback(&on_error_);
+    glfwInit();
+    STORM_INFO_("GLFW intitialized, version '{}'!", glfwGetVersionString());
+    loaded_ = true;
+  }
+
+  /// @brief Unload the framework.
+  void unload() {
+    if (!loaded_) { return; }
+  }
+
+private:
+
+  static void on_error_(int error, const char* description) {
+    STORM_THROW_GL_("GLFW: Error {:#x}: {}", error, description);
+  }
+
+}; // class Framework
+
 /// @brief OpenGL window.
-class Window {
+class Window final {
 private:
 
   GLFWwindow* window_;
@@ -203,7 +251,53 @@ private:
 
 public:
 
-  void init() {
+  /// @brief Construct a window.
+  Window() = default;
+
+  Window(const Window&) = delete;
+  Window& operator=(const Window& window) = delete;
+
+  /// @brief Underlying window pointer.
+  [[nodiscard]] constexpr GLFWwindow* underlying() const noexcept {
+    return window_;
+  }
+  /// @brief Cast to underlying window pointer.
+  [[nodiscard]] constexpr operator GLFWwindow*() const noexcept {
+    return window_;
+  }
+
+  /// @brief Load the window.
+  void load(Framework& framework, //
+            const char* title, size_t width, size_t height) {
+    framework.load();
+
+    // Set the window hints.
+    glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+    // Create the window.
+    unload();
+    STORM_ASSERT_(title != nullptr, "Invalid window title!");
+    STORM_ASSERT_(width > 0 && height > 0, "Invalid window size!");
+    window_ =
+        glfwCreateWindow(static_cast<int>(width), static_cast<int>(height),
+                         title, /*monitor*/ nullptr, /*share*/ nullptr);
+
+    // Load GLEW.
+    if (!framework.glew_loaded_) {
+      glfwMakeContextCurrent(window_);
+      glewExperimental = GL_TRUE;
+      if (GLenum status = glewInit(); status != GLEW_OK) {
+        STORM_THROW_GL_("GLEW: failed to initialize, {:#x}: {}!", //
+                        status, glewGetErrorString(status));
+      }
+      framework.glew_loaded_ = true;
+    }
+
     // Set the callbacks.
     glfwSetWindowUserPointer(window_, this);
     glfwSetWindowCloseCallback(window_, &on_close_);
@@ -214,7 +308,11 @@ public:
     glfwSetCursorPosCallback(window_, &on_set_cursor_pos_);
   }
 
-public:
+  /// @brief Unload the window.
+  void unload() noexcept {
+    glfwDestroyWindow(window_);
+    window_ = nullptr;
+  }
 
   /// @brief Set handler for the window close event.
   template<std::invocable CloseFn>
@@ -224,7 +322,7 @@ public:
 
   /// @brief Set handler for the window resize event.
   template<std::invocable<size_t, size_t> ResizeFn>
-  void on_close(ResizeFn on_resize_fn) {
+  void on_resize(ResizeFn on_resize_fn) {
     on_resize_fn_ = std::move(on_resize_fn);
   }
 

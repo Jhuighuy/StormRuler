@@ -177,7 +177,7 @@ class DeviceBuffer : public IdHolder {
 public:
 
   /// @brief Construct a buffer.
-  DeviceBuffer() noexcept {
+  DeviceBuffer() {
     GLuint buffer_id;
     glGenBuffers(1, &buffer_id);
     set_id(buffer_id);
@@ -190,7 +190,7 @@ public:
   DeviceBuffer& operator=(DeviceBuffer&&) = default;
 
   /// @brief Destruct the buffer.
-  ~DeviceBuffer() noexcept {
+  ~DeviceBuffer() {
     const GLuint buffer_id = id();
     glDeleteBuffers(1, &buffer_id);
   }
@@ -202,7 +202,7 @@ class VertexArray final : public IdHolder {
 public:
 
   /// @brief Construct a vertex array.
-  VertexArray() noexcept {
+  VertexArray() {
     GLuint vertex_array_id;
     glGenVertexArrays(1, &vertex_array_id);
     set_id(vertex_array_id);
@@ -215,7 +215,7 @@ public:
   VertexArray& operator=(VertexArray&&) = default;
 
   /// @brief Destruct the vertex array.
-  ~VertexArray() noexcept {
+  ~VertexArray() {
     glBindVertexArray(0);
     const GLuint vertex_array_id = id();
     glDeleteVertexArrays(1, &vertex_array_id);
@@ -228,13 +228,13 @@ class BindVertexArray final {
 public:
 
   /// @brief Bind the @p vertex_array.
-  BindVertexArray(const VertexArray& vertex_array) noexcept {
+  BindVertexArray(const VertexArray& vertex_array) {
     STORM_ASSERT_(vertex_array != 0, "Invalid vertex array!");
     glBindVertexArray(vertex_array);
   }
 
   /// @brief Unbind the vertex_array.
-  ~BindVertexArray() noexcept {
+  ~BindVertexArray() {
     glBindVertexArray(0);
   }
 
@@ -494,7 +494,7 @@ public:
   }
 
   /// @brief Build the mesh.
-  void build() noexcept {
+  void build() {
     STORM_INFO_("Building the mesh: "
                 "it has {} vertex buffers and {} index buffers",
                 p_vertex_arrays_.size(), p_index_array_ != nullptr ? 1 : 0);
@@ -516,7 +516,7 @@ public:
   }
 
   /// @brief Draw the mesh.
-  void draw(GLenum mode = GL_TRIANGLES) noexcept {
+  void draw(GLenum mode = GL_TRIANGLES) {
     STORM_ASSERT_(mode == GL_LINES || mode == GL_TRIANGLES,
                   "Unsupported draw mode {:#x}!", mode);
     BindVertexArray bind_vertex_array{vertex_array_};
@@ -649,13 +649,13 @@ class BindProgram final {
 public:
 
   /// @brief Bind the @p program.
-  BindProgram(const Program& program) noexcept {
+  BindProgram(const Program& program) {
     STORM_ASSERT_(program != 0, "Invalid program!");
     glUseProgram(program);
   }
 
   /// @brief Unbind the program.
-  ~BindProgram() noexcept {
+  ~BindProgram() {
     glUseProgram(0);
   }
 

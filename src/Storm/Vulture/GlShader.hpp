@@ -41,7 +41,6 @@ public:
 
   /// @brief Move-construct a shader.
   Shader(Shader&&) = default;
-
   /// @brief Move-assign the shader.
   Shader& operator=(Shader&&) = default;
 
@@ -97,7 +96,6 @@ public:
 
   /// @brief Move-construct a program.
   Program(Program&&) = default;
-
   /// @brief Move-assign the program.
   Program& operator=(Program&&) = default;
 

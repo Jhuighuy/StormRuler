@@ -49,7 +49,6 @@ public:
 
   /// @brief Move-construct a buffer.
   DeviceBuffer(DeviceBuffer&&) = default;
-
   /// @brief Move-assign the buffer.
   DeviceBuffer& operator=(DeviceBuffer&&) = default;
 
@@ -74,7 +73,6 @@ public:
 
   /// @brief Move-construct a vertex array.
   VertexArray(VertexArray&&) = default;
-
   /// @brief Move-assign the vertex array.
   VertexArray& operator=(VertexArray&&) = default;
 

@@ -367,7 +367,7 @@ public:
   }
 
   /// @brief Set handler for the key released event.
-  template<std::invocable<int, int> KeyUpFn>
+  template<std::invocable KeyUpFn>
   void on_key_up(KeyUpFn on_key_up_fn, //
                  Key key, Modifiers mods = Modifiers::none) {
     on_key_up_fns_.emplace(std::pair{key, mods}, std::move(on_key_up_fn));

@@ -140,12 +140,12 @@ void visualize_mesh(const Mesh& mesh) {
       gl::Key::d);
   window.on_key_down(
       [&]() { //
-        camera.transform().translate(glm::vec3{0.0, 0.0, +0.05});
+        camera.transform().rotate_degrees(glm::vec3{0.0, +0.5, 0.0});
       },
       gl::Key::q);
   window.on_key_down(
       [&]() { //
-        camera.transform().translate(glm::vec3{0.0, 0.0, -0.05});
+        camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
       },
       gl::Key::e);
 

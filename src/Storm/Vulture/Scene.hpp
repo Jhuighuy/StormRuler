@@ -37,7 +37,7 @@ private:
 
   const Transform* parent_{};
   glm::vec3 position_{};
-  glm::quat rotation_{};
+  glm::quat rotation_{glm::vec3{}}; // initializes zero rotation.
   glm::vec3 scale_{1.0, 1.0, 1.0};
 
 public:
@@ -54,9 +54,14 @@ public:
   }
 
   /// @brief Transform rotation.
+  /// @{
   [[nodiscard]] constexpr const glm::quat& rotation() const noexcept {
     return rotation_;
   }
+  [[nodiscard]] glm::vec3 rotation_degrees() const noexcept {
+    return glm::degrees(glm::eulerAngles(rotation_));
+  }
+  /// @}
 
   /// @brief Transform scale.
   [[nodiscard]] constexpr const glm::vec3& scale() const noexcept {
@@ -69,9 +74,14 @@ public:
   }
 
   /// @brief Rotate the transform.
-  constexpr void rotate(const glm::vec3& delta_degrees) noexcept {
+  /// @{
+  constexpr void rotate(const glm::quat& delta) noexcept {
+    rotation_ *= delta;
+  }
+  constexpr void rotate_degrees(const glm::vec3& delta_degrees) noexcept {
     rotation_ *= glm::quat{glm::radians(delta_degrees)};
   }
+  /// @}
 
   /// @brief Rescale the transform.
   /// @{
@@ -84,8 +94,8 @@ public:
   /// @}
 
   /// @brief Transform model matrix.
-  [[nodiscard]] /*constexpr*/ glm::mat4 //
-  model_matrix() const noexcept {
+  /// @todo GLM's matmul operator is not constexpr?
+  [[nodiscard]] glm::mat4 model_matrix() const noexcept {
     auto model_matrix = glm::translate(glm::mat4(1.0f), position_) *
                         glm::toMat4(rotation_) *
                         glm::scale(glm::mat4(1.0f), scale_);
@@ -114,23 +124,34 @@ public:
 
   /// @brief Camera transform.
   /// @{
-  [[nodiscard]] Transform& transform() noexcept {
+  [[nodiscard]] constexpr Transform& transform() noexcept {
     return transform_;
   }
-  [[nodiscard]] const Transform& transform() const noexcept {
+  [[nodiscard]] constexpr const Transform& transform() const noexcept {
     return transform_;
   }
   /// @}
 
   /// @brief Set perspective projection matrix.
-  void set_perspective(float aspect_ratio, float fov_degrees = 60.0f, //
-                       float near = 0.01f, float far = 100.0f) noexcept {
-    projection_matrix_ = glm::perspective(fov_degrees, aspect_ratio, near, far);
+  void set_perspective(float aspect_ratio, float fov_degrees = 60.0f,
+                       float near = 0.001f, float far = 1000.0f) noexcept {
+    // Beware: GLM's documentations says that FOV is in degress,
+    // but actually it is in radians!
+    projection_matrix_ =
+        glm::perspective(glm::radians(fov_degrees), aspect_ratio, near, far);
+  }
+
+  /// @brief Set orthographic projection matrix.
+  void set_ortographic(float aspect_ratio, float height = 1.0f,
+                       float near = 0.001f, float far = 1000.0f) noexcept {
+    const float width = aspect_ratio * height;
+    projection_matrix_ = glm::ortho(-0.5f * width, +0.5f * width,
+                                    -0.5f * height, +0.5f * height, near, far);
   }
 
   /// @brief Camera view-projection matrix.
-  [[nodiscard]] /*constexpr*/ glm::mat4
-  view_projection_matrix() const noexcept {
+  /// @todo GLM's matmul operator is not constexpr?
+  [[nodiscard]] glm::mat4 view_projection_matrix() const noexcept {
     const glm::mat4 view_matrix = glm::inverse(transform_.model_matrix());
     return projection_matrix_ * view_matrix;
   }
@@ -155,30 +176,30 @@ public:
 
   /// @brief Mesh renderer transform.
   /// @{
-  [[nodiscard]] Transform& transform() noexcept {
+  [[nodiscard]] constexpr Transform& transform() noexcept {
     return transform_;
   }
-  [[nodiscard]] const Transform& transform() const noexcept {
+  [[nodiscard]] constexpr const Transform& transform() const noexcept {
     return transform_;
   }
   /// @}
 
   /// @brief Mesh renderer mesh.
   /// @{
-  [[nodiscard]] gl::Mesh& mesh() noexcept {
+  [[nodiscard]] constexpr gl::Mesh& mesh() noexcept {
     return mesh_;
   }
-  [[nodiscard]] const gl::Mesh& mesh() const noexcept {
+  [[nodiscard]] constexpr const gl::Mesh& mesh() const noexcept {
     return mesh_;
   }
   /// @}
 
   /// @brief Mesh renderer program.
   /// @{
-  [[nodiscard]] gl::Program& program() noexcept {
+  [[nodiscard]] constexpr gl::Program& program() noexcept {
     return program_;
   }
-  [[nodiscard]] const gl::Program& program() const noexcept {
+  [[nodiscard]] constexpr const gl::Program& program() const noexcept {
     return program_;
   }
   /// @}

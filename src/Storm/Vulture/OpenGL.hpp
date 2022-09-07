@@ -228,7 +228,7 @@ class BindVertexArray final {
 public:
 
   /// @brief Bind the @p vertex_array.
-  BindVertexArray(const VertexArray& vertex_array) {
+  explicit BindVertexArray(const VertexArray& vertex_array) {
     STORM_ASSERT_(vertex_array != 0, "Invalid vertex array!");
     glBindVertexArray(vertex_array);
   }
@@ -649,7 +649,7 @@ class BindProgram final {
 public:
 
   /// @brief Bind the @p program.
-  BindProgram(const Program& program) {
+  explicit BindProgram(const Program& program) {
     STORM_ASSERT_(program != 0, "Invalid program!");
     glUseProgram(program);
   }

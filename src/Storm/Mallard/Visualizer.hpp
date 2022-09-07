@@ -54,6 +54,7 @@ void visualize_mesh(const Mesh& mesh) {
   constexpr static size_t window_height = 900;
   gl::Window window{};
   window.load(framework, window_title, window_width, window_height);
+  gl::BindWindow bind_window{window};
   glViewport(0, 0, window_width, window_height);
 
   // Initialize.
@@ -119,34 +120,28 @@ void visualize_mesh(const Mesh& mesh) {
   float scale = 1.01;
   glm::vec2 pos{};
   glm::vec3 col{0.1f, 0.1f, 0.9f};
+  window.on_key_down([&]() { pos.y += 0.05; }, gl::Key::w);
+  window.on_key_down([&]() { pos.x -= 0.05; }, gl::Key::a);
+  window.on_key_down([&]() { pos.y -= 0.05; }, gl::Key::s);
+  window.on_key_down([&]() { pos.x += 0.05; }, gl::Key::d);
+  window.on_key_down([&]() { scale *= 1.01; }, gl::Key::q);
+  window.on_key_down([&]() { scale /= 1.01; }, gl::Key::e);
 
   while (!glfwWindowShouldClose(window)) {
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { pos.y += 0.05; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { pos.x -= 0.05; }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { pos.y -= 0.05; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { pos.x += 0.05; }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) { scale *= 1.01; }
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) { scale /= 1.01; }
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    gl::BindProgram bind_program{program};
+    glUniform2f(glGetUniformLocation(program, "pos"), pos.x, pos.y);
+    glUniform1f(glGetUniformLocation(program, "scale"), scale);
+    col = glm::vec3{0.9f, 0.9f, 0.9f};
+    glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+    cell_mesh.draw();
+    col = glm::vec3{0.1f, 0.1f, 0.9f};
+    glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+    edge_mesh.draw(GL_LINES);
 
-    // render frame
-    {
-      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT);
-      gl::BindProgram bind_program{program};
-      glUniform2f(glGetUniformLocation(program, "pos"), pos.x, pos.y);
-      glUniform1f(glGetUniformLocation(program, "scale"), scale);
-      col = glm::vec3{0.9f, 0.9f, 0.9f};
-      glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-      cell_mesh.draw();
-      col = glm::vec3{0.1f, 0.1f, 0.9f};
-      glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
-      edge_mesh.draw(GL_LINES);
-    }
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+    window.update();
   }
-
-  glfwTerminate();
 }
 
 } // namespace Storm

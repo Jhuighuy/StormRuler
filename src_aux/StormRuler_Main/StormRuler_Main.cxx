@@ -95,8 +95,9 @@ void stormNonlinSolve2(const SolverType& method, //
 //Sigma - ??
 //Try Sigma = 1??
 static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0;//10.0;
+static double Mobility;
 
-static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
+static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c, const std::vector<double>& BV) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
   // stormApplyBCs_CosWall(
   //     mesh, c_hat, c,
@@ -104,11 +105,11 @@ static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c) {
   //  stormApplyBCs(mesh, c_hat, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
-static void SetBCs_w(stormMesh_t mesh, stormArray_t w) {
+static void SetBCs_w(stormMesh_t mesh, stormArray_t w, const std::vector<double>& BV) {
   stormApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
 } // SetBCs_w
 
-static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
+static void SetBCs_p(stormMesh_t mesh, stormArray_t p, const std::vector<double>& BV) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   // stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
   // stormApplyBCs(mesh, p, 4,
@@ -116,25 +117,26 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p) {
   //                            (2.0 * 0.01 * 26)));
 } // SetBCs_p
 
-static void SetBCs_v(stormMesh_t mesh, stormArray_t v) {
+static void SetBCs_v(stormMesh_t mesh, stormArray_t v, const std::vector<double>& BV) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
   // stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
   // stormApplyBCs_InOutLet(mesh, v, 2);
   // stormApplyBCs(mesh, v, 4, SR_PURE_NEUMANN);
 
-  stormReal_t R = 0.2 * 0.5;
-  stormReal_t qFlux = 10.0 * 0.5 * M_PI * R * R * R * R;
-  stormApplyBCs_InOutLet(mesh, v, 4, qFlux);
+  [[maybe_unused]] stormReal_t R = 0.2 * 0.5;
+  [[maybe_unused]] stormReal_t qFlux = 10.0 * 0.5 * M_PI * R * R * R * R;
+  stormApplyBCs_InOutLet(mesh, v, 4, BV[4]);
 } // SetBCs_v
 
 static void CahnHilliard_Step(stormMesh_t mesh, //
                               const StormArray<real_t>& c,
                               const StormArray<Vec2D<real_t>>& v, //
                               StormArray<real_t>& c_hat,
-                              StormArray<real_t>& w_hat) {
-  SetBCs_c(mesh, c, c);
-  SetBCs_v(mesh, v);
+                              StormArray<real_t>& w_hat,
+                              const std::vector<double>& BV) {
+  SetBCs_c(mesh, c, c, BV);
+  SetBCs_v(mesh, v, BV);
 
   constexpr auto dF_dc = [](real_t c) {
     return 2.0 * c * (c - 1.0) * (2.0 * c - 1.0);
@@ -152,14 +154,14 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
       [&](StormArray<real_t>& c_hat, const StormArray<real_t>& c_in) {
         // w_hat <<= f + 2.0 * sigma * (c_in - c) - Gamma * DIVGRAD(c_in);
         w_hat <<= f + 2.0 * sigma * (c_in - c);
-        SetBCs_c(mesh, c_in, c);
+        SetBCs_c(mesh, c_in, c, BV);
         stormDivGrad(mesh, w_hat, -Gamma, c_in);
 
         // c_hat <<= c_in + tau * CONV(v, c_in) - tau * DIVGRAD(w_hat)
         c_hat <<= c_in;
-        SetBCs_w(mesh, w_hat);
+        SetBCs_w(mesh, w_hat, BV);
         stormConvection(mesh, c_hat, -tau, c_in, v);
-        stormDivGrad(mesh, c_hat, -tau, w_hat);
+        stormDivGrad(mesh, c_hat, -tau * Mobility, w_hat);
       },
       false);
 
@@ -167,7 +169,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
   // w_hat = dF_dc(c_hat) - Gamma * DIVGRAD(c_hat)
   w_hat <<= map(dF_dc, c_hat);
-  SetBCs_c(mesh, c_hat, c);
+  SetBCs_c(mesh, c_hat, c, BV);
   stormDivGrad(mesh, w_hat, -Gamma, c_hat);
 
 } // CahnHilliard_Step
@@ -182,7 +184,8 @@ static void NavierStokes_Step(stormMesh_t mesh, //
                               const StormArray<real_t>& w,
                               StormArray<real_t>& p_hat,
                               StormArray<Vec2D<real_t>>& v_hat,
-                              StormArray<real_t>& rho) {
+                              StormArray<real_t>& rho,
+                              const std::vector<double>& BV) {
   StormArray<real_t> mu, rho_inv;
   mu.assign(rho, false);
   rho_inv.assign(rho, false);
@@ -196,8 +199,8 @@ static void NavierStokes_Step(stormMesh_t mesh, //
     rhs.assign(v, false);
 
     // rhs <<= v + (tau * Sigma / math::sqrt(Gamma)) * rho_inv * c * GRAD(w);
-    SetBCs_w(mesh, w);
-    SetBCs_v(mesh, v);
+    SetBCs_w(mesh, w, BV);
+    SetBCs_v(mesh, v, BV);
     fill_with(rhs, Vec2D<real_t>{0.0, 0.0});
     stormGradient(mesh, rhs, tau, w);
     rhs *= (Sigma / std::sqrt(Gamma)) * c * rho_inv;
@@ -213,13 +216,15 @@ static void NavierStokes_Step(stormMesh_t mesh, //
 
           // v_hat <<= v + tau * CONV(v, v) - tau * mu * rho_inv * DIVGRAD(v);
           v_hat <<= v;
-          SetBCs_v(mesh, v);
+          SetBCs_v(mesh, v, BV);
           stormConvection(mesh, v_hat, -tau, v, v);
           fill_with(tmp, Vec2D<real_t>{0.0, 0.0});
           stormDivGrad(mesh, tmp, tau, v);
           tmp *= mu * rho_inv;
           v_hat -= tmp;
         });
+
+        //std::cout<<"NonlinSolve2 passed"<<std::endl;
   }
 
   v_hat <<= map(
@@ -235,7 +240,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
     // rhs <<= p - DIV(v_hat) + ???
     rhs <<= p;
     stormDivergence(mesh, rhs, 1.0, v_hat);
-    SetBCs_w(mesh, rho_inv);
+    SetBCs_w(mesh, rho_inv, BV);
 
     p_hat <<= p;
     stormLinSolve2(
@@ -244,10 +249,12 @@ static void NavierStokes_Step(stormMesh_t mesh, //
         [&](StormArray<real_t>& p_hat, const StormArray<real_t>& p) {
           // p_hat <<= p - tau * DIVGRAD(rho_inv, p)
           p_hat <<= p;
-          SetBCs_p(mesh, p);
+          SetBCs_p(mesh, p, BV);
           stormDivWGrad(mesh, p_hat, -tau, rho_inv, p);
         },
         false);
+              //std::cout<<"LinSolve2 passed"<<std::endl;
+
   }
 
   {
@@ -256,7 +263,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
 
     // v_hat -= tau * rho_inv * GRAD(p_hat)
     fill_with(tmp, Vec2D<real_t>{0.0, 0.0});
-    SetBCs_p(mesh, p_hat);
+    SetBCs_p(mesh, p_hat, BV);
     stormGradient(mesh, tmp, tau, p_hat);
     v_hat += rho_inv * tmp;
   }
@@ -311,7 +318,7 @@ void Init_For_NVT(Nvt& NVT_obj) {
 int main(int argc, char** argv) {
 
   // //mesh file name
-   const char* mesh_filename = "./test/Domain-100-Tube.ppm";
+   const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
 
 
   //global parameters of the task
@@ -340,7 +347,24 @@ int main(int argc, char** argv) {
   [[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
   //stormReal_t dR = 0.01;
   [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
-  [[maybe_unused]] stormReal_t Mu = Lambda * Lambda / tau_relax;
+  /*static stormReal_t */Mobility = Lambda * Lambda / tau_relax;
+
+  //Qflux /= 10.0;
+
+  // double u_mean = Qflux / M_PI / (R_small * R_small);
+  // double Re = u_mean * R_small * rho_2 / mu_2;
+  // std::cout << Re << std::endl;
+
+  Gamma = Lambda * Lambda;
+
+  //Values for boundaries; index -> value for boundary with <<index>> number
+  std::vector <double> BoundaryKeyValues(6);
+  BoundaryKeyValues[0] = 0.0;
+  BoundaryKeyValues[1] = 0.0;
+  BoundaryKeyValues[2] = 0.0;
+  BoundaryKeyValues[3] = 0.0;
+  BoundaryKeyValues[4] = Qflux;  //поток на границе типа вход
+  BoundaryKeyValues[5] = 0.0;
 
   //Initialize NVT
   Nvt nvt_class = Nvt();
@@ -383,19 +407,23 @@ int main(int argc, char** argv) {
 
 
   double total_time = 0.0;
+  double time_of_task = 0.0;
+  int num_write = 0;
 
-  for (int time = 0; time <= 200000; ++time) {
-    for (int frac = 0; time != 0 && frac < 10; ++frac) {
+  //for (int time = 0; time <= 200000; ++time) {
+  while (time_of_task < TaskTime) {
+    for (int frac = 0; num_write != 0 && frac < 10; ++frac) {
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
 
-      CahnHilliard_Step(mesh, c, v, c_hat, w_hat);
-      NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, rho);
+      CahnHilliard_Step(mesh, c, v, c_hat, w_hat, BoundaryKeyValues);
+      NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, rho, BoundaryKeyValues);
 
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
       elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
       total_time += elapsed;
+      time_of_task += tau;
 
       std::swap(c, c_hat);
       std::swap(p, p_hat);
@@ -404,13 +432,17 @@ int main(int argc, char** argv) {
 
     char filename[256];
     printf("time = %f\n", total_time);
-    sprintf(filename, "out/fld-%d.vti", time);
+    printf("time of task = %f\n", time_of_task);
+    sprintf(filename, "out/fld-%d.vti", num_write);
     stormIOList_t io = SR_IO_Begin();
     SR_IO_Add(io, v, "velocity");
     SR_IO_Add(io, c, "phase");
     SR_IO_Add(io, p, "pressure");
     SR_IO_Add(io, rho, "density");
     SR_IO_Flush(io, mesh, filename);
+
+    num_write++;
+
   }
 
   return 0;

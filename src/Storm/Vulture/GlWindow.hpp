@@ -262,6 +262,11 @@ public:
   /// @brief Construct a window.
   Window() = default;
 
+  /// @brief Move-construct a window.
+  Window(Window&&) = default;
+  /// @brief Move-assign the window.
+  Window& operator=(Window&&) = default;
+
   Window(const Window&) = delete;
   Window& operator=(const Window& window) = delete;
 

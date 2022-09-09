@@ -197,8 +197,8 @@ MAKE_SCALAR_CAST_TYPE_(std::floating_point, GLdouble)
 template<vertex_attrib_valid_type Type, //
          glm::length_t Length, glm::qualifier Qualifier>
 struct VertexAttribTypeTraits<glm::vec<Length, Type, Qualifier>> {
-  using storage_type = glm::vec<Length, vertex_attrib_storage_type_t<Type>,
-                                glm::qualifier::packed_highp>;
+  using storage_type =
+      glm::vec<Length, vertex_attrib_storage_type_t<Type>, glm::packed>;
   [[nodiscard]] static constexpr GLenum type() noexcept {
     return vertex_attrib_type<Type>;
   }
@@ -211,8 +211,8 @@ struct VertexAttribTypeTraits<glm::vec<Length, Type, Qualifier>> {
 template<vertex_attrib_valid_type Type, //
          glm::length_t Rows, glm::length_t Cols, glm::qualifier Qualifier>
 struct VertexAttribTypeTraits<glm::mat<Rows, Cols, Type, Qualifier>> {
-  using storage_type = glm::mat<Rows, Cols, vertex_attrib_storage_type_t<Type>,
-                                glm::qualifier::packed_highp>;
+  using storage_type =
+      glm::mat<Rows, Cols, vertex_attrib_storage_type_t<Type>, glm::packed>;
   [[nodiscard]] static constexpr GLenum type() noexcept {
     return vertex_attrib_type<Type>;
   }

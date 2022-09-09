@@ -60,7 +60,7 @@ void visualize_mesh(const Mesh& mesh) {
   // Initialize.
   gl::DebugOutput debug_output{};
   gl::Shader vertex_shader{};
-  vertex_shader.load(GL_VERTEX_SHADER, R"(
+  vertex_shader.load(gl::ShaderType::vertex, R"(
       #version 330 core
       layout(location = 0) in vec3 positionMS;
       uniform mat4 view_projection;
@@ -71,7 +71,7 @@ void visualize_mesh(const Mesh& mesh) {
     )");
 
   gl::Shader fragment_shader{};
-  fragment_shader.load(GL_FRAGMENT_SHADER, R"(
+  fragment_shader.load(gl::ShaderType::fragment, R"(
       #version 330 core
       out vec4 color;
       uniform vec3 col;
@@ -153,14 +153,13 @@ void visualize_mesh(const Mesh& mesh) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     gl::BindProgram bind_program{program};
-    const auto vp = camera.view_projection_matrix();
-    glUniformMatrix4fv(glGetUniformLocation(program, "view_projection"), 1,
-                       GL_FALSE, &vp[0][0]);
-    glm::vec3 col{0.9f, 0.9f, 0.9f};
-    glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+    bind_program.set_uniform(program.uniform_location("view_projection"),
+                             camera.view_projection_matrix());
+    bind_program.set_uniform(program.uniform_location("col"),
+                             glm::vec3{0.9f, 0.9f, 0.9f});
     cell_renderer.draw(camera, program);
-    col = glm::vec3{0.1f, 0.1f, 0.9f};
-    glUniform3f(glGetUniformLocation(program, "col"), col.r, col.g, col.b);
+    bind_program.set_uniform(program.uniform_location("col"),
+                             glm::vec3{0.1f, 0.1f, 0.9f});
     edge_renderer.draw(camera, program, GL_LINES);
 
     window.update();

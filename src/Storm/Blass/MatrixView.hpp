@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/MatrixBase.hpp>
+#include <Storm/Blass/Matrix.hpp>
 
 #include <concepts>
 #include <type_traits>

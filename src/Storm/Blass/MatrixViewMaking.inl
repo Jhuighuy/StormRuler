@@ -30,7 +30,6 @@
 namespace Storm {
 
 /// @brief Matrix generating view.
-/// @todo This is completely overengineered.
 // clang-format off
 template<std::copy_constructible Func>
   requires std::is_object_v<Func> &&

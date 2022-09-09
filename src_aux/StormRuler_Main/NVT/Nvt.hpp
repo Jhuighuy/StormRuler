@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Storm/Blass/Matrix.hpp>
+#include <Storm/Blass/MatrixDense.hpp>
 #include <iostream>
 #include <vector>
 

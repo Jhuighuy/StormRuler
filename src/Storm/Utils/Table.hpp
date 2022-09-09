@@ -23,6 +23,7 @@
 #include <Storm/Base.hpp>
 
 #include <Storm/Utils/Containers.hpp>
+#include <Storm/Utils/Meta.hpp>
 
 #include <algorithm>
 #include <ranges>

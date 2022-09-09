@@ -49,7 +49,8 @@ concept real_or_complex_floating_point =
 
 namespace math {
 
-  using std::abs;
+  static real_t deg2rad(real_t) noexcept;
+  static real_t rad2deg(real_t) noexcept;
 
   /// @brief If @p y is zero, return zero,
   ///   else return value of @p x divided by @p y.
@@ -58,6 +59,11 @@ namespace math {
     static constexpr Value zero{0.0};
     return y == zero ? zero : (x / y);
   }
+
+  using std::abs;
+
+  template<class Real>
+  constexpr Real sign(Real) noexcept;
 
   /// @name Exponential functions.
   /// @{

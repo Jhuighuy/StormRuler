@@ -34,6 +34,48 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
+/*
+ * Current classes are really bad.
+ * Problems:
+ * - We do need to implement value assignment on buffers, it is unclear how to
+ *   implement it.
+ * - We do not need to store the actual host data, since there is no need to
+ *   read it.
+ *
+ * What we shall have instead:
+ * - Base class that performs buffer construction and destruction, and possibly
+ *   implements full or partial data assignemnt. Aka the ByteBuffer.
+ *   Synopsis:
+ *
+ * class ByteBuffer {
+ * public:
+ *
+ *   ByteBuffer(); // Constructs the buffer.
+ *   ~ByteBuffer(); // Destructs the buffer.
+ *
+ *   ByteBuffer(ByteBuffer&&) = default;
+ *   ByteBuffer& operator=(ByteBuffer&&) = default;
+ *
+ *   ByteBuffer(const ByteBuffer&) = delete;
+ *   ByteBuffer& operator=(const ByteBuffer&) = delete;
+ *
+ *   GLsizeiptr size_bytes() const noexcept; // Buffer size in bytes.
+ *
+ *   // Assign the buffer bytes.
+ *   void assign_bytes(GLsizeiptr size_bytes,
+ *                     const std::byte* data = nullptr);
+ *
+ *   // Set the buffer bytes with offset.
+ *   void set_bytes(GLintptr offset_bytes,
+ *                  GLsizeiptr size_bytes,
+ *                  const std::byte* data);
+ *
+ * };
+ *
+ * - Derived template class.
+ * template<>
+ */
+
 namespace Storm::Vulture::gl {
 
 /// @brief OpenGL device buffer.

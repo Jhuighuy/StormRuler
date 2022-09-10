@@ -47,40 +47,31 @@ enum class ShaderType : GLenum {
 }; // enum class ShaderType
 
 /// @brief OpenGL shader.
-class Shader final {
+class Shader final : detail_::noncopyable_ {
 private:
 
   friend class Program;
-  GLuint shader_id_ = 0;
+  GLuint shader_id_;
 
 public:
 
   /// @brief Construct a shader.
-  Shader() = default;
+  Shader(ShaderType type) {
+    shader_id_ = glCreateShader(static_cast<GLenum>(type));
+  }
 
   /// @brief Move-construct a shader.
   Shader(Shader&&) = default;
   /// @brief Move-assign the shader.
   Shader& operator=(Shader&&) = default;
 
-  Shader(const Shader&) = delete;
-  Shader& operator=(const Shader& window) = delete;
-
   /// @brief Destruct the shader.
-  ~Shader() noexcept {
-    unload();
+  ~Shader() {
+    glDeleteShader(shader_id_);
   }
 
   /// @brief Load the shader of type @p type from @p source.
-  void load(ShaderType type, std::string_view source) {
-    unload();
-
-    // Create a shader.
-    STORM_ASSERT_(detail_::one_of_(type, ShaderType::vertex,
-                                   ShaderType::geometry, ShaderType::fragment),
-                  "Unsupported shader type {:#x}!", static_cast<GLenum>(type));
-    shader_id_ = glCreateShader(static_cast<GLenum>(type));
-
+  void load(std::string_view source) {
     // Upload the shader source code.
     const auto source_data = source.data();
     const auto source_size = static_cast<GLint>(source.size());
@@ -102,16 +93,10 @@ public:
     }
   }
 
-  /// @brief Unload the shader.
-  void unload() noexcept {
-    glDeleteShader(shader_id_);
-    shader_id_ = 0;
-  }
-
 }; // class Shader
 
 /// @brief OpenGL shader program.
-class Program final {
+class Program final : detail_::noncopyable_ {
 private:
 
   friend class BindProgram;
@@ -120,29 +105,23 @@ private:
 public:
 
   /// @brief Construct a program.
-  Program() = default;
+  Program() {
+    program_id_ = glCreateProgram();
+  }
 
   /// @brief Move-construct a program.
   Program(Program&&) = default;
   /// @brief Move-assign the program.
   Program& operator=(Program&&) = default;
 
-  Program(const Program&) = delete;
-  Program& operator=(const Program& window) = delete;
-
   /// @brief Destruct the program.
   ~Program() noexcept {
-    unload();
+    glDeleteProgram(program_id_);
   }
 
   /// @brief Load the program from shaders.
   template<std::same_as<Shader>... Shader>
   void load(const Shader&... shaders) {
-    unload();
-
-    // Create a program.
-    program_id_ = glCreateProgram();
-
     // Attach the shaders.
     const auto attach_shader = [&](const auto& shader) {
       glAttachShader(program_id_, shader.shader_id_);
@@ -163,13 +142,6 @@ public:
     if (info_log_length != 0) {
       STORM_WARNING_("Program linking message: {}", info_log.c_str());
     }
-  }
-
-  /// @brief Unload the program.
-  void unload() noexcept {
-    glUseProgram(0);
-    glDeleteProgram(program_id_);
-    program_id_ = 0;
   }
 
   /// @brief Get program uniform location.

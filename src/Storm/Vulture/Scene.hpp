@@ -22,8 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Vulture/GlBuffer.hpp>
 #include <Storm/Vulture/GlShader.hpp>
+#include <Storm/Vulture/GlVertexArray.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -163,7 +163,7 @@ class MeshRenderer final {
 private:
 
   Transform transform_{};
-  gl::Mesh mesh_{};
+  // gl::Mesh mesh_{};
   gl::Program program_{};
 
 public:
@@ -186,12 +186,12 @@ public:
 
   /// @brief Mesh renderer mesh.
   /// @{
-  [[nodiscard]] constexpr gl::Mesh& mesh() noexcept {
-    return mesh_;
-  }
-  [[nodiscard]] constexpr const gl::Mesh& mesh() const noexcept {
-    return mesh_;
-  }
+  //[[nodiscard]] constexpr gl::Mesh& mesh() noexcept {
+  //  return mesh_;
+  //}
+  //[[nodiscard]] constexpr const gl::Mesh& mesh() const noexcept {
+  //  return mesh_;
+  //}
   /// @}
 
   /// @brief Mesh renderer program.
@@ -206,14 +206,14 @@ public:
 
   /// @brief Draw the mesh.
   /// @{
-  void draw(const Camera& camera, const gl::Program& program,
-            GLenum mode = GL_TRIANGLES) const {
-    // gl::BindProgram bind_program{program};
-    mesh_.draw(mode);
-  }
-  void draw(const Camera& camera, GLenum mode = GL_TRIANGLES) const {
-    draw(camera, program_, mode);
-  }
+  // void draw(const Camera& camera, const gl::Program& program,
+  //           GLenum mode = GL_TRIANGLES) const {
+  //   // gl::BindProgram bind_program{program};
+  //   mesh_.draw(mode);
+  // }
+  // void draw(const Camera& camera, GLenum mode = GL_TRIANGLES) const {
+  //   draw(camera, program_, mode);
+  // }
   /// @}
 
 }; // class Camera

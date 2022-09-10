@@ -59,8 +59,8 @@ void visualize_mesh(const Mesh& mesh) {
 
   // Initialize.
   gl::DebugOutput debug_output{};
-  gl::Shader vertex_shader{};
-  vertex_shader.load(gl::ShaderType::vertex, R"(
+  gl::Shader vertex_shader{gl::ShaderType::vertex};
+  vertex_shader.load(R"(
       #version 330 core
       layout(location = 0) in vec3 positionMS;
       uniform mat4 view_projection;
@@ -70,8 +70,8 @@ void visualize_mesh(const Mesh& mesh) {
       }
     )");
 
-  gl::Shader fragment_shader{};
-  fragment_shader.load(gl::ShaderType::fragment, R"(
+  gl::Shader fragment_shader{gl::ShaderType::fragment};
+  fragment_shader.load(R"(
       #version 330 core
       out vec4 color;
       uniform vec3 col;
@@ -83,11 +83,11 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Program program;
   program.load(std::move(vertex_shader), std::move(fragment_shader));
 
-  const gl::HostDeviceBuffer mesh_nodes(
+  const gl::VertexArrayBuffer nodes_buffer(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
         return node.position();
       }));
-  const gl::HostDeviceBuffer mesh_edges(
+  const gl::VertexArrayBuffer edge_nodes_buffer(
       edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
         return edge.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
@@ -95,7 +95,7 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-  const gl::HostDeviceBuffer mesh_cells(
+  const gl::VertexArrayBuffer cell_nodes_buffer(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         return cell.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
@@ -104,47 +104,43 @@ void visualize_mesh(const Mesh& mesh) {
       }) |
       std::views::join);
 
-  scene::MeshRenderer edge_renderer{};
-  edge_renderer.mesh().push_vertex_array(mesh_nodes);
-  edge_renderer.mesh().set_index_array(mesh_edges);
-  edge_renderer.mesh().build();
+  gl::VertexArray edge_vertex_array{};
+  edge_vertex_array.build(edge_nodes_buffer, nodes_buffer);
 
-  scene::MeshRenderer cell_renderer{};
-  cell_renderer.mesh().push_vertex_array(mesh_nodes);
-  cell_renderer.mesh().set_index_array(mesh_cells);
-  cell_renderer.mesh().build();
+  gl::VertexArray cell_vertex_array{};
+  cell_vertex_array.build(cell_nodes_buffer, nodes_buffer);
 
   // Setup camera.
   scene::Camera camera{};
   camera.transform().translate(glm::vec3{0.0f, 0.0f, 1.0f});
   camera.set_perspective(16.0 / 9.0);
   window.on_key_down(
-      [&]() {
+      [&] {
         camera.transform().translate(glm::vec3{0.0, +0.05, 0.0});
       },
       gl::Key::w);
   window.on_key_down(
-      [&]() {
+      [&] {
         camera.transform().translate(glm::vec3{-0.05, 0.0, 0.0});
       },
       gl::Key::a);
   window.on_key_down(
-      [&]() {
+      [&] {
         camera.transform().translate(glm::vec3{0.0, -0.05, 0.0});
       },
       gl::Key::s);
   window.on_key_down(
-      [&]() {
+      [&] {
         camera.transform().translate(glm::vec3{+0.05, 0.0, 0.0});
       },
       gl::Key::d);
   window.on_key_down(
-      [&]() { //
+      [&] {
         camera.transform().rotate_degrees(glm::vec3{0.0, +0.5, 0.0});
       },
       gl::Key::q);
   window.on_key_down(
-      [&]() { //
+      [&] {
         camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
       },
       gl::Key::e);
@@ -152,15 +148,24 @@ void visualize_mesh(const Mesh& mesh) {
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
     gl::BindProgram bind_program{program};
+
     bind_program.set_uniform(program.uniform_location("view_projection"),
                              camera.view_projection_matrix());
     bind_program.set_uniform(program.uniform_location("col"),
                              glm::vec3{0.9f, 0.9f, 0.9f});
-    cell_renderer.draw(camera, program);
+    glBindVertexArray(cell_vertex_array.vertex_array_id_);
+    glDrawElements(GL_TRIANGLES, num_cells(mesh) * 3, GL_UNSIGNED_INT,
+                   /*indices*/ nullptr);
+    // cell_renderer.draw(camera, program);
+
     bind_program.set_uniform(program.uniform_location("col"),
                              glm::vec3{0.1f, 0.1f, 0.9f});
-    edge_renderer.draw(camera, program, GL_LINES);
+    glBindVertexArray(edge_vertex_array.vertex_array_id_);
+    glDrawElements(GL_LINES, num_edges(mesh) * 2, GL_UNSIGNED_INT,
+                   /*indices*/ nullptr);
+    //  edge_renderer.draw(camera, program, GL_LINES);
 
     window.update();
   }

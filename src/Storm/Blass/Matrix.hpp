@@ -43,6 +43,7 @@ struct matrix_shape_t {
 
   /// @brief Compare the matrix shapes.
   constexpr auto operator<=>(const matrix_shape_t&) const = default;
+
 }; // struct matrix_shape_t
 
 /// @brief Matrix: has shape and two subscripts.

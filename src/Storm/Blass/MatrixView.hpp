@@ -59,10 +59,12 @@ inline constexpr bool enable_matrix_view_v =
 /// @brief Matrix view concept.
 /// @todo In order to add the `movable` constraint, we
 ///   need to box the functor inside the `MapMatrixView`.
+// clang-format off
 template<class MatrixView>
-concept matrix_view =     //
+concept matrix_view =
     matrix<MatrixView> && // std::movable<MatrixView> &&
     enable_matrix_view_v<MatrixView>;
+// clang-format on
 
 /// @brief Matrix that can be safely casted into a matrix view.
 // clang-format off
@@ -129,32 +131,6 @@ public:
   }
   /// @}
 
-  /// @brief Traverse the matrix expression tree with a @p visitor.
-  /// @tparam LeafsToRoot If true, the tree would be traversed from leafs to
-  /// root, otherwise from root to leafs.
-  template<bool LeafsToRoot = true>
-  constexpr void traverse_tree(const auto& visitor) const {
-    self_().traverse_tree(visitor);
-  }
-
-  /// @brief Transform the matrix expression tree with a @p transformer.
-  /// The tree would be traversed and transformed from leafs to root.
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return self_().transform_tree(transformer);
-  }
-
-protected:
-
-  template<bool LeafsToRoot>
-  constexpr void traverse_self_(const auto& visitor,
-                                const matrix auto&... child_nodes) const {
-    if constexpr (LeafsToRoot) {
-      (visitor(child_nodes), ...), visitor(self_());
-    } else {
-      visitor(self_()), (visitor(child_nodes), ...);
-    }
-  }
-
 }; // class MatrixViewInterface
 
 /// @brief Matrix reference view.
@@ -197,16 +173,6 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::traverse_tree
-  constexpr void traverse_tree(const auto& visitor) const {
-    p_mat_->tranverse_tree(visitor);
-  }
-
-  /// @copydoc MatrixViewInterface::transform_tree
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer(*p_mat_);
-  }
-
 }; // class MatrixRefView
 
 template<class Matrix>
@@ -244,16 +210,6 @@ public:
     return mat_(row_index, col_index);
   }
   /// @}
-
-  /// @copydoc MatrixViewInterface::traverse_tree
-  constexpr void traverse_tree(const auto& visitor) const {
-    mat_.tranverse_tree(visitor);
-  }
-
-  /// @copydoc MatrixViewInterface::transform_tree
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer(mat_);
-  }
 
 }; // class MatrixOwningView
 

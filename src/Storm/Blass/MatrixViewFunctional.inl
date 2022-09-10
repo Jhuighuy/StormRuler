@@ -75,26 +75,6 @@ public:
         mats_);
   }
 
-  /// @copydoc MatrixViewInterface::traverse_tree
-  constexpr void traverse_tree(const auto& visitor) const {
-    std::apply(
-        [&](const Matrices&... mats) { //
-          (mats.tranverse_tree(visitor), ...);
-        },
-        mats_);
-    visitor(*this);
-  }
-
-  /// @copydoc MatrixViewInterface::transform_tree
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return std::apply(
-        [&](const Matrices&... mats) {
-          return transformer(
-              Storm::MapMatrixView(func_, mats.transform_tree(transformer)...));
-        },
-        mats_);
-  }
-
 }; // class MapMatrixView
 
 template<class Func, class... Matrices>
@@ -405,18 +385,6 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::traverse_tree
-  constexpr void traverse_tree(const auto& visitor) const {
-    mat_.tranverse_tree(visitor);
-    visitor(*this);
-  }
-
-  /// @copydoc MatrixViewInterface::transform_tree
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer(
-        Storm::MatrixTransposeView(mat_.transform_tree(transformer)));
-  }
-
 }; // MatrixTransposeView
 
 template<class Matrix>
@@ -462,19 +430,6 @@ public:
       val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
     }
     return val;
-  }
-
-  /// @copydoc MatrixViewInterface::traverse_tree
-  constexpr void traverse_tree(const auto& visitor) const {
-    mat1_.tranverse_tree(visitor), mat2_.tranverse_tree(visitor);
-    visitor(*this);
-  }
-
-  /// @copydoc MatrixViewInterface::transform_tree
-  [[nodiscard]] constexpr auto transform_tree(const auto& transformer) const {
-    return transformer( //
-        Storm::MatrixProductView(mat1_.transform_tree(transformer),
-                                 mat2_.transform_tree(transformer)));
   }
 
 }; // class MatrixProductView

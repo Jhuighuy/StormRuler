@@ -28,6 +28,7 @@
 #include <Storm/Vulture/GlBuffer.hpp>
 #include <Storm/Vulture/GlDebug.hpp>
 #include <Storm/Vulture/GlShader.hpp>
+#include <Storm/Vulture/GlVertexArray.hpp>
 #include <Storm/Vulture/GlWindow.hpp>
 #include <Storm/Vulture/Scene.hpp>
 
@@ -47,6 +48,15 @@ namespace Storm::Vulture {
 
 template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
+  IndexedVector<GLfloat, CellIndex<Mesh>> cell_data{};
+  std::ranges::copy(
+      cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
+        const real_t v = std::sin(3.0 * cell.barycenter_position().x) *
+                         std::cos(7.0 * cell.barycenter_position().y);
+        return static_cast<GLfloat>((v + 1.0) / 2.0);
+      }),
+      std::back_inserter(cell_data));
+
   gl::Framework framework{};
 
   constexpr static const char* window_title = "Strom::Vulture Visualizer";
@@ -92,11 +102,13 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Shader fragment_shader{gl::ShaderType::fragment};
   fragment_shader.load(R"(
       #version 330 core
+      uniform samplerBuffer values;
       out vec4 color;
-      uniform vec3 col;
       void main() {
-        color = vec4(col, 1.0);
-        color.x = gl_PrimitiveID/79672.0f;
+        float value = texelFetch(values, gl_PrimitiveID).r;
+        value = clamp(value, 0.0f, 1.0f);
+        color.rgb = mix(vec3(0.0f, 0.0f, 1.0f), vec3(1.0f, 0.0f, 0.0f), value);
+        color.a = 1.0f;
       }
     )");
 
@@ -110,7 +122,7 @@ void visualize_mesh(const Mesh& mesh) {
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
         return static_cast<glm::vec2>(node.position());
       }));
-  const gl::Buffer<GLuint> edge_nodes_buffer(
+  const gl::Buffer edge_nodes_buffer(
       edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
         return edge.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
@@ -118,7 +130,7 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-  const gl::Buffer<GLuint> cell_nodes_buffer(
+  const gl::Buffer cell_nodes_buffer(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         return cell.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
@@ -135,6 +147,14 @@ void visualize_mesh(const Mesh& mesh) {
 
   gl::VertexArray cell_vertex_array{};
   cell_vertex_array.build_indexed(cell_nodes_buffer, nodes_buffer);
+
+  // Setup data.
+  const gl::Buffer cell_data_buffer(cell_data);
+  GLuint texture_id_;
+  glGenTextures(1, &texture_id_);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_BUFFER, texture_id_);
+  glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, cell_data_buffer);
 
   // Setup camera.
   scene::Camera camera{};
@@ -177,21 +197,21 @@ void visualize_mesh(const Mesh& mesh) {
 
     gl::BindProgram bind_program{program};
 
+    bind_program.set_uniform(program.uniform_location("values"), 0);
     bind_program.set_uniform(program.uniform_location("view_projection"),
                              camera.view_projection_matrix());
-    bind_program.set_uniform(program.uniform_location("col"),
-                             glm::vec3{0.9f, 0.9f, 0.9f});
-    glBindVertexArray(cell_vertex_array.vertex_array_id_);
+    // bind_program.set_uniform(program.uniform_location("col"),
+    //                          glm::vec3{0.9f, 0.9f, 0.9f});
+    glBindVertexArray(cell_vertex_array);
     glDrawElements(GL_TRIANGLES, num_cells(mesh) * 3, GL_UNSIGNED_INT,
                    /*indices*/ nullptr);
-    // cell_renderer.draw(camera, program);
 
+#if 0
     bind_program.set_uniform(program.uniform_location("col"),
                              glm::vec3{0.1f, 0.1f, 0.9f});
     glBindVertexArray(edge_vertex_array.vertex_array_id_);
     glDrawElements(GL_LINES, num_edges(mesh) * 2, GL_UNSIGNED_INT,
                    /*indices*/ nullptr);
-    //  edge_renderer.draw(camera, program, GL_LINES);
 
     {
       gl::BindProgram bind_program{node_program};
@@ -202,6 +222,7 @@ void visualize_mesh(const Mesh& mesh) {
       glBindVertexArray(node_vertex_array.vertex_array_id_);
       glDrawArrays(GL_POINTS, 0, num_nodes(mesh));
     }
+#endif
 
     window.update();
   }

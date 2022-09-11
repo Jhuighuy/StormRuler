@@ -40,7 +40,7 @@
 #include <Storm/Blass/FastVector.hpp>
 #include <Storm/Blass/Mat.hpp>
 
-#if 0
+#if 1
 #include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/IoTetgen.hpp>
 #include <Storm/Mallard/IoVtk.hpp>
@@ -310,7 +310,7 @@ void Init_For_NVT(Nvt& NVT_obj) {
 int main(int argc, char** argv) {
   print_banner();
 
-#if 0
+#if 1
   UnstructuredMesh<2, 2> mesh1{};
   read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
   write_mesh_to_vtk(mesh1, "out/test.vtk");
@@ -376,7 +376,7 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
-#if 1
+#if 0
   Nvt nvt_class = Nvt();
 
   Init_For_NVT(nvt_class);

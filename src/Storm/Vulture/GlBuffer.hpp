@@ -45,6 +45,13 @@ enum class BufferUsage : GLenum {
   dynamic_copy = GL_DYNAMIC_COPY,
 }; // enum class BufferUsage
 
+/// @brief OpenGL buffer binding target.
+enum class BufferTarget : GLenum {
+  array_buffer = GL_ARRAY_BUFFER,
+  element_array_buffer = GL_ELEMENT_ARRAY_BUFFER,
+  texture_buffer = GL_TEXTURE_BUFFER,
+}; // enum class BufferTarget
+
 /// @brief OpenGL buffer.
 template<class Type>
 class Buffer : detail_::noncopyable_ {
@@ -61,6 +68,7 @@ public:
 
   /// @brief Construct a buffer with a range.
   /// @param usage Intended buffer usage.
+  /// @param target Buffer binding target.
   // clang-format off
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Type>
@@ -77,6 +85,11 @@ public:
   /// @brief Destruct the buffer.
   ~Buffer() {
     glDeleteBuffers(1, &buffer_id_);
+  }
+
+  /// @brief Bind the buffer to @p target.
+  void bind(BufferTarget target) const {
+    glBindBuffer(static_cast<GLenum>(target), buffer_id_);
   }
 
   /// @brief Assign the buffer @p values.
@@ -116,83 +129,52 @@ public:
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(Type), &value);
   }
 
-  GLuint id() const {
-    return buffer_id_;
-  }
-  operator GLuint() const {
-    return buffer_id_;
-  }
-
 }; // class Buffer
 
 template<std::ranges::input_range Range, class... T>
 Buffer(Range&&, T...) -> Buffer<std::ranges::range_value_t<Range>>;
 
-/// @brief Vertex array buffer type traits.
+/// @brief Vertex attribute type traits.
 template<class>
-class VertexArrayTypeTraits {
+class VertexAttribTypeTraits {
 public:
-
-  /// @brief Type that would be stored in the buffer.
-  struct storage_type;
-
-  /// @brief Type enumeration.
-  [[nodiscard]] static consteval GLenum type() noexcept = delete;
 
   /// @brief Number of the components in the type.
   [[nodiscard]] static consteval GLint length() noexcept = delete;
 
-}; // class VertexArrayTypeTraits
+  /// @brief Type enumeration.
+  [[nodiscard]] static consteval GLenum type_enum() noexcept = delete;
 
-/// @brief Vertex array buffer type.
+}; // class VertexAttribTypeTraits
+
+/// @brief Vertex attribute type.
 // clang-format off
 template<class Type>
-concept vertex_array_type =
+concept vertex_attrib_type =
     requires {
-      typename VertexArrayTypeTraits<Type>::storage_type;
-      { VertexArrayTypeTraits<Type>::type_enum() } -> std::same_as<GLenum>;
-      { VertexArrayTypeTraits<Type>::length() } -> std::same_as<GLint>;
-    } &&
-    std::convertible_to<Type,
-      typename VertexArrayTypeTraits<Type>::storage_type>;
+      { VertexAttribTypeTraits<Type>::length() } -> std::same_as<GLint>;
+      { VertexAttribTypeTraits<Type>::type_enum() } -> std::same_as<GLenum>;
+    };
 // clang-format on
-
-/// @brief Type that would be stored in an OpenGL buffer.
-template<class Type>
-using vertex_array_storage_type_t =
-    typename VertexArrayTypeTraits<Type>::storage_type;
-
-/// @brief OpenGL type enumeration.
-template<class Type>
-inline constexpr GLenum
-    vertex_array_type_enum_v = VertexArrayTypeTraits<Type>::type_enum();
 
 /// @brief Number of the components in type.
 template<class Type>
 inline constexpr size_t
-    vertex_array_type_length_v = VertexArrayTypeTraits<Type>::length();
+    vertex_attrib_length_v = VertexAttribTypeTraits<Type>::length();
+
+/// @brief OpenGL type enumeration.
+template<class Type>
+inline constexpr GLenum
+    vertex_attrib_type_enum_v = VertexAttribTypeTraits<Type>::type_enum();
 
 #define MAKE_SCALAR_BASE_TYPE_(GLtype, GL_TYPE)                  \
   template<>                                                     \
-  struct VertexArrayTypeTraits<GLtype> {                         \
-    using storage_type = GLtype;                                 \
+  struct VertexAttribTypeTraits<GLtype> {                        \
+    [[nodiscard]] static consteval GLint length() noexcept {     \
+      return 1;                                                  \
+    }                                                            \
     [[nodiscard]] static consteval GLenum type_enum() noexcept { \
       return GL_TYPE;                                            \
-    }                                                            \
-    [[nodiscard]] static consteval GLint length() noexcept {     \
-      return 1;                                                  \
-    }                                                            \
-  };
-
-#define MAKE_SCALAR_CAST_TYPE_(constrain, GLtype)                \
-  template<constrain Type>                                       \
-  struct VertexArrayTypeTraits<Type> {                           \
-    using storage_type = GLtype;                                 \
-    [[nodiscard]] static consteval GLenum type_enum() noexcept { \
-      return vertex_array_type<GLtype>;                          \
-    }                                                            \
-    [[nodiscard]] static consteval GLint length() noexcept {     \
-      return 1;                                                  \
     }                                                            \
   };
 
@@ -203,99 +185,34 @@ MAKE_SCALAR_BASE_TYPE_(GLshort, GL_SHORT)
 MAKE_SCALAR_BASE_TYPE_(GLushort, GL_UNSIGNED_SHORT)
 MAKE_SCALAR_BASE_TYPE_(GLint, GL_INT)
 MAKE_SCALAR_BASE_TYPE_(GLuint, GL_UNSIGNED_INT)
-MAKE_SCALAR_CAST_TYPE_(std::signed_integral, GLint)
-MAKE_SCALAR_CAST_TYPE_(std::unsigned_integral, GLuint)
 
 // Scalar floating-point types.
 MAKE_SCALAR_BASE_TYPE_(GLfloat, GL_FLOAT)
 MAKE_SCALAR_BASE_TYPE_(GLdouble, GL_DOUBLE)
-MAKE_SCALAR_CAST_TYPE_(std::floating_point, GLdouble)
 
 #undef MAKE_SCALAR_BASE_TYPE_
-#undef MAKE_SCALAR_CAST_TYPE_
 
 // GLM vector type.
-template<vertex_array_type Type, //
-         glm::length_t Length, glm::qualifier Qualifier>
-struct VertexArrayTypeTraits<glm::vec<Length, Type, Qualifier>> {
-  using storage_type =
-      glm::vec<Length, vertex_array_storage_type_t<Type>, glm::packed>;
-  [[nodiscard]] static consteval GLenum type_enum() noexcept {
-    return vertex_array_type_enum_v<Type>;
-  }
+template<glm::length_t Length, vertex_attrib_type Type>
+struct VertexAttribTypeTraits<glm::vec<Length, Type, glm::packed>> {
   [[nodiscard]] static consteval GLint length() noexcept {
-    return static_cast<GLint>(Length * vertex_array_type_length_v<Type>);
+    return static_cast<GLint>(Length * vertex_attrib_length_v<Type>);
   }
-}; // VertexArrayTypeTraits<glm::vec>
+  [[nodiscard]] static consteval GLenum type_enum() noexcept {
+    return vertex_attrib_type_enum_v<Type>;
+  }
+}; // VertexAttribTypeTraits<glm::vec>
 
 // GLM matrix type.
-template<vertex_array_type Type, //
-         glm::length_t Rows, glm::length_t Cols, glm::qualifier Qualifier>
-struct VertexArrayTypeTraits<glm::mat<Rows, Cols, Type, Qualifier>> {
-  using storage_type =
-      glm::mat<Rows, Cols, vertex_array_storage_type_t<Type>, glm::packed>;
-  [[nodiscard]] static consteval GLenum type_enum() noexcept {
-    return vertex_array_type_enum_v<Type>;
-  }
+template<glm::length_t Rows, glm::length_t Cols, vertex_attrib_type Type>
+struct VertexAttribTypeTraits<glm::mat<Rows, Cols, Type, glm::packed>> {
   [[nodiscard]] static consteval GLint length() noexcept {
-    return static_cast<GLint>(Rows * Cols * vertex_array_type_length_v<Type>);
+    return static_cast<GLint>(Rows * Cols * vertex_attrib_length_v<Type>);
   }
-}; // VertexArrayTypeTraits<glm::mat>
-
-/// @brief OpenGL vertex array buffer.
-template<vertex_array_type Value>
-class VertexArrayBuffer : public Buffer<vertex_array_storage_type_t<Value>> {
-public:
-
-  /// @brief Construct a vertex array buffer.
-  VertexArrayBuffer() = default;
-
-  /// @brief Construct a vertex array buffer with a range.
-  /// @param usage Intended buffer usage.
-  // clang-format off
-  template<std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, Value>
-  VertexArrayBuffer(Range&& values,
-                    BufferUsage usage = BufferUsage::static_draw)
-      : Buffer<vertex_array_storage_type_t<Value>>{} {
-    // clang-format on
-    assign(std::forward<Range>(values), usage);
+  [[nodiscard]] static consteval GLenum type_enum() noexcept {
+    return vertex_attrib_type_enum_v<Type>;
   }
-
-  /// @brief Move-construct a vertex array buffer.
-  VertexArrayBuffer(VertexArrayBuffer&&) = default;
-  /// @brief Move-assign the vertex array buffer.
-  VertexArrayBuffer& operator=(VertexArrayBuffer&&) = default;
-
-  /// @brief Destruct the buffer.
-  ~VertexArrayBuffer() = default;
-
-  /// @brief Assign the vertex array buffer @p values.
-  /// @param usage Intended buffer usage.
-  // clang-format off
-  template<std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, Value>
-  void assign(Range&& values, BufferUsage usage = BufferUsage::static_draw) {
-    // clang-format on
-    using StorageType = vertex_array_storage_type_t<Value>;
-    Buffer<StorageType>::assign(
-        values | std::views::transform([](const Value& value) {
-          return static_cast<StorageType>(value);
-        }),
-        usage);
-  }
-
-  /// @brief Set the buffer @p value at @p index.
-  void set(size_t index, const Value& value) {
-    using StorageType = vertex_array_storage_type_t<Value>;
-    Buffer<StorageType>::set(index, static_cast<StorageType>(value));
-  }
-
-}; // class VertexArrayBuffer
-
-template<std::ranges::input_range Range, class... T>
-VertexArrayBuffer(Range&&, T...)
-    -> VertexArrayBuffer<std::ranges::range_value_t<Range>>;
+}; // VertexAttribTypeTraits<glm::mat>
 
 /// @brief OpenGL vertex array.
 class VertexArray final : detail_::noncopyable_ {
@@ -321,24 +238,39 @@ public:
   }
 
   /// @brief Build the vertex array buffer.
-  template<std::unsigned_integral Index, vertex_array_type... VertexAttribs>
-  void build(const VertexArrayBuffer<Index>& index_buffer,
-             const VertexArrayBuffer<VertexAttribs>&... vertex_buffers) {
+  /// @{
+  template<vertex_attrib_type... Types>
+  void build(const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-    auto bind_array_buffer =
-        [index = GLuint{}]<class Type>(
-            const VertexArrayBuffer<Type>& vertex_buffer) mutable {
-          glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-          glVertexAttribPointer(index++, //
-                                vertex_array_type_length_v<Type>,
-                                vertex_array_type_enum_v<Type>,
+    (attach_vertex_attribs_(vertex_buffers), ...);
+  }
+  template<vertex_attrib_type... Types>
+  void build_indexed(const Buffer<GLuint>& index_buffer,
+                     const Buffer<Types>&... vertex_buffers) {
+    glBindVertexArray(vertex_array_id_);
+    index_buffer.bind(BufferTarget::element_array_buffer);
+    (attach_vertex_attribs_(vertex_buffers), ...);
+  }
+  /// @}
+
+private:
+
+  template<vertex_attrib_type... Types>
+  static void attach_vertex_attribs_(const Buffer<Types>&... vertex_buffers) {
+    GLuint index{};
+    const auto attach_single_attrib =
+        [&]<class Type>(const Buffer<Type>& vertex_buffer) {
+          vertex_buffer.bind(BufferTarget::array_buffer);
+          glVertexAttribPointer(index, //
+                                vertex_attrib_length_v<Type>,
+                                vertex_attrib_type_enum_v<Type>,
                                 /*normalized*/ GL_FALSE,
                                 /*stride*/ 0,
                                 /*offset*/ nullptr);
           glEnableVertexAttribArray(index);
+          index += 1;
         };
-    (bind_array_buffer(vertex_buffers), ...);
+    (attach_single_attrib(vertex_buffers), ...);
   }
 
 }; // class VertexArray

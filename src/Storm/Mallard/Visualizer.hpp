@@ -70,6 +70,25 @@ void visualize_mesh(const Mesh& mesh) {
       }
     )");
 
+  gl::Shader geometry_shader{gl::ShaderType::geometry};
+  geometry_shader.load(R"(
+      #version 330 core
+      layout(points) in;
+      layout(triangle_strip, max_vertices = 4) out;
+      void main() {
+        vec4 pos = gl_in[0].gl_Position;
+        gl_Position = pos + vec4(-0.002, -0.002, 0.0, 0.0);
+        EmitVertex();   
+        gl_Position = pos + vec4( 0.002, -0.002, 0.0, 0.0);
+        EmitVertex();
+        gl_Position = pos + vec4(-0.002,  0.002, 0.0, 0.0);
+        EmitVertex();
+        gl_Position = pos + vec4( 0.002,  0.002, 0.0, 0.0);
+        EmitVertex();
+        EndPrimitive();
+      }
+    )");
+
   gl::Shader fragment_shader{gl::ShaderType::fragment};
   fragment_shader.load(R"(
       #version 330 core
@@ -77,38 +96,45 @@ void visualize_mesh(const Mesh& mesh) {
       uniform vec3 col;
       void main() {
         color = vec4(col, 1.0);
+        color.x = gl_PrimitiveID/79672.0f;
       }
     )");
 
   gl::Program program;
-  program.load(std::move(vertex_shader), std::move(fragment_shader));
+  program.load(vertex_shader, fragment_shader);
 
-  const gl::VertexArrayBuffer nodes_buffer(
+  gl::Program node_program{};
+  node_program.load(vertex_shader, geometry_shader, fragment_shader);
+
+  const gl::Buffer nodes_buffer(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
-        return node.position();
+        return static_cast<glm::vec2>(node.position());
       }));
-  const gl::VertexArrayBuffer edge_nodes_buffer(
+  const gl::Buffer<GLuint> edge_nodes_buffer(
       edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
         return edge.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
-                 return static_cast<size_t>(node.index());
+                 return static_cast<GLuint>(node.index());
                });
       }) |
       std::views::join);
-  const gl::VertexArrayBuffer cell_nodes_buffer(
+  const gl::Buffer<GLuint> cell_nodes_buffer(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         return cell.nodes() |
                std::views::transform([](NodeView<const Mesh> node) {
-                 return static_cast<size_t>(node.index());
+                 return static_cast<GLuint>(node.index());
                });
       }) |
       std::views::join);
 
+  gl::VertexArray node_vertex_array{};
+  node_vertex_array.build(nodes_buffer);
+
   gl::VertexArray edge_vertex_array{};
-  edge_vertex_array.build(edge_nodes_buffer, nodes_buffer);
+  edge_vertex_array.build_indexed(edge_nodes_buffer, nodes_buffer);
 
   gl::VertexArray cell_vertex_array{};
-  cell_vertex_array.build(cell_nodes_buffer, nodes_buffer);
+  cell_vertex_array.build_indexed(cell_nodes_buffer, nodes_buffer);
 
   // Setup camera.
   scene::Camera camera{};
@@ -166,6 +192,16 @@ void visualize_mesh(const Mesh& mesh) {
     glDrawElements(GL_LINES, num_edges(mesh) * 2, GL_UNSIGNED_INT,
                    /*indices*/ nullptr);
     //  edge_renderer.draw(camera, program, GL_LINES);
+
+    {
+      gl::BindProgram bind_program{node_program};
+      bind_program.set_uniform(program.uniform_location("view_projection"),
+                               camera.view_projection_matrix());
+      bind_program.set_uniform(program.uniform_location("col"),
+                               glm::vec3{0.9f, 0.1f, 0.1f});
+      glBindVertexArray(node_vertex_array.vertex_array_id_);
+      glDrawArrays(GL_POINTS, 0, num_nodes(mesh));
+    }
 
     window.update();
   }

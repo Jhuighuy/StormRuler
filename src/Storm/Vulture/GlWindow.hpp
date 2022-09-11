@@ -22,8 +22,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Vulture/GlBase.hpp>
-
 #include <algorithm>
 #include <concepts>
 #include <functional>

@@ -194,45 +194,49 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup camera.
   scene::Camera camera{};
   camera.set_perspective(16.0 / 9.0);
-  window.on_key_down(
-      [&] {
-        camera.transform().translate(glm::vec3{0.0, +0.05, 0.0});
-      },
-      gl::Key::w);
-  window.on_key_down(
-      [&] {
-        camera.transform().translate(glm::vec3{-0.05, 0.0, 0.0});
-      },
-      gl::Key::a);
-  window.on_key_down(
-      [&] {
-        camera.transform().translate(glm::vec3{0.0, -0.05, 0.0});
-      },
-      gl::Key::s);
-  window.on_key_down(
-      [&] {
-        camera.transform().translate(glm::vec3{+0.05, 0.0, 0.0});
-      },
-      gl::Key::d);
-  window.on_key_down(
-      [&] {
-        camera.transform().rotate_degrees(glm::vec3{0.0, +0.5, 0.0});
-      },
-      gl::Key::q);
-  window.on_key_down(
-      [&] {
-        camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
-      },
-      gl::Key::e);
-  window.on_scroll( //
-      [&](const glm::dvec2& offset) {
-        camera.set_orbit(camera.orbit() - 0.25 * offset.y);
-      });
+  // Reset the camera.
+  window.on_key_up({gl::Key::r},
+                   [&] { camera.transform() = scene::Transform{}; });
+  // Translate the camera.
+  window.on_key_down(gl::Key::w, [&] {
+    camera.transform().translate(glm::vec3{0.0, +0.05, 0.0});
+  });
+  window.on_key_down(gl::Key::a, [&] {
+    camera.transform().translate(glm::vec3{-0.05, 0.0, 0.0});
+  });
+  window.on_key_down(gl::Key::s, [&] {
+    camera.transform().translate(glm::vec3{0.0, -0.05, 0.0});
+  });
+  window.on_key_down(gl::Key::d, [&] {
+    camera.transform().translate(glm::vec3{+0.05, 0.0, 0.0});
+  });
+  // Rotate the camera.
+  window.on_key_up(gl::Key::q, [&] {
+    camera.transform().rotate_degrees(glm::vec3{0.0f, +90.0f, 0.0f});
+  });
+  window.on_key_up(gl::Key::e, [&] {
+    camera.transform().rotate_degrees(glm::vec3{0.0f, -90.0f, 0.0f});
+  });
+  window.on_key_down(gl::Key::up, [&] {
+    camera.transform().rotate_degrees(glm::vec3{+0.5, 0.0, 0.0});
+  });
+  window.on_key_down(gl::Key::down, [&] {
+    camera.transform().rotate_degrees(glm::vec3{-0.5, 0.0, 0.0});
+  });
+  window.on_key_down(gl::Key::left, [&] {
+    camera.transform().rotate_degrees(glm::vec3{0.0, +0.5, 0.0});
+  });
+  window.on_key_down(gl::Key::right, [&] {
+    camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
+  });
+  window.on_scroll([&](const glm::dvec2& offset) {
+    camera.set_orbit(camera.orbit() - 0.25 * offset.y);
+  });
 
   bool draw_nodes = false;
-  window.on_key_up([&] { draw_nodes = !draw_nodes; }, gl::Key::n);
+  window.on_key_up(gl::Key::n, [&] { draw_nodes = !draw_nodes; });
   bool draw_edges = false;
-  window.on_key_up([&] { draw_edges = !draw_edges; }, gl::Key::m);
+  window.on_key_up(gl::Key::m, [&] { draw_edges = !draw_edges; });
 
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.2f, 0.2f, 0.3f, 1.0f);

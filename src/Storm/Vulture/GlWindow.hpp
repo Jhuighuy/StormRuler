@@ -364,33 +364,56 @@ public:
   }
 
   /// @brief Set handler for the key pressed event.
+  /// @{
   template<std::invocable KeyDownFn>
-  void on_key_down(KeyDownFn on_key_down_fn, //
-                   Key key, Modifiers mods = Modifiers::none) {
+  void on_key_down(Key key, KeyDownFn on_key_down_fn) {
+    on_key_down(key, Modifiers::none, std::move(on_key_down_fn));
+  }
+  template<std::invocable KeyDownFn>
+  void on_key_down(Key key, Modifiers mods, KeyDownFn on_key_down_fn) {
     on_key_down_fns_.emplace(std::pair{key, mods}, std::move(on_key_down_fn));
   }
+  /// @}
 
   /// @brief Set handler for the key released event.
+  /// @{
   template<std::invocable KeyUpFn>
-  void on_key_up(KeyUpFn on_key_up_fn, //
-                 Key key, Modifiers mods = Modifiers::none) {
+  void on_key_up(Key key, KeyUpFn on_key_up_fn) {
+    on_key_up(key, Modifiers::none, std::move(on_key_up_fn));
+  }
+  template<std::invocable KeyUpFn>
+  void on_key_up(Key key, Modifiers mods, KeyUpFn on_key_up_fn) {
     on_key_up_fns_.emplace(std::pair{key, mods}, std::move(on_key_up_fn));
   }
+  /// @}
 
   /// @brief Set handler for the mouse button pressed event.
+  /// @{
   template<std::invocable MouseButtonDownFn>
-  void on_mouse_button_down(MouseButtonDownFn on_mouse_button_down_fn,
-                            MouseButton mouse_button,
-                            Modifiers mods = Modifiers::none) {
+  void on_mouse_button_down(MouseButton mouse_button,
+                            MouseButtonDownFn on_mouse_button_down_fn) {
+    on_mouse_button_down(mouse_button, Modifiers::none,
+                         std::move(on_mouse_button_down_fn));
+  }
+  template<std::invocable MouseButtonDownFn>
+  void on_mouse_button_down(MouseButton mouse_button, Modifiers mods,
+                            MouseButtonDownFn on_mouse_button_down_fn) {
     on_mouse_button_down_fns_.emplace(std::pair{mouse_button, mods},
                                       std::move(on_mouse_button_down_fn));
   }
+  /// @}
 
   /// @brief Set handler for the mouse button released event.
-  template<std::invocable KeyUpFn>
-  void on_mouse_button_up(KeyUpFn on_mouse_button_up_fn,
-                          MouseButton mouse_button,
-                          Modifiers mods = Modifiers::none) {
+  /// @{
+  template<std::invocable MouseButtonDownFn>
+  void on_mouse_button_up(MouseButton mouse_button,
+                          MouseButtonDownFn on_mouse_button_up_fn) {
+    on_mouse_button_up(mouse_button, Modifiers::none,
+                       std::move(on_mouse_button_up_fn));
+  }
+  template<std::invocable MouseButtonUpFn>
+  void on_mouse_button_up(MouseButton mouse_button, Modifiers mods,
+                          MouseButtonUpFn on_mouse_button_up_fn) {
     on_mouse_button_up_fns_.emplace(std::pair{mouse_button, mods},
                                     std::move(on_mouse_button_up_fn));
   }

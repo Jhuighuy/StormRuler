@@ -35,7 +35,6 @@ namespace Storm::Vulture::scene {
 class Transform final {
 private:
 
-  const Transform* parent_{};
   glm::vec3 position_{};
   glm::quat rotation_{glm::vec3{}}; // initializes zero rotation.
   glm::vec3 scale_{1.0, 1.0, 1.0};
@@ -44,9 +43,6 @@ public:
 
   /// @brief Construct the transform.
   constexpr Transform() = default;
-
-  /// @brief Construct the transform with @p parent.
-  constexpr explicit Transform(const Transform& parent) : parent_{&parent} {}
 
   /// @brief Transform position.
   [[nodiscard]] constexpr const glm::vec3& position() const noexcept {
@@ -99,9 +95,6 @@ public:
     auto model_matrix = glm::translate(glm::mat4(1.0f), position_) *
                         glm::toMat4(rotation_) *
                         glm::scale(glm::mat4(1.0f), scale_);
-    if (parent_ != nullptr) {
-      model_matrix = parent_->model_matrix() * model_matrix;
-    }
     return model_matrix;
   }
 

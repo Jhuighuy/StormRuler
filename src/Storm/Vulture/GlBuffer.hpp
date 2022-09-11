@@ -58,6 +58,7 @@ class Buffer : detail_::noncopyable_ {
 public:
 
   GLuint buffer_id_;
+  GLsizei buffer_size_ = 0;
 
 public:
 
@@ -91,6 +92,11 @@ public:
     return buffer_id_;
   }
 
+  /// @brief Buffer size.
+  [[nodiscard]] constexpr GLsizei size() const noexcept {
+    return buffer_size_;
+  }
+
   /// @brief Bind the buffer to @p target.
   void bind(BufferTarget target) const {
     glBindBuffer(static_cast<GLenum>(target), buffer_id_);
@@ -105,8 +111,9 @@ public:
     // clang-format on
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
     if constexpr (std::ranges::sized_range<Range>) {
+      buffer_size_ = static_cast<GLsizei>(values.size());
       const auto num_bytes =
-          static_cast<GLsizeiptr>(values.size() * sizeof(Type));
+          static_cast<GLsizeiptr>(buffer_size_ * sizeof(Type));
       glBufferData(GL_ARRAY_BUFFER, num_bytes, /*data*/ nullptr,
                    static_cast<GLenum>(usage));
       const auto pointer =
@@ -119,8 +126,9 @@ public:
     } else {
       std::vector<Type> temp{};
       std::ranges::copy(values, std::back_inserter(temp));
+      buffer_size_ = static_cast<GLsizei>(temp.size());
       const auto num_bytes =
-          static_cast<GLsizeiptr>(temp.size() * sizeof(Type));
+          static_cast<GLsizeiptr>(buffer_size_ * sizeof(Type));
       glBufferData(GL_ARRAY_BUFFER, num_bytes, temp.data(),
                    static_cast<GLenum>(usage));
     }

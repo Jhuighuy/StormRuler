@@ -66,9 +66,9 @@ void visualize_mesh(const Mesh& mesh) {
   window.load(framework, window_title, window_width, window_height);
   gl::BindWindow bind_window{window};
   glViewport(0, 0, window_width, window_height);
+  gl::DebugOutput debug_output{};
 
   // Initialize.
-  gl::DebugOutput debug_output{};
   gl::Shader vertex_shader{gl::ShaderType::vertex};
   vertex_shader.load(R"(
       #version 330 core
@@ -80,27 +80,59 @@ void visualize_mesh(const Mesh& mesh) {
       }
     )");
 
-  gl::Shader geometry_shader{gl::ShaderType::geometry};
-  geometry_shader.load(R"(
+  gl::Shader node_geometry_shader{gl::ShaderType::geometry};
+  node_geometry_shader.load(R"(
       #version 330 core
       layout(points) in;
       layout(triangle_strip, max_vertices = 4) out;
+      out vec2 position;
       void main() {
+        
         vec4 pos = gl_in[0].gl_Position;
-        gl_Position = pos + vec4(-0.002, -0.002, 0.0, 0.0);
+        const vec2 sz = vec2(0.002*9.0/16.0, 0.002);
+
+        position = vec2(-1, -1);
+        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
         EmitVertex();   
-        gl_Position = pos + vec4( 0.002, -0.002, 0.0, 0.0);
+
+        position = vec2(+1, -1);
+        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
         EmitVertex();
-        gl_Position = pos + vec4(-0.002,  0.002, 0.0, 0.0);
+
+        position = vec2(-1, +1);
+        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
         EmitVertex();
-        gl_Position = pos + vec4( 0.002,  0.002, 0.0, 0.0);
+
+        position = vec2(+1, +1);
+        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
         EmitVertex();
+
         EndPrimitive();
       }
     )");
 
-  gl::Shader fragment_shader{gl::ShaderType::fragment};
-  fragment_shader.load(R"(
+  gl::Shader node_fragment_shader{gl::ShaderType::fragment};
+  node_fragment_shader.load(R"(
+      #version 330 core
+      in vec2 position;
+      out vec4 color;
+      void main() {
+        if (length(position) > 1.0f) discard;
+        color = vec4(0.9f, 0.9f, 0.9f, 1.0f);
+      }
+    )");
+
+  gl::Shader edge_fragment_shader{gl::ShaderType::fragment};
+  edge_fragment_shader.load(R"(
+      #version 330 core
+      out vec4 color;
+      void main() {
+        color = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+      }
+    )");
+
+  gl::Shader cell_fragment_shader{gl::ShaderType::fragment};
+  cell_fragment_shader.load(R"(
       #version 330 core
       uniform samplerBuffer values;
       out vec4 color;
@@ -112,11 +144,14 @@ void visualize_mesh(const Mesh& mesh) {
       }
     )");
 
-  gl::Program program;
-  program.load(vertex_shader, fragment_shader);
-
   gl::Program node_program{};
-  node_program.load(vertex_shader, geometry_shader, fragment_shader);
+  node_program.load(vertex_shader, node_geometry_shader, node_fragment_shader);
+
+  gl::Program edge_program{};
+  edge_program.load(vertex_shader, edge_fragment_shader);
+
+  gl::Program cell_program{};
+  cell_program.load(vertex_shader, cell_fragment_shader);
 
   const gl::Buffer nodes_buffer(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
@@ -158,7 +193,6 @@ void visualize_mesh(const Mesh& mesh) {
 
   // Setup camera.
   scene::Camera camera{};
-  camera.transform().translate(glm::vec3{0.0f, 0.0f, 1.0f});
   camera.set_perspective(16.0 / 9.0);
   window.on_key_down(
       [&] {
@@ -190,21 +224,44 @@ void visualize_mesh(const Mesh& mesh) {
         camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
       },
       gl::Key::e);
+  window.on_scroll( //
+      [&](const glm::dvec2& offset) {
+        camera.set_orbit(camera.orbit() - 0.25 * offset.y);
+      });
+
+  bool draw_nodes = false;
+  window.on_key_up([&] { draw_nodes = !draw_nodes; }, gl::Key::n);
+  bool draw_edges = false;
+  window.on_key_up([&] { draw_edges = !draw_edges; }, gl::Key::m);
 
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    gl::BindProgram bind_program{program};
+    const auto view_projection = camera.view_projection_matrix();
 
-    bind_program.set_uniform(program.uniform_location("values"), 0);
-    bind_program.set_uniform(program.uniform_location("view_projection"),
-                             camera.view_projection_matrix());
-    // bind_program.set_uniform(program.uniform_location("col"),
-    //                          glm::vec3{0.9f, 0.9f, 0.9f});
-    glBindVertexArray(cell_vertex_array);
-    glDrawElements(GL_TRIANGLES, num_cells(mesh) * 3, GL_UNSIGNED_INT,
-                   /*indices*/ nullptr);
+    {
+      gl::BindProgram bind_program{cell_program};
+      bind_program.set_uniform(cell_program.uniform_location("values"), 0);
+      bind_program.set_uniform(cell_program.uniform_location("view_projection"),
+                               view_projection);
+      cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
+                                     num_cells(mesh) * 3);
+    }
+
+    if (draw_edges) {
+      gl::BindProgram bind_program{edge_program};
+      bind_program.set_uniform(edge_program.uniform_location("view_projection"),
+                               view_projection);
+      edge_vertex_array.draw_indexed(gl::DrawMode::lines, num_edges(mesh) * 2);
+    }
+
+    if (draw_nodes) {
+      gl::BindProgram bind_program{node_program};
+      bind_program.set_uniform(node_program.uniform_location("view_projection"),
+                               view_projection);
+      node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
+    }
 
 #if 0
     bind_program.set_uniform(program.uniform_location("col"),

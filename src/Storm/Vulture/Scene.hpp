@@ -111,6 +111,8 @@ public:
 class Camera final {
 private:
 
+  float near_ = 0.01f, far_ = 0.99f;
+  float orbit_ = 1.0f;
   Transform transform_{};
   glm::mat4 projection_matrix_{};
 
@@ -132,6 +134,16 @@ public:
   }
   /// @}
 
+  /// @brief Camera orbit.
+  /// @{
+  [[nodiscard]] constexpr float orbit() const noexcept {
+    return orbit_;
+  }
+  constexpr void set_orbit(float orbit) noexcept {
+    orbit_ = std::clamp(orbit, near_, far_);
+  }
+  /// @}
+
   /// @brief Set perspective projection matrix.
   void set_perspective(float aspect_ratio, float fov_degrees = 60.0f,
                        float near = 0.001f, float far = 1000.0f) noexcept {
@@ -139,6 +151,7 @@ public:
     // but actually it is in radians!
     projection_matrix_ =
         glm::perspective(glm::radians(fov_degrees), aspect_ratio, near, far);
+    near_ = near, far_ = far;
   }
 
   /// @brief Set orthographic projection matrix.
@@ -147,12 +160,15 @@ public:
     const float width = aspect_ratio * height;
     projection_matrix_ = glm::ortho(-0.5f * width, +0.5f * width,
                                     -0.5f * height, +0.5f * height, near, far);
+    near_ = near, far_ = far;
   }
 
   /// @brief Camera view-projection matrix.
   /// @todo GLM's matmul operator is not constexpr?
   [[nodiscard]] glm::mat4 view_projection_matrix() const noexcept {
-    const glm::mat4 view_matrix = glm::inverse(transform_.model_matrix());
+    const glm::mat4 view_matrix = glm::inverse(
+        transform_.model_matrix() *
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, orbit_)));
     return projection_matrix_ * view_matrix;
   }
 

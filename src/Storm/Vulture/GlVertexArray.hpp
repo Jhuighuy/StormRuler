@@ -81,6 +81,13 @@ inline constexpr GLint
     vertex_attrib_length_v<glm::mat<Rows, Cols, Type, glm::packed>> =
         (static_cast<GLint>(Rows * Cols * vertex_attrib_length_v<Type>));
 
+/// @brief OpenGL draw mode.
+enum class DrawMode : GLenum {
+  points = GL_POINTS,
+  lines = GL_LINES,
+  triangles = GL_TRIANGLES,
+}; // enum class DrawMode
+
 /// @brief OpenGL vertex array.
 class VertexArray final : detail_::noncopyable_ {
 private:
@@ -114,14 +121,27 @@ public:
   template<vertex_attrib_type... Types>
   void build(const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
-    (attach_vertex_attribs_(vertex_buffers), ...);
+    attach_vertex_attribs_(vertex_buffers...);
   }
   template<vertex_attrib_type... Types>
   void build_indexed(const Buffer<GLuint>& index_buffer,
                      const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
     index_buffer.bind(BufferTarget::element_array_buffer);
-    (attach_vertex_attribs_(vertex_buffers), ...);
+    attach_vertex_attribs_(vertex_buffers...);
+  }
+  /// @}
+
+  /// @brief Draw the vertex array.
+  /// @{
+  void draw(DrawMode mode, GLsizei count) const {
+    glBindVertexArray(vertex_array_id_);
+    glDrawArrays(static_cast<GLenum>(mode), /*first*/ 0, count);
+  }
+  void draw_indexed(DrawMode mode, GLsizei count) const {
+    glBindVertexArray(vertex_array_id_);
+    glDrawElements(static_cast<GLenum>(mode), count, GL_UNSIGNED_INT,
+                   /*indices*/ nullptr);
   }
   /// @}
 

@@ -30,17 +30,17 @@
 namespace Storm::Vulture::gl {
 
 /// @brief OpenGL type enumeration.
-template<class Type>
+template<class>
 inline constexpr GLenum vertex_attrib_type_v = 0;
 
 /// @brief Number of the components in type.
-template<class Type>
+template<class>
 inline constexpr GLint vertex_attrib_length_v = 1;
 
 /// @brief Vertex attribute type.
 // clang-format off
-template<class Type>
-concept vertex_attrib_type = (vertex_attrib_type_v<Type> != 0);
+template<class VertexAttrib>
+concept vertex_attrib = (vertex_attrib_type_v<VertexAttrib> != 0);
 // clang-format on
 
 // Scalar types.
@@ -62,21 +62,21 @@ template<>
 inline constexpr GLenum vertex_attrib_type_v<GLdouble> = GL_DOUBLE;
 
 // GLM vector type.
-template<glm::length_t Length, vertex_attrib_type Type>
+template<glm::length_t Length, vertex_attrib Type>
 inline constexpr GLenum
     vertex_attrib_type_v<glm::vec<Length, Type, glm::packed>> =
         vertex_attrib_type_v<Type>;
-template<glm::length_t Length, vertex_attrib_type Type>
+template<glm::length_t Length, vertex_attrib Type>
 inline constexpr GLint
     vertex_attrib_length_v<glm::vec<Length, Type, glm::packed>> =
         (static_cast<GLint>(Length * vertex_attrib_length_v<Type>));
 
 // GLM matrix type.
-template<glm::length_t Rows, glm::length_t Cols, vertex_attrib_type Type>
+template<glm::length_t Rows, glm::length_t Cols, vertex_attrib Type>
 inline constexpr GLenum
     vertex_attrib_type_v<glm::mat<Rows, Cols, Type, glm::packed>> =
         vertex_attrib_type_v<Type>;
-template<glm::length_t Rows, glm::length_t Cols, vertex_attrib_type Type>
+template<glm::length_t Rows, glm::length_t Cols, vertex_attrib Type>
 inline constexpr GLint
     vertex_attrib_length_v<glm::mat<Rows, Cols, Type, glm::packed>> =
         (static_cast<GLint>(Rows * Cols * vertex_attrib_length_v<Type>));
@@ -118,12 +118,12 @@ public:
 
   /// @brief Build the vertex array buffer.
   /// @{
-  template<vertex_attrib_type... Types>
+  template<vertex_attrib... Types>
   void build(const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
     attach_vertex_attribs_(vertex_buffers...);
   }
-  template<vertex_attrib_type... Types>
+  template<vertex_attrib... Types>
   void build_indexed(const Buffer<GLuint>& index_buffer,
                      const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
@@ -147,13 +147,13 @@ public:
 
 private:
 
-  template<vertex_attrib_type... Types>
+  template<vertex_attrib... Types>
   static void attach_vertex_attribs_(const Buffer<Types>&... vertex_buffers) {
     GLuint index = 0;
     (attach_single_vertex_attrib(index++, vertex_buffers), ...);
   }
 
-  template<vertex_attrib_type Type>
+  template<vertex_attrib Type>
   static void attach_single_vertex_attrib(GLuint index,
                                           const Buffer<Type>& vertex_buffer) {
     vertex_buffer.bind(BufferTarget::array_buffer);

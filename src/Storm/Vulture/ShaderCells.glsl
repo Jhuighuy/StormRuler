@@ -39,7 +39,8 @@ STORM_VULTURE_SHADER_(fragment, R"(
 
 in float node_value;
 
-out vec4 fragment_color;
+layout(location = 0) out vec4 fragment_color;
+layout(location = 1) out uvec2 fragment_entity;
 
 uniform usamplerBuffer cell_states;
 uniform bool use_node_value;
@@ -64,5 +65,6 @@ void main() {
   fragment_color.a = 1.0;
   uint state = texelFetch(cell_states, gl_PrimitiveID).r;
   fragment_color *= state == uint(0) ? regular_color : selected_color;
+  fragment_entity = uvec2(222, gl_PrimitiveID);
 }
 )")

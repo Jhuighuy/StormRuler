@@ -38,9 +38,9 @@ in vec2 texture_coordinates;
 
 out vec4 fragment_color;
 
-uniform sampler2D frame_texture;
+uniform sampler2D color_texture;
 
 void main() {
-  fragment_color = texture2D(frame_texture, texture_coordinates);
+  fragment_color = texture2D(color_texture, texture_coordinates);
 }
 )")

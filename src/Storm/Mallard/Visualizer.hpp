@@ -73,7 +73,8 @@ void visualize_mesh(const Mesh& mesh) {
 
   // Setup framebuffer.
   gl::Texture2D<glm::vec4> color_texture{window_width, window_height};
-  gl::Framebuffer framebuffer{color_texture};
+  gl::Texture2D<glm::uvec2> entity_texture{window_width, window_height};
+  gl::Framebuffer framebuffer{color_texture, entity_texture};
   gl::Buffer screen_quad_buffer{
       std::array{glm::vec2{+1.0f, +1.0f}, glm::vec2{+1.0f, -1.0f},
                  glm::vec2{-1.0f, +1.0f}, glm::vec2{+1.0f, -1.0f},
@@ -200,12 +201,12 @@ void visualize_mesh(const Mesh& mesh) {
 
   window.main_loop([&] {
     framebuffer.draw_into([&]() {
+      glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       const auto view_projection_matrix = camera.view_projection_matrix();
 
       if (draw_cells) {
-        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         gl::BindProgram bind_program{cell_program};
         cell_states_texture_buffer.bind(0);
         cell_data_texture_buffer.bind(1);
@@ -240,9 +241,12 @@ void visualize_mesh(const Mesh& mesh) {
     });
 
     {
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       gl::BindProgram bind_program{screen_quad_program};
       color_texture.bind(0);
-      bind_program.set_uniform(node_program["frame_texture"], 0);
+      entity_texture.bind(1);
+      bind_program.set_uniform(node_program["color_texture"], 0);
       screen_quad_vertex_array.draw(gl::DrawMode::triangles, 6);
     }
   });

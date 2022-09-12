@@ -68,95 +68,18 @@ void visualize_mesh(const Mesh& mesh) {
   glViewport(0, 0, window_width, window_height);
   gl::DebugOutput debug_output{};
 
-  // Initialize.
-  gl::Shader vertex_shader{gl::ShaderType::vertex};
-  vertex_shader.load(R"(
-      #version 330 core
-      layout(location = 0) in vec3 positionMS;
-      uniform mat4 view_projection;
-      void main() {
-        gl_Position = vec4(positionMS, 1.0);
-        gl_Position = view_projection * gl_Position;
-      }
-    )");
-
-  gl::Shader node_geometry_shader{gl::ShaderType::geometry};
-  node_geometry_shader.load(R"(
-      #version 330 core
-      layout(points) in;
-      layout(triangle_strip, max_vertices = 4) out;
-      out vec2 position;
-      void main() {
-        
-        vec4 pos = gl_in[0].gl_Position;
-        const vec2 sz = vec2(0.002*9.0/16.0, 0.002);
-
-        position = vec2(-1, -1);
-        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
-        EmitVertex();   
-
-        position = vec2(+1, -1);
-        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
-        EmitVertex();
-
-        position = vec2(-1, +1);
-        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
-        EmitVertex();
-
-        position = vec2(+1, +1);
-        gl_Position = pos + vec4(sz * position, 0.0, 0.0);
-        EmitVertex();
-
-        EndPrimitive();
-      }
-    )");
-
-  gl::Shader node_fragment_shader{gl::ShaderType::fragment};
-  node_fragment_shader.load(R"(
-      #version 330 core
-      in vec2 position;
-      out vec4 color;
-      void main() {
-        if (length(position) > 1.0f) discard;
-        color = vec4(0.9f, 0.9f, 0.9f, 1.0f);
-      }
-    )");
-
-  gl::Shader edge_fragment_shader{gl::ShaderType::fragment};
-  edge_fragment_shader.load(R"(
-      #version 330 core
-      out vec4 color;
-      void main() {
-        color = vec4(0.8f, 0.8f, 0.8f, 1.0f);
-      }
-    )");
-
-  gl::Shader cell_fragment_shader{gl::ShaderType::fragment};
-  cell_fragment_shader.load(R"(
-      #version 330 core
-      uniform samplerBuffer values;
-      out vec4 color;
-      void main() {
-        float value = texelFetch(values, gl_PrimitiveID).r;
-        value = clamp(value, 0.0f, 1.0f);
-        color.rgb = mix(vec3(0.0f, 0.0f, 1.0f), vec3(1.0f, 0.0f, 0.0f), value);
-        color.a = 1.0f;
-      }
-    )");
-
-  gl::Program node_program{};
-  node_program.load(vertex_shader, node_geometry_shader, node_fragment_shader);
-
-  gl::Program edge_program{};
-  edge_program.load(vertex_shader, edge_fragment_shader);
-
-  gl::Program cell_program{};
-  cell_program.load(vertex_shader, cell_fragment_shader);
-
-  const gl::Buffer nodes_buffer(
+  // Setup nodes.
+  const gl::Buffer node_positions_buffer(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
         return static_cast<glm::vec2>(node.position());
       }));
+  gl::VertexArray node_vertex_array{};
+  node_vertex_array.build(node_positions_buffer);
+  gl::Program node_program{
+#include <Storm/Vulture/ShaderNodes.glsl>
+  };
+
+  // Setup edges.
   const gl::Buffer edge_nodes_buffer(
       edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
         return edge.nodes() |
@@ -165,6 +88,13 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
+  gl::VertexArray edge_vertex_array{};
+  edge_vertex_array.build_indexed(edge_nodes_buffer, node_positions_buffer);
+  gl::Program edge_program{
+#include <Storm/Vulture/ShaderEdges.glsl>
+  };
+
+  // Setup cells.
   const gl::Buffer cell_nodes_buffer(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         return cell.nodes() |
@@ -173,15 +103,11 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-
-  gl::VertexArray node_vertex_array{};
-  node_vertex_array.build(nodes_buffer);
-
-  gl::VertexArray edge_vertex_array{};
-  edge_vertex_array.build_indexed(edge_nodes_buffer, nodes_buffer);
-
   gl::VertexArray cell_vertex_array{};
-  cell_vertex_array.build_indexed(cell_nodes_buffer, nodes_buffer);
+  cell_vertex_array.build_indexed(cell_nodes_buffer, node_positions_buffer);
+  gl::Program cell_program{
+#include <Storm/Vulture/ShaderCells.glsl>
+  };
 
   // Setup data.
   const gl::Buffer cell_data_buffer(cell_data);
@@ -251,28 +177,33 @@ void visualize_mesh(const Mesh& mesh) {
     glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const auto view_projection = camera.view_projection_matrix();
+    const auto view_projection_matrix = camera.view_projection_matrix();
 
     {
       gl::BindProgram bind_program{cell_program};
-      bind_program.set_uniform(cell_program.uniform_location("values"), 0);
-      bind_program.set_uniform(cell_program.uniform_location("view_projection"),
-                               view_projection);
+      bind_program.set_uniform(cell_program.uniform_location("cell_values"), 0);
+      bind_program.set_uniform(
+          cell_program.uniform_location("view_projection_matrix"),
+          view_projection_matrix);
       cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
                                      num_cells(mesh) * 3);
     }
 
     if (draw_edges) {
       gl::BindProgram bind_program{edge_program};
-      bind_program.set_uniform(edge_program.uniform_location("view_projection"),
-                               view_projection);
+      bind_program.set_uniform(
+          edge_program.uniform_location("view_projection_matrix"),
+          view_projection_matrix);
       edge_vertex_array.draw_indexed(gl::DrawMode::lines, num_edges(mesh) * 2);
     }
 
     if (draw_nodes) {
       gl::BindProgram bind_program{node_program};
-      bind_program.set_uniform(node_program.uniform_location("view_projection"),
-                               view_projection);
+      bind_program.set_uniform(
+          node_program.uniform_location("view_projection_matrix"),
+          view_projection_matrix);
+      bind_program.set_uniform(node_program.uniform_location("point_size"),
+                               glm::vec2{0.002f * 9.0f / 16.0f, 0.002f});
       node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
     }
   });

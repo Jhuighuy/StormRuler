@@ -28,6 +28,7 @@
 #include <Storm/Vulture/GlBuffer.hpp>
 #include <Storm/Vulture/GlDebug.hpp>
 #include <Storm/Vulture/GlShader.hpp>
+#include <Storm/Vulture/GlTexture.hpp>
 #include <Storm/Vulture/GlVertexArray.hpp>
 #include <Storm/Vulture/GlWindow.hpp>
 #include <Storm/Vulture/Scene.hpp>
@@ -78,6 +79,13 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Program node_program{
 #include <Storm/Vulture/ShaderNodes.glsl>
   };
+  // Set up node data.
+  const gl::Buffer<GLuint> node_states_buffer(
+      nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
+        return GLuint{(size_t) node.index() % 2 == 0};
+      }));
+  const gl::TextureBuffer node_states_texture_buffer{node_states_buffer,
+                                                     GL_R32UI};
 
   // Setup edges.
   const gl::Buffer edge_nodes_buffer(
@@ -108,14 +116,9 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Program cell_program{
 #include <Storm/Vulture/ShaderCells.glsl>
   };
-
-  // Setup data.
+  // Setup cell data.
   const gl::Buffer cell_data_buffer(cell_data);
-  GLuint texture_id_;
-  glGenTextures(1, &texture_id_);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_BUFFER, texture_id_);
-  glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, cell_data_buffer);
+  const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer, GL_R32F};
 
   // Setup camera.
   scene::Camera camera{};
@@ -181,6 +184,7 @@ void visualize_mesh(const Mesh& mesh) {
 
     {
       gl::BindProgram bind_program{cell_program};
+      cell_data_texture_buffer.bind(0);
       bind_program.set_uniform(cell_program.uniform_location("cell_values"), 0);
       bind_program.set_uniform(
           cell_program.uniform_location("view_projection_matrix"),
@@ -199,6 +203,8 @@ void visualize_mesh(const Mesh& mesh) {
 
     if (draw_nodes) {
       gl::BindProgram bind_program{node_program};
+      node_states_texture_buffer.bind(0);
+      bind_program.set_uniform(node_program.uniform_location("node_states"), 0);
       bind_program.set_uniform(
           node_program.uniform_location("view_projection_matrix"),
           view_projection_matrix);

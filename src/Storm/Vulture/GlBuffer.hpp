@@ -55,7 +55,7 @@ enum class BufferTarget : GLenum {
 /// @brief OpenGL buffer.
 template<class Type>
 class Buffer : detail_::noncopyable_ {
-public:
+private:
 
   GLuint buffer_id_;
   GLsizei buffer_size_ = 0;

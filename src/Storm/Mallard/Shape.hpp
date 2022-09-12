@@ -58,7 +58,7 @@ public:
 
   /// @brief AABB center.
   [[nodiscard]] constexpr Vec center() const noexcept {
-    return (max_ + min_) / 2;
+    return 0.5 * (max_ + min_);
   }
   /// @brief AABB extents.
   [[nodiscard]] constexpr Vec extents() const noexcept {

@@ -181,7 +181,7 @@ public:
 
   /// @brief Bind the @p program.
   explicit BindProgram(const Program& program) {
-    STORM_ASSERT_(program, "Invalid program!");
+    STORM_ASSERT_(program != 0, "Invalid program!");
     glUseProgram(program);
   }
 

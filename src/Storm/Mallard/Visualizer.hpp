@@ -81,8 +81,7 @@ void visualize_mesh(const Mesh& mesh) {
   };
   // Setup node data.
   gl::Buffer<GLuint> node_states_buffer(num_nodes(mesh));
-  const gl::TextureBuffer node_states_texture_buffer{node_states_buffer,
-                                                     GL_R32UI};
+  const gl::TextureBuffer node_states_texture_buffer{node_states_buffer};
 
   // Setup edges.
   const gl::Buffer edge_nodes_buffer(
@@ -100,8 +99,7 @@ void visualize_mesh(const Mesh& mesh) {
   };
   // Setup edge data.
   gl::Buffer<GLuint> edge_states_buffer(num_edges(mesh));
-  const gl::TextureBuffer edge_states_texture_buffer{edge_states_buffer,
-                                                     GL_R32UI};
+  const gl::TextureBuffer edge_states_texture_buffer{edge_states_buffer};
 
   // Setup cells.
   const gl::Buffer cell_nodes_buffer(
@@ -119,10 +117,9 @@ void visualize_mesh(const Mesh& mesh) {
   };
   // Setup cell data.
   const gl::Buffer cell_data_buffer(cell_data);
-  const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer, GL_R32F};
+  const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer};
   gl::Buffer<GLuint> cell_states_buffer(num_cells(mesh));
-  const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer,
-                                                     GL_R32UI};
+  const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer};
 
   NodeView node(mesh, NodeIndex{13});
   node_states_buffer.set(static_cast<size_t>(node.index()), 1);

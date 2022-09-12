@@ -37,6 +37,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define STORM_VULTURE_SHADER_(type, source) \
+  []() { return gl::Shader{gl::ShaderType::type, source}; }(),
+
 namespace Storm::Vulture::gl {
 
 /// @brief OpenGL shader type.
@@ -56,8 +59,12 @@ private:
 public:
 
   /// @brief Construct a shader.
-  Shader(ShaderType type) {
+  explicit Shader(ShaderType type) {
     shader_id_ = glCreateShader(static_cast<GLenum>(type));
+  }
+  /// @brief Construct a shader with @p source.
+  Shader(ShaderType type, std::string_view source) : Shader{type} {
+    load(source);
   }
 
   /// @brief Move-construct a shader.
@@ -108,6 +115,11 @@ public:
   Program() {
     program_id_ = glCreateProgram();
   }
+  /// @brief Construct a program with @p shaders.
+  template<std::same_as<Shader>... Shader>
+  explicit Program(const Shader&... shaders) : Program() {
+    load(shaders...);
+  }
 
   /// @brief Move-construct a program.
   Program(Program&&) = default;
@@ -119,7 +131,7 @@ public:
     glDeleteProgram(program_id_);
   }
 
-  /// @brief Load the program from shaders.
+  /// @brief Load the program with @p shaders.
   template<std::same_as<Shader>... Shader>
   void load(const Shader&... shaders) {
     // Attach the shaders.

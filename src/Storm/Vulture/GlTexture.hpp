@@ -24,6 +24,8 @@
 
 #include <Storm/Vulture/GlBuffer.hpp>
 
+#include <concepts>
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -167,6 +169,11 @@ public:
   /// @brief Construct a 2D texture.
   Texture2D() = default;
 
+  /// @brief Consruct a 2D texture with @p width and @p height;
+  Texture2D(GLsizei width, GLsizei height) : Texture2D{} {
+    assign(width, height);
+  }
+
   /// @brief Bind the texture buffer to @p slot.
   void bind(size_t slot) const {
     bind_(TextureTarget::texture2D, slot);
@@ -180,6 +187,11 @@ public:
         /*level*/ 0, pixel_desc_v<Pixel>.internal_format, width, height,
         /*border*/ 0, pixel_desc_v<Pixel>.format, pixel_desc_v<Pixel>.type,
         /*data*/ nullptr);
+    /// @todo Sampling properties!
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   }
 
 }; // class Texture2D

@@ -27,6 +27,7 @@
 
 #include <Storm/Vulture/GlBuffer.hpp>
 #include <Storm/Vulture/GlDebug.hpp>
+#include <Storm/Vulture/GlFramebuffer.hpp>
 #include <Storm/Vulture/GlShader.hpp>
 #include <Storm/Vulture/GlTexture.hpp>
 #include <Storm/Vulture/GlVertexArray.hpp>
@@ -69,6 +70,18 @@ void visualize_mesh(const Mesh& mesh) {
   gl::BindWindow bind_window{window};
   glViewport(0, 0, window_width, window_height);
   gl::DebugOutput debug_output{};
+
+  // Setup framebuffer.
+  gl::Texture2D<glm::vec4> color_texture{window_width, window_height};
+  gl::Framebuffer framebuffer{color_texture};
+  gl::Buffer screen_quad_buffer{
+      std::array{glm::vec2{+1.0f, +1.0f}, glm::vec2{+1.0f, -1.0f},
+                 glm::vec2{-1.0f, +1.0f}, glm::vec2{+1.0f, -1.0f},
+                 glm::vec2{-1.0f, -1.0f}, glm::vec2{-1.0f, +1.0f}}};
+  gl::VertexArray screen_quad_vertex_array{screen_quad_buffer};
+  gl::Program screen_quad_program{
+#include <Storm/Vulture/ShaderScreenQuad.glsl>
+  };
 
   // Setup nodes.
   const gl::Buffer node_positions_buffer(
@@ -186,41 +199,51 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
 
   window.main_loop([&] {
-    glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    framebuffer.draw_into([&]() {
+      const auto view_projection_matrix = camera.view_projection_matrix();
 
-    const auto view_projection_matrix = camera.view_projection_matrix();
+      if (draw_cells) {
+        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (draw_cells) {
-      gl::BindProgram bind_program{cell_program};
-      cell_states_texture_buffer.bind(0);
-      cell_data_texture_buffer.bind(1);
-      bind_program.set_uniform(cell_program["cell_states"], 0);
-      bind_program.set_uniform(cell_program["cell_values"], 1);
-      bind_program.set_uniform(cell_program["view_projection_matrix"],
-                               view_projection_matrix);
-      cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
-                                     num_cells(mesh) * 3);
-    }
+        gl::BindProgram bind_program{cell_program};
+        cell_states_texture_buffer.bind(0);
+        cell_data_texture_buffer.bind(1);
+        bind_program.set_uniform(cell_program["cell_states"], 0);
+        bind_program.set_uniform(cell_program["cell_values"], 1);
+        bind_program.set_uniform(cell_program["view_projection_matrix"],
+                                 view_projection_matrix);
+        cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
+                                       num_cells(mesh) * 3);
+      }
 
-    if (draw_edges) {
-      gl::BindProgram bind_program{edge_program};
-      edge_states_texture_buffer.bind(0);
-      bind_program.set_uniform(edge_program["edge_states"], 0);
-      bind_program.set_uniform(edge_program["view_projection_matrix"],
-                               view_projection_matrix);
-      edge_vertex_array.draw_indexed(gl::DrawMode::lines, num_edges(mesh) * 2);
-    }
+      if (draw_edges) {
+        gl::BindProgram bind_program{edge_program};
+        edge_states_texture_buffer.bind(0);
+        bind_program.set_uniform(edge_program["edge_states"], 0);
+        bind_program.set_uniform(edge_program["view_projection_matrix"],
+                                 view_projection_matrix);
+        edge_vertex_array.draw_indexed(gl::DrawMode::lines,
+                                       num_edges(mesh) * 2);
+      }
 
-    if (draw_nodes) {
-      gl::BindProgram bind_program{node_program};
-      node_states_texture_buffer.bind(0);
-      bind_program.set_uniform(node_program["node_states"], 0);
-      bind_program.set_uniform(node_program["view_projection_matrix"],
-                               view_projection_matrix);
-      bind_program.set_uniform(node_program["point_size"],
-                               glm::vec2{0.002f * 9.0f / 16.0f, 0.002f});
-      node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
+      if (draw_nodes) {
+        gl::BindProgram bind_program{node_program};
+        node_states_texture_buffer.bind(0);
+        bind_program.set_uniform(node_program["node_states"], 0);
+        bind_program.set_uniform(node_program["view_projection_matrix"],
+                                 view_projection_matrix);
+        bind_program.set_uniform(node_program["point_size"],
+                                 glm::vec2{0.002f * 9.0f / 16.0f, 0.002f});
+        node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
+      }
+    });
+
+    {
+      gl::BindProgram bind_program{screen_quad_program};
+      color_texture.bind(0);
+      bind_program.set_uniform(node_program["frame_texture"], 0);
+      screen_quad_vertex_array.draw(gl::DrawMode::triangles, 6);
     }
   });
 }

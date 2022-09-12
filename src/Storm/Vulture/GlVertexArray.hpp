@@ -89,7 +89,7 @@ public:
   /// @brief Construct a vertex array with buffers.
   /// @{
   template<vertex_attrib... Types>
-  VertexArray(const Buffer<Types>&... vertex_buffers) : VertexArray{} {
+  explicit VertexArray(const Buffer<Types>&... vertex_buffers) : VertexArray{} {
     assign(vertex_buffers...);
   }
   template<vertex_attrib... Types>

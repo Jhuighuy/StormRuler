@@ -49,7 +49,7 @@ struct pixel_desc_t {
 /// Copied straightly from the OpenGL ES 3.0's `glTexImage2D`
 /// sized internal format table.
 template<class Pixel>
-inline constexpr auto default_pixel_desc_v = []() -> pixel_desc_t {
+inline constexpr auto pixel_desc_v = []() -> pixel_desc_t {
   if constexpr (std::same_as<Pixel, GLbyte>)
     return {GL_R8I, GL_RED_INTEGER, GL_BYTE};
   if constexpr (std::same_as<Pixel, GLubyte>)
@@ -113,6 +113,12 @@ inline constexpr auto default_pixel_desc_v = []() -> pixel_desc_t {
   return {};
 }();
 
+/// @brief Pixel type.
+// clang-format off
+template<class Pixel>
+concept pixel = (pixel_desc_v<Pixel>.internal_format != 0);
+// clang-format on
+
 /// @brief OpenGL texture.
 class Texture : detail_::noncopyable_ {
 private:
@@ -141,21 +147,20 @@ public:
     return texture_id_;
   }
 
-  /// @brief Bind the texture to @p target.
-  /// @{
-  void bind(TextureTarget target) const {
+protected:
+
+  void bind_(TextureTarget target) const {
     glBindTexture(static_cast<GLenum>(target), texture_id_);
   }
-  void bind(TextureTarget target, size_t slot) const {
+  void bind_(TextureTarget target, size_t slot) const {
     glActiveTexture(GL_TEXTURE0 + slot);
-    bind(target);
+    bind_(target);
   }
-  /// @}
 
 }; // class Texture
 
 /// @brief OpenGL 2D texture.
-template<class Pixel, pixel_desc_t PixelDesc = default_pixel_desc_v<Pixel>>
+template<pixel Pixel>
 class Texture2D : public Texture {
 public:
 
@@ -164,16 +169,17 @@ public:
 
   /// @brief Bind the texture buffer to @p slot.
   void bind(size_t slot) const {
-    Texture::bind(TextureTarget::texture2D, slot);
+    bind_(TextureTarget::texture2D, slot);
   }
 
   /// @brief Assign the texture width and height.
   void assign(GLsizei width, GLsizei height) {
-    Texture::bind(TextureTarget::texture2D);
-    glTexImage2D(GL_TEXTURE_2D,
-                 /*level*/ 0, PixelDesc.internal_format, width, height,
-                 /*border*/ 0, PixelDesc.format, PixelDesc.type,
-                 /*data*/ nullptr);
+    bind_(TextureTarget::texture2D);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        /*level*/ 0, pixel_desc_v<Pixel>.internal_format, width, height,
+        /*border*/ 0, pixel_desc_v<Pixel>.format, pixel_desc_v<Pixel>.type,
+        /*data*/ nullptr);
   }
 
 }; // class Texture2D
@@ -183,23 +189,21 @@ class TextureBuffer : public Texture {
 public:
 
   /// @brief Construct a texture.
-  // clang-format off
-  template<class Pixel>
+  template<pixel Pixel>
   TextureBuffer(const Buffer<Pixel>& buffer) {
-    // clang-format on
     assign(buffer);
   }
 
   /// @brief Bind the texture buffer to @p slot.
   void bind(size_t slot) const {
-    Texture::bind(TextureTarget::texture_buffer, slot);
+    bind_(TextureTarget::texture_buffer, slot);
   }
 
   /// @brief Assign the texture buffer underlying @p buffer.
-  template<class Pixel, pixel_desc_t PixelDesc = default_pixel_desc_v<Pixel>>
+  template<pixel Pixel>
   void assign(const Buffer<Pixel>& buffer) {
-    Texture::bind(TextureTarget::texture_buffer);
-    glTexBuffer(GL_TEXTURE_BUFFER, PixelDesc.internal_format, buffer);
+    bind_(TextureTarget::texture_buffer);
+    glTexBuffer(GL_TEXTURE_BUFFER, pixel_desc_v<Pixel>.internal_format, buffer);
   }
 
 }; // class TextureBuffer

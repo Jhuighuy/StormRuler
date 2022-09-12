@@ -29,6 +29,13 @@
 
 namespace Storm::Vulture::gl {
 
+/// @brief OpenGL draw mode.
+enum class DrawMode : GLenum {
+  points = GL_POINTS,
+  lines = GL_LINES,
+  triangles = GL_TRIANGLES,
+}; // enum class DrawMode
+
 /// @brief OpenGL type enumeration.
 template<class Type>
 inline constexpr GLenum vertex_attrib_type_v = [] {
@@ -61,12 +68,10 @@ inline constexpr GLint
     vertex_attrib_length_v<glm::vec<Length, Type, glm::packed>> =
         static_cast<GLint>(Length);
 
-/// @brief OpenGL draw mode.
-enum class DrawMode : GLenum {
-  points = GL_POINTS,
-  lines = GL_LINES,
-  triangles = GL_TRIANGLES,
-}; // enum class DrawMode
+struct indexed_t {};
+
+/// @brief Indexed vertex array helper.
+inline constexpr indexed_t indexed_v{};
 
 /// @brief OpenGL vertex array.
 class VertexArray final : detail_::noncopyable_ {
@@ -80,6 +85,21 @@ public:
   VertexArray() {
     glGenVertexArrays(1, &vertex_array_id_);
   }
+
+  /// @brief Construct a vertex array with buffers.
+  /// @{
+  template<vertex_attrib... Types>
+  VertexArray(const Buffer<Types>&... vertex_buffers) : VertexArray{} {
+    assign(vertex_buffers...);
+  }
+  template<vertex_attrib... Types>
+  VertexArray(indexed_t, //
+              const Buffer<GLuint>& index_buffer,
+              const Buffer<Types>&... vertex_buffers)
+      : VertexArray{} {
+    assign_indexed(index_buffer, vertex_buffers...);
+  }
+  /// @}
 
   /// @brief Move-construct a vertex array.
   VertexArray(VertexArray&&) = default;
@@ -99,13 +119,13 @@ public:
   /// @brief Build the vertex array buffer.
   /// @{
   template<vertex_attrib... Types>
-  void build(const Buffer<Types>&... vertex_buffers) {
+  void assign(const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
     attach_vertex_attribs_(vertex_buffers...);
   }
   template<vertex_attrib... Types>
-  void build_indexed(const Buffer<GLuint>& index_buffer,
-                     const Buffer<Types>&... vertex_buffers) {
+  void assign_indexed(const Buffer<GLuint>& index_buffer,
+                      const Buffer<Types>&... vertex_buffers) {
     glBindVertexArray(vertex_array_id_);
     index_buffer.bind(BufferTarget::element_array_buffer);
     attach_vertex_attribs_(vertex_buffers...);

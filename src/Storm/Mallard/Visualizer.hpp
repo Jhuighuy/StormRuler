@@ -60,6 +60,7 @@ void visualize_mesh(const Mesh& mesh) {
 
   gl::Framework framework{};
 
+  // Setup window.
   constexpr static const char* window_title = "Strom::Vulture Visualizer";
   constexpr static size_t window_width = 1600;
   constexpr static size_t window_height = 900;
@@ -74,8 +75,7 @@ void visualize_mesh(const Mesh& mesh) {
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
         return static_cast<glm::vec2>(node.position());
       }));
-  gl::VertexArray node_vertex_array{};
-  node_vertex_array.build(node_positions_buffer);
+  gl::VertexArray node_vertex_array{node_positions_buffer};
   gl::Program node_program{
 #include <Storm/Vulture/ShaderNodes.glsl>
   };
@@ -92,8 +92,8 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-  gl::VertexArray edge_vertex_array{};
-  edge_vertex_array.build_indexed(edge_nodes_buffer, node_positions_buffer);
+  gl::VertexArray edge_vertex_array{gl::indexed_v, //
+                                    edge_nodes_buffer, node_positions_buffer};
   gl::Program edge_program{
 #include <Storm/Vulture/ShaderEdges.glsl>
   };
@@ -110,8 +110,8 @@ void visualize_mesh(const Mesh& mesh) {
                });
       }) |
       std::views::join);
-  gl::VertexArray cell_vertex_array{};
-  cell_vertex_array.build_indexed(cell_nodes_buffer, node_positions_buffer);
+  gl::VertexArray cell_vertex_array{gl::indexed_v, //
+                                    cell_nodes_buffer, node_positions_buffer};
   gl::Program cell_program{
 #include <Storm/Vulture/ShaderCells.glsl>
   };

@@ -30,8 +30,17 @@
 namespace Storm::Vulture::gl {
 
 /// @brief OpenGL type enumeration.
-template<class>
-inline constexpr GLenum vertex_attrib_type_v = 0;
+template<class Type>
+inline constexpr GLenum vertex_attrib_type_v = [] {
+  if constexpr (std::same_as<Type, GLbyte>) return GL_BYTE;
+  if constexpr (std::same_as<Type, GLubyte>) return GL_UNSIGNED_BYTE;
+  if constexpr (std::same_as<Type, GLshort>) return GL_SHORT;
+  if constexpr (std::same_as<Type, GLushort>) return GL_UNSIGNED_SHORT;
+  if constexpr (std::same_as<Type, GLint>) return GL_INT;
+  if constexpr (std::same_as<Type, GLuint>) return GL_UNSIGNED_INT;
+  if constexpr (std::same_as<Type, GLfloat>) return GL_FLOAT;
+  if constexpr (std::same_as<Type, GLdouble>) return GL_DOUBLE;
+}();
 
 /// @brief Number of the components in type.
 template<class>
@@ -43,25 +52,6 @@ template<class VertexAttrib>
 concept vertex_attrib = (vertex_attrib_type_v<VertexAttrib> != 0);
 // clang-format on
 
-// Scalar types.
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLbyte> = GL_BYTE;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLubyte> = GL_UNSIGNED_BYTE;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLshort> = GL_SHORT;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLushort> = GL_UNSIGNED_SHORT;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLint> = GL_INT;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLuint> = GL_UNSIGNED_INT;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLfloat> = GL_FLOAT;
-template<>
-inline constexpr GLenum vertex_attrib_type_v<GLdouble> = GL_DOUBLE;
-
-// GLM vector type.
 template<glm::length_t Length, vertex_attrib Type>
 inline constexpr GLenum
     vertex_attrib_type_v<glm::vec<Length, Type, glm::packed>> =
@@ -69,17 +59,7 @@ inline constexpr GLenum
 template<glm::length_t Length, vertex_attrib Type>
 inline constexpr GLint
     vertex_attrib_length_v<glm::vec<Length, Type, glm::packed>> =
-        (static_cast<GLint>(Length * vertex_attrib_length_v<Type>));
-
-// GLM matrix type.
-template<glm::length_t Rows, glm::length_t Cols, vertex_attrib Type>
-inline constexpr GLenum
-    vertex_attrib_type_v<glm::mat<Rows, Cols, Type, glm::packed>> =
-        vertex_attrib_type_v<Type>;
-template<glm::length_t Rows, glm::length_t Cols, vertex_attrib Type>
-inline constexpr GLint
-    vertex_attrib_length_v<glm::mat<Rows, Cols, Type, glm::packed>> =
-        (static_cast<GLint>(Rows * Cols * vertex_attrib_length_v<Type>));
+        static_cast<GLint>(Length);
 
 /// @brief OpenGL draw mode.
 enum class DrawMode : GLenum {

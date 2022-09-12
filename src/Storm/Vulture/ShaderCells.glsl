@@ -41,8 +41,12 @@ in float node_value;
 
 out vec4 fragment_color;
 
+uniform usamplerBuffer cell_states;
 uniform bool use_node_value;
 uniform samplerBuffer cell_values;
+
+const vec4 regular_color = vec4(1.0, 1.0, 1.0, 1.0);
+const vec4 selected_color = vec4(0.2, 0.8, 0.8, 1.0);
 
 float get_value() {
   if (use_node_value) {
@@ -58,5 +62,7 @@ void main() {
   value = clamp(value, 0.0, 1.0);
   fragment_color.rgb = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.0, 0.0), value);
   fragment_color.a = 1.0;
+  uint state = texelFetch(cell_states, gl_PrimitiveID).r;
+  fragment_color *= state == uint(0) ? regular_color : selected_color;
 }
 )")

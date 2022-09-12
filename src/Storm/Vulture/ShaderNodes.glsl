@@ -81,11 +81,11 @@ out vec4 fragment_color;
 const vec4 regular_color = vec4(0.9, 0.9, 0.9, 1.0);
 const vec4 selected_color = vec4(0.9, 0.1, 0.9, 1.0);
 
-uniform usamplerBuffer node_state;
+uniform usamplerBuffer node_states;
 
 void main() {
   if (length(position_model_space) > 1.0) { discard; }
-  uint state = texelFetch(node_state, gl_PrimitiveID).r;
+  uint state = texelFetch(node_states, gl_PrimitiveID).r;
   fragment_color = state == uint(0) ? regular_color : selected_color;
 }
 )")

@@ -79,11 +79,8 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Program node_program{
 #include <Storm/Vulture/ShaderNodes.glsl>
   };
-  // Set up node data.
-  const gl::Buffer<GLuint> node_states_buffer(
-      nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
-        return GLuint{(size_t) node.index() % 2 == 0};
-      }));
+  // Setup node data.
+  gl::Buffer<GLuint> node_states_buffer(num_nodes(mesh));
   const gl::TextureBuffer node_states_texture_buffer{node_states_buffer,
                                                      GL_R32UI};
 
@@ -101,6 +98,10 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Program edge_program{
 #include <Storm/Vulture/ShaderEdges.glsl>
   };
+  // Setup edge data.
+  gl::Buffer<GLuint> edge_states_buffer(num_edges(mesh));
+  const gl::TextureBuffer edge_states_texture_buffer{edge_states_buffer,
+                                                     GL_R32UI};
 
   // Setup cells.
   const gl::Buffer cell_nodes_buffer(
@@ -119,6 +120,15 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup cell data.
   const gl::Buffer cell_data_buffer(cell_data);
   const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer, GL_R32F};
+  gl::Buffer<GLuint> cell_states_buffer(num_cells(mesh));
+  const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer,
+                                                     GL_R32UI};
+
+  NodeView node(mesh, NodeIndex{13});
+  node_states_buffer.set(static_cast<size_t>(node.index()), 1);
+  node.for_each_edge([&](auto edge) { //
+    edge_states_buffer.set(static_cast<size_t>(edge.index()), 1);
+  });
 
   // Setup camera.
   scene::Camera camera{};
@@ -175,6 +185,8 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::n, [&] { draw_nodes = !draw_nodes; });
   bool draw_edges = false;
   window.on_key_up(gl::Key::m, [&] { draw_edges = !draw_edges; });
+  bool draw_cells = true;
+  window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
 
   window.main_loop([&] {
     glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
@@ -182,10 +194,12 @@ void visualize_mesh(const Mesh& mesh) {
 
     const auto view_projection_matrix = camera.view_projection_matrix();
 
-    {
+    if (draw_cells) {
       gl::BindProgram bind_program{cell_program};
-      cell_data_texture_buffer.bind(0);
-      bind_program.set_uniform(cell_program.uniform_location("cell_values"), 0);
+      cell_states_texture_buffer.bind(0);
+      cell_data_texture_buffer.bind(1);
+      bind_program.set_uniform(cell_program.uniform_location("cell_states"), 0);
+      bind_program.set_uniform(cell_program.uniform_location("cell_values"), 1);
       bind_program.set_uniform(
           cell_program.uniform_location("view_projection_matrix"),
           view_projection_matrix);
@@ -195,6 +209,8 @@ void visualize_mesh(const Mesh& mesh) {
 
     if (draw_edges) {
       gl::BindProgram bind_program{edge_program};
+      edge_states_texture_buffer.bind(0);
+      bind_program.set_uniform(edge_program.uniform_location("edge_states"), 0);
       bind_program.set_uniform(
           edge_program.uniform_location("view_projection_matrix"),
           view_projection_matrix);

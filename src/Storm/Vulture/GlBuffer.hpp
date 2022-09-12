@@ -67,6 +67,18 @@ public:
     glGenBuffers(1, &buffer_id_);
   }
 
+  /// @brief Construct a buffer with a size.
+  /// @param usage Intended buffer usage.
+  Buffer(GLsizei size) : Buffer{} {
+    assign(size);
+  }
+
+  /// @brief Construct a buffer with a @p size copies of @p value.
+  /// @param usage Intended buffer usage.
+  Buffer(GLsizei size, const Type& value) : Buffer{} {
+    assign(size, value);
+  }
+
   /// @brief Construct a buffer with a range.
   /// @param usage Intended buffer usage.
   // clang-format off
@@ -102,6 +114,25 @@ public:
     glBindBuffer(static_cast<GLenum>(target), buffer_id_);
   }
 
+  /// @brief Assign the buffer @p size.
+  /// @param usage Intended buffer usage.
+  void assign(GLsizei size, BufferUsage usage = BufferUsage::static_draw) {
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
+    buffer_size_ = size;
+    const auto num_bytes = static_cast<GLsizeiptr>(size * sizeof(Type));
+    glBufferData(GL_ARRAY_BUFFER, num_bytes, /*data*/ nullptr,
+                 static_cast<GLenum>(usage));
+  }
+
+  /// @brief Assign the buffer @p size copies of @p value.
+  void assign(GLsizei size, const Type& value,
+              BufferUsage usage = BufferUsage::static_draw) {
+    /// @todo C++23:
+    // assign(std::views::repeat(value, size));
+    assign(std::views::iota(size) |
+           std::views::transform([&](auto) { return value; }));
+  }
+
   /// @brief Assign the buffer @p values.
   /// @param usage Intended buffer usage.
   // clang-format off
@@ -111,11 +142,7 @@ public:
     // clang-format on
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
     if constexpr (std::ranges::sized_range<Range>) {
-      buffer_size_ = static_cast<GLsizei>(values.size());
-      const auto num_bytes =
-          static_cast<GLsizeiptr>(buffer_size_ * sizeof(Type));
-      glBufferData(GL_ARRAY_BUFFER, num_bytes, /*data*/ nullptr,
-                   static_cast<GLenum>(usage));
+      assign(static_cast<GLsizei>(values.size()));
       const auto pointer =
           static_cast<Type*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
       if (pointer == nullptr) { STORM_THROW_GL_("Failed to map the buffer!"); }

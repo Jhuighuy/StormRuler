@@ -89,15 +89,16 @@ void stormNonlinSolve2(const SolverType& method, //
 
 } // stormNonLinSolve2
 
-//tau - time step
-//Gamma - lambda^2
-//sigma - const stab (num meth)
-//Sigma - ??
-//Try Sigma = 1??
-static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0;//10.0;
+// tau - time step
+// Gamma - lambda^2
+// sigma - const stab (num meth)
+// Sigma - ??
+// Try Sigma = 1??
+static double tau = 1.0e-2, Gamma = 1.0e-4, sigma = 1.0, Sigma = 10.0; // 10.0;
 static double Mobility;
 
-static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c, const std::vector<double>& BV) {
+static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c,
+                     const std::vector<double>& BV) {
   stormApplyBCs(mesh, c_hat, SR_ALL, SR_PURE_NEUMANN);
   // stormApplyBCs_CosWall(
   //     mesh, c_hat, c,
@@ -105,11 +106,13 @@ static void SetBCs_c(stormMesh_t mesh, stormArray_t c_hat, stormArray_t c, const
   //  stormApplyBCs(mesh, c_hat, 4, SR_DIRICHLET(1.0));
 } // SetBCs_c
 
-static void SetBCs_w(stormMesh_t mesh, stormArray_t w, const std::vector<double>& BV) {
+static void SetBCs_w(stormMesh_t mesh, stormArray_t w,
+                     const std::vector<double>& BV) {
   stormApplyBCs(mesh, w, SR_ALL, SR_PURE_NEUMANN);
 } // SetBCs_w
 
-static void SetBCs_p(stormMesh_t mesh, stormArray_t p, const std::vector<double>& BV) {
+static void SetBCs_p(stormMesh_t mesh, stormArray_t p,
+                     const std::vector<double>& BV) {
   stormApplyBCs(mesh, p, SR_ALL, SR_PURE_NEUMANN);
   // stormApplyBCs(mesh, p, 2, SR_DIRICHLET(0.0));
   // stormApplyBCs(mesh, p, 4,
@@ -117,7 +120,8 @@ static void SetBCs_p(stormMesh_t mesh, stormArray_t p, const std::vector<double>
   //                            (2.0 * 0.01 * 26)));
 } // SetBCs_p
 
-static void SetBCs_v(stormMesh_t mesh, stormArray_t v, const std::vector<double>& BV) {
+static void SetBCs_v(stormMesh_t mesh, stormArray_t v,
+                     const std::vector<double>& BV) {
   stormApplyBCs(mesh, v, SR_ALL, SR_PURE_DIRICHLET);
   stormApplyBCs_SlipWall(mesh, v, 3);
   // stormApplyBCs(mesh, v, 2, SR_PURE_NEUMANN);
@@ -165,7 +169,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
       },
       false);
 
-  // c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
+  c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
 
   // w_hat = dF_dc(c_hat) - Gamma * DIVGRAD(c_hat)
   w_hat <<= map(dF_dc, c_hat);
@@ -174,18 +178,16 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
 } // CahnHilliard_Step
 
-static double mu_1 = 0.08, mu_2 = 0.08;
+static double mu_1 = 0.008, mu_2 = 0.008;
 static double rho_1 = 1.0, rho_2 = 50.0;
 
-static void NavierStokes_Step(stormMesh_t mesh, //
-                              const StormArray<real_t>& p,
-                              const StormArray<Vec2D<real_t>>& v, //
-                              const StormArray<real_t>& c,
-                              const StormArray<real_t>& w,
-                              StormArray<real_t>& p_hat,
-                              StormArray<Vec2D<real_t>>& v_hat,
-                              StormArray<real_t>& rho,
-                              const std::vector<double>& BV) {
+static void
+NavierStokes_Step(stormMesh_t mesh, //
+                  const StormArray<real_t>& p,
+                  const StormArray<Vec2D<real_t>>& v, //
+                  const StormArray<real_t>& c, const StormArray<real_t>& w,
+                  StormArray<real_t>& p_hat, StormArray<Vec2D<real_t>>& v_hat,
+                  StormArray<real_t>& rho, const std::vector<double>& BV) {
   StormArray<real_t> mu, rho_inv;
   mu.assign(rho, false);
   rho_inv.assign(rho, false);
@@ -224,12 +226,12 @@ static void NavierStokes_Step(stormMesh_t mesh, //
           v_hat -= tmp;
         });
 
-        //std::cout<<"NonlinSolve2 passed"<<std::endl;
+    // std::cout<<"NonlinSolve2 passed"<<std::endl;
   }
 
   v_hat <<= map(
       [](const Vec2D<real_t>& v) {
-        return v + 0.3 * tau * Vec2D<real_t>{0.0, -1.0};
+        return v + 0.0 * tau * Vec2D<real_t>{0.0, -1.0}; // no gravity!
       },
       v_hat);
 
@@ -253,8 +255,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
           stormDivWGrad(mesh, p_hat, -tau, rho_inv, p);
         },
         false);
-              //std::cout<<"LinSolve2 passed"<<std::endl;
-
+    // std::cout<<"LinSolve2 passed"<<std::endl;
   }
 
   {
@@ -272,13 +273,14 @@ static void NavierStokes_Step(stormMesh_t mesh, //
 
 void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
                   stormReal_t* c, const stormReal_t* _, void* env) {
-  //const static stormReal_t L = 1.0;
+  // const static stormReal_t L = 1.0;
   const static stormReal_t L = 1e-2;
   const static stormReal_t l = 1e-3;
   const static stormReal_t h_small = 5e-3 / 120.0;
   bool in = false;
-  if ((fabs(r[0]) <= 0.101 * 5e-3) && (r[1] >= L + h_small) && (r[1] <= L + l + 2 * h_small)) {
-  //if (fabs(r[0] - 0 * L) <= L * 0.101 && fabs(2 * L - r[1]) <= L * 0.665) {
+  if ((fabs(r[0]) <= 0.101 * 5e-3) && (r[1] >= L + h_small) &&
+      (r[1] <= L + l + 2 * h_small)) {
+    // if (fabs(r[0] - 0 * L) <= L * 0.101 && fabs(2 * L - r[1]) <= L * 0.665) {
     in = true;
   }
   // if (fabs(2 * L - r[1]) <= L * 0.4) { in = true; }
@@ -316,25 +318,33 @@ void Init_For_NVT(Nvt& NVT_obj) {
 }
 
 int main(int argc, char** argv) {
-
   // //mesh file name
-   const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
+  const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
 
 
-  //global parameters of the task
-  [[maybe_unused]] const stormReal_t R_area = 5e-3;      //main reservoir radius
-  [[maybe_unused]] const stormReal_t L_to_R = 2.0;       //Length to radius ration (main reservoir)
-  [[maybe_unused]] const stormReal_t R_to_r = 10.0;      //Main reservoir radius to small reservoir radius
-  [[maybe_unused]] const stormReal_t TaskTime = 10000.0; //Total soultion time
-  [[maybe_unused]] const stormReal_t P_form = 5e6;       //Formation pressure (initial?)
-  [[maybe_unused]] const stormReal_t Ving_to_V = 0.1;    //V_injection to total volume
-  [[maybe_unused]] const stormReal_t TimesScale = 100.0; //Time factor ratio (= TaskTime / TimeRelax = TimeRelax / dt)
-  [[maybe_unused]] const stormReal_t Lambda_to_h = 5.0;  //Interface width in cells
-  [[maybe_unused]] const stormInt_t N_mesh_R = 120;      //Number of cells for the main radius
-  [[maybe_unused]] const stormInt_t Wall_N_r = 2;        //Wall mesh size in r dimension
-  [[maybe_unused]] const stormInt_t Wall_N_l = 8;        //Wall mesh size in l dimension
+  // global parameters of the task
+  [[maybe_unused]] const stormReal_t R_area = 5e-3; // main reservoir radius
+  [[maybe_unused]] const stormReal_t L_to_R =
+      2.0; // Length to radius ration (main reservoir)
+  [[maybe_unused]] const stormReal_t R_to_r =
+      10.0; // Main reservoir radius to small reservoir radius
+  [[maybe_unused]] const stormReal_t TaskTime = 10000.0; // Total soultion time
+  [[maybe_unused]] const stormReal_t P_form =
+      5e6; // Formation pressure (initial?)
+  [[maybe_unused]] const stormReal_t Ving_to_V =
+      0.1; // V_injection to total volume
+  [[maybe_unused]] const stormReal_t TimesScale =
+      100.0; // Time factor ratio (= TaskTime / TimeRelax = TimeRelax / dt)
+  [[maybe_unused]] const stormReal_t Lambda_to_h =
+      5.0; // Interface width in cells
+  [[maybe_unused]] const stormInt_t N_mesh_R =
+      120; // Number of cells for the main radius
+  [[maybe_unused]] const stormInt_t Wall_N_r =
+      2; // Wall mesh size in r dimension
+  [[maybe_unused]] const stormInt_t Wall_N_l =
+      8; // Wall mesh size in l dimension
 
-  //Calculate dependable parameters
+  // Calculate dependable parameters
   [[maybe_unused]] stormReal_t R_small = R_area / R_to_r;
   [[maybe_unused]] stormReal_t L_area = R_area * L_to_R;
   [[maybe_unused]] stormReal_t L_small = L_area / R_to_r;
@@ -345,11 +355,11 @@ int main(int argc, char** argv) {
   tau = tau_relax / TimesScale;
   [[maybe_unused]] stormReal_t Qflux = V_ing / TaskTime;
   [[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
-  //stormReal_t dR = 0.01;
+  // stormReal_t dR = 0.01;
   [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
-  /*static stormReal_t */Mobility = Lambda * Lambda / tau_relax;
+  /*static stormReal_t */ Mobility = Lambda * Lambda / tau_relax;
 
-  //Qflux /= 10.0;
+  // Qflux /= 10.0;
 
   // double u_mean = Qflux / M_PI / (R_small * R_small);
   // double Re = u_mean * R_small * rho_2 / mu_2;
@@ -357,37 +367,37 @@ int main(int argc, char** argv) {
 
   Gamma = Lambda * Lambda;
 
-  //Values for boundaries; index -> value for boundary with <<index>> number
-  std::vector <double> BoundaryKeyValues(6);
+  // Values for boundaries; index -> value for boundary with <<index>> number
+  std::vector<double> BoundaryKeyValues(6);
   BoundaryKeyValues[0] = 0.0;
   BoundaryKeyValues[1] = 0.0;
   BoundaryKeyValues[2] = 0.0;
   BoundaryKeyValues[3] = 0.0;
-  BoundaryKeyValues[4] = Qflux;  //поток на границе типа вход
+  BoundaryKeyValues[4] = Qflux; //поток на границе типа вход
   BoundaryKeyValues[5] = 0.0;
 
-  //Initialize NVT
+  // Initialize NVT
   Nvt nvt_class = Nvt();
 
   Init_For_NVT(nvt_class);
 
-  //Calculate initial concetrations and quantities
-  //CO2
+  // Calculate initial concetrations and quantities
+  // CO2
   [[maybe_unused]] stormReal_t n_conc_CO2 = nvt_class.Concentration(0, P_form);
   [[maybe_unused]] stormReal_t N_CO2 = n_conc_CO2 * V_main;
   //[[maybe_unused]] //C10
   [[maybe_unused]] stormReal_t n_conc_C10 = nvt_class.Concentration(1, P_form);
   [[maybe_unused]] stormReal_t N_C10 = n_conc_C10 * V_small;
 
-  //need to give these N to NVT!!!
+  // need to give these N to NVT!!!
   std::vector<double> N_load;
   N_load.push_back(N_CO2 / (V_main + V_small));
   N_load.push_back(N_C10 / (V_main + V_small));
   nvt_class.Load_N(N_load);
 
-  //Formation pressure
-  
-  //make name a function parameter!
+  // Formation pressure
+
+  // make name a function parameter!
   stormMesh_t mesh = SR_InitMesh(mesh_filename, dR, dR);
 
   StormArray<real_t> c(mesh, SR_Alloc(mesh, 1, 0)),
@@ -410,14 +420,15 @@ int main(int argc, char** argv) {
   double time_of_task = 0.0;
   int num_write = 0;
 
-  //for (int time = 0; time <= 200000; ++time) {
+  // for (int time = 0; time <= 200000; ++time) {
   while (time_of_task < TaskTime) {
-    for (int frac = 0; num_write != 0 && frac < 10; ++frac) {
+    for (int frac = 0; num_write != 0 && frac < 1; ++frac) {
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
 
       CahnHilliard_Step(mesh, c, v, c_hat, w_hat, BoundaryKeyValues);
-      NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, rho, BoundaryKeyValues);
+      NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, rho,
+                        BoundaryKeyValues);
 
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
@@ -442,7 +453,6 @@ int main(int argc, char** argv) {
     SR_IO_Flush(io, mesh, filename);
 
     num_write++;
-
   }
 
   return 0;

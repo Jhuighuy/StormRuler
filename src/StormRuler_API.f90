@@ -214,6 +214,8 @@ function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
     integer(ip), allocatable :: pixels(:,:)
     integer(ip), allocatable :: colorToMark(:)
 
+    print *, 'hx = ', hx
+    print *, 'hy = ', hy
     dx = hx
     dy = hy
 

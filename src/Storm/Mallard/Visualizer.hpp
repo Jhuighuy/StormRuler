@@ -75,7 +75,7 @@ void visualize_mesh(const Mesh& mesh) {
       layout(location = 0) in vec3 positionMS;
       uniform mat4 view_projection;
       void main() {
-        gl_Position = vec4(positionMS - vec3(1.0, 0.5, 0.0), 1.0);
+        gl_Position = vec4(positionMS, 1.0);
         gl_Position = view_projection * gl_Position;
       }
     )");
@@ -194,9 +194,18 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup camera.
   scene::Camera camera{};
   camera.set_perspective(16.0 / 9.0);
+  const auto reset_camera = [&]() {
+    camera.transform() = scene::Transform{};
+    const auto center = mesh.aabb().center();
+    camera.transform().translate(
+        glm::vec3(static_cast<glm::vec2>(center), 0.0f));
+    const auto extents = mesh.aabb().extents();
+    float orbit = static_cast<float>(0.5 * glm::max(extents.x, extents.y));
+    camera.set_orbit(orbit);
+  };
+  reset_camera();
   // Reset the camera.
-  window.on_key_up({gl::Key::r},
-                   [&] { camera.transform() = scene::Transform{}; });
+  window.on_key_up({gl::Key::r}, reset_camera);
   // Translate the camera.
   window.on_key_down(gl::Key::w, [&] {
     camera.transform().translate(glm::vec3{0.0, +0.05, 0.0});
@@ -211,6 +220,9 @@ void visualize_mesh(const Mesh& mesh) {
     camera.transform().translate(glm::vec3{+0.05, 0.0, 0.0});
   });
   // Rotate the camera.
+  window.on_scroll([&](const glm::dvec2& offset) {
+    camera.set_orbit(camera.orbit() - 0.25 * offset.y);
+  });
   window.on_key_up(gl::Key::q, [&] {
     camera.transform().rotate_degrees(glm::vec3{0.0f, +90.0f, 0.0f});
   });
@@ -229,18 +241,15 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_down(gl::Key::right, [&] {
     camera.transform().rotate_degrees(glm::vec3{0.0, -0.5, 0.0});
   });
-  window.on_scroll([&](const glm::dvec2& offset) {
-    camera.set_orbit(camera.orbit() - 0.25 * offset.y);
-  });
 
   bool draw_nodes = false;
   window.on_key_up(gl::Key::n, [&] { draw_nodes = !draw_nodes; });
   bool draw_edges = false;
   window.on_key_up(gl::Key::m, [&] { draw_edges = !draw_edges; });
 
-  while (!glfwWindowShouldClose(window)) {
+  window.main_loop([&] {
     glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const auto view_projection = camera.view_projection_matrix();
 
@@ -266,27 +275,7 @@ void visualize_mesh(const Mesh& mesh) {
                                view_projection);
       node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
     }
-
-#if 0
-    bind_program.set_uniform(program.uniform_location("col"),
-                             glm::vec3{0.1f, 0.1f, 0.9f});
-    glBindVertexArray(edge_vertex_array.vertex_array_id_);
-    glDrawElements(GL_LINES, num_edges(mesh) * 2, GL_UNSIGNED_INT,
-                   /*indices*/ nullptr);
-
-    {
-      gl::BindProgram bind_program{node_program};
-      bind_program.set_uniform(program.uniform_location("view_projection"),
-                               camera.view_projection_matrix());
-      bind_program.set_uniform(program.uniform_location("col"),
-                               glm::vec3{0.9f, 0.1f, 0.1f});
-      glBindVertexArray(node_vertex_array.vertex_array_id_);
-      glDrawArrays(GL_POINTS, 0, num_nodes(mesh));
-    }
-#endif
-
-    window.update();
-  }
+  });
 }
 
 } // namespace Storm::Vulture

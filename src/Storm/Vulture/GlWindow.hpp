@@ -268,6 +268,11 @@ public:
   Window(const Window&) = delete;
   Window& operator=(const Window& window) = delete;
 
+  /// @brief Destroy the window.
+  ~Window() {
+    glfwDestroyWindow(underlying_);
+  }
+
   /// @brief Underlying window pointer.
   [[nodiscard]] constexpr GLFWwindow* underlying() const noexcept {
     return underlying_;
@@ -308,7 +313,6 @@ public:
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     // Create the window.
-    unload();
     STORM_ASSERT_(title != nullptr, "Invalid window title!");
     STORM_ASSERT_(width > 0 && height > 0, "Invalid window size!");
     underlying_ =
@@ -339,16 +343,14 @@ public:
     glfwSetCursorPosCallback(underlying_, &on_set_cursor_pos_);
   }
 
-  /// @brief Unload the window.
-  void unload() {
-    glfwDestroyWindow(underlying_);
-    underlying_ = nullptr;
-  }
-
-  /// @brief Update the window.
-  void update() {
-    glfwSwapBuffers(underlying_);
-    glfwPollEvents();
+  /// @brief Run the window main loop.
+  template<std::invocable RenderFn>
+  void main_loop(RenderFn render_fn) {
+    while (!glfwWindowShouldClose(underlying_)) {
+      render_fn();
+      glfwSwapBuffers(underlying_);
+      glfwPollEvents();
+    }
   }
 
   /// @brief Set handler for the window close event.

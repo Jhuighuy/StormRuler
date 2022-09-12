@@ -103,6 +103,8 @@ private:
     >
   > entity_volumes_tuple_{};
 
+  shapes::AABB<Vec> aabb_{};
+
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
@@ -196,6 +198,11 @@ public:
     return std::get<I>(entity_volumes_tuple_)[index];
   }
 
+  /// @brief Mesh AABB.
+  [[nodiscard]] constexpr const auto& aabb() const noexcept {
+    return aabb_;
+  }
+
   /// @brief Position of the entitity at @p index.
   template<size_t I>
   [[nodiscard]] constexpr Vec //
@@ -280,8 +287,14 @@ public:
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      // Assign the node position.
-      std::get<I>(entity_positions_tuple_).emplace_back(shape);
+      // Assign the node position and update the AABB.
+      auto& positions = std::get<I>(entity_positions_tuple_);
+      const Vec& pos = positions.emplace_back(shape);
+      if (positions.size() == 1) {
+        aabb_ = shapes::AABB{pos};
+      } else {
+        aabb_.extend(pos);
+      }
     } else {
       // Assign the entity shape type, volume, center position (and normal).
       std::get<I>(entity_shape_types_tuple_).emplace_back(shape.type());

@@ -32,6 +32,46 @@
 
 namespace Storm::shapes {
 
+/// @brief Axis-aligned bounding box (AABB).
+template<class Vec>
+class AABB {
+private:
+
+  Vec min_{}, max_{};
+
+public:
+
+  /// @brief Construct an AABB.
+  constexpr AABB() = default;
+
+  /// @brief Construct an AABB with a vector @p vec.
+  constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
+
+  /// @brief AABB min vector.
+  [[nodiscard]] constexpr const Vec& min() const noexcept {
+    return min_;
+  }
+  /// @brief AABB max vector.
+  [[nodiscard]] constexpr const Vec& max() const noexcept {
+    return max_;
+  }
+
+  /// @brief AABB center.
+  [[nodiscard]] constexpr Vec center() const noexcept {
+    return (max_ + min_) / 2;
+  }
+  /// @brief AABB extents.
+  [[nodiscard]] constexpr Vec extents() const noexcept {
+    return max_ - min_;
+  }
+
+  /// @brief Extend the AABB.
+  void extend(const Vec& vec) noexcept {
+    min_ = glm::min(min_, vec), max_ = glm::max(max_, vec);
+  }
+
+}; // class AABB
+
 /// @brief Shape type.
 enum class Type : std::uint8_t {
   segment,        ///< Segment shape type.

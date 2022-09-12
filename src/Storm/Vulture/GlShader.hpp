@@ -37,6 +37,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+/// @brief A macro, used to spawn shaders in '.glsl' files.
 #define STORM_VULTURE_SHADER_(type, source) \
   []() { return gl::Shader{gl::ShaderType::type, source}; }(),
 
@@ -53,7 +54,6 @@ enum class ShaderType : GLenum {
 class Shader final : detail_::noncopyable_ {
 private:
 
-  friend class Program;
   GLuint shader_id_;
 
 public:
@@ -64,7 +64,7 @@ public:
   }
   /// @brief Construct a shader with @p source.
   Shader(ShaderType type, std::string_view source) : Shader{type} {
-    load(source);
+    assign(source);
   }
 
   /// @brief Move-construct a shader.
@@ -77,8 +77,13 @@ public:
     glDeleteShader(shader_id_);
   }
 
+  /// @brief Cast to shader ID.
+  [[nodiscard]] constexpr operator GLuint() const noexcept {
+    return shader_id_;
+  }
+
   /// @brief Load the shader of type @p type from @p source.
-  void load(std::string_view source) {
+  void assign(std::string_view source) {
     // Upload the shader source code.
     const auto source_data = source.data();
     const auto source_size = static_cast<GLint>(source.size());
@@ -106,7 +111,6 @@ public:
 class Program final : detail_::noncopyable_ {
 private:
 
-  friend class BindProgram;
   GLuint program_id_ = 0;
 
 public:
@@ -118,7 +122,7 @@ public:
   /// @brief Construct a program with @p shaders.
   template<std::same_as<Shader>... Shader>
   explicit Program(const Shader&... shaders) : Program() {
-    load(shaders...);
+    assign(shaders...);
   }
 
   /// @brief Move-construct a program.
@@ -131,14 +135,16 @@ public:
     glDeleteProgram(program_id_);
   }
 
+  /// @brief Cast to shader ID.
+  [[nodiscard]] constexpr operator GLuint() const noexcept {
+    return program_id_;
+  }
+
   /// @brief Load the program with @p shaders.
   template<std::same_as<Shader>... Shader>
-  void load(const Shader&... shaders) {
+  void assign(const Shader&... shaders) {
     // Attach the shaders.
-    const auto attach_shader = [&](const auto& shader) {
-      glAttachShader(program_id_, shader.shader_id_);
-    };
-    (attach_shader(shaders), ...);
+    (glAttachShader(program_id_, shaders), ...);
 
     // Try to link the program and check result.
     glLinkProgram(program_id_);
@@ -157,26 +163,26 @@ public:
   }
 
   /// @brief Get program uniform location.
-  [[nodiscard]] auto uniform_location(const char* name) const {
+  /// @{
+  [[nodiscard]] GLint operator[](const std::string& name) const {
+    return (*this)[name.c_str()];
+  }
+  [[nodiscard]] GLint operator[](const char* name) const {
     STORM_ASSERT_(name != nullptr, "Invalid uniform name!");
     return glGetUniformLocation(program_id_, name);
   }
+  /// @}
 
 }; // class Program
 
 /// @brief Binder for an OpenGL program.
 class BindProgram final {
-private:
-
-  GLuint binded_program_id_;
-
 public:
 
   /// @brief Bind the @p program.
-  explicit BindProgram(const Program& program)
-      : binded_program_id_{program.program_id_} {
-    STORM_ASSERT_(program.program_id_ > 0, "Invalid program!");
-    glUseProgram(program.program_id_);
+  explicit BindProgram(const Program& program) {
+    STORM_ASSERT_(program, "Invalid program!");
+    glUseProgram(program);
   }
 
   /// @brief Set the scalar uniform value.

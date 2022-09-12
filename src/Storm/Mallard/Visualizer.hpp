@@ -198,11 +198,10 @@ void visualize_mesh(const Mesh& mesh) {
       gl::BindProgram bind_program{cell_program};
       cell_states_texture_buffer.bind(0);
       cell_data_texture_buffer.bind(1);
-      bind_program.set_uniform(cell_program.uniform_location("cell_states"), 0);
-      bind_program.set_uniform(cell_program.uniform_location("cell_values"), 1);
-      bind_program.set_uniform(
-          cell_program.uniform_location("view_projection_matrix"),
-          view_projection_matrix);
+      bind_program.set_uniform(cell_program["cell_states"], 0);
+      bind_program.set_uniform(cell_program["cell_values"], 1);
+      bind_program.set_uniform(cell_program["view_projection_matrix"],
+                               view_projection_matrix);
       cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
                                      num_cells(mesh) * 3);
     }
@@ -210,21 +209,19 @@ void visualize_mesh(const Mesh& mesh) {
     if (draw_edges) {
       gl::BindProgram bind_program{edge_program};
       edge_states_texture_buffer.bind(0);
-      bind_program.set_uniform(edge_program.uniform_location("edge_states"), 0);
-      bind_program.set_uniform(
-          edge_program.uniform_location("view_projection_matrix"),
-          view_projection_matrix);
+      bind_program.set_uniform(edge_program["edge_states"], 0);
+      bind_program.set_uniform(edge_program["view_projection_matrix"],
+                               view_projection_matrix);
       edge_vertex_array.draw_indexed(gl::DrawMode::lines, num_edges(mesh) * 2);
     }
 
     if (draw_nodes) {
       gl::BindProgram bind_program{node_program};
       node_states_texture_buffer.bind(0);
-      bind_program.set_uniform(node_program.uniform_location("node_states"), 0);
-      bind_program.set_uniform(
-          node_program.uniform_location("view_projection_matrix"),
-          view_projection_matrix);
-      bind_program.set_uniform(node_program.uniform_location("point_size"),
+      bind_program.set_uniform(node_program["node_states"], 0);
+      bind_program.set_uniform(node_program["view_projection_matrix"],
+                               view_projection_matrix);
+      bind_program.set_uniform(node_program["point_size"],
                                glm::vec2{0.002f * 9.0f / 16.0f, 0.002f});
       node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
     }

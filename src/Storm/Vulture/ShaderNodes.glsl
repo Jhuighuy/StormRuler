@@ -82,12 +82,13 @@ layout(location = 1) out uvec2 fragment_entity;
 const vec4 regular_color = vec4(0.9, 0.9, 0.9, 1.0);
 const vec4 selected_color = vec4(0.9, 0.1, 0.9, 1.0);
 
+uniform uint node_entity_type;
 uniform usamplerBuffer node_states;
 
 void main() {
   if (length(position_model_space) > 1.0) { discard; }
   uint state = texelFetch(node_states, gl_PrimitiveID).r;
   fragment_color = state == uint(0) ? regular_color : selected_color;
-  fragment_entity = uvec2(111, gl_PrimitiveID);
+  fragment_entity = uvec2(node_entity_type, gl_PrimitiveID);
 }
 )")

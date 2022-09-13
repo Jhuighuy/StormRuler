@@ -87,6 +87,10 @@ void visualize_mesh(const Mesh& mesh) {
 #include <Storm/Vulture/ShaderScreenQuad.glsl>
   };
 
+  static constexpr GLuint node_entity_type = 111;
+  static constexpr GLuint edge_entity_type = 222;
+  static constexpr GLuint cell_entity_type = 333;
+
   // Setup nodes.
   const gl::Buffer node_positions_buffer(
       nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
@@ -242,6 +246,8 @@ void visualize_mesh(const Mesh& mesh) {
 
       if (draw_cells) {
         gl::BindProgram bind_program{cell_program};
+        bind_program.set_uniform(cell_program["cell_entity_type"],
+                                 cell_entity_type);
         cell_states_texture_buffer.bind(0);
         cell_data_texture_buffer.bind(1);
         bind_program.set_uniform(cell_program["cell_states"], 0);
@@ -254,6 +260,8 @@ void visualize_mesh(const Mesh& mesh) {
 
       if (draw_edges) {
         gl::BindProgram bind_program{edge_program};
+        bind_program.set_uniform(edge_program["edge_entity_type"],
+                                 edge_entity_type);
         edge_states_texture_buffer.bind(0);
         bind_program.set_uniform(edge_program["edge_states"], 0);
         bind_program.set_uniform(edge_program["view_projection_matrix"],
@@ -264,6 +272,8 @@ void visualize_mesh(const Mesh& mesh) {
 
       if (draw_nodes) {
         gl::BindProgram bind_program{node_program};
+        bind_program.set_uniform(node_program["node_entity_type"],
+                                 node_entity_type);
         node_states_texture_buffer.bind(0);
         bind_program.set_uniform(node_program["node_states"], 0);
         bind_program.set_uniform(node_program["view_projection_matrix"],
@@ -296,19 +306,19 @@ void visualize_mesh(const Mesh& mesh) {
     const auto entity_type = entity.x;
     const auto entity_index = entity.y;
     switch (entity_type) {
-      case 111: {
+      case node_entity_type: {
         unselect_all();
         last_selected_node.emplace(entity_index);
         select_node(*last_selected_node, 1);
         break;
       }
-      case 222: {
+      case edge_entity_type: {
         unselect_all();
         last_selected_edge.emplace(entity_index);
         select_edge(*last_selected_edge, 1);
         break;
       }
-      case 333: {
+      case cell_entity_type: {
         unselect_all();
         last_selected_cell.emplace(entity_index);
         select_cell(*last_selected_cell, 1);

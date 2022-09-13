@@ -42,6 +42,7 @@ in float node_value;
 layout(location = 0) out vec4 fragment_color;
 layout(location = 1) out uvec2 fragment_entity;
 
+uniform uint cell_entity_type;
 uniform usamplerBuffer cell_states;
 uniform bool use_node_value;
 uniform samplerBuffer cell_values;
@@ -67,6 +68,6 @@ void main() {
   if (state != uint(0)) {
     fragment_color = mix(fragment_color, selected_color, 0.5);
   }
-  fragment_entity = uvec2(333, gl_PrimitiveID);
+  fragment_entity = uvec2(cell_entity_type, gl_PrimitiveID);
 }
 )")

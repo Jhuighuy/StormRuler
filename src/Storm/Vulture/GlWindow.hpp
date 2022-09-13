@@ -253,7 +253,7 @@ private:
   std::multimap<std::pair<MouseButton, Modifiers>, std::function<void()>>
       on_mouse_button_down_fns_{}, on_mouse_button_up_fns_{};
   std::vector<std::function<void(glm::dvec2)>> on_scroll_fns_{};
-  std::vector<std::function<void(glm::dvec2)>> on_set_cursor_pos_fns_{};
+  std::vector<std::function<void(size_t, size_t)>> on_set_cursor_pos_fns_{};
 
 public:
 
@@ -289,13 +289,27 @@ public:
     glfwGetWindowSize(underlying_, &width, nullptr);
     return static_cast<size_t>(width);
   }
-
   /// @brief Get window height.
   [[nodiscard]] size_t height() const {
     STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
     int height;
     glfwGetWindowSize(underlying_, nullptr, &height);
     return static_cast<size_t>(height);
+  }
+
+  /// @brief Get cursor position's x.
+  [[nodiscard]] size_t cursor_pos_x() const {
+    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    double pos_xd;
+    glfwGetCursorPos(underlying_, &pos_xd, nullptr);
+    return make_cursor_pos_x_(pos_xd);
+  }
+  /// @brief Get cursor position's y.
+  [[nodiscard]] size_t cursor_pos_y() const {
+    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    double pos_yd;
+    glfwGetCursorPos(underlying_, nullptr, &pos_yd);
+    return make_cursor_pos_y_(pos_yd);
   }
 
   /// @brief Load the window.
@@ -427,7 +441,7 @@ public:
   }
 
   /// @brief Set handler for the set cursor position event.
-  template<std::invocable<glm::dvec2> SetCursorPosFn>
+  template<std::invocable<size_t, size_t> SetCursorPosFn>
   void on_set_cursor_pos(SetCursorPosFn on_set_cursor_pos_fn) {
     on_set_cursor_pos_fns_.push_back(std::move(on_set_cursor_pos_fn));
   }
@@ -512,11 +526,25 @@ private:
     }
   }
 
+  [[nodiscard]] size_t make_cursor_pos_x_(double pos_x) const {
+    return static_cast<size_t>(
+        std::clamp(pos_x, 0.0, static_cast<double>(width())));
+  }
+  /// @brief Get cursor position's y.
+  [[nodiscard]] size_t make_cursor_pos_y_(double pos_y) const {
+    const size_t height = this->height();
+    return height - 1 -
+           static_cast<size_t>(
+               std::clamp(pos_y, 0.0, static_cast<double>(height)));
+  }
+
   static void on_set_cursor_pos_(GLFWwindow* window, //
-                                 double x_pos, double y_pos) noexcept {
+                                 double pos_xd, double pos_yd) noexcept {
     const auto self = get_self_(window);
+    const auto pos_x = self->make_cursor_pos_x_(pos_xd),
+               pos_y = self->make_cursor_pos_y_(pos_yd);
     for (const auto& on_set_cursor_pos_fn : self->on_set_cursor_pos_fns_) {
-      on_set_cursor_pos_fn({x_pos, y_pos});
+      on_set_cursor_pos_fn(pos_x, pos_y);
     }
   }
 

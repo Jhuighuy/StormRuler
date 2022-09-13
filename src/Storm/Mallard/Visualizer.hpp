@@ -205,6 +205,7 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
 
   window.main_loop([&] {
+    // Render the screen into framebuffer.
     framebuffer.draw_into([&]() {
       glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -245,16 +246,10 @@ void visualize_mesh(const Mesh& mesh) {
       }
     });
 
+    // Query the pixels read.
     entity_texture.read_pixels(entity_texture_pixel_buffer);
-    glFinish();
 
-    double xpd, ypd;
-    glfwGetCursorPos(window, &xpd, &ypd);
-    auto xp = std::clamp((size_t) xpd, size_t(0), window_width - 1);
-    auto yp = window_height - 1 -
-              std::clamp((size_t) ypd, size_t(0), window_height - 1);
-    auto p = entity_texture_pixel_buffer.get(yp * window_width + xp);
-    STORM_INFO_("type = {}, index = {}", p.x, p.y);
+    GLsync sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
     {
       glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -265,6 +260,12 @@ void visualize_mesh(const Mesh& mesh) {
       bind_program.set_uniform(node_program["color_texture"], 0);
       screen_quad_vertex_array.draw(gl::DrawMode::triangles, 6);
     }
+
+    glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, UINT64_MAX);
+
+    const auto entity = entity_texture_pixel_buffer.get(
+        window.cursor_pos_y() * window_width + window.cursor_pos_x());
+    STORM_INFO_("type = {}, index = {}", entity.x, entity.y);
   });
 }
 

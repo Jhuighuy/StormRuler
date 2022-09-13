@@ -165,6 +165,7 @@ public:
     }
   }
 
+  /// @todo Refactor as `operator[]`.
   /// @brief Get the buffer value at @p index.
   Type get(size_t index) const {
     STORM_ASSERT_(index < static_cast<size_t>(buffer_size_),

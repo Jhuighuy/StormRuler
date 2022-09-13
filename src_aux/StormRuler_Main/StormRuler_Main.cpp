@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
 
 #if 1
   UnstructuredMesh<2, 2> mesh1{};
-  read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
+  read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
   write_mesh_to_vtk(mesh1, "out/test.vtk");
   STORM_INFO_("mesh has {} edges", num_edges(mesh1));
   STORM_INFO_("mesh has {} faces", num_faces(mesh1));

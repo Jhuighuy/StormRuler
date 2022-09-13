@@ -74,7 +74,7 @@ private:
         meta::pair_list_t<Label, EntityIndices_>
       >
     >
-  > label_ranges_tuple_{};
+  > entity_ranges_tuple_{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
@@ -133,45 +133,45 @@ public:
         [](auto&... ranges) {
           ((ranges.emplace_back(0), ranges.emplace_back(0)), ...);
         },
-        label_ranges_tuple_);
+        entity_ranges_tuple_);
   }
 
   /// @brief Number of entity labels.
   template<size_t I>
   [[nodiscard]] constexpr size_t
   num_labels(meta::type<EntityIndex<I>> = {}) const noexcept {
-    return std::get<I>(label_ranges_tuple_).size() - 1;
+    return std::get<I>(entity_ranges_tuple_).size() - 1;
   }
 
   /// @brief Number of entities.
   template<size_t I>
   [[nodiscard]] constexpr size_t
   num_entities(meta::type<EntityIndex<I>> = {}) const noexcept {
-    return static_cast<size_t>(std::get<I>(label_ranges_tuple_).back());
+    return static_cast<size_t>(std::get<I>(entity_ranges_tuple_).back());
   }
   /// @brief Number of entities with label @p label.
   template<size_t I>
   [[nodiscard]] constexpr size_t
   num_entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
-    const auto& label_ranges = std::get<I>(label_ranges_tuple_);
-    return label_ranges[label + 1] - label_ranges[label];
+    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    return entity_ranges[label + 1] - entity_ranges[label];
   }
 
   /// @brief Index range of the entitites.
   template<size_t I>
   [[nodiscard]] constexpr auto //
   entities(meta::type<EntityIndex<I>> = {}) const noexcept {
-    const auto& label_ranges = std::get<I>(label_ranges_tuple_);
-    return std::views::iota(label_ranges.front(), label_ranges.back());
+    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    return std::views::iota(entity_ranges.front(), entity_ranges.back());
   }
   /// @brief Index range of the entitites with label @p label.
   template<size_t I>
   [[nodiscard]] constexpr auto
   entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
-    const auto& label_ranges = std::get<I>(label_ranges_tuple_);
-    return std::views::iota(label_ranges[label], label_ranges[label + 1]);
+    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    return std::views::iota(entity_ranges[label], entity_ranges[label + 1]);
   }
 
   /// @brief Label of the entitity at @p index.
@@ -271,8 +271,8 @@ public:
     // clang-format on
 
     // If an edge or or face is inserted, check if it exists first.
-    if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
-                    std::is_same_v<EntityIndex<I>, CellIndex>) ) {
+    if constexpr (std::is_same_v<EntityIndex<I>, EdgeIndex> ||
+                  std::is_same_v<EntityIndex<I>, FaceIndex>) {
       if (const auto found_entity_index = find<I>(shape.nodes());
           found_entity_index.has_value()) {
         return *found_entity_index;
@@ -281,8 +281,7 @@ public:
     const EntityIndex<I> entity_index{num_entities<I>()};
 
     // Assign the default label.
-    /// @todo Label!
-    std::get<I>(label_ranges_tuple_).back() += 1;
+    std::get<I>(entity_ranges_tuple_).back() += 1;
     std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
 
     // Assign the geometrical properties.
@@ -331,6 +330,10 @@ public:
             const EntityIndex<J> part_index = insert<J>(part);
             std::get<T>(connectivity_tuple_).connect(entity_index, part_index);
             std::get<U>(connectivity_tuple_).connect(part_index, entity_index);
+            // Fix the face orientation (if needed).
+            if constexpr (std::is_same_v<EntityIndex<J>, FaceIndex>) {
+              update_face_orientation_(part_index, part.nodes());
+            }
           };
           std::apply([&](const auto&... parts) { (process_part(parts), ...); },
                      shapes::parts<J>(shape));
@@ -341,8 +344,42 @@ public:
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
     std::get<T>(connectivity_tuple_).connect(entity_index, entity_index);
 
-    // STORM_INFO_("inserting ({}, {})", I, (size_t) entity_index);
     return entity_index;
+  }
+
+private:
+
+  void update_face_orientation_(FaceIndex face_index, const auto& face_nodes) {
+    // Check the face orientation.
+    const bool face_oriented_as_inner = std::ranges::equal( //
+        face_nodes, adjacent<0>(face_index));
+    const bool face_oriented_as_outer = std::ranges::equal(
+        face_nodes, adjacent<0>(face_index) | std::views::reverse);
+    switch (adjacent<TopologicalDim>(face_index).size()) {
+      case 1: {
+        // Face was connected with the first cell.
+        // This must be the inner cell. Flip the face if it is not.
+        STORM_ENSURE_(face_oriented_as_inner ^ face_oriented_as_outer,
+                      "Broken face orientation");
+        if (face_oriented_as_outer) {
+          face_normals_[face_index] = -face_normals_[face_index];
+          meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
+              [&]<size_t I>(meta::type<EntityIndex<I>>) {
+                using T = Table<FaceIndex, EntityIndex<I>>;
+                std::ranges::reverse(
+                    std::get<T>(connectivity_tuple_)[face_index]);
+              });
+        }
+        break;
+      }
+      case 2: {
+        // Face was connected with the second cell.
+        // This must be the outer cell.
+        STORM_ENSURE_(face_oriented_as_outer, "Broken face orientation.");
+        break;
+      }
+      default: STORM_TERMINATE_("Face already has two or more adjacent cells!");
+    }
   }
 
 }; // class UnstructuredMesh

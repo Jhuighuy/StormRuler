@@ -351,30 +351,38 @@ public:
 private:
 
   // clang-format off
-  template<std::ranges::range Range>
+  template<std::ranges::sized_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr void update_face_orientation_(FaceIndex face_index,
                                           const Range& cell_face_nodes) {
     // clang-format on
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
-    STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
-    temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());
-    std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
-    const bool face_oriented_as_inner = std::ranges::equal(temp, face_nodes);
-    const bool face_oriented_as_outer = !face_oriented_as_inner && [&] {
-      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.back()));
-      return std::ranges::equal(temp, face_nodes | std::views::reverse);
-    }();
+    bool cell_is_inner, cell_is_outer;
+    if (cell_face_nodes.size() == 2) {
+      cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);
+      cell_is_outer = !cell_is_inner &&
+                      std::ranges::equal(cell_face_nodes, //
+                                         face_nodes | std::views::reverse);
+    } else {
+      // Need to take into the account possible rotations.
+      STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
+      temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());
+      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
+      cell_is_inner = std::ranges::equal(temp, face_nodes);
+      cell_is_outer = !cell_is_inner && [&] {
+        std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.back()));
+        return std::ranges::equal(temp, face_nodes | std::views::reverse);
+      }();
+    }
     // Check and update the orientation (if needed).
-    const size_t num_cell_faces = adjacent<TopologicalDim>(face_index).size();
-    if (num_cell_faces == 1) {
-      // Face was connected with the first cell.
-      // This must be the inner cell. Flip the face if it is not.
-      STORM_ENSURE_(face_oriented_as_inner || face_oriented_as_outer,
+    const auto cell_faces = adjacent<TopologicalDim>(face_index);
+    if (cell_faces.size() == 1) {
+      STORM_ENSURE_(cell_is_inner || cell_is_outer,
                     "Face has a single adjacent cell, "
                     "but it can be neither inner nor outer!");
-      if (face_oriented_as_outer) {
+      // Flip the face if the cell is outer.
+      if (cell_is_outer) {
         face_normals_[face_index] = -face_normals_[face_index];
         meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
             [&]<size_t I>(meta::type<EntityIndex<I>>) {
@@ -383,12 +391,10 @@ private:
                   std::get<T>(connectivity_tuple_)[face_index]);
             });
       }
-    } else if (num_cell_faces == 2) {
-      // Face was connected with the second cell.
-      // This must be the outer cell.
-      STORM_ENSURE_(face_oriented_as_outer,
+    } else if (cell_faces.size() == 2) {
+      STORM_ENSURE_(cell_is_outer,
                     "Face has two adjacent cells, "
-                    "but the second cannot be the outer one!");
+                    "but the second cell cannot be the outer one!");
     } else {
       STORM_TERMINATE_("Invalid number of the face cells!");
     }

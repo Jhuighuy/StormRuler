@@ -311,15 +311,17 @@ int main(int argc, char** argv) {
   print_banner();
 
 #if 1
-  UnstructuredMesh<3, 3> mesh1{};
-  read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
+  UnstructuredMesh<2, 2> mesh1{};
+  read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
+  // UnstructuredMesh<3, 3> mesh1{};
+  // read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
   // write_mesh_to_vtk(mesh1, "out/test.vtk");
 
   STORM_INFO_("mesh has {} edges", num_edges(mesh1));
   STORM_INFO_("mesh has {} faces", num_faces(mesh1));
   STORM_INFO_("mesh loaded");
 
-  // Vulture::visualize_mesh(mesh1);
+  Vulture::visualize_mesh(mesh1);
   return 0;
 #endif
 

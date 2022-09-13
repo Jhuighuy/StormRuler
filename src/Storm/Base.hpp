@@ -70,7 +70,7 @@
 #warning Storm has detected multiple compilers, something is terribly wrong...
 #endif
 
-// `thread_local`
+// C++23 allows `thread_local` inside of the `constexpr` functions.
 #if STORM_CPP23_
 #define STORM_CPP23_THREAD_LOCAL_ thread_local
 #else

@@ -41,7 +41,7 @@ layout(location = 1) out uvec2 fragment_entity;
 uniform usamplerBuffer edge_states;
 
 const vec4 regular_color = vec4(0.8, 0.8, 0.8, 1.0);
-const vec4 selected_color = vec4(0.8, 0.2, 0.8, 1.0);
+const vec4 selected_color = vec4(0.2, 0.8, 0.8, 1.0);
 
 void main() {
   uint state = texelFetch(edge_states, gl_PrimitiveID).r;

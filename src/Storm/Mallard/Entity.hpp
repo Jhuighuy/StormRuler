@@ -183,9 +183,14 @@ public:
   /// @}
 
   /// @brief Entity index.
+  /// @{
   [[nodiscard]] constexpr EntityIndex<I> index() const noexcept {
     return index_;
   }
+  [[nodiscard]] constexpr size_t index_sz() const noexcept {
+    return static_cast<size_t>(index_);
+  }
+  /// @}
 
   /// @brief Cast to entity index operator.
   [[nodiscard]] constexpr operator EntityIndex<I>() const noexcept {

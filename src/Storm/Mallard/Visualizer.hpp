@@ -72,6 +72,7 @@ void visualize_mesh(const Mesh& mesh) {
   gl::DebugOutput debug_output{};
 
   // Setup framebuffer.
+  /// @todo MSAA is broken with framebuffers!
   gl::Texture2D<glm::vec4> color_texture{window_width, window_height};
   gl::Texture2D<glm::uvec2> entity_texture{window_width, window_height};
   gl::Buffer<glm::uvec2> entity_texture_pixel_buffer(
@@ -140,12 +141,6 @@ void visualize_mesh(const Mesh& mesh) {
                                         gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer};
 
-  NodeView node(mesh, NodeIndex{13});
-  node_states_buffer.set(static_cast<size_t>(node.index()), 1);
-  node.for_each_edge([&](auto edge) { //
-    edge_states_buffer.set(static_cast<size_t>(edge.index()), 1);
-  });
-
   // Setup camera.
   scene::Camera camera{};
   camera.set_perspective(16.0 / 9.0);
@@ -203,6 +198,39 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::m, [&] { draw_edges = !draw_edges; });
   bool draw_cells = true;
   window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
+
+  const auto select_node = [&](NodeIndex node_index, GLuint state) {
+    NodeView node{mesh, node_index};
+    node_states_buffer.set(node.index_sz(), state);
+    node.for_each_edge(
+        [&](auto edge) { edge_states_buffer.set(edge.index_sz(), state); });
+    node.for_each_cell(
+        [&](auto cell) { cell_states_buffer.set(cell.index_sz(), state); });
+  };
+  const auto select_edge = [&](EdgeIndex edge_index, GLuint state) {
+    EdgeView edge{mesh, edge_index};
+    edge_states_buffer.set(edge.index_sz(), state);
+    edge.for_each_node(
+        [&](auto node) { node_states_buffer.set(node.index_sz(), state); });
+    edge.for_each_cell(
+        [&](auto cell) { cell_states_buffer.set(cell.index_sz(), state); });
+  };
+  const auto select_cell = [&](CellIndex<const Mesh> cell_index, GLuint state) {
+    CellView cell{mesh, cell_index};
+    cell_states_buffer.set(cell.index_sz(), state);
+    cell.for_each_node(
+        [&](auto node) { node_states_buffer.set(node.index_sz(), state); });
+    cell.for_each_edge(
+        [&](auto edge) { edge_states_buffer.set(edge.index_sz(), state); });
+  };
+  std::optional<NodeIndex> last_selected_node;
+  std::optional<EdgeIndex> last_selected_edge;
+  std::optional<CellIndex<const Mesh>> last_selected_cell;
+  const auto unselect_all = [&]() {
+    if (last_selected_node) { select_node(*last_selected_node, 0); }
+    if (last_selected_edge) { select_edge(*last_selected_edge, 0); }
+    if (last_selected_cell) { select_cell(*last_selected_cell, 0); }
+  };
 
   window.main_loop([&] {
     // Render the screen into framebuffer.
@@ -265,7 +293,28 @@ void visualize_mesh(const Mesh& mesh) {
 
     const auto entity = entity_texture_pixel_buffer.get(
         window.cursor_pos_y() * window_width + window.cursor_pos_x());
-    STORM_INFO_("type = {}, index = {}", entity.x, entity.y);
+    const auto entity_type = entity.x;
+    const auto entity_index = entity.y;
+    switch (entity_type) {
+      case 111: {
+        unselect_all();
+        last_selected_node.emplace(entity_index);
+        select_node(*last_selected_node, 1);
+        break;
+      }
+      case 222: {
+        unselect_all();
+        last_selected_edge.emplace(entity_index);
+        select_edge(*last_selected_edge, 1);
+        break;
+      }
+      case 333: {
+        unselect_all();
+        last_selected_cell.emplace(entity_index);
+        select_cell(*last_selected_cell, 1);
+        break;
+      }
+    }
   });
 }
 

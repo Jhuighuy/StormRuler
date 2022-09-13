@@ -526,16 +526,16 @@ private:
     }
   }
 
-  [[nodiscard]] size_t make_cursor_pos_x_(double pos_x) const {
+  [[nodiscard]] size_t make_cursor_pos_x_(double pos_xd) const {
     return static_cast<size_t>(
-        std::clamp(pos_x, 0.0, static_cast<double>(width())));
+        std::clamp(pos_xd, 0.0, static_cast<double>(width() - 1)));
   }
   /// @brief Get cursor position's y.
-  [[nodiscard]] size_t make_cursor_pos_y_(double pos_y) const {
+  [[nodiscard]] size_t make_cursor_pos_y_(double pos_yd) const {
     const size_t height = this->height();
-    return height - 1 -
-           static_cast<size_t>(
-               std::clamp(pos_y, 0.0, static_cast<double>(height)));
+    const auto pos_y = static_cast<size_t>(
+        std::clamp(pos_yd, 0.0, static_cast<double>(height - 1)));
+    return height - 1 - pos_y;
   }
 
   static void on_set_cursor_pos_(GLFWwindow* window, //

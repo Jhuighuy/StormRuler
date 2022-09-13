@@ -70,6 +70,13 @@
 #warning Storm has detected multiple compilers, something is terribly wrong...
 #endif
 
+// `thread_local`
+#if STORM_CPP23_
+#define STORM_CPP23_THREAD_LOCAL_ thread_local
+#else
+#define STORM_CPP23_THREAD_LOCAL_
+#endif
+
 // Force (kindly ask) the compiler to inline the function.
 #if STORM_COMPILER_MSVC_
 #define STORM_FORCE_INLINE_ inline __forceinline

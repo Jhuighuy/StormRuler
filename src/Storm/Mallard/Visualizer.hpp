@@ -74,6 +74,8 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup framebuffer.
   gl::Texture2D<glm::vec4> color_texture{window_width, window_height};
   gl::Texture2D<glm::uvec2> entity_texture{window_width, window_height};
+  gl::Buffer<glm::uvec2> entity_texture_pixel_buffer(
+      window_width * window_height, gl::BufferUsage::dynamic_copy);
   gl::Framebuffer framebuffer{color_texture, entity_texture};
   gl::Buffer screen_quad_buffer{
       std::array{glm::vec2{+1.0f, +1.0f}, glm::vec2{+1.0f, -1.0f},
@@ -94,7 +96,8 @@ void visualize_mesh(const Mesh& mesh) {
 #include <Storm/Vulture/ShaderNodes.glsl>
   };
   // Setup node data.
-  gl::Buffer<GLuint> node_states_buffer(num_nodes(mesh));
+  gl::Buffer<GLuint> node_states_buffer(num_nodes(mesh),
+                                        gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer node_states_texture_buffer{node_states_buffer};
 
   // Setup edges.
@@ -112,7 +115,8 @@ void visualize_mesh(const Mesh& mesh) {
 #include <Storm/Vulture/ShaderEdges.glsl>
   };
   // Setup edge data.
-  gl::Buffer<GLuint> edge_states_buffer(num_edges(mesh));
+  gl::Buffer<GLuint> edge_states_buffer(num_edges(mesh),
+                                        gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer edge_states_texture_buffer{edge_states_buffer};
 
   // Setup cells.
@@ -132,7 +136,8 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup cell data.
   const gl::Buffer cell_data_buffer(cell_data);
   const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer};
-  gl::Buffer<GLuint> cell_states_buffer(num_cells(mesh));
+  gl::Buffer<GLuint> cell_states_buffer(num_cells(mesh),
+                                        gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer};
 
   NodeView node(mesh, NodeIndex{13});
@@ -240,34 +245,16 @@ void visualize_mesh(const Mesh& mesh) {
       }
     });
 
-    GLuint pbo;
-    glGenBuffers(1, &pbo);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
-    glBufferData(GL_PIXEL_PACK_BUFFER,
-                 sizeof(glm::uvec2) * window_width * window_height, nullptr,
-                 GL_STREAM_COPY);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, entity_texture);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
-
-    glFlush();
+    entity_texture.read_pixels(entity_texture_pixel_buffer);
     glFinish();
 
     double xpd, ypd;
     glfwGetCursorPos(window, &xpd, &ypd);
-    auto pixels =
-        (const glm::uvec2*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-    if (pixels != nullptr) {
-      auto xp = std::clamp((size_t) xpd, size_t(0), window_width - 1);
-      auto yp = window_height - 1 -
-                std::clamp((size_t) ypd, size_t(0), window_height - 1);
-      auto p = pixels[yp * window_width + xp];
-      STORM_INFO_("type = {}, index = {}", p.x, p.y);
-      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-    }
-
-    glDeleteBuffers(1, &pbo);
+    auto xp = std::clamp((size_t) xpd, size_t(0), window_width - 1);
+    auto yp = window_height - 1 -
+              std::clamp((size_t) ypd, size_t(0), window_height - 1);
+    auto p = entity_texture_pixel_buffer.get(yp * window_width + xp);
+    STORM_INFO_("type = {}, index = {}", p.x, p.y);
 
     {
       glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

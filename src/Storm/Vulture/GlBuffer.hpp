@@ -49,6 +49,8 @@ enum class BufferUsage : GLenum {
 enum class BufferTarget : GLenum {
   array_buffer = GL_ARRAY_BUFFER,
   element_array_buffer = GL_ELEMENT_ARRAY_BUFFER,
+  pixel_pack_buffer = GL_PIXEL_PACK_BUFFER,
+  pixel_unpack_buffer = GL_PIXEL_UNPACK_BUFFER,
   texture_buffer = GL_TEXTURE_BUFFER,
 }; // enum class BufferTarget
 
@@ -69,14 +71,17 @@ public:
 
   /// @brief Construct a buffer with a size.
   /// @param usage Intended buffer usage.
-  Buffer(GLsizei size) : Buffer{} {
-    assign(size);
+  explicit Buffer(GLsizei size, BufferUsage usage = BufferUsage::static_draw)
+      : Buffer{} {
+    assign(size, usage);
   }
 
   /// @brief Construct a buffer with a @p size copies of @p value.
   /// @param usage Intended buffer usage.
-  Buffer(GLsizei size, const Type& value) : Buffer{} {
-    assign(size, value);
+  explicit Buffer(GLsizei size, const Type& value,
+                  BufferUsage usage = BufferUsage::static_draw)
+      : Buffer{} {
+    assign(size, value, usage);
   }
 
   /// @brief Construct a buffer with a range.
@@ -143,10 +148,9 @@ public:
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
     if constexpr (std::ranges::sized_range<Range>) {
       assign(static_cast<GLsizei>(values.size()));
-      const auto pointer =
-          static_cast<Type*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+      const auto pointer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
       if (pointer == nullptr) { STORM_THROW_GL_("Failed to map the buffer!"); }
-      std::ranges::copy(values, pointer);
+      std::ranges::copy(values, static_cast<Type*>(pointer));
       if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
         STORM_THROW_GL_("Failed to unmap the buffer!");
       }
@@ -161,8 +165,26 @@ public:
     }
   }
 
+  /// @brief Get the buffer value at @p index.
+  Type get(size_t index) const {
+    STORM_ASSERT_(index < static_cast<size_t>(buffer_size_),
+                  "Index is out of range!");
+    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
+    const auto pointer = glMapBufferRange(
+        GL_ARRAY_BUFFER, static_cast<GLintptr>(index * sizeof(Type)),
+        static_cast<GLsizeiptr>(sizeof(Type)), GL_MAP_READ_BIT);
+    if (pointer == nullptr) { STORM_THROW_GL_("Failed to map the buffer!"); }
+    Type value = *static_cast<const Type*>(pointer);
+    if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
+      STORM_THROW_GL_("Failed to unmap the buffer!");
+    }
+    return value;
+  }
+
   /// @brief Set the buffer @p value at @p index.
   void set(size_t index, const Type& value) {
+    STORM_ASSERT_(index < static_cast<size_t>(buffer_size_),
+                  "Index is out of range!");
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
     const auto offset = static_cast<GLintptr>(index * sizeof(Type));
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(Type), &value);

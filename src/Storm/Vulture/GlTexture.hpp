@@ -170,7 +170,8 @@ public:
   Texture2D() = default;
 
   /// @brief Consruct a 2D texture with @p width and @p height;
-  Texture2D(GLsizei width, GLsizei height) : Texture2D{} {
+  Texture2D(GLsizei width, GLsizei height, const Pixel* data = nullptr)
+      : Texture2D{} {
     assign(width, height);
   }
 
@@ -179,19 +180,27 @@ public:
     bind_(TextureTarget::texture2D, slot);
   }
 
-  /// @brief Assign the texture width and height.
-  void assign(GLsizei width, GLsizei height) {
+  /// @brief Assign the texture @p width, @p height and @p data.
+  void assign(GLsizei width, GLsizei height, const Pixel* data = nullptr) {
     bind_(TextureTarget::texture2D);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        /*level*/ 0, pixel_desc_v<Pixel>.internal_format, width, height,
-        /*border*/ 0, pixel_desc_v<Pixel>.format, pixel_desc_v<Pixel>.type,
-        /*data*/ nullptr);
+    glTexImage2D(GL_TEXTURE_2D,
+                 /*level*/ 0, pixel_desc_v<Pixel>.internal_format, //
+                 width, height,
+                 /*border*/ 0, pixel_desc_v<Pixel>.format,
+                 pixel_desc_v<Pixel>.type, data);
     /// @todo Sampling properties!
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  }
+
+  /// @brief Read the texture into the pixel buffer object.
+  void read_pixels(Buffer<Pixel>& buffer) {
+    buffer.bind(BufferTarget::pixel_pack_buffer);
+    bind_(TextureTarget::texture2D);
+    glGetTexImage(GL_TEXTURE_2D, /*level*/ 0, pixel_desc_v<Pixel>.format,
+                  pixel_desc_v<Pixel>.type, /*data*/ nullptr);
   }
 
 }; // class Texture2D

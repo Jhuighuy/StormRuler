@@ -65,6 +65,6 @@ void main() {
   fragment_color.a = 1.0;
   uint state = texelFetch(cell_states, gl_PrimitiveID).r;
   fragment_color *= state == uint(0) ? regular_color : selected_color;
-  fragment_entity = uvec2(222, gl_PrimitiveID);
+  fragment_entity = uvec2(333, gl_PrimitiveID);
 }
 )")

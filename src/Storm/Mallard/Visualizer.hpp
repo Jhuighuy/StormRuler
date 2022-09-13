@@ -240,6 +240,35 @@ void visualize_mesh(const Mesh& mesh) {
       }
     });
 
+    GLuint pbo;
+    glGenBuffers(1, &pbo);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+    glBufferData(GL_PIXEL_PACK_BUFFER,
+                 sizeof(glm::uvec2) * window_width * window_height, nullptr,
+                 GL_STREAM_COPY);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, entity_texture);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
+
+    glFlush();
+    glFinish();
+
+    double xpd, ypd;
+    glfwGetCursorPos(window, &xpd, &ypd);
+    auto pixels =
+        (const glm::uvec2*) glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    if (pixels != nullptr) {
+      auto xp = std::clamp((size_t) xpd, size_t(0), window_width - 1);
+      auto yp = window_height - 1 -
+                std::clamp((size_t) ypd, size_t(0), window_height - 1);
+      auto p = pixels[yp * window_width + xp];
+      STORM_INFO_("type = {}, index = {}", p.x, p.y);
+      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+    }
+
+    glDeleteBuffers(1, &pbo);
+
     {
       glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

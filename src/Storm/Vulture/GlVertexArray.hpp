@@ -38,7 +38,7 @@ enum class DrawMode : GLenum {
 
 /// @brief OpenGL type enumeration.
 template<class Type>
-inline constexpr GLenum vertex_attrib_type_v = [] {
+inline constexpr auto vertex_attrib_type_v = []() -> GLenum {
   if constexpr (std::same_as<Type, GLbyte>) return GL_BYTE;
   if constexpr (std::same_as<Type, GLubyte>) return GL_UNSIGNED_BYTE;
   if constexpr (std::same_as<Type, GLshort>) return GL_SHORT;
@@ -47,6 +47,7 @@ inline constexpr GLenum vertex_attrib_type_v = [] {
   if constexpr (std::same_as<Type, GLuint>) return GL_UNSIGNED_INT;
   if constexpr (std::same_as<Type, GLfloat>) return GL_FLOAT;
   if constexpr (std::same_as<Type, GLdouble>) return GL_DOUBLE;
+  return 0;
 }();
 
 /// @brief Number of the components in type.

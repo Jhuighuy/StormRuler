@@ -196,6 +196,7 @@ public:
   }
 
   /// @brief Read the texture into the pixel buffer object.
+  /// @see https://riptutorial.com/opengl/example/28872/using-pbos
   void read_pixels(Buffer<Pixel>& buffer) {
     buffer.bind(BufferTarget::pixel_pack_buffer);
     bind_(TextureTarget::texture2D);

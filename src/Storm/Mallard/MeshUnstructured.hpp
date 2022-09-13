@@ -271,8 +271,8 @@ public:
     // clang-format on
 
     // If an edge or or face is inserted, check if it exists first.
-    if constexpr (std::is_same_v<EntityIndex<I>, EdgeIndex> ||
-                  std::is_same_v<EntityIndex<I>, FaceIndex>) {
+    if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
+                    std::is_same_v<EntityIndex<I>, CellIndex>) ) {
       if (const auto found_entity_index = find<I>(shape.nodes());
           found_entity_index.has_value()) {
         return *found_entity_index;
@@ -349,36 +349,43 @@ public:
 
 private:
 
-  void update_face_orientation_(FaceIndex face_index, const auto& face_nodes) {
-    // Check the face orientation.
-    const bool face_oriented_as_inner = std::ranges::equal( //
-        face_nodes, adjacent<0>(face_index));
-    const bool face_oriented_as_outer = std::ranges::equal(
-        face_nodes, adjacent<0>(face_index) | std::views::reverse);
-    switch (adjacent<TopologicalDim>(face_index).size()) {
-      case 1: {
-        // Face was connected with the first cell.
-        // This must be the inner cell. Flip the face if it is not.
-        STORM_ENSURE_(face_oriented_as_inner ^ face_oriented_as_outer,
-                      "Broken face orientation");
-        if (face_oriented_as_outer) {
-          face_normals_[face_index] = -face_normals_[face_index];
-          meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
-              [&]<size_t I>(meta::type<EntityIndex<I>>) {
-                using T = Table<FaceIndex, EntityIndex<I>>;
-                std::ranges::reverse(
-                    std::get<T>(connectivity_tuple_)[face_index]);
-              });
-        }
-        break;
+  void update_face_orientation_(FaceIndex face_index,
+                                const auto& cell_face_nodes) {
+    // Detect the face orientation.
+    const auto face_nodes = adjacent<0>(face_index);
+    std::vector<NodeIndex> temp{cell_face_nodes.begin(), cell_face_nodes.end()};
+    std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
+    const bool face_oriented_as_inner = std::ranges::equal(temp, face_nodes);
+    const bool face_oriented_as_outer = !face_oriented_as_inner && [&] {
+      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.back()));
+      return std::ranges::equal(temp, face_nodes | std::views::reverse);
+    }();
+    // Check and update the orientation (if needed).
+    const size_t num_cell_faces = adjacent<TopologicalDim>(face_index).size();
+    if (num_cell_faces == 1) {
+      // Face was connected with the first cell.
+      // This must be the inner cell. Flip the face if it is not.
+      if (face_oriented_as_outer) {
+        face_normals_[face_index] = -face_normals_[face_index];
+        meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
+            [&]<size_t I>(meta::type<EntityIndex<I>>) {
+              using T = Table<FaceIndex, EntityIndex<I>>;
+              std::ranges::reverse(
+                  std::get<T>(connectivity_tuple_)[face_index]);
+            });
+      } else if (!face_oriented_as_inner) {
+        STORM_TERMINATE_("Face has a single adjacent cell, "
+                         "but it can be neither inner nor outer!");
       }
-      case 2: {
-        // Face was connected with the second cell.
-        // This must be the outer cell.
-        STORM_ENSURE_(face_oriented_as_outer, "Broken face orientation.");
-        break;
+    } else if (num_cell_faces == 2) {
+      // Face was connected with the second cell.
+      // This must be the outer cell.
+      if (!face_oriented_as_outer) {
+        STORM_TERMINATE_("Face has two adjacent cells, "
+                         "but the second cannot be the outer one!");
       }
-      default: STORM_TERMINATE_("Face already has two or more adjacent cells!");
+    } else {
+      STORM_TERMINATE_("Invalid number of the face cells!");
     }
   }
 

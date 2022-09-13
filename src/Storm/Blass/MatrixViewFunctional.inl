@@ -51,6 +51,7 @@ public:
   /// @brief Construct a map view.
   constexpr MapMatrixView(Func func, Matrices... mats)
       : func_{std::move(func)}, mats_{std::move(mats)...} {
+#if !STORM_COMPILER_MSVC_
     STORM_ASSERT_( //
         std::apply(
             [](const auto& first_mat, const auto&... rest_mats) {
@@ -58,6 +59,7 @@ public:
             },
             mats_),
         "Shapes of the matrix arguments are mismatched.");
+#endif
   }
 
   /// @copydoc MatrixViewInterface::shape

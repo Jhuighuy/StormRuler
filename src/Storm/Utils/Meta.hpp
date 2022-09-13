@@ -364,7 +364,7 @@ using r_pair_list_t = decltype(r_pair_list<X>(List{}));
 ///////////////////////////////////
 // Pair cast
 
-template<template<class, class> class ToPair>
+template<template<class...> class ToPair>
 struct pair_cast_fn : transform_fn<pair_cast_fn<ToPair>> {
   template<class T, class U>
   consteval auto operator()(list<T, U>) const {
@@ -372,10 +372,10 @@ struct pair_cast_fn : transform_fn<pair_cast_fn<ToPair>> {
   }
 }; // struct pair_cast_fn
 
-template<template<class, class> class ToPair>
+template<template<class...> class ToPair>
 inline constexpr pair_cast_fn<ToPair> pair_cast{};
 
-template<template<class, class> class ToPair, class Pair>
+template<template<class...> class ToPair, class Pair>
 using pair_cast_t = decltype(pair_cast<ToPair>(Pair{}));
 
 template<class Pair>

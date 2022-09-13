@@ -139,21 +139,24 @@ public:
 
   /// @brief Set perspective projection matrix.
   void set_perspective(float aspect_ratio, float fov_degrees = 60.0f,
-                       float near = 0.001f, float far = 1000.0f) noexcept {
+                       float the_near = 0.001f,
+                       float the_far = 1000.0f) noexcept {
     // Beware: GLM's documentations says that FOV is in degress,
     // but actually it is in radians!
-    projection_matrix_ =
-        glm::perspective(glm::radians(fov_degrees), aspect_ratio, near, far);
-    near_ = near, far_ = far;
+    projection_matrix_ = glm::perspective(glm::radians(fov_degrees),
+                                          aspect_ratio, the_near, the_far);
+    near_ = the_near, far_ = the_far;
   }
 
   /// @brief Set orthographic projection matrix.
   void set_ortographic(float aspect_ratio, float height = 1.0f,
-                       float near = 0.001f, float far = 1000.0f) noexcept {
+                       float the_near = 0.001f,
+                       float the_far = 1000.0f) noexcept {
     const float width = aspect_ratio * height;
-    projection_matrix_ = glm::ortho(-0.5f * width, +0.5f * width,
-                                    -0.5f * height, +0.5f * height, near, far);
-    near_ = near, far_ = far;
+    projection_matrix_ =
+        glm::ortho(-0.5f * width, +0.5f * width, //
+                   -0.5f * height, +0.5f * height, the_near, the_far);
+    near_ = the_near, far_ = the_far;
   }
 
   /// @brief Camera view-projection matrix.

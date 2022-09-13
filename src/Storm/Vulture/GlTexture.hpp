@@ -155,7 +155,7 @@ protected:
     glBindTexture(static_cast<GLenum>(target), texture_id_);
   }
   void bind_(TextureTarget target, size_t slot) const {
-    glActiveTexture(GL_TEXTURE0 + slot);
+    glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + slot));
     bind_(target);
   }
 

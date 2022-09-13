@@ -32,7 +32,7 @@ cmake_minimum_required(VERSION 3.12)
 project(StormRuler
   VERSION 1.0
   DESCRIPTION "A very high order CFD solver and beyond"
-  LANGUAGES Fortran CXX)
+  LANGUAGES CXX)
 
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
@@ -53,12 +53,12 @@ elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 #elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
 #  set(REQUIRED_Fortran_COMPILER_VERSION "???")
 else()
-  message(FATAL_ERROR "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}.")
+  #message(FATAL_ERROR "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}.")
 endif()
 if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS REQUIRED_Fortran_COMPILER_VERSION)
-  message(FATAL_ERROR 
-    "Insufficient ${CMAKE_Fortran_COMPILER_ID} Fortran compiler version, \
-    required version ${REQUIRED_Fortran_COMPILER_VERSION} or more recent.")
+  #message(FATAL_ERROR 
+  #  "Insufficient ${CMAKE_Fortran_COMPILER_ID} Fortran compiler version, \
+  #  required version ${REQUIRED_Fortran_COMPILER_VERSION} or more recent.")
 endif()
 
 # Check C/C++ compiler.
@@ -238,7 +238,7 @@ else()
     message(STATUS "MKL enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
   endif()
-endif()
+endif() 
 
 # Find BLAS.
 if(StormRuler_NO_BLAS)

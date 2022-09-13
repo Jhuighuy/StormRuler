@@ -40,7 +40,7 @@
 #include <StormRuler_API.h>
 
 // Detect the C++ version.
-#if __cplusplus < 202002L
+#if __cplusplus < 202002L && !defined(_MSC_VER)
 #error Storm requires C++20 support!
 #endif
 #if __cplusplus > 202002L

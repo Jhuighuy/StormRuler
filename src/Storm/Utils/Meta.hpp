@@ -359,21 +359,21 @@ template<class List, class X>
 using r_pair_list_t = decltype(r_pair_list<X>(List{}));
 
 template<class, class>
-struct auto_pair_list_t;
+struct pair_list;
 template<class X, class... Ts>
-struct auto_pair_list_t<X, list<Ts...>> {
+struct pair_list<X, list<Ts...>> {
   using type = l_pair_list_t<X, list<Ts...>>;
 };
 template<class... Ts, class X>
-struct auto_pair_list_t<list<Ts...>, X> {
+struct pair_list<list<Ts...>, X> {
   using type = r_pair_list_t<list<Ts...>, X>;
 };
 
 template<class X, class Y>
-using pair_list_t = typename auto_pair_list_t<X, Y>::type;
+using pair_list_t = typename pair_list<X, Y>::type;
 
 template<class X, class Y>
-inline constexpr pair_list_t<X, Y> pair_list;
+inline constexpr pair_list_t<X, Y> pair_list_v;
 
 //
 ///////////////////////////////////

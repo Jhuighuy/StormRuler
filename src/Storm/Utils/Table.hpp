@@ -75,11 +75,9 @@ public:
     row_offsets_.emplace_back(col_indices_.size());
   }
   /// @brief Push back a row with @p row_col_indices.
-  // clang-format off
-  template<std::ranges::range Range>
+  template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
   constexpr void push_back(Range&& row_col_indices) {
-    // clang-format on
     col_indices_.insert(col_indices_.end(), //
                         row_col_indices.begin(), row_col_indices.end());
     row_offsets_.emplace_back(col_indices_.size());
@@ -146,11 +144,9 @@ public:
     row_offsets_.emplace_back(col_indices_.size());
   }
   /// @brief Push back a row with @p row_col_indices.
-  // clang-format off
-  template<std::ranges::range Range>
+  template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
   constexpr void push_back(Range&& row_col_indices) {
-    // clang-format on
     col_indices_.insert(col_indices_.end(), //
                         row_col_indices.begin(), row_col_indices.end());
     row_end_offsets_.emplace_back(col_indices_.size());
@@ -222,11 +218,9 @@ public:
     data_.emplace_back();
   }
   /// @brief Push back a row with @p row_col_indices.
-  // clang-format off
-  template<std::ranges::range Range>
+  template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
   constexpr void push_back(Range&& row_col_indices) {
-    // clang-format on
     data_.emplace_back();
     std::ranges::copy(row_col_indices, std::back_inserter(data_.back()));
   }

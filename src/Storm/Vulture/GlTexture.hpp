@@ -116,10 +116,8 @@ inline constexpr auto pixel_desc_v = []() -> pixel_desc_t {
 }();
 
 /// @brief Pixel type.
-// clang-format off
 template<class Pixel>
 concept pixel = (pixel_desc_v<Pixel>.internal_format != 0);
-// clang-format on
 
 /// @brief OpenGL texture.
 class Texture : detail_::noncopyable_ {

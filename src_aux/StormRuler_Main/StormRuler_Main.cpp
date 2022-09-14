@@ -47,7 +47,7 @@
 #include <Storm/Mallard/MeshUnstructured.hpp>
 #include <Storm/Mallard/Shape.hpp>
 #include <Storm/Mallard/Visualizer.hpp>
-//#include <Storm/Blass/Matrix.hpp>
+// #include <Storm/Blass/Matrix.hpp>
 #endif
 
 #include "NVT/Nvt.hpp"
@@ -282,25 +282,25 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 void Init_For_NVT(Nvt& NVT_obj) {
-  //Количество компонент
-  // int n_comp = 2;
-  //Критическая температура
+  // Количество компонент
+  //  int n_comp = 2;
+  // Критическая температура
   std::vector<double> T_crit{304.2, 617.6};
-  //Критическое давление
+  // Критическое давление
   std::vector<double> P_crit{73.7646e5, 21.0756e5};
-  //Ацентрические факторы
+  // Ацентрические факторы
   std::vector<double> ac_factors{0.225, 0.49};
-  //Параметры парного взаимодействия
+  // Параметры парного взаимодействия
   std::vector<std::vector<double>> k_ij{{0, 0.1141}, {0.1141, 0}};
-  //Количества компонент
+  // Количества компонент
   std::vector<double> N_parts{2549.336, 159.335375};
-  //Объем
+  // Объем
   double V = 1.0;
-  //Температура
+  // Температура
   double T = 295.15;
-  //Давление
+  // Давление
   double P_init = 4e6;
-  //Количество узлов по phi
+  // Количество узлов по phi
   int N_mesh = 101;
 
   NVT_obj.NVT_set_param(T_crit, P_crit, ac_factors, k_ij, N_parts, V, T, P_init,

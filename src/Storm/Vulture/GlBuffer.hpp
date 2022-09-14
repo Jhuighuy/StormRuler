@@ -86,11 +86,10 @@ public:
 
   /// @brief Construct a buffer with a range.
   /// @param usage Intended buffer usage.
-  // clang-format off
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Type>
-  Buffer(Range&& values, BufferUsage usage = BufferUsage::static_draw) : Buffer{} {
-    // clang-format on
+  Buffer(Range&& values, BufferUsage usage = BufferUsage::static_draw)
+      : Buffer{} {
     assign(std::forward<Range>(values), usage);
   }
 
@@ -140,11 +139,9 @@ public:
 
   /// @brief Assign the buffer @p values.
   /// @param usage Intended buffer usage.
-  // clang-format off
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Type>
   void assign(Range&& values, BufferUsage usage = BufferUsage::static_draw) {
-    // clang-format on
     glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
     if constexpr (std::ranges::sized_range<Range>) {
       assign(static_cast<GLsizei>(values.size()));

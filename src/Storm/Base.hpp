@@ -209,7 +209,7 @@ namespace detail_ {
 
   template<class T1, class T2>
   concept different_from_ =
-      !std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+      (!std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>);
 
 } // namespace detail_
 

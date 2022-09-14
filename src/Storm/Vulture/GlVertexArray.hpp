@@ -55,10 +55,8 @@ template<class>
 inline constexpr GLint vertex_attrib_length_v = 1;
 
 /// @brief Vertex attribute type.
-// clang-format off
 template<class VertexAttrib>
 concept vertex_attrib = (vertex_attrib_type_v<VertexAttrib> != 0);
-// clang-format on
 
 template<glm::length_t Length, vertex_attrib Type>
 inline constexpr GLenum

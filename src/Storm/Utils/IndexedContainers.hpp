@@ -33,11 +33,9 @@
 namespace Storm {
 
 /// @brief Wrapper for std::array with strict indexing.
-// clang-format off
 template<index Index, class Value, size_t Size>
   requires std::is_object_v<Value>
 class IndexedArray final : public std::array<Value, Size> {
-  // clang-format on
 public:
 
   /// @brief Element at @p index.
@@ -69,11 +67,9 @@ public:
 }; // class IndexedArray
 
 /// @brief Wrapper for std::vector with strict indexing.
-// clang-format off
 template<index Index, class Value, class Allocator = std::allocator<Value>>
   requires std::is_object_v<Value> && std::is_object_v<Allocator>
 class IndexedVector final : public std::vector<Value, Allocator> {
-  // clang-format on
 public:
 
   /// @brief Construct an empty indexed vector.

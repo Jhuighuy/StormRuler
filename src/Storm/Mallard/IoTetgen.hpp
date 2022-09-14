@@ -97,6 +97,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
         "Done reading {} nodes from file '{}'.", num_nodes, path.string());
   }
 
+  std::vector<Label> edge_labels{};
   { // Read the edges.
     path.replace_extension(".edge");
     std::ifstream edge_stream(path);
@@ -114,8 +115,10 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the edges.
+    if (edges_have_labels) { edge_labels.reserve(num_edges); }
     for (size_t edge_entry = 0; edge_entry < num_edges; ++edge_entry) {
-      size_t edge_index, edge_label = 0;
+      size_t edge_index;
+      Label edge_label;
       shapes::Seg edge{};
       edge_stream >> edge_index >> edge.n1 >> edge.n2;
       if (edges_have_labels) edge_stream >> edge_label;
@@ -123,13 +126,15 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
         STORM_THROW_IO_("Cannot read the edge # {} from file '{}'!", //
                         edge_entry, path.string());
       }
-      mesh.insert(edge, meta::type_v<EdgeIndex>); /// @todo edge_label!
+      mesh.insert(edge, meta::type_v<EdgeIndex>);
+      if (edges_have_labels) { edge_labels.push_back(edge_label); }
     }
 
     STORM_INFO_( //
         "Done reading {} edges from file '{}'.", num_edges, path.string());
   }
 
+  [[maybe_unused]] std::vector<Label> face_labels{};
   if constexpr (mesh3D) {
     // Read the faces.
     path.replace_extension(".face");
@@ -148,8 +153,10 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the faces.
+    if (faces_have_labels) { face_labels.reserve(num_faces); }
     for (size_t face_entry = 0; face_entry < num_faces; ++face_entry) {
-      size_t face_index, face_label = 0;
+      size_t face_index;
+      Label face_label;
       shapes::Triangle face{};
       face_stream >> face_index >> face.n1 >> face.n2 >> face.n3;
       if (faces_have_labels) { face_stream >> face_label; }
@@ -157,7 +164,8 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
         STORM_THROW_IO_("Cannot read the face # {} from file '{}'!", //
                         face_entry, path.string());
       }
-      mesh.insert(face, meta::type_v<FaceIndex<Mesh>>); /// @todo face_label!
+      mesh.insert(face, meta::type_v<FaceIndex<Mesh>>);
+      if (faces_have_labels) { face_labels.push_back(face_label); }
     }
 
     STORM_INFO_( //
@@ -206,6 +214,20 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
 
     STORM_INFO_( //
         "Done reading {} cells from file '{}'.", num_cells, path.string());
+  }
+
+  // Assign the labels.
+  // (This should be done at the end, since
+  //  TetGen may not generate all the edges/faces.)
+  if (!edge_labels.empty()) {
+    mesh.assign_labels(edge_labels, meta::type_v<EdgeIndex>);
+    STORM_INFO_("Done assigning edge labels.");
+  }
+  if constexpr (mesh3D) {
+    if (!face_labels.empty()) {
+      mesh.assign_labels(face_labels, meta::type_v<FaceIndex<Mesh>>);
+      STORM_INFO_("Done assigning face labels.");
+    }
   }
 }
 

@@ -32,6 +32,7 @@
 #include <Storm/Mallard/Shape.hpp>
 
 #include <algorithm>
+#include <numeric>
 #include <optional>
 #include <ranges>
 #include <tuple>
@@ -350,64 +351,24 @@ public:
     return entity_index;
   }
 
-private:
-
-  // clang-format off
-  template<std::ranges::sized_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
-  constexpr void update_face_orientation_(FaceIndex face_index,
-                                          Range&& cell_face_nodes) {
-    // clang-format on
-    // Detect the face orientation.
-    const auto face_nodes = adjacent<0>(face_index);
-    bool cell_is_inner, cell_is_outer;
-    if (cell_face_nodes.size() == 2) {
-      cell_is_inner = cell_face_nodes.front() == face_nodes.front() &&
-                      cell_face_nodes.back() == face_nodes.back();
-      cell_is_outer = cell_face_nodes.front() == face_nodes.back() &&
-                      cell_face_nodes.back() == face_nodes.front();
-    } else {
-      // Need to take into the account possible rotations.
-      STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
-      temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());
-      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
-      cell_is_inner = std::ranges::equal(temp, face_nodes);
-      cell_is_outer = !cell_is_inner && [&] {
-        std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.back()));
-        return std::ranges::equal(temp, face_nodes | std::views::reverse);
-      }();
-    }
-    // Check and update the orientation (if needed).
-    const auto cell_faces = adjacent<TopologicalDim>(face_index);
-    if (cell_faces.size() == 1) {
-      STORM_ENSURE_(cell_is_inner || cell_is_outer,
-                    "Face has a single adjacent cell, "
-                    "but it can be neither inner nor outer!");
-      // Flip the face if the cell is outer.
-      if (cell_is_outer) {
-        face_normals_[face_index] = -face_normals_[face_index];
-        meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
-            [&]<size_t I>(meta::type<EntityIndex<I>>) {
-              using T = Table<FaceIndex, EntityIndex<I>>;
-              std::ranges::reverse(
-                  std::get<T>(connectivity_tuple_)[face_index]);
-            });
-      }
-    } else if (cell_faces.size() == 2) {
-      STORM_ENSURE_(cell_is_outer,
-                    "Face has two adjacent cells, "
-                    "but the second cell cannot be the outer one!");
-    } else {
-      STORM_TERMINATE_("Invalid number of the face cells!");
-    }
-  }
-
+  /// @brief Permute the entities.
   // clang-format off
   template<size_t I, std::ranges::random_access_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
-  constexpr void permute_unchecked_(Range&& perm,
-                                    meta::type<EntityIndex<I>> = {}) {
+    requires std::permutable<std::ranges::iterator_t<Range>> &&
+             std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
+  constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
     // clang-format on
+    if constexpr (std::ranges::sized_range<Range>) {
+      STORM_ASSERT_(perm.size() <= num_entities<I>(),
+                    "Invalid permutation size!");
+    }
+
+    // Stable-sort the permutation in order to keep the label ranges correct.
+    std::ranges::stable_sort(perm, [&](EntityIndex<I> entity_index_1,
+                                       EntityIndex<I> entity_index_2) {
+      return label(entity_index_1) < label(entity_index_2);
+    });
+
     { // Generate the inverse permutations and fix the connectivity.
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(perm.size());
       permutations::invert_permutation(perm, iperm.begin());
@@ -460,6 +421,95 @@ private:
       auto properties_tuple_2 = make_properties_tuple(entity_index_2);
       std::swap(properties_tuple_1, properties_tuple_2);
     });
+  }
+
+  // clang-format off
+  template<size_t I, std::ranges::input_range Range>
+    requires std::same_as<std::ranges::range_value_t<Range>, Label>
+  constexpr void assign_labels(Range&& labels, 
+                               meta::type<EntityIndex<I>> = {}) {
+    // clang-format on
+    if constexpr (std::ranges::sized_range<Range>) {
+      STORM_ASSERT_(labels.size() == num_entities<I>(),
+                    "Invalid labels range size!");
+    }
+    auto& entity_labels = std::get<I>(entity_labels_tuple_);
+    std::ranges::copy(labels, entity_labels.begin());
+    finalize_labels_assignment_<I>();
+  }
+
+private:
+
+  // clang-format off
+  template<std::ranges::sized_range Range>
+    requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
+  constexpr void update_face_orientation_(FaceIndex face_index,
+                                          Range&& cell_face_nodes) {
+    // clang-format on
+    // Detect the face orientation.
+    const auto face_nodes = adjacent<0>(face_index);
+    bool cell_is_inner, cell_is_outer;
+    if (cell_face_nodes.size() == 2) {
+      cell_is_inner = cell_face_nodes.front() == face_nodes.front() &&
+                      cell_face_nodes.back() == face_nodes.back();
+      cell_is_outer = cell_face_nodes.front() == face_nodes.back() &&
+                      cell_face_nodes.back() == face_nodes.front();
+    } else {
+      // Need to take into the account possible rotations.
+      STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
+      temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());
+      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
+      cell_is_inner = std::ranges::equal(temp, face_nodes);
+      cell_is_outer = !cell_is_inner && [&] {
+        std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.back()));
+        return std::ranges::equal(temp, face_nodes | std::views::reverse);
+      }();
+    }
+    // Check and update the orientation (if needed).
+    const auto cell_faces = adjacent<TopologicalDim>(face_index);
+    if (cell_faces.size() == 1) {
+      STORM_ENSURE_(cell_is_inner || cell_is_outer,
+                    "Face has a single adjacent cell, "
+                    "but it can be neither inner nor outer!");
+      // Flip the face if the cell is outer.
+      if (cell_is_outer) {
+        face_normals_[face_index] = -face_normals_[face_index];
+        meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
+            [&]<size_t I>(meta::type<EntityIndex<I>>) {
+              using T = Table<FaceIndex, EntityIndex<I>>;
+              std::ranges::reverse(
+                  std::get<T>(connectivity_tuple_)[face_index]);
+            });
+      }
+    } else if (cell_faces.size() == 2) {
+      STORM_ENSURE_(cell_is_outer,
+                    "Face has two adjacent cells, "
+                    "but the second cell cannot be the outer one!");
+    } else {
+      STORM_TERMINATE_("Invalid number of the face cells!");
+    }
+  }
+
+  template<size_t I>
+  constexpr void finalize_labels_assignment_() {
+    // Permute the entities according to labels.
+    std::vector<EntityIndex<I>> perm(num_entities<I>());
+    std::ranges::copy(entities<I>(), perm.begin());
+    permute<I>(perm);
+
+    // Regenerate label ranges.
+    auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    const auto& entity_labels = std::get<I>(entity_labels_tuple_);
+    entity_ranges.clear();
+    std::ranges::for_each(entity_labels, [&](Label label) {
+      entity_ranges.resize(static_cast<size_t>(label) + 2);
+      entity_ranges[label + 1] += 1;
+    });
+    std::partial_sum(
+        entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
+        [](EntityIndex<I> entity_index_1, EntityIndex<I> entity_index_2) {
+          return entity_index_1 + static_cast<size_t>(entity_index_2);
+        });
   }
 
 }; // class UnstructuredMesh

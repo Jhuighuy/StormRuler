@@ -315,16 +315,7 @@ int main(int argc, char** argv) {
   read_mesh_from_tetgen(mesh1, "test/mesh/rectangle.1.");
   // UnstructuredMesh<3, 3> mesh1{};
   // read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
-  write_mesh_to_vtk(mesh1, "out/test.vtk");
-
-  STORM_INFO_("mesh has {} edges", num_edges(mesh1));
-  STORM_INFO_("mesh has {} faces", num_faces(mesh1));
-  STORM_INFO_("mesh loaded");
-
-  std::vector<CellIndex<UnstructuredMesh<2, 2>>> perm{};
-  std::ranges::copy(mesh1.entities<2>() | std::views::reverse,
-                    std::back_inserter(perm));
-  mesh1.permute<2>(perm);
+  // write_mesh_to_vtk(mesh1, "out/test.vtk");
 
   STORM_INFO_("mesh has {} edges", num_edges(mesh1));
   STORM_INFO_("mesh has {} faces", num_faces(mesh1));

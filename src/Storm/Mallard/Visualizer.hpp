@@ -301,7 +301,7 @@ void visualize_mesh(const Mesh& mesh) {
       gl::BindProgram bind_program{screen_quad_program};
       color_texture.bind(0);
       entity_texture.bind(1);
-      bind_program.set_uniform(node_program["color_texture"], 0);
+      bind_program.set_uniform(screen_quad_program["color_texture"], 0);
       screen_quad_vertex_array.draw(gl::DrawMode::triangles, 6);
     }
 
@@ -311,21 +311,19 @@ void visualize_mesh(const Mesh& mesh) {
         window.cursor_pos_y() * window_width + window.cursor_pos_x());
     const auto entity_type = entity.x;
     const auto entity_index = entity.y;
+    unselect_all();
     switch (entity_type) {
       case node_entity_type: {
-        unselect_all();
         last_selected_node.emplace(entity_index);
         select_node(*last_selected_node, 1);
         break;
       }
       case edge_entity_type: {
-        unselect_all();
         last_selected_edge.emplace(entity_index);
         select_edge(*last_selected_edge, 1);
         break;
       }
       case cell_entity_type: {
-        unselect_all();
         last_selected_cell.emplace(entity_index);
         select_cell(*last_selected_cell, 1);
         break;

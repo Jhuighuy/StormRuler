@@ -359,7 +359,7 @@ public:
   constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
     // clang-format on
     if constexpr (std::ranges::sized_range<Range>) {
-      STORM_ASSERT_(perm.size() <= num_entities<I>(),
+      STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
                     "Invalid permutation size!");
     }
 
@@ -370,7 +370,7 @@ public:
     });
 
     { // Generate the inverse permutations and fix the connectivity.
-      IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(perm.size());
+      IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
@@ -384,13 +384,15 @@ public:
     }
 
     // Permute the entity-* connectivity.
+    /// @todo For some table types, when the rows are swappable,
+    /// inplace permutation may be used.
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
       auto& table = std::get<T>(connectivity_tuple_);
       T permuted_table{};
       std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
         const auto entity_index_sz = static_cast<size_t>(entity_index);
-        const EntityIndex<I> permuted_entity_index{perm[entity_index_sz]};
+        const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
         permuted_table.push_back(table[permuted_entity_index]);
       });
       table = std::move(permuted_table);
@@ -399,7 +401,7 @@ public:
     // Permute the entity shape properties.
     permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
                                             EntityIndex<I> entity_index_2) {
-      const auto make_properties_tuple = [&](EntityIndex<I> entity_index) {
+      const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
         auto& labels = std::get<I>(entity_labels_tuple_);
         auto& positions = std::get<I>(entity_positions_tuple_);
         if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -407,18 +409,19 @@ public:
         } else {
           auto& shape_types = std::get<I>(entity_shape_types_tuple_);
           auto& volumes = std::get<I>(entity_volumes_tuple_);
+          const auto properties =
+              std::tie(labels[entity_index], shape_types[entity_index],
+                       volumes[entity_index], positions[entity_index]);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-            return std::tie(labels[entity_index], shape_types[entity_index],
-                            volumes[entity_index], positions[entity_index],
-                            face_normals_[entity_index]);
+            return std::tuple_cat(properties,
+                                  std::tie(face_normals_[entity_index]));
           } else {
-            return std::tie(labels[entity_index], shape_types[entity_index],
-                            volumes[entity_index], positions[entity_index]);
+            return properties;
           }
         }
       };
-      auto properties_tuple_1 = make_properties_tuple(entity_index_1);
-      auto properties_tuple_2 = make_properties_tuple(entity_index_2);
+      auto properties_tuple_1 = gather_shape_properties_(entity_index_1);
+      auto properties_tuple_2 = gather_shape_properties_(entity_index_2);
       std::swap(properties_tuple_1, properties_tuple_2);
     });
   }
@@ -430,7 +433,7 @@ public:
                                meta::type<EntityIndex<I>> = {}) {
     // clang-format on
     if constexpr (std::ranges::sized_range<Range>) {
-      STORM_ASSERT_(labels.size() == num_entities<I>(),
+      STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
                     "Invalid labels range size!");
     }
     auto& entity_labels = std::get<I>(entity_labels_tuple_);
@@ -441,19 +444,19 @@ public:
 private:
 
   // clang-format off
-  template<std::ranges::sized_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
+  template<std::ranges::forward_range Range>
+    requires std::ranges::sized_range<Range> &&
+             std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr void update_face_orientation_(FaceIndex face_index,
                                           Range&& cell_face_nodes) {
     // clang-format on
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;
-    if (cell_face_nodes.size() == 2) {
-      cell_is_inner = cell_face_nodes.front() == face_nodes.front() &&
-                      cell_face_nodes.back() == face_nodes.back();
-      cell_is_outer = cell_face_nodes.front() == face_nodes.back() &&
-                      cell_face_nodes.back() == face_nodes.front();
+    if (std::ranges::size(cell_face_nodes) == 2) {
+      cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);
+      cell_is_outer =
+          std::ranges::equal(cell_face_nodes, face_nodes | std::views::reverse);
     } else {
       // Need to take into the account possible rotations.
       STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};

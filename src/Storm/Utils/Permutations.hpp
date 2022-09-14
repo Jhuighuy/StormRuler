@@ -22,6 +22,7 @@
 
 #include <concepts>
 #include <iterator>
+#include <utility>
 
 namespace Storm {
 
@@ -61,11 +62,12 @@ constexpr void invert_permutation(PermutationIterator perm_iterator,
                                   PermutationSentinel perm_sentinel,
                                   InversePermutationIterator iperm_iterator) {
   // clang-format on
-  std::iter_value_t<PermutationIterator> index{};
+  using Index = std::iter_value_t<PermutationIterator>;
+  Index index{};
   for (; perm_iterator != perm_sentinel; ++perm_iterator, ++index) {
-    STORM_ASSERT_(*perm_iterator != SIZE_MAX,
+    STORM_ASSERT_(*perm_iterator != Index{SIZE_MAX},
                   "Invalid permutation iterator value!");
-    iperm_iterator[*perm_iterator] = index;
+    iperm_iterator[static_cast<size_t>(*perm_iterator)] = index;
   }
 }
 template<std::ranges::input_range PermutationRange,
@@ -73,7 +75,7 @@ template<std::ranges::input_range PermutationRange,
 constexpr void invert_permutation(PermutationRange&& perm_range,
                                   InversePermutationIterator iperm_iterator) {
   invert_permutation(std::ranges::begin(perm_range),
-                     std::ranges::end(perm_range.end()), iperm_iterator);
+                     std::ranges::end(perm_range), std::move(iperm_iterator));
 }
 /// @}
 
@@ -85,19 +87,20 @@ template<std::random_access_iterator PermutationIterator,
          std::invocable<std::iter_value_t<PermutationIterator>,
                         std::iter_value_t<PermutationIterator>>
              SwapFunc>
-constexpr void permute(PermutationIterator perm_iterator,
-                       PermutationSentinel perm_sentinel, SwapFunc swap_func) {
-  std::iter_value_t<PermutationIterator> index{};
+constexpr void permute_inplace(PermutationIterator perm_iterator,
+                               PermutationSentinel perm_sentinel,
+                               SwapFunc swap_func) {
+  using Index = std::iter_value_t<PermutationIterator>;
+  Index index{};
   for (; perm_iterator != perm_sentinel; ++perm_iterator, ++index) {
-    auto current_index = index;
-    auto current_perm_iterator = perm_iterator;
+    Index current_index = index;
+    PermutationIterator current_perm_iterator = perm_iterator;
     while (*current_perm_iterator != index) {
-      STORM_ASSERT_(*current_perm_iterator != SIZE_MAX,
+      STORM_ASSERT_(*current_perm_iterator != Index{SIZE_MAX},
                     "Invalid permutation iterator value!");
-      const auto new_index = *current_perm_iterator;
+      const Index new_index = *current_perm_iterator;
       swap_func(current_index, new_index);
-      *current_perm_iterator = current_index;
-      current_index = new_index;
+      *current_perm_iterator = current_index, current_index = new_index;
       current_perm_iterator = perm_iterator + (current_index - index);
     }
     *current_perm_iterator = current_index;
@@ -106,6 +109,15 @@ constexpr void permute(PermutationIterator perm_iterator,
   std::ranges::fill(perm_iterator, perm_sentinel,
                     std::iter_value_t<PermutationIterator>{SIZE_MAX});
 #endif
+}
+template<std::ranges::random_access_range PermutationRange,
+         std::invocable<std::ranges::range_value_t<PermutationRange>,
+                        std::ranges::range_value_t<PermutationRange>>
+             SwapFunc>
+constexpr void permute_inplace(PermutationRange&& perm_range,
+                               SwapFunc swap_func) {
+  permute_inplace(std::ranges::begin(perm_range), //
+                  std::ranges::end(perm_range), std::move(swap_func));
 }
 /// @}
 

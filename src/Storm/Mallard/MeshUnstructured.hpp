@@ -25,6 +25,7 @@
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
+#include <Storm/Utils/Permutations.hpp>
 #include <Storm/Utils/Table.hpp>
 
 #include <Storm/Mallard/Mesh.hpp>
@@ -228,9 +229,12 @@ public:
   }
 
   /// @brief Find an entity by it's @p node_indices.
-  template<size_t I, class Range>
+  // clang-format off
+  template<size_t I, std::ranges::input_range Range>
+    requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   [[nodiscard]] constexpr std::optional<EntityIndex<I>>
-  find(const Range& node_indices, meta::type<EntityIndex<I>> = {}) const {
+  find(Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
+    // clang-format on
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());
     STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> found{};
@@ -396,6 +400,66 @@ private:
     } else {
       STORM_TERMINATE_("Invalid number of the face cells!");
     }
+  }
+
+  // clang-format off
+  template<size_t I, std::ranges::random_access_range Range>
+    requires std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
+  constexpr void permute_unchecked_(Range&& perm,
+                                    meta::type<EntityIndex<I>> = {}) {
+    // clang-format on
+    { // Generate the inverse permutations and fix the connectivity.
+      IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(perm.size());
+      permutations::invert_permutation(perm, iperm.begin());
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
+          using T = Table<EntityIndex<J>, EntityIndex<I>>;
+          std::ranges::for_each(std::get<T>(connectivity_tuple_)[entity_index],
+                                [&](EntityIndex<I>& adjacent_index) {
+                                  adjacent_index = iperm[adjacent_index];
+                                });
+        });
+      });
+    }
+
+    // Permute the entity-* connectivity.
+    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      using T = Table<EntityIndex<I>, EntityIndex<J>>;
+      auto& table = std::get<T>(connectivity_tuple_);
+      T permuted_table{};
+      std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
+        const auto entity_index_sz = static_cast<size_t>(entity_index);
+        const EntityIndex<I> permuted_entity_index{perm[entity_index_sz]};
+        permuted_table.push_back(table[permuted_entity_index]);
+      });
+      table = std::move(permuted_table);
+    });
+
+    // Permute the entity shape properties.
+    permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
+                                            EntityIndex<I> entity_index_2) {
+      const auto make_swap_argument = [&](EntityIndex<I> entity_index) {
+        auto& labels = std::get<I>(entity_labels_tuple_);
+        auto& positions = std::get<I>(entity_positions_tuple_);
+        if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
+          return std::tie(labels[entity_index], positions[entity_index]);
+        } else {
+          auto& shape_types = std::get<I>(entity_shape_types_tuple_);
+          auto& volumes = std::get<I>(entity_volumes_tuple_);
+          if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
+            return std::tie(labels[entity_index], shape_types[entity_index],
+                            volumes[entity_index], positions[entity_index],
+                            face_normals_[entity_index]);
+          } else {
+            return std::tie(labels[entity_index], shape_types[entity_index],
+                            volumes[entity_index], positions[entity_index]);
+          }
+        }
+      };
+      auto arg_1 = make_swap_argument(entity_index_1);
+      auto arg_2 = make_swap_argument(entity_index_2);
+      std::swap(arg_1, arg_2);
+    });
   }
 
 }; // class UnstructuredMesh

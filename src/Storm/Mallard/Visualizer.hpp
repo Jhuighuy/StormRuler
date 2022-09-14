@@ -62,7 +62,7 @@ void visualize_mesh(const Mesh& mesh) {
   gl::Framework framework{};
 
   // Setup window.
-  constexpr static const char* window_title = "Strom::Vulture Visualizer";
+  constexpr static const char* window_title = "Storm::Vulture Visualizer";
   constexpr static size_t window_width = 1600;
   constexpr static size_t window_height = 900;
   gl::Window window{};

@@ -62,7 +62,8 @@ public:
   /// @brief Comparison operator.
   /// @{
   [[nodiscard]] constexpr auto operator<=>(const Index& other) const = default;
-  [[nodiscard]] constexpr auto operator<=>(size_t value) const noexcept {
+  template<std::integral Integral>
+  [[nodiscard]] constexpr auto operator<=>(Integral value) const noexcept {
     return value_ <=> static_cast<size_t>(value);
   }
   /// @}

@@ -356,16 +356,16 @@ private:
   template<std::ranges::sized_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr void update_face_orientation_(FaceIndex face_index,
-                                          const Range& cell_face_nodes) {
+                                          Range&& cell_face_nodes) {
     // clang-format on
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;
     if (cell_face_nodes.size() == 2) {
-      cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);
-      cell_is_outer = !cell_is_inner &&
-                      std::ranges::equal(cell_face_nodes, //
-                                         face_nodes | std::views::reverse);
+      cell_is_inner = cell_face_nodes.front() == face_nodes.front() &&
+                      cell_face_nodes.back() == face_nodes.back();
+      cell_is_outer = cell_face_nodes.front() == face_nodes.back() &&
+                      cell_face_nodes.back() == face_nodes.front();
     } else {
       // Need to take into the account possible rotations.
       STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
@@ -438,7 +438,7 @@ private:
     // Permute the entity shape properties.
     permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
                                             EntityIndex<I> entity_index_2) {
-      const auto make_swap_argument = [&](EntityIndex<I> entity_index) {
+      const auto make_properties_tuple = [&](EntityIndex<I> entity_index) {
         auto& labels = std::get<I>(entity_labels_tuple_);
         auto& positions = std::get<I>(entity_positions_tuple_);
         if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -456,9 +456,9 @@ private:
           }
         }
       };
-      auto arg_1 = make_swap_argument(entity_index_1);
-      auto arg_2 = make_swap_argument(entity_index_2);
-      std::swap(arg_1, arg_2);
+      auto properties_tuple_1 = make_properties_tuple(entity_index_1);
+      auto properties_tuple_2 = make_properties_tuple(entity_index_2);
+      std::swap(properties_tuple_1, properties_tuple_2);
     });
   }
 

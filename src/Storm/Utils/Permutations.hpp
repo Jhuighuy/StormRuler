@@ -55,9 +55,12 @@ namespace Storm::permutations {
 /// @brief Invert the permutation. Complexity is linear.
 /// @todo Add contrains!
 /// @{
+// clang-format off
 template<std::input_iterator PermutationIterator,
          std::sentinel_for<PermutationIterator> PermutationSentinel,
-         class InversePermutationIterator>
+         std::random_access_iterator InversePermutationIterator>
+  requires std::indirectly_copyable<
+    PermutationIterator, InversePermutationIterator>
 constexpr void invert_permutation(PermutationIterator perm_iterator,
                                   PermutationSentinel perm_sentinel,
                                   InversePermutationIterator iperm_iterator) {
@@ -70,26 +73,34 @@ constexpr void invert_permutation(PermutationIterator perm_iterator,
     iperm_iterator[static_cast<size_t>(*perm_iterator)] = index;
   }
 }
+// clang-format off
 template<std::ranges::input_range PermutationRange,
-         class InversePermutationIterator>
+         std::random_access_iterator InversePermutationIterator>
+  requires std::indirectly_copyable<
+    std::ranges::iterator_t<PermutationRange>, InversePermutationIterator>
 constexpr void invert_permutation(PermutationRange&& perm_range,
                                   InversePermutationIterator iperm_iterator) {
+  // clang-format on
   invert_permutation(std::ranges::begin(perm_range),
                      std::ranges::end(perm_range), std::move(iperm_iterator));
 }
 /// @}
 
 /// @brief Apply the permutation inplace. Complexity is linear.
-/// @todo Add contrains!
 /// @{
+// clang-format off
 template<std::random_access_iterator PermutationIterator,
          std::sentinel_for<PermutationIterator> PermutationSentinel,
          std::invocable<std::iter_value_t<PermutationIterator>,
                         std::iter_value_t<PermutationIterator>>
              SwapFunc>
+  requires std::permutable<PermutationIterator>
 constexpr void permute_inplace(PermutationIterator perm_iterator,
                                PermutationSentinel perm_sentinel,
                                SwapFunc swap_func) {
+  // clang-format on
+  // For implementation details see:
+  // https://devblogs.microsoft.com/oldnewthing/20170102-00/?p=95095
   using Index = std::iter_value_t<PermutationIterator>;
   Index index{};
   for (; perm_iterator != perm_sentinel; ++perm_iterator, ++index) {
@@ -106,16 +117,18 @@ constexpr void permute_inplace(PermutationIterator perm_iterator,
     *current_perm_iterator = current_index;
   }
 #ifndef NDEBUG
-  std::ranges::fill(perm_iterator, perm_sentinel,
-                    std::iter_value_t<PermutationIterator>{SIZE_MAX});
+  std::ranges::fill(perm_iterator, perm_sentinel, Index{SIZE_MAX});
 #endif
 }
+// clang-format off
 template<std::ranges::random_access_range PermutationRange,
          std::invocable<std::ranges::range_value_t<PermutationRange>,
                         std::ranges::range_value_t<PermutationRange>>
              SwapFunc>
+  requires std::permutable<std::ranges::iterator_t<PermutationRange>>
 constexpr void permute_inplace(PermutationRange&& perm_range,
                                SwapFunc swap_func) {
+  // clang-format on
   permute_inplace(std::ranges::begin(perm_range), //
                   std::ranges::end(perm_range), std::move(swap_func));
 }

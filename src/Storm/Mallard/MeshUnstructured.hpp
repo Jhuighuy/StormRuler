@@ -22,7 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Containers.hpp>
+#include <Storm/Utils/Index.hpp>
+#include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
 #include <Storm/Utils/Table.hpp>
 
@@ -69,17 +70,14 @@ private:
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::transform_t<
-        meta::reverse_fn,
-        meta::pair_list_t<Label, EntityIndices_>
-      >
+      meta::pair_list_t<Label, EntityIndices_>
     >
   > entity_ranges_tuple_{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<Label, EntityIndices_>
+      meta::pair_list_t<EntityIndices_, Label>
     >
   > entity_labels_tuple_{};
 
@@ -88,7 +86,7 @@ private:
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
-        meta::pair_list_t<shapes::Type, meta::drop_first_t<EntityIndices_>>
+        meta::pair_list_t<meta::drop_first_t<EntityIndices_>, shapes::Type>
       >
     >
   > entity_shape_types_tuple_{};
@@ -98,7 +96,7 @@ private:
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
-        meta::pair_list_t<real_t, meta::drop_first_t<EntityIndices_>>
+        meta::pair_list_t<meta::drop_first_t<EntityIndices_>, real_t>
       >
     >
   > entity_volumes_tuple_{};
@@ -108,12 +106,12 @@ private:
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<Vec, EntityIndices_>
+      meta::pair_list_t<EntityIndices_, Vec>
     >
   > entity_positions_tuple_{};
 
   // You don't belong here, huh?
-  IndexedVector<Vec, FaceIndex> face_normals_{};
+  IndexedVector<FaceIndex, Vec> face_normals_{};
 
   meta::as_std_tuple_t<
     meta::transform_t<

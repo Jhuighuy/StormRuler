@@ -22,7 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Containers.hpp>
+#include <Storm/Utils/Index.hpp>
+#include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
 
 #include <algorithm>
@@ -41,8 +42,8 @@ private:
   static_assert(std::is_same_v<Value, void>,
                 "Non-void CsrTable is not implemented yet!");
 
-  IndexedVector<OffsetIndex, RowIndex> row_offsets_{OffsetIndex{0}};
-  IndexedVector<ColIndex, OffsetIndex> col_indices_;
+  IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
+  IndexedVector<OffsetIndex, ColIndex> col_indices_;
 
 public:
 
@@ -109,9 +110,9 @@ private:
                 "Non-void McsrTable is not implemented yet!");
 
   size_t row_size_hint_ = 25;
-  IndexedVector<OffsetIndex, RowIndex> row_offsets_{OffsetIndex{0}};
-  IndexedVector<OffsetIndex, RowIndex> row_end_offsets_;
-  IndexedVector<ColIndex, OffsetIndex> col_indices_;
+  IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
+  IndexedVector<RowIndex, OffsetIndex> row_end_offsets_;
+  IndexedVector<OffsetIndex, ColIndex> col_indices_;
 
 public:
 
@@ -194,7 +195,7 @@ private:
   static_assert(std::is_same_v<Value, void>,
                 "Non-void VovTable is not implemented yet!");
 
-  IndexedVector<IndexedVector<ColIndex, OffsetIndex>, RowIndex> data_;
+  IndexedVector<RowIndex, IndexedVector<OffsetIndex, ColIndex>> data_;
 
 public:
 

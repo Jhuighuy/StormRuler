@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Utils/Index.hpp>
+
 #include <array>
 #include <compare>
 #include <concepts>
@@ -30,123 +32,9 @@
 
 namespace Storm {
 
-/// @brief Strictly-tagged index.
-template<class Tag>
-class Index final {
-private:
-
-  size_t value_;
-
-public:
-
-  /// @brief Construct an undefined index.
-  constexpr Index() = default;
-
-  /// @brief Construct an index with value.
-  template<std::integral Integral>
-  constexpr explicit Index(Integral value) noexcept
-      : value_{static_cast<size_t>(value)} {}
-
-  /// @brief Cast to the underlying value.
-  template<std::integral Integral>
-  [[nodiscard]] constexpr explicit operator Integral() const noexcept {
-    return static_cast<Integral>(value_);
-  }
-
-  /// @brief Cast into another tagged index.
-  template<class OtherTag>
-  [[nodiscard]] constexpr explicit operator Index<OtherTag>() const noexcept {
-    return Index<OtherTag>{value_};
-  }
-
-  /// @brief Comparison operator.
-  /// @{
-  [[nodiscard]] constexpr auto operator<=>(const Index& other) const = default;
-  [[nodiscard]] constexpr auto operator<=>(size_t value) const noexcept {
-    return value_ <=> static_cast<size_t>(value);
-  }
-  /// @}
-
-  /// @brief Increment operators.
-  /// @{
-  constexpr Index& operator++() noexcept {
-    return ++value_, *this;
-  }
-  constexpr Index operator++(int) noexcept {
-    Index copy{*this};
-    return ++value_, copy;
-  }
-  /// @}
-
-  /// @brief Decrement operators.
-  /// @{
-  constexpr Index& operator--() noexcept {
-    return --value_, *this;
-  }
-  constexpr Index operator--(int) noexcept {
-    Index copy{*this};
-    return --value_, copy;
-  }
-  /// @}
-
-  /// @brief Addition operators.
-  /// @{
-  constexpr Index& operator+=(ptrdiff_t delta) noexcept {
-    return value_ += delta, *this;
-  }
-  [[nodiscard]] friend constexpr Index //
-  operator+(Index i, ptrdiff_t d) noexcept {
-    return Index{i.value_ + d};
-  }
-  [[nodiscard]] friend constexpr Index //
-  operator+(ptrdiff_t d, Index i) noexcept {
-    return Index{d + i.value_};
-  }
-  /// @}
-
-  /// @brief Subtraction operators.
-  /// @{
-  constexpr Index& operator-=(ptrdiff_t delta) noexcept {
-    return value_ -= delta, *this;
-  }
-  [[nodiscard]] friend constexpr Index //
-  operator-(Index i, ptrdiff_t d) noexcept {
-    return Index{i.value_ - d};
-  }
-  /// @}
-
-  /// @brief Difference operator.
-  [[nodiscard]] friend constexpr ptrdiff_t //
-  operator-(Index i1, Index i2) noexcept {
-    return static_cast<ptrdiff_t>(i1.value_ - i2.value_);
-  }
-
-  /// @brief Read @p index from the input @p stream.
-  friend std::istream& operator>>(std::istream& stream, Index& i) {
-    return stream >> i.value_;
-  }
-
-  /// @brief Write @p index to the output @p stream.
-  friend std::ostream& operator<<(std::ostream& stream, Index i) {
-    return stream << i.value_;
-  }
-
-}; // class Index
-
-namespace detail_ {
-  template<class>
-  inline constexpr bool is_index_v_ = false;
-  template<class Tag>
-  inline constexpr bool is_index_v_<Index<Tag>> = true;
-} // namespace detail_
-
-/// @brief Index type.
-template<class Index>
-concept index = detail_::is_index_v_<Index>;
-
 /// @brief Wrapper for std::array with strict indexing.
 // clang-format off
-template<class Value, size_t Size, index Index>
+template<index Index, class Value, size_t Size>
   requires std::is_object_v<Value>
 class IndexedArray final : public std::array<Value, Size> {
   // clang-format on
@@ -181,9 +69,8 @@ public:
 }; // class IndexedArray
 
 /// @brief Wrapper for std::vector with strict indexing.
-/// @todo Swap the Value and Index tparams!
 // clang-format off
-template<class Value, index Index, class Allocator = std::allocator<Value>>
+template<index Index, class Value, class Allocator = std::allocator<Value>>
   requires std::is_object_v<Value> && std::is_object_v<Allocator>
 class IndexedVector final : public std::vector<Value, Allocator> {
   // clang-format on

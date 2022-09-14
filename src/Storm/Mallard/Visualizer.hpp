@@ -50,7 +50,7 @@ namespace Storm::Vulture {
 
 template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
-  IndexedVector<GLfloat, CellIndex<Mesh>> cell_data{};
+  IndexedVector<CellIndex<Mesh>, GLfloat> cell_data{};
   std::ranges::copy(
       cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
         const real_t v = std::sin(3.0 * cell.barycenter_position().x) *

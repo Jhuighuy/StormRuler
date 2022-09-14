@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Containers.hpp>
+#include <Storm/Utils/Index.hpp>
 
 namespace Storm {
 

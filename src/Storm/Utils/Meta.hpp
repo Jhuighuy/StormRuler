@@ -328,16 +328,16 @@ using unique_t = decltype(unique(List{}));
 ///////////////////////////////////
 
 ///////////////////////////////////
-//
+// Make pair list
 
 template<class X>
-struct pair_list_fn {
+struct l_pair_list_fn {
   template<class... Ts>
   consteval auto operator()(list<Ts...>) const {
     using R = raw_t<X>;
     return list_v<list_t<R, Ts>...>;
   }
-}; // struct pair_list_fn
+}; // struct l_pair_list_fn
 
 template<class X>
 struct r_pair_list_fn {
@@ -349,14 +349,31 @@ struct r_pair_list_fn {
 }; // struct r_pair_list_fn
 
 template<class X>
-inline constexpr pair_list_fn<X> pair_list;
+inline constexpr l_pair_list_fn<X> l_pair_list;
 template<class X>
 inline constexpr r_pair_list_fn<X> r_pair_list;
 
 template<class X, class List>
-using pair_list_t = decltype(pair_list<X>(List{}));
-template<class X, class List>
+using l_pair_list_t = decltype(l_pair_list<X>(List{}));
+template<class List, class X>
 using r_pair_list_t = decltype(r_pair_list<X>(List{}));
+
+template<class, class>
+struct auto_pair_list_t;
+template<class X, class... Ts>
+struct auto_pair_list_t<X, list<Ts...>> {
+  using type = l_pair_list_t<X, list<Ts...>>;
+};
+template<class... Ts, class X>
+struct auto_pair_list_t<list<Ts...>, X> {
+  using type = r_pair_list_t<list<Ts...>, X>;
+};
+
+template<class X, class Y>
+using pair_list_t = typename auto_pair_list_t<X, Y>::type;
+
+template<class X, class Y>
+inline constexpr pair_list_t<X, Y> pair_list;
 
 //
 ///////////////////////////////////
@@ -439,7 +456,7 @@ using concat_t = decltype(concat(Lists{}...));
 struct cartesian_product_fn : reduce_fn<cartesian_product_fn> {
   template<class... Ts, class... Us>
   consteval auto operator()(list<Ts...>, list<Us...>) const {
-    return concat(pair_list<Ts>(list_v<Us...>)...);
+    return concat(l_pair_list<Ts>(list_v<Us...>)...);
   }
 }; // struct cartesian_product_fn
 

@@ -86,8 +86,8 @@ public:
   }
 
   /// @brief Draw to framebuffer.
-  template<std::invocable DrawFn>
-  void draw_into(DrawFn draw_fn) {
+  template<std::invocable DrawFunc>
+  void draw_into(DrawFunc draw_func) {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
     draw_fn();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

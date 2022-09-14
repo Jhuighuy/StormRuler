@@ -246,14 +246,14 @@ class Window final {
 private:
 
   GLFWwindow* underlying_{};
-  std::vector<std::function<void()>> on_close_fns_{};
-  std::vector<std::function<void(size_t, size_t)>> on_resize_fns_{};
+  std::vector<std::function<void()>> on_close_funcs_{};
+  std::vector<std::function<void(size_t, size_t)>> on_resize_funcs_{};
   std::multimap<std::pair<Key, Modifiers>, std::function<void()>>
-      on_key_down_fns_{}, on_key_up_fns_{};
+      on_key_down_funcs_{}, on_key_up_funcs_{};
   std::multimap<std::pair<MouseButton, Modifiers>, std::function<void()>>
-      on_mouse_button_down_fns_{}, on_mouse_button_up_fns_{};
-  std::vector<std::function<void(glm::dvec2)>> on_scroll_fns_{};
-  std::vector<std::function<void(size_t, size_t)>> on_set_cursor_pos_fns_{};
+      on_mouse_button_down_funcs_{}, on_mouse_button_up_funcs_{};
+  std::vector<std::function<void(glm::dvec2)>> on_scroll_funcs_{};
+  std::vector<std::function<void(size_t, size_t)>> on_set_cursor_pos_funcs_{};
 
 public:
 
@@ -358,92 +358,93 @@ public:
   }
 
   /// @brief Run the window main loop.
-  template<std::invocable RenderFn>
-  void main_loop(RenderFn render_fn) {
+  template<std::invocable RenderFunc>
+  void main_loop(RenderFunc render_func) {
     while (!glfwWindowShouldClose(underlying_)) {
-      render_fn();
+      render_func();
       glfwSwapBuffers(underlying_);
       glfwPollEvents();
     }
   }
 
   /// @brief Set handler for the window close event.
-  template<std::invocable CloseFn>
-  void on_close(CloseFn on_close_fn) {
-    on_close_fns_.push_back(std::move(on_close_fn));
+  template<std::invocable OnCloseFunc>
+  void on_close(OnCloseFunc on_close_func) {
+    on_close_funcs_.push_back(std::move(on_close_func));
   }
 
   /// @brief Set handler for the window resize event.
-  template<std::invocable<size_t, size_t> ResizeFn>
-  void on_resize(ResizeFn on_resize_fn) {
-    on_resize_fns_.push_back(std::move(on_resize_fn));
+  template<std::invocable<size_t, size_t> OnResizeFunc>
+  void on_resize(OnResizeFunc on_resize_func) {
+    on_resize_funcs_.push_back(std::move(on_resize_func));
   }
 
   /// @brief Set handler for the key pressed event.
   /// @{
-  template<std::invocable KeyDownFn>
-  void on_key_down(Key key, KeyDownFn on_key_down_fn) {
-    on_key_down(key, Modifiers::none, std::move(on_key_down_fn));
+  template<std::invocable OnKeyDownFunc>
+  void on_key_down(Key key, OnKeyDownFunc on_key_down_func) {
+    on_key_down(key, Modifiers::none, std::move(on_key_down_func));
   }
-  template<std::invocable KeyDownFn>
-  void on_key_down(Key key, Modifiers mods, KeyDownFn on_key_down_fn) {
-    on_key_down_fns_.emplace(std::pair{key, mods}, std::move(on_key_down_fn));
+  template<std::invocable OnKeyDownFunc>
+  void on_key_down(Key key, Modifiers mods, OnKeyDownFunc on_key_down_func) {
+    on_key_down_funcs_.emplace(std::pair{key, mods},
+                               std::move(on_key_down_func));
   }
   /// @}
 
   /// @brief Set handler for the key released event.
   /// @{
-  template<std::invocable KeyUpFn>
-  void on_key_up(Key key, KeyUpFn on_key_up_fn) {
-    on_key_up(key, Modifiers::none, std::move(on_key_up_fn));
+  template<std::invocable OnKeyUpFunc>
+  void on_key_up(Key key, OnKeyUpFunc on_key_up_func) {
+    on_key_up(key, Modifiers::none, std::move(on_key_up_func));
   }
-  template<std::invocable KeyUpFn>
-  void on_key_up(Key key, Modifiers mods, KeyUpFn on_key_up_fn) {
-    on_key_up_fns_.emplace(std::pair{key, mods}, std::move(on_key_up_fn));
+  template<std::invocable OnKeyUpFunc>
+  void on_key_up(Key key, Modifiers mods, OnKeyUpFunc on_key_up_func) {
+    on_key_up_funcs_.emplace(std::pair{key, mods}, std::move(on_key_up_func));
   }
   /// @}
 
   /// @brief Set handler for the mouse button pressed event.
   /// @{
-  template<std::invocable MouseButtonDownFn>
+  template<std::invocable OnMouseButtonDownFunc>
   void on_mouse_button_down(MouseButton mouse_button,
-                            MouseButtonDownFn on_mouse_button_down_fn) {
+                            OnMouseButtonDownFunc on_mouse_button_down_func) {
     on_mouse_button_down(mouse_button, Modifiers::none,
-                         std::move(on_mouse_button_down_fn));
+                         std::move(on_mouse_button_down_func));
   }
-  template<std::invocable MouseButtonDownFn>
+  template<std::invocable OnMouseButtonDownFunc>
   void on_mouse_button_down(MouseButton mouse_button, Modifiers mods,
-                            MouseButtonDownFn on_mouse_button_down_fn) {
-    on_mouse_button_down_fns_.emplace(std::pair{mouse_button, mods},
-                                      std::move(on_mouse_button_down_fn));
+                            OnMouseButtonDownFunc on_mouse_button_down_func) {
+    on_mouse_button_down_funcs_.emplace(std::pair{mouse_button, mods},
+                                        std::move(on_mouse_button_down_func));
   }
   /// @}
 
   /// @brief Set handler for the mouse button released event.
   /// @{
-  template<std::invocable MouseButtonDownFn>
+  template<std::invocable OnMouseButtonUpFunc>
   void on_mouse_button_up(MouseButton mouse_button,
-                          MouseButtonDownFn on_mouse_button_up_fn) {
+                          OnMouseButtonUpFunc on_mouse_button_up_func) {
     on_mouse_button_up(mouse_button, Modifiers::none,
-                       std::move(on_mouse_button_up_fn));
+                       std::move(on_mouse_button_up_func));
   }
-  template<std::invocable MouseButtonUpFn>
+  template<std::invocable OnMouseButtonUpFunc>
   void on_mouse_button_up(MouseButton mouse_button, Modifiers mods,
-                          MouseButtonUpFn on_mouse_button_up_fn) {
-    on_mouse_button_up_fns_.emplace(std::pair{mouse_button, mods},
-                                    std::move(on_mouse_button_up_fn));
+                          OnMouseButtonUpFunc on_mouse_button_up_func) {
+    on_mouse_button_up_funcs_.emplace(std::pair{mouse_button, mods},
+                                      std::move(on_mouse_button_up_func));
   }
 
   /// @brief Set handler for the scroll event.
-  template<std::invocable<glm::dvec2> ScrollFn>
-  void on_scroll(ScrollFn on_scroll_fn) {
-    on_scroll_fns_.push_back(std::move(on_scroll_fn));
+  template<std::invocable<glm::dvec2> OnScrollFunc>
+  void on_scroll(OnScrollFunc on_scroll_func) {
+    on_scroll_funcs_.push_back(std::move(on_scroll_func));
   }
 
   /// @brief Set handler for the set cursor position event.
-  template<std::invocable<size_t, size_t> SetCursorPosFn>
-  void on_set_cursor_pos(SetCursorPosFn on_set_cursor_pos_fn) {
-    on_set_cursor_pos_fns_.push_back(std::move(on_set_cursor_pos_fn));
+  template<std::invocable<size_t, size_t> OnSetCursorPosFunc>
+  void on_set_cursor_pos(OnSetCursorPosFunc on_set_cursor_pos_func) {
+    on_set_cursor_pos_funcs_.push_back(std::move(on_set_cursor_pos_func));
   }
 
 private:
@@ -457,15 +458,15 @@ private:
 
   static void on_close_(GLFWwindow* window) noexcept {
     const auto self = get_self_(window);
-    for (const auto& close_fn : self->on_close_fns_) {
-      close_fn();
+    for (const auto& close_func : self->on_close_funcs_) {
+      close_func();
     }
   }
 
   static void on_resize_(GLFWwindow* window, int width, int height) noexcept {
     const auto self = get_self_(window);
-    for (const auto& on_resize_fn : self->on_resize_fns_) {
-      on_resize_fn(static_cast<size_t>(width), static_cast<size_t>(height));
+    for (const auto& on_resize_func : self->on_resize_funcs_) {
+      on_resize_func(static_cast<size_t>(width), static_cast<size_t>(height));
     }
   }
 
@@ -476,13 +477,13 @@ private:
     switch (action) {
       case GLFW_PRESS:
       case GLFW_REPEAT: {
-        const auto [first, last] = self->on_key_down_fns_.equal_range(
+        const auto [first, last] = self->on_key_down_funcs_.equal_range(
             {static_cast<Key>(key), static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       case GLFW_RELEASE: {
-        const auto [first, last] = self->on_key_up_fns_.equal_range(
+        const auto [first, last] = self->on_key_up_funcs_.equal_range(
             {static_cast<Key>(key), static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
@@ -499,14 +500,15 @@ private:
     switch (action) {
       case GLFW_PRESS:
       case GLFW_REPEAT: {
-        const auto [first, last] = self->on_mouse_button_down_fns_.equal_range(
-            {static_cast<MouseButton>(mouse_button),
-             static_cast<Modifiers>(mods)});
+        const auto [first, last] =
+            self->on_mouse_button_down_funcs_.equal_range(
+                {static_cast<MouseButton>(mouse_button),
+                 static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       case GLFW_RELEASE: {
-        const auto [first, last] = self->on_mouse_button_up_fns_.equal_range(
+        const auto [first, last] = self->on_mouse_button_up_funcs_.equal_range(
             {static_cast<MouseButton>(mouse_button),
              static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
@@ -521,8 +523,8 @@ private:
   static void on_scroll_(GLFWwindow* window, //
                          double x_offset, double y_offset) noexcept {
     const auto self = get_self_(window);
-    for (const auto& on_scroll_fn : self->on_scroll_fns_) {
-      on_scroll_fn({x_offset, y_offset});
+    for (const auto& on_scroll_func : self->on_scroll_funcs_) {
+      on_scroll_func({x_offset, y_offset});
     }
   }
 
@@ -543,8 +545,8 @@ private:
     const auto self = get_self_(window);
     const auto pos_x = self->make_cursor_pos_x_(pos_xd),
                pos_y = self->make_cursor_pos_y_(pos_yd);
-    for (const auto& on_set_cursor_pos_fn : self->on_set_cursor_pos_fns_) {
-      on_set_cursor_pos_fn(pos_x, pos_y);
+    for (const auto& on_set_cursor_pos_func : self->on_set_cursor_pos_funcs_) {
+      on_set_cursor_pos_func(pos_x, pos_y);
     }
   }
 

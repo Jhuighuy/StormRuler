@@ -87,64 +87,54 @@ enum class Type : std::uint8_t {
 }; // enum class shape_type
 
 /// @brief Shape concept.
-// clang-format off
 template<class Shape>
-concept shape = 
+concept shape =
     requires(Shape shape) {
       { shape.type() } noexcept -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::range;
-    } && 
-    std::same_as<std::ranges::range_value_t<
-        decltype(std::declval<Shape>().nodes())>, NodeIndex>;
-// clang-format on
+    } &&
+    std::same_as<
+        std::ranges::range_value_t<decltype(std::declval<Shape>().nodes())>,
+        NodeIndex>;
 
 /// @brief 1D Shape concept.
-// clang-format off
 template<class Shape>
-concept shape1D = shape<Shape> &&
-    !requires(Shape shape) { shape.edges(); } &&
-    !requires(Shape shape) { shape.faces(); };
-// clang-format on
+concept shape1D = shape<Shape> && //
+                  !requires(Shape shape) { shape.edges(); } &&
+                  !requires(Shape shape) { shape.faces(); };
 
 /// @brief 2D Shape concept.
-// clang-format off
 template<class Shape>
-concept shape2D = shape<Shape> &&
-    requires(Shape shape) { 
-      std::apply([](shape1D auto&&...) {}, shape.edges());
-    } && !requires(Shape shape) { shape.faces(); };
-// clang-format on
+concept shape2D = shape<Shape> && //
+                  requires(Shape shape) {
+                    std::apply([](shape1D auto&&...) {}, shape.edges());
+                  } && !requires(Shape shape) { shape.faces(); };
 
 /// @brief 3D Shape concept.
-// clang-format off
 template<class Shape>
-concept shape3D = shape<Shape> &&
-    requires(Shape shape) { 
-      std::apply([](shape1D auto&&...) {}, shape.edges());
-    } && requires(Shape shape) { 
-      std::apply([](shape2D auto&&...) {}, shape.faces());
-    };
-// clang-format on
+concept shape3D = shape<Shape> && //
+                  requires(Shape shape) {
+                    std::apply([](shape1D auto&&...) {}, shape.edges());
+                  } && //
+                  requires(Shape shape) {
+                    std::apply([](shape2D auto&&...) {}, shape.faces());
+                  };
 
 /// @brief Shape topological dimensionality.
-// clang-format off
 template<shape Shape>
   requires (shape1D<Shape> || shape2D<Shape> || shape3D<Shape>)
 inline constexpr size_t shape_dim_v = []() {
-  // clang-format on
   if constexpr (shape1D<Shape>) return 1;
   if constexpr (shape2D<Shape>) return 2;
   if constexpr (shape3D<Shape>) return 3;
 }();
 
 /// @brief Get the shape parts.
-// clang-format off
 template<size_t Index, shape Shape>
   requires ((Index == 0) ||
-            (Index == 1 && (shape2D<Shape> || shape3D<Shape>)) ||
-            (Index == 2 && shape3D<Shape>))
+            (Index == 1 && (shape2D<Shape> || shape3D<Shape>) ) ||
+            (Index == 2 && shape3D<Shape>) )
 [[nodiscard]] constexpr auto parts(const Shape& shape) noexcept {
-  // clang-format on
   if constexpr (Index == 0) {
     return shape.nodes();
   } else if constexpr (Index == 1) {
@@ -155,27 +145,22 @@ template<size_t Index, shape Shape>
 }
 
 /// @brief Complex shape concept.
-// clang-format off
 template<class Shape, class Mesh>
-concept complex_shape = shape<Shape> && mesh<Mesh> && 
-    requires(Shape shape, const Mesh& mesh) { 
-      { shape.pieces(mesh) } -> std::ranges::range; 
-    } && 
-    shape<std::ranges::range_value_t<decltype(
-        std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
-// clang-format on
+concept complex_shape =
+    shape<Shape> && mesh<Mesh> &&
+    requires(Shape shape, const Mesh& mesh) {
+      { shape.pieces(mesh) } -> std::ranges::range;
+    } &&
+    shape<std::ranges::range_value_t<decltype(std::declval<Shape>().pieces(
+        std::declval<Mesh>()))>>;
 
 /// @brief Piece type of a complex.
-// clang-format off
 template<class Shape, class Mesh>
   requires complex_shape<Shape, Mesh>
-using piece_t =
-    std::ranges::range_value_t<decltype(
-        std::declval<Shape>().pieces(std::declval<Mesh>()))>;
-// clang-format on
+using piece_t = std::ranges::range_value_t<decltype( //
+    std::declval<Shape>().pieces(std::declval<Mesh>()))>;
 
 namespace detail_ {
-  // clang-format off
   template<class Shape, class Mesh>
   concept has_volume_ =
       requires(Shape shape, const Mesh& mesh) { shape.volume(mesh); };
@@ -185,9 +170,7 @@ namespace detail_ {
   template<class Shape, class Mesh>
   concept has_normal_ =
       requires(Shape shape, const Mesh& mesh) { shape.normal(mesh); };
-  // clang-format on
 
-  // clang-format off
   template<class Shape, class Mesh>
   concept can_volume_ =
       requires(Shape shape, const Mesh& mesh) { volume(shape, mesh); };
@@ -197,18 +180,14 @@ namespace detail_ {
   template<class Shape, class Mesh>
   concept can_normal_ =
       requires(Shape shape, const Mesh& mesh) { normal(shape, mesh); };
-  // clang-format on
 } // namespace detail_
 
 /// @brief Compute the shape "volume" (length in 1D, area in 2D, volume in 3D).
-// clang-format off
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_volume_<Shape, Mesh> || 
-            (complex_shape<Shape, Mesh> && 
-             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>))
-[[nodiscard]] constexpr auto volume(const Shape& shape,
-                                    const Mesh& mesh) {
-  // clang-format on
+  requires (detail_::has_volume_<Shape, Mesh> ||
+            (complex_shape<Shape, Mesh> &&
+             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>) )
+[[nodiscard]] constexpr auto volume(const Shape& shape, const Mesh& mesh) {
   if constexpr (detail_::has_volume_<Shape, Mesh>) {
     return shape.volume(mesh);
   } else if constexpr (complex_shape<Shape, Mesh> &&
@@ -224,15 +203,12 @@ template<shape Shape, mesh Mesh>
 }
 
 /// @brief Compute the shape barycenter.
-// clang-format off
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_barycenter_<Shape, Mesh> || 
+  requires (detail_::has_barycenter_<Shape, Mesh> ||
             (complex_shape<Shape, Mesh> &&
              detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>))
-[[nodiscard]] constexpr auto barycenter(const Shape& shape,
-                                        const Mesh& mesh) {
-  // clang-format on
+             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>) )
+[[nodiscard]] constexpr auto barycenter(const Shape& shape, const Mesh& mesh) {
   if constexpr (detail_::has_barycenter_<Shape, Mesh>) {
     return shape.barycenter(mesh);
   } else if constexpr (complex_shape<Shape, Mesh> &&
@@ -251,15 +227,12 @@ template<shape Shape, mesh Mesh>
 }
 
 /// @brief Compute the shape normal.
-// clang-format off
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_normal_<Shape, Mesh> || 
+  requires (detail_::has_normal_<Shape, Mesh> ||
             (complex_shape<Shape, Mesh> &&
              detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>))
-[[nodiscard]] constexpr auto normal(const Shape& shape,
-                                    const Mesh& mesh) {
-  // clang-format on
+             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>) )
+[[nodiscard]] constexpr auto normal(const Shape& shape, const Mesh& mesh) {
   if constexpr (detail_::has_normal_<Shape, Mesh>) {
     return shape.normal(mesh);
   } else if constexpr (complex_shape<Shape, Mesh> &&
@@ -324,11 +297,9 @@ public:
   }
 
   /// @brief Segment normal.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> == 2)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const glm::dvec2 d = glm::normalize(v2 - v1);
     return glm::vec2(-d.y, d.x);
@@ -379,11 +350,9 @@ public:
   }
 
   /// @brief Triangle "volume" (area).
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
   [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)};
     if constexpr (mesh_dim_v<Mesh> == 2) {
@@ -395,22 +364,18 @@ public:
   }
 
   /// @brief Triangle barycenter.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
   [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)};
     return (v1 + v2 + v3) / 3.0;
   }
 
   /// @brief Triangle normal.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> == 3)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)};
     return glm::normalize(glm::cross(v2 - v1, v3 - v1));
@@ -460,11 +425,9 @@ public:
   }
 
   /// @brief Quadrangle pieces.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
   [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
-    // clang-format on
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Triangle{n1, n2, n3}, Triangle{n3, n4, n1}};
     // return std::array{Triangle{n1, n2, n4}, Triangle{n2, n3, n4}};

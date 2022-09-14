@@ -230,12 +230,10 @@ public:
   }
 
   /// @brief Find an entity by it's @p node_indices.
-  // clang-format off
   template<size_t I, std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   [[nodiscard]] constexpr std::optional<EntityIndex<I>>
   find(Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
-    // clang-format on
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());
     STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> found{};
@@ -266,14 +264,11 @@ public:
 
   /// @brief Insert a new or find an existing entity of shape @p shape.
   /// @returns Index of the entity.
-  // clang-format off
   template<size_t I, class Shape>
     requires ((I == 0 && std::constructible_from<Vec, const Shape&>) ||
-              (I != 0 && shapes::shape<Shape>))
-  constexpr EntityIndex<I>
-  insert(const Shape& shape, meta::type<EntityIndex<I>> = {}) {
-    // clang-format on
-
+              (I != 0 && shapes::shape<Shape>) )
+  constexpr EntityIndex<I> insert(const Shape& shape,
+                                  meta::type<EntityIndex<I>> = {}) {
     // If an edge or or face is inserted, check if it exists first.
     if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
                     std::is_same_v<EntityIndex<I>, CellIndex>) ) {
@@ -352,12 +347,10 @@ public:
   }
 
   /// @brief Permute the entities.
-  // clang-format off
   template<size_t I, std::ranges::random_access_range Range>
     requires std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
   constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
-    // clang-format on
     if constexpr (std::ranges::sized_range<Range>) {
       STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
                     "Invalid permutation size!");
@@ -426,12 +419,11 @@ public:
     });
   }
 
-  // clang-format off
+  /// @brief Assign the entity labels.
   template<size_t I, std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Label>
-  constexpr void assign_labels(Range&& labels, 
+  constexpr void assign_labels(Range&& labels,
                                meta::type<EntityIndex<I>> = {}) {
-    // clang-format on
     if constexpr (std::ranges::sized_range<Range>) {
       STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
                     "Invalid labels range size!");
@@ -443,13 +435,11 @@ public:
 
 private:
 
-  // clang-format off
   template<std::ranges::forward_range Range>
     requires std::ranges::sized_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr void update_face_orientation_(FaceIndex face_index,
                                           Range&& cell_face_nodes) {
-    // clang-format on
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;

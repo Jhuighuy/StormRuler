@@ -57,14 +57,12 @@ template<class>
 inline constexpr bool enable_mesh_v = false;
 
 /// @brief Mesh concept.
-// clang-format off
 template<class Mesh>
-concept mesh = enable_mesh_v<std::remove_const_t<Mesh>> &&
-    requires {
-      typename FaceIndex<Mesh>;
-      typename CellIndex<Mesh>;
-    };
-// clang-format on
+concept mesh = enable_mesh_v<std::remove_const_t<Mesh>> && //
+               requires {
+                 typename FaceIndex<Mesh>;
+                 typename CellIndex<Mesh>;
+               };
 
 /// @brief Mesh spatial vector type.
 template<mesh Mesh>

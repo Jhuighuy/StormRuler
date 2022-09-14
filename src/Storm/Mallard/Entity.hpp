@@ -141,11 +141,9 @@ namespace detail_ {
 template<mesh Mesh, index Index>
 class EntityView;
 
-// clang-format off
 template<mesh Mesh, size_t I>
   requires std::is_object_v<Mesh>
 class EntityView<Mesh, EntityIndex<I>> {
-  // clang-format on
 private:
 
   template<mesh, index>

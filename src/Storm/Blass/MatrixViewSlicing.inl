@@ -94,12 +94,10 @@ public:
 }; // class SlicedIndices
 
 /// @brief Submatrix view.
-// clang-format off
 template<matrix_view Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
     public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
-  // clang-format on
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -116,10 +114,9 @@ private:
     return num_rows(mat_);
   }
 
-  // clang-format off
-  constexpr auto num_cols_() const noexcept 
-      requires requires { col_indices_.size(); } {
-    // clang-format on
+  constexpr auto num_cols_() const noexcept
+    requires requires { col_indices_.size(); }
+  {
     return col_indices_.size();
   }
   constexpr auto num_cols_() const noexcept {

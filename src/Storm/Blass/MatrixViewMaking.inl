@@ -30,12 +30,10 @@
 namespace Storm {
 
 /// @brief Matrix generating view.
-// clang-format off
 template<std::copy_constructible Func>
   requires std::is_object_v<Func> &&
            std::regular_invocable<Func, size_t, size_t>
 class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
-  // clang-format on
 private:
 
   matrix_shape_t shape_;

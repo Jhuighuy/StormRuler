@@ -47,14 +47,12 @@ struct matrix_shape_t {
 }; // struct matrix_shape_t
 
 /// @brief Matrix: has shape and two subscripts.
-// clang-format off
 template<class Matrix>
-concept matrix = 
-    requires(Matrix& mat) { 
+concept matrix = //
+    requires(Matrix& mat) {
       { mat.shape() } noexcept -> std::same_as<matrix_shape_t>;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
     };
-// clang-format on
 
 /// @brief Number of the matrix rows.
 constexpr size_t num_rows(const matrix auto& mat) noexcept {
@@ -76,11 +74,9 @@ template<matrix Matrix>
 using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
 
 /// @brief Matrix element reference type.
-// clang-format off
 template<matrix Matrix>
-  requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>> 
+  requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
-// clang-format on
 /// @}
 
 // ========================================================================== //

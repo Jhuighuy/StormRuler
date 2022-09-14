@@ -32,23 +32,19 @@
 
 namespace Storm {
 
-// clang-format off
 template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
 class MatrixViewInterface;
-// clang-format on
 
 namespace detail_ {
-  // clang-format off
   template<class T, class U>
-    requires(!std::same_as<T, MatrixViewInterface<U>>)
+    requires (!std::same_as<T, MatrixViewInterface<U>>)
   void is_derived_from_matrix_view_interface_impl_(
       const T&, const MatrixViewInterface<U>&); // not defined
   template<class T>
   concept is_derived_from_matrix_view_interface_ =
       requires(T x) { is_derived_from_matrix_view_interface_impl_(x, x); };
-  // clang-format on
 } // namespace detail_
 
 /// @brief Types, enabled to be a matrix view.
@@ -59,31 +55,25 @@ inline constexpr bool enable_matrix_view_v =
 /// @brief Matrix view concept.
 /// @todo In order to add the `movable` constraint, we
 ///   need to box the functor inside the `MapMatrixView`.
-// clang-format off
 template<class MatrixView>
-concept matrix_view =
-    matrix<MatrixView> && // std::movable<MatrixView> &&
-    enable_matrix_view_v<MatrixView>;
-// clang-format on
+concept matrix_view = matrix<MatrixView> && // std::movable<MatrixView> &&
+                      enable_matrix_view_v<MatrixView>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
-// clang-format off
 template<class Matrix>
-concept viewable_matrix = matrix<Matrix> &&
+concept viewable_matrix =
+    matrix<Matrix> &&
     ((matrix_view<std::remove_cvref_t<Matrix>> &&
       std::constructible_from<std::remove_cvref_t<Matrix>, Matrix>) ||
      (!matrix_view<std::remove_cvref_t<Matrix>> &&
       (std::is_lvalue_reference_v<Matrix> ||
-       std::movable<std::remove_reference_t<Matrix>>)));
-// clang-format on
+       std::movable<std::remove_reference_t<Matrix>>) ));
 
 /// @brief CRTP interface to a matrix views.
-// clang-format off
 template<class Derived>
   requires std::is_class_v<Derived> &&
            std::same_as<Derived, std::remove_cv_t<Derived>>
 class MatrixViewInterface {
-  // clang-format on
 private:
 
   constexpr Derived& self_() noexcept {
@@ -146,15 +136,12 @@ private:
 public:
 
   /// @brief Construct a matrix reference view.
-  // clang-format off
   template<detail_::different_from_<MatrixRefView> OtherMatrix>
     requires std::convertible_to<OtherMatrix, Matrix&> &&
              requires { funс_(std::declval<OtherMatrix>()); }
   constexpr MatrixRefView(OtherMatrix&& mat) noexcept
       : p_mat_{std::addressof(
-            static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {
-    // clang-format on
-  }
+            static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
 
   /// @copydoc MatrixViewInterface::shape
   [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
@@ -179,12 +166,10 @@ template<class Matrix>
 MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 
 /// @brief Matrix owning view.
-// clang-format off
 template<matrix Matrix>
   requires std::movable<Matrix>
-class MatrixOwningView final : 
+class MatrixOwningView final :
     public MatrixViewInterface<MatrixOwningView<Matrix>> {
-  // clang-format on
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_{};
@@ -214,24 +199,20 @@ public:
 }; // class MatrixOwningView
 
 namespace detail_ {
-  // clang-format off
   template<class Matrix>
-  concept matrix_can_ref_view_ = 
+  concept matrix_can_ref_view_ =
       requires { MatrixRefView{std::declval<Matrix>()}; };
   template<class Matrix>
-  concept matrix_can_owning_view_ = 
+  concept matrix_can_owning_view_ =
       requires { MatrixOwningView{std::declval<Matrix>()}; };
-  // clang-format on
 } // namespace detail_
 
 /// @brief Forward the viewable matrix @p mat as a matrix view.
-// clang-format off
 template<viewable_matrix Matrix>
-  requires matrix_view<std::decay_t<Matrix>> || 
-           detail_::matrix_can_ref_view_<Matrix> || 
+  requires matrix_view<std::decay_t<Matrix>> ||
+           detail_::matrix_can_ref_view_<Matrix> ||
            detail_::matrix_can_owning_view_<Matrix>
 [[nodiscard]] constexpr auto forward_as_matrix_view(Matrix&& mat) {
-  // clang-format on
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
   } else if constexpr (detail_::matrix_can_ref_view_<Matrix>) {

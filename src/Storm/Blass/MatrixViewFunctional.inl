@@ -34,13 +34,11 @@
 namespace Storm {
 
 /// @brief Component-wise product of function to matrices view.
-// clang-format off
 template<std::copy_constructible Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
-           std::regular_invocable<Func,  matrix_element_decltype_t<Matrices>...>
+           std::regular_invocable<Func, matrix_element_decltype_t<Matrices>...>
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
-  // clang-format on
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
@@ -84,22 +82,18 @@ MapMatrixView(Func, Matrices&&...)
     -> MapMatrixView<Func, forward_as_matrix_view_t<Matrices>...>;
 
 namespace detail_ {
-  // clang-format off
   template<class Func, class... Matrices>
-  concept can_map_matrix_view_ = 
-      requires { 
-        MapMatrixView(std::declval<Func>(), std::declval<Matrices>()...); 
+  concept can_map_matrix_view_ =
+      requires {
+        MapMatrixView(std::declval<Func>(), std::declval<Matrices>()...);
       };
-  // clang-format on
 } // namespace detail_
 
 /// @brief Make a component-wise product of function @p func
 ///   to matrices @p mats.
-// clang-format off
 template<class Func, viewable_matrix... Matrices>
   requires detail_::can_map_matrix_view_<Func, Matrices...>
 [[nodiscard]] constexpr auto map(Func&& func, Matrices&&... mats) {
-  // clang-format on
   return MapMatrixView(std::forward<Func>(func),
                        std::forward<Matrices>(mats)...);
 }
@@ -140,22 +134,18 @@ template<viewable_matrix Matrix>
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
-// clang-format off
 template<viewable_matrix Matrix, std::copyable Scalar>
   requires (!matrix<Scalar>)
 [[nodiscard]] constexpr auto operator*(Matrix&& mat, Scalar scal) {
-  // clang-format on
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return std::forward<Elem>(elem) * scal;
       },
       std::forward<Matrix>(mat));
 }
-// clang-format off
 template<std::copyable Scalar, viewable_matrix Matrix>
   requires (!matrix<Scalar>)
 [[nodiscard]] constexpr auto operator*(Scalar scal, Matrix&& mat) {
-  // clang-format on
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return scal * std::forward<Elem>(elem);
@@ -165,11 +155,9 @@ template<std::copyable Scalar, viewable_matrix Matrix>
 /// @}
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
-// clang-format off
 template<viewable_matrix Matrix, std::copyable Scalar>
   requires (!matrix<Scalar>)
 [[nodiscard]] constexpr auto operator/(Matrix&& mat, Scalar scal) {
-  // clang-format on
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return std::forward<Elem>(elem) / scal;
@@ -178,11 +166,9 @@ template<viewable_matrix Matrix, std::copyable Scalar>
 }
 
 /// @brief Divide the scalar @p scal by a matrix @p mat.
-// clang-format off
 template<std::copyable Scalar, viewable_matrix Matrix>
   requires (!matrix<Scalar>)
 [[nodiscard]] constexpr auto operator/(Scalar scal, Matrix&& mat) {
-  // clang-format on
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return scal / std::forward<Elem>(elem);
@@ -232,10 +218,9 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
         std::forward<Matrix>(mat));                 \
   }
 
-// clang-format off
 #define MAKE_BINARY_SCALAR_MATRIX_FUNC_(func)                        \
   template<std::copyable Scalar, viewable_matrix Matrix>             \
-    requires(!matrix<Scalar>)                                        \
+    requires (!matrix<Scalar>)                                       \
   [[nodiscard]] constexpr auto func(Scalar scal, Matrix&& mat) {     \
     return MapMatrixView(                                            \
         [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept { \
@@ -243,12 +228,10 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
         },                                                           \
         std::forward<Matrix>(mat));                                  \
   }
-// clang-format on
 
-// clang-format off
 #define MAKE_BINARY_MATRIX_SCALAR_FUNC_(func)                        \
   template<viewable_matrix Matrix, std::copyable Scalar>             \
-    requires(!matrix<Scalar>)                                        \
+    requires (!matrix<Scalar>)                                       \
   [[nodiscard]] constexpr auto func(Matrix&& mat, Scalar scal) {     \
     return MapMatrixView(                                            \
         [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept { \
@@ -256,7 +239,6 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
         },                                                           \
         std::forward<Matrix>(mat));                                  \
   }
-// clang-format on
 
 #define MAKE_BINARY_MATRIX_MATRIX_FUNC_(func)                                  \
   template<viewable_matrix Matrix1, viewable_matrix Matrix2>                   \
@@ -285,11 +267,9 @@ namespace math {
 
   MAKE_UNARY_MATRIX_FUNC_(cbrt)
 
-  // clang-format off
   template<viewable_matrix... Matrices>
-    requires(detail_::in_range_(sizeof...(Matrices), 2, 3))
+    requires (detail_::in_range_(sizeof...(Matrices), 2, 3))
   [[nodiscard]] constexpr auto hypot(Matrices&&... mats) {
-    // clang-format on
     return MapMatrixView(
         []<class... Elems>(Elems&&... elems) noexcept {
           return hypot(std::forward<Elems>(elems)...);

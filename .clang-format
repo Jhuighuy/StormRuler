@@ -26,6 +26,8 @@ ColumnLimit: 80
 CompactNamespaces: false
 ContinuationIndentWidth: 4
 IndentCaseLabels: true
+IndentRequiresClause: true
+RequiresClausePosition: OwnLine
 IndentPPDirectives: None
 IndentWidth: 2
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -40,7 +42,11 @@ SpaceBeforeAssignmentOperators: true
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
-SpaceBeforeParens: ControlStatements
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterRequiresInClause: true
+  AfterRequiresInExpression: false
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 1

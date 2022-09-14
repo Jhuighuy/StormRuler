@@ -89,7 +89,7 @@ public:
   template<std::invocable DrawFunc>
   void draw_into(DrawFunc draw_func) {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
-    draw_fn();
+    draw_func();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
 

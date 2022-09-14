@@ -206,6 +206,8 @@ void visualize_mesh(const Mesh& mesh) {
   const auto select_node = [&](NodeIndex node_index, GLuint state) {
     NodeView node{mesh, node_index};
     node_states_buffer.set(node.index_sz(), state);
+    node.for_each_node(
+        [&](auto node) { node_states_buffer.set(node.index_sz(), state); });
     node.for_each_edge(
         [&](auto edge) { edge_states_buffer.set(edge.index_sz(), state); });
     node.for_each_cell(
@@ -216,6 +218,8 @@ void visualize_mesh(const Mesh& mesh) {
     edge_states_buffer.set(edge.index_sz(), state);
     edge.for_each_node(
         [&](auto node) { node_states_buffer.set(node.index_sz(), state); });
+    edge.for_each_edge(
+        [&](auto edge) { edge_states_buffer.set(edge.index_sz(), state); });
     edge.for_each_cell(
         [&](auto cell) { cell_states_buffer.set(cell.index_sz(), state); });
   };
@@ -226,6 +230,8 @@ void visualize_mesh(const Mesh& mesh) {
         [&](auto node) { node_states_buffer.set(node.index_sz(), state); });
     cell.for_each_edge(
         [&](auto edge) { edge_states_buffer.set(edge.index_sz(), state); });
+    cell.for_each_cell(
+        [&](auto cell) { cell_states_buffer.set(cell.index_sz(), state); });
   };
   std::optional<NodeIndex> last_selected_node;
   std::optional<EdgeIndex> last_selected_edge;

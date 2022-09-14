@@ -181,6 +181,7 @@ public:
 }; // class IndexedArray
 
 /// @brief Wrapper for std::vector with strict indexing.
+/// @todo Swap the Value and Index tparams!
 // clang-format off
 template<class Value, index Index, class Allocator = std::allocator<Value>>
   requires std::is_object_v<Value> && std::is_object_v<Allocator>

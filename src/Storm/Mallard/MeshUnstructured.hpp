@@ -567,7 +567,7 @@ private:
           auto& volumes = std::get<I>(entity_volumes_tuple_);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
             return std::tie(shape_types[entity_index], volumes[entity_index],
-                            positions[entity_index], face_normals_[entity_index]));
+                            positions[entity_index], face_normals_[entity_index]);
           } else {
             return std::tie(shape_types[entity_index], volumes[entity_index],
                             positions[entity_index]);

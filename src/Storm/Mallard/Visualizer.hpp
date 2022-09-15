@@ -307,6 +307,7 @@ void visualize_mesh(const Mesh& mesh) {
 
     glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, UINT64_MAX);
 
+    bool debug_labels = false;
     const auto entity = entity_texture_pixel_buffer.get(
         window.cursor_pos_y() * window_width + window.cursor_pos_x());
     const auto entity_type = entity.x;
@@ -316,11 +317,19 @@ void visualize_mesh(const Mesh& mesh) {
       case node_entity_type: {
         last_selected_node.emplace(entity_index);
         select_node(*last_selected_node, 1);
+        if (debug_labels) {
+          STORM_INFO_("node label = {}",
+                      (size_t) mesh.label(*last_selected_node));
+        }
         break;
       }
       case edge_entity_type: {
         last_selected_edge.emplace(entity_index);
         select_edge(*last_selected_edge, 1);
+        if (debug_labels) {
+          STORM_INFO_("edge label = {}",
+                      (size_t) mesh.label(*last_selected_edge));
+        }
         break;
       }
       case cell_entity_type: {

@@ -373,6 +373,36 @@ public:
     return entity_index;
   }
 
+#if 0
+  /// @brief Insert a ghost cell.
+  /// @returns Index of the ghost cell.
+  constexpr CellIndex insert_ghost(FaceIndex face_index) {
+    constexpr size_t I = TopologicalDim;
+    const CellIndex cell_index{num_entities<I>()};
+
+    // Assign the last existing label label.
+    std::get<I>(entity_ranges_tuple_).back() += 1;
+    std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
+
+    // Assign the entity shape type, volume, center position (and normal).
+    const CellIndex mirror_cell_index = adjacent<I>(face_index).front();
+    std::get<I>(entity_shape_types_tuple_).emplace_back(shapes::Type::ghost);
+    std::get<I>(entity_volumes_tuple_).emplace_back(volume(mirror_cell_index));
+    std::get<I>(entity_positions_tuple_)
+        .emplace_back(2.0 * position(face_index) - position(mirror_cell_index));
+
+    // Allocate the empty connectivity rows, conncet the face with ghost.
+    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      using T = Table<CellIndex, EntityIndex<J>>;
+      std::get<T>(connectivity_tuple_).push_back();
+    });
+    using T = Table<FaceIndex, CellIndex>;
+    std::get<T>(connectivity_tuple_).connect(face_index, cell_index);
+
+    return cell_index;
+  }
+#endif
+
   /// @brief Permute the entities.
   /// @param perm Entity permutation range, it may be modified in order to
   ///             preserve the label ranges correctness.
@@ -423,7 +453,7 @@ public:
     permute_base_<I>(perm);
 
     // Regenerate label ranges.
-    const size_t num_entities = this->num_entities<I>();
+    const size_t delta = this->num_entities<I>() - std::ranges::size(labels);
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     entity_ranges.clear();
     std::ranges::for_each(labels, [&](Label label) {
@@ -431,7 +461,7 @@ public:
           std::max(entity_ranges.size(), static_cast<size_t>(label) + 2));
       entity_ranges[label + 1] += 1;
     });
-    entity_ranges[Label{1}] += num_entities - std::ranges::size(labels);
+    entity_ranges[Label{0} + 1] += delta;
     std::partial_sum(
         entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
         [](EntityIndex<I> entity_index_1, EntityIndex<I> entity_index_2) {
@@ -499,6 +529,7 @@ private:
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        /// @todo Use parallel loop here!
         std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
           using T = Table<EntityIndex<J>, EntityIndex<I>>;
           std::ranges::for_each(std::get<T>(connectivity_tuple_)[entity_index],
@@ -510,8 +541,9 @@ private:
     }
 
     // Permute the entity-* connectivity.
+    /// @todo This is actually the slowest part of the entire function.
     /// @todo For some table types, when the rows are swappable,
-    /// inplace permutation may be used.
+    ///       so the inplace permutation may be used.
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
       auto& table = std::get<T>(connectivity_tuple_);
@@ -538,10 +570,11 @@ private:
               std::tie(shape_types[entity_index], volumes[entity_index],
                        positions[entity_index]);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-            return std::tuple_cat(properties,
-                                  std::tie(face_normals_[entity_index]));
+            return std::tie(shape_types[entity_index], volumes[entity_index],
+                            positions[entity_index], face_normals_[entity_index]));
           } else {
-            return properties;
+            return std::tie(shape_types[entity_index], volumes[entity_index],
+                            positions[entity_index]);
           }
         }
       };

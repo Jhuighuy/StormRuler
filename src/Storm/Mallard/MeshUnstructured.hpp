@@ -129,11 +129,9 @@ public:
   /// @brief Initialize the mesh.
   constexpr UnstructuredMesh() {
     // Initialize the default label (0).
-    std::apply(
-        [](auto&... ranges) {
-          ((ranges.emplace_back(0), ranges.emplace_back(0)), ...);
-        },
-        entity_ranges_tuple_);
+    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      insert_label<I>(), insert_label<I>();
+    });
   }
 
   /// @brief Number of entity labels.
@@ -229,7 +227,7 @@ public:
     return std::get<T>(connectivity_tuple_)[index];
   }
 
-  /// @brief Find an entity by it's @p node_indices.
+  /// @brief Find an entity by it's @p node_indices. Complexity is constant.
   template<size_t I, std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   [[nodiscard]] constexpr std::optional<EntityIndex<I>>
@@ -256,13 +254,19 @@ public:
     switch (found.size()) {
       case 0: return std::nullopt;
       case 1: return found.front();
-      default:
-        throw std::range_error(
-            "For the specified node list more than one entity found!");
     }
+    STORM_THROW_("For the specified node list more than one entity found!");
+  }
+
+  /// @brief Insert a new entity label.
+  template<size_t I>
+  constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
+    std::get<I>(entity_ranges_tuple_).emplace_back(0);
   }
 
   /// @brief Insert a new or find an existing entity of shape @p shape.
+  /// If a new entity is inserted, the last existing entity label will be
+  /// assigned to it.
   /// @returns Index of the entity.
   template<size_t I, class Shape>
     requires ((I == 0 && std::constructible_from<Vec, const Shape&>) ||
@@ -347,6 +351,9 @@ public:
   }
 
   /// @brief Permute the entities.
+  /// @param perm Entity permutation range, it may be modified in order to
+  ///             preserve the label ranges correctness.
+  /// @warning This operation is very slow!
   template<size_t I, std::ranges::random_access_range Range>
     requires std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
@@ -420,6 +427,9 @@ public:
   }
 
   /// @brief Assign the entity labels.
+  /// @param label Labels range to assign. May be smaller,
+  ///              than the amount of entities.
+  /// @warning This operation is very slow!
   template<size_t I, std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Label>
   constexpr void assign_labels(Range&& labels,
@@ -435,6 +445,8 @@ public:
 
 private:
 
+  // Update the face orientation such that if it has a single adjacent cell,
+  // than the cell is inner.
   template<std::ranges::forward_range Range>
     requires std::ranges::sized_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
@@ -507,8 +519,7 @@ private:
 
 }; // class UnstructuredMesh
 
-template<size_t Dim, size_t TopologicalDim, //
-         template<class, class> class Table>
+template<size_t Dim, size_t TopologicalDim, template<class, class> class Table>
 inline constexpr bool
     enable_mesh_v<UnstructuredMesh<Dim, TopologicalDim, Table>> = true;
 

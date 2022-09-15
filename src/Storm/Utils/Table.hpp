@@ -107,7 +107,7 @@ private:
   static_assert(std::is_same_v<Value, void>,
                 "Non-void McsrTable is not implemented yet!");
 
-  size_t row_size_hint_ = 25;
+  size_t row_size_hint_ = 75;
   IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
   IndexedVector<RowIndex, OffsetIndex> row_end_offsets_;
   IndexedVector<OffsetIndex, ColIndex> col_indices_;

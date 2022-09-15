@@ -155,16 +155,19 @@
   STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
 #endif
 
-#define STORM_THROW_(error, message, ...)                        \
+#define STORM_THROW_BASE_(error, message, ...)                   \
   do {                                                           \
     throw error(fmt::format(message __VA_OPT__(, __VA_ARGS__))); \
   } while (false)
 
+#define STORM_THROW_(message, ...) \
+  STORM_THROW_BASE_(Storm::Error, message __VA_OPT__(, __VA_ARGS__))
+
 #define STORM_THROW_IO_(message, ...) \
-  STORM_THROW_(Storm::IoError, message __VA_OPT__(, __VA_ARGS__))
+  STORM_THROW_BASE_(Storm::IoError, message __VA_OPT__(, __VA_ARGS__))
 
 #define STORM_THROW_GL_(message, ...) \
-  STORM_THROW_(Storm::GlError, message __VA_OPT__(, __VA_ARGS__))
+  STORM_THROW_BASE_(Storm::GlError, message __VA_OPT__(, __VA_ARGS__))
 
 namespace Storm {
 

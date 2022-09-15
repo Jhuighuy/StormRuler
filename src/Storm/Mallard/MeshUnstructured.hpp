@@ -178,7 +178,7 @@ public:
   [[nodiscard]] constexpr Label //
   label(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
-    // Binary search for the entity in the label ranges.
+    // Binary search for entity in the label ranges.
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     const auto lower_bound = std::ranges::lower_bound(entity_ranges, index);
     return Label{lower_bound - entity_ranges.begin() - 1};
@@ -273,7 +273,6 @@ public:
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
       std::get<I>(entity_positions_tuple_).reserve(capacity);
     } else {
-      // Assign the entity shape type, volume, center position (and normal).
       std::get<I>(entity_shape_types_tuple_).reserve(capacity);
       std::get<I>(entity_volumes_tuple_).reserve(capacity);
       std::get<I>(entity_positions_tuple_).reserve(capacity);
@@ -391,7 +390,7 @@ public:
     std::get<I>(entity_positions_tuple_)
         .emplace_back(2.0 * position(face_index) - position(mirror_cell_index));
 
-    // Allocate the empty connectivity rows, conncet the face with ghost.
+    // Allocate the empty connectivity rows, connect the face with ghost.
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<CellIndex, EntityIndex<J>>;
       std::get<T>(connectivity_tuple_).push_back();
@@ -566,9 +565,6 @@ private:
         } else {
           auto& shape_types = std::get<I>(entity_shape_types_tuple_);
           auto& volumes = std::get<I>(entity_volumes_tuple_);
-          const auto properties =
-              std::tie(shape_types[entity_index], volumes[entity_index],
-                       positions[entity_index]);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
             return std::tie(shape_types[entity_index], volumes[entity_index],
                             positions[entity_index], face_normals_[entity_index]));

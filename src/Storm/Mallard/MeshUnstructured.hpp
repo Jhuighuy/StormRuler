@@ -76,15 +76,6 @@ private:
     >
   > entity_ranges_tuple_{};
 
-#if 0
-  meta::as_std_tuple_t<
-    meta::transform_t<
-      meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<EntityIndices_, Label>
-    >
-  > entity_labels_tuple_{};
-#endif
-
   meta::as_std_tuple_t<
     meta::prepend_t<
       meta::empty_t,
@@ -191,9 +182,6 @@ public:
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     const auto lower_bound = std::ranges::lower_bound(entity_ranges, index);
     return Label{lower_bound - entity_ranges.begin() - 1};
-#if 0
-    return std::get<I>(entity_labels_tuple_)[index];
-#endif
   }
 
   /// @brief Shape type of the entitity at @p index.
@@ -297,13 +285,11 @@ public:
         return *found_entity_index;
       }
     }
-    const EntityIndex<I> entity_index{num_entities<I>()};
 
-    // Assign the last existing label label.
+    // Allocate the entity index,
+    // implicitly assigning the last existing label label.
+    const EntityIndex<I> entity_index{num_entities<I>()};
     std::get<I>(entity_ranges_tuple_).back() += 1;
-#if 0
-    std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
-#endif
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -409,8 +395,9 @@ public:
     std::ranges::stable_sort(perm, [&](EntityIndex<I> entity_index_1,
                                        EntityIndex<I> entity_index_2) {
       const auto new_label = [&](EntityIndex<I> entity_index) {
-        return entity_index < labels.size() ? labels[(size_t) entity_index] :
-                                              Label{0};
+        const auto entity_index_sz = static_cast<size_t>(entity_index);
+        return entity_index >= labels.size() ? Label{0} :
+                                               labels[entity_index_sz];
       };
       return new_label(entity_index_1) < new_label(entity_index_2);
     });
@@ -522,21 +509,15 @@ private:
     permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
                                             EntityIndex<I> entity_index_2) {
       const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
-#if 0
-        auto& labels = std::get<I>(entity_labels_tuple_);
-#endif
         auto& positions = std::get<I>(entity_positions_tuple_);
         if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
           return std::tie(labels[entity_index], positions[entity_index]);
         } else {
           auto& shape_types = std::get<I>(entity_shape_types_tuple_);
           auto& volumes = std::get<I>(entity_volumes_tuple_);
-          const auto properties = std::tie(
-#if 0
-                labels[entity_index],
-#endif
-              shape_types[entity_index], volumes[entity_index],
-              positions[entity_index]);
+          const auto properties =
+              std::tie(shape_types[entity_index], volumes[entity_index],
+                       positions[entity_index]);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
             return std::tuple_cat(properties,
                                   std::tie(face_normals_[entity_index]));

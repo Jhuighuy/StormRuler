@@ -237,8 +237,13 @@ public:
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
   constexpr void push_back(Range&& row_col_indices) {
-    data_.emplace_back();
-    std::ranges::copy(row_col_indices, std::back_inserter(data_.back()));
+    if constexpr (std::constructible_from<
+        IndexedVector<OffsetIndex, ColIndex>, Range>) {
+      data_.emplace_back(std::forward<Range>(row_col_indices));
+    } else {
+      data_.emplace_back();
+      std::ranges::copy(row_col_indices, std::back_inserter(data_.back()));
+    }
   }
 
   /// @brief Insert a connection at @p row_index, @p col_index.

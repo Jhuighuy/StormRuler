@@ -547,10 +547,11 @@ private:
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
       auto& table = std::get<T>(connectivity_tuple_);
       T permuted_table{};
+      permuted_table.reserve(num_entities<I>());
       std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
         const auto entity_index_sz = static_cast<size_t>(entity_index);
         const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
-        permuted_table.push_back(table[permuted_entity_index]);
+        permuted_table.push_back(std::move(table[permuted_entity_index]));
       });
       table = std::move(permuted_table);
     });

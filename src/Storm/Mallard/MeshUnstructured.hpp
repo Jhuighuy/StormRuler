@@ -159,7 +159,7 @@ public:
 
   /// @brief Index range of the entitites.
   template<size_t I>
-  [[nodiscard]] constexpr auto //
+  [[nodiscard]] constexpr auto
   entities(meta::type<EntityIndex<I>> = {}) const noexcept {
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(entity_ranges.front(), entity_ranges.back());
@@ -175,8 +175,7 @@ public:
 
   /// @brief Label of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr Label //
-  label(EntityIndex<I> index) const noexcept {
+  [[nodiscard]] constexpr Label label(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     // Binary search for entity in the label ranges.
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
@@ -194,8 +193,7 @@ public:
 
   /// @brief "Volume" of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr real_t //
-  volume(EntityIndex<I> index) const noexcept {
+  [[nodiscard]] constexpr real_t volume(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_volumes_tuple_)[index];
   }
@@ -207,15 +205,13 @@ public:
 
   /// @brief Position of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr Vec //
-  position(EntityIndex<I> index) const noexcept {
+  [[nodiscard]] constexpr Vec position(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_positions_tuple_)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
-  [[nodiscard]] constexpr Vec //
-  normal(FaceIndex face_index) const noexcept {
+  [[nodiscard]] constexpr Vec normal(FaceIndex face_index) const noexcept {
     STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
                   "Face index is out of range!");
     return face_normals_[face_index];
@@ -223,7 +219,7 @@ public:
 
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
   template<size_t J, size_t I>
-  [[nodiscard]] constexpr auto //
+  [[nodiscard]] constexpr auto
   adjacent(EntityIndex<I> index,
            meta::type<EntityIndex<J>> = {}) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
@@ -233,9 +229,10 @@ public:
 
   /// @brief Find an entity by it's @p node_indices. Complexity is constant.
   template<size_t I, std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
-  [[nodiscard]] constexpr std::optional<EntityIndex<I>>
-  find(Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
+    requires (I != 0) &&
+             std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
+  [[nodiscard]] constexpr std::optional<EntityIndex<I>> find(
+      Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());
     STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> found{};
@@ -262,23 +259,16 @@ public:
     STORM_THROW_("For the specified node list more than one entity found!");
   }
 
-  /// @brief Insert a new entity label.
-  template<size_t I>
-  constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
-    std::get<I>(entity_ranges_tuple_).emplace_back(0);
-  }
-
+  /// @brief Reverve memory for the entities.
   template<size_t I>
   constexpr void reserve(size_t capacity, meta::type<EntityIndex<I>> = {}) {
-    if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      std::get<I>(entity_positions_tuple_).reserve(capacity);
-    } else {
+    std::get<I>(entity_positions_tuple_).reserve(capacity);
+    if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
       std::get<I>(entity_shape_types_tuple_).reserve(capacity);
       std::get<I>(entity_volumes_tuple_).reserve(capacity);
-      std::get<I>(entity_positions_tuple_).reserve(capacity);
-      if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-        face_normals_.reserve(capacity);
-      }
+    }
+    if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
+      face_normals_.reserve(capacity);
     }
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
@@ -286,28 +276,24 @@ public:
     });
   }
 
-  /// @brief Insert a new or find an existing entity of shape @p shape.
-  /// If a new entity is inserted, the last existing entity label will be
-  /// assigned to it.
+  /// @brief Insert a new entity label.
+  template<size_t I>
+  constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
+    std::get<I>(entity_ranges_tuple_).emplace_back(0);
+  }
+
+  /// @brief Insert a new entity of shape @p shape.
+  /// The last existing entity label will be assigned to it.
   /// @returns Index of the entity.
   template<size_t I, class Shape>
-    requires ((I == 0 && std::constructible_from<Vec, const Shape&>) ||
-              (I != 0 && shapes::shape<Shape>) )
-  constexpr EntityIndex<I> insert(const Shape& shape,
+    requires ((I == 0 && std::constructible_from<Vec, Shape>) ||
+              (shapes::shape<Shape> && I == shapes::shape_dim_v<Shape>) )
+  constexpr EntityIndex<I> insert(Shape&& shape,
                                   meta::type<EntityIndex<I>> = {}) {
-    // If an edge or or face is inserted, check if it exists first.
-    if constexpr (!(std::is_same_v<EntityIndex<I>, NodeIndex> ||
-                    std::is_same_v<EntityIndex<I>, CellIndex>) ) {
-      if (const auto found_entity_index = find<I>(shape.nodes());
-          found_entity_index.has_value()) {
-        return *found_entity_index;
-      }
-    }
-
     // Allocate the entity index,
     // implicitly assigning the last existing label label.
-    const EntityIndex<I> entity_index{num_entities<I>()};
-    std::get<I>(entity_ranges_tuple_).back() += 1;
+    const EntityIndex<I> entity_index{
+        std::get<I>(entity_ranges_tuple_).back()++};
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -352,7 +338,7 @@ public:
           using T = Table<EntityIndex<I>, EntityIndex<J>>;
           using U = Table<EntityIndex<J>, EntityIndex<I>>;
           const auto process_part = [&](const auto& part) {
-            const EntityIndex<J> part_index = insert<J>(part);
+            const EntityIndex<J> part_index = find_or_insert<J>(part);
             std::get<T>(connectivity_tuple_).connect(entity_index, part_index);
             std::get<U>(connectivity_tuple_).connect(part_index, entity_index);
             // Fix the face orientation (if needed).
@@ -370,6 +356,20 @@ public:
     std::get<T>(connectivity_tuple_).connect(entity_index, entity_index);
 
     return entity_index;
+  }
+
+  /// @brief Find an existing entity of shape @p shape or insert a new one.
+  /// @returns Index of the entity.
+  template<size_t I, class Shape>
+    requires ((I == 0 && std::constructible_from<Vec, Shape>) ||
+              (shapes::shape<Shape> && I == shapes::shape_dim_v<Shape>) )
+  constexpr EntityIndex<I> find_or_insert(Shape&& shape,
+                                          meta::type<EntityIndex<I>> = {}) {
+    if (const auto entity_index = find<I>(shape.nodes());
+        entity_index.has_value()) {
+      return *entity_index;
+    }
+    return insert<I>(std::forward<Shape>(shape));
   }
 
 #if 0
@@ -568,7 +568,8 @@ private:
           auto& volumes = std::get<I>(entity_volumes_tuple_);
           if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
             return std::tie(shape_types[entity_index], volumes[entity_index],
-                            positions[entity_index], face_normals_[entity_index]);
+                            positions[entity_index],
+                            face_normals_[entity_index]);
           } else {
             return std::tie(shape_types[entity_index], volumes[entity_index],
                             positions[entity_index]);

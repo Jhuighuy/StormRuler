@@ -95,10 +95,9 @@ concept shape =
     requires(Shape shape) {
       { shape.type() } noexcept -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::range;
-    } &&
-    std::same_as<
-        std::ranges::range_value_t<decltype(std::declval<Shape>().nodes())>,
-        NodeIndex>;
+    } && std::same_as<std::ranges::range_value_t< //
+                          decltype(std::declval<Shape>().nodes())>,
+                      NodeIndex>;
 
 /// @brief 1D Shape concept.
 template<class Shape>

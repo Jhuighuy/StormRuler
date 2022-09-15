@@ -268,6 +268,25 @@ public:
     std::get<I>(entity_ranges_tuple_).emplace_back(0);
   }
 
+  template<size_t I>
+  constexpr void reserve(size_t capacity, meta::type<EntityIndex<I>> = {}) {
+    if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
+      std::get<I>(entity_positions_tuple_).reserve(capacity);
+    } else {
+      // Assign the entity shape type, volume, center position (and normal).
+      std::get<I>(entity_shape_types_tuple_).reserve(capacity);
+      std::get<I>(entity_volumes_tuple_).reserve(capacity);
+      std::get<I>(entity_positions_tuple_).reserve(capacity);
+      if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
+        face_normals_.reserve(capacity);
+      }
+    }
+    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      using T = Table<EntityIndex<I>, EntityIndex<J>>;
+      std::get<T>(connectivity_tuple_).reserve(capacity);
+    });
+  }
+
   /// @brief Insert a new or find an existing entity of shape @p shape.
   /// If a new entity is inserted, the last existing entity label will be
   /// assigned to it.

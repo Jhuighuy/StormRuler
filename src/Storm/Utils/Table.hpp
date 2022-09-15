@@ -70,6 +70,11 @@ public:
   }
   /// @}
 
+  /// @brief Reserve the row storage.
+  constexpr void reserve(size_t capacity) {
+    row_offsets_.reserve(capacity + 1);
+  }
+
   /// @brief Push back an empty row.
   constexpr void push_back() {
     row_offsets_.emplace_back(col_indices_.size());
@@ -136,6 +141,12 @@ public:
                                  col_indices_.cbegin() + last);
   }
   /// @}
+
+  /// @brief Reserve the row storage.
+  constexpr void reserve(size_t capacity) {
+    row_offsets_.reserve(capacity + 1);
+    row_end_offsets_.reserve(capacity + 1);
+  }
 
   /// @brief Push back an empty row.
   constexpr void push_back() {
@@ -212,6 +223,11 @@ public:
     return data_[row_index];
   }
   /// @}
+
+  /// @brief Reserve the row storage.
+  constexpr void reserve(size_t capacity) {
+    data_.reserve(capacity);
+  }
 
   /// @brief Push back an empty row.
   constexpr void push_back() {

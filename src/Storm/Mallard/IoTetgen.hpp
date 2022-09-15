@@ -73,6 +73,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the nodes.
+    mesh.reserve(num_nodes, meta::type_v<NodeIndex>);
     for (size_t node_entry = 0; node_entry < num_nodes; ++node_entry) {
       size_t node_index, node_label = 0;
       mesh_vec_t<Mesh> node_pos{};
@@ -113,6 +114,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the edges.
+    mesh.reserve(num_edges, meta::type_v<EdgeIndex>);
     if (edges_have_labels) { edge_labels.reserve(num_edges); }
     for (size_t edge_entry = 0; edge_entry < num_edges; ++edge_entry) {
       size_t edge_index;
@@ -151,6 +153,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the faces.
+    mesh.reserve(num_faces, meta::type_v<FaceIndex<Mesh>>);
     if (faces_have_labels) { face_labels.reserve(num_faces); }
     for (size_t face_entry = 0; face_entry < num_faces; ++face_entry) {
       size_t face_index;
@@ -197,6 +200,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     }
 
     // Read the cells.
+    mesh.reserve(num_cells, meta::type_v<CellIndex<Mesh>>);
     for (size_t cell_entry = 0; cell_entry < num_cells; ++cell_entry) {
       size_t cell_index, cell_attrib = 0;
       std::conditional_t<mesh3D, shapes::Tetrahedron, shapes::Triangle> cell{};

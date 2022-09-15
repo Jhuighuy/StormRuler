@@ -76,12 +76,14 @@ private:
     >
   > entity_ranges_tuple_{};
 
+#if 0
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
       meta::pair_list_t<EntityIndices_, Label>
     >
   > entity_labels_tuple_{};
+#endif
 
   meta::as_std_tuple_t<
     meta::prepend_t<
@@ -141,6 +143,14 @@ public:
     return std::get<I>(entity_ranges_tuple_).size() - 1;
   }
 
+  /// @brief Label range.
+  template<size_t I>
+  [[nodiscard]] constexpr auto
+  labels(meta::type<EntityIndex<I>> = {}) const noexcept {
+    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    return std::views::iota(Label{0}, Label{entity_ranges.size() - 1});
+  }
+
   /// @brief Number of entities.
   template<size_t I>
   [[nodiscard]] constexpr size_t
@@ -177,7 +187,13 @@ public:
   [[nodiscard]] constexpr Label //
   label(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
+    // Binary search for the entity in the label ranges.
+    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    const auto lower_bound = std::ranges::lower_bound(entity_ranges, index);
+    return Label{lower_bound - entity_ranges.begin() - 1};
+#if 0
     return std::get<I>(entity_labels_tuple_)[index];
+#endif
   }
 
   /// @brief Shape type of the entitity at @p index.
@@ -283,9 +299,11 @@ public:
     }
     const EntityIndex<I> entity_index{num_entities<I>()};
 
-    // Assign the default label.
+    // Assign the last existing label label.
     std::get<I>(entity_ranges_tuple_).back() += 1;
+#if 0
     std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
+#endif
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -369,78 +387,50 @@ public:
       return label(entity_index_1) < label(entity_index_2);
     });
 
-    { // Generate the inverse permutations and fix the connectivity.
-      IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
-      permutations::invert_permutation(perm, iperm.begin());
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
-          using T = Table<EntityIndex<J>, EntityIndex<I>>;
-          std::ranges::for_each(std::get<T>(connectivity_tuple_)[entity_index],
-                                [&](EntityIndex<I>& adjacent_index) {
-                                  adjacent_index = iperm[adjacent_index];
-                                });
-        });
-      });
-    }
-
-    // Permute the entity-* connectivity.
-    /// @todo For some table types, when the rows are swappable,
-    /// inplace permutation may be used.
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-      using T = Table<EntityIndex<I>, EntityIndex<J>>;
-      auto& table = std::get<T>(connectivity_tuple_);
-      T permuted_table{};
-      std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
-        const auto entity_index_sz = static_cast<size_t>(entity_index);
-        const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
-        permuted_table.push_back(table[permuted_entity_index]);
-      });
-      table = std::move(permuted_table);
-    });
-
-    // Permute the entity shape properties.
-    permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
-                                            EntityIndex<I> entity_index_2) {
-      const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
-        auto& labels = std::get<I>(entity_labels_tuple_);
-        auto& positions = std::get<I>(entity_positions_tuple_);
-        if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-          return std::tie(labels[entity_index], positions[entity_index]);
-        } else {
-          auto& shape_types = std::get<I>(entity_shape_types_tuple_);
-          auto& volumes = std::get<I>(entity_volumes_tuple_);
-          const auto properties =
-              std::tie(labels[entity_index], shape_types[entity_index],
-                       volumes[entity_index], positions[entity_index]);
-          if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-            return std::tuple_cat(properties,
-                                  std::tie(face_normals_[entity_index]));
-          } else {
-            return properties;
-          }
-        }
-      };
-      auto properties_tuple_1 = gather_shape_properties_(entity_index_1);
-      auto properties_tuple_2 = gather_shape_properties_(entity_index_2);
-      std::swap(properties_tuple_1, properties_tuple_2);
-    });
+    // Permute the entities.
+    permute_base_(perm);
   }
 
   /// @brief Assign the entity labels.
   /// @param label Labels range to assign. May be smaller,
   ///              than the amount of entities.
   /// @warning This operation is very slow!
-  template<size_t I, std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, Label>
+  template<size_t I, std::ranges::sized_range Range>
+    requires std::ranges::random_access_range<Range> &&
+             std::same_as<std::ranges::range_value_t<Range>, Label>
   constexpr void assign_labels(Range&& labels,
                                meta::type<EntityIndex<I>> = {}) {
-    if constexpr (std::ranges::sized_range<Range>) {
-      STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
-                    "Invalid labels range size!");
-    }
-    auto& entity_labels = std::get<I>(entity_labels_tuple_);
-    std::ranges::copy(labels, entity_labels.begin());
-    finalize_labels_assignment_<I>();
+    STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
+                  "Invalid labels range size!");
+
+    // Permute the entities according to labels.
+    std::vector<EntityIndex<I>> perm(num_entities<I>());
+    std::ranges::copy(entities<I>(), perm.begin());
+    std::ranges::stable_sort(perm, [&](EntityIndex<I> entity_index_1,
+                                       EntityIndex<I> entity_index_2) {
+      const auto new_label = [&](EntityIndex<I> entity_index) {
+        return entity_index < labels.size() ? labels[(size_t) entity_index] :
+                                              Label{0};
+      };
+      return new_label(entity_index_1) < new_label(entity_index_2);
+    });
+    permute_base_<I>(perm);
+
+    // Regenerate label ranges.
+    const size_t num_entities = this->num_entities<I>();
+    auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    entity_ranges.clear();
+    std::ranges::for_each(labels, [&](Label label) {
+      entity_ranges.resize(
+          std::max(entity_ranges.size(), static_cast<size_t>(label) + 2));
+      entity_ranges[label + 1] += 1;
+    });
+    entity_ranges[Label{1}] += num_entities - std::ranges::size(labels);
+    std::partial_sum(
+        entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
+        [](EntityIndex<I> entity_index_1, EntityIndex<I> entity_index_2) {
+          return entity_index_1 + static_cast<size_t>(entity_index_2);
+        });
   }
 
 private:
@@ -495,26 +485,70 @@ private:
     }
   }
 
-  template<size_t I>
-  constexpr void finalize_labels_assignment_() {
-    // Permute the entities according to labels.
-    std::vector<EntityIndex<I>> perm(num_entities<I>());
-    std::ranges::copy(entities<I>(), perm.begin());
-    permute<I>(perm);
-
-    // Regenerate label ranges.
-    auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
-    const auto& entity_labels = std::get<I>(entity_labels_tuple_);
-    entity_ranges.clear();
-    std::ranges::for_each(entity_labels, [&](Label label) {
-      entity_ranges.resize(static_cast<size_t>(label) + 2);
-      entity_ranges[label + 1] += 1;
-    });
-    std::partial_sum(
-        entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
-        [](EntityIndex<I> entity_index_1, EntityIndex<I> entity_index_2) {
-          return entity_index_1 + static_cast<size_t>(entity_index_2);
+  template<size_t I, std::ranges::random_access_range Range>
+    requires std::permutable<std::ranges::iterator_t<Range>> &&
+             std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
+  constexpr void permute_base_(Range&& perm, meta::type<EntityIndex<I>> = {}) {
+    { // Generate the inverse permutations and fix the connectivity.
+      IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
+      permutations::invert_permutation(perm, iperm.begin());
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
+          using T = Table<EntityIndex<J>, EntityIndex<I>>;
+          std::ranges::for_each(std::get<T>(connectivity_tuple_)[entity_index],
+                                [&](EntityIndex<I>& adjacent_index) {
+                                  adjacent_index = iperm[adjacent_index];
+                                });
         });
+      });
+    }
+
+    // Permute the entity-* connectivity.
+    /// @todo For some table types, when the rows are swappable,
+    /// inplace permutation may be used.
+    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      using T = Table<EntityIndex<I>, EntityIndex<J>>;
+      auto& table = std::get<T>(connectivity_tuple_);
+      T permuted_table{};
+      std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
+        const auto entity_index_sz = static_cast<size_t>(entity_index);
+        const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
+        permuted_table.push_back(table[permuted_entity_index]);
+      });
+      table = std::move(permuted_table);
+    });
+
+    // Permute the entity shape properties.
+    permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
+                                            EntityIndex<I> entity_index_2) {
+      const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
+#if 0
+        auto& labels = std::get<I>(entity_labels_tuple_);
+#endif
+        auto& positions = std::get<I>(entity_positions_tuple_);
+        if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
+          return std::tie(labels[entity_index], positions[entity_index]);
+        } else {
+          auto& shape_types = std::get<I>(entity_shape_types_tuple_);
+          auto& volumes = std::get<I>(entity_volumes_tuple_);
+          const auto properties = std::tie(
+#if 0
+                labels[entity_index],
+#endif
+              shape_types[entity_index], volumes[entity_index],
+              positions[entity_index]);
+          if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
+            return std::tuple_cat(properties,
+                                  std::tie(face_normals_[entity_index]));
+          } else {
+            return properties;
+          }
+        }
+      };
+      auto properties_tuple_1 = gather_shape_properties_(entity_index_1);
+      auto properties_tuple_2 = gather_shape_properties_(entity_index_2);
+      std::swap(properties_tuple_1, properties_tuple_2);
+    });
   }
 
 }; // class UnstructuredMesh

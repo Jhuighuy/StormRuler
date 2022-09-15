@@ -317,7 +317,7 @@ public:
       }
     }
 
-    // Assign the topological properties.
+    // Assign the connectivity properties.
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       // Allocate the empty rows.
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
@@ -360,9 +360,8 @@ public:
 
   /// @brief Find an existing entity of shape @p shape or insert a new one.
   /// @returns Index of the entity.
-  template<size_t I, class Shape>
-    requires ((I == 0 && std::constructible_from<Vec, Shape>) ||
-              (shapes::shape<Shape> && I == shapes::shape_dim_v<Shape>) )
+  template<size_t I, shapes::shape Shape>
+    requires (I == shapes::shape_dim_v<Shape>)
   constexpr EntityIndex<I> find_or_insert(Shape&& shape,
                                           meta::type<EntityIndex<I>> = {}) {
     if (const auto entity_index = find<I>(shape.nodes());
@@ -455,11 +454,11 @@ public:
     const size_t delta = this->num_entities<I>() - std::ranges::size(labels);
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     entity_ranges.clear();
-    std::ranges::for_each(labels, [&](Label label) {
+    for (Label label : labels) {
       entity_ranges.resize(
           std::max(entity_ranges.size(), static_cast<size_t>(label) + 2));
       entity_ranges[label + 1] += 1;
-    });
+    };
     entity_ranges[Label{0} + 1] += delta;
     std::partial_sum(
         entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
@@ -531,10 +530,10 @@ private:
         /// @todo Use parallel loop here!
         std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
           using T = Table<EntityIndex<J>, EntityIndex<I>>;
-          std::ranges::for_each(std::get<T>(connectivity_tuple_)[entity_index],
-                                [&](EntityIndex<I>& adjacent_index) {
-                                  adjacent_index = iperm[adjacent_index];
-                                });
+          auto adj = std::get<T>(connectivity_tuple_)[entity_index];
+          for (EntityIndex<I>& adjacent_index : adj) {
+            adjacent_index = iperm[adjacent_index];
+          }
         });
       });
     }
@@ -548,11 +547,11 @@ private:
       auto& table = std::get<T>(connectivity_tuple_);
       T permuted_table{};
       permuted_table.reserve(num_entities<I>());
-      std::ranges::for_each(entities<I>(), [&](EntityIndex<I> entity_index) {
+      for (EntityIndex<I> entity_index : entities<I>()) {
         const auto entity_index_sz = static_cast<size_t>(entity_index);
         const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
         permuted_table.push_back(std::move(table[permuted_entity_index]));
-      });
+      }
       table = std::move(permuted_table);
     });
 
@@ -562,7 +561,7 @@ private:
       const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
         auto& positions = std::get<I>(entity_positions_tuple_);
         if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-          return std::tie(labels[entity_index], positions[entity_index]);
+          return std::tie(positions[entity_index]);
         } else {
           auto& shape_types = std::get<I>(entity_shape_types_tuple_);
           auto& volumes = std::get<I>(entity_volumes_tuple_);

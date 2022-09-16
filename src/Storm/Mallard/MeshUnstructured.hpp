@@ -46,7 +46,7 @@ namespace Storm {
 /// @tparam TopologicalDim Topological dimensionality.
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
-         template<class, class> class Table = VoidVovTable>
+         template<class, class> class Table = VovTable>
 class UnstructuredMesh {
 private:
 
@@ -412,8 +412,8 @@ public:
       using T = Table<EntityIndex<I>, NodeIndex>;
       using U = Table<NodeIndex, EntityIndex<I>>;
       for (NodeIndex node_index : shape.nodes()) {
-        std::get<T>(connectivity_tuple_).connect(entity_index, node_index);
-        std::get<U>(connectivity_tuple_).connect(node_index, entity_index);
+        std::get<T>(connectivity_tuple_).insert(entity_index, node_index);
+        std::get<U>(connectivity_tuple_).insert(node_index, entity_index);
       }
     }
     meta::for_each<meta::make_seq_t<EntityIndex, 1, I>>(
@@ -423,8 +423,8 @@ public:
           using U = Table<EntityIndex<J>, EntityIndex<I>>;
           const auto process_part = [&](const auto& part) {
             const EntityIndex<J> part_index = find_or_insert<J>(part);
-            std::get<T>(connectivity_tuple_).connect(entity_index, part_index);
-            std::get<U>(connectivity_tuple_).connect(part_index, entity_index);
+            std::get<T>(connectivity_tuple_).insert(entity_index, part_index);
+            std::get<U>(connectivity_tuple_).insert(part_index, entity_index);
             // Fix the face orientation (if needed).
             if constexpr (std::is_same_v<EntityIndex<J>, FaceIndex>) {
               update_face_orientation_(part_index, part.nodes());
@@ -437,7 +437,7 @@ public:
     // Connect the entity with it's siblings.
     /// @todo Implement me!
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
-    std::get<T>(connectivity_tuple_).connect(entity_index, entity_index);
+    std::get<T>(connectivity_tuple_).insert(entity_index, entity_index);
 
     return entity_index;
   }

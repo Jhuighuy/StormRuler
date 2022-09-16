@@ -22,15 +22,29 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
 
 #include <algorithm>
 #include <ranges>
+#include <span>
 #include <utility>
 
 namespace Storm {
+
+template<crtp_derived Derived>
+class TableInterface;
+
+/// @brief Types, enabled to be a table.
+template<class T>
+inline constexpr bool enable_table_v =
+    derived_from_crtp_interface<T, TableInterface>;
+
+/// @brief Table concept.
+template<class Table>
+concept table = std::movable<Table> && enable_table_v<Table>;
 
 struct OffsetTag;
 using OffsetIndex = Index<OffsetTag>;
@@ -61,20 +75,34 @@ void move_table(InTable&& in_table, OutTable& out_table) {
     for (auto row_index : in_table.rows()) {
       out_table.push_back(std::move(in_table[row_index]));
     }
-    out_table = {};
+    in_table = {};
   }
 }
 
-/// @brief Compressed sparse row table.
-template<class Value, index RowIndex, index ColIndex>
-class CsrTable final {
+/// @brief CRTP interface to a table.
+template<crtp_derived Derived>
+class TableInterface {
 private:
 
-  static_assert(std::is_same_v<Value, void>,
-                "Non-void CsrTable is not implemented yet!");
+  constexpr Derived& self_() noexcept {
+    static_assert(std::derived_from<Derived, TableInterface>);
+    return static_cast<Derived&>(*this);
+  }
+  constexpr const Derived& self_() const noexcept {
+    return static_cast<TableInterface&>(*this).self_();
+  }
+
+public:
+}; // TableInterface
+
+/// @brief Compressed sparse row table.
+template<index RowIndex, class ColValue>
+  requires std::is_object_v<ColValue>
+class CsrTable final : public TableInterface<CsrTable<RowIndex, ColValue>> {
+private:
 
   IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
-  IndexedVector<OffsetIndex, ColIndex> col_indices_;
+  IndexedVector<OffsetIndex, ColValue> col_values_;
 
 public:
 
@@ -92,24 +120,20 @@ public:
   /// @{
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    const auto first = static_cast<size_t>(row_offsets_[row_index]);
-    const auto last = static_cast<size_t>(row_offsets_[row_index + 1]);
-    return std::ranges::subrange(col_indices_.begin() + first,
-                                 col_indices_.begin() + last);
+    return std::span{&col_values_[row_offsets_[row_index]],
+                     &col_values_[row_offsets_[row_index + 1]]};
   }
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) const noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    const auto first = static_cast<size_t>(row_offsets_[row_index]);
-    const auto last = static_cast<size_t>(row_offsets_[row_index + 1]);
-    return std::ranges::subrange(col_indices_.cbegin() + first,
-                                 col_indices_.cbegin() + last);
+    return std::span{&col_values_[row_offsets_[row_index]],
+                     &col_values_[row_offsets_[row_index + 1]]};
   }
   /// @}
 
   /// @brief Clear the table.
   constexpr void clear() {
     row_offsets_.clear(), row_offsets_.emplace_back(0);
-    col_indices_.clear();
+    col_values_.clear();
   }
 
   /// @brief Reserve the row storage.
@@ -119,144 +143,41 @@ public:
 
   /// @brief Push back an empty row.
   constexpr void push_back() {
-    row_offsets_.emplace_back(col_indices_.size());
+    row_offsets_.emplace_back(col_values_.size());
   }
-  /// @brief Push back a row with @p row_col_indices.
+  /// @brief Push back a row with @p row_values.
   template<std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
-  constexpr void push_back(Range&& row_col_indices) {
-    col_indices_.insert(col_indices_.end(), //
-                        row_col_indices.begin(), row_col_indices.end());
-    row_offsets_.emplace_back(col_indices_.size());
+    requires std::same_as<std::ranges::range_value_t<Range>, ColValue>
+  constexpr void push_back(Range&& row_values) {
+    col_values_.insert(col_values_.end(), row_values.begin(), row_values.end());
+    row_offsets_.emplace_back(col_values_.size());
   }
 
-  /// @brief Insert a connection at @p row_index, @p col_index.
-  void connect(RowIndex row_index, ColIndex col_index) {
+  /// @brief Insert a connection at @p row_index, @p col_value.
+  /// @warning Complexity is linear!
+  void insert(RowIndex row_index, ColValue col_value) {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    col_indices_.insert(col_indices_.begin() +
-                            static_cast<size_t>(row_offsets_[row_index + 1]),
-                        col_index);
+    const auto offset = static_cast<size_t>(row_offsets_[row_index + 1]);
+    col_values_.insert(col_values_.begin() + offset, col_value);
     std::for_each(row_offsets_.begin() + static_cast<size_t>(row_index) + 1,
                   row_offsets_.end(), [](auto& offset) { offset += 1; });
   }
 
 }; // class CsrTable
 
-/// @brief Compressed sparse row table without column values.
-template<index RowIndex, index ColIndex>
-using VoidCsrTable = CsrTable<void, RowIndex, ColIndex>;
-
-/// @brief Modified compressed sparse row table.
-template<class Value, index RowIndex, index ColIndex>
-class McsrTable final {
-private:
-
-  static_assert(std::is_same_v<Value, void>,
-                "Non-void McsrTable is not implemented yet!");
-
-  size_t row_size_hint_ = 75;
-  IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
-  IndexedVector<RowIndex, OffsetIndex> row_end_offsets_;
-  IndexedVector<OffsetIndex, ColIndex> col_indices_;
-
-public:
-
-  /// @brief Number of rows.
-  [[nodiscard]] constexpr size_t size() const noexcept {
-    return row_offsets_.size() - 1;
-  }
-
-  /// @brief Get the column indices range of a row @p row_index.
-  /// @{
-  [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    const auto first = static_cast<size_t>(row_offsets_[row_index]);
-    const auto last = static_cast<size_t>(row_end_offsets_[row_index]);
-    return std::ranges::subrange(col_indices_.begin() + first,
-                                 col_indices_.begin() + last);
-  }
-  [[nodiscard]] constexpr auto operator[](RowIndex row_index) const noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    const auto first = static_cast<size_t>(row_offsets_[row_index]);
-    const auto last = static_cast<size_t>(row_end_offsets_[row_index]);
-    return std::ranges::subrange(col_indices_.cbegin() + first,
-                                 col_indices_.cbegin() + last);
-  }
-  /// @}
-
-  /// @brief Clear the table.
-  constexpr void clear() {
-    row_offsets_.clear(), row_offsets_.emplace_back(0);
-    row_end_offsets_.clear(), col_indices_.clear();
-  }
-
-  /// @brief Reserve the row storage.
-  constexpr void reserve(size_t capacity) {
-    row_offsets_.reserve(capacity + 1);
-    row_end_offsets_.reserve(capacity + 1);
-  }
-
-  /// @brief Push back an empty row.
-  constexpr void push_back() {
-    row_end_offsets_.emplace_back(col_indices_.size());
-    col_indices_.insert(col_indices_.end(), row_size_hint_, ColIndex{SIZE_MAX});
-    row_offsets_.emplace_back(col_indices_.size());
-  }
-  /// @brief Push back a row with @p row_col_indices.
-  template<std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
-  constexpr void push_back(Range&& row_col_indices) {
-    col_indices_.insert(col_indices_.end(), //
-                        row_col_indices.begin(), row_col_indices.end());
-    row_end_offsets_.emplace_back(col_indices_.size());
-    row_offsets_.emplace_back(col_indices_.size());
-  }
-
-  /// @brief Insert a connection at @p row_index, @p col_index.
-  void connect(RowIndex row_index, ColIndex col_index) {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    if (row_end_offsets_[row_index] == row_offsets_[row_index + 1]) {
-      const auto row_index_sz = static_cast<size_t>(row_index);
-      const size_t row_size =
-          row_end_offsets_[row_index] - row_offsets_[row_index];
-      STORM_TRACE_("MCSR row {} capacity exhausted, row size is {}, {}!",
-                   row_index_sz, row_size + 1,
-                   meta::type_name_v<decltype(*this)>);
-      if (row_size == row_size_hint_) { row_size_hint_ *= 2; }
-      const size_t delta = row_size_hint_ - row_size;
-      col_indices_.insert(col_indices_.begin() +
-                              static_cast<size_t>(row_end_offsets_[row_index]),
-                          delta, ColIndex{SIZE_MAX});
-      std::for_each(row_offsets_.begin() + row_index_sz + 1, row_offsets_.end(),
-                    [&](auto& offset) { offset += delta; });
-      std::for_each(row_end_offsets_.begin() + row_index_sz + 1,
-                    row_end_offsets_.end(),
-                    [&](auto& offset) { offset += delta; });
-    }
-    col_indices_[row_end_offsets_[row_index]++] = col_index;
-  }
-
-}; // class McsrTable
-
-/// @brief Modified compressed sparse row table without column values.
-template<index RowIndex, index ColIndex>
-using VoidMcsrTable = McsrTable<void, RowIndex, ColIndex>;
-
 /// @brief Vector-of-vectors sparse row table.
-template<class Value, index RowIndex, index ColIndex>
-class VovTable final {
+template<index RowIndex, class ColValue = void>
+  requires std::is_object_v<ColValue>
+class VovTable final : public TableInterface<VovTable<RowIndex, ColValue>> {
 private:
 
-  static_assert(std::is_same_v<Value, void>,
-                "Non-void VovTable is not implemented yet!");
-
-  IndexedVector<RowIndex, IndexedVector<OffsetIndex, ColIndex>> data_;
+  IndexedVector<RowIndex, IndexedVector<OffsetIndex, ColValue>> rows_;
 
 public:
 
   /// @brief Number of rows.
   [[nodiscard]] constexpr size_t size() const noexcept {
-    return data_.size();
+    return rows_.size();
   }
 
   /// @brief Index range of the rows.
@@ -268,52 +189,48 @@ public:
   /// @{
   [[nodiscard]] constexpr auto& operator[](RowIndex row_index) noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    return data_[row_index];
+    return rows_[row_index];
   }
   [[nodiscard]] constexpr const auto&
   operator[](RowIndex row_index) const noexcept {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    return data_[row_index];
+    return rows_[row_index];
   }
   /// @}
 
   /// @brief Clear the table.
   constexpr void clear() {
-    data_.clear();
+    rows_.clear();
   }
 
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {
-    data_.reserve(capacity);
+    rows_.reserve(capacity);
   }
 
   /// @brief Push back an empty row.
   constexpr void push_back() {
-    data_.emplace_back();
+    rows_.emplace_back();
   }
   /// @brief Push back a row with @p row_col_indices.
+  /// @{
   template<std::ranges::input_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, ColIndex>
-  constexpr void push_back(Range&& row_col_indices) {
-    if constexpr (std::constructible_from< //
-                      IndexedVector<OffsetIndex, ColIndex>, Range>) {
-      data_.emplace_back(std::forward<Range>(row_col_indices));
-    } else {
-      data_.emplace_back();
-      std::ranges::copy(row_col_indices, std::back_inserter(data_.back()));
-    }
+    requires std::same_as<std::ranges::range_value_t<Range>, ColValue>
+  constexpr void push_back(Range&& row_values) {
+    rows_.emplace_back();
+    std::ranges::copy(row_values, std::back_inserter(rows_.back()));
   }
+  constexpr void push_back(IndexedVector<OffsetIndex, ColValue>&& row_values) {
+    rows_.emplace_back(std::move(row_values));
+  }
+  /// @}
 
-  /// @brief Insert a connection at @p row_index, @p col_index.
-  void connect(RowIndex row_index, ColIndex col_index) {
+  /// @brief Insert a connection at @p row_index, @p col_value.
+  void insert(RowIndex row_index, ColValue col_value) {
     STORM_ASSERT_(row_index < size(), "Row index is out of range!");
-    data_[row_index].push_back(col_index);
+    rows_[row_index].push_back(col_value);
   }
 
 }; // class VovTable
-
-/// @brief Modified compressed sparse row table without column values.
-template<index RowIndex, index ColIndex>
-using VoidVovTable = VovTable<void, RowIndex, ColIndex>;
 
 } // namespace Storm

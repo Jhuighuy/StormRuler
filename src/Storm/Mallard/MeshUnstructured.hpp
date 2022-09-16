@@ -128,89 +128,6 @@ public:
     });
   }
 
-  /// @brief Copy-construct the mesh.
-  constexpr UnstructuredMesh(const UnstructuredMesh&) = default;
-  /// @brief Copy-assign the mesh.
-  constexpr UnstructuredMesh& operator=(const UnstructuredMesh&) = default;
-
-  /// @brief Copy-construct the mesh from the unstructured @p mesh.
-  template<template<class, class> class OtherTable>
-  constexpr explicit UnstructuredMesh(
-      const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
-    *this = mesh;
-  }
-  /// @brief Copy-assign the unstructured @p mesh with different table type.
-  template<template<class, class> class OtherTable>
-  constexpr UnstructuredMesh&
-  operator=(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
-    // Copy the ranges and shape properties.
-    entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
-    entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
-    entity_volumes_tuple_ = mesh.entity_volumes_tuple_;
-    aabb_ = mesh.aabb_;
-    entity_positions_tuple_ = mesh.entity_positions_tuple_;
-    face_normals_ = mesh.face_normals_;
-
-    // Copy the connectivity tables.
-    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-        using T = Table<EntityIndex<I>, EntityIndex<J>>;
-        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        std::get<T>(connectivity_tuple_) =
-            std::get<U>(mesh.connectivity_tuple_);
-      });
-    });
-
-    return *this;
-  }
-
-  /// @brief Move-construct the mesh.
-  constexpr UnstructuredMesh(UnstructuredMesh&&) = default;
-  /// @brief Move-assign the mesh.
-  constexpr UnstructuredMesh& operator=(UnstructuredMesh&&) = default;
-
-  /// @brief Move-construct the mesh from the unstructured @p mesh.
-  template<template<class, class> class OtherTable>
-  constexpr explicit UnstructuredMesh(
-      UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
-    *this = std::move(mesh);
-  }
-  /// @brief Move-assign the unstructured @p mesh with different table type.
-  template<template<class, class> class OtherTable>
-  constexpr UnstructuredMesh&
-  operator=(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
-    // Move the ranges and shape properties.
-    /// @todo Ranges of the source mesh would be invalid.
-    entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
-    entity_shape_types_tuple_ = std::move(mesh.entity_shape_types_tuple_);
-    entity_volumes_tuple_ = std::move(mesh.entity_volumes_tuple_);
-    aabb_ = std::move(mesh.aabb_);
-    entity_positions_tuple_ = std::move(mesh.entity_positions_tuple_);
-    face_normals_ = std::move(mesh.face_normals_);
-
-    // Move the connectivity tables.
-    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-        using T = Table<EntityIndex<I>, EntityIndex<J>>;
-        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        std::get<T>(connectivity_tuple_) =
-            std::move(std::get<U>(mesh.connectivity_tuple_));
-      });
-    });
-
-    return *this;
-  }
-
-  /// @brief Construct the mesh from arbitrary @p mesh.
-  template<mesh Mesh>
-  constexpr explicit UnstructuredMesh(const Mesh& mesh); // not implemented yet!
-  /// @brief Assign the arbitrary @p mesh.
-  template<mesh Mesh>
-  constexpr UnstructuredMesh& operator=(const Mesh& mesh);
-
-  /// @brief Destruct the mesh.
-  constexpr ~UnstructuredMesh() = default;
-
   /// @brief Number of entity labels.
   template<size_t I>
   [[nodiscard]] constexpr size_t
@@ -342,6 +259,57 @@ public:
     }
     STORM_THROW_("For the specified node list more than one entity found!");
   }
+
+  /// @brief Copy-assign the unstructured @p mesh with different table type.
+  template<template<class, class> class OtherTable>
+  constexpr void
+  assign(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
+    // Copy the ranges and shape properties.
+    entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
+    entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
+    entity_volumes_tuple_ = mesh.entity_volumes_tuple_;
+    aabb_ = mesh.aabb_;
+    entity_positions_tuple_ = mesh.entity_positions_tuple_;
+    face_normals_ = mesh.face_normals_;
+
+    // Copy the connectivity tables.
+    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        using T = Table<EntityIndex<I>, EntityIndex<J>>;
+        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
+        std::get<T>(connectivity_tuple_)
+            .assign(std::get<U>(mesh.connectivity_tuple_));
+      });
+    });
+  }
+
+  /// @brief Move-assign the unstructured @p mesh with different table type.
+  template<template<class, class> class OtherTable>
+  constexpr void
+  assign(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
+    // Move the ranges and shape properties.
+    /// @todo Ranges of the source mesh would be invalid.
+    entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
+    entity_shape_types_tuple_ = std::move(mesh.entity_shape_types_tuple_);
+    entity_volumes_tuple_ = std::move(mesh.entity_volumes_tuple_);
+    aabb_ = std::move(mesh.aabb_);
+    entity_positions_tuple_ = std::move(mesh.entity_positions_tuple_);
+    face_normals_ = std::move(mesh.face_normals_);
+
+    // Move the connectivity tables.
+    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        using T = Table<EntityIndex<I>, EntityIndex<J>>;
+        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
+        std::get<T>(connectivity_tuple_)
+            .assign(std::move(std::get<U>(mesh.connectivity_tuple_)));
+      });
+    });
+  }
+
+  /// @brief Assign the arbitrary @p mesh.
+  template<mesh Mesh>
+  constexpr void assign(const Mesh& mesh); // not implemented yet!
 
   /// @brief Reverve memory for the entities.
   template<size_t I>

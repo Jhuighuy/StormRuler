@@ -99,7 +99,15 @@ public:
     return std::ranges::size(self_().rows());
   }
 
-  /// @brief Copy-assign the @p table of the different type.
+  /// @brief Assign the @p table.
+  /// @todo Refactor this in some point of time.
+  /// @{
+  void assign(Derived&& table) {
+    self_() = std::move(table);
+  }
+  void assign(const Derived& table) {
+    self_() = table;
+  }
   template<table Table>
   void assign(const Table& table) {
     self_().clear();
@@ -108,6 +116,7 @@ public:
       self_().push_back(table[row_index]);
     }
   }
+  /// @}
 
 }; // TableInterface
 
@@ -121,32 +130,6 @@ private:
   IndexedVector<OffsetIndex, ColValue> col_values_;
 
 public:
-
-  /// @brief Construct the table.
-  constexpr CsrTable() = default;
-
-  /// @brief Copy-construct the table.
-  constexpr CsrTable(const CsrTable&) = default;
-  /// @brief Copy-assign the table.
-  constexpr CsrTable& operator=(const CsrTable&) = default;
-
-  /// @brief Move-construct the table.
-  constexpr CsrTable(CsrTable&&) = default;
-  /// @brief Move-assign the table.
-  constexpr CsrTable& operator=(CsrTable&&) = default;
-
-  /// @brief Copy-construct the table from @p table of different type.
-  template<table Table>
-  constexpr CsrTable(const Table&);
-  /// @brief Copy-assign the @p table of different type.
-  template<table Table>
-  constexpr CsrTable& operator=(const Table& table) {
-    this->assign(table);
-    return *this;
-  }
-
-  /// @brief Destruct the table.
-  constexpr ~CsrTable() = default;
 
   /// @brief Index range of the rows.
   [[nodiscard]] constexpr auto rows() const noexcept {

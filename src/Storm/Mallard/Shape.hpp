@@ -83,9 +83,6 @@ enum class Type : std::uint8_t {
   pyramid,        ///< Pyramid shape type.
   pentahedron,    ///< Pentahedron shape type.
   hexahedron,     ///< Hexahedron shape type.
-#if 0
-  ghost,          ///< Ghost cell shape type.
-#endif
   count_,
 }; // enum class shape_type
 

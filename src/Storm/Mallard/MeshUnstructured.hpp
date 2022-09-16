@@ -36,6 +36,7 @@
 #include <optional>
 #include <ranges>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace Storm {
@@ -126,6 +127,89 @@ public:
       insert_label<I>(), insert_label<I>();
     });
   }
+
+  /// @brief Copy-construct the mesh.
+  constexpr UnstructuredMesh(const UnstructuredMesh&) = default;
+  /// @brief Copy-assign the mesh.
+  constexpr UnstructuredMesh& operator=(const UnstructuredMesh&) = default;
+
+  /// @brief Move-construct the mesh.
+  constexpr UnstructuredMesh(UnstructuredMesh&&) = default;
+  /// @brief Move-assign the mesh.
+  constexpr UnstructuredMesh& operator=(UnstructuredMesh&&) = default;
+
+  /// @brief Copy-construct the mesh from the unstructured @p mesh.
+  template<template<class, class> class OtherTable>
+  constexpr explicit UnstructuredMesh(
+      const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
+    *this = mesh;
+  }
+  /// @brief Copy-assign the unstructured @p mesh with different table type.
+  template<template<class, class> class OtherTable>
+  constexpr UnstructuredMesh&
+  operator=(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
+    // Copy the ranges and shape properties.
+    entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
+    entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
+    entity_volumes_tuple_ = mesh.entity_volumes_tuple_;
+    aabb_ = mesh.aabb_;
+    entity_positions_tuple_ = mesh.entity_positions_tuple_;
+    face_normals_ = mesh.face_normals_;
+
+    // Copy the connectivity tables.
+    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        using T = Table<EntityIndex<I>, EntityIndex<J>>;
+        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
+        copy_table(std::get<U>(mesh.connectivity_tuple_),
+                   std::get<T>(connectivity_tuple_));
+      });
+    });
+
+    return *this;
+  }
+
+  /// @brief Move-construct the mesh from the unstructured @p mesh.
+  template<template<class, class> class OtherTable>
+  constexpr explicit UnstructuredMesh(
+      UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
+    *this = std::move(mesh);
+  }
+  /// @brief Move-assign the unstructured @p mesh with different table type.
+  template<template<class, class> class OtherTable>
+  constexpr UnstructuredMesh&
+  operator=(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
+    // Move the ranges and shape properties.
+    /// @todo Ranges of the source mesh would be invalid.
+    entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
+    entity_shape_types_tuple_ = std::move(mesh.entity_shape_types_tuple_);
+    entity_volumes_tuple_ = std::move(mesh.entity_volumes_tuple_);
+    aabb_ = std::move(mesh.aabb_);
+    entity_positions_tuple_ = std::move(mesh.entity_positions_tuple_);
+    face_normals_ = std::move(mesh.face_normals_);
+
+    // Move the connectivity tables.
+    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+        using T = Table<EntityIndex<I>, EntityIndex<J>>;
+        using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
+        move_table(std::move(std::get<U>(mesh.connectivity_tuple_)),
+                   std::get<T>(connectivity_tuple_));
+      });
+    });
+
+    return *this;
+  }
+
+  /// @brief Construct the mesh from arbitrary @p mesh.
+  template<mesh Mesh>
+  constexpr explicit UnstructuredMesh(const Mesh& mesh); // not implemented yet!
+  /// @brief Assign the arbitrary @p mesh.
+  template<mesh Mesh>
+  constexpr UnstructuredMesh& operator=(const Mesh& mesh);
+
+  /// @brief Destruct the mesh.
+  constexpr ~UnstructuredMesh() = default;
 
   /// @brief Number of entity labels.
   template<size_t I>
@@ -371,36 +455,6 @@ public:
     return insert<I>(std::forward<Shape>(shape));
   }
 
-#if 0
-  /// @brief Insert a ghost cell.
-  /// @returns Index of the ghost cell.
-  constexpr CellIndex insert_ghost(FaceIndex face_index) {
-    constexpr size_t I = TopologicalDim;
-    const CellIndex cell_index{num_entities<I>()};
-
-    // Assign the last existing label label.
-    std::get<I>(entity_ranges_tuple_).back() += 1;
-    std::get<I>(entity_labels_tuple_).emplace_back(num_labels<I>() - 1);
-
-    // Assign the entity shape type, volume, center position (and normal).
-    const CellIndex mirror_cell_index = adjacent<I>(face_index).front();
-    std::get<I>(entity_shape_types_tuple_).emplace_back(shapes::Type::ghost);
-    std::get<I>(entity_volumes_tuple_).emplace_back(volume(mirror_cell_index));
-    std::get<I>(entity_positions_tuple_)
-        .emplace_back(2.0 * position(face_index) - position(mirror_cell_index));
-
-    // Allocate the empty connectivity rows, connect the face with ghost.
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-      using T = Table<CellIndex, EntityIndex<J>>;
-      std::get<T>(connectivity_tuple_).push_back();
-    });
-    using T = Table<FaceIndex, CellIndex>;
-    std::get<T>(connectivity_tuple_).connect(face_index, cell_index);
-
-    return cell_index;
-  }
-#endif
-
   /// @brief Permute the entities.
   /// @param perm Entity permutation range, it may be modified in order to
   ///             preserve the label ranges correctness.
@@ -427,7 +481,6 @@ public:
   /// @brief Assign the entity labels.
   /// @param label Labels range to assign. May be smaller,
   ///              than the amount of entities.
-  /// @warning This operation is very slow!
   template<size_t I, std::ranges::sized_range Range>
     requires std::ranges::random_access_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, Label>
@@ -450,7 +503,7 @@ public:
     });
     permute_base_<I>(perm);
 
-    // Regenerate label ranges.
+    // Generate the new label ranges.
     const size_t delta = this->num_entities<I>() - std::ranges::size(labels);
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     entity_ranges.clear();
@@ -519,11 +572,12 @@ private:
     }
   }
 
+  // Actually permute the entities.
   template<size_t I, std::ranges::random_access_range Range>
     requires std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
   constexpr void permute_base_(Range&& perm, meta::type<EntityIndex<I>> = {}) {
-    { // Generate the inverse permutations and fix the connectivity.
+    { // Update the connectivity with inverse permutations.
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
@@ -539,9 +593,7 @@ private:
     }
 
     // Permute the entity-* connectivity.
-    /// @todo This is actually the slowest part of the entire function.
-    /// @todo For some table types, when the rows are swappable,
-    ///       so the inplace permutation may be used.
+    /// @todo `copy_table_indirect` maybe?
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
       auto& table = std::get<T>(connectivity_tuple_);

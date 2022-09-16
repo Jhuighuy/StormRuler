@@ -28,11 +28,42 @@
 
 #include <algorithm>
 #include <ranges>
+#include <utility>
 
 namespace Storm {
 
 struct OffsetTag;
 using OffsetIndex = Index<OffsetTag>;
+
+/// @brief Copy the @p in_table to @p out_table.
+/// @todo `table` concept?
+template<class InTable, class OutTable>
+void copy_table(const InTable& in_table, OutTable& out_table) {
+  if constexpr (std::assignable_from<OutTable, InTable>) {
+    out_table = in_table;
+  } else {
+    out_table.clear();
+    out_table.reserve(in_table.size());
+    for (auto row_index : in_table.rows()) {
+      out_table.push_back(in_table[row_index]);
+    }
+  }
+}
+/// @brief Move the @p in_table to @p out_table.
+/// @todo `table` concept?
+template<class InTable, class OutTable>
+void move_table(InTable&& in_table, OutTable& out_table) {
+  if constexpr (std::assignable_from<OutTable, InTable>) {
+    out_table = std::move(in_table);
+  } else {
+    out_table.clear();
+    out_table.reserve(in_table.size());
+    for (auto row_index : in_table.rows()) {
+      out_table.push_back(std::move(in_table[row_index]));
+    }
+    out_table = {};
+  }
+}
 
 /// @brief Compressed sparse row table.
 template<class Value, index RowIndex, index ColIndex>
@@ -52,6 +83,11 @@ public:
     return row_offsets_.size() - 1;
   }
 
+  /// @brief Index range of the rows.
+  [[nodiscard]] constexpr auto rows() const noexcept {
+    return std::views::iota(RowIndex{0}, RowIndex{size()});
+  }
+
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
@@ -69,6 +105,12 @@ public:
                                  col_indices_.cbegin() + last);
   }
   /// @}
+
+  /// @brief Clear the table.
+  constexpr void clear() {
+    row_offsets_.clear(), row_offsets_.emplace_back(0);
+    col_indices_.clear();
+  }
 
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {
@@ -142,6 +184,12 @@ public:
   }
   /// @}
 
+  /// @brief Clear the table.
+  constexpr void clear() {
+    row_offsets_.clear(), row_offsets_.emplace_back(0);
+    row_end_offsets_.clear(), col_indices_.clear();
+  }
+
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {
     row_offsets_.reserve(capacity + 1);
@@ -211,6 +259,11 @@ public:
     return data_.size();
   }
 
+  /// @brief Index range of the rows.
+  [[nodiscard]] constexpr auto rows() const noexcept {
+    return std::views::iota(RowIndex{0}, RowIndex{size()});
+  }
+
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   [[nodiscard]] constexpr auto& operator[](RowIndex row_index) noexcept {
@@ -223,6 +276,11 @@ public:
     return data_[row_index];
   }
   /// @}
+
+  /// @brief Clear the table.
+  constexpr void clear() {
+    data_.clear();
+  }
 
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {

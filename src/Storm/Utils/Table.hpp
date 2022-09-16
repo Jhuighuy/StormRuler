@@ -89,10 +89,26 @@ private:
     return static_cast<Derived&>(*this);
   }
   constexpr const Derived& self_() const noexcept {
-    return static_cast<TableInterface&>(*this).self_();
+    return const_cast<TableInterface&>(*this).self_();
   }
 
 public:
+
+  /// @brief Number of the table rows.
+  [[nodiscard]] constexpr size_t size() const noexcept {
+    return std::ranges::size(self_().rows());
+  }
+
+  /// @brief Copy-assign the @p table of the different type.
+  template<table Table>
+  void assign(const Table& table) {
+    self_().clear();
+    self_().reserve(table.size());
+    for (auto row_index : table.rows()) {
+      self_().push_back(table[row_index]);
+    }
+  }
+
 }; // TableInterface
 
 /// @brief Compressed sparse row table.
@@ -106,25 +122,46 @@ private:
 
 public:
 
-  /// @brief Number of rows.
-  [[nodiscard]] constexpr size_t size() const noexcept {
-    return row_offsets_.size() - 1;
+  /// @brief Construct the table.
+  constexpr CsrTable() = default;
+
+  /// @brief Copy-construct the table.
+  constexpr CsrTable(const CsrTable&) = default;
+  /// @brief Copy-assign the table.
+  constexpr CsrTable& operator=(const CsrTable&) = default;
+
+  /// @brief Move-construct the table.
+  constexpr CsrTable(CsrTable&&) = default;
+  /// @brief Move-assign the table.
+  constexpr CsrTable& operator=(CsrTable&&) = default;
+
+  /// @brief Copy-construct the table from @p table of different type.
+  template<table Table>
+  constexpr CsrTable(const Table&);
+  /// @brief Copy-assign the @p table of different type.
+  template<table Table>
+  constexpr CsrTable& operator=(const Table& table) {
+    this->assign(table);
+    return *this;
   }
+
+  /// @brief Destruct the table.
+  constexpr ~CsrTable() = default;
 
   /// @brief Index range of the rows.
   [[nodiscard]] constexpr auto rows() const noexcept {
-    return std::views::iota(RowIndex{0}, RowIndex{size()});
+    return std::views::iota(RowIndex{0}, RowIndex{row_offsets_.size() - 1});
   }
 
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     return std::span{&col_values_[row_offsets_[row_index]],
                      &col_values_[row_offsets_[row_index + 1]]};
   }
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) const noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     return std::span{&col_values_[row_offsets_[row_index]],
                      &col_values_[row_offsets_[row_index + 1]]};
   }
@@ -156,7 +193,7 @@ public:
   /// @brief Insert a connection at @p row_index, @p col_value.
   /// @warning Complexity is linear!
   void insert(RowIndex row_index, ColValue col_value) {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     const auto offset = static_cast<size_t>(row_offsets_[row_index + 1]);
     col_values_.insert(col_values_.begin() + offset, col_value);
     std::for_each(row_offsets_.begin() + static_cast<size_t>(row_index) + 1,
@@ -175,25 +212,20 @@ private:
 
 public:
 
-  /// @brief Number of rows.
-  [[nodiscard]] constexpr size_t size() const noexcept {
-    return rows_.size();
-  }
-
   /// @brief Index range of the rows.
   [[nodiscard]] constexpr auto rows() const noexcept {
-    return std::views::iota(RowIndex{0}, RowIndex{size()});
+    return std::views::iota(RowIndex{0}, RowIndex{rows_.size()});
   }
 
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   [[nodiscard]] constexpr auto& operator[](RowIndex row_index) noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     return rows_[row_index];
   }
   [[nodiscard]] constexpr const auto&
   operator[](RowIndex row_index) const noexcept {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     return rows_[row_index];
   }
   /// @}
@@ -227,7 +259,7 @@ public:
 
   /// @brief Insert a connection at @p row_index, @p col_value.
   void insert(RowIndex row_index, ColValue col_value) {
-    STORM_ASSERT_(row_index < size(), "Row index is out of range!");
+    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     rows_[row_index].push_back(col_value);
   }
 

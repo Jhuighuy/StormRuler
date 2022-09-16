@@ -120,7 +120,7 @@ private:
 
 public:
 
-  /// @brief Initialize the mesh.
+  /// @brief Construct the mesh.
   constexpr UnstructuredMesh() {
     // Initialize the default label (0).
     meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
@@ -132,11 +132,6 @@ public:
   constexpr UnstructuredMesh(const UnstructuredMesh&) = default;
   /// @brief Copy-assign the mesh.
   constexpr UnstructuredMesh& operator=(const UnstructuredMesh&) = default;
-
-  /// @brief Move-construct the mesh.
-  constexpr UnstructuredMesh(UnstructuredMesh&&) = default;
-  /// @brief Move-assign the mesh.
-  constexpr UnstructuredMesh& operator=(UnstructuredMesh&&) = default;
 
   /// @brief Copy-construct the mesh from the unstructured @p mesh.
   template<template<class, class> class OtherTable>
@@ -161,13 +156,18 @@ public:
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         using T = Table<EntityIndex<I>, EntityIndex<J>>;
         using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        copy_table(std::get<U>(mesh.connectivity_tuple_),
-                   std::get<T>(connectivity_tuple_));
+        std::get<T>(connectivity_tuple_) =
+            std::get<U>(mesh.connectivity_tuple_);
       });
     });
 
     return *this;
   }
+
+  /// @brief Move-construct the mesh.
+  constexpr UnstructuredMesh(UnstructuredMesh&&) = default;
+  /// @brief Move-assign the mesh.
+  constexpr UnstructuredMesh& operator=(UnstructuredMesh&&) = default;
 
   /// @brief Move-construct the mesh from the unstructured @p mesh.
   template<template<class, class> class OtherTable>
@@ -193,8 +193,8 @@ public:
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         using T = Table<EntityIndex<I>, EntityIndex<J>>;
         using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        move_table(std::move(std::get<U>(mesh.connectivity_tuple_)),
-                   std::get<T>(connectivity_tuple_));
+        std::get<T>(connectivity_tuple_) =
+            std::move(std::get<U>(mesh.connectivity_tuple_));
       });
     });
 

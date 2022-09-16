@@ -22,6 +22,7 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Math.hpp>
 
 #include <Storm/Blass/Matrix.hpp>
@@ -32,25 +33,13 @@
 
 namespace Storm {
 
-template<class Derived>
-  requires std::is_class_v<Derived> &&
-           std::same_as<Derived, std::remove_cv_t<Derived>>
+template<crtp_derived Derived>
 class MatrixViewInterface;
-
-namespace detail_ {
-  template<class T, class U>
-    requires (!std::same_as<T, MatrixViewInterface<U>>)
-  void is_derived_from_matrix_view_interface_impl_(
-      const T&, const MatrixViewInterface<U>&); // not defined
-  template<class T>
-  concept is_derived_from_matrix_view_interface_ =
-      requires(T x) { is_derived_from_matrix_view_interface_impl_(x, x); };
-} // namespace detail_
 
 /// @brief Types, enabled to be a matrix view.
 template<class T>
 inline constexpr bool enable_matrix_view_v =
-    detail_::is_derived_from_matrix_view_interface_<T>;
+    derived_from_crtp_interface<T, MatrixViewInterface>;
 
 /// @brief Matrix view concept.
 /// @todo In order to add the `movable` constraint, we
@@ -70,9 +59,7 @@ concept viewable_matrix =
        std::movable<std::remove_reference_t<Matrix>>) ));
 
 /// @brief CRTP interface to a matrix views.
-template<class Derived>
-  requires std::is_class_v<Derived> &&
-           std::same_as<Derived, std::remove_cv_t<Derived>>
+template<crtp_derived Derived>
 class MatrixViewInterface {
 private:
 

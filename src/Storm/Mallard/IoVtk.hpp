@@ -24,7 +24,6 @@
 
 #include <Storm/Utils/Meta.hpp>
 
-#include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/Mesh.hpp>
 #include <Storm/Mallard/Shape.hpp>
 

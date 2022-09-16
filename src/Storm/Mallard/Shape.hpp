@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Mallard/Mesh.hpp>
+#include <Storm/Mallard/Fwd.hpp>
 
 #include <array>
 #include <cstdint>

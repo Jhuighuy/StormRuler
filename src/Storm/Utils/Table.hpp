@@ -38,9 +38,9 @@ template<crtp_derived Derived>
 class TableInterface;
 
 /// @brief Types, enabled to be a table.
-template<class T>
+template<class Table>
 inline constexpr bool enable_table_v =
-    derived_from_crtp_interface<T, TableInterface>;
+    derived_from_crtp_interface<Table, TableInterface>;
 
 /// @brief Table concept.
 template<class Table>

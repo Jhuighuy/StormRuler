@@ -22,7 +22,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/Mesh.hpp>
 
 #include <Storm/Vulture/GlBuffer.hpp>
@@ -52,7 +51,7 @@ template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
   IndexedVector<CellIndex<Mesh>, GLfloat> cell_data{};
   std::ranges::copy(
-      cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
+      mesh.cells() | std::views::transform([](CellView<Mesh> cell) {
         const real_t v = std::sin(3.0 * cell.barycenter_position().x) *
                          std::cos(7.0 * cell.barycenter_position().y);
         return static_cast<GLfloat>((v + 1.0) / 2.0);
@@ -93,7 +92,7 @@ void visualize_mesh(const Mesh& mesh) {
 
   // Setup nodes.
   const gl::Buffer node_positions_buffer(
-      nodes(mesh) | std::views::transform([](NodeView<const Mesh> node) {
+      mesh.nodes() | std::views::transform([](NodeView<Mesh> node) {
         return static_cast<glm::vec2>(node.position());
       }));
   gl::VertexArray node_vertex_array{node_positions_buffer};
@@ -101,15 +100,14 @@ void visualize_mesh(const Mesh& mesh) {
 #include <Storm/Vulture/ShaderNodes.glsl>
   };
   // Setup node data.
-  gl::Buffer<GLuint> node_states_buffer(num_nodes(mesh),
+  gl::Buffer<GLuint> node_states_buffer(mesh.num_nodes(),
                                         gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer node_states_texture_buffer{node_states_buffer};
 
   // Setup edges.
   const gl::Buffer edge_nodes_buffer(
-      edges(mesh) | std::views::transform([](EdgeView<const Mesh> edge) {
-        return edge.nodes() |
-               std::views::transform([](NodeView<const Mesh> node) {
+      mesh.edges() | std::views::transform([](EdgeView<Mesh> edge) {
+        return edge.nodes() | std::views::transform([](NodeView<Mesh> node) {
                  return static_cast<GLuint>(node.index());
                });
       }) |
@@ -120,15 +118,14 @@ void visualize_mesh(const Mesh& mesh) {
 #include <Storm/Vulture/ShaderEdges.glsl>
   };
   // Setup edge data.
-  gl::Buffer<GLuint> edge_states_buffer(num_edges(mesh),
+  gl::Buffer<GLuint> edge_states_buffer(mesh.num_edges(),
                                         gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer edge_states_texture_buffer{edge_states_buffer};
 
   // Setup cells.
   const gl::Buffer cell_nodes_buffer(
-      cells(mesh) | std::views::transform([](CellView<const Mesh> cell) {
-        return cell.nodes() |
-               std::views::transform([](NodeView<const Mesh> node) {
+      mesh.cells() | std::views::transform([](CellView<Mesh> cell) {
+        return cell.nodes() | std::views::transform([](NodeView<Mesh> node) {
                  return static_cast<GLuint>(node.index());
                });
       }) |
@@ -141,7 +138,7 @@ void visualize_mesh(const Mesh& mesh) {
   // Setup cell data.
   const gl::Buffer cell_data_buffer(cell_data);
   const gl::TextureBuffer cell_data_texture_buffer{cell_data_buffer};
-  gl::Buffer<GLuint> cell_states_buffer(num_cells(mesh),
+  gl::Buffer<GLuint> cell_states_buffer(mesh.num_cells(),
                                         gl::BufferUsage::dynamic_draw);
   const gl::TextureBuffer cell_states_texture_buffer{cell_states_buffer};
 
@@ -261,7 +258,7 @@ void visualize_mesh(const Mesh& mesh) {
         bind_program.set_uniform(cell_program["view_projection_matrix"],
                                  view_projection_matrix);
         cell_vertex_array.draw_indexed(gl::DrawMode::triangles,
-                                       num_cells(mesh) * 3);
+                                       mesh.num_cells() * 3);
       }
 
       if (draw_edges) {
@@ -273,7 +270,7 @@ void visualize_mesh(const Mesh& mesh) {
         bind_program.set_uniform(edge_program["view_projection_matrix"],
                                  view_projection_matrix);
         edge_vertex_array.draw_indexed(gl::DrawMode::lines,
-                                       num_edges(mesh) * 2);
+                                       mesh.num_edges() * 2);
       }
 
       if (draw_nodes) {
@@ -286,7 +283,7 @@ void visualize_mesh(const Mesh& mesh) {
                                  view_projection_matrix);
         bind_program.set_uniform(node_program["point_size"],
                                  glm::vec2{0.002f * 9.0f / 16.0f, 0.002f});
-        node_vertex_array.draw(gl::DrawMode::points, num_nodes(mesh));
+        node_vertex_array.draw(gl::DrawMode::points, mesh.num_nodes());
       }
     });
 

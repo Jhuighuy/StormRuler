@@ -47,7 +47,8 @@ namespace Storm {
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
          template<class, class> class Table = VovTable>
-class UnstructuredMesh {
+class UnstructuredMesh final :
+    public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>> {
 private:
 
   template<size_t, size_t, template<class, class> class>
@@ -598,9 +599,5 @@ private:
   }
 
 }; // class UnstructuredMesh
-
-template<size_t Dim, size_t TopologicalDim, template<class, class> class Table>
-inline constexpr bool
-    enable_mesh_v<UnstructuredMesh<Dim, TopologicalDim, Table>> = true;
 
 } // namespace Storm

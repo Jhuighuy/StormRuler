@@ -41,7 +41,6 @@
 #include <Storm/Blass/Mat.hpp>
 
 #if 1
-#include <Storm/Mallard/Entity.hpp>
 #include <Storm/Mallard/IoTetgen.hpp>
 #include <Storm/Mallard/IoVtk.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>
@@ -315,18 +314,18 @@ int main(int argc, char** argv) {
   read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
   // UnstructuredMesh<3, 3> mesh1{};
   // read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
-  //   write_mesh_to_vtk(mesh1, "out/test.vtk");
+  //     write_mesh_to_vtk(mesh1, "out/test.vtk");
 
-  STORM_INFO_("mesh has {} edges", num_edges(mesh1));
-  STORM_INFO_("mesh has {} faces", num_faces(mesh1));
-  STORM_INFO_("mesh has {} cells", num_cells(mesh1));
+  STORM_INFO_("mesh has {} edges", mesh1.num_edges());
+  STORM_INFO_("mesh has {} faces", mesh1.num_faces());
+  STORM_INFO_("mesh has {} cells", mesh1.num_cells());
   STORM_INFO_("mesh loaded");
 
   UnstructuredMesh<2, 2, CsrTable> mesh2{};
   // UnstructuredMesh<3, 3, CsrTable> mesh2{};
-  // mesh2.assign(std::move(mesh1));
+  mesh2.assign(std::move(mesh1));
 
-  Vulture::visualize_mesh(mesh1);
+  Vulture::visualize_mesh(mesh2);
   return 0;
 #endif
 

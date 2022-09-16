@@ -344,8 +344,7 @@ public:
                                   meta::type<EntityIndex<I>> = {}) {
     // Allocate the entity index,
     // implicitly assigning the last existing label label.
-    const EntityIndex<I> entity_index{
-        std::get<I>(entity_ranges_tuple_).back()++};
+    const EntityIndex<I> index{std::get<I>(entity_ranges_tuple_).back()++};
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
@@ -380,8 +379,8 @@ public:
       using T = Table<EntityIndex<I>, NodeIndex>;
       using U = Table<NodeIndex, EntityIndex<I>>;
       for (NodeIndex node_index : shape.nodes()) {
-        std::get<T>(connectivity_tuple_).insert(entity_index, node_index);
-        std::get<U>(connectivity_tuple_).insert(node_index, entity_index);
+        std::get<T>(connectivity_tuple_).insert(index, node_index);
+        std::get<U>(connectivity_tuple_).insert(node_index, index);
       }
     }
     meta::for_each<meta::make_seq_t<EntityIndex, 1, I>>(
@@ -391,8 +390,8 @@ public:
           using U = Table<EntityIndex<J>, EntityIndex<I>>;
           const auto process_part = [&](const auto& part) {
             const EntityIndex<J> part_index = find_or_insert<J>(part);
-            std::get<T>(connectivity_tuple_).insert(entity_index, part_index);
-            std::get<U>(connectivity_tuple_).insert(part_index, entity_index);
+            std::get<T>(connectivity_tuple_).insert(index, part_index);
+            std::get<U>(connectivity_tuple_).insert(part_index, index);
             // Fix the face orientation (if needed).
             if constexpr (std::is_same_v<EntityIndex<J>, FaceIndex>) {
               update_face_orientation_(part_index, part.nodes());
@@ -405,9 +404,9 @@ public:
     // Connect the entity with it's siblings.
     /// @todo Implement me!
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
-    std::get<T>(connectivity_tuple_).insert(entity_index, entity_index);
+    std::get<T>(connectivity_tuple_).insert(index, index);
 
-    return entity_index;
+    return index;
   }
 
   /// @brief Find an existing entity of shape @p shape or insert a new one.
@@ -416,9 +415,8 @@ public:
     requires (I == shapes::shape_dim_v<Shape>)
   constexpr EntityIndex<I> find_or_insert(Shape&& shape,
                                           meta::type<EntityIndex<I>> = {}) {
-    if (const auto entity_index = find<I>(shape.nodes());
-        entity_index.has_value()) {
-      return *entity_index;
+    if (const auto index = find<I>(shape.nodes()); index.has_value()) {
+      return *index;
     }
     return insert<I>(std::forward<Shape>(shape));
   }
@@ -437,10 +435,10 @@ public:
     }
 
     // Stable-sort the permutation in order to keep the label ranges correct.
-    std::ranges::stable_sort(perm, [&](EntityIndex<I> entity_index_1,
-                                       EntityIndex<I> entity_index_2) {
-      return label(entity_index_1) < label(entity_index_2);
-    });
+    std::ranges::stable_sort(
+        perm, [&](EntityIndex<I> index_1, EntityIndex<I> index_2) {
+          return label(index_1) < label(index_2);
+        });
 
     // Permute the entities.
     permute_base_(perm);
@@ -460,15 +458,14 @@ public:
     // Permute the entities according to labels.
     std::vector<EntityIndex<I>> perm(num_entities<I>());
     std::ranges::copy(entities<I>(), perm.begin());
-    std::ranges::stable_sort(perm, [&](EntityIndex<I> entity_index_1,
-                                       EntityIndex<I> entity_index_2) {
-      const auto new_label = [&](EntityIndex<I> entity_index) {
-        const auto entity_index_sz = static_cast<size_t>(entity_index);
-        return entity_index >= labels.size() ? Label{0} :
-                                               labels[entity_index_sz];
-      };
-      return new_label(entity_index_1) < new_label(entity_index_2);
-    });
+    std::ranges::stable_sort(
+        perm, [&](EntityIndex<I> index_1, EntityIndex<I> index_2) {
+          const auto new_label = [&](EntityIndex<I> index) {
+            const auto index_sz = static_cast<size_t>(index);
+            return index >= labels.size() ? Label{0} : labels[index_sz];
+          };
+          return new_label(index_1) < new_label(index_2);
+        });
     permute_base_<I>(perm);
 
     // Generate the new label ranges.
@@ -481,11 +478,11 @@ public:
       entity_ranges[label + 1] += 1;
     };
     entity_ranges[Label{0} + 1] += delta;
-    std::partial_sum(
-        entity_ranges.begin(), entity_ranges.end(), entity_ranges.begin(),
-        [](EntityIndex<I> entity_index_1, EntityIndex<I> entity_index_2) {
-          return entity_index_1 + static_cast<size_t>(entity_index_2);
-        });
+    std::partial_sum(entity_ranges.begin(), entity_ranges.end(),
+                     entity_ranges.begin(),
+                     [](EntityIndex<I> index_1, EntityIndex<I> index_2) {
+                       return index_1 + static_cast<size_t>(index_2);
+                     });
   }
 
 private:
@@ -550,9 +547,9 @@ private:
       permutations::invert_permutation(perm, iperm.begin());
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         /// @todo Use parallel loop here!
-        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> entity_index) {
+        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> index) {
           using T = Table<EntityIndex<J>, EntityIndex<I>>;
-          auto adj = std::get<T>(connectivity_tuple_)[entity_index];
+          decltype(auto) adj = std::get<T>(connectivity_tuple_)[index];
           for (EntityIndex<I>& adjacent_index : adj) {
             adjacent_index = iperm[adjacent_index];
           }
@@ -567,38 +564,37 @@ private:
       auto& table = std::get<T>(connectivity_tuple_);
       T permuted_table{};
       permuted_table.reserve(num_entities<I>());
-      for (EntityIndex<I> entity_index : entities<I>()) {
-        const auto entity_index_sz = static_cast<size_t>(entity_index);
-        const EntityIndex<I> permuted_entity_index = perm[entity_index_sz];
-        permuted_table.push_back(std::move(table[permuted_entity_index]));
+      for (EntityIndex<I> index : entities<I>()) {
+        const auto index_sz = static_cast<size_t>(index);
+        const EntityIndex<I> permuted_index = perm[index_sz];
+        permuted_table.push_back(std::move(table[permuted_index]));
       }
       table = std::move(permuted_table);
     });
 
     // Permute the entity shape properties.
-    permutations::permute_inplace(perm, [&](EntityIndex<I> entity_index_1,
-                                            EntityIndex<I> entity_index_2) {
-      const auto gather_shape_properties_ = [&](EntityIndex<I> entity_index) {
-        auto& positions = std::get<I>(entity_positions_tuple_);
-        if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
-          return std::tie(positions[entity_index]);
-        } else {
-          auto& shape_types = std::get<I>(entity_shape_types_tuple_);
-          auto& volumes = std::get<I>(entity_volumes_tuple_);
-          if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-            return std::tie(shape_types[entity_index], volumes[entity_index],
-                            positions[entity_index],
-                            face_normals_[entity_index]);
-          } else {
-            return std::tie(shape_types[entity_index], volumes[entity_index],
-                            positions[entity_index]);
-          }
-        }
-      };
-      auto properties_tuple_1 = gather_shape_properties_(entity_index_1);
-      auto properties_tuple_2 = gather_shape_properties_(entity_index_2);
-      std::swap(properties_tuple_1, properties_tuple_2);
-    });
+    permutations::permute_inplace(
+        perm, [&](EntityIndex<I> index_1, EntityIndex<I> index_2) {
+          const auto gather_shape_properties_ = [&](EntityIndex<I> index) {
+            auto& positions = std::get<I>(entity_positions_tuple_);
+            if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
+              return std::tie(positions[index]);
+            } else {
+              auto& shape_types = std::get<I>(entity_shape_types_tuple_);
+              auto& volumes = std::get<I>(entity_volumes_tuple_);
+              if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
+                return std::tie(shape_types[index], volumes[index],
+                                positions[index], face_normals_[index]);
+              } else {
+                return std::tie(shape_types[index], volumes[index],
+                                positions[index]);
+              }
+            }
+          };
+          auto properties_1 = gather_shape_properties_(index_1);
+          auto properties_2 = gather_shape_properties_(index_2);
+          std::swap(properties_1, properties_2);
+        });
   }
 
 }; // class UnstructuredMesh

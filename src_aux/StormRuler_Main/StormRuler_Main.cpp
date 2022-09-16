@@ -311,10 +311,10 @@ int main(int argc, char** argv) {
   print_banner();
 
 #if 1
-  // UnstructuredMesh<2, 2> mesh1{};
-  // read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
-  UnstructuredMesh<3, 3> mesh1{};
-  read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
+  UnstructuredMesh<2, 2, VovTable> mesh1{};
+  read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
+  // UnstructuredMesh<3, 3> mesh1{};
+  // read_mesh_from_tetgen(mesh1, "test/mesh/mesh.1.");
   //   write_mesh_to_vtk(mesh1, "out/test.vtk");
 
   STORM_INFO_("mesh has {} edges", num_edges(mesh1));
@@ -322,10 +322,11 @@ int main(int argc, char** argv) {
   STORM_INFO_("mesh has {} cells", num_cells(mesh1));
   STORM_INFO_("mesh loaded");
 
-  // UnstructuredMesh<2, 2, CsrTable> mesh2{std::move(mesh1)};
-  UnstructuredMesh<3, 3, CsrTable> mesh2{std::move(mesh1)};
+  UnstructuredMesh<2, 2, CsrTable> mesh2{};
+  // UnstructuredMesh<3, 3, CsrTable> mesh2{};
+  // mesh2.assign(std::move(mesh1));
 
-  // Vulture::visualize_mesh(mesh2);
+  Vulture::visualize_mesh(mesh1);
   return 0;
 #endif
 

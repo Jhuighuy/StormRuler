@@ -134,8 +134,8 @@ public:
         col_indices_{std::move(col_indices)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  constexpr matrix_shape_t shape() const noexcept {
-    return {num_rows_(), num_cols_()};
+  constexpr auto shape() const noexcept {
+    return MatrixShape{num_rows_(), num_cols_()};
   }
 
   /// @copydoc MatrixViewInterface::operator()

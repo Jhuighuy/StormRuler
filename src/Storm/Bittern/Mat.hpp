@@ -117,7 +117,7 @@ public:
     return std::integral_constant<size_t, SizeY>{};
   }
   auto shape() const noexcept {
-    return matrix_shape_t{num_rows(), num_cols()};
+    return MatrixShape{num_rows(), num_cols()};
   }
 
   /// @brief Get reference to the component at the index.

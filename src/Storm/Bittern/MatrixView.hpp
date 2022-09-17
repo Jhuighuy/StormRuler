@@ -80,7 +80,7 @@ protected:
 public:
 
   /// @brief Shape of the matrix.
-  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+  [[nodiscard]] constexpr auto shape() const noexcept {
     return self_().shape();
   }
 
@@ -131,7 +131,7 @@ public:
             static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+  [[nodiscard]] constexpr auto shape() const noexcept {
     return p_mat_->shape();
   }
 
@@ -167,7 +167,7 @@ public:
   constexpr MatrixOwningView(Matrix&& mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+  [[nodiscard]] constexpr auto shape() const noexcept {
     return mat_.shape();
   }
 

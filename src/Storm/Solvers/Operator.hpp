@@ -100,7 +100,7 @@ public:
     return MySize;
   }
   auto shape() const noexcept {
-    return matrix_shape_t{MySize, 1};
+    return MatrixShape{MySize, 1};
   }
 
   const auto& operator()(size_t i, size_t j = 0) const noexcept {

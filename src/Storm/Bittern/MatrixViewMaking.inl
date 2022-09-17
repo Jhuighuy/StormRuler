@@ -36,17 +36,17 @@ template<std::copy_constructible Func>
 class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
 private:
 
-  matrix_shape_t shape_;
+  MatrixShape shape_;
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
 
 public:
 
   /// @brief Construct a generating view.
-  constexpr MakeMatrixView(matrix_shape_t shape, Func func)
+  constexpr MakeMatrixView(MatrixShape shape, Func func)
       : shape_{shape}, func_{std::move(func)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr matrix_shape_t shape() const noexcept {
+  [[nodiscard]] constexpr auto shape() const noexcept {
     return shape_;
   }
 
@@ -64,7 +64,7 @@ public:
 /// @param value Matrix element value.
 template<std::copyable Element>
 [[nodiscard]] constexpr auto //
-make_constant_matrix(matrix_shape_t shape, Element value) {
+make_constant_matrix(MatrixShape shape, Element value) {
   return MakeMatrixView( //
       shape,
       [value = std::move(value)]( //
@@ -79,7 +79,7 @@ make_constant_matrix(matrix_shape_t shape, Element value) {
 /// @param off_diagonal Matrix off-diagonal element value.
 template<std::copyable Element>
 [[nodiscard]] constexpr auto
-make_diagonal_matrix(matrix_shape_t shape, //
+make_diagonal_matrix(MatrixShape shape, //
                      Element diagonal, Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,

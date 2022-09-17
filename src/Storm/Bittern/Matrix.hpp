@@ -34,7 +34,7 @@
 namespace Storm {
 
 /// @brief Matrix shape.
-struct matrix_shape_t {
+struct MatrixShape {
   /// @brief Number of the matrix rows.
   size_t num_rows = 0;
 
@@ -42,15 +42,15 @@ struct matrix_shape_t {
   size_t num_cols = 0;
 
   /// @brief Compare the matrix shapes.
-  constexpr auto operator<=>(const matrix_shape_t&) const = default;
+  constexpr auto operator<=>(const MatrixShape&) const = default;
 
-}; // struct matrix_shape_t
+}; // struct MatrixShape
 
 /// @brief Matrix: has shape and two subscripts.
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
-      { mat.shape() } noexcept -> std::same_as<matrix_shape_t>;
+      { mat.shape() } noexcept -> std::same_as<MatrixShape>;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
     };
 

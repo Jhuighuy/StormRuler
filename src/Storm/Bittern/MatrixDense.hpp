@@ -146,8 +146,8 @@ public:
     return num_cols_;
   }
 
-  constexpr matrix_shape_t shape() const noexcept {
-    return {num_rows(), num_cols()};
+  constexpr auto shape() const noexcept {
+    return MatrixShape{num_rows(), num_cols()};
   }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.

@@ -140,13 +140,15 @@ public:
   /// @{
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
     STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
+    // Here we do `{col_values_[begin - 1], &col_values_[end - 1] + 1}`, 
+    // since `col_values_[end - 1]` may be outsize of the vector.
     return std::span{&col_values_[row_offsets_[row_index]],
-                     &col_values_[row_offsets_[row_index + 1]]};
+                     &col_values_[row_offsets_[row_index + 1] - 1] + 1};
   }
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) const noexcept {
     STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
     return std::span{&col_values_[row_offsets_[row_index]],
-                     &col_values_[row_offsets_[row_index + 1]]};
+                     &col_values_[row_offsets_[row_index + 1] - 1] + 1};
   }
   /// @}
 

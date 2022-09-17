@@ -613,7 +613,7 @@ public:
 
   /// @brief Tetrahedron faces.
   [[nodiscard]] constexpr auto faces() const noexcept {
-    return std::tuple{Triangle{n1, n3, n2}, Triangle{n1, n2, n4},
+    return std::array{Triangle{n1, n3, n2}, Triangle{n1, n2, n4},
                       Triangle{n2, n3, n4}, Triangle{n3, n1, n4}};
   }
 

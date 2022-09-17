@@ -71,12 +71,14 @@ void visualize_mesh(const Mesh& mesh) {
   gl::DebugOutput debug_output{};
 
   // Setup framebuffers.
-  gl::Texture2D<glm::vec4> color_texture{ window_width, window_height };
-  gl::Texture2D<glm::uvec2> entity_texture{ window_width, window_height };
-  gl::Framebuffer framebuffer{ color_texture, entity_texture };
-  gl::MultisampledTexture2D<glm::vec4> color_ms_texture{ window_width, window_height };
-  gl::MultisampledTexture2D<glm::uvec2> entity_ms_texture{ window_width, window_height };
-  gl::Framebuffer ms_framebuffer{ color_ms_texture, entity_ms_texture };
+  gl::Texture2D<glm::vec4> color_texture{window_width, window_height};
+  gl::Texture2D<glm::uvec2> entity_texture{window_width, window_height};
+  gl::Framebuffer framebuffer{color_texture, entity_texture};
+  gl::MultisampledTexture2D<glm::vec4> color_ms_texture{window_width,
+                                                        window_height};
+  gl::MultisampledTexture2D<glm::uvec2> entity_ms_texture{window_width,
+                                                          window_height};
+  gl::Framebuffer ms_framebuffer{color_ms_texture, entity_ms_texture};
   gl::Buffer<glm::uvec2> entity_texture_pixel_buffer(
       window_width * window_height, gl::BufferUsage::dynamic_copy);
   gl::Buffer screen_quad_buffer{
@@ -204,7 +206,8 @@ void visualize_mesh(const Mesh& mesh) {
   bool debug_labels = false;
   window.on_key_up(gl::Key::l, [&] { debug_labels = !debug_labels; });
   bool enable_multisampling = false;
-  window.on_key_up(gl::Key::z, [&] { enable_multisampling = !enable_multisampling; });
+  window.on_key_up(gl::Key::z,
+                   [&] { enable_multisampling = !enable_multisampling; });
 
   const auto select_node = [&](NodeIndex node_index, GLuint state) {
     NodeView node{mesh, node_index};
@@ -293,22 +296,21 @@ void visualize_mesh(const Mesh& mesh) {
       }
     });
 
+    // Switching back from MSAA does not work for some reason.
     if (enable_multisampling) {
       glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
       glReadBuffer(GL_COLOR_ATTACHMENT0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
       glDrawBuffer(GL_COLOR_ATTACHMENT0);
-      glBlitFramebuffer(0, 0, window_width, window_height, 
-                        0, 0, window_width, window_height, 
-                        GL_COLOR_BUFFER_BIT, GL_LINEAR);
-      
+      glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
+                        window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
       glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
       glReadBuffer(GL_COLOR_ATTACHMENT1);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
       glDrawBuffer(GL_COLOR_ATTACHMENT1);
-      glBlitFramebuffer(0, 0, window_width, window_height,
-                        0, 0, window_width, window_height,
-                        GL_COLOR_BUFFER_BIT, GL_NEAREST);
+      glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
+                        window_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
       glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

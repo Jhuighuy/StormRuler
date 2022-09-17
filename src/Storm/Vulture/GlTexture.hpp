@@ -212,9 +212,10 @@ public:
   /// @brief Construct a multisampled 2D texture.
   MultisampledTexture2D() = default;
 
-  /// @brief Consruct a multisampled 2D texture with @p width, 
+  /// @brief Consruct a multisampled 2D texture with @p width,
   /// @p height and @p num_samples.
-  MultisampledTexture2D(GLsizei width, GLsizei height, GLsizei num_samples = 4) {
+  MultisampledTexture2D(GLsizei width, GLsizei height,
+                        GLsizei num_samples = 4) {
     assign(width, height, num_samples);
   }
 
@@ -223,15 +224,16 @@ public:
     bind_(TextureTarget::multisample_texture2D, slot);
   }
 
-  /// @brief Assign the multisampled 2D texture @p width, @p height and @p num_samples.
+  /// @brief Assign the multisampled 2D texture @p width, @p height and @p
+  /// num_samples.
   void assign(GLsizei width, GLsizei height, GLsizei num_samples = 4) {
     bind_(TextureTarget::multisample_texture2D);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, num_samples, 
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, num_samples,
                             pixel_desc_v<Pixel>.internal_format, width, height,
                             /*fixed_sample_locations*/ GL_TRUE);
   }
 
-}; // class MultisampledTexture2D 
+}; // class MultisampledTexture2D
 
 /// @brief OpenGL texture buffer.
 class TextureBuffer final : public Texture {

@@ -81,8 +81,8 @@ public:
     glDrawBuffers(static_cast<GLsizei>(attachments.size()), attachments.data());
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-      STORM_ERROR_("Failed to initialize framebuffer, status = {:#x}!", status);
-      STORM_THROW_GL_("Failed to initialize framebuffer, status = {:#x}!", status);
+      STORM_THROW_GL_( //
+          "Failed to initialize framebuffer, status = {:#x}!", status);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
@@ -96,15 +96,18 @@ private:
   }
 
   template<pixel Pixel>
-  static GLenum attach_single_texture_(GLenum index, const Texture2D<Pixel>& texture) {
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D,
-      texture, /*level*/ 0);
+  static GLenum attach_single_texture_(GLenum index,
+                                       const Texture2D<Pixel>& texture) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
+                           GL_TEXTURE_2D, texture, /*level*/ 0);
     return GL_COLOR_ATTACHMENT0 + index;
   }
   template<pixel Pixel>
-  static GLenum attach_single_texture_(GLenum index, const MultisampledTexture2D<Pixel>& texture) {
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D_MULTISAMPLE,
-      texture, /*level*/ 0);
+  static GLenum
+  attach_single_texture_(GLenum index,
+                         const MultisampledTexture2D<Pixel>& texture) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
+                           GL_TEXTURE_2D_MULTISAMPLE, texture, /*level*/ 0);
     return GL_COLOR_ATTACHMENT0 + index;
   }
 

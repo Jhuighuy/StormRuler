@@ -4,6 +4,7 @@
 // ************************************************************************************
 // //
 
+#if 0
 #include "SkunkFvSolver.hh"
 
 // ************************************************************************************
@@ -73,3 +74,4 @@ void MhdFvSolverT<MhdPhysicsT>::calc_step(real_t& dt, Storm::tScalarField& u,
 // //
 
 template class MhdFvSolverT<tGasPhysics>;
+#endif

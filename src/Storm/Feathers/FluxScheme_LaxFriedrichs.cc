@@ -28,7 +28,7 @@
 
 #include "FluxScheme.hh"
 
-namespace Storm {
+namespace Storm::Feathers {
 
 /**
  * Calculate the Local Lax-Friedrichs (Rusanov) numerical flux.
@@ -58,4 +58,4 @@ void tLaxFriedrichsFluxScheme<tGasPhysics>::get_numerical_flux(
   }
 } // tLaxFriedrichsFluxScheme::get_numerical_flux
 
-} // namespace Storm
+} // namespace Storm::Feathers

@@ -14,8 +14,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,10 +30,9 @@
 #ifndef GRADIENT_LIMITER_SCHEME_HH_
 #define GRADIENT_LIMITER_SCHEME_HH_
 
-#include "SkunkBase.hh"
-#include <stormMesh/Mesh.hxx>
+#include "Field.hh"
 
-namespace Storm {
+namespace Storm::Feathers {
 
 /**
  * Barth-Jespersen (minmod)
@@ -44,9 +43,10 @@ namespace Storm {
  */
 class tMinmodSlopeLimiter {
 public:
-    /** Compute local slope coefficient. */
-    real_t operator()(real_t du_min, real_t du_max,
-                      real_t du_face, real_t eps_sqr) const;
+
+  /** Compute local slope coefficient. */
+  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
+                    real_t eps_sqr) const;
 }; // class tMinmodSlopeLimiter
 
 /**
@@ -57,9 +57,10 @@ public:
  */
 class tVenkatakrishnanSlopeLimiter {
 public:
-    /** Compute local slope coefficient. */
-    real_t operator()(real_t du_min, real_t du_max,
-                      real_t du_face, real_t eps_sqr) const;
+
+  /** Compute local slope coefficient. */
+  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
+                    real_t eps_sqr) const;
 }; // class tVenkatakrishnanSlopeLimiter
 
 /**
@@ -70,13 +71,11 @@ public:
  */
 class tCubicSlopeLimiter {
 public:
-    /** Compute local slope coefficient. */
-    real_t operator()(real_t du_min, real_t du_max,
-                      real_t du_face, real_t eps_sqr) const;
-}; // class tCubicSlopeLimiter
 
-// ------------------------------------------------------------------------------------ //
-// ------------------------------------------------------------------------------------ //
+  /** Compute local slope coefficient. */
+  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
+                    real_t eps_sqr) const;
+}; // class tCubicSlopeLimiter
 
 /**
  * Dummy
@@ -86,10 +85,10 @@ public:
  */
 class tDummySecondLimiter {
 public:
-    /** Compute second slope coefficient. */
-    real_t operator()(real_t limiter,
-                      real_t du_min, real_t du_max,
-                      real_t eps_sqr) const;
+
+  /** Compute second slope coefficient. */
+  real_t operator()(real_t limiter, real_t du_min, real_t du_max,
+                    real_t eps_sqr) const;
 }; // class tDummySecondLimiter
 
 /**
@@ -100,53 +99,52 @@ public:
  */
 class tCubicSecondLimiter {
 public:
-    /** Compute second slope coefficient. */
-    real_t operator()(real_t limiter,
-                      real_t du_min, real_t du_max,
-                      real_t eps_sqr) const;
-}; // class tCubicSecondLimiter
 
-// ------------------------------------------------------------------------------------ //
-// ------------------------------------------------------------------------------------ //
+  /** Compute second slope coefficient. */
+  real_t operator()(real_t limiter, real_t du_min, real_t du_max,
+                    real_t eps_sqr) const;
+}; // class tCubicSecondLimiter
 
 /**
  * Gradient cell limiter estimation scheme:
- * computes cell-centered limiters and averages based on the cell-centered expansion.
+ * computes cell-centered limiters and averages based on the cell-centered
+ * expansion.
  */
 class iGradientLimiterScheme : public tObject<iGradientLimiterScheme> {
 public:
-    /** Compute cell-centered gradient limiter coefficients. */
-    virtual void get_cell_limiter(size_t num_vars,
-                                  tScalarField& lim_u,
-                                  const tScalarField& u,
-                                  const tVectorField& grad_u) const = 0;
+
+  /** Compute cell-centered gradient limiter coefficients. */
+  virtual void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
+                                const tScalarField& u,
+                                const tVectorField& grad_u) const = 0;
 }; // class iGradientLimiterScheme
 
 /**
  * Gradient cell limiter estimation scheme:
- * computes cell-centered limiters and averages based on the cell-centered expansion.
+ * computes cell-centered limiters and averages based on the cell-centered
+ * expansion.
  */
 template<class tSlopeLimiter, class tSecondLimiter = tDummySecondLimiter>
 class tGradientLimiterScheme final : public iGradientLimiterScheme {
 public:
-    std::shared_ptr<const Mesh> m_mesh;
-    tSlopeLimiter m_slope_limiter;
-    tSecondLimiter m_second_limiter;
+
+  std::shared_ptr<const Mesh> m_mesh;
+  tSlopeLimiter m_slope_limiter;
+  tSecondLimiter m_second_limiter;
 
 public:
-    /** Initialize the limiting scheme. */
-    explicit tGradientLimiterScheme(std::shared_ptr<const Mesh> mesh,
-                                    const tSlopeLimiter& slope_limiter = {},
-                                    const tSecondLimiter& second_limiter = {}):
-        m_mesh(std::move(mesh)),
-        m_slope_limiter(slope_limiter), m_second_limiter(second_limiter) {
-    }
 
-    /** Compute cell-centered gradient limiter coefficients. */
-    void get_cell_limiter(size_t num_vars,
-                          tScalarField& lim_u,
-                          const tScalarField& u,
-                          const tVectorField& grad_u) const final;
+  /** Initialize the limiting scheme. */
+  explicit tGradientLimiterScheme(std::shared_ptr<const Mesh> mesh,
+                                  const tSlopeLimiter& slope_limiter = {},
+                                  const tSecondLimiter& second_limiter = {})
+      : m_mesh(std::move(mesh)), m_slope_limiter(slope_limiter),
+        m_second_limiter(second_limiter) {}
+
+  /** Compute cell-centered gradient limiter coefficients. */
+  void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
+                        const tScalarField& u,
+                        const tVectorField& grad_u) const final;
 }; // class tGradientLimiterScheme
 
 using cMinmodGradientLimiterScheme =
@@ -158,12 +156,11 @@ using cVenkatakrishnanGradientLimiterScheme =
 using cVenkatakrishnan2GradientLimiterScheme =
     tGradientLimiterScheme<tVenkatakrishnanSlopeLimiter, tCubicSecondLimiter>;
 
-using cCubicGradientLimiterScheme =
-    tGradientLimiterScheme<tCubicSlopeLimiter>;
+using cCubicGradientLimiterScheme = tGradientLimiterScheme<tCubicSlopeLimiter>;
 
 using cCubic2GradientLimiterScheme =
     tGradientLimiterScheme<tCubicSlopeLimiter, tCubicSecondLimiter>;
 
-} // namespace feathers
+} // namespace Storm::Feathers
 
 #endif // GRADIENT_LIMITER_SCHEME_HH_

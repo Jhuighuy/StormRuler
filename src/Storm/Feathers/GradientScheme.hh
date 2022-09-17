@@ -30,10 +30,10 @@
 #ifndef GRADIENT_SCHEME_HH_
 #define GRADIENT_SCHEME_HH_
 
-#include "SkunkBase.hh"
-#include <stormMesh/Mesh.hxx>
+#include "Field.hh"
 
-namespace Storm {
+
+namespace Storm::Feathers {
 
 /** Abstract cell-centered gradient scheme. */
 class iGradientScheme : public tObject<iGradientScheme> {
@@ -76,6 +76,6 @@ public:
                      const tScalarField& u) const final;
 }; // class cLeastSquaresGradientScheme
 
-} // namespace Storm
+} // namespace Storm::Feathers
 
 #endif // GRADIENT_SCHEME_HH_

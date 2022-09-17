@@ -28,7 +28,7 @@
 
 #include "GradientLimiterScheme.hh"
 
-namespace Storm {
+namespace Storm::Feathers {
 
 /**
  * Compute local slope coefficient.
@@ -235,4 +235,4 @@ template class tGradientLimiterScheme<tVenkatakrishnanSlopeLimiter,
 template class tGradientLimiterScheme<tCubicSlopeLimiter>;
 template class tGradientLimiterScheme<tCubicSlopeLimiter, tCubicSecondLimiter>;
 
-} // namespace Storm
+} // namespace Storm::Feathers

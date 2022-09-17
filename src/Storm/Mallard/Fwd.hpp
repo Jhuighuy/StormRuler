@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Bittern/FastVector.hpp>
+
 #include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/Meta.hpp>

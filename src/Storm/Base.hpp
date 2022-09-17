@@ -21,7 +21,8 @@
 #pragma once
 
 #ifndef STORM_HEADER_ONLY
-#error #define STORM_HEADER_ONLY before including Storm!
+// #error #define STORM_HEADER_ONLY before including Storm!
+#define STORM_HEADER_ONLY 1
 #endif
 
 #ifdef STORM_HEADER_ONLY

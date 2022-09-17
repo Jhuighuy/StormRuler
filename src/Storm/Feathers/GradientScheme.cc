@@ -28,7 +28,7 @@
 
 #include "GradientScheme.hh"
 
-namespace Storm {
+namespace Storm::Feathers {
 
 /**
  * Init the gradient scheme.
@@ -125,4 +125,4 @@ void cLeastSquaresGradientScheme::get_gradients(size_t num_vars,
   });
 } // cLeastSquaresGradientScheme::get_gradients
 
-} // namespace Storm
+} // namespace Storm::Feathers

@@ -28,7 +28,7 @@
 
 #include "ConvectionScheme.hh"
 
-namespace Storm {
+namespace Storm::Feathers {
 
 /**
  * Compute the first-order upwind convection.
@@ -131,4 +131,4 @@ void cUpwind2ConvectionScheme::get_cell_convection(
   });
 } // cUpwind2ConvectionScheme::get_cell_convection
 
-} // namespace Storm
+} // namespace Storm::Feathers

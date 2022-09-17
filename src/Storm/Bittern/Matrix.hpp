@@ -21,7 +21,6 @@
 // This header should really be <Matrix.hpp>
 #pragma once
 
-#include <compare>
 #include <concepts>
 #include <type_traits>
 
@@ -33,34 +32,84 @@
 
 namespace Storm {
 
+/// @brief Matrix extent type.
+template<class MatrixExtent>
+concept matrix_extent =
+    std::same_as<MatrixExtent, size_t> || is_size_t_constant_v<MatrixExtent>;
+
 /// @brief Matrix shape.
-struct MatrixShape {
+template<matrix_extent Rows, matrix_extent Cols>
+class MatrixShape final {
+public:
+
   /// @brief Number of the matrix rows.
-  size_t num_rows = 0;
+  STORM_NO_UNIQUE_ADDRESS_ Rows num_rows{};
 
   /// @brief Number of the matrix columns.
-  size_t num_cols = 0;
+  STORM_NO_UNIQUE_ADDRESS_ Cols num_cols{};
 
-  /// @brief Compare the matrix shapes.
-  constexpr auto operator<=>(const MatrixShape&) const = default;
+}; // class MatrixShape
 
-}; // struct MatrixShape
+template<size_t NumRows, size_t NumCols>
+MatrixShape(size_t_constant<NumRows>, size_t_constant<NumCols>)
+    -> MatrixShape<size_t_constant<NumRows>, size_t_constant<NumCols>>;
+
+template<size_t NumRows, std::integral Cols>
+MatrixShape(size_t_constant<NumRows>, Cols)
+    -> MatrixShape<size_t_constant<NumRows>, size_t>;
+
+template<std::integral Rows, size_t NumCols>
+MatrixShape(Rows, size_t_constant<NumCols>)
+    -> MatrixShape<size_t, size_t_constant<NumCols>>;
+
+template<std::integral Rows, std::integral Cols>
+MatrixShape(Rows, Cols) -> MatrixShape<size_t, size_t>;
+
+/// @brief Compare the matrix shapes @p a and @p b.
+/// @{
+template<matrix_extent Rows1, matrix_extent Cols1, //
+         matrix_extent Rows2, matrix_extent Cols2>
+[[nodiscard]] constexpr bool
+operator==(const MatrixShape<Rows1, Cols1>& a,
+           const MatrixShape<Rows2, Cols2>& b) noexcept {
+  return a.num_rows == b.num_rows && a.num_cols == b.num_cols;
+}
+template<matrix_extent Rows1, matrix_extent Cols1, //
+         matrix_extent Rows2, matrix_extent Cols2>
+[[nodiscard]] constexpr bool
+operator!=(const MatrixShape<Rows1, Cols1>& a,
+           const MatrixShape<Rows2, Cols2>& b) noexcept {
+  return a.num_rows != b.num_rows || a.num_cols != b.num_cols;
+}
+/// @}
+
+/// @brief Check if type is a matrix shape.
+/// @{
+template<class>
+inline constexpr bool is_matrix_shape_v = false;
+template<matrix_extent Rows, matrix_extent Cols>
+inline constexpr bool is_matrix_shape_v<MatrixShape<Rows, Cols>> = true;
+/// @}
+
+/// @brief Matrix shape type.
+template<class MatrixShape>
+concept matrix_shape = is_matrix_shape_v<std::remove_cvref_t<MatrixShape>>;
 
 /// @brief Matrix: has shape and two subscripts.
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
-      { mat.shape() } noexcept -> std::same_as<MatrixShape>;
+      { mat.shape() } noexcept -> matrix_shape;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
     };
 
 /// @brief Number of the matrix rows.
-constexpr size_t num_rows(const matrix auto& mat) noexcept {
+constexpr auto num_rows(const matrix auto& mat) noexcept {
   return mat.shape().num_rows;
 }
 
 /// @brief Number of the matrix columns.
-constexpr size_t num_cols(const matrix auto& mat) noexcept {
+constexpr auto num_cols(const matrix auto& mat) noexcept {
   return mat.shape().num_cols;
 }
 
@@ -81,9 +130,6 @@ using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
 // ========================================================================== //
 // ========================================================================== //
-
-template<class>
-class StormArray;
 
 #if 0
 constexpr auto eval_vectorized(auto func, //

@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Bittern/Vector.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -43,7 +43,7 @@ namespace Storm {
 ///     Journal of research of the National Bureau of Standards 49 (1952):
 /// 409-435.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -60,7 +60,7 @@ private:
 
 }; // class CgSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t CgSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                               const Operator<Vector>& lin_op,
                               const Preconditioner<Vector>* pre_op) {
@@ -94,7 +94,7 @@ real_t CgSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
 
 } // CgSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t CgSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                  const Operator<Vector>& lin_op,
                                  const Preconditioner<Vector>* pre_op) {

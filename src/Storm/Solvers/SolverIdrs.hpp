@@ -24,8 +24,8 @@
 
 #include <Storm/Utils/Math.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixDense.hpp>
-#include <Storm/Bittern/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -47,7 +47,7 @@ namespace Storm {
 ///      Biorthogonality Properties.”
 ///      ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
@@ -77,7 +77,7 @@ public:
 
 }; // class IdrsSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t IdrsSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
                                       const Operator<Vector>& lin_op,
                                       const Preconditioner<Vector>* pre_op) {
@@ -127,7 +127,7 @@ real_t IdrsSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
 
 } // IdrsSolver::outer_init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
                                     const Preconditioner<Vector>* pre_op) {
@@ -174,7 +174,7 @@ void IdrsSolver<Vector>::inner_init(const Vector& x_vec, const Vector& b_vec,
 
 } // IdrsSolver::inner_init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
                                          const Operator<Vector>& lin_op,
                                          const Preconditioner<Vector>* pre_op) {

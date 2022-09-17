@@ -24,15 +24,15 @@
 
 #include <Storm/Utils/Math.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixDense.hpp>
-#include <Storm/Bittern/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
 namespace Storm {
 
 namespace detail_ {
-  template<VectorLike Vector, bool Flexible, bool Loose = false>
+  template<legacy_vector_like Vector, bool Flexible, bool Loose = false>
   class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
   private:
 
@@ -87,7 +87,7 @@ namespace detail_ {
 ///      nonsymmetric linear systems.”
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class GmresSolver final : public detail_::BaseGmresSolver_<Vector, false> {};
 
 /// @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
@@ -113,10 +113,10 @@ class GmresSolver final : public detail_::BaseGmresSolver_<Vector, false> {};
 ///     “A Flexible Inner-Outer Preconditioned GMRES Algorithm.”
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class FgmresSolver final : public detail_::BaseGmresSolver_<Vector, true> {};
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<legacy_vector_like Vector, bool Flexible, bool Loose>
 real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
@@ -165,7 +165,7 @@ real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 
 } // BaseGmresSolver_::outer_init
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<legacy_vector_like Vector, bool Flexible, bool Loose>
 void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
@@ -194,7 +194,7 @@ void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
 
 } // BaseGmresSolver_::inner_init
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<legacy_vector_like Vector, bool Flexible, bool Loose>
 real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
@@ -273,7 +273,7 @@ real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
 
 } // BaseGmresSolver_::inner_iterate
 
-template<VectorLike Vector, bool Flexible, bool Loose>
+template<legacy_vector_like Vector, bool Flexible, bool Loose>
 void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
     Vector& x_vec, const Vector& b_vec,                                   //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //

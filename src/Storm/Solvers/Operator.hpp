@@ -29,8 +29,8 @@
 
 #include <Storm/Utils/Object.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
-#include <Storm/Bittern/Vector.hpp>
 
 #include <cmath>
 #include <functional>
@@ -100,7 +100,7 @@ public:
     return MySize;
   }
   auto shape() const noexcept {
-    return MatrixShape{MySize, 1};
+    return MatrixShape{MySize, size_t_constant<1>{}};
   }
 
   const auto& operator()(size_t i, size_t j = 0) const noexcept {
@@ -116,7 +116,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class Operator : public Object {
 public:
 
@@ -132,7 +132,7 @@ public:
   /// @param z_vec Output vector, 𝒛.
   /// @param y_vec Intermediate vector, 𝒚.
   /// @param x_vec Input vector, 𝒙.
-  template<VectorLike InOutVector = InVector>
+  template<legacy_vector_like InOutVector = InVector>
   void mul(OutVector& z_vec, InOutVector& y_vec,
            const Operator<InVector, InOutVector>& other_op,
            const InVector& x_vec) const {
@@ -175,7 +175,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Operator implementation with external function pointers.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
 
@@ -189,13 +189,13 @@ public:
   /// @param matVecFunc Operator-vector product function, 𝒚 ← 𝓐(𝒙).
   /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
   /// @{
-  template<operator_like<InVector, OutVector> MatVecFunc>
+  template<legacy_operator_like<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
     STORM_ASSERT_(MatVecFunc_, "");
   }
-  template<operator_like<InVector, OutVector> MatVecFunc,
-           operator_like<OutVector, InVector> ConjMatVecFunc>
+  template<legacy_operator_like<InVector, OutVector> MatVecFunc,
+           legacy_operator_like<OutVector, InVector> ConjMatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc,
                               ConjMatVecFunc&& conjMatVecFunc)
       : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
@@ -227,15 +227,15 @@ private:
 /// @param conjMatVecFunc Conjugate operator-vector product, 𝒙 ← 𝓐*(𝒚).
 /// ----------------------------------------------------------------- ///
 /// @{
-template<VectorLike InVector, VectorLike OutVector = InVector,
-         operator_like<InVector, OutVector> MatVecFunc>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector,
+         legacy_operator_like<InVector, OutVector> MatVecFunc>
 auto make_operator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc));
 }
-template<VectorLike InVector, VectorLike OutVector = InVector,
-         operator_like<InVector, OutVector> MatVecFunc,
-         operator_like<OutVector, InVector> ConjMatVecFunc>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector,
+         legacy_operator_like<InVector, OutVector> MatVecFunc,
+         legacy_operator_like<OutVector, InVector> ConjMatVecFunc>
 auto make_operator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
   return std::make_unique<FunctionalOperator<InVector, OutVector>>(
       std::forward<MatVecFunc>(matVecFunc),
@@ -246,7 +246,7 @@ auto make_operator(MatVecFunc&& matVecFunc, ConjMatVecFunc&& conjMatVecFunc) {
 /// ----------------------------------------------------------------- ///
 /// @brief Make the self-adjoint functional operator.
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector, operator_like<Vector> MatVecFunc>
+template<legacy_vector_like Vector, legacy_operator_like<Vector> MatVecFunc>
 auto make_symmetric_operator(MatVecFunc&& matVecFunc) {
   return std::make_unique<FunctionalOperator<Vector>>(
       matVecFunc, std::forward<MatVecFunc>(matVecFunc));

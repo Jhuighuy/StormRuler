@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Vector.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -36,7 +36,7 @@ namespace Storm {
 /// @verbatim
 /// [1] ???
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
 
@@ -56,7 +56,7 @@ private:
 
 }; // class RichardsonSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t RichardsonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                       const Operator<Vector>& lin_op,
                                       const Preconditioner<Vector>* pre_op) {
@@ -81,7 +81,7 @@ real_t RichardsonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
 
 } // RichardsonSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                          const Operator<Vector>& lin_op,
                                          const Preconditioner<Vector>* pre_op) {

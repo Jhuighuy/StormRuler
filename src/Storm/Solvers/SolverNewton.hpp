@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Bittern/Vector.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -51,7 +51,7 @@ namespace Storm {
 /// @verbatim
 /// [1] ???
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
@@ -65,14 +65,14 @@ private:
 
 }; // class NewtonSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t NewtonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                   const Operator<Vector>& any_op,
                                   const Preconditioner<Vector>* pre_op) {
   STORM_TERMINATE_("Newton solver is not implemented yet!");
 } // NewtonSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t NewtonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                      const Operator<Vector>& any_op,
                                      const Preconditioner<Vector>* pre_op) {
@@ -105,7 +105,7 @@ real_t NewtonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
 ///     “CFD High-order Accurate Scheme JFNK Solver.”
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -121,7 +121,7 @@ private:
 
 }; // class JfnkSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t JfnkSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                 const Operator<Vector>& any_op,
                                 const Preconditioner<Vector>* pre_op) {
@@ -142,7 +142,7 @@ real_t JfnkSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
 
 } // JfnkSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t JfnkSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                    const Operator<Vector>& any_op,
                                    const Preconditioner<Vector>* pre_op) {

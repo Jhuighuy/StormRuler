@@ -42,7 +42,7 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class Solver : public Object {
 public:
 
@@ -61,7 +61,7 @@ public:
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator equation iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class IterativeSolver : public Solver<InVector, OutVector> {
 public:
 
@@ -120,7 +120,7 @@ public:
 
 }; // class IterativeSolver
 
-template<VectorLike InVector, VectorLike OutVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector>
 bool IterativeSolver<InVector, OutVector>::solve(
     InVector& x_vec, const OutVector& b_vec,
     const Operator<InVector, OutVector>& any_op) {
@@ -156,7 +156,7 @@ bool IterativeSolver<InVector, OutVector>::solve(
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike InVector, VectorLike OutVector = InVector>
+template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class InnerOuterIterativeSolver : public IterativeSolver<InVector, OutVector> {
 public:
 
@@ -265,7 +265,7 @@ private:
 /// @brief Solve an operator equation 𝓐(𝒙) = 𝒃,
 ///   when 𝓐(𝒙) is a non-uniform operator (𝓐(𝟢) ≠ 𝟢).
 /// ----------------------------------------------------------------- ///
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 bool solve_non_uniform(Solver<Vector>& solver, Vector& x_vec,
                        const Vector& b_vec, const Operator<Vector>& any_op) {
   Vector z_vec, f_vec;

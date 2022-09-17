@@ -95,19 +95,6 @@ inline constexpr bool is_matrix_shape_v<MatrixShape<Rows, Cols>> = true;
 template<class MatrixShape>
 concept matrix_shape = is_matrix_shape_v<std::remove_cvref_t<MatrixShape>>;
 
-/// @brief Check if type is a vector shape.
-/// @{
-template<class>
-inline constexpr bool is_vector_shape_v = false;
-template<matrix_extent Rows>
-inline constexpr bool is_vector_shape_v< //
-    MatrixShape<Rows, size_t_constant<1>>> = true;
-/// @}
-
-/// @brief Matrix shape type.
-template<class VectorShape>
-concept vector_shape = is_vector_shape_v<std::remove_cvref_t<VectorShape>>;
-
 /// @brief Matrix: has matrix shape and two subscripts.
 template<class Matrix>
 concept matrix = //
@@ -120,6 +107,14 @@ concept matrix = //
 template<matrix Matrix>
 using matrix_shape_t =
     std::remove_cvref_t<decltype(std::declval<Matrix>().shape())>;
+
+/// @brief Matrix shape type.
+template<class VectorShape>
+concept vector_shape =
+    matrix_shape<VectorShape> &&
+    std::same_as<
+        std::remove_cvref_t<decltype(std::declval<VectorShape>().num_cols)>,
+        size_t_constant<1>>;
 
 /// @brief Vector: matrix of a single column, subscriptable with a single index.
 template<class Vector>
@@ -153,10 +148,23 @@ using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
 template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
-/// @}
 
 // ========================================================================== //
 // ========================================================================== //
+
+template<class Vector>
+concept legacy_vector_like =
+    vector<Vector> &&
+    requires(Vector& targetVec, const Vector& sourceVector, bool copyContents) {
+      { targetVec.assign(sourceVector) };
+      { targetVec.assign(sourceVector, copyContents) };
+    };
+
+template<class Operator, class InVector, class OutVector = InVector>
+concept legacy_operator_like =
+    requires(Operator& any_op, OutVector& y_vec, const InVector& x_vec) {
+      any_op(y_vec, x_vec);
+    };
 
 #if 0
 constexpr auto eval_vectorized(auto func, //

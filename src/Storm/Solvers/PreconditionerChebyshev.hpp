@@ -43,7 +43,7 @@ namespace Storm {
 ///     “Iterative methods for sparse linear systems.” (2003).
 /// @endverbatim
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class ChebyshevPreconditioner final : public Preconditioner<Vector> {
 public:
 
@@ -66,7 +66,7 @@ private:
 
 }; // class ChebyshevPreconditioner
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 void ChebyshevPreconditioner<Vector>::build(const Vector& x_vec,
                                             const Vector& b_vec,
                                             const Operator<Vector>& lin_op) {
@@ -94,7 +94,7 @@ void ChebyshevPreconditioner<Vector>::build(const Vector& x_vec,
 
 } // ChebyshevPreconditioner::Build
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 void ChebyshevPreconditioner<Vector>::mul(Vector& y_vec,
                                           const Vector& x_vec) const {
   // Initialize the solution:

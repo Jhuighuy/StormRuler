@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Bittern/Vector.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -46,7 +46,7 @@ namespace Storm {
 ///     “CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.”
 ///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -63,7 +63,7 @@ private:
 
 }; // class CgsSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t CgsSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                const Operator<Vector>& lin_op,
                                const Preconditioner<Vector>* pre_op) {
@@ -99,7 +99,7 @@ real_t CgsSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
 
 } // CgsSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t CgsSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                   const Operator<Vector>& lin_op,
                                   const Preconditioner<Vector>* pre_op) {

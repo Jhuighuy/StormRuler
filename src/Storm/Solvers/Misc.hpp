@@ -34,7 +34,7 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Largest eigenvalue estimator based on the Power Iterations.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class PowerIterations final {
 public:
 
@@ -57,7 +57,7 @@ public:
 
 }; // class PowerIterations
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t PowerIterations<Vector>::estimate_largest_eigenvalue(
     Vector& x_vec, const Operator<Vector>& lin_op, size_t max_iters,
     real_t relative_tolerance) {

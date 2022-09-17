@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Bittern/Vector.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -33,7 +33,7 @@
 namespace Storm {
 
 namespace detail_ {
-  template<VectorLike Vector, bool L1>
+  template<legacy_vector_like Vector, bool L1>
   class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
   private:
 
@@ -78,7 +78,7 @@ namespace detail_ {
 ///     “Transpose-Free Quasi-Minimal Residual Methods for Non-Hermitian Linear
 ///      Systems.” (1994).
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class TfqmrSolver final : public detail_::BaseTfqmrSolver_<Vector, false> {};
 
 /// @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
@@ -98,10 +98,10 @@ class TfqmrSolver final : public detail_::BaseTfqmrSolver_<Vector, false> {};
 ///     “A Transpose-Free 1-norm Quasi-Minimal Residual Algorithm
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class Tfqmr1Solver final : public detail_::BaseTfqmrSolver_<Vector, true> {};
 
-template<VectorLike Vector, bool L1>
+template<legacy_vector_like Vector, bool L1>
 real_t detail_::BaseTfqmrSolver_<Vector, L1>::init(
     const Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
@@ -151,7 +151,7 @@ real_t detail_::BaseTfqmrSolver_<Vector, L1>::init(
 
 } // BaseTfqmrSolver_::init
 
-template<VectorLike Vector, bool L1>
+template<legacy_vector_like Vector, bool L1>
 real_t detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //

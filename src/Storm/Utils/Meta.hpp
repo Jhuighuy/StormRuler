@@ -501,7 +501,7 @@ consteval auto type_name() {
 }
 
 template<class T>
-consteval auto type_name(T&&) {
+constexpr auto type_name(T&&) {
   return type_name<T>();
 }
 

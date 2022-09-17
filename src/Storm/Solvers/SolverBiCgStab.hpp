@@ -24,8 +24,8 @@
 
 #include <Storm/Utils/Math.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixDense.hpp>
-#include <Storm/Bittern/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -47,7 +47,7 @@ namespace Storm {
 ///      Solution of Nonsymmetric Linear Systems.”
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
 
@@ -64,7 +64,7 @@ private:
 
 }; // class BiCgStabSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t BiCgStabSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
                                     const Preconditioner<Vector>* pre_op) {
@@ -100,7 +100,7 @@ real_t BiCgStabSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
 
 } // BiCgStabSolver::init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
                                        const Operator<Vector>& lin_op,
                                        const Preconditioner<Vector>* pre_op) {
@@ -196,7 +196,7 @@ real_t BiCgStabSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
 ///     Complex Spectrum.”
 ///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
 /// @endverbatim
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
@@ -222,7 +222,7 @@ public:
 
 }; // class BiCgStabLSolver
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t
 BiCgStabLSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
                                     const Operator<Vector>& lin_op,
@@ -271,7 +271,7 @@ BiCgStabLSolver<Vector>::outer_init(const Vector& x_vec, const Vector& b_vec,
 
 } // BiCgStabLSolver::outer_init
 
-template<VectorLike Vector>
+template<legacy_vector_like Vector>
 real_t
 BiCgStabLSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
                                        const Operator<Vector>& lin_op,

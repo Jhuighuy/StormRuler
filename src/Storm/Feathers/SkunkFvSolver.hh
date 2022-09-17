@@ -1,8 +1,3 @@
-// ************************************************************************************
-// // Orchid/Skunk -- 2D / 3D Euler / MagnetoHydroDynamics solver. Copyright(C)
-// Butakov Oleg and Co. 2019.
-// ************************************************************************************
-// //
 
 #pragma once
 
@@ -14,12 +9,7 @@
 
 #include <map>
 
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
+namespace Storm::Feathers {
 
 /**
  * @brief A Finite volume solver.
@@ -34,24 +24,18 @@ public:
 
 private:
 
-  std::shared_ptr<const cMesh> m_mesh;
-  std::shared_ptr<Storm::iConvectionScheme> m_conv;
+  std::shared_ptr<const Mesh> m_mesh;
+  std::shared_ptr<iConvectionScheme> m_conv;
   std::map<int_t, std::shared_ptr<MhdFvBcPT<MhdPhysicsT>>> m_bcs;
 
 public:
 
-  explicit MhdFvSolverT(std::shared_ptr<const cMesh> mesh);
+  explicit MhdFvSolverT(std::shared_ptr<const Mesh> mesh);
 
 public:
 
-  void calc_func(Storm::tScalarField& u, Storm::tScalarField& u_out) const;
-  void calc_step(real_t& dt, Storm::tScalarField& u,
-                 Storm::tScalarField& u_hat) const;
+  void calc_func(tScalarField& u, tScalarField& u_out) const;
+  void calc_step(real_t& dt, tScalarField& u, tScalarField& u_hat) const;
 }; // class MhdFvSolverT
 
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
+} // namespace Storm::Feathers

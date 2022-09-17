@@ -25,62 +25,52 @@
  * SOFTWARE.
  */
 
-#if 0
 #include "SkunkFvBC.hh"
 
-// ************************************************************************************ //
-// ************************************************************************************ //
-// ************************************************************************************ //
+namespace Storm::Feathers {
 
 /**
  * @brief Compute the ghost state.
  * Scalars are copied, velocity components are set to zero.
  */
 template<typename MhdPhysicsT>
-void MhdFvBcFarFieldT<MhdPhysicsT>::get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r, const Storm::vec3_t& r_ghost,
-                                                     const MhdFluidStateT& u,
-                                                     MhdFluidStateT& u_ghost) const {
-    u_ghost = u;
-}   // MhdFvBcFarFieldT::get_ghost_state_
-
-// ************************************************************************************ //
-// ************************************************************************************ //
-// ************************************************************************************ //
+void MhdFvBcFarFieldT<MhdPhysicsT>::get_ghost_state_(
+    const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+    const MhdFluidStateT& u, MhdFluidStateT& u_ghost) const {
+  u_ghost = u;
+} // MhdFvBcFarFieldT::get_ghost_state_
 
 /**
- * @brief Compute the ghost state. 
+ * @brief Compute the ghost state.
  * Scalars are copied, velocity components are set to zero.
  */
 template<typename MhdPhysicsT>
-void MhdFvBcNoSlipT<MhdPhysicsT>::get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r, const Storm::vec3_t& r_ghost,
-                                                   const MhdFluidStateT& u,
-                                                   MhdFluidStateT& u_ghost) const {
-    u_ghost = u;
-    if (vfunc != nullptr) {
-        u_ghost.vel = vfunc(r_ghost);
-    } else {
-        u_ghost.vel = {};
-    }
-}   // MhdFvBcNoSlipT::get_ghost_state_
+void MhdFvBcNoSlipT<MhdPhysicsT>::get_ghost_state_(
+    const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+    const MhdFluidStateT& u, MhdFluidStateT& u_ghost) const {
+  u_ghost = u;
+  if (vfunc != nullptr) {
+    u_ghost.vel = vfunc(r_ghost);
+  } else {
+    u_ghost.vel = {};
+  }
+} // MhdFvBcNoSlipT::get_ghost_state_
 
 /**
- * @brief Compute the ghost state. 
+ * @brief Compute the ghost state.
  * Scalars are copied, velocity components are set to zero.
  */
 template<typename MhdPhysicsT>
-void MhdFvBcSlipT<MhdPhysicsT>::get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r, const Storm::vec3_t& r_ghost,
-                                                 const MhdFluidStateT& u,
-                                                 MhdFluidStateT& u_ghost) const {
-    u_ghost = u;
-    u_ghost.vel -= u.vel_n * n;
-}   // MhdFvBcSlipT::get_ghost_state_
-
-// ************************************************************************************ //
-// ************************************************************************************ //
-// ************************************************************************************ //
+void MhdFvBcSlipT<MhdPhysicsT>::get_ghost_state_(
+    const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+    const MhdFluidStateT& u, MhdFluidStateT& u_ghost) const {
+  u_ghost = u;
+  u_ghost.vel -= u.vel_n * n;
+} // MhdFvBcSlipT::get_ghost_state_
 
 template class MhdFvBcPT<tGasPhysics>;
 template class MhdFvBcFarFieldT<tGasPhysics>;
 template class MhdFvBcNoSlipT<tGasPhysics>;
 template class MhdFvBcSlipT<tGasPhysics>;
-#endif
+
+} // namespace Storm::Feathers

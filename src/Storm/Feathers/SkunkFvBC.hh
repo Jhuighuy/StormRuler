@@ -26,20 +26,12 @@
  */
 
 #pragma once
-#ifndef MHD_FV_BC_HH
-#define MHD_FV_BC_HH
 
 #include "Field.hh"
 #include "SkunkHydro.hh"
 #include <functional>
 
-
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
+namespace Storm::Feathers {
 
 /**
  * Abstract finite-volume boundary condition.
@@ -59,13 +51,6 @@ private:
   virtual void get_ghost_state_(tScalarField& u) const = 0;
 }; // class MhdFvBcT
 
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-
 /**
  * @brief Abstract boundary condition.
  */
@@ -79,9 +64,8 @@ public:
 public:
 
   /** @brief Compute the ghost states. */
-  void get_ghost_state(const Storm::vec3_t& n, const Storm::vec3_t& r,
-                       const Storm::vec3_t& r_ghost, const real_t* u,
-                       real_t* u_ghost) const {
+  void get_ghost_state(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+                       const real_t* u, real_t* u_ghost) const {
     MhdFluidStateT u_state(n, u), u_ghost_state;
     get_ghost_state_(n, r, r_ghost, u_state, u_ghost_state);
     u_ghost_state.make_cons(5, u_ghost);
@@ -90,18 +74,10 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  virtual void get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r,
-                                const Storm::vec3_t& r_ghost,
-                                const MhdFluidStateT& u,
+  virtual void get_ghost_state_(const vec3_t& n, const vec3_t& r,
+                                const vec3_t& r_ghost, const MhdFluidStateT& u,
                                 MhdFluidStateT& u_ghost) const = 0;
 }; // MhdFvBcT
-
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
 
 /**
  * @brief Far field boundary condition.
@@ -117,17 +93,10 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r,
-                        const Storm::vec3_t& r_ghost, const MhdFluidStateT& u,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+                        const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override;
 }; // class MhdFvBcFarFieldT
-
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
 
 /**
  * @brief No-slip wall boundary condition.
@@ -138,16 +107,16 @@ public:
 
   using typename MhdFvBcPT<MhdPhysicsT>::MhdFluidStateT;
   using MhdFvBcPT<MhdPhysicsT>::num_vars;
-  std::function<Storm::vec3_t(Storm::vec3_t)> vfunc;
+  std::function<vec3_t(vec3_t)> vfunc;
 
-  MhdFvBcNoSlipT(std::function<Storm::vec3_t(Storm::vec3_t)> vfunc = nullptr)
+  MhdFvBcNoSlipT(std::function<vec3_t(vec3_t)> vfunc = nullptr)
       : vfunc(std::move(vfunc)) {}
 
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r,
-                        const Storm::vec3_t& r_ghost, const MhdFluidStateT& u,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+                        const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override;
 }; // class MhdFvBcNoSlipT
 
@@ -164,16 +133,9 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const Storm::vec3_t& n, const Storm::vec3_t& r,
-                        const Storm::vec3_t& r_ghost, const MhdFluidStateT& u,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+                        const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override;
 }; // class MhdFluidBcSlipTMhdFluidBcSlipT
 
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-// ************************************************************************************
-// //
-
-#endif // ifndef MHD_FV_BC_HH
+} // namespace Storm::Feathers

@@ -95,12 +95,39 @@ inline constexpr bool is_matrix_shape_v<MatrixShape<Rows, Cols>> = true;
 template<class MatrixShape>
 concept matrix_shape = is_matrix_shape_v<std::remove_cvref_t<MatrixShape>>;
 
-/// @brief Matrix: has shape and two subscripts.
+/// @brief Check if type is a vector shape.
+/// @{
+template<class>
+inline constexpr bool is_vector_shape_v = false;
+template<matrix_extent Rows>
+inline constexpr bool is_vector_shape_v< //
+    MatrixShape<Rows, size_t_constant<1>>> = true;
+/// @}
+
+/// @brief Matrix shape type.
+template<class VectorShape>
+concept vector_shape = is_vector_shape_v<std::remove_cvref_t<VectorShape>>;
+
+/// @brief Matrix: has matrix shape and two subscripts.
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
       { mat.shape() } noexcept -> matrix_shape;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
+    };
+
+/// @brief Matrix shape type.
+template<matrix Matrix>
+using matrix_shape_t =
+    std::remove_cvref_t<decltype(std::declval<Matrix>().shape())>;
+
+/// @brief Vector: matrix of a single column, subscriptable with a single index.
+template<class Vector>
+concept vector =      //
+    matrix<Vector> && //
+    requires(Vector& vec) {
+      { vec.shape() } noexcept -> vector_shape;
+      { vec(std::declval<size_t>()) } noexcept;
     };
 
 /// @brief Number of the matrix rows.

@@ -84,18 +84,6 @@ public:
     return self_().shape();
   }
 
-  /// @brief Get the vector coefficient at @p row_index.
-  /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index) noexcept {
-    return self_()(row_index, 0);
-  }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index) const noexcept {
-    return self_()(row_index, 0);
-  }
-  /// @}
-
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
   [[nodiscard]] constexpr decltype(auto) //
@@ -105,6 +93,22 @@ public:
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
     return self_()(row_index, col_index);
+  }
+  /// @}
+
+  /// @brief Get the vector coefficient at @p row_index.
+  /// @{
+  [[nodiscard]] constexpr decltype(auto) //
+  operator()(size_t row_index) noexcept
+    requires vector_shape<matrix_shape_t<Derived>>
+  {
+    return self_()(row_index, 0);
+  }
+  [[nodiscard]] constexpr decltype(auto)
+  operator()(size_t row_index) const noexcept
+    requires vector_shape<matrix_shape_t<Derived>>
+  {
+    return self_()(row_index, 0);
   }
   /// @}
 

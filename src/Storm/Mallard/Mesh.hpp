@@ -129,6 +129,10 @@ public:
   [[nodiscard]] constexpr operator EntityIndex<I>() const noexcept {
     return index_;
   }
+  /// @todo REMOVE ME!!!
+  operator size_t() const {
+    return index_sz();
+  }
 
   /// @brief Comparison operator.
   [[nodiscard]] constexpr auto
@@ -338,12 +342,10 @@ public:
     return self_().num_labels(meta::type_v<EdgeIndex>);
   }
   /// @brief Number of the face labels.
-  template<mesh Mesh>
   [[nodiscard]] constexpr size_t num_face_labels() const noexcept {
     return self_().num_labels(meta::type_v<FaceIndex<Derived>>);
   }
   /// @brief Number of the cell labels.
-  template<mesh Mesh>
   [[nodiscard]] constexpr size_t num_cell_labels() const noexcept {
     return self_().num_labels(meta::type_v<CellIndex<Derived>>);
   }
@@ -391,7 +393,7 @@ public:
   }
   /// @brief Range of the nodes with a @p label.
   [[nodiscard]] constexpr auto nodes(Label label) const noexcept {
-    return self_().entities(meta::type_v<NodeIndex>, label) |
+    return self_().entities(label, meta::type_v<NodeIndex>) |
            detail_::to_node_view_(self_());
   }
 
@@ -402,19 +404,18 @@ public:
   }
   /// @brief Range of the edges with @p label.
   [[nodiscard]] constexpr auto edges(Label label) const noexcept {
-    return self_().entities(meta::type_v<EdgeIndex>, label) |
+    return self_().entities(label, meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(self_());
   }
 
   /// @brief Range of the faces.
-  template<mesh Mesh>
   [[nodiscard]] constexpr auto faces() const noexcept {
     return self_().entities(meta::type_v<FaceIndex<Derived>>) |
            detail_::to_face_view_(self_());
   }
   /// @brief Range of the faces with @p label.
   [[nodiscard]] constexpr auto faces(Label label) const noexcept {
-    return self_().entities(meta::type_v<FaceIndex<Derived>>, label) |
+    return self_().entities(label, meta::type_v<FaceIndex<Derived>>) |
            detail_::to_face_view_(self_());
   }
 
@@ -425,7 +426,7 @@ public:
   }
   /// @brief Range of the cells with @p label.
   [[nodiscard]] constexpr auto cells(Label label) const noexcept {
-    return self_().entities(meta::type_v<CellIndex<Derived>>, label) |
+    return self_().entities(label, meta::type_v<CellIndex<Derived>>) |
            detail_::to_cell_view_(self_());
   }
 
@@ -451,26 +452,26 @@ public:
 
   /// @brief Range of the boundary nodes.
   [[nodiscard]] constexpr auto labeled_nodes() const noexcept {
-    return nodes(self_()) | std::views::drop(self_().num_entities( //
-                                meta::type_v<NodeIndex>, Label{0}));
+    return nodes() | std::views::drop(self_().num_entities(
+                         Label{0}, meta::type_v<NodeIndex>));
   }
 
   /// @brief Range of the boundary edges.
   [[nodiscard]] constexpr auto labeled_edges() const noexcept {
-    return edges(self_()) | std::views::drop(self_().num_entities( //
-                                meta::type_v<EdgeIndex>, Label{0}));
+    return edges() | std::views::drop(self_().num_entities(
+                         Label{0}, meta::type_v<EdgeIndex>));
   }
 
   /// @brief Range of the boundary faces.
   [[nodiscard]] constexpr auto labeled_faces() const noexcept {
-    return faces(self_()) | std::views::drop(self_().num_entities(
-                                meta::type_v<FaceIndex<Derived>>, Label{0}));
+    return faces() | std::views::drop(self_().num_entities(
+                         Label{0}, meta::type_v<FaceIndex<Derived>>));
   }
 
   /// @brief Range of the boundary cells.
   [[nodiscard]] constexpr auto labeled_cells() const noexcept {
-    return cells(self_()) | std::views::drop(self_().num_entities(
-                                meta::type_v<CellIndex<Derived>>, Label{0}));
+    return cells() | std::views::drop(self_().num_entities(
+                         Label{0}, meta::type_v<CellIndex<Derived>>));
   }
 
 }; // class MeshInterface

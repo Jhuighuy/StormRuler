@@ -128,11 +128,6 @@ tCubicSlopeLimiter::operator()(real_t du_min, real_t du_max, real_t du_face,
   return limiter;
 } // tCubicSlopeLimiter::operator()
 
-// ------------------------------------------------------------------------------------
-// //
-// ------------------------------------------------------------------------------------
-// //
-
 /**
  * Compute second slope coefficient.
  */
@@ -169,11 +164,6 @@ inline real_t tCubicSecondLimiter::operator()(real_t limiter, real_t du_min,
   FEATHERS_ENSURE(!"Broken cubic second limiter.");
 } // tCubicSecondLimiter::get_slope_coefficient
 
-// ------------------------------------------------------------------------------------
-// //
-// ------------------------------------------------------------------------------------
-// //
-
 /**
  * Compute cell-centered gradient limiter coefficients.
  */
@@ -183,7 +173,7 @@ void tGradientLimiterScheme<tSlopeLimiter, tSecondLimiter>::get_cell_limiter(
     const tVectorField& grad_u) const {
   /* Compute the cell-centered
    * limiting coefficients and averages. */
-  ForEach(int_cell_views(*m_mesh), [&](CellView cell) {
+  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
     static const real_t k = 0.1;
     const real_t eps_sqr = std::pow(k * cell.volume(), 3);
     /* Find the largest negative and positive differences
@@ -192,7 +182,8 @@ void tGradientLimiterScheme<tSlopeLimiter, tSecondLimiter>::get_cell_limiter(
     du_min = u[cell];
     FEATHERS_TMP_SCALAR_FIELD(du_max, num_vars);
     du_max = u[cell];
-    cell.for_each_face_cells([&](CellView cell_inner, CellView cell_outer) {
+    cell.for_each_face_cells([&](CellView<Mesh> cell_inner,
+                                 CellView<Mesh> cell_outer) {
       for (size_t i = 0; i < num_vars; ++i) {
         du_min[i] =
             std::min(du_min[i], std::min(u[cell_outer][i], u[cell_inner][i]));
@@ -208,7 +199,7 @@ void tGradientLimiterScheme<tSlopeLimiter, tSecondLimiter>::get_cell_limiter(
     /* Compute slope limiting coefficients:
      * clamp the Node delta with computed local delta extrema. */
     lim_u[cell].fill(1.0);
-    cell.for_each_face([&](FaceView face) {
+    cell.for_each_face([&](FaceView<Mesh> face) {
       const vec3_t dr = face.center() - cell.center();
       for (size_t i = 0; i < num_vars; ++i) {
         const real_t du_face = glm::dot(grad_u[cell][i], dr);

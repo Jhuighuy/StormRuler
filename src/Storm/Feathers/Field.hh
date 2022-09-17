@@ -35,6 +35,10 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <ranges>
+
+#define FEATHERS_ENSURE(x) STORM_ASSERT_(x, "FEATHERS_ENSURE!")
+#define FEATHERS_NOT_USED(...)
 
 namespace Storm::Feathers {
 
@@ -49,6 +53,11 @@ using mat4_t = glm::dmat4;
 template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
 using Mesh = UnstructuredMesh<3, 2>;
+
+template<std::ranges::input_range Range>
+void ForEach(Range&& r, auto f) {
+  std::ranges::for_each(r, f);
+}
 
 #define FEATHERS_ALLOCA(T, size) static_cast<T*>(alloca(sizeof(T) * (size)))
 

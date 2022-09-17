@@ -28,12 +28,12 @@
 
 #include "FluxScheme.hh"
 
-namespace {
-const double gamma = Gamma;
-const double gamma_2 = (gamma + 1.0) / (2.0 * gamma);
-} // namespace
-
 namespace Storm::Feathers {
+
+namespace {
+  const double gamma = Gamma;
+  const double gamma_2 = (gamma + 1.0) / (2.0 * gamma);
+} // namespace
 
 /**
  * Calculate the Harten-Lax-van Leer-Einfeldt numerical flux.

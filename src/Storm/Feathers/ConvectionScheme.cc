@@ -37,8 +37,8 @@ void cUpwindConvectionScheme::get_cell_convection(size_t num_vars,
                                                   tScalarField& div_f,
                                                   const tScalarField& u) const {
   /* Compute the first order numerical fluxes. */
-  tScalarField flux_u(num_vars, m_mesh->faces().size());
-  ForEach(face_views(*m_mesh), [&](FaceView face) {
+  tScalarField flux_u(num_vars, m_mesh->num_faces());
+  ForEach(m_mesh->faces(), [&](FaceView<Mesh> face) {
     const CellView cell_outer = face.outer_cell();
     const CellView cell_inner = face.inner_cell();
 
@@ -48,11 +48,11 @@ void cUpwindConvectionScheme::get_cell_convection(size_t num_vars,
   });
 
   /* Compute the first order convection. */
-  ForEach(int_cell_views(*m_mesh), [&](CellView cell) {
+  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
     div_f[cell] = {};
-    cell.for_each_face([&](FaceView face) {
-      const CellView cell_outer = face.outer_cell();
-      const CellView cell_inner = face.inner_cell();
+    cell.for_each_face([&](FaceView<Mesh> face) {
+      const CellView<Mesh> cell_outer = face.outer_cell();
+      const CellView<Mesh> cell_inner = face.inner_cell();
       const real_t ds = face.area();
       if (cell_outer == cell) {
         for (size_t i = 0; i < num_vars; ++i) {
@@ -78,18 +78,18 @@ void cUpwindConvectionScheme::get_cell_convection(size_t num_vars,
 void cUpwind2ConvectionScheme::get_cell_convection(
     size_t num_vars, tScalarField& div_f, const tScalarField& u) const {
   /* Compute the second order limited gradients. */
-  tVectorField grad_u(num_vars, m_mesh->cells().size());
+  tVectorField grad_u(num_vars, m_mesh->num_cells());
   m_gradient_scheme->get_gradients(num_vars, grad_u, u);
 
-  tScalarField lim_u(num_vars, m_mesh->cells().size());
+  tScalarField lim_u(num_vars, m_mesh->num_cells());
   m_gradient_limiter_scheme->get_cell_limiter(num_vars, lim_u, u, grad_u);
 
   /* Compute the second order numerical fluxes:
    * integrate the numerical flux over the face Nodes. */
-  tScalarField flux_f(num_vars, m_mesh->faces().size());
-  ForEach(face_views(*m_mesh), [&](FaceView face) {
-    const CellView cell_outer = face.outer_cell();
-    const CellView cell_inner = face.inner_cell();
+  tScalarField flux_f(num_vars, m_mesh->num_faces());
+  ForEach(m_mesh->faces(), [&](FaceView<Mesh> face) {
+    const CellView<Mesh> cell_outer = face.outer_cell();
+    const CellView<Mesh> cell_inner = face.inner_cell();
     const vec3_t dr_outer = face.center() - cell_outer.center();
     const vec3_t dr_inner = face.center() - cell_inner.center();
     FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
@@ -108,11 +108,11 @@ void cUpwind2ConvectionScheme::get_cell_convection(
   });
 
   /* Compute the second order convection. */
-  ForEach(int_cell_views(*m_mesh), [&](CellView cell) {
+  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
     div_f[cell] = {};
-    cell.for_each_face([&](FaceView face) {
-      const CellView cell_outer = face.outer_cell();
-      const CellView cell_inner = face.inner_cell();
+    cell.for_each_face([&](FaceView<Mesh> face) {
+      const CellView<Mesh> cell_outer = face.outer_cell();
+      const CellView<Mesh> cell_inner = face.inner_cell();
       const real_t ds = face.area();
       if (cell_outer == cell) {
         for (size_t i = 0; i < num_vars; ++i) {

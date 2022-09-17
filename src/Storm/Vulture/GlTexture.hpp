@@ -34,6 +34,7 @@ namespace Storm::Vulture::gl {
 /// @brief OpenGL texture binding target.
 enum class TextureTarget : GLenum {
   texture2D = GL_TEXTURE_2D,
+  multisample_texture2D = GL_TEXTURE_2D_MULTISAMPLE,
   texture_buffer = GL_TEXTURE_BUFFER,
 }; // enum class TextureTarget
 
@@ -161,24 +162,23 @@ protected:
 
 /// @brief OpenGL 2D texture.
 template<pixel Pixel>
-class Texture2D : public Texture {
+class Texture2D final : public Texture {
 public:
 
   /// @brief Construct a 2D texture.
   Texture2D() = default;
 
-  /// @brief Consruct a 2D texture with @p width and @p height;
-  Texture2D(GLsizei width, GLsizei height, const Pixel* data = nullptr)
-      : Texture2D{} {
+  /// @brief Consruct a 2D texture with @p width, @p height and @p data.
+  Texture2D(GLsizei width, GLsizei height, const Pixel* data = nullptr) {
     assign(width, height);
   }
 
-  /// @brief Bind the texture buffer to @p slot.
+  /// @brief Bind the 2D texture buffer to @p slot.
   void bind(size_t slot) const {
     bind_(TextureTarget::texture2D, slot);
   }
 
-  /// @brief Assign the texture @p width, @p height and @p data.
+  /// @brief Assign the 2D texture @p width, @p height and @p data.
   void assign(GLsizei width, GLsizei height, const Pixel* data = nullptr) {
     bind_(TextureTarget::texture2D);
     glTexImage2D(GL_TEXTURE_2D,
@@ -193,7 +193,7 @@ public:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   }
 
-  /// @brief Read the texture into the pixel buffer object.
+  /// @brief Read the 2D texture into the pixel buffer object.
   /// @see https://riptutorial.com/opengl/example/28872/using-pbos
   void read_pixels(Buffer<Pixel>& buffer) {
     buffer.bind(BufferTarget::pixel_pack_buffer);
@@ -204,8 +204,37 @@ public:
 
 }; // class Texture2D
 
+/// @brief OpenGL multisampled 2D texture.
+template<pixel Pixel>
+class MultisampledTexture2D final : public Texture {
+public:
+
+  /// @brief Construct a multisampled 2D texture.
+  MultisampledTexture2D() = default;
+
+  /// @brief Consruct a multisampled 2D texture with @p width, 
+  /// @p height and @p num_samples.
+  MultisampledTexture2D(GLsizei width, GLsizei height, GLsizei num_samples = 4) {
+    assign(width, height, num_samples);
+  }
+
+  /// @brief Bind the multisampled 2D texture buffer to @p slot.
+  void bind(size_t slot) const {
+    bind_(TextureTarget::multisample_texture2D, slot);
+  }
+
+  /// @brief Assign the multisampled 2D texture @p width, @p height and @p num_samples.
+  void assign(GLsizei width, GLsizei height, GLsizei num_samples = 4) {
+    bind_(TextureTarget::multisample_texture2D);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, num_samples, 
+                            pixel_desc_v<Pixel>.internal_format, width, height,
+                            /*fixed_sample_locations*/ GL_TRUE);
+  }
+
+}; // class MultisampledTexture2D 
+
 /// @brief OpenGL texture buffer.
-class TextureBuffer : public Texture {
+class TextureBuffer final : public Texture {
 public:
 
   /// @brief Construct a texture.

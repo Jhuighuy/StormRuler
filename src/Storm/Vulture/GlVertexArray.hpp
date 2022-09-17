@@ -149,12 +149,12 @@ private:
   template<vertex_attrib... Types>
   static void attach_vertex_attribs_(const Buffer<Types>&... vertex_buffers) {
     GLuint index = 0;
-    (attach_single_vertex_attrib(index++, vertex_buffers), ...);
+    (attach_single_vertex_attrib_(index++, vertex_buffers), ...);
   }
 
   template<vertex_attrib Type>
-  static void attach_single_vertex_attrib(GLuint index,
-                                          const Buffer<Type>& vertex_buffer) {
+  static void attach_single_vertex_attrib_(GLuint index,
+                                           const Buffer<Type>& vertex_buffer) {
     vertex_buffer.bind(BufferTarget::array_buffer);
     glEnableVertexAttribArray(index);
     glVertexAttribPointer(index, //

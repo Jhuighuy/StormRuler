@@ -25,6 +25,7 @@
 #include <Storm/Vulture/GlTexture.hpp>
 
 #include <array>
+#include <concepts>
 
 #include <GL/glew.h>
 
@@ -44,8 +45,8 @@ public:
   }
 
   /// @brief Construct a framebuffer with @p textures.
-  template<pixel... Pixels>
-  explicit Framebuffer(const Texture2D<Pixels>&... textures) : Framebuffer{} {
+  // template<pixel... Pixels>
+  explicit Framebuffer(const auto&... textures) : Framebuffer{} {
     assign(textures...);
   }
 
@@ -64,33 +65,47 @@ public:
     return framebuffer_id_;
   }
 
-  /// @brief Build the framebuffer with @p textures.
-  template<pixel... Pixels>
-  void assign(const Texture2D<Pixels>&... textures) {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
-    std::array<GLenum, sizeof...(textures)> attachments{};
-    const auto attach_texture =
-        [&]<class Pixel>(size_t index, const Texture2D<Pixel>& texture) {
-          /// @todo Depth attachments!
-          attachments[index] = GL_COLOR_ATTACHMENT0 + index;
-          glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
-                               texture, /*level*/ 0);
-        };
-    size_t index = 0;
-    (attach_texture(index++, textures), ...);
-    glDrawBuffers(GLsizei{sizeof...(textures)}, attachments.data());
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-      STORM_THROW_GL_("Failed to initialize framebuffer!");
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
-
   /// @brief Draw to framebuffer.
   template<std::invocable DrawFunc>
   void draw_into(DrawFunc draw_func) {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
     draw_func();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+
+  /// @brief Build the framebuffer with @p textures.
+  // template<pixel... Pixels>
+  void assign(const auto&... textures) {
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
+    const auto attachments = attach_textures_(textures...);
+    glDrawBuffers(static_cast<GLsizei>(attachments.size()), attachments.data());
+    auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+      STORM_ERROR_("Failed to initialize framebuffer, status = {:#x}!", status);
+      STORM_THROW_GL_("Failed to initialize framebuffer, status = {:#x}!", status);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+
+private:
+
+  static auto attach_textures_(const auto&... textures) {
+    GLenum index = 0;
+    std::array attachments{attach_single_texture_(index++, textures)...};
+    return attachments;
+  }
+
+  template<pixel Pixel>
+  static GLenum attach_single_texture_(GLenum index, const Texture2D<Pixel>& texture) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D,
+      texture, /*level*/ 0);
+    return GL_COLOR_ATTACHMENT0 + index;
+  }
+  template<pixel Pixel>
+  static GLenum attach_single_texture_(GLenum index, const MultisampledTexture2D<Pixel>& texture) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D_MULTISAMPLE,
+      texture, /*level*/ 0);
+    return GL_COLOR_ATTACHMENT0 + index;
   }
 
 }; // class Framebuffer

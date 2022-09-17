@@ -24,8 +24,8 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/MatrixDense.hpp>
-#include <Storm/Blass/Vector.hpp>
+#include <Storm/Bittern/MatrixDense.hpp>
+#include <Storm/Bittern/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 

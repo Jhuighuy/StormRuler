@@ -27,7 +27,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Blass/MatrixView.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
 
 #include <array>
 #include <initializer_list>
@@ -70,18 +70,18 @@ public:
                                    NumCols != std::dynamic_extent)*/
       = default;
   constexpr explicit DenseMatrix(size_t num_rows) //
-      requires(NumRows == std::dynamic_extent &&  //
-               NumCols != std::dynamic_extent)
+    requires (NumRows == std::dynamic_extent &&   //
+              NumCols != std::dynamic_extent)
       : num_rows_{num_rows}, //
         coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
   constexpr explicit DenseMatrix(size_t num_cols) //
-      requires(NumRows != std::dynamic_extent &&  //
-               NumCols == std::dynamic_extent)
+    requires (NumRows != std::dynamic_extent &&   //
+              NumCols == std::dynamic_extent)
       : num_cols_{num_cols}, //
         coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
   constexpr DenseMatrix(size_t num_rows, size_t num_cols) //
-      requires(NumRows == std::dynamic_extent &&          //
-               NumCols == std::dynamic_extent)
+    requires (NumRows == std::dynamic_extent &&           //
+              NumCols == std::dynamic_extent)
       : num_rows_{num_rows}, num_cols_{num_cols}, //
         coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
   /// @}
@@ -113,22 +113,25 @@ public:
     }
   }
 
-  constexpr void assign(size_t num_rows)         //
-      requires(NumRows == std::dynamic_extent && //
-               NumCols != std::dynamic_extent) {
+  constexpr void assign(size_t num_rows)        //
+    requires (NumRows == std::dynamic_extent && //
+              NumCols != std::dynamic_extent)
+  {
     num_rows_ = num_rows;
     coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
   }
-  constexpr void assign(size_t num_cols)         //
-      requires(NumRows != std::dynamic_extent && //
-               NumCols == std::dynamic_extent) {
+  constexpr void assign(size_t num_cols)        //
+    requires (NumRows != std::dynamic_extent && //
+              NumCols == std::dynamic_extent)
+  {
     num_cols_ = num_cols;
     coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
   }
   constexpr void assign(size_t num_rows,
-                        size_t num_cols)         //
-      requires(NumRows == std::dynamic_extent && //
-               NumCols == std::dynamic_extent) {
+                        size_t num_cols)        //
+    requires (NumRows == std::dynamic_extent && //
+              NumCols == std::dynamic_extent)
+  {
     num_rows_ = num_rows, num_cols_ = num_cols;
     coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
   }

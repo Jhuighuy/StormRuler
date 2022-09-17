@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <Storm/Blass/Matrix.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <ostream>
 

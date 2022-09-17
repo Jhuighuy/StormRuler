@@ -27,7 +27,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Blass/MatrixView.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
 
 namespace Storm {
 

@@ -37,8 +37,8 @@
 
 #include <Storm/Utils/Banner.hpp>
 
-#include <Storm/Blass/FastVector.hpp>
-#include <Storm/Blass/Mat.hpp>
+#include <Storm/Bittern/FastVector.hpp>
+#include <Storm/Bittern/Mat.hpp>
 
 #if 1
 #include <Storm/Mallard/IoTetgen.hpp>
@@ -46,7 +46,7 @@
 #include <Storm/Mallard/MeshUnstructured.hpp>
 #include <Storm/Mallard/Shape.hpp>
 #include <Storm/Mallard/Visualizer.hpp>
-// #include <Storm/Blass/Matrix.hpp>
+// #include <Storm/Bittern/Matrix.hpp>
 #endif
 
 #include "NVT/Nvt.hpp"

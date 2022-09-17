@@ -20,7 +20,7 @@
 
 #ifndef STORM_INSIDE_MATRIX_VIEW_HPP_
 #error Do not include this header directly, \
-       use <Storm/Blass/MatrixView.hpp> instead.
+       use <Storm/Bittern/MatrixView.hpp> instead.
 #endif
 
 #include <array>

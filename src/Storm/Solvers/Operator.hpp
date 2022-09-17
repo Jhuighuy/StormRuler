@@ -29,8 +29,8 @@
 
 #include <Storm/Utils/Object.hpp>
 
-#include <Storm/Blass/MatrixView.hpp>
-#include <Storm/Blass/Vector.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Bittern/Vector.hpp>
 
 #include <cmath>
 #include <functional>

@@ -25,7 +25,7 @@
 #include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/Matrix.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <concepts>
 #include <type_traits>
@@ -217,9 +217,9 @@ using forward_as_matrix_view_t =
 } // namespace Storm
 
 #define STORM_INSIDE_MATRIX_VIEW_HPP_
-#include <Storm/Blass/MatrixViewFunctional.inl>
-#include <Storm/Blass/MatrixViewMaking.inl>
-#include <Storm/Blass/MatrixViewSlicing.inl>
+#include <Storm/Bittern/MatrixViewFunctional.inl>
+#include <Storm/Bittern/MatrixViewMaking.inl>
+#include <Storm/Bittern/MatrixViewSlicing.inl>
 #undef STORM_INSIDE_MATRIX_VIEW_HPP_
 
 #include "MatrixAction.hpp"

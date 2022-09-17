@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include <Storm/Blass/Vector.hpp>
+#include <Storm/Bittern/Vector.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 

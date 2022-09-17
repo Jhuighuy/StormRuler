@@ -32,11 +32,6 @@
 
 namespace Storm {
 
-struct LabelTag;
-
-/// @brief Label index type.
-using Label = Index<LabelTag>;
-
 template<crtp_derived Derived>
 class MeshInterface;
 

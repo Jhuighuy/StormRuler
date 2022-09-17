@@ -19,12 +19,16 @@
 # IN THE SOFTWARE.
 
 # Ignore everything by default, but scan all directories.
-
 *
 *~
 !*/
 
-# Source files.
+# Git, Markdown, Doxygen, etc.
+!.git*
+!.clang-format
+!ext/*
+!*.md
+!Doxyfile
 
 # Fortran and C/C++.
 !*.f
@@ -40,10 +44,8 @@
 !*.hpp
 !*.hxx
 !*.inl
-
-# Lua and MATLAB.
-!*.lua
 !*.m
+!*.mm
 
 # GLSL
 !*.glsl
@@ -61,10 +63,3 @@
 !CMakeLists.txt
 cmake_install.cmake
 CMakeFiles/
-
-# Git, Markdown, Doxygen, etc.
-!.git*
-!.clang-format
-!ext/*
-!*.md
-!Doxyfile

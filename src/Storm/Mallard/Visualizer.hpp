@@ -50,20 +50,20 @@ namespace Storm::Vulture {
 template<mesh Mesh>
 void visualize_mesh(const Mesh& mesh) {
   IndexedVector<CellIndex<Mesh>, GLfloat> cell_data{};
-  std::ranges::copy(
-      mesh.cells() | std::views::transform([](CellView<Mesh> cell) {
-        const real_t v = std::sin(3.0 * cell.barycenter_position().x) *
-                         std::cos(7.0 * cell.barycenter_position().y);
-        return static_cast<GLfloat>((v + 1.0) / 2.0);
-      }),
-      std::back_inserter(cell_data));
+  std::ranges::copy(mesh.cells() |
+                        std::views::transform([](CellView<Mesh> cell) {
+                          const real_t v = std::sin(3.0 * cell.center().x) *
+                                           std::cos(7.0 * cell.center().y);
+                          return static_cast<GLfloat>((v + 1.0) / 2.0);
+                        }),
+                    std::back_inserter(cell_data));
 
   gl::Framework framework{};
 
   // Setup window.
   constexpr static const char* window_title = "Storm::Vulture Visualizer";
-  constexpr static size_t window_width = 1600;
-  constexpr static size_t window_height = 900;
+  constexpr static size_t window_width = 1920;
+  constexpr static size_t window_height = 1080;
   gl::Window window{};
   window.load(framework, window_title, window_width, window_height);
   gl::BindWindow bind_window{window};
@@ -199,6 +199,8 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::m, [&] { draw_edges = !draw_edges; });
   bool draw_cells = true;
   window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
+  bool debug_labels = false;
+  window.on_key_up(gl::Key::l, [&] { debug_labels = !debug_labels; });
 
   const auto select_node = [&](NodeIndex node_index, GLuint state) {
     NodeView node{mesh, node_index};
@@ -304,7 +306,6 @@ void visualize_mesh(const Mesh& mesh) {
 
     glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, UINT64_MAX);
 
-    bool debug_labels = false;
     const auto entity = entity_texture_pixel_buffer.get(
         window.cursor_pos_y() * window_width + window.cursor_pos_x());
     const auto entity_type = entity.x;

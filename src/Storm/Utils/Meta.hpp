@@ -41,7 +41,7 @@ namespace Storm::meta {
 
 struct empty_t {};
 
-inline constexpr empty_t empty{};
+inline constexpr empty_t empty_v{};
 
 //
 ///////////////////////////////////
@@ -252,7 +252,7 @@ struct append_fn : transform_fn<append_fn<X>> {
 }; // struct append_fn
 
 template<class X>
-inline constexpr append_fn<X> append;
+inline constexpr append_fn<X> append{};
 
 template<class X, class List>
 using append_t = decltype(append<X>(List{}));
@@ -272,7 +272,7 @@ struct prepend_fn : transform_fn<prepend_fn<X>> {
 }; // struct prepend_fn
 
 template<class X>
-inline constexpr prepend_fn<X> prepend;
+inline constexpr prepend_fn<X> prepend{};
 
 template<class X, class List>
 using prepend_t = decltype(prepend<X>(List{}));
@@ -293,7 +293,7 @@ struct reverse_fn : transform_fn<reverse_fn> {
   }
 }; // struct reverse_fn
 
-inline constexpr reverse_fn reverse;
+inline constexpr reverse_fn reverse{};
 
 template<class List>
 using reverse_t = decltype(reverse(List{}));
@@ -319,7 +319,7 @@ struct unique_fn : transform_fn<unique_fn> {
   }
 }; // struct unique_fn
 
-inline constexpr unique_fn unique;
+inline constexpr unique_fn unique{};
 
 template<class List>
 using unique_t = decltype(unique(List{}));
@@ -373,7 +373,7 @@ template<class X, class Y>
 using pair_list_t = typename pair_list<X, Y>::type;
 
 template<class X, class Y>
-inline constexpr pair_list_t<X, Y> pair_list_v;
+inline constexpr pair_list_t<X, Y> pair_list_v{};
 
 //
 ///////////////////////////////////
@@ -442,7 +442,7 @@ struct concat_fn : reduce_fn<concat_fn> {
   }
 }; // struct concat_fn
 
-inline constexpr concat_fn concat;
+inline constexpr concat_fn concat{};
 
 template<class... Lists>
 using concat_t = decltype(concat(Lists{}...));

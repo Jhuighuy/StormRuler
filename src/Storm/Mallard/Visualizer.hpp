@@ -205,9 +205,6 @@ void visualize_mesh(const Mesh& mesh) {
   window.on_key_up(gl::Key::b, [&] { draw_cells = !draw_cells; });
   bool debug_labels = false;
   window.on_key_up(gl::Key::l, [&] { debug_labels = !debug_labels; });
-  bool enable_multisampling = false;
-  window.on_key_up(gl::Key::z,
-                   [&] { enable_multisampling = !enable_multisampling; });
 
   const auto select_node = [&](NodeIndex node_index, GLuint state) {
     NodeView node{mesh, node_index};
@@ -250,7 +247,7 @@ void visualize_mesh(const Mesh& mesh) {
 
   window.main_loop([&] {
     // Render the screen into framebuffer.
-    (enable_multisampling ? ms_framebuffer : framebuffer).draw_into([&]() {
+    ms_framebuffer.draw_into([&]() {
       glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -296,25 +293,23 @@ void visualize_mesh(const Mesh& mesh) {
       }
     });
 
-    // Switching back from MSAA does not work for some reason.
-    if (enable_multisampling) {
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
-      glReadBuffer(GL_COLOR_ATTACHMENT0);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-      glDrawBuffer(GL_COLOR_ATTACHMENT0);
-      glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
-                        window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    // Copy resolve mutisampling.
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
+                      window_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
-      glReadBuffer(GL_COLOR_ATTACHMENT1);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
-      glDrawBuffer(GL_COLOR_ATTACHMENT1);
-      glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
-                        window_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, ms_framebuffer);
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    glBlitFramebuffer(0, 0, window_width, window_height, 0, 0, window_width,
+                      window_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    }
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     // Query the pixels read.
     entity_texture.read_pixels(entity_texture_pixel_buffer);

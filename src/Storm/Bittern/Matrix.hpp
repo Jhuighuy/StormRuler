@@ -65,8 +65,7 @@ MatrixShape(Rows, size_t_constant<NumCols>)
 template<std::integral Rows, std::integral Cols>
 MatrixShape(Rows, Cols) -> MatrixShape<size_t, size_t>;
 
-/// @brief Compare the matrix shapes @p a and @p b.
-/// @{
+/// @brief Check if matrix shapes @p a and @p b are equal.
 template<matrix_extent Rows1, matrix_extent Cols1, //
          matrix_extent Rows2, matrix_extent Cols2>
 [[nodiscard]] constexpr bool
@@ -74,14 +73,6 @@ operator==(const MatrixShape<Rows1, Cols1>& a,
            const MatrixShape<Rows2, Cols2>& b) noexcept {
   return a.num_rows == b.num_rows && a.num_cols == b.num_cols;
 }
-template<matrix_extent Rows1, matrix_extent Cols1, //
-         matrix_extent Rows2, matrix_extent Cols2>
-[[nodiscard]] constexpr bool
-operator!=(const MatrixShape<Rows1, Cols1>& a,
-           const MatrixShape<Rows2, Cols2>& b) noexcept {
-  return a.num_rows != b.num_rows || a.num_cols != b.num_cols;
-}
-/// @}
 
 /// @brief Check if type is a matrix shape.
 /// @{

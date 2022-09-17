@@ -213,7 +213,7 @@ template<viewable_matrix Matrix>
   }
 }
 
-/// @brief Suitable matrix view type for a vieable matrix.
+/// @brief Suitable matrix view type for a viewable matrix.
 template<viewable_matrix Matrix>
 using forward_as_matrix_view_t =
     decltype(forward_as_matrix_view(std::declval<Matrix>()));

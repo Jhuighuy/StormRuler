@@ -30,34 +30,20 @@
 
 namespace Storm::Feathers {
 
-/** Abstract cell-centered gradient scheme. */
-class iGradientScheme : public tObject<iGradientScheme> {
-public:
-
-  /** Compute cell-centered gradients. */
-  virtual void get_gradients(size_t num_vars, tVectorField& grad_u,
-                             const tScalarField& u) const = 0;
-
-}; // class iGradientScheme
-
-/**
- * Weighted Least-Squares gradient estimation scheme, cell-based:
- * computes cell-centered gradients based on the cell-centered values.
- *
- * This gradient scheme is a second-order scheme for any meshes.
- * Also, this gradient scheme is by far the fastest one.
- */
-class cLeastSquaresGradientScheme final : public iGradientScheme {
+/// @brief Weighted Least-Squares gradient estimation scheme, cell-based:
+/// computes cell-centered gradients based on the cell-centered values.
+/*template<mesh Mesh>*/
+class LeastSquaresGradientScheme final {
 private:
 
-  std::shared_ptr<const Mesh> m_mesh;
+  const Mesh* p_mesh_;
   tMatrixField m_inverse_matrices;
 
 public:
 
   /** Initialize the gradient scheme. */
-  explicit cLeastSquaresGradientScheme(std::shared_ptr<const Mesh> mesh)
-      : m_mesh(std::move(mesh)), m_inverse_matrices(1, m_mesh->cells().size()) {
+  /*constexpr*/ explicit LeastSquaresGradientScheme(const Mesh& mesh)
+      : p_mesh_{&mesh}, m_inverse_matrices(1, p_mesh_->num_cells()) {
     init_gradients_();
   }
 
@@ -66,7 +52,7 @@ private:
   void init_gradients_() {
     /* Compute the least-squares
      * problem matrices for the interior Cells. */
-    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+    ForEach(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
@@ -79,7 +65,7 @@ private:
      * cells. Use the same stencil as for the interior cell, but centered to a
      * boundary cell. */
     for_each_bnd_face_cells(
-        *m_mesh, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+        *p_mesh_, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
           mat3_t& mat = (m_inverse_matrices[cell_outer][0] = mat3_t(0.0));
           const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
           mat += glm::outerProduct(dr, dr);
@@ -96,7 +82,7 @@ private:
 
     /* Compute the inverse of the least squares problem matrices.
      * ( Matrix is stabilized by a small number, added to the diagonal. ) */
-    ForEach(m_mesh->cells(), [&](CellView<Mesh> cell) {
+    ForEach(p_mesh_->cells(), [&](CellView<Mesh> cell) {
       static const mat3_t eps(1e-14);
       mat3_t& mat = m_inverse_matrices[cell][0];
       mat = glm::inverse(mat + eps);
@@ -107,10 +93,10 @@ public:
 
   /** Compute cell-centered gradients. */
   void get_gradients(size_t num_vars, tVectorField& grad_u,
-                     const tScalarField& u) const final {
+                     const tScalarField& u) const {
     /* Compute the least-squares
      * problem right-hand statements for the interior Cells. */
-    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+    ForEach(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       grad_u[cell].fill(vec3_t(0.0));
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
@@ -125,7 +111,7 @@ public:
      * cells. Use the same stencil as for the interior cell, but centered to a
      * boundary cell. */
     for_each_bnd_face_cells(
-        *m_mesh, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+        *p_mesh_, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
           grad_u[cell_outer].fill(vec3_t(0.0));
           const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
           for (size_t i = 0; i < num_vars; ++i) {
@@ -146,7 +132,7 @@ public:
         });
 
     /* Solve the least-squares problem. */
-    ForEach(m_mesh->cells(), [&](CellView<Mesh> cell) {
+    ForEach(p_mesh_->cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < num_vars; ++i) {
         const mat3_t& mat = m_inverse_matrices[cell][0];
         grad_u[cell][i] = mat * grad_u[cell][i];
@@ -154,6 +140,6 @@ public:
     });
   }
 
-}; // class cLeastSquaresGradientScheme
+}; // class LeastSquaresGradientScheme
 
 } // namespace Storm::Feathers

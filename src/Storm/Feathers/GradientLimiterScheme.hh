@@ -32,6 +32,8 @@
 
 #include "Field.hh"
 
+#include <type_traits>
+
 namespace Storm::Feathers {
 
 /// @brief Barth-Jespersen (minmod) slope limiter.
@@ -183,6 +185,8 @@ public:
 /// @endverbatim
 template</*mesh Mesh,*/
          class SlopeLimiter, class SecondLimiter = DummySecondLimiter>
+  requires std::is_object_v<SlopeLimiter> &&
+           std::is_object_v<DummySecondLimiter>
 class GradientLimiterScheme final {
 private:
 

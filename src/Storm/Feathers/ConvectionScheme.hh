@@ -51,21 +51,21 @@ public:
 class cUpwindConvectionScheme final : public iConvectionScheme {
 public:
 
-  std::shared_ptr<const Mesh> m_mesh;
+  std::shared_ptr<const Mesh> p_mesh_;
   std::shared_ptr<iFluxScheme> m_flux;
 
 public:
 
   explicit cUpwindConvectionScheme(std::shared_ptr<const Mesh> mesh)
-      : m_mesh(std::move(mesh)),
+      : p_mesh_(std::move(mesh)),
         m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()) {}
 
   /** Compute the first-order upwind nonlinear convection. */
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
-    ForEach(m_mesh->interior_cells(),
+    ForEach(p_mesh_->interior_cells(),
             [&](CellView<Mesh> cell) { div_f[cell] = {}; });
-    std::ranges::for_each(m_mesh->faces(), [&](FaceView<Mesh> face) {
+    std::ranges::for_each(p_mesh_->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();
       FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
@@ -85,34 +85,39 @@ public:
  * Piecewise-linear upwind convection scheme.
  * This is a second-order scheme.
  */
-template<class GradientLimiterScheme = Cubic2GradientLimiterScheme>
+template</*mesh Mesh,*/
+         class GradientScheme, class GradientLimiterScheme>
+  requires std::is_object_v<GradientScheme> &&
+           std::is_object_v<GradientLimiterScheme>
 class cUpwind2ConvectionScheme final : public iConvectionScheme {
 public:
 
-  std::shared_ptr<Mesh> m_mesh;
+  const Mesh* p_mesh_;
   std::shared_ptr<iFluxScheme> m_flux;
-  std::shared_ptr<iGradientScheme> m_gradient_scheme;
-  std::shared_ptr<GradientLimiterScheme> m_gradient_limiter_scheme;
+  STORM_NO_UNIQUE_ADDRESS_ GradientScheme gradient_scheme_;
+  STORM_NO_UNIQUE_ADDRESS_ GradientLimiterScheme gradient_limiter_scheme_;
 
 public:
 
-  explicit cUpwind2ConvectionScheme(std::shared_ptr<Mesh> mesh)
-      : m_mesh(std::move(mesh)),
-        m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()),
-        m_gradient_scheme(new cLeastSquaresGradientScheme(m_mesh)),
-        m_gradient_limiter_scheme(new Cubic2GradientLimiterScheme(*m_mesh)) {}
+  /// @brief Construct the second order upwind convection scheme.
+  constexpr explicit cUpwind2ConvectionScheme(
+      const Mesh& mesh, GradientScheme gradient_scheme,
+      GradientLimiterScheme gradient_limiter_scheme)
+      : p_mesh_{&mesh}, m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()),
+        gradient_scheme_{std::move(gradient_scheme)},
+        gradient_limiter_scheme_{std::move(gradient_limiter_scheme)} {}
 
   /** Compute the second-order upwind nonlinear convection. */
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
-    tVectorField grad_u(num_vars, m_mesh->num_cells());
-    m_gradient_scheme->get_gradients(num_vars, grad_u, u);
-    tScalarField lim_u(num_vars, m_mesh->num_cells());
-    m_gradient_limiter_scheme->get_cell_limiter(num_vars, lim_u, u, grad_u);
+    tVectorField grad_u(num_vars, p_mesh_->num_cells());
+    gradient_scheme_.get_gradients(num_vars, grad_u, u);
+    tScalarField lim_u(num_vars, p_mesh_->num_cells());
+    gradient_limiter_scheme_.get_cell_limiter(num_vars, lim_u, u, grad_u);
 
-    ForEach(m_mesh->interior_cells(),
+    ForEach(p_mesh_->interior_cells(),
             [&](CellView<Mesh> cell) { div_f[cell] = {}; });
-    std::ranges::for_each(m_mesh->faces(), [&](FaceView<Mesh> face) {
+    std::ranges::for_each(p_mesh_->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();
       const vec3_t dr_inner = face.center3D() - cell_inner.center3D();

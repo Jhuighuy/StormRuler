@@ -45,7 +45,7 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                [[maybe_unused]] Real eps_sqr) const {
+                                [[maybe_unused]] Real eps_sqr) const noexcept {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -74,7 +74,7 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                Real eps_sqr) const {
+                                Real eps_sqr) const noexcept {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -107,7 +107,7 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                [[maybe_unused]] Real eps_sqr) const {
+                                [[maybe_unused]] Real eps_sqr) const noexcept {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -142,7 +142,7 @@ public:
   [[nodiscard]] Real operator()(Real limiter, //
                                 [[maybe_unused]] Real du_min,
                                 [[maybe_unused]] Real du_max,
-                                [[maybe_unused]] Real eps_sqr) const {
+                                [[maybe_unused]] Real eps_sqr) const noexcept {
     const Real second_limiter = limiter;
     return second_limiter;
   }
@@ -159,20 +159,16 @@ public:
   [[nodiscard]] Real operator()(Real limiter, //
                                 Real du_min,  //
                                 Real du_max,  //
-                                Real eps_sqr) const {
-    // Compute weight: [1], page 5.
+                                Real eps_sqr) const noexcept {
     const Real du_sqr = std::pow(du_max - du_min, 2);
     if (du_sqr <= eps_sqr) { return 1.0; }
-    if (eps_sqr < du_sqr && du_sqr < 2.0 * eps_sqr) {
-      const Real dy = (du_sqr - eps_sqr) / eps_sqr;
-      const Real dy_sqr = std::pow(dy, 2);
-      const Real weight = (2.0 * dy - 3.0) * dy_sqr + 1.0;
-      const Real second_limiter = weight + (1.0 - weight) * limiter;
-      return second_limiter;
-    }
     if (du_sqr >= 2.0 * eps_sqr) { return limiter; }
-    STORM_THROW_( //
-        "Broken cubic second limiter, du^2 = {}, eps^2 = {}!", du_sqr, eps_sqr);
+    // Compute weight: [1], page 5.
+    const Real dy = (du_sqr - eps_sqr) / eps_sqr;
+    const Real dy_sqr = math::pow(dy, 2);
+    const Real weight = (2.0 * dy - 3.0) * dy_sqr + 1.0;
+    const Real second_limiter = weight * 1.0 + (1.0 - weight) * limiter;
+    return second_limiter;
   }
 
 }; // class CubicSecondLimiter
@@ -185,35 +181,33 @@ public:
 ///     "Limiters for Unstructured Higher-Order Accurate
 ///      Solutions of the Euler Equations" (2008).
 /// @endverbatim
-template<class SlopeLimiter, class SecondLimiter = DummySecondLimiter>
+template</*mesh Mesh,*/
+         class SlopeLimiter, class SecondLimiter = DummySecondLimiter>
 class GradientLimiterScheme final {
-public:
+private:
 
-  std::shared_ptr<Mesh> mesh_;
-  SlopeLimiter slope_limiter_;
-  SecondLimiter second_limiter_;
+  const Mesh* p_mesh_;
+  STORM_NO_UNIQUE_ADDRESS_ SlopeLimiter slope_limiter_;
+  STORM_NO_UNIQUE_ADDRESS_ SecondLimiter second_limiter_;
 
 public:
 
   /// @brief Construct the gradient limiter.
-  explicit GradientLimiterScheme(std::shared_ptr<Mesh> mesh,
-                                 SlopeLimiter slope_limiter = {},
-                                 SecondLimiter second_limiter = {})
-      : mesh_(std::move(mesh)),                   //
-        slope_limiter_{std::move(slope_limiter)}, //
+  constexpr explicit GradientLimiterScheme(
+      const Mesh& mesh, SlopeLimiter slope_limiter = {},
+      SecondLimiter second_limiter = {}) noexcept
+      : p_mesh_{&mesh}, slope_limiter_{std::move(slope_limiter)},
         second_limiter_{std::move(second_limiter)} {}
 
   /// @brief Compute cell-centered gradient limiter coefficients.
   void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
                         const tScalarField& u,
                         const tVectorField& grad_u) const {
-    /* Compute the cell-centered
-     * limiting coefficients and averages. */
-    ForEach(mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       static const real_t k = 0.1;
       const real_t eps_sqr = std::pow(k * cell.volume(), 3);
-      /* Find the largest negative and positive differences
-       * between values of and neighbor Cells and the current cell. */
+      // Find the largest negative and positive differences
+      // between values of and neighbor cells and the current cell.
       FEATHERS_TMP_SCALAR_FIELD(du_min, num_vars);
       du_min = u[cell];
       FEATHERS_TMP_SCALAR_FIELD(du_max, num_vars);
@@ -232,8 +226,8 @@ public:
         du_max[i] = std::max(0.0, du_max[i] - u[cell][i]);
       }
 
-      /* Compute slope limiting coefficients:
-       * clamp the Node delta with computed local delta extrema. */
+      // Compute slope limiting coefficients:
+      // clamp the face delta with computed local delta extrema.
       lim_u[cell].fill(1.0);
       cell.for_each_face([&](FaceView<Mesh> face) {
         const vec3_t dr = face.center3D() - cell.center3D();
@@ -245,8 +239,8 @@ public:
         }
       });
 
-      /* Compute secondary limiting coefficients:
-       * disable limiting near smooth regions. */
+      // Compute secondary limiting coefficients:
+      // disable limiting near smooth regions.
       for (size_t i = 0; i < num_vars; ++i) {
         const real_t limiter =
             second_limiter_(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);

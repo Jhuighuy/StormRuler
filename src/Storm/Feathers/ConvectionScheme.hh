@@ -85,21 +85,22 @@ public:
  * Piecewise-linear upwind convection scheme.
  * This is a second-order scheme.
  */
+template<class GradientLimiterScheme = Cubic2GradientLimiterScheme>
 class cUpwind2ConvectionScheme final : public iConvectionScheme {
 public:
 
-  std::shared_ptr<const Mesh> m_mesh;
+  std::shared_ptr<Mesh> m_mesh;
   std::shared_ptr<iFluxScheme> m_flux;
   std::shared_ptr<iGradientScheme> m_gradient_scheme;
-  std::shared_ptr<iGradientLimiterScheme> m_gradient_limiter_scheme;
+  std::shared_ptr<GradientLimiterScheme> m_gradient_limiter_scheme;
 
 public:
 
-  explicit cUpwind2ConvectionScheme(std::shared_ptr<const Mesh> mesh)
+  explicit cUpwind2ConvectionScheme(std::shared_ptr<Mesh> mesh)
       : m_mesh(std::move(mesh)),
         m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()),
         m_gradient_scheme(new cLeastSquaresGradientScheme(m_mesh)),
-        m_gradient_limiter_scheme(new cCubic2GradientLimiterScheme(m_mesh)) {}
+        m_gradient_limiter_scheme(new Cubic2GradientLimiterScheme(m_mesh)) {}
 
   /** Compute the second-order upwind nonlinear convection. */
   void get_cell_convection(size_t num_vars, tScalarField& div_f,

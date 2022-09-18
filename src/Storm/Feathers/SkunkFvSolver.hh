@@ -49,13 +49,13 @@ public:
 
 private:
 
-  std::shared_ptr<const Mesh> m_mesh;
+  std::shared_ptr<Mesh> m_mesh;
   std::shared_ptr<iConvectionScheme> m_conv;
   std::map<Label, std::shared_ptr<MhdFvBcPT<MhdPhysicsT>>> m_bcs;
 
 public:
 
-  explicit MhdFvSolverT(std::shared_ptr<const Mesh> mesh)
+  explicit MhdFvSolverT(std::shared_ptr<Mesh> mesh)
       : m_mesh(mesh), m_conv(new cUpwind2ConvectionScheme(mesh)) {
     m_bcs[Label{1}] = std::make_shared<MhdFvBcFarFieldT<MhdPhysicsT>>();
     m_bcs[Label{2}] = std::make_shared<MhdFvBcSlipT<MhdPhysicsT>>();

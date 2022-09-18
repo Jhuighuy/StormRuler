@@ -160,8 +160,7 @@ public:
                                 Real du_min,  //
                                 Real du_max,  //
                                 Real eps_sqr) const {
-    /* Compute weight:
-     * [1], page 5. */
+    // Compute weight: [1], page 5.
     const Real du_sqr = std::pow(du_max - du_min, 2);
     if (du_sqr <= eps_sqr) { return 1.0; }
     if (eps_sqr < du_sqr && du_sqr < 2.0 * eps_sqr) {
@@ -178,50 +177,39 @@ public:
 
 }; // class CubicSecondLimiter
 
-/**
- * Gradient cell limiter estimation scheme:
- * computes cell-centered limiters and averages based on the cell-centered
- * expansion.
- */
-class iGradientLimiterScheme : public tObject<iGradientLimiterScheme> {
+/// @brief Gradient cell limiter estimation scheme.
+///
+/// References:
+/// @verbatim
+/// [1] Krzysztof Michalak, Carl Ollivier-Gooch,
+///     "Limiters for Unstructured Higher-Order Accurate
+///      Solutions of the Euler Equations" (2008).
+/// @endverbatim
+template<class SlopeLimiter, class SecondLimiter = DummySecondLimiter>
+class GradientLimiterScheme final {
 public:
 
-  /** Compute cell-centered gradient limiter coefficients. */
-  virtual void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
-                                const tScalarField& u,
-                                const tVectorField& grad_u) const = 0;
-
-}; // class iGradientLimiterScheme
-
-/**
- * Gradient cell limiter estimation scheme:
- * computes cell-centered limiters and averages based on the cell-centered
- * expansion.
- */
-template<class tSlopeLimiter, class tSecondLimiter = DummySecondLimiter>
-class tGradientLimiterScheme final : public iGradientLimiterScheme {
-public:
-
-  std::shared_ptr<const Mesh> m_mesh;
-  tSlopeLimiter m_slope_limiter;
-  tSecondLimiter m_second_limiter;
+  std::shared_ptr<Mesh> mesh_;
+  SlopeLimiter slope_limiter_;
+  SecondLimiter second_limiter_;
 
 public:
 
-  /** Initialize the limiting scheme. */
-  explicit tGradientLimiterScheme(std::shared_ptr<const Mesh> mesh,
-                                  const tSlopeLimiter& slope_limiter = {},
-                                  const tSecondLimiter& second_limiter = {})
-      : m_mesh(std::move(mesh)), m_slope_limiter(slope_limiter),
-        m_second_limiter(second_limiter) {}
+  /// @brief Construct the gradient limiter.
+  explicit GradientLimiterScheme(std::shared_ptr<Mesh> mesh,
+                                 SlopeLimiter slope_limiter = {},
+                                 SecondLimiter second_limiter = {})
+      : mesh_(std::move(mesh)),                   //
+        slope_limiter_{std::move(slope_limiter)}, //
+        second_limiter_{std::move(second_limiter)} {}
 
-  /** Compute cell-centered gradient limiter coefficients. */
+  /// @brief Compute cell-centered gradient limiter coefficients.
   void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
                         const tScalarField& u,
-                        const tVectorField& grad_u) const final {
+                        const tVectorField& grad_u) const {
     /* Compute the cell-centered
      * limiting coefficients and averages. */
-    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+    ForEach(mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       static const real_t k = 0.1;
       const real_t eps_sqr = std::pow(k * cell.volume(), 3);
       /* Find the largest negative and positive differences
@@ -252,7 +240,7 @@ public:
         for (size_t i = 0; i < num_vars; ++i) {
           const real_t du_face = glm::dot(grad_u[cell][i], dr);
           const real_t limiter =
-              m_slope_limiter(du_min[i], du_max[i], du_face, eps_sqr);
+              slope_limiter_(du_min[i], du_max[i], du_face, eps_sqr);
           lim_u[cell][i] = std::min(lim_u[cell][i], limiter);
         }
       });
@@ -261,25 +249,25 @@ public:
        * disable limiting near smooth regions. */
       for (size_t i = 0; i < num_vars; ++i) {
         const real_t limiter =
-            m_second_limiter(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
+            second_limiter_(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
         lim_u[cell][i] = limiter;
       }
     });
   }
 
-}; // class tGradientLimiterScheme
+}; // class GradientLimiterScheme
 
-using cMinmodGradientLimiterScheme = tGradientLimiterScheme<MinmodSlopeLimiter>;
+using MinmodGradientLimiterScheme = GradientLimiterScheme<MinmodSlopeLimiter>;
 
-using cVenkatakrishnanGradientLimiterScheme =
-    tGradientLimiterScheme<VenkatakrishnanSlopeLimiter>;
+using VenkatakrishnanGradientLimiterScheme =
+    GradientLimiterScheme<VenkatakrishnanSlopeLimiter>;
 
-using cVenkatakrishnan2GradientLimiterScheme =
-    tGradientLimiterScheme<VenkatakrishnanSlopeLimiter, CubicSecondLimiter>;
+using Venkatakrishnan2GradientLimiterScheme =
+    GradientLimiterScheme<VenkatakrishnanSlopeLimiter, CubicSecondLimiter>;
 
-using cCubicGradientLimiterScheme = tGradientLimiterScheme<CubicSlopeLimiter>;
+using CubicGradientLimiterScheme = GradientLimiterScheme<CubicSlopeLimiter>;
 
-using cCubic2GradientLimiterScheme =
-    tGradientLimiterScheme<CubicSlopeLimiter, CubicSecondLimiter>;
+using Cubic2GradientLimiterScheme =
+    GradientLimiterScheme<CubicSlopeLimiter, CubicSecondLimiter>;
 
 } // namespace Storm::Feathers

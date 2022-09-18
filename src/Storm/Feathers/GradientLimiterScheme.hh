@@ -26,27 +26,29 @@
 
 #pragma once
 
+#include <Storm/Base.hpp>
+
+#include <Storm/Utils/Math.hpp>
+
 #include "Field.hh"
 
 namespace Storm::Feathers {
 
-/**
- * Barth-Jespersen (minmod)
- * slope limiter for the limiter estimation scheme.
- *
- * This is a non-differentiable limiter, so it may
- * affect convergence properties of the implicit scheme.
- */
-class tMinmodSlopeLimiter {
+/// @brief Barth-Jespersen (minmod) slope limiter.
+/// This is a non-differentiable limiter, so it may
+/// affect convergence properties of the implicit scheme.
+class MinmodSlopeLimiter {
 public:
 
-  /** Compute local slope coefficient. */
-  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
-                    [[maybe_unused]] real_t eps_sqr) const {
-    /* Compute deltas:
-     * [1], page 4. */
-    const real_t delta_neg = du_face;
-    real_t delta_pos;
+  /// @brief Compute limiter value.
+  template<class Real>
+  [[nodiscard]] Real operator()(Real du_min,  //
+                                Real du_max,  //
+                                Real du_face, //
+                                [[maybe_unused]] Real eps_sqr) const {
+    // Compute deltas: [1], page 4.
+    const Real delta_neg = du_face;
+    Real delta_pos;
     if (delta_neg < 0.0) {
       delta_pos = du_min;
     } else if (delta_neg > 0.0) {
@@ -54,31 +56,28 @@ public:
     } else {
       return 1.0;
     }
-    /* Compute limiter:
-     * [1], page 3. */
-    const real_t y_cur = delta_pos / delta_neg;
-    const real_t limiter = std::min(1.0, y_cur);
+    // Compute limiter: [1], page 3.
+    const Real y_cur = delta_pos / delta_neg;
+    const Real limiter = std::min(1.0, y_cur);
     return limiter;
   }
 
-}; // class tMinmodSlopeLimiter
+}; // class MinmodSlopeLimiter
 
-/**
- * Venkatakrishnan
- * slope limiter for the limiter estimation scheme.
- *
- * This is a differentiable limiter.
- */
-class tVenkatakrishnanSlopeLimiter {
+/// @brief Venkatakrishnan slope limiter.
+/// This is a differentiable limiter.
+class VenkatakrishnanSlopeLimiter {
 public:
 
-  /** Compute local slope coefficient. */
-  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
-                    real_t eps_sqr) const {
-    /* Compute deltas:
-     * [1], page 4. */
-    const real_t delta_neg = du_face;
-    real_t delta_pos;
+  /// @brief Compute limiter value.
+  template<class Real>
+  [[nodiscard]] Real operator()(Real du_min,  //
+                                Real du_max,  //
+                                Real du_face, //
+                                Real eps_sqr) const {
+    // Compute deltas: [1], page 4.
+    const Real delta_neg = du_face;
+    Real delta_pos;
     if (delta_neg < 0.0) {
       delta_pos = du_min;
     } else if (delta_neg > 0.0) {
@@ -86,35 +85,32 @@ public:
     } else {
       return 1.0;
     }
-    /* Compute limiter:
-     * [1], page 4. */
-    const real_t delta_pos_sqr = std::pow(delta_pos, 2);
-    const real_t delta_neg_sqr = std::pow(delta_neg, 2);
-    const real_t delta_pos_neg = delta_pos * delta_neg;
-    const real_t limiter =
+    // Compute limiter: [1], page 4.
+    const Real delta_pos_sqr = math::pow(delta_pos, 2);
+    const Real delta_neg_sqr = math::pow(delta_neg, 2);
+    const Real delta_pos_neg = delta_pos * delta_neg;
+    const Real limiter =
         (delta_pos_sqr + 2.0 * delta_pos_neg + eps_sqr) /
         (delta_pos_sqr + 2.0 * delta_neg_sqr + delta_pos_neg + eps_sqr);
     return limiter;
   }
 
-}; // class tVenkatakrishnanSlopeLimiter
+}; // class VenkatakrishnanSlopeLimiter
 
-/**
- * Michalak Ollivier-Gooch (cubic)
- * slope limiter for the limiter estimation scheme.
- *
- * This is a differentiable limiter.
- */
-class tCubicSlopeLimiter {
+/// @brief Michalak Ollivier-Gooch (cubic) slope limiter.
+/// This is a differentiable limiter.
+class CubicSlopeLimiter {
 public:
 
-  /** Compute local slope coefficient. */
-  real_t operator()(real_t du_min, real_t du_max, real_t du_face,
-                    [[maybe_unused]] real_t eps_sqr) const {
-    /* Calculate deltas:
-     * [1], page 4. */
-    const real_t delta_neg = du_face;
-    real_t delta_pos;
+  /// @brief Compute limiter value.
+  template<class Real>
+  [[nodiscard]] Real operator()(Real du_min,  //
+                                Real du_max,  //
+                                Real du_face, //
+                                [[maybe_unused]] Real eps_sqr) const {
+    // Compute deltas: [1], page 4.
+    const Real delta_neg = du_face;
+    Real delta_pos;
     if (delta_neg < 0.0) {
       delta_pos = du_min;
     } else if (delta_neg > 0.0) {
@@ -122,61 +118,57 @@ public:
     } else {
       return 1.0;
     }
-    /* Compute limiter:
-     * [1], page 5. */
-    const real_t y_cur = delta_pos / delta_neg;
-    const real_t y_thr = 1.75;
+    // Compute limiter: [1], page 5.
+    const Real y_cur = delta_pos / delta_neg;
+    const Real y_thr = 1.75;
     auto limiter = 1.0;
     if (y_cur < y_thr) {
-      const real_t y_div = y_cur / y_thr;
-      limiter = y_cur + std::pow(y_div, 2) *
+      const Real y_div = y_cur / y_thr;
+      limiter = y_cur + math::pow(y_div, 2) *
                             (3.0 - 2.0 * y_thr + (y_thr - 2.0) * y_div);
     }
     return limiter;
   }
 
-}; // class tCubicSlopeLimiter
+}; // class CubicSlopeLimiter
 
-/**
- * Dummy
- * second slope limiter for the limiter estimation scheme.
- *
- * This is a differentiable limiter.
- */
-class tDummySecondLimiter {
+/// @brief Dummy second slope limiter.
+/// This is a differentiable limiter.
+class DummySecondLimiter {
 public:
 
-  /** Compute second slope coefficient. */
-  real_t operator()(real_t limiter, [[maybe_unused]] real_t du_min,
-                    [[maybe_unused]] real_t du_max,
-                    [[maybe_unused]] real_t eps_sqr) const {
-    const real_t second_limiter = limiter;
+  /// @brief Compute limiter value.
+  template<class Real>
+  [[nodiscard]] Real operator()(Real limiter, //
+                                [[maybe_unused]] Real du_min,
+                                [[maybe_unused]] Real du_max,
+                                [[maybe_unused]] Real eps_sqr) const {
+    const Real second_limiter = limiter;
     return second_limiter;
   }
 
-}; // class tDummySecondLimiter
+}; // class DummySecondLimiter
 
-/**
- * Michalak Ollivier-Gooch cubic
- * second slope limiter for the limiter estimation scheme.
-
- * This is a differentiable limiter.
- */
-class tCubicSecondLimiter {
+/// @brief Michalak Ollivier-Gooch cubic second slope limiter.
+/// This is a differentiable limiter.
+class CubicSecondLimiter {
 public:
 
-  /** Compute second slope coefficient. */
-  real_t operator()(real_t limiter, real_t du_min, real_t du_max,
-                    real_t eps_sqr) const {
+  /// @brief Compute limiter value.
+  template<class Real>
+  [[nodiscard]] Real operator()(Real limiter, //
+                                Real du_min,  //
+                                Real du_max,  //
+                                Real eps_sqr) const {
     /* Compute weight:
      * [1], page 5. */
-    const real_t du_sqr = std::pow(du_max - du_min, 2);
+    const Real du_sqr = std::pow(du_max - du_min, 2);
     if (du_sqr <= eps_sqr) { return 1.0; }
     if (eps_sqr < du_sqr && du_sqr < 2.0 * eps_sqr) {
-      const real_t dy = (du_sqr - eps_sqr) / eps_sqr;
-      const real_t dy_sqr = std::pow(dy, 2);
-      const real_t weight = (2.0 * dy - 3.0) * dy_sqr + 1.0;
-      const real_t second_limiter = weight + (1.0 - weight) * limiter;
+      const Real dy = (du_sqr - eps_sqr) / eps_sqr;
+      const Real dy_sqr = std::pow(dy, 2);
+      const Real weight = (2.0 * dy - 3.0) * dy_sqr + 1.0;
+      const Real second_limiter = weight + (1.0 - weight) * limiter;
       return second_limiter;
     }
     if (du_sqr >= 2.0 * eps_sqr) { return limiter; }
@@ -184,7 +176,7 @@ public:
         "Broken cubic second limiter, du^2 = {}, eps^2 = {}!", du_sqr, eps_sqr);
   }
 
-}; // class tCubicSecondLimiter
+}; // class CubicSecondLimiter
 
 /**
  * Gradient cell limiter estimation scheme:
@@ -206,7 +198,7 @@ public:
  * computes cell-centered limiters and averages based on the cell-centered
  * expansion.
  */
-template<class tSlopeLimiter, class tSecondLimiter = tDummySecondLimiter>
+template<class tSlopeLimiter, class tSecondLimiter = DummySecondLimiter>
 class tGradientLimiterScheme final : public iGradientLimiterScheme {
 public:
 
@@ -277,18 +269,17 @@ public:
 
 }; // class tGradientLimiterScheme
 
-using cMinmodGradientLimiterScheme =
-    tGradientLimiterScheme<tMinmodSlopeLimiter>;
+using cMinmodGradientLimiterScheme = tGradientLimiterScheme<MinmodSlopeLimiter>;
 
 using cVenkatakrishnanGradientLimiterScheme =
-    tGradientLimiterScheme<tVenkatakrishnanSlopeLimiter>;
+    tGradientLimiterScheme<VenkatakrishnanSlopeLimiter>;
 
 using cVenkatakrishnan2GradientLimiterScheme =
-    tGradientLimiterScheme<tVenkatakrishnanSlopeLimiter, tCubicSecondLimiter>;
+    tGradientLimiterScheme<VenkatakrishnanSlopeLimiter, CubicSecondLimiter>;
 
-using cCubicGradientLimiterScheme = tGradientLimiterScheme<tCubicSlopeLimiter>;
+using cCubicGradientLimiterScheme = tGradientLimiterScheme<CubicSlopeLimiter>;
 
 using cCubic2GradientLimiterScheme =
-    tGradientLimiterScheme<tCubicSlopeLimiter, tCubicSecondLimiter>;
+    tGradientLimiterScheme<CubicSlopeLimiter, CubicSecondLimiter>;
 
 } // namespace Storm::Feathers

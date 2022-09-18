@@ -64,8 +64,8 @@ public:
   /// @brief Compute the first order upwind nonlinear convection.
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
-    ForEach(p_mesh_->interior_cells(),
-            [&](CellView<Mesh> cell) { div_f[cell] = {}; });
+    std::ranges::for_each(p_mesh_->interior_cells(),
+                          [&](CellView<Mesh> cell) { div_f[cell] = {}; });
     std::ranges::for_each(p_mesh_->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();
@@ -114,8 +114,8 @@ public:
     tScalarField lim_u(num_vars, p_mesh_->num_cells());
     gradient_limiter_scheme_.get_cell_limiter(num_vars, lim_u, u, grad_u);
 
-    ForEach(p_mesh_->interior_cells(),
-            [&](CellView<Mesh> cell) { div_f[cell] = {}; });
+    std::ranges::for_each(p_mesh_->interior_cells(),
+                          [&](CellView<Mesh> cell) { div_f[cell] = {}; });
     std::ranges::for_each(p_mesh_->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();

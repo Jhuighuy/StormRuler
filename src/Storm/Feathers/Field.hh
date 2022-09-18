@@ -47,19 +47,6 @@ template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
 using Mesh = UnstructuredMesh<2, 2, CsrTable>;
 
-template<std::ranges::input_range Range>
-void ForEach(Range&& r, auto f) {
-#pragma omp parallel for schedule(static)
-  for (auto i = 0; i < (int) r.size(); ++i)
-    f(r[i]);
-}
-template<class Mesh>
-void for_each_bnd_face_cells(const Mesh& mesh, auto func) noexcept {
-  ForEach(mesh.boundary_faces(), [&](FaceView<Mesh> face) {
-    func(face.inner_cell(), face.outer_cell());
-  });
-}
-
 #define FEATHERS_ALLOCA(T, size) static_cast<T*>(alloca(sizeof(T) * (size)))
 
 template<typename data_t>

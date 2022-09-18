@@ -297,11 +297,17 @@ public:
 
   /// @brief Segment normal.
   template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> == 2)
+  // requires (mesh_dim_v<Mesh> == 2)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const glm::dvec2 d = glm::normalize(v2 - v1);
-    return glm::vec2(-d.y, d.x);
+    if constexpr (mesh_dim_v<Mesh> == 2) {
+      const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+      const glm::dvec2 d = glm::normalize(v2 - v1);
+      return glm::vec2(-d.y, d.x);
+    } else {
+      const glm::dvec2 v1{mesh.position(n1)}, v2{mesh.position(n2)};
+      const glm::dvec2 d = glm::normalize(v2 - v1);
+      return glm::vec3(-d.y, d.x, 0.0);
+    }
   }
 
 }; // class Seg

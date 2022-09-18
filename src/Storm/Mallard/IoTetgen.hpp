@@ -41,7 +41,7 @@ namespace Storm {
 template<mesh Mesh>
   requires (detail_::in_range_(mesh_dim_v<Mesh>, size_t{2}, size_t{3}))
 void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
-  constexpr bool mesh3D = mesh_dim_v<Mesh> == 3;
+  constexpr bool mesh3D = true; // mesh_dim_v<Mesh> == 3;
 
   STORM_INFO_("Loading the TetGen/Triangle mesh from path '{}'...",
               path.replace_extension("*").string());
@@ -61,11 +61,13 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     if (node_stream.bad()) {
       STORM_THROW_IO_("Cannot read the node file '{}' header!", path.string());
     }
+#if 0
     if (dim != mesh_dim_v<Mesh>) {
       STORM_THROW_IO_("Unexpected number of the dimensions in node file '{}' "
                       "header! Expected {}, got {}.",
                       path.string(), mesh_dim_v<Mesh>, dim);
     }
+#endif
     if (num_node_attribs != 0) {
       STORM_WARNING_("Header of the node file '{}' specifies {} attributes per "
                      "node, which are ignored!",
@@ -79,7 +81,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       mesh_vec_t<Mesh> node_pos{};
       std::vector<real_t> node_attribs(num_node_attribs);
       node_stream >> node_index >> node_pos.x >> node_pos.y;
-      if constexpr (mesh3D) { node_stream >> node_pos.z; }
+      // if constexpr (mesh3D) { node_stream >> node_pos.z; }
       for (real_t& node_attrib : node_attribs) {
         node_stream >> node_attrib;
       }
@@ -135,6 +137,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
   }
 
   [[maybe_unused]] std::vector<Label> face_labels{};
+#if 0
   if constexpr (mesh3D) {
     // Read the faces.
     path.replace_extension(".face");
@@ -172,6 +175,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     STORM_INFO_( //
         "Done reading {} faces from file '{}'.", num_faces, path.string());
   }
+#endif
 
   { // Read the cells.
     path.replace_extension(".ele");
@@ -188,11 +192,13 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     if (cell_stream.bad()) {
       STORM_THROW_IO_("Cannot read the cell file '{}' header!", path.string());
     }
+#if 0
     if (num_cell_nodes != mesh_dim_v<Mesh> + 1) {
       STORM_THROW_IO_("Unexpected number of the nodes per cell in the cell "
                       "file '{}' header! Expected {}, got {}.",
                       path.string(), mesh_dim_v<Mesh> + 1, num_cell_nodes);
     }
+#endif
     if (cells_have_attribs) {
       STORM_WARNING_("Header of the cell file '{}' specifies a regional "
                      "attribute per cell, which is ignored!",
@@ -203,9 +209,11 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     mesh.reserve(num_cells, meta::type_v<CellIndex<Mesh>>);
     for (size_t cell_entry = 0; cell_entry < num_cells; ++cell_entry) {
       size_t cell_index, cell_attrib = 0;
-      std::conditional_t<mesh3D, shapes::Tetrahedron, shapes::Triangle> cell{};
+      std::conditional_t</*mesh3D*/ false, shapes::Tetrahedron,
+                         shapes::Triangle>
+          cell{};
       cell_stream >> cell_index >> cell.n1 >> cell.n2 >> cell.n3;
-      if constexpr (mesh3D) { cell_stream >> cell.n4; }
+      // if constexpr (mesh3D) { cell_stream >> cell.n4; }
       if (cells_have_attribs) { cell_stream >> cell_attrib; }
       if (cell_stream.bad()) {
         STORM_THROW_IO_("Cannot read the cell # {} from file '{}'!", //
@@ -225,7 +233,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     mesh.assign_labels(edge_labels, meta::type_v<EdgeIndex>);
     STORM_INFO_("Done assigning edge labels.");
   }
-  if constexpr (mesh3D) {
+  if constexpr (mesh3D && false) {
     if (!face_labels.empty()) {
       mesh.assign_labels(face_labels, meta::type_v<FaceIndex<Mesh>>);
       STORM_INFO_("Done assigning face labels.");

@@ -52,11 +52,13 @@ using mat3_t = glm::dmat3;
 using mat4_t = glm::dmat4;
 template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
-using Mesh = UnstructuredMesh<3, 2>;
+using Mesh = UnstructuredMesh<3, 2, CsrTable>;
 
 template<std::ranges::input_range Range>
 void ForEach(Range&& r, auto f) {
-  std::ranges::for_each(r, f);
+#pragma omp parallel for
+  for (auto i = 0; i < (int) r.size(); ++i)
+    f(r[i]);
 }
 
 #define FEATHERS_ALLOCA(T, size) static_cast<T*>(alloca(sizeof(T) * (size)))

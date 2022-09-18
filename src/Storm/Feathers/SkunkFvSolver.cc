@@ -1,5 +1,7 @@
 #include "SkunkFvSolver.hh"
 
+#include <iostream>
+
 namespace Storm::Feathers {
 
 template<typename MhdPhysicsT>
@@ -25,6 +27,9 @@ void MhdFvSolverT<MhdPhysicsT>::calc_func(tScalarField& u,
   for (size_t mark = 1; mark < m_mesh->num_face_labels(); ++mark) {
     const auto& bc = m_bcs.at(mark);
     ForEach(m_mesh->faces(Label(mark)), [&](FaceView<Mesh> face) {
+      // std::cout << "face.cells().size() = " << face.cells().size() <<
+      // std::endl; std::cout << "face.outer_cell() = " << face.outer_cell() <<
+      // std::endl;
       bc->get_ghost_state(
           face.normal(), face.inner_cell().center(), face.outer_cell().center(),
           u[face.inner_cell()].data(), u[face.outer_cell()].data());

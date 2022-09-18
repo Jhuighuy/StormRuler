@@ -159,7 +159,8 @@ inline real_t tCubicSecondLimiter::operator()(real_t limiter, real_t du_min,
     return second_limiter;
   }
   if (du_sqr >= 2.0 * eps_sqr) { return limiter; }
-  FEATHERS_ENSURE(!"Broken cubic second limiter.");
+  STORM_THROW_( //
+      "Broken cubic second limiter, du^2 = {}, eps^2 = {}!", du_sqr, eps_sqr);
 } // tCubicSecondLimiter::get_slope_coefficient
 
 /**

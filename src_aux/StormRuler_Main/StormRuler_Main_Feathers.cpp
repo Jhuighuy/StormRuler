@@ -125,20 +125,20 @@ int main(int argc, char** argv) {
   tScalarField uc(5, mesh->num_cells());
   tScalarField up(5, mesh->num_cells());
   MhdFvSolverT<tGasPhysics> solver(mesh);
-  for (uint_t cell_ind = 0; cell_ind < mesh->num_cells(); ++cell_ind) {
-    std::array<real_t, 5> q{1.0, 1.0, 1.0, 0.0, 0.0};
+  for (size_t cell_ind = 0; cell_ind < mesh->num_cells(); ++cell_ind) {
+    std::array<real_t, 5> q{2.0, 1.0, 1.0, 0.0, 0.0};
     // std::array<real_t, 5> q{1.4, 1.0, 3.0, 0.0, 0.0};
     MhdHydroVars v({}, nullptr, q.data());
     v.make_cons(5, uc[cell_ind].data());
   }
   real_t dt = 1e-4;
 
-  const uint_t freq = 200;
+  const size_t freq = 200;
   save_vtk(*mesh, ("out/fields-" + my_to_string(0) + ".vtk").c_str(),
            {{"rho", 0, &uc}});
   real_t tt = 0.0;
   {
-    for (uint_t l = 1; l <= 2000000; ++l) {
+    for (size_t l = 1; l <= 2000000; ++l) {
       solver.calc_step(dt, uc, up);
       if (l % freq == 0) {
         std::cout << l / freq << "\t" << tt << "\t" << std::endl;

@@ -88,13 +88,8 @@ void tHllFluxScheme<tGasPhysics>::get_numerical_flux(
     return;
   }
 
-  FEATHERS_ENSURE(!"Broken signal velocities.");
+  STORM_THROW_("Broken signal velocities, sl = {}, sr = {}!", sl, sr);
 } // tHllFluxScheme::get_numerical_flux
-
-// ------------------------------------------------------------------------------------
-// //
-// ------------------------------------------------------------------------------------
-// //
 
 /**
  * Calculate the Harten-Lax-van Leer-Contact numerical flux.
@@ -183,7 +178,8 @@ void tHllcFluxScheme<tGasPhysics>::get_numerical_flux(
     return;
   }
 
-  FEATHERS_ENSURE(!"Broken signal velocities.");
+  STORM_THROW_( //
+      "Broken signal velocities, sl = {}, ss = {}, sr = {}!", sl, ss, sr);
 } // tHllcFluxScheme<tGasPhysics>::get_numerical_flux
 
 } // namespace Storm::Feathers

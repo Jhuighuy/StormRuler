@@ -57,17 +57,17 @@ public:
 public:
 
   /** make primitive variables, 𝑸 = (𝜌,𝑝,𝒗,𝑞ᵢ,…)ᵀ. */
-  real_t* make_prim(uint_t num_vars, real_t* prim) const {
+  real_t* make_prim(size_t num_vars, real_t* prim) const {
     *reinterpret_cast<std::array<real_t, 5>*>(prim) = {rho, p, vel.x, vel.y,
                                                        vel.z};
     return prim;
   }
 
   /** make conserved variables, 𝑼 = (𝜌,𝜌𝐸,𝜌𝒗,𝜌𝑞ᵢ,…)ᵀ. */
-  real_t* make_cons(uint_t num_vars, real_t* cons) const {
+  real_t* make_cons(size_t num_vars, real_t* cons) const {
     *reinterpret_cast<std::array<real_t, 5>*>(cons) = {
         rho, rho * nrg, rho * vel.x, rho * vel.y, rho * vel.z};
-    for (uint_t i = 5; i < num_vars; ++i) {
+    for (size_t i = 5; i < num_vars; ++i) {
       if (rest_cons != nullptr) {
         cons[i] = rest_cons[i - 5];
       } else if (rest_prim != nullptr) {
@@ -78,11 +78,11 @@ public:
   }
 
   /** make flux variables, 𝑭ₙ = (𝜌𝒗ₙ,𝜌𝐻𝒗ₙ,𝜌𝒗𝒗ₙ,𝜌𝑞ᵢ𝒗ₙ,…)ᵀ. */
-  real_t* make_flux(uint_t num_vars, const vec3_t& n, real_t* flux) const {
+  real_t* make_flux(size_t num_vars, const vec3_t& n, real_t* flux) const {
     *reinterpret_cast<std::array<real_t, 5>*>(flux) = {
         rho * vel_n, rho * vel_n * ent, rho * vel_n * vel.x + p * n.x,
         rho * vel_n * vel.y + p * n.y, rho * vel_n * vel.z + p * n.z};
-    for (uint_t i = 5; i < num_vars; ++i) {
+    for (size_t i = 5; i < num_vars; ++i) {
       if (rest_cons != nullptr) {
         flux[i] = vel_n * rest_cons[i - 5];
       } else if (rest_prim != nullptr) {
@@ -125,7 +125,7 @@ typedef class MhdHydroVars MhdFluidVarsIdealGas;
 class tGasPhysics {
 public:
 
-  static constexpr int_t num_vars = 5;
+  static constexpr size_t num_vars = 5;
   typedef MhdFluidVarsIdealGas MhdFluidStateT;
   typedef MhdFluidVarsIdealGas tFluidState;
 

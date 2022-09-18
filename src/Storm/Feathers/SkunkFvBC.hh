@@ -35,7 +35,7 @@ namespace Storm::Feathers {
 /**
  * Abstract finite-volume boundary condition.
  */
-template<int_t num_vars_t>
+template<size_t num_vars_t>
 class MhdFvBcT : public std::enable_shared_from_this<MhdFvBcT<num_vars_t>> {
 public:
 
@@ -58,7 +58,7 @@ class MhdFvBcPT : public std::enable_shared_from_this<MhdFvBcPT<MhdPhysicsT>> {
 public:
 
   using MhdFluidStateT = typename MhdPhysicsT::MhdFluidStateT;
-  static constexpr int_t num_vars = MhdPhysicsT::num_vars;
+  static constexpr size_t num_vars = MhdPhysicsT::num_vars;
 
 public:
 

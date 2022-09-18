@@ -45,13 +45,13 @@ class MhdFvSolverT :
 public:
 
   using MhdFluidStateT = typename MhdPhysicsT::MhdFluidStateT;
-  static constexpr int_t num_vars = MhdPhysicsT::num_vars;
+  static constexpr size_t num_vars = MhdPhysicsT::num_vars;
 
 private:
 
   std::shared_ptr<const Mesh> m_mesh;
   std::shared_ptr<iConvectionScheme> m_conv;
-  std::map<int_t, std::shared_ptr<MhdFvBcPT<MhdPhysicsT>>> m_bcs;
+  std::map<Label, std::shared_ptr<MhdFvBcPT<MhdPhysicsT>>> m_bcs;
 
 public:
 

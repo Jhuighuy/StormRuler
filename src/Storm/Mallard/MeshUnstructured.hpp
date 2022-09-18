@@ -440,8 +440,8 @@ public:
     std::get<I>(entity_shape_types_tuple_).emplace_back(shapes::Type{0xFF});
     std::get<I>(entity_volumes_tuple_).emplace_back(volume(mirror_cell_index));
     std::get<I>(entity_positions_tuple_)
-        .emplace_back(1.5 * position(face_index) -
-                      0.5 * position(mirror_cell_index));
+        .emplace_back(2.0 * position(face_index) -
+                      1.0 * position(mirror_cell_index));
 
     // Allocate the empty connectivity rows, connect the face with ghost.
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {

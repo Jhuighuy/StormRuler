@@ -35,13 +35,10 @@
 #include <memory>
 #include <ranges>
 
-#define FEATHERS_ENSURE(x) STORM_ASSERT_(x, "FEATHERS_ENSURE!")
 #define FEATHERS_NOT_USED(...)
 
 namespace Storm::Feathers {
 
-using int_t = intptr_t;
-using uint_t = size_t;
 using vec2_t = glm::dvec2;
 using vec3_t = glm::dvec3;
 using vec4_t = glm::dvec4;
@@ -54,7 +51,7 @@ using Mesh = UnstructuredMesh<3, 2, CsrTable>;
 
 template<std::ranges::input_range Range>
 void ForEach(Range&& r, auto f) {
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
   for (auto i = 0; i < (int) r.size(); ++i)
     f(r[i]);
 }

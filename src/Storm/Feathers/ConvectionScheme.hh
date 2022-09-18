@@ -79,7 +79,8 @@ public:
 public:
 
   explicit cUpwind2ConvectionScheme(std::shared_ptr<const Mesh> mesh)
-      : m_mesh(std::move(mesh)), m_flux(new tHllcFluxScheme<tGasPhysics>()),
+      : m_mesh(std::move(mesh)),
+        m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()),
         m_gradient_scheme(new cLeastSquaresGradientScheme(m_mesh)),
         m_gradient_limiter_scheme(new cCubic2GradientLimiterScheme(m_mesh)) {}
 

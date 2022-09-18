@@ -47,7 +47,7 @@ namespace Storm {
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
          template<class, class> class Table = CsrTable>
-  requires (Dim >= TopologicalDim)
+  requires (2 <= TopologicalDim && TopologicalDim <= Dim && Dim <= 3)
 class UnstructuredMesh final :
     public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>> {
 private:
@@ -334,8 +334,8 @@ public:
   constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     if (entity_ranges.empty()) {
-      entity_ranges.emplace_back(0);
-      entity_ranges.emplace_back(0);
+      entity_ranges.reserve(2);
+      entity_ranges.emplace_back(0), entity_ranges.emplace_back(0);
     } else {
       entity_ranges.push_back(entity_ranges.back());
     }
@@ -371,7 +371,12 @@ public:
       std::get<I>(entity_positions_tuple_)
           .emplace_back(shapes::barycenter(shape, *this));
       if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-        face_normals_.emplace_back(shapes::normal(shape, *this));
+        if constexpr (Dim == TopologicalDim) {
+          face_normals_.emplace_back(shapes::normal(shape, *this));
+        } else {
+          /// @todo What are the face normals for surface meshes?
+          face_normals_.emplace_back({});
+        }
       }
     }
 
@@ -465,18 +470,17 @@ public:
     }
   }
 
-  /// @brief Permute the entities.
+  /// @brief Permute the entities. Complexity is log²-linear.
   /// @param perm Entity permutation range, it may be modified in order to
   ///             preserve the label ranges correctness.
-  /// @warning This operation is very slow!
-  template<size_t I, std::ranges::random_access_range Range>
-    requires std::permutable<std::ranges::iterator_t<Range>> &&
+  /// @warning Permutation range values will be spoiled after the call!
+  template<size_t I, std::ranges::sized_range Range>
+    requires std::ranges::random_access_range<Range> &&
+             std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
   constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
-    if constexpr (std::ranges::sized_range<Range>) {
-      STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
-                    "Invalid permutation size!");
-    }
+    STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
+                  "Invalid permutation size!");
 
     // Stable-sort the permutation in order to keep the label ranges correct.
     std::ranges::stable_sort(
@@ -488,7 +492,7 @@ public:
     permute_base_(perm);
   }
 
-  /// @brief Assign the entity labels.
+  /// @brief Assign the entity labels. Complexity is log²-linear.
   /// @param label Labels range to assign. May be smaller,
   ///              than the amount of entities.
   template<size_t I, std::ranges::sized_range Range>
@@ -602,7 +606,6 @@ private:
     }
 
     // Permute the entity-* connectivity.
-    /// @todo `copy_table_indirect` maybe?
     meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
       auto& table = std::get<T>(connectivity_tuple_);

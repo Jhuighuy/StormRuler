@@ -41,6 +41,7 @@ public:
   /** Compute the nonlinear convection. */
   virtual void get_cell_convection(size_t num_vars, tScalarField& conv_u,
                                    const tScalarField& u) const = 0;
+
 }; // class iConvectionScheme
 
 /**
@@ -62,37 +63,18 @@ public:
   /** Compute the first-order upwind nonlinear convection. */
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
-    /* Compute the first order numerical fluxes. */
-    tScalarField flux_u(num_vars, m_mesh->num_faces());
-    ForEach(m_mesh->faces(), [&](FaceView<Mesh> face) {
-      const CellView cell_outer = face.outer_cell();
-      const CellView cell_inner = face.inner_cell();
-
-      tScalarSubField flux = (flux_u[face] = {});
-      m_flux->get_numerical_flux(num_vars, face.normal3D(), u[cell_outer],
-                                 u[cell_inner], flux);
-    });
-
-    /* Compute the first order convection. */
-    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
-      div_f[cell] = {};
-      cell.for_each_face([&](FaceView<Mesh> face) {
-        const CellView<Mesh> cell_outer = face.outer_cell();
-        const CellView<Mesh> cell_inner = face.inner_cell();
-        const real_t ds = face.area();
-        if (cell_outer == cell) {
-          for (size_t i = 0; i < num_vars; ++i) {
-            div_f[cell][i] -= flux_u[face][i] * ds;
-          }
-        } else if (cell_inner == cell) {
-          for (size_t i = 0; i < num_vars; ++i) {
-            div_f[cell][i] += flux_u[face][i] * ds;
-          }
-        }
-      });
-      const real_t inv_dv = 1.0 / cell.volume();
+    ForEach(m_mesh->interior_cells(),
+            [&](CellView<Mesh> cell) { div_f[cell] = {}; });
+    std::ranges::for_each(m_mesh->faces(), [&](FaceView<Mesh> face) {
+      const CellView<Mesh> cell_inner = face.inner_cell();
+      const CellView<Mesh> cell_outer = face.outer_cell();
+      FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
+      m_flux->get_numerical_flux(num_vars, face.normal3D(), //
+                                 u[cell_outer], u[cell_inner], flux);
+      const real_t ds = face.area();
       for (size_t i = 0; i < num_vars; ++i) {
-        div_f[cell][i] *= inv_dv;
+        div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
+        div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
       }
     });
   }
@@ -122,57 +104,36 @@ public:
   /** Compute the second-order upwind nonlinear convection. */
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
-    /* Compute the second order limited gradients. */
     tVectorField grad_u(num_vars, m_mesh->num_cells());
     m_gradient_scheme->get_gradients(num_vars, grad_u, u);
-
     tScalarField lim_u(num_vars, m_mesh->num_cells());
     m_gradient_limiter_scheme->get_cell_limiter(num_vars, lim_u, u, grad_u);
 
-    /* Compute the second order numerical fluxes:
-     * integrate the numerical flux over the face Nodes. */
-    tScalarField flux_f(num_vars, m_mesh->num_faces());
-    ForEach(m_mesh->faces(), [&](FaceView<Mesh> face) {
-      const CellView<Mesh> cell_outer = face.outer_cell();
+    ForEach(m_mesh->interior_cells(),
+            [&](CellView<Mesh> cell) { div_f[cell] = {}; });
+    std::ranges::for_each(m_mesh->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
-      const vec3_t dr_outer = face.center3D() - cell_outer.center3D();
+      const CellView<Mesh> cell_outer = face.outer_cell();
       const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
-      FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
+      const vec3_t dr_outer = face.center3D() - cell_outer.center3D();
       FEATHERS_TMP_SCALAR_FIELD(u_inner, num_vars);
+      FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
       for (size_t i = 0; i < num_vars; ++i) {
-        u_outer[i] =
-            u[cell_outer][i] +
-            lim_u[cell_outer][i] * glm::dot(grad_u[cell_outer][i], dr_outer);
         u_inner[i] =
             u[cell_inner][i] +
             lim_u[cell_inner][i] * glm::dot(grad_u[cell_inner][i], dr_inner);
+        u_outer[i] =
+            u[cell_outer][i] +
+            lim_u[cell_outer][i] * glm::dot(grad_u[cell_outer][i], dr_outer);
       }
 
-      tScalarSubField flux = (flux_f[face] = {});
-      m_flux->get_numerical_flux(num_vars, face.normal3D(), u_outer, u_inner,
-                                 flux);
-    });
-
-    /* Compute the second order convection. */
-    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
-      div_f[cell] = {};
-      cell.for_each_face([&](FaceView<Mesh> face) {
-        const CellView<Mesh> cell_outer = face.outer_cell();
-        const CellView<Mesh> cell_inner = face.inner_cell();
-        const real_t ds = face.area();
-        if (cell_outer == cell) {
-          for (size_t i = 0; i < num_vars; ++i) {
-            div_f[cell][i] -= flux_f[face][i] * ds;
-          }
-        } else if (cell_inner == cell) {
-          for (size_t i = 0; i < num_vars; ++i) {
-            div_f[cell][i] += flux_f[face][i] * ds;
-          }
-        }
-      });
-      const real_t inv_dv = 1.0 / cell.volume();
+      FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
+      m_flux->get_numerical_flux(num_vars, face.normal3D(), //
+                                 u_outer, u_inner, flux);
+      const real_t ds = face.area();
       for (size_t i = 0; i < num_vars; ++i) {
-        div_f[cell][i] *= inv_dv;
+        div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
+        div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
       }
     });
   }

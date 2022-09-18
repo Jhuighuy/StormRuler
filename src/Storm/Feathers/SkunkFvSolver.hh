@@ -55,12 +55,47 @@ private:
 
 public:
 
-  explicit MhdFvSolverT(std::shared_ptr<const Mesh> mesh);
+  explicit MhdFvSolverT(std::shared_ptr<const Mesh> mesh)
+      : m_mesh(mesh), m_conv(new cUpwind2ConvectionScheme(mesh)) {
+    m_bcs[Label{1}] = std::make_shared<MhdFvBcFarFieldT<MhdPhysicsT>>();
+    m_bcs[Label{2}] = std::make_shared<MhdFvBcSlipT<MhdPhysicsT>>();
+  }
 
-public:
+  /**
+   * @brief Compute spacial discretization.
+   */
+  void calc_func(tScalarField& u, tScalarField& u_out) const {
+    /*
+     * Clear fields and apply boundary conditions.
+     */
+    ForEach(m_mesh->cells(),
+            [&](CellView<Mesh> cell) { u_out[cell].fill(0.0); });
+    for (size_t mark = 1; mark < m_mesh->num_face_labels(); ++mark) {
+      const Label label{mark};
+      const auto& bc = m_bcs.at(label);
+      ForEach(m_mesh->faces(label), [&](FaceView<Mesh> face) {
+        bc->get_ghost_state(
+            face.normal3D(), //
+            face.inner_cell().center3D(), face.outer_cell().center3D(),
+            u[face.inner_cell()].data(), u[face.outer_cell()].data());
+      });
+    }
 
-  void calc_func(tScalarField& u, tScalarField& u_out) const;
-  void calc_step(real_t& dt, tScalarField& u, tScalarField& u_hat) const;
+    m_conv->get_cell_convection(5, u_out, u);
+  }
+
+  /*
+   * Compute time step.
+   */
+  void calc_step(real_t& dt, tScalarField& u, tScalarField& u_hat) const {
+    calc_func(u, u_hat);
+    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+      for (size_t i = 0; i < num_vars; ++i) {
+        u_hat[cell][i] = u[cell][i] - dt * u_hat[cell][i];
+      }
+    });
+  }
+
 }; // class MhdFvSolverT
 
 } // namespace Storm::Feathers

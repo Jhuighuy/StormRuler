@@ -25,11 +25,8 @@
 /// IN THE SOFTWARE.
 
 #pragma once
-#ifndef GRADIENT_SCHEME_HH_
-#define GRADIENT_SCHEME_HH_
 
 #include "Field.hh"
-
 
 namespace Storm::Feathers {
 
@@ -40,6 +37,7 @@ public:
   /** Compute cell-centered gradients. */
   virtual void get_gradients(size_t num_vars, tVectorField& grad_u,
                              const tScalarField& u) const = 0;
+
 }; // class iGradientScheme
 
 /**
@@ -65,15 +63,95 @@ public:
 
 private:
 
-  void init_gradients_();
+  void init_gradients_() {
+    /* Compute the least-squares
+     * problem matrices for the interior Cells. */
+    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+      mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
+      cell.for_each_face_cells(
+          [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+            const vec3_t dr = cell_outer.center() - cell_inner.center();
+            mat += glm::outerProduct(dr, dr);
+          });
+    });
+
+    /* Compute the least squares problem right-hand statements for the boundary
+     * cells. Use the same stencil as for the interior cell, but centered to a
+     * boundary cell. */
+    for_each_bnd_face_cells(*m_mesh, [&](CellView<Mesh> cell_inner,
+                                         CellView<Mesh> cell_outer) {
+      mat3_t& mat = (m_inverse_matrices[cell_outer][0] = mat3_t(0.0));
+      const vec3_t dr = cell_outer.center() - cell_inner.center();
+      mat += glm::outerProduct(dr, dr);
+      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
+                                         CellView<Mesh> cell_inner_outer) {
+        if (cell_inner_outer == cell_inner) {
+          std::swap(cell_inner_inner, cell_inner_outer);
+        }
+        const vec3_t dr_inner = cell_inner_outer.center() - cell_inner.center();
+        mat += glm::outerProduct(dr_inner, dr_inner);
+      });
+    });
+
+    /* Compute the inverse of the least squares problem matrices.
+     * ( Matrix is stabilized by a small number, added to the diagonal. ) */
+    ForEach(m_mesh->cells(), [&](CellView<Mesh> cell) {
+      static const mat3_t eps(1e-14);
+      mat3_t& mat = m_inverse_matrices[cell][0];
+      mat = glm::inverse(mat + eps);
+    });
+  }
 
 public:
 
   /** Compute cell-centered gradients. */
   void get_gradients(size_t num_vars, tVectorField& grad_u,
-                     const tScalarField& u) const final;
+                     const tScalarField& u) const final {
+    /* Compute the least-squares
+     * problem right-hand statements for the interior Cells. */
+    ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
+      grad_u[cell].fill(vec3_t(0.0));
+      cell.for_each_face_cells(
+          [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+            const vec3_t dr = cell_outer.center() - cell_inner.center();
+            for (size_t i = 0; i < num_vars; ++i) {
+              grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
+            }
+          });
+    });
+
+    /* Compute the least squares problem right-hand statements for the boundary
+     * cells. Use the same stencil as for the interior cell, but centered to a
+     * boundary cell. */
+    for_each_bnd_face_cells(*m_mesh, [&](CellView<Mesh> cell_inner,
+                                         CellView<Mesh> cell_outer) {
+      grad_u[cell_outer].fill(vec3_t(0.0));
+      const vec3_t dr = cell_outer.center() - cell_inner.center();
+      for (size_t i = 0; i < num_vars; ++i) {
+        grad_u[cell_outer][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
+      }
+      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
+                                         CellView<Mesh> cell_inner_outer) {
+        if (cell_inner_outer == cell_inner) {
+          std::swap(cell_inner_inner, cell_inner_outer);
+        }
+        const vec3_t dr_inner = cell_inner_outer.center() - cell_inner.center();
+        for (size_t i = 0; i < num_vars; ++i) {
+          grad_u[cell_outer][i] +=
+              (u[cell_inner_outer][i] - u[cell_inner][i]) * dr_inner;
+        }
+      });
+    });
+
+    /* Solve the least-squares problem. */
+    ForEach(m_mesh->cells(), [&](CellView<Mesh> cell) {
+      for (size_t i = 0; i < num_vars; ++i) {
+        const mat3_t& mat = m_inverse_matrices[cell][0];
+        grad_u[cell][i] = mat * grad_u[cell][i];
+      }
+    });
+  }
+
 }; // class cLeastSquaresGradientScheme
 
 } // namespace Storm::Feathers
-
-#endif // GRADIENT_SCHEME_HH_

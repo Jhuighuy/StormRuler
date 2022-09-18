@@ -80,11 +80,11 @@ void save_vtk(auto& mesh, const char* path,
   file << std::endl;
 
   size_t const sumNumCellAdjNodes =
-      ForEachSum(mesh.unlabeled_cells(), size_t(0),
+      ForEachSum(mesh.interior_cells(), size_t(0),
                  [](auto cell) { return cell.nodes().size() + 1; });
   file << "CELLS " << mesh.num_cells({}) << " " << sumNumCellAdjNodes
        << std::endl;
-  std::ranges::for_each(mesh.unlabeled_cells(), [&](auto cell) {
+  std::ranges::for_each(mesh.interior_cells(), [&](auto cell) {
     file << cell.nodes().size() << " ";
     cell.for_each_node([&](size_t node_index) { file << node_index << " "; });
     file << std::endl;
@@ -92,7 +92,7 @@ void save_vtk(auto& mesh, const char* path,
   file << std::endl;
 
   file << "CELL_TYPES " << mesh.num_cells({}) << std::endl;
-  std::ranges::for_each(mesh.unlabeled_cells(),
+  std::ranges::for_each(mesh.interior_cells(),
                         [&](auto cell) { file << "5" << std::endl; });
   file << std::endl;
 
@@ -100,7 +100,7 @@ void save_vtk(auto& mesh, const char* path,
   for (const sFieldDesc& field : fields) {
     file << "SCALARS " << field.name << " double 1" << std::endl;
     file << "LOOKUP_TABLE default" << std::endl;
-    std::ranges::for_each(mesh.unlabeled_cells(), [&](auto cell) {
+    std::ranges::for_each(mesh.interior_cells(), [&](auto cell) {
       file << (*field.scalar)[cell][field.var_index] << std::endl;
     });
   }
@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
   MhdFvSolverT<tGasPhysics> solver(mesh);
   for (uint_t cell_ind = 0; cell_ind < mesh->num_cells(); ++cell_ind) {
     std::array<real_t, 5> q{1.0, 1.0, 1.0, 0.0, 0.0};
+    // std::array<real_t, 5> q{1.4, 1.0, 3.0, 0.0, 0.0};
     MhdHydroVars v({}, nullptr, q.data());
     v.make_cons(5, uc[cell_ind].data());
   }

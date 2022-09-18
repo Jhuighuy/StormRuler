@@ -430,48 +430,44 @@ public:
            detail_::to_cell_view_(self_());
   }
 
-  /// @brief Range of the unlabeled nodes.
-  [[nodiscard]] constexpr auto unlabeled_nodes() const noexcept {
+  /// @brief Range of the interior nodes.
+  [[nodiscard]] constexpr auto interior_nodes() const noexcept {
     return nodes(Label{0});
   }
 
-  /// @brief Range of the unlabeled edges.
-  [[nodiscard]] constexpr auto unlabeled_edges() const noexcept {
+  /// @brief Range of the interior edges.
+  [[nodiscard]] constexpr auto interior_edges() const noexcept {
     return edges(Label{0});
   }
 
-  /// @brief Range of the unlabeled faces.
-  [[nodiscard]] constexpr auto unlabeled_faces() const noexcept {
+  /// @brief Range of the interior faces.
+  [[nodiscard]] constexpr auto interior_faces() const noexcept {
     return faces(Label{0});
   }
 
-  /// @brief Range of the unlabeled cells.
-  [[nodiscard]] constexpr auto unlabeled_cells() const noexcept {
+  /// @brief Range of the interior cells.
+  [[nodiscard]] constexpr auto interior_cells() const noexcept {
     return cells(Label{0});
   }
 
   /// @brief Range of the boundary nodes.
-  [[nodiscard]] constexpr auto labeled_nodes() const noexcept {
-    return nodes() | std::views::drop(self_().num_entities(
-                         Label{0}, meta::type_v<NodeIndex>));
+  [[nodiscard]] constexpr auto boundary_nodes() const noexcept {
+    return nodes() | std::views::drop(num_nodes(Label{0}));
   }
 
   /// @brief Range of the boundary edges.
-  [[nodiscard]] constexpr auto labeled_edges() const noexcept {
-    return edges() | std::views::drop(self_().num_entities(
-                         Label{0}, meta::type_v<EdgeIndex>));
+  [[nodiscard]] constexpr auto boundary_edges() const noexcept {
+    return edges() | std::views::drop(num_edges(Label{0}));
   }
 
   /// @brief Range of the boundary faces.
-  [[nodiscard]] constexpr auto labeled_faces() const noexcept {
-    return faces() | std::views::drop(self_().num_entities(
-                         Label{0}, meta::type_v<FaceIndex<Derived>>));
+  [[nodiscard]] constexpr auto boundary_faces() const noexcept {
+    return faces() | std::views::drop(num_faces(Label{0}));
   }
 
   /// @brief Range of the boundary cells.
-  [[nodiscard]] constexpr auto labeled_cells() const noexcept {
-    return cells() | std::views::drop(self_().num_entities(
-                         Label{0}, meta::type_v<CellIndex<Derived>>));
+  [[nodiscard]] constexpr auto boundary_cells() const noexcept {
+    return cells() | std::views::drop(num_cells(Label{0}));
   }
 
 }; // class MeshInterface

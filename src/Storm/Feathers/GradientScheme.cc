@@ -32,7 +32,7 @@ namespace Storm::Feathers {
 
 template<class Mesh>
 void for_each_bnd_face_cells(const Mesh& mesh, auto func) noexcept {
-  ForEach(mesh.labeled_faces(), [&](FaceView<Mesh> face) {
+  ForEach(mesh.boundary_faces(), [&](FaceView<Mesh> face) {
     func(face.inner_cell(), face.outer_cell());
   });
 }
@@ -43,7 +43,7 @@ void for_each_bnd_face_cells(const Mesh& mesh, auto func) noexcept {
 void cLeastSquaresGradientScheme::init_gradients_() {
   /* Compute the least-squares
    * problem matrices for the interior Cells. */
-  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
+  ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
     mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
     cell.for_each_face_cells(
         [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
@@ -90,7 +90,7 @@ void cLeastSquaresGradientScheme::get_gradients(size_t num_vars,
                                                 const tScalarField& u) const {
   /* Compute the least-squares
    * problem right-hand statements for the interior Cells. */
-  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
+  ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
     grad_u[cell].fill(vec3_t(0.0));
     cell.for_each_face_cells(
         [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {

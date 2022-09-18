@@ -48,7 +48,7 @@ void cUpwindConvectionScheme::get_cell_convection(size_t num_vars,
   });
 
   /* Compute the first order convection. */
-  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
+  ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
     div_f[cell] = {};
     cell.for_each_face([&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_outer = face.outer_cell();
@@ -108,7 +108,7 @@ void cUpwind2ConvectionScheme::get_cell_convection(
   });
 
   /* Compute the second order convection. */
-  ForEach(m_mesh->unlabeled_cells(), [&](CellView<Mesh> cell) {
+  ForEach(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
     div_f[cell] = {};
     cell.for_each_face([&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_outer = face.outer_cell();

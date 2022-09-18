@@ -46,7 +46,8 @@ namespace Storm {
 /// @tparam TopologicalDim Topological dimensionality.
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
-         template<class, class> class Table = VovTable>
+         template<class, class> class Table = CsrTable>
+  requires (Dim >= TopologicalDim)
 class UnstructuredMesh final :
     public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>> {
 private:

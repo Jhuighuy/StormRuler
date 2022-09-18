@@ -45,7 +45,7 @@ using mat3_t = glm::dmat3;
 using mat4_t = glm::dmat4;
 template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
-using Mesh = UnstructuredMesh<3, 2, CsrTable>;
+using Mesh = UnstructuredMesh<2, 2, CsrTable>;
 
 template<std::ranges::input_range Range>
 void ForEach(Range&& r, auto f) {

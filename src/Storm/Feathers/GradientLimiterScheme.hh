@@ -256,7 +256,7 @@ public:
        * clamp the Node delta with computed local delta extrema. */
       lim_u[cell].fill(1.0);
       cell.for_each_face([&](FaceView<Mesh> face) {
-        const vec3_t dr = face.center() - cell.center();
+        const vec3_t dr = face.center3D() - cell.center3D();
         for (size_t i = 0; i < num_vars; ++i) {
           const real_t du_face = glm::dot(grad_u[cell][i], dr);
           const real_t limiter =

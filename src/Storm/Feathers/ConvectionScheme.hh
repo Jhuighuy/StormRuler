@@ -69,7 +69,7 @@ public:
       const CellView cell_inner = face.inner_cell();
 
       tScalarSubField flux = (flux_u[face] = {});
-      m_flux->get_numerical_flux(num_vars, face.normal(), u[cell_outer],
+      m_flux->get_numerical_flux(num_vars, face.normal3D(), u[cell_outer],
                                  u[cell_inner], flux);
     });
 
@@ -135,8 +135,8 @@ public:
     ForEach(m_mesh->faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_outer = face.outer_cell();
       const CellView<Mesh> cell_inner = face.inner_cell();
-      const vec3_t dr_outer = face.center() - cell_outer.center();
-      const vec3_t dr_inner = face.center() - cell_inner.center();
+      const vec3_t dr_outer = face.center3D() - cell_outer.center3D();
+      const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
       FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
       FEATHERS_TMP_SCALAR_FIELD(u_inner, num_vars);
       for (size_t i = 0; i < num_vars; ++i) {
@@ -149,7 +149,7 @@ public:
       }
 
       tScalarSubField flux = (flux_f[face] = {});
-      m_flux->get_numerical_flux(num_vars, face.normal(), u_outer, u_inner,
+      m_flux->get_numerical_flux(num_vars, face.normal3D(), u_outer, u_inner,
                                  flux);
     });
 

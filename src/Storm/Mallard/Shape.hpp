@@ -251,11 +251,11 @@ template<shape Shape, mesh Mesh>
 /// @verbatim
 ///
 ///  n1 @ f1
-///      \
+///      \ 
 ///       \         e1 = (n1,n2)
 ///        v e1     f1 = (n1)
 ///         \       f2 = (n2)
-///          \
+///          \ 
 ///        n2 @ f2
 ///
 /// @endverbatim
@@ -297,19 +297,12 @@ public:
 
   /// @brief Segment normal.
   template<mesh Mesh>
-  // requires (mesh_dim_v<Mesh> == 2)
+    requires (mesh_dim_v<Mesh> == 2)
   [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    if constexpr (mesh_dim_v<Mesh> == 2) {
-      /// @todo Since the 3D case below works, maybe the sign is wrong...
-      const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-      const glm::dvec2 d = glm::normalize(v2 - v1);
-      return glm::vec2(-d.y, d.x);
-    } else {
-      const glm::dvec2 v1{mesh.position(n1)}, v2{mesh.position(n2)};
-      const glm::dvec3 d(glm::normalize(v2 - v1), 0.0);
-      const glm::dvec3 up(0.0, 0.0, 1.0);
-      return glm::normalize(glm::cross(d, up));
-    }
+    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
+    const glm::dvec2 d = glm::normalize(v2 - v1);
+    /// @todo Is sign here correct?
+    return -glm::vec2(-d.y, d.x);
   }
 
 }; // class Seg
@@ -322,8 +315,8 @@ public:
 ///          / \          e2 = f2 = (n2,n3)
 ///         /   \         e3 = f3 = (n3,n1)
 ///  e3/f3 v     ^ e2/f2
-///       /       \
-///      /         \
+///       /       \ 
+///      /         \ 
 ///  n1 @----->-----@ n2
 ///         e1/f1
 ///
@@ -511,9 +504,9 @@ public:
 ///        v        ^
 ///     ./`        /
 ///  n6 @         @ n3
-///     |          \
+///     |          \ 
 ///     v           ^ e2/f2
-///     |            \
+///     |            \ 
 ///     @------>------@
 ///     n1     |     n2
 ///          e1/f1

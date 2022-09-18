@@ -70,7 +70,7 @@ private:
       mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const vec3_t dr = cell_outer.center() - cell_inner.center();
+            const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
             mat += glm::outerProduct(dr, dr);
           });
     });
@@ -78,20 +78,21 @@ private:
     /* Compute the least squares problem right-hand statements for the boundary
      * cells. Use the same stencil as for the interior cell, but centered to a
      * boundary cell. */
-    for_each_bnd_face_cells(*m_mesh, [&](CellView<Mesh> cell_inner,
-                                         CellView<Mesh> cell_outer) {
-      mat3_t& mat = (m_inverse_matrices[cell_outer][0] = mat3_t(0.0));
-      const vec3_t dr = cell_outer.center() - cell_inner.center();
-      mat += glm::outerProduct(dr, dr);
-      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
-                                         CellView<Mesh> cell_inner_outer) {
-        if (cell_inner_outer == cell_inner) {
-          std::swap(cell_inner_inner, cell_inner_outer);
-        }
-        const vec3_t dr_inner = cell_inner_outer.center() - cell_inner.center();
-        mat += glm::outerProduct(dr_inner, dr_inner);
-      });
-    });
+    for_each_bnd_face_cells(
+        *m_mesh, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+          mat3_t& mat = (m_inverse_matrices[cell_outer][0] = mat3_t(0.0));
+          const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
+          mat += glm::outerProduct(dr, dr);
+          cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
+                                             CellView<Mesh> cell_inner_outer) {
+            if (cell_inner_outer == cell_inner) {
+              std::swap(cell_inner_inner, cell_inner_outer);
+            }
+            const vec3_t dr_inner =
+                cell_inner_outer.center3D() - cell_inner.center3D();
+            mat += glm::outerProduct(dr_inner, dr_inner);
+          });
+        });
 
     /* Compute the inverse of the least squares problem matrices.
      * ( Matrix is stabilized by a small number, added to the diagonal. ) */
@@ -113,7 +114,7 @@ public:
       grad_u[cell].fill(vec3_t(0.0));
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const vec3_t dr = cell_outer.center() - cell_inner.center();
+            const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
             for (size_t i = 0; i < num_vars; ++i) {
               grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
             }
@@ -123,25 +124,26 @@ public:
     /* Compute the least squares problem right-hand statements for the boundary
      * cells. Use the same stencil as for the interior cell, but centered to a
      * boundary cell. */
-    for_each_bnd_face_cells(*m_mesh, [&](CellView<Mesh> cell_inner,
-                                         CellView<Mesh> cell_outer) {
-      grad_u[cell_outer].fill(vec3_t(0.0));
-      const vec3_t dr = cell_outer.center() - cell_inner.center();
-      for (size_t i = 0; i < num_vars; ++i) {
-        grad_u[cell_outer][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
-      }
-      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
-                                         CellView<Mesh> cell_inner_outer) {
-        if (cell_inner_outer == cell_inner) {
-          std::swap(cell_inner_inner, cell_inner_outer);
-        }
-        const vec3_t dr_inner = cell_inner_outer.center() - cell_inner.center();
-        for (size_t i = 0; i < num_vars; ++i) {
-          grad_u[cell_outer][i] +=
-              (u[cell_inner_outer][i] - u[cell_inner][i]) * dr_inner;
-        }
-      });
-    });
+    for_each_bnd_face_cells(
+        *m_mesh, [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+          grad_u[cell_outer].fill(vec3_t(0.0));
+          const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
+          for (size_t i = 0; i < num_vars; ++i) {
+            grad_u[cell_outer][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
+          }
+          cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
+                                             CellView<Mesh> cell_inner_outer) {
+            if (cell_inner_outer == cell_inner) {
+              std::swap(cell_inner_inner, cell_inner_outer);
+            }
+            const vec3_t dr_inner =
+                cell_inner_outer.center3D() - cell_inner.center3D();
+            for (size_t i = 0; i < num_vars; ++i) {
+              grad_u[cell_outer][i] +=
+                  (u[cell_inner_outer][i] - u[cell_inner][i]) * dr_inner;
+            }
+          });
+        });
 
     /* Solve the least-squares problem. */
     ForEach(m_mesh->cells(), [&](CellView<Mesh> cell) {

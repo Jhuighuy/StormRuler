@@ -55,7 +55,8 @@ void MhdFvSolverT<MhdPhysicsT>::calc_func(tScalarField& u,
     const auto& bc = m_bcs.at(label);
     ForEach(m_mesh->faces(label), [&](FaceView<Mesh> face) {
       bc->get_ghost_state(
-          face.normal(), face.inner_cell().center(), face.outer_cell().center(),
+          face.normal3D(), //
+          face.inner_cell().center3D(), face.outer_cell().center3D(),
           u[face.inner_cell()].data(), u[face.outer_cell()].data());
     });
   }

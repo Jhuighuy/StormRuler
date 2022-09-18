@@ -74,7 +74,7 @@ void save_vtk(auto& mesh, const char* path,
 
   file << "POINTS " << mesh.num_nodes() << " double" << std::endl;
   std::ranges::for_each(mesh.nodes(), [&](auto node) {
-    const vec3_t& pos = node.position();
+    const vec3_t& pos = node.position3D();
     file << pos.x << " " << pos.y << " " << pos.z << std::endl;
   });
   file << std::endl;
@@ -110,11 +110,11 @@ void save_vtk(auto& mesh, const char* path,
 int main(int argc, char** argv) {
   print_banner();
 
-  UnstructuredMesh<3, 2, VovTable> mesh1{};
+  UnstructuredMesh<2, 2, VovTable> mesh1{};
   read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
   mesh1.insert_ghosts();
 
-  auto mesh = std::make_shared<UnstructuredMesh<3, 2, CsrTable>>();
+  auto mesh = std::make_shared<UnstructuredMesh<2, 2, CsrTable>>();
   mesh->assign(std::move(mesh1));
 
   STORM_INFO_("mesh has {} edges", mesh->num_edges());

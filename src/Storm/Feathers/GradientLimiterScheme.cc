@@ -38,7 +38,7 @@ namespace Storm::Feathers {
  */
 inline real_t
 tMinmodSlopeLimiter::operator()(real_t du_min, real_t du_max, real_t du_face,
-                                real_t FEATHERS_NOT_USED(eps_sqr)) const {
+                                [[maybe_unused]] real_t eps_sqr) const {
   /* Compute deltas:
    * [1], page 4. */
   const real_t delta_neg = du_face;
@@ -101,7 +101,7 @@ inline real_t tVenkatakrishnanSlopeLimiter::operator()(real_t du_min,
  */
 inline real_t
 tCubicSlopeLimiter::operator()(real_t du_min, real_t du_max, real_t du_face,
-                               real_t FEATHERS_NOT_USED(eps_sqr)) const {
+                               [[maybe_unused]] real_t eps_sqr) const {
   /* Calculate deltas:
    * [1], page 4. */
   const real_t delta_neg = du_face;
@@ -129,9 +129,10 @@ tCubicSlopeLimiter::operator()(real_t du_min, real_t du_max, real_t du_face,
 /**
  * Compute second slope coefficient.
  */
-inline real_t tDummySecondLimiter::operator()(
-    real_t limiter, real_t FEATHERS_NOT_USED(du_min),
-    real_t FEATHERS_NOT_USED(du_max), real_t FEATHERS_NOT_USED(eps_sqr)) const {
+inline real_t
+tDummySecondLimiter::operator()(real_t limiter, [[maybe_unused]] real_t du_min,
+                                [[maybe_unused]] real_t du_max,
+                                [[maybe_unused]] real_t eps_sqr) const {
   const real_t second_limiter = limiter;
   return second_limiter;
 } // tDummySecondLimiter::operator()

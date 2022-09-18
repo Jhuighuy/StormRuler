@@ -35,8 +35,6 @@
 #include <memory>
 #include <ranges>
 
-#define FEATHERS_NOT_USED(...)
-
 namespace Storm::Feathers {
 
 using vec2_t = glm::dvec2;

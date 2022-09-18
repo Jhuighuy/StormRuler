@@ -56,9 +56,12 @@ private:
 public:
 
   explicit MhdFvSolverT(std::shared_ptr<Mesh> mesh)
-      : m_mesh(mesh), m_conv(new cUpwind2ConvectionScheme(
-                          *mesh, LeastSquaresGradientScheme{*mesh},
-                          Cubic2GradientLimiterScheme{*mesh})) {
+      : m_mesh(mesh),
+        m_conv(new LinearUpwindConvectionScheme(
+            *mesh, tLaxFriedrichsFluxScheme<MhdPhysicsT>{},
+            LeastSquaresGradientScheme{*mesh},
+            GradientLimiterScheme{*mesh, //
+                                  CubicSlopeLimiter{}, CubicSecondLimiter{}})) {
     m_bcs[Label{1}] = std::make_shared<MhdFvBcFarFieldT<MhdPhysicsT>>();
     m_bcs[Label{2}] = std::make_shared<MhdFvBcSlipT<MhdPhysicsT>>();
   }

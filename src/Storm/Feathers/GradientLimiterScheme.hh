@@ -183,8 +183,7 @@ public:
 ///     "Limiters for Unstructured Higher-Order Accurate
 ///      Solutions of the Euler Equations" (2008).
 /// @endverbatim
-template</*mesh Mesh,*/
-         class SlopeLimiter, class SecondLimiter = DummySecondLimiter>
+template<mesh Mesh, class SlopeLimiter, class SecondLimiter>
   requires std::is_object_v<SlopeLimiter> &&
            std::is_object_v<DummySecondLimiter>
 class GradientLimiterScheme final {
@@ -254,18 +253,5 @@ public:
   }
 
 }; // class GradientLimiterScheme
-
-using MinmodGradientLimiterScheme = GradientLimiterScheme<MinmodSlopeLimiter>;
-
-using VenkatakrishnanGradientLimiterScheme =
-    GradientLimiterScheme<VenkatakrishnanSlopeLimiter>;
-
-using Venkatakrishnan2GradientLimiterScheme =
-    GradientLimiterScheme<VenkatakrishnanSlopeLimiter, CubicSecondLimiter>;
-
-using CubicGradientLimiterScheme = GradientLimiterScheme<CubicSlopeLimiter>;
-
-using Cubic2GradientLimiterScheme =
-    GradientLimiterScheme<CubicSlopeLimiter, CubicSecondLimiter>;
 
 } // namespace Storm::Feathers

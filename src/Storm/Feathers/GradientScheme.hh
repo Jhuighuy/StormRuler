@@ -32,20 +32,19 @@ namespace Storm::Feathers {
 
 /// @brief Weighted Least-Squares gradient estimation scheme, cell-based:
 /// computes cell-centered gradients based on the cell-centered values.
-/*template<mesh Mesh>*/
+template<mesh Mesh>
 class LeastSquaresGradientScheme final {
 private:
 
   const Mesh* p_mesh_;
+  bool initialized_ = false;
   tMatrixField m_inverse_matrices;
 
 public:
 
-  /** Initialize the gradient scheme. */
-  /*constexpr*/ explicit LeastSquaresGradientScheme(const Mesh& mesh)
-      : p_mesh_{&mesh}, m_inverse_matrices(1, p_mesh_->num_cells()) {
-    init_gradients_();
-  }
+  /// @brief Construct the gradient scheme.
+  constexpr explicit LeastSquaresGradientScheme(const Mesh& mesh)
+      : p_mesh_{&mesh}, m_inverse_matrices(1, p_mesh_->num_cells()) {}
 
 private:
 
@@ -87,6 +86,8 @@ private:
       mat3_t& mat = m_inverse_matrices[cell][0];
       mat = glm::inverse(mat + eps);
     });
+
+    initialized_ = true;
   }
 
 public:
@@ -94,6 +95,9 @@ public:
   /** Compute cell-centered gradients. */
   void get_gradients(size_t num_vars, tVectorField& grad_u,
                      const tScalarField& u) const {
+    if (!initialized_)
+      const_cast<LeastSquaresGradientScheme*>(this)->init_gradients_();
+
     /* Compute the least-squares
      * problem right-hand statements for the interior Cells. */
     ForEach(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {

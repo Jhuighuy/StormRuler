@@ -44,23 +44,24 @@ public:
 
 }; // class iConvectionScheme
 
-/**
- * Piecewise-constant upwind convection scheme.
- * This is a first-order scheme.
- */
-class cUpwindConvectionScheme final : public iConvectionScheme {
+/// @brief Piecewise-constant upwind convection scheme.
+/// This is a first order scheme.
+template<mesh Mesh, class FluxScheme>
+  requires std::is_object_v<FluxScheme>
+class UpwindConvectionScheme final : public iConvectionScheme {
 public:
 
-  std::shared_ptr<const Mesh> p_mesh_;
-  std::shared_ptr<iFluxScheme> m_flux;
+  const Mesh* p_mesh_;
+  STORM_NO_UNIQUE_ADDRESS_ FluxScheme flux_scheme_;
 
 public:
 
-  explicit cUpwindConvectionScheme(std::shared_ptr<const Mesh> mesh)
-      : p_mesh_(std::move(mesh)),
-        m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()) {}
+  /// @brief Construct the first order upwind convection scheme.
+  constexpr explicit UpwindConvectionScheme(const Mesh& mesh,
+                                            FluxScheme flux_scheme) noexcept
+      : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)} {}
 
-  /** Compute the first-order upwind nonlinear convection. */
+  /// @brief Compute the first order upwind nonlinear convection.
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
     ForEach(p_mesh_->interior_cells(),
@@ -69,8 +70,8 @@ public:
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();
       FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-      m_flux->get_numerical_flux(num_vars, face.normal3D(), //
-                                 u[cell_outer], u[cell_inner], flux);
+      flux_scheme_->get_numerical_flux(num_vars, face.normal3D(), //
+                                       u[cell_outer], u[cell_inner], flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < num_vars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -79,35 +80,33 @@ public:
     });
   }
 
-}; // class cUpwindConvectionScheme
+}; // class UpwindConvectionScheme
 
-/**
- * Piecewise-linear upwind convection scheme.
- * This is a second-order scheme.
- */
-template</*mesh Mesh,*/
+/// @brief Piecewise-linear upwind convection scheme.
+/// This is a second order scheme.
+template<mesh Mesh, class FluxScheme, //
          class GradientScheme, class GradientLimiterScheme>
-  requires std::is_object_v<GradientScheme> &&
+  requires std::is_object_v<FluxScheme> && std::is_object_v<GradientScheme> &&
            std::is_object_v<GradientLimiterScheme>
-class cUpwind2ConvectionScheme final : public iConvectionScheme {
+class LinearUpwindConvectionScheme final : public iConvectionScheme {
 public:
 
   const Mesh* p_mesh_;
-  std::shared_ptr<iFluxScheme> m_flux;
+  STORM_NO_UNIQUE_ADDRESS_ FluxScheme flux_scheme_;
   STORM_NO_UNIQUE_ADDRESS_ GradientScheme gradient_scheme_;
   STORM_NO_UNIQUE_ADDRESS_ GradientLimiterScheme gradient_limiter_scheme_;
 
 public:
 
   /// @brief Construct the second order upwind convection scheme.
-  constexpr explicit cUpwind2ConvectionScheme(
-      const Mesh& mesh, GradientScheme gradient_scheme,
-      GradientLimiterScheme gradient_limiter_scheme)
-      : p_mesh_{&mesh}, m_flux(new tLaxFriedrichsFluxScheme<tGasPhysics>()),
+  constexpr explicit LinearUpwindConvectionScheme(
+      const Mesh& mesh, FluxScheme flux_scheme, GradientScheme gradient_scheme,
+      GradientLimiterScheme gradient_limiter_scheme) noexcept
+      : p_mesh_{&mesh}, flux_scheme_{flux_scheme}, //
         gradient_scheme_{std::move(gradient_scheme)},
         gradient_limiter_scheme_{std::move(gradient_limiter_scheme)} {}
 
-  /** Compute the second-order upwind nonlinear convection. */
+  /// @brief Compute the second-order upwind nonlinear convection.
   void get_cell_convection(size_t num_vars, tScalarField& div_f,
                            const tScalarField& u) const final {
     tVectorField grad_u(num_vars, p_mesh_->num_cells());
@@ -134,8 +133,8 @@ public:
       }
 
       FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-      m_flux->get_numerical_flux(num_vars, face.normal3D(), //
-                                 u_outer, u_inner, flux);
+      flux_scheme_.get_numerical_flux(num_vars, face.normal3D(), //
+                                      u_outer, u_inner, flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < num_vars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -144,6 +143,6 @@ public:
     });
   }
 
-}; // class cUpwindConvectionScheme
+}; // class UpwindConvectionScheme
 
 } // namespace Storm::Feathers

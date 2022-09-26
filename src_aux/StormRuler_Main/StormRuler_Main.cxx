@@ -130,7 +130,8 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v,
 
   [[maybe_unused]] stormReal_t R = 0.2 * 0.5;
   [[maybe_unused]] stormReal_t qFlux = 10.0 * 0.5 * M_PI * R * R * R * R;
-  stormApplyBCs_InOutLet(mesh, v, 4, BV[4]);
+  //stormApplyBCs_InOutLet(mesh, v, 4, BV[4]);
+  stormApplyBCs_InOutLet(mesh, v, 4, qFlux);
 } // SetBCs_v
 
 static void CahnHilliard_Step(stormMesh_t mesh, //
@@ -169,7 +170,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
       },
       false);
 
-  c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
+  //c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
 
   // w_hat = dF_dc(c_hat) - Gamma * DIVGRAD(c_hat)
   w_hat <<= map(dF_dc, c_hat);
@@ -178,8 +179,9 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
 
 } // CahnHilliard_Step
 
-static double mu_1 = 0.008, mu_2 = 0.008;
+static double mu_1 = 0.08, mu_2 = 0.08;
 static double rho_1 = 1.0, rho_2 = 50.0;
+static double gravity = 0.3;
 
 static void
 NavierStokes_Step(stormMesh_t mesh, //
@@ -231,7 +233,7 @@ NavierStokes_Step(stormMesh_t mesh, //
 
   v_hat <<= map(
       [](const Vec2D<real_t>& v) {
-        return v + 0.0 * tau * Vec2D<real_t>{0.0, -1.0}; // no gravity!
+        return v + gravity * tau * Vec2D<real_t>{0.0, -1.0}; // no gravity!
       },
       v_hat);
 
@@ -273,14 +275,14 @@ NavierStokes_Step(stormMesh_t mesh, //
 
 void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
                   stormReal_t* c, const stormReal_t* _, void* env) {
-  // const static stormReal_t L = 1.0;
-  const static stormReal_t L = 1e-2;
-  const static stormReal_t l = 1e-3;
-  const static stormReal_t h_small = 5e-3 / 120.0;
+  const static stormReal_t L = 1.0;
+  //const static stormReal_t L = 1e-2;
+  //const static stormReal_t l = 1e-3;
+  //const static stormReal_t h_small = 5e-3 / 120.0;
   bool in = false;
-  if ((fabs(r[0]) <= 0.101 * 5e-3) && (r[1] >= L + h_small) &&
-      (r[1] <= L + l + 2 * h_small)) {
-    // if (fabs(r[0] - 0 * L) <= L * 0.101 && fabs(2 * L - r[1]) <= L * 0.665) {
+  // if ((fabs(r[0]) <= 0.101 * 5e-3) && (r[1] >= L + h_small) &&
+  //     (r[1] <= L + l + 2 * h_small)) {
+  if (fabs(r[0] - 0 * L) <= L * 0.101 && fabs(2 * L - r[1]) <= L * 0.665) {
     in = true;
   }
   // if (fabs(2 * L - r[1]) <= L * 0.4) { in = true; }
@@ -319,7 +321,8 @@ void Init_For_NVT(Nvt& NVT_obj) {
 
 int main(int argc, char** argv) {
   // //mesh file name
-  const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
+  //const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
+  const char* mesh_filename = "./test/Domain-100-Tube.ppm";
 
 
   // global parameters of the task
@@ -343,6 +346,7 @@ int main(int argc, char** argv) {
       2; // Wall mesh size in r dimension
   [[maybe_unused]] const stormInt_t Wall_N_l =
       8; // Wall mesh size in l dimension
+  //[[maybe_unused]] const stormReal_t gravity = 9.81;
 
   // Calculate dependable parameters
   [[maybe_unused]] stormReal_t R_small = R_area / R_to_r;
@@ -352,12 +356,13 @@ int main(int argc, char** argv) {
   [[maybe_unused]] stormReal_t V_small = M_PI * R_small * R_small * L_small;
   [[maybe_unused]] stormReal_t V_ing = V_main * Ving_to_V;
   [[maybe_unused]] stormReal_t tau_relax = TaskTime / TimesScale;
-  tau = tau_relax / TimesScale;
+  //tau = tau_relax / TimesScale;
   [[maybe_unused]] stormReal_t Qflux = V_ing / TaskTime;
-  [[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
-  // stormReal_t dR = 0.01;
+  //[[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
+   stormReal_t dR = 0.01;
   [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
-  /*static stormReal_t */ Mobility = Lambda * Lambda / tau_relax;
+  // /*static stormReal_t */ Mobility = Lambda * Lambda / tau_relax;
+  Mobility = 1.0;
 
   // Qflux /= 10.0;
 
@@ -365,7 +370,7 @@ int main(int argc, char** argv) {
   // double Re = u_mean * R_small * rho_2 / mu_2;
   // std::cout << Re << std::endl;
 
-  Gamma = Lambda * Lambda;
+  //Gamma = Lambda * Lambda;
 
   // Values for boundaries; index -> value for boundary with <<index>> number
   std::vector<double> BoundaryKeyValues(6);
@@ -422,7 +427,7 @@ int main(int argc, char** argv) {
 
   // for (int time = 0; time <= 200000; ++time) {
   while (time_of_task < TaskTime) {
-    for (int frac = 0; num_write != 0 && frac < 1; ++frac) {
+    for (int frac = 0; num_write != 0 && frac < 10; ++frac) {
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
 

@@ -190,10 +190,10 @@ subroutine FDM_ApplyBCs_InOutLet(mesh, mark, v, Q)
 
     RR = mesh%CellCenter(1, cell)
 
-    !RRR = merge(0.1_dp, 10.0_dp, mark == 2)
+    RRR = merge(0.1_dp, 10.0_dp, mark == 2)
     !RRR = merge(0.1_dp, 0.101_dp, mark == 2)
-    Pi = 3.14159265358979323846
-    RRR = 2.0_dp * Q / Pi / (R**4)
+    !Pi = 3.14159265358979323846
+    !RRR = 2.0_dp * Q / Pi / (R**4)
 
     !RRR = 10 = dp/dz / (4 eta)?
 

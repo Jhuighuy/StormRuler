@@ -44,7 +44,7 @@
 #include <StormRuler_API.h>
 
 #include <Storm/Blass/Mat.hpp>
-//#include <Storm/Blass/Matrix.hpp>
+// #include <Storm/Blass/Matrix.hpp>
 
 #include <Storm/NVT/Nvt.hpp>
 #include <Storm/Solvers/PreconditionerFactory.hpp>
@@ -130,7 +130,7 @@ static void SetBCs_v(stormMesh_t mesh, stormArray_t v,
 
   [[maybe_unused]] stormReal_t R = 0.2 * 0.5;
   [[maybe_unused]] stormReal_t qFlux = 10.0 * 0.5 * M_PI * R * R * R * R;
-  //stormApplyBCs_InOutLet(mesh, v, 4, BV[4]);
+  // stormApplyBCs_InOutLet(mesh, v, 4, BV[4]);
   stormApplyBCs_InOutLet(mesh, v, 4, qFlux);
 } // SetBCs_v
 
@@ -170,7 +170,7 @@ static void CahnHilliard_Step(stormMesh_t mesh, //
       },
       false);
 
-  //c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
+  // c_hat <<= map([](real_t c) { return std::clamp(c, 0.0, 1.0); }, c_hat);
 
   // w_hat = dF_dc(c_hat) - Gamma * DIVGRAD(c_hat)
   w_hat <<= map(dF_dc, c_hat);
@@ -183,13 +183,16 @@ static double mu_1 = 0.08, mu_2 = 0.08;
 static double rho_1 = 1.0, rho_2 = 50.0;
 static double gravity = 0.3;
 
-static void
-NavierStokes_Step(stormMesh_t mesh, //
-                  const StormArray<real_t>& p,
-                  const StormArray<Vec2D<real_t>>& v, //
-                  const StormArray<real_t>& c, const StormArray<real_t>& w,
-                  StormArray<real_t>& p_hat, StormArray<Vec2D<real_t>>& v_hat,
-                  StormArray<real_t>& rho, const std::vector<double>& BV) {
+static void NavierStokes_Step(stormMesh_t mesh, //
+                              const StormArray<real_t>& p,
+                              const StormArray<Vec2D<real_t>>& v, //
+                              const StormArray<real_t>& c,        //
+                              const StormArray<real_t>& c_old,    //
+                              const StormArray<real_t>& w,
+                              StormArray<real_t>& p_hat,
+                              StormArray<Vec2D<real_t>>& v_hat,
+                              StormArray<real_t>& rho,
+                              const std::vector<double>& BV) {
   StormArray<real_t> mu, rho_inv;
   mu.assign(rho, false);
   rho_inv.assign(rho, false);
@@ -241,8 +244,11 @@ NavierStokes_Step(stormMesh_t mesh, //
     StormArray<real_t> rhs;
     rhs.assign(p, false);
 
-    // rhs <<= p - DIV(v_hat) + ???
-    rhs <<= p;
+    // rhs <<= S + p - DIV(v_hat).
+    real_t S = 0.0;
+
+    fill_with(rhs, S);
+    rhs += p;
     stormDivergence(mesh, rhs, 1.0, v_hat);
     SetBCs_w(mesh, rho_inv, BV);
 
@@ -276,9 +282,9 @@ NavierStokes_Step(stormMesh_t mesh, //
 void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
                   stormReal_t* c, const stormReal_t* _, void* env) {
   const static stormReal_t L = 1.0;
-  //const static stormReal_t L = 1e-2;
-  //const static stormReal_t l = 1e-3;
-  //const static stormReal_t h_small = 5e-3 / 120.0;
+  // const static stormReal_t L = 1e-2;
+  // const static stormReal_t l = 1e-3;
+  // const static stormReal_t h_small = 5e-3 / 120.0;
   bool in = false;
   // if ((fabs(r[0]) <= 0.101 * 5e-3) && (r[1] >= L + h_small) &&
   //     (r[1] <= L + l + 2 * h_small)) {
@@ -293,26 +299,26 @@ void Initial_Data(stormSize_t dim, const stormReal_t* r, stormSize_t size,
 } // Initial_Data
 
 void Init_For_NVT(Nvt& NVT_obj) {
-  //Количество компонент
-  // 0 - CO2, 1 - C10
-  // int n_comp = 2;
-  //Критическая температура
+  // Количество компонент
+  //  0 - CO2, 1 - C10
+  //  int n_comp = 2;
+  // Критическая температура
   std::vector<double> T_crit{304.2, 617.6};
-  //Критическое давление
+  // Критическое давление
   std::vector<double> P_crit{73.7646e5, 21.0756e5};
-  //Ацентрические факторы
+  // Ацентрические факторы
   std::vector<double> ac_factors{0.225, 0.49};
-  //Параметры парного взаимодействия
+  // Параметры парного взаимодействия
   std::vector<std::vector<double>> k_ij{{0, 0.1141}, {0.1141, 0}};
-  //Количества компонент
+  // Количества компонент
   std::vector<double> N_parts{2549.336, 159.335375};
-  //Объем
+  // Объем
   double V = 1.0;
-  //Температура
+  // Температура
   double T = 295.15;
-  //Давление
+  // Давление
   double P_init = 5e6;
-  //Количество узлов по phi
+  // Количество узлов по phi
   int N_mesh = 101;
 
   NVT_obj.NVT_set_param(T_crit, P_crit, ac_factors, k_ij, N_parts, V, T, P_init,
@@ -321,7 +327,7 @@ void Init_For_NVT(Nvt& NVT_obj) {
 
 int main(int argc, char** argv) {
   // //mesh file name
-  //const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
+  // const char* mesh_filename = "./test/Domain-100-Tube_brandnew.ppm";
   const char* mesh_filename = "./test/Domain-100-Tube.ppm";
 
 
@@ -356,10 +362,10 @@ int main(int argc, char** argv) {
   [[maybe_unused]] stormReal_t V_small = M_PI * R_small * R_small * L_small;
   [[maybe_unused]] stormReal_t V_ing = V_main * Ving_to_V;
   [[maybe_unused]] stormReal_t tau_relax = TaskTime / TimesScale;
-  //tau = tau_relax / TimesScale;
+  // tau = tau_relax / TimesScale;
   [[maybe_unused]] stormReal_t Qflux = V_ing / TaskTime;
   //[[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
-   stormReal_t dR = 0.01;
+  stormReal_t dR = 0.01;
   [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
   // /*static stormReal_t */ Mobility = Lambda * Lambda / tau_relax;
   Mobility = 1.0;
@@ -370,7 +376,7 @@ int main(int argc, char** argv) {
   // double Re = u_mean * R_small * rho_2 / mu_2;
   // std::cout << Re << std::endl;
 
-  //Gamma = Lambda * Lambda;
+  // Gamma = Lambda * Lambda;
 
   // Values for boundaries; index -> value for boundary with <<index>> number
   std::vector<double> BoundaryKeyValues(6);
@@ -378,7 +384,7 @@ int main(int argc, char** argv) {
   BoundaryKeyValues[1] = 0.0;
   BoundaryKeyValues[2] = 0.0;
   BoundaryKeyValues[3] = 0.0;
-  BoundaryKeyValues[4] = Qflux; //поток на границе типа вход
+  BoundaryKeyValues[4] = Qflux; // поток на границе типа вход
   BoundaryKeyValues[5] = 0.0;
 
   // Initialize NVT
@@ -432,7 +438,7 @@ int main(int argc, char** argv) {
       clock_gettime(CLOCK_MONOTONIC, &start);
 
       CahnHilliard_Step(mesh, c, v, c_hat, w_hat, BoundaryKeyValues);
-      NavierStokes_Step(mesh, p, v, c_hat, w_hat, p_hat, v_hat, rho,
+      NavierStokes_Step(mesh, p, v, c_hat, c, w_hat, p_hat, v_hat, rho,
                         BoundaryKeyValues);
 
       clock_gettime(CLOCK_MONOTONIC, &finish);

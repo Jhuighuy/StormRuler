@@ -111,7 +111,7 @@ _STORM_OPAQUE_(stormSymbol);
 
 _STORM_OPAQUE_(stormMesh);
 
-STORM_API stormMesh_t SR_InitMesh(const char* name, stormReal_t hx, stormReal_t hy);
+STORM_API stormMesh_t SR_InitMesh(const char* name, stormReal_t hx, stormReal_t hy, stormSize_t* N_Cells);
 
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< //
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //

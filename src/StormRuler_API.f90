@@ -183,9 +183,10 @@ end subroutine Free_$klass
 
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
 !! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!
-function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
+function cInitMesh(namePtr, hx, hy, N_cells) result(meshPtr) bind(C, name='SR_InitMesh')
   use StormRuler_IO, only: Load_PPM
   real(c_double), intent(in), value :: hx, hy
+  integer(c_size_t), intent(out) :: N_cells
   character(c_char), intent(in) :: namePtr(*)
   type(c_ptr) :: meshPtr
 
@@ -246,6 +247,8 @@ function cInitMesh(namePtr, hx, hy) result(meshPtr) bind(C, name='SR_InitMesh')
 #$endif
 
   meshPtr = Wrap(gMesh)
+
+  N_cells = int(gMesh%NumCells,kind=c_size_t)
 
 end function cInitMesh
 

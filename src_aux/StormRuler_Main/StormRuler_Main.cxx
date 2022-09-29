@@ -52,6 +52,9 @@
 
 using namespace Storm;
 
+static size_t NumCells;
+static stormReal_t dR = 0.01;
+
 template<class T>
 void stormLinSolve2(const SolverType& method,
                     const PreconditionerType& preMethod, //
@@ -247,8 +250,33 @@ static void NavierStokes_Step(stormMesh_t mesh, //
     // rhs <<= S + p - DIV(v_hat).
     real_t S = 0.0;
 
+    [[maybe_unused]] real_t V_old = 0.0, V = 0.0;
+
+    [[maybe_unused]] auto integr_c = [&] (const auto& c) {
+        real_t V = 0.0;
+        for (size_t i = 0; i < NumCells; ++i) {
+            V += c(i) * dR * dR;
+        }
+        return V;
+    };
+
+
+    V_old = integr_c(c_old);
+    V = integr_c(c);
+
+    real_t I = 5.0 * M_PI * (0.1 * 0.1 * 0.1 * 0.1);
+
+    //std::cout<<"V = "<<V<<" , V_old = "<<V_old<<std::endl;
+
+    S = 2.0 * (V - V_old - tau * I) / tau / (V + V_old);
+
+
     fill_with(rhs, S);
-    rhs += p;
+
+    //div v = 0 correction coeffecient 
+    real_t alpha = 1.0;
+
+    rhs += alpha * p;
     stormDivergence(mesh, rhs, 1.0, v_hat);
     SetBCs_w(mesh, rho_inv, BV);
 
@@ -258,7 +286,7 @@ static void NavierStokes_Step(stormMesh_t mesh, //
         p_hat, rhs,
         [&](StormArray<real_t>& p_hat, const StormArray<real_t>& p) {
           // p_hat <<= p - tau * DIVGRAD(rho_inv, p)
-          p_hat <<= p;
+          p_hat <<= alpha * p;
           SetBCs_p(mesh, p, BV);
           stormDivWGrad(mesh, p_hat, -tau, rho_inv, p);
         },
@@ -365,7 +393,6 @@ int main(int argc, char** argv) {
   // tau = tau_relax / TimesScale;
   [[maybe_unused]] stormReal_t Qflux = V_ing / TaskTime;
   //[[maybe_unused]] stormReal_t dR = R_area / N_mesh_R;
-  stormReal_t dR = 0.01;
   [[maybe_unused]] stormReal_t Lambda = Lambda_to_h * dR;
   // /*static stormReal_t */ Mobility = Lambda * Lambda / tau_relax;
   Mobility = 1.0;
@@ -409,7 +436,7 @@ int main(int argc, char** argv) {
   // Formation pressure
 
   // make name a function parameter!
-  stormMesh_t mesh = SR_InitMesh(mesh_filename, dR, dR);
+  stormMesh_t mesh = SR_InitMesh(mesh_filename, dR, dR, &NumCells);
 
   StormArray<real_t> c(mesh, SR_Alloc(mesh, 1, 0)),
       c_hat(mesh, SR_Alloc(mesh, 1, 0));

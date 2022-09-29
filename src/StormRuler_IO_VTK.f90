@@ -173,7 +173,7 @@ subroutine IO_WriteVtkImageData(mesh, file, optFields)
             if (mesh%IsCellInternal(cell)) then
               call writer%Write(stream, item%values(cell))
             else
-              call writer%Write(stream, 0.0_dp)
+              call writer%Write(stream, item%values(1))
             end if
           end do
         end do

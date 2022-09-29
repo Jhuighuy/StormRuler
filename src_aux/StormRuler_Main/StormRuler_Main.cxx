@@ -276,6 +276,8 @@ static void NavierStokes_Step(stormMesh_t mesh, //
     //div v = 0 correction coeffecient 
     real_t alpha = 1.0;
 
+    std::cout<<"S = "<<S<<" , P = " << p(0) <<std::endl;
+
     rhs += alpha * p;
     stormDivergence(mesh, rhs, 1.0, v_hat);
     SetBCs_w(mesh, rho_inv, BV);
@@ -292,7 +294,12 @@ static void NavierStokes_Step(stormMesh_t mesh, //
         },
         false);
     // std::cout<<"LinSolve2 passed"<<std::endl;
+    real_t P_mean = integr_c(p_hat) / (NumCells * dR * dR);
+    fill_with(rhs, P_mean);
+    p_hat -= rhs;
   }
+
+  
 
   {
     StormArray<Vec2D<real_t>> tmp;

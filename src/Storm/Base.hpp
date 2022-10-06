@@ -20,15 +20,6 @@
 
 #pragma once
 
-#ifndef STORM_HEADER_ONLY
-// #error #define STORM_HEADER_ONLY before including Storm!
-#define STORM_HEADER_ONLY 1
-#endif
-
-#ifdef STORM_HEADER_ONLY
-#define FMT_HEADER_ONLY 1
-#endif
-
 #include <complex>
 #include <concepts>
 #include <cstdint>
@@ -37,8 +28,6 @@
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
-
-#include <StormRuler_API.h>
 
 // Detect the C++ version.
 #if __cplusplus < 202002L && !defined(_MSC_VER)

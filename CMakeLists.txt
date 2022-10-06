@@ -1,33 +1,24 @@
-## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ##
-## Copyright (C) 2021 Oleg Butakov
-## 
-## Permission is hereby granted, free of charge, to any person 
-## obtaining a copy of this software and associated documentation 
-## files (the "Software"), to deal in the Software without 
-## restriction, including without limitation the rights  to use, 
-## copy, modify, merge, publish, distribute, sublicense, and/or
-## sell copies of the Software, and to permit persons to whom the  
-## Software is furnished to do so, subject to the following 
-## conditions:
-## 
-## The above copyright notice and this permission notice shall be 
-## included in all copies or substantial portions of the Software.
-## 
-## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-## EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-## OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-## NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-## HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-## WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## OTHER DEALINGS IN THE SOFTWARE.
-## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ##
+# Copyright (C) 2022 Oleg Butakov
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.12)
-
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Setup StormRuler project, using Fortran and C++.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
 
 project(StormRuler
   VERSION 1.0
@@ -37,29 +28,7 @@ project(StormRuler
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
 
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Compilation options.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-# Check Fortran compiler.
-if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-  set(REQUIRED_Fortran_COMPILER_VERSION "10.3.0")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-  # TODO: Intel Classic Fortran Compiler ('ifort') or 
-  #       Intel LLVM Fortran Compiler ('ifx')?
-  set(REQUIRED_Fortran_COMPILER_VERSION "20.2.4")
-#elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
-#  set(REQUIRED_Fortran_COMPILER_VERSION "???")
-#elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
-#  set(REQUIRED_Fortran_COMPILER_VERSION "???")
-else()
-  #message(FATAL_ERROR "Unknown Fortran compiler ${CMAKE_Fortran_COMPILER_ID}.")
-endif()
-if(CMAKE_Fortran_COMPILER_VERSION VERSION_LESS REQUIRED_Fortran_COMPILER_VERSION)
-  #message(FATAL_ERROR 
-  #  "Insufficient ${CMAKE_Fortran_COMPILER_ID} Fortran compiler version, \
-  #  required version ${REQUIRED_Fortran_COMPILER_VERSION} or more recent.")
-endif()
+# Compilation options.
 
 # Check C/C++ compiler.
 # TODO: Check C/C++ compiler version.
@@ -73,32 +42,6 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
   message(WARNING "Unknown C++ compiler, correct options may not be set.")
 endif()
 
-# Detect endianness.
-include(TestBigEndian)
-test_big_endian(BIG_ENDIAN)
-if(BIG_ENDIAN)
-  message(STATUS "StormRuler is being compiled on the big endian machine.")
-endif()
-
-# Detect Apple Silicon CPU.
-# Fortran compilers on Apple Silicon are not production-ready yet,
-# so we need to disable some features (for now).
-if(APPLE)
-  include(CheckCxxCompilerFlag)
-  check_cxx_compiler_flag("-arch arm64" APPLE_SILICON)
-  message(STATUS "Apple Silicon detected, this is bad..")
-endif()
-
-# Warning and diagnostics options (Fortran).
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-  list(APPEND Fortran_DEBUG_OPTIONS -fcheck=all)
-  list(APPEND Fortran_OPTIONS -Wall -Wextra -Wpedantic 
-    -Wno-unused-dummy-argument)
-elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-  list(APPEND Fortran_OPTIONS -warn all,nounused) 
-elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
-  #list(APPEND Fortran_OPTIONS ???) 
-endif()
 # Warning and diagnostics options (C/C++).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
@@ -111,19 +54,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
     -Wno-gnu-zero-variadic-macro-arguments)
 endif()
 
-# Optimization options (Fortran).
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-  list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
-  if (NOT APPLE_SILICON)
-    list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
-  endif()
-elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-  list(APPEND Fortran_DEBUG_OPTIONS -g -O0)
-  list(APPEND Fortran_RELEASE_OPTIONS -g -Ofast -march=native)
-elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
-  list(APPEND Fortran_DEBUG_OPTIONS -g -C -O0)
-  list(APPEND Fortran_RELEASE_OPTIONS -g -O4 -march=native)
-endif()
 # Optimization options (C/C++).
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND CXX_DEBUG_OPTIONS -g -O0)
@@ -134,13 +64,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
   list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
 endif()
 
-# Set the Fortran options.
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:Fortran>:${Fortran_OPTIONS}>)
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Debug>:${Fortran_DEBUG_OPTIONS}>>)
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:Fortran>:$<$<CONFIG:Release>:${Fortran_RELEASE_OPTIONS}>>)
 # Set the C/C++ options.
 target_compile_options(StormRuler_BASE INTERFACE
   $<$<COMPILE_LANGUAGE:C,CXX>:${CXX_OPTIONS}>)
@@ -149,18 +72,21 @@ target_compile_options(StormRuler_BASE INTERFACE
 target_compile_options(StormRuler_BASE INTERFACE
   $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:${CXX_RELEASE_OPTIONS}>>)
 
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Libraries.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
-# CMake modules.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
+# Detect endianness.
+include(TestBigEndian)
+test_big_endian(BIG_ENDIAN)
+if(BIG_ENDIAN)
+  message(STATUS "StormRuler is being compiled on the big endian machine.")
+endif()
 
 # Library include directories.
 target_include_directories(
   StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(
   StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/ext")
+
+# Libraries.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
   
 # Find Git and update submodules.
 find_package(Git)
@@ -175,44 +101,25 @@ if(GIT_FOUND)
   endif()
 endif()
 
-## Find SYCL.
-#find_package(IntelDPCPP REQUIRED)
-#message(STATUS "SYCL (Intel DC++) enabled.")
+# Find {fmt}.
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
+
+# Find spdlog.
+find_package(spdlog CONFIG REQUIRED)
+target_link_libraries(StormRuler_BASE INTERFACE spdlog)
 
 # Find OpenMP.
 if(StormRuler_NO_OpenMP)
   message(STATUS "StormRuler OpenMP was disabled by user.")
 else()
   find_package(OpenMP)
-  if(OpenMP_Fortran_FOUND)
-    # TODO: NAG has linking problems for OpenMP builds.
-    if(NOT CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
-      set(OpenMP_Fortran_ENABLED 1)
-    endif()
-    if(OpenMP_Fortran_ENABLED)
-      message(STATUS "Fortran OpenMP enabled.")
-      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_Fortran)
-    endif()
-  endif()
   if(OpenMP_CXX_FOUND)
-    if(OpenMP_Fortran_ENABLED)
-      # Enable C++ OpenMP only in case Fortran and C++ compiler vendors match.
-      # Mixing different OpenMP runtimes is generally not a good idea.
-      #if(CMAKE_Fortran_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
-        set(OpenMP_CXX_ENABLED 1)
-      #endif()
-      # NAG uses system C compiler as a backend,
-      # which can should theoretically match used C compiler.
-      if(CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
-        set(OpenMP_CXX_ENABLED 1)
-      endif()
-    endif()
-    if(OpenMP_CXX_ENABLED)
-      message(STATUS "C++ OpenMP enabled.")
-      target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
-    else()
-      message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
-    endif()
+    set(OpenMP_CXX_ENABLED)
+    message(STATUS "C++ OpenMP enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
+  else()
+    message(STATUS "C++ OpenMP disabled, different Fortran and C++ compiler vendors.")
   endif()
 endif()
 
@@ -221,12 +128,12 @@ if(StormRuler_NO_MKL)
   message(STATUS "StormRuler MKL was disabled by user.")
 else()
   # Configure OpenMP library to the Fortran compiler native one.
-  if(OpenMP_Fortran_ENABLED)
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
+  if(OpenMP_CXX_ENABLED)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "INTEL")
       set(MKL_THREADING "intel_thread")
-    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       set(MKL_THREADING "gnu_thread")
-    elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
       set(MKL_THREADING "pgi_thread")
     endif()
   endif()
@@ -296,34 +203,40 @@ else()
   endif()
 endif()
 
-# Find OpenGL, GLEW and GLFW.
+# Find OpenGL, GLEW, GLFW and GLM.
 if(StormRuler_NO_OpenGL)
   message(STATUS "StormRuler OpenGL was disabled by user.")
 else()
   find_package(OpenGL)
   if(OpenGL_FOUND)
     message(STATUS "OpenGL enabled.")
+    set(OpenGL_ENABLED 1)
     target_link_libraries(StormRuler_BASE INTERFACE OpenGL::GL)
-    target_link_libraries(StormRuler_BASE INTERFACE OpenGL::GLU)
   endif()
   find_package(GLEW)
   if(GLEW_FOUND)
+    set(GLEW_ENABLED 1)
     message(STATUS "GLEW enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE GLEW::GLEW)
   endif()
   find_package(glfw3 3.3)
   if(glfw3_FOUND)
+    set(GLFW_ENABLED 1)
     message(STATUS "GLFW enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE glfw)
   endif()
+  find_package(glm)
+  if(glm_FOUND)
+    set(GLM_ENABLED 1)
+    message(STATUS "GLM enabled.")
+    target_link_libraries(StormRuler_BASE INTERFACE glm::glm)
+  endif()
 endif()
 
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-## Main shared library and the executable.
-## -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ##
-
+# Add the main shared library.
 message(STATUS "Adding StormRuler shared library.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 
+# Add the test executable.
 message(STATUS "Adding StormRuler main executable.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")

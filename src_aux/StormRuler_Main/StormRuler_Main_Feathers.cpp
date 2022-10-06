@@ -24,7 +24,6 @@
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> //
 
 #define _USE_MATH_DEFINES 1
-#define STORM_HEADER_ONLY 1
 
 #include <Storm/Utils/Banner.hpp>
 

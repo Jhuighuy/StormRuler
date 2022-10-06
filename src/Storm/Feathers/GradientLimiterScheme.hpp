@@ -30,7 +30,7 @@
 
 #include <Storm/Utils/Math.hpp>
 
-#include "Field.hh"
+#include "Field.hpp"
 
 #include <type_traits>
 

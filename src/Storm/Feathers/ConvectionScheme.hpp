@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include "FluxScheme.hh"
-#include "GradientLimiterScheme.hh"
-#include "GradientScheme.hh"
+#include "FluxScheme.hpp"
+#include "GradientLimiterScheme.hpp"
+#include "GradientScheme.hpp"
 
 namespace Storm::Feathers {
 

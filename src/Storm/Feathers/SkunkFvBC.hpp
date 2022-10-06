@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "Field.hh"
-#include "SkunkHydro.hh"
+#include "Field.hpp"
+#include "SkunkHydro.hpp"
 #include <functional>
 
 namespace Storm::Feathers {

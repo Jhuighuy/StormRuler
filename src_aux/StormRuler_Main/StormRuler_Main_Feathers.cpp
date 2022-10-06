@@ -35,7 +35,7 @@
 #include <Storm/Mallard/MeshUnstructured.hpp>
 #include <Storm/Mallard/Shape.hpp>
 // #include <Storm/Bittern/Matrix.hpp>
-#include <Storm/Feathers/SkunkFvSolver.hh>
+#include <Storm/Feathers/SkunkFvSolver.hpp>
 
 #include <algorithm>
 #include <cstring>

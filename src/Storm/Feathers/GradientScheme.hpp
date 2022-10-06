@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "Field.hh"
+#include "Field.hpp"
 
 namespace Storm::Feathers {
 

@@ -33,6 +33,11 @@ namespace Storm::Feathers {
 static const real_t Gamma = 1.4;
 static const real_t Gamma1 = Gamma - 1.0;
 
+namespace {
+  const double gamma = Gamma;
+  const double gamma_2 = (gamma + 1.0) / (2.0 * gamma);
+} // namespace
+
 class MhdHydroVars {
 public:
 

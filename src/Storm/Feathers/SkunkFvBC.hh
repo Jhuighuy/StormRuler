@@ -94,8 +94,10 @@ private:
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override;
-}; // class MhdFvBcFarFieldT
+                        MhdFluidStateT& u_ghost) const override {
+    u_ghost = u;
+  } // MhdFvBcFarFieldT::get_ghost_state_
+};  // class MhdFvBcFarFieldT
 
 /**
  * @brief No-slip wall boundary condition.
@@ -116,7 +118,15 @@ private:
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override;
+                        MhdFluidStateT& u_ghost) const override {
+    u_ghost = u;
+    if (vfunc != nullptr) {
+      u_ghost.vel = vfunc(r_ghost);
+    } else {
+      u_ghost.vel = {};
+    }
+  }
+
 }; // class MhdFvBcNoSlipT
 
 /**
@@ -134,7 +144,11 @@ private:
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override;
+                        MhdFluidStateT& u_ghost) const override {
+    u_ghost = u;
+    u_ghost.vel -= u.vel_n * n;
+  }
+
 }; // class MhdFluidBcSlipTMhdFluidBcSlipT
 
 } // namespace Storm::Feathers

@@ -99,8 +99,6 @@ private:
     >
   > entity_volumes_tuple_{};
 
-  shapes::AABB<Vec> aabb_{};
-
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
@@ -110,6 +108,8 @@ private:
 
   // You don't belong here, huh?
   IndexedVector<FaceIndex, Vec> face_normals_{};
+
+  shapes::AABB<Vec> aabb_{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
@@ -124,7 +124,7 @@ public:
 
   /// @brief Construct the mesh.
   constexpr UnstructuredMesh() {
-    // Initialize the default label (0).
+    // Initialize the default label.
     meta::for_each<EntityIndices_>(
         [&]<size_t I>(meta::type<EntityIndex<I>>) { insert_label<I>(); });
   }
@@ -200,11 +200,6 @@ public:
     return std::get<I>(entity_volumes_tuple_)[index];
   }
 
-  /// @brief Mesh AABB.
-  [[nodiscard]] constexpr const auto& aabb() const noexcept {
-    return aabb_;
-  }
-
   /// @brief Position of the entitity at @p index.
   template<size_t I>
   [[nodiscard]] constexpr Vec position(EntityIndex<I> index) const noexcept {
@@ -217,6 +212,11 @@ public:
     STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
                   "Face index is out of range!");
     return face_normals_[face_index];
+  }
+
+  /// @brief Mesh AABB.
+  [[nodiscard]] constexpr const auto& aabb() const noexcept {
+    return aabb_;
   }
 
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
@@ -269,9 +269,9 @@ public:
     entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
     entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
     entity_volumes_tuple_ = mesh.entity_volumes_tuple_;
-    aabb_ = mesh.aabb_;
     entity_positions_tuple_ = mesh.entity_positions_tuple_;
     face_normals_ = mesh.face_normals_;
+    aabb_ = mesh.aabb_;
 
     // Copy the connectivity tables.
     meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
@@ -293,9 +293,9 @@ public:
     entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
     entity_shape_types_tuple_ = std::move(mesh.entity_shape_types_tuple_);
     entity_volumes_tuple_ = std::move(mesh.entity_volumes_tuple_);
-    aabb_ = std::move(mesh.aabb_);
     entity_positions_tuple_ = std::move(mesh.entity_positions_tuple_);
     face_normals_ = std::move(mesh.face_normals_);
+    aabb_ = std::move(mesh.aabb_);
 
     // Move the connectivity tables.
     meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
@@ -545,7 +545,9 @@ private:
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;
-    if (std::ranges::size(cell_face_nodes) == 2) {
+    const size_t num_cell_faces = std::ranges::size(cell_face_nodes);
+    STORM_ASSERT_(num_cell_faces >= 2, "This function should be called in 1D!");
+    if (num_cell_faces == 2) {
       cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);
       cell_is_outer =
           std::ranges::equal(cell_face_nodes, face_nodes | std::views::reverse);

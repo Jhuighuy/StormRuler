@@ -30,22 +30,22 @@
 !*.md
 !Doxyfile
 
-# Fortran and C/C++.
-!*.f
-!*.f90
-*.out.f90
-!*.fi
+# CMake.
+!*.cmake
+!CMakeLists.txt
+cmake_install.cmake
+CMakeFiles/
+
+# C/C++.
 !*.c
-!*.cc
 !*.cpp
-!*.cxx
 !*.h
-!*.hh
 !*.hpp
-!*.hxx
 !*.inl
 !*.m
 !*.mm
+Config.hpp
+!Config.hpp.in
 
 # GLSL
 !*.glsl
@@ -57,9 +57,3 @@
 # Input files.
 !*.ppm
 !test/mesh/*
-
-# CMake.
-!*.cmake
-!CMakeLists.txt
-cmake_install.cmake
-CMakeFiles/

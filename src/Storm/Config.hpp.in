@@ -1,0 +1,42 @@
+/// Copyright (C) 2022 Oleg Butakov
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
+
+#pragma once
+
+// Threading libraries configutation.
+#cmakedefine01 STORM_OpenMP_ENABLED
+#cmakedefine01 STORM_TBB_ENABLED
+
+// Algebra libraries configutation.
+#cmakedefine01 STORM_MKL_ENABLED
+#cmakedefine01 STORM_BLAS_ENABLED
+#cmakedefine01 STORM_LAPACK_ENABLED
+
+// Metis configutation.
+#cmakedefine01 STORM_METIS_ENABLED
+
+// Zlib configutation.
+#cmakedefine01 STORM_ZLIB_ENABLED
+
+// OpenGL configutation.
+#cmakedefine01 STORM_OpenGL_ENABLED
+#cmakedefine01 STORM_GLEW_ENABLED
+#cmakedefine01 STORM_GLFW_ENABLED
+#cmakedefine01 STORM_GLM_ENABLED

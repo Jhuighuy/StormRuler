@@ -144,6 +144,12 @@
   STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
 #endif
 
+// Include the configuration file.
+#if __has_include("Config.hpp")
+#include "Config.hpp"
+#endif
+#include "ConfigDefault.hpp"
+
 #define STORM_THROW_BASE_(error, message, ...)                   \
   do {                                                           \
     throw error(fmt::format(message __VA_OPT__(, __VA_ARGS__))); \

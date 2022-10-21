@@ -40,21 +40,19 @@ using Label = Index<LabelTag>;
 
 template<mesh Mesh>
 class NodeView;
-template<class Mesh>
-NodeView(const Mesh&, NodeIndex) -> NodeView<Mesh>;
-
 template<mesh Mesh>
 class EdgeView;
-template<class Mesh>
-EdgeView(const Mesh&, EdgeIndex) -> EdgeView<Mesh>;
-
 template<mesh Mesh>
 class FaceView;
-template<class Mesh>
-FaceView(const Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
-
 template<mesh Mesh>
 class CellView;
+
+template<class Mesh>
+NodeView(const Mesh&, NodeIndex) -> NodeView<Mesh>;
+template<class Mesh>
+EdgeView(const Mesh&, EdgeIndex) -> EdgeView<Mesh>;
+template<class Mesh>
+FaceView(const Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
 template<class Mesh>
 CellView(const Mesh&, CellIndex<Mesh>) -> CellView<Mesh>;
 
@@ -404,7 +402,7 @@ public:
 
   /// @brief Range of the nodes.
   [[nodiscard]] constexpr auto nodes() const noexcept {
-    return self_().entities(meta::type_v<NodeIndex>) | //
+    return self_().entities(meta::type_v<NodeIndex>) |
            detail_::to_node_view_(self_());
   }
   /// @brief Range of the nodes with a @p label.
@@ -415,7 +413,7 @@ public:
 
   /// @brief Range of the edges.
   [[nodiscard]] constexpr auto edges() const noexcept {
-    return self_().entities(meta::type_v<EdgeIndex>) | //
+    return self_().entities(meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(self_());
   }
   /// @brief Range of the edges with @p label.

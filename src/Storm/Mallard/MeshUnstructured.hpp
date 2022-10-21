@@ -356,12 +356,12 @@ public:
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
       // Assign the node position and update the AABB.
-      auto& positions = std::get<I>(entity_positions_tuple_);
-      const Vec& pos = positions.emplace_back(shape);
-      if (positions.size() == 1) {
-        aabb_ = shapes::AABB{pos};
+      auto& node_positions = std::get<I>(entity_positions_tuple_);
+      const Vec& position = node_positions.emplace_back(shape);
+      if (node_positions.size() == 1) {
+        aabb_ = shapes::AABB{position};
       } else {
-        aabb_.extend(pos);
+        aabb_.extend(position);
       }
     } else {
       // Assign the entity shape type, volume, center position (and normal).

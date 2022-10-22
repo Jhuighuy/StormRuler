@@ -33,37 +33,22 @@
 
 namespace Storm::Feathers {
 
-/**
- * Abstract numerical flux.
- */
-class iFluxScheme : public tObject<iFluxScheme> {
-public:
+/// @brief Local Lax-Friedrichs (Rusanov) numerical flux.
+/// Use this numerical flux if all other fails.
+/// It should always work.
+template<class Physics>
+class LaxFriedrichsFluxScheme;
 
-  /** Compute the numerical flux. */
-  virtual void get_numerical_flux(size_t num_vars, const vec3_t& n,
-                                  tScalarConstSubField cons_r,
-                                  tScalarConstSubField cons_l,
-                                  tScalarSubField flux) const = 0;
-}; // class iFluxScheme
-
-/**
- * Local Lax-Friedrichs (Rusanov) numerical flux.
- *
- * Use this numerical flux if all other fails.
- * It should always work.
- */
-/** @{ */
-template<typename tPhysics>
-class tLaxFriedrichsFluxScheme;
 template<>
-class tLaxFriedrichsFluxScheme<tGasPhysics> final : public iFluxScheme {
+class LaxFriedrichsFluxScheme<tGasPhysics> final {
 public:
 
-  /** Compute the numerical flux. */
-  void get_numerical_flux(size_t num_vars, const vec3_t& n,
-                          tScalarConstSubField cons_r,
-                          tScalarConstSubField cons_l,
-                          tScalarSubField flux) const final {
+  /// @brief Compute the numerical flux.
+  template<class Real, size_t NumVars>
+  void get_numerical_flux(const vec3_t& n, //
+                          const Subfield<Real, NumVars>& cons_r,
+                          const Subfield<Real, NumVars>& cons_l,
+                          Subfield<Real, NumVars>& flux) const noexcept {
     const tGasPhysics::tFluidState ur(n, cons_r.data());
     const tGasPhysics::tFluidState ul(n, cons_l.data());
 
@@ -71,17 +56,17 @@ public:
      * [1] Eq. (10.55-10.56). */
     const real_t ss =
         std::max(std::abs(ur.vel_n) + ur.c_snd, std::abs(ul.vel_n) + ul.c_snd);
-    FEATHERS_TMP_SCALAR_FIELD(flux_r, num_vars);
-    FEATHERS_TMP_SCALAR_FIELD(flux_l, num_vars);
-    ur.make_flux(num_vars, n, flux_r.data());
-    ul.make_flux(num_vars, n, flux_l.data());
-    for (size_t i = 0; i < num_vars; ++i) {
+    Subfield<Real, NumVars> flux_r{}, flux_l{};
+    ur.make_flux(NumVars, n, flux_r.data());
+    ul.make_flux(NumVars, n, flux_l.data());
+    for (size_t i = 0; i < NumVars; ++i) {
       flux[i] = 0.5 * ((flux_r[i] + flux_l[i]) - ss * (cons_r[i] - cons_l[i]));
     }
   }
-}; // class tLaxFriedrichsFluxScheme<tGasPhysics>
-/** @} */
 
+}; // class LaxFriedrichsFluxScheme<tGasPhysics>
+
+#if 0
 /**
  * Harten-Lax-van Leer-Einfeldt numerical flux.
  *
@@ -247,5 +232,6 @@ public:
   }
 }; // class tHllcFluxScheme<tGasPhysics>
 /** @} */
+#endif
 
 } // namespace Storm::Feathers

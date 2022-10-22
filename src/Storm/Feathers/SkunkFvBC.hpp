@@ -33,24 +33,6 @@
 namespace Storm::Feathers {
 
 /**
- * Abstract finite-volume boundary condition.
- */
-template<size_t num_vars_t>
-class MhdFvBcT : public std::enable_shared_from_this<MhdFvBcT<num_vars_t>> {
-public:
-
-  /** Compute the ghost state values. */
-  void get_ghost_state(tScalarField& u) const {
-    get_ghost_state_(u);
-  }
-
-private:
-
-  /** Compute the ghost state values. */
-  virtual void get_ghost_state_(tScalarField& u) const = 0;
-}; // class MhdFvBcT
-
-/**
  * @brief Abstract boundary condition.
  */
 template<typename MhdPhysicsT>

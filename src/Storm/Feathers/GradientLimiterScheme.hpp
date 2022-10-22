@@ -203,28 +203,26 @@ public:
         second_limiter_{std::move(second_limiter)} {}
 
   /// @brief Compute cell-centered gradient limiter coefficients.
-  void get_cell_limiter(size_t num_vars, tScalarField& lim_u,
-                        const tScalarField& u,
-                        const tVectorField& grad_u) const {
+  template<class Real, size_t NumVars>
+  void get_cell_limiter(Field<Real, NumVars>& lim_u, //
+                        const Field<Real, NumVars>& u,
+                        const Field<Vec<Real>, NumVars>& grad_u) const {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       static const real_t k = 0.1;
       const real_t eps_sqr = std::pow(k * cell.volume(), 3);
       // Find the largest negative and positive differences
       // between values of and neighbor cells and the current cell.
-      FEATHERS_TMP_SCALAR_FIELD(du_min, num_vars);
-      du_min = u[cell];
-      FEATHERS_TMP_SCALAR_FIELD(du_max, num_vars);
-      du_max = u[cell];
+      auto du_min = u[cell], du_max = u[cell];
       cell.for_each_face_cells([&](CellView<Mesh> cell_inner,
                                    CellView<Mesh> cell_outer) {
-        for (size_t i = 0; i < num_vars; ++i) {
+        for (size_t i = 0; i < NumVars; ++i) {
           du_min[i] =
               std::min(du_min[i], std::min(u[cell_outer][i], u[cell_inner][i]));
           du_max[i] =
               std::max(du_max[i], std::max(u[cell_outer][i], u[cell_inner][i]));
         }
       });
-      for (size_t i = 0; i < num_vars; ++i) {
+      for (size_t i = 0; i < NumVars; ++i) {
         du_min[i] = std::min(0.0, du_min[i] - u[cell][i]);
         du_max[i] = std::max(0.0, du_max[i] - u[cell][i]);
       }
@@ -234,7 +232,7 @@ public:
       lim_u[cell].fill(1.0);
       cell.for_each_face([&](FaceView<Mesh> face) {
         const vec3_t dr = face.center3D() - cell.center3D();
-        for (size_t i = 0; i < num_vars; ++i) {
+        for (size_t i = 0; i < NumVars; ++i) {
           const real_t du_face = glm::dot(grad_u[cell][i], dr);
           const real_t limiter =
               slope_limiter_(du_min[i], du_max[i], du_face, eps_sqr);
@@ -242,9 +240,9 @@ public:
         }
       });
 
-      // Compute secondary limiting coefficients:
-      // disable limiting near smooth regions.
-      for (size_t i = 0; i < num_vars; ++i) {
+      // Compute secondary limiting coefficients by disabling
+      // limiting near the smooth regions.
+      for (size_t i = 0; i < NumVars; ++i) {
         const real_t limiter =
             second_limiter_(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
         lim_u[cell][i] = limiter;

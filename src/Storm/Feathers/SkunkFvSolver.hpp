@@ -62,7 +62,7 @@ public:
             *mesh, tHllcFluxScheme<MhdPhysicsT>{}))
 #else
         m_conv(new LinearUpwindConvectionScheme(
-            *mesh, tLaxFriedrichsFluxScheme<MhdPhysicsT>{},
+            *mesh, LaxFriedrichsFluxScheme<MhdPhysicsT>{},
             LeastSquaresGradientScheme{*mesh},
             GradientLimiterScheme{*mesh, //
                                   CubicSlopeLimiter{}, CubicSecondLimiter{}}))
@@ -76,19 +76,20 @@ public:
   /**
    * @brief Compute spacial discretization.
    */
-  void calc_func(tScalarField& u, tScalarField& f) const {
+  void calc_func(Field<real_t, 5>& u, Field<real_t, 5>& f) const {
     std::ranges::for_each(m_mesh->cells(),
                           [&](CellView<Mesh> cell) { f[cell].fill(0.0); });
-    m_conv->get_cell_convection(5, f, u);
+    m_conv->get_cell_convection(f, u);
   }
 
   /*
    * Compute time step.
    */
-  void calc_step(real_t& dt, tScalarField& u, tScalarField& u_hat) const {
+  void calc_step(real_t& dt, Field<real_t, 5>& u,
+                 Field<real_t, 5>& u_hat) const {
     calc_func(u, u_hat);
     std::ranges::for_each(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
-      for (size_t i = 0; i < num_vars; ++i) {
+      for (size_t i = 0; i < 5; ++i) {
         u_hat[cell][i] = u[cell][i] - dt * u_hat[cell][i];
       }
     });

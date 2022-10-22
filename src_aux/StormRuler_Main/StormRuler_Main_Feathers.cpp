@@ -120,8 +120,8 @@ int main(int argc, char** argv) {
   STORM_INFO_("mesh has {} cells", mesh->num_cells());
   STORM_INFO_("mesh loaded");
 
-  tScalarField uc(5, mesh->num_cells());
-  tScalarField up(5, mesh->num_cells());
+  Field<real_t, 5> uc(mesh->num_cells());
+  Field<real_t, 5> up(mesh->num_cells());
   for (size_t cell_ind = 0; cell_ind < mesh->num_cells(); ++cell_ind) {
     std::array<real_t, 5> q{2.0, 1.0, 1.0, 0.0, 0.0};
     // std::array<real_t, 5> q{1.4, 1.0, 3.0, 0.0, 0.0};

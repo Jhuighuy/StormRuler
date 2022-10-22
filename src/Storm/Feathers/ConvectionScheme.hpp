@@ -42,8 +42,8 @@ public:
   std::map<Label, std::shared_ptr<MhdFvBcPT<tGasPhysics>>>* bcs_;
 
   /** Compute the nonlinear convection. */
-  virtual void get_cell_convection(size_t num_vars, tScalarField& conv_u,
-                                   const tScalarField& u) const = 0;
+  virtual void get_cell_convection(Field<real_t, 5>& div_f,
+                                   const Field<real_t, 5>& u) const = 0;
 
 }; // class iConvectionScheme
 
@@ -65,19 +65,20 @@ public:
       : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)} {}
 
   /// @brief Compute the first order upwind nonlinear convection.
-  void get_cell_convection(size_t num_vars, tScalarField& div_f,
-                           const tScalarField& u) const final {
+  template<class Real, size_t NumVars>
+  void get_cell_convection(Field<Real, NumVars>& div_f,
+                           const Field<Real, NumVars>& u) const {
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
       const CellView<Mesh> cell_outer = face.outer_cell();
 
       // Compute the flux.
-      FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-      flux_scheme_.get_numerical_flux(num_vars, face.normal3D(), //
+      Subfield<Real, NumVars> flux{};
+      flux_scheme_.get_numerical_flux(face.normal3D(), //
                                       u[cell_outer], u[cell_inner], flux);
       const real_t ds = face.area();
-      for (size_t i = 0; i < num_vars; ++i) {
+      for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
         div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
       }
@@ -87,16 +88,16 @@ public:
     for (const auto& [label, bc] : *bcs_) {
       std::ranges::for_each(p_mesh_->faces(label), [&](FaceView<Mesh> face) {
         const CellView<Mesh> cell_inner = face.inner_cell();
-        FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
+        Subfield<Real, NumVars> u_outer{};
         bc->get_ghost_state(face.normal3D(), face.center3D(),
                             u[face.inner_cell()].data(), u_outer.data());
 
         // Compute the flux.
-        FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-        flux_scheme_.get_numerical_flux(num_vars, face.normal3D(), //
+        Subfield<Real, NumVars> flux{};
+        flux_scheme_.get_numerical_flux(face.normal3D(), //
                                         u_outer, u[cell_inner], flux);
         const real_t ds = face.area();
-        for (size_t i = 0; i < num_vars; ++i) {
+        for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
         }
       });
@@ -129,14 +130,20 @@ public:
         gradient_scheme_{std::move(gradient_scheme)},
         gradient_limiter_scheme_{std::move(gradient_limiter_scheme)} {}
 
+  void get_cell_convection(Field<real_t, 5>& div_f,
+                           const Field<real_t, 5>& u) const final {
+    get_cell_convection1(div_f, u);
+  }
+
   /// @brief Compute the second-order upwind nonlinear convection.
-  void get_cell_convection(size_t num_vars, tScalarField& div_f,
-                           const tScalarField& u) const final {
+  template<class Real, size_t NumVars>
+  void get_cell_convection1(Field<Real, NumVars>& div_f,
+                            const Field<Real, NumVars>& u) const {
     // Compute the gradients.
-    tVectorField grad_u(num_vars, p_mesh_->num_cells());
-    gradient_scheme_.get_gradients(num_vars, grad_u, u);
-    tScalarField phi_u(num_vars, p_mesh_->num_cells());
-    gradient_limiter_scheme_.get_cell_limiter(num_vars, phi_u, u, grad_u);
+    Field<Vec<Real>, NumVars> grad_u(p_mesh_->num_cells());
+    gradient_scheme_.get_gradients(grad_u, u);
+    Field<Real, NumVars> phi_u(p_mesh_->num_cells());
+    gradient_limiter_scheme_.get_cell_limiter(phi_u, u, grad_u);
 
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
@@ -144,11 +151,10 @@ public:
       const CellView<Mesh> cell_outer = face.outer_cell();
 
       // Reconstruct the face values.
-      const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
       const vec3_t dr_outer = face.center3D() - cell_outer.center3D();
-      FEATHERS_TMP_SCALAR_FIELD(u_inner, num_vars);
-      FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
-      for (size_t i = 0; i < num_vars; ++i) {
+      const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
+      Subfield<Real, NumVars> u_outer{}, u_inner{};
+      for (size_t i = 0; i < NumVars; ++i) {
         u_inner[i] =
             u[cell_inner][i] +
             phi_u[cell_inner][i] * glm::dot(grad_u[cell_inner][i], dr_inner);
@@ -158,11 +164,11 @@ public:
       }
 
       // Compute the flux.
-      FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-      flux_scheme_.get_numerical_flux(num_vars, face.normal3D(), //
+      Subfield<Real, NumVars> flux{};
+      flux_scheme_.get_numerical_flux(face.normal3D(), //
                                       u_outer, u_inner, flux);
       const real_t ds = face.area();
-      for (size_t i = 0; i < num_vars; ++i) {
+      for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
         div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
       }
@@ -175,9 +181,8 @@ public:
         const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
 
         // Reconstruct the face values.
-        FEATHERS_TMP_SCALAR_FIELD(u_inner, num_vars);
-        FEATHERS_TMP_SCALAR_FIELD(u_outer, num_vars);
-        for (size_t i = 0; i < num_vars; ++i) {
+        Subfield<Real, NumVars> u_outer{}, u_inner{};
+        for (size_t i = 0; i < NumVars; ++i) {
           u_inner[i] =
               u[cell_inner][i] +
               phi_u[cell_inner][i] * glm::dot(grad_u[cell_inner][i], dr_inner);
@@ -186,11 +191,11 @@ public:
                             u_inner.data(), u_outer.data());
 
         // Compute the flux.
-        FEATHERS_TMP_SCALAR_FIELD(flux, num_vars);
-        flux_scheme_.get_numerical_flux(num_vars, face.normal3D(), //
+        Subfield<Real, NumVars> flux{};
+        flux_scheme_.get_numerical_flux(face.normal3D(), //
                                         u_outer, u_inner, flux);
         const real_t ds = face.area();
-        for (size_t i = 0; i < num_vars; ++i) {
+        for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
         }
       });

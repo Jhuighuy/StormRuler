@@ -37,21 +37,17 @@ class LeastSquaresGradientScheme final {
 private:
 
   const Mesh* p_mesh_;
-  bool initialized_ = false;
-  tMatrixField m_inverse_matrices;
+  Field<Mat<real_t>> m_inverse_matrices;
 
 public:
 
   /// @brief Construct the gradient scheme.
   constexpr explicit LeastSquaresGradientScheme(const Mesh& mesh)
-      : p_mesh_{&mesh}, m_inverse_matrices(1, p_mesh_->num_cells()) {}
-
-private:
-
-  void init_gradients_() {
+      : p_mesh_{&mesh}, m_inverse_matrices(p_mesh_->num_cells()) {
     // Compute the least-squares problem matrices.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
+      auto& mat = m_inverse_matrices[cell][0];
+      mat = {};
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
             const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
@@ -63,28 +59,22 @@ private:
     // (Matrix is stabilized by a small number, added to the diagonal.)
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       static const mat3_t eps(1e-14);
-      mat3_t& mat = m_inverse_matrices[cell][0];
+      auto& mat = m_inverse_matrices[cell][0];
       mat = glm::inverse(mat + eps);
     });
-
-    initialized_ = true;
   }
 
-public:
-
   /// @brief Compute cell-centered gradients.
-  void get_gradients(size_t num_vars, tVectorField& grad_u,
-                     const tScalarField& u) const {
-    if (!initialized_)
-      const_cast<LeastSquaresGradientScheme*>(this)->init_gradients_();
-
+  template<class Real, size_t NumVars>
+  void get_gradients(Field<Vec<Real>, NumVars>& grad_u,
+                     const Field<Real, NumVars>& u) const {
     // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       grad_u[cell].fill(vec3_t(0.0));
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
             const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
-            for (size_t i = 0; i < num_vars; ++i) {
+            for (size_t i = 0; i < NumVars; ++i) {
               grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
             }
           });
@@ -92,7 +82,7 @@ public:
 
     // Solve the least-squares problem.
     std::ranges::for_each(p_mesh_->cells(), [&](CellView<Mesh> cell) {
-      for (size_t i = 0; i < num_vars; ++i) {
+      for (size_t i = 0; i < NumVars; ++i) {
         const mat3_t& mat = m_inverse_matrices[cell][0];
         grad_u[cell][i] = mat * grad_u[cell][i];
       }

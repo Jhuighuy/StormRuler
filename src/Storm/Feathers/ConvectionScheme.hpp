@@ -42,13 +42,13 @@ public:
   std::map<Label, std::shared_ptr<MhdFvBcPT<tGasPhysics>>>* bcs_;
 
   /** Compute the nonlinear convection. */
-  virtual void get_cell_convection(Field<real_t, 5>& div_f,
-                                   const Field<real_t, 5>& u) const = 0;
+  virtual void
+  get_cell_convection(CellField<Mesh, real_t, 5>& div_f,
+                      const CellField<Mesh, real_t, 5>& u) const = 0;
 
 }; // class iConvectionScheme
 
 /// @brief Piecewise-constant upwind convection scheme.
-/// This is a first order scheme.
 template<mesh Mesh, class FluxScheme>
   requires std::is_object_v<FluxScheme>
 class UpwindConvectionScheme final : public iConvectionScheme {
@@ -64,15 +64,15 @@ public:
                                             FluxScheme flux_scheme) noexcept
       : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)} {}
 
-  void get_cell_convection(Field<real_t, 5>& div_f,
-                           const Field<real_t, 5>& u) const final {
+  void get_cell_convection(CellField<Mesh, real_t, 5>& div_f,
+                           const CellField<Mesh, real_t, 5>& u) const final {
     (*this)(div_f, u);
   }
 
   /// @brief Compute the first order upwind nonlinear convection.
   template<class Real, size_t NumVars>
-  void operator()(Field<Real, NumVars>& div_f,
-                  const Field<Real, NumVars>& u) const noexcept {
+  void operator()(CellField<Mesh, Real, NumVars>& div_f,
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
@@ -110,7 +110,6 @@ public:
 }; // class UpwindConvectionScheme
 
 /// @brief Piecewise-linear upwind convection scheme.
-/// This is a second order scheme.
 template<mesh Mesh, class FluxScheme, //
          class GradientScheme, class GradientLimiterScheme>
   requires std::is_object_v<FluxScheme> && std::is_object_v<GradientScheme> &&
@@ -133,18 +132,18 @@ public:
         gradient_scheme_{std::move(gradient_scheme)},
         gradient_limiter_scheme_{std::move(gradient_limiter_scheme)} {}
 
-  void get_cell_convection(Field<real_t, 5>& div_f,
-                           const Field<real_t, 5>& u) const final {
+  void get_cell_convection(CellField<Mesh, real_t, 5>& div_f,
+                           const CellField<Mesh, real_t, 5>& u) const final {
     (*this)(div_f, u);
   }
 
   /// @brief Compute the second-order upwind nonlinear convection.
   template<class Real, size_t NumVars>
-  void operator()(Field<Real, NumVars>& div_f,
-                  const Field<Real, NumVars>& u) const noexcept {
+  void operator()(CellField<Mesh, Real, NumVars>& div_f,
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the gradients.
-    Field<Vec<Real>, NumVars> grad_u(p_mesh_->num_cells());
-    Field<Real, NumVars> phi_u(p_mesh_->num_cells());
+    CellVecField<Mesh, Real, NumVars> grad_u(p_mesh_->num_cells());
+    CellField<Mesh, Real, NumVars> phi_u(p_mesh_->num_cells());
     gradient_scheme_(grad_u, u);
     gradient_limiter_scheme_(phi_u, u, grad_u);
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {

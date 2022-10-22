@@ -127,10 +127,6 @@ public:
   [[nodiscard]] constexpr operator EntityIndex<I>() const noexcept {
     return index_;
   }
-  /// @todo TRANSITION CODE, REMOVE ME!!!
-  operator size_t() const {
-    return index_sz();
-  }
 
   /// @brief Comparison operator.
   [[nodiscard]] constexpr auto

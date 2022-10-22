@@ -76,7 +76,8 @@ public:
   /**
    * @brief Compute spacial discretization.
    */
-  void calc_func(Field<real_t, 5>& u, Field<real_t, 5>& f) const {
+  void calc_func(CellField<Mesh, real_t, 5>& u,
+                 CellField<Mesh, real_t, 5>& f) const {
     std::ranges::for_each(m_mesh->cells(),
                           [&](CellView<Mesh> cell) { f[cell].fill(0.0); });
     m_conv->get_cell_convection(f, u);
@@ -85,8 +86,9 @@ public:
   /*
    * Compute time step.
    */
-  void calc_step(real_t& dt, Field<real_t, 5>& u,
-                 Field<real_t, 5>& u_hat) const {
+  void calc_step(real_t& dt, //
+                 CellField<Mesh, real_t, 5>& u,
+                 CellField<Mesh, real_t, 5>& u_hat) const {
     calc_func(u, u_hat);
     std::ranges::for_each(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < 5; ++i) {

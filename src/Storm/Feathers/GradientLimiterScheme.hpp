@@ -204,9 +204,10 @@ public:
 
   /// @brief Compute cell-centered gradient limiter coefficients.
   template<class Real, size_t NumVars>
-  void operator()(Field<Real, NumVars>& lim_u, //
-                  const Field<Real, NumVars>& u,
-                  const Field<Vec<Real>, NumVars>& grad_u) const noexcept {
+  void operator()( //
+      CellField<Mesh, Real, NumVars>& lim_u,
+      const CellField<Mesh, Real, NumVars>& u,
+      const CellVecField<Mesh, Real, NumVars>& grad_u) const noexcept {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Find the largest negative and positive differences
       // between values of and neighbor cells and the current cell.

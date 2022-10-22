@@ -55,13 +55,17 @@ using Mat = mat3_t;
 template<class T, size_t N = 1>
 using Subfield = std::array<T, N>;
 
-template<class T, size_t N = 1>
-using Field = std::vector<Subfield<T, N>>;
+template<class Mesh, class T, size_t N = 1>
+using CellField = IndexedVector<CellIndex<Mesh>, Subfield<T, N>>;
+template<class Mesh, class T, size_t N = 1>
+using CellVecField = IndexedVector<CellIndex<Mesh>, Subfield<Vec<T>, N>>;
+template<class Mesh, class T, size_t N = 1>
+using CellMatField = IndexedVector<CellIndex<Mesh>, Subfield<Mat<T>, N>>;
 
 struct sFieldDesc {
   const char* name;
   size_t var_index;
-  Field<real_t, 5>* scalar;
+  CellField<Mesh, real_t, 5>* scalar;
 }; // struct sFieldDesc
 
 } // namespace Storm::Feathers

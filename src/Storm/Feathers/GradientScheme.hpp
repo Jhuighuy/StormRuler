@@ -37,7 +37,7 @@ class LeastSquaresGradientScheme final {
 private:
 
   const Mesh* p_mesh_;
-  Field<Mat<real_t>> m_inverse_matrices;
+  CellMatField<Mesh, real_t> m_inverse_matrices;
 
 public:
 
@@ -66,8 +66,8 @@ public:
 
   /// @brief Compute cell-centered gradients.
   template<class Real, size_t NumVars>
-  void operator()(Field<Vec<Real>, NumVars>& grad_u,
-                  const Field<Real, NumVars>& u) const noexcept {
+  void operator()(CellVecField<Mesh, Real, NumVars>& grad_u,
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       grad_u[cell].fill(vec3_t(0.0));

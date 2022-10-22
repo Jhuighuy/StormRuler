@@ -85,7 +85,8 @@ void save_vtk(auto& mesh, const char* path,
        << std::endl;
   std::ranges::for_each(mesh.interior_cells(), [&](auto cell) {
     file << cell.nodes().size() << " ";
-    cell.for_each_node([&](size_t node_index) { file << node_index << " "; });
+    cell.for_each_node(
+        [&](NodeIndex node_index) { file << node_index << " "; });
     file << std::endl;
   });
   file << std::endl;
@@ -120,13 +121,13 @@ int main(int argc, char** argv) {
   STORM_INFO_("mesh has {} cells", mesh->num_cells());
   STORM_INFO_("mesh loaded");
 
-  Field<real_t, 5> uc(mesh->num_cells());
-  Field<real_t, 5> up(mesh->num_cells());
+  CellField<Mesh, real_t, 5> uc(mesh->num_cells());
+  CellField<Mesh, real_t, 5> up(mesh->num_cells());
   for (size_t cell_ind = 0; cell_ind < mesh->num_cells(); ++cell_ind) {
     std::array<real_t, 5> q{2.0, 1.0, 1.0, 0.0, 0.0};
     // std::array<real_t, 5> q{1.4, 1.0, 3.0, 0.0, 0.0};
     MhdHydroVars v({}, nullptr, q.data());
-    v.make_cons(5, uc[cell_ind].data());
+    v.make_cons(5, uc[CellIndex<Mesh>{cell_ind}].data());
   }
   real_t dt = 1e-4;
 

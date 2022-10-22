@@ -45,10 +45,10 @@ public:
 
   /// @brief Compute the numerical flux.
   template<class Real, size_t NumVars>
-  void get_numerical_flux(const vec3_t& n, //
-                          const Subfield<Real, NumVars>& cons_r,
-                          const Subfield<Real, NumVars>& cons_l,
-                          Subfield<Real, NumVars>& flux) const noexcept {
+  void operator()(const vec3_t& n, //
+                  const Subfield<Real, NumVars>& cons_r,
+                  const Subfield<Real, NumVars>& cons_l,
+                  Subfield<Real, NumVars>& flux) const noexcept {
     const tGasPhysics::tFluidState ur(n, cons_r.data());
     const tGasPhysics::tFluidState ul(n, cons_l.data());
 

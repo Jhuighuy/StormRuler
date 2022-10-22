@@ -204,12 +204,10 @@ public:
 
   /// @brief Compute cell-centered gradient limiter coefficients.
   template<class Real, size_t NumVars>
-  void get_cell_limiter(Field<Real, NumVars>& lim_u, //
-                        const Field<Real, NumVars>& u,
-                        const Field<Vec<Real>, NumVars>& grad_u) const {
+  void operator()(Field<Real, NumVars>& lim_u, //
+                  const Field<Real, NumVars>& u,
+                  const Field<Vec<Real>, NumVars>& grad_u) const noexcept {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      static const real_t k = 0.1;
-      const real_t eps_sqr = std::pow(k * cell.volume(), 3);
       // Find the largest negative and positive differences
       // between values of and neighbor cells and the current cell.
       auto du_min = u[cell], du_max = u[cell];
@@ -229,6 +227,8 @@ public:
 
       // Compute slope limiting coefficients:
       // clamp the face delta with computed local delta extrema.
+      static const real_t k = 0.1;
+      const real_t eps_sqr = std::pow(k * cell.volume(), 3);
       lim_u[cell].fill(1.0);
       cell.for_each_face([&](FaceView<Mesh> face) {
         const vec3_t dr = face.center3D() - cell.center3D();

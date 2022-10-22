@@ -66,8 +66,8 @@ public:
 
   /// @brief Compute cell-centered gradients.
   template<class Real, size_t NumVars>
-  void get_gradients(Field<Vec<Real>, NumVars>& grad_u,
-                     const Field<Real, NumVars>& u) const {
+  void operator()(Field<Vec<Real>, NumVars>& grad_u,
+                  const Field<Real, NumVars>& u) const noexcept {
     // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       grad_u[cell].fill(vec3_t(0.0));

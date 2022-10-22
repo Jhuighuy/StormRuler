@@ -64,10 +64,15 @@ public:
                                             FluxScheme flux_scheme) noexcept
       : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)} {}
 
+  void get_cell_convection(Field<real_t, 5>& div_f,
+                           const Field<real_t, 5>& u) const final {
+    (*this)(div_f, u);
+  }
+
   /// @brief Compute the first order upwind nonlinear convection.
   template<class Real, size_t NumVars>
-  void get_cell_convection(Field<Real, NumVars>& div_f,
-                           const Field<Real, NumVars>& u) const {
+  void operator()(Field<Real, NumVars>& div_f,
+                  const Field<Real, NumVars>& u) const noexcept {
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
@@ -75,8 +80,7 @@ public:
 
       // Compute the flux.
       Subfield<Real, NumVars> flux{};
-      flux_scheme_.get_numerical_flux(face.normal3D(), //
-                                      u[cell_outer], u[cell_inner], flux);
+      flux_scheme_(face.normal3D(), u[cell_outer], u[cell_inner], flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -94,8 +98,7 @@ public:
 
         // Compute the flux.
         Subfield<Real, NumVars> flux{};
-        flux_scheme_.get_numerical_flux(face.normal3D(), //
-                                        u_outer, u[cell_inner], flux);
+        flux_scheme_(face.normal3D(), u_outer, u[cell_inner], flux);
         const real_t ds = face.area();
         for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -132,18 +135,23 @@ public:
 
   void get_cell_convection(Field<real_t, 5>& div_f,
                            const Field<real_t, 5>& u) const final {
-    get_cell_convection1(div_f, u);
+    (*this)(div_f, u);
   }
 
   /// @brief Compute the second-order upwind nonlinear convection.
   template<class Real, size_t NumVars>
-  void get_cell_convection1(Field<Real, NumVars>& div_f,
-                            const Field<Real, NumVars>& u) const {
+  void operator()(Field<Real, NumVars>& div_f,
+                  const Field<Real, NumVars>& u) const noexcept {
     // Compute the gradients.
     Field<Vec<Real>, NumVars> grad_u(p_mesh_->num_cells());
-    gradient_scheme_.get_gradients(grad_u, u);
     Field<Real, NumVars> phi_u(p_mesh_->num_cells());
-    gradient_limiter_scheme_.get_cell_limiter(phi_u, u, grad_u);
+    gradient_scheme_(grad_u, u);
+    gradient_limiter_scheme_(phi_u, u, grad_u);
+    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+      for (size_t i = 0; i < NumVars; ++i) {
+        grad_u[cell][i] *= phi_u[cell][i];
+      }
+    });
 
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
@@ -156,17 +164,14 @@ public:
       Subfield<Real, NumVars> u_outer{}, u_inner{};
       for (size_t i = 0; i < NumVars; ++i) {
         u_inner[i] =
-            u[cell_inner][i] +
-            phi_u[cell_inner][i] * glm::dot(grad_u[cell_inner][i], dr_inner);
+            u[cell_inner][i] + glm::dot(grad_u[cell_inner][i], dr_inner);
         u_outer[i] =
-            u[cell_outer][i] +
-            phi_u[cell_outer][i] * glm::dot(grad_u[cell_outer][i], dr_outer);
+            u[cell_outer][i] + glm::dot(grad_u[cell_outer][i], dr_outer);
       }
 
       // Compute the flux.
       Subfield<Real, NumVars> flux{};
-      flux_scheme_.get_numerical_flux(face.normal3D(), //
-                                      u_outer, u_inner, flux);
+      flux_scheme_(face.normal3D(), u_outer, u_inner, flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -184,16 +189,14 @@ public:
         Subfield<Real, NumVars> u_outer{}, u_inner{};
         for (size_t i = 0; i < NumVars; ++i) {
           u_inner[i] =
-              u[cell_inner][i] +
-              phi_u[cell_inner][i] * glm::dot(grad_u[cell_inner][i], dr_inner);
+              u[cell_inner][i] + glm::dot(grad_u[cell_inner][i], dr_inner);
         }
         bc->get_ghost_state(face.normal3D(), face.center3D(), //
                             u_inner.data(), u_outer.data());
 
         // Compute the flux.
         Subfield<Real, NumVars> flux{};
-        flux_scheme_.get_numerical_flux(face.normal3D(), //
-                                        u_outer, u_inner, flux);
+        flux_scheme_(face.normal3D(), u_outer, u_inner, flux);
         const real_t ds = face.area();
         for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();

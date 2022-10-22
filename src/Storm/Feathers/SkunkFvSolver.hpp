@@ -57,36 +57,29 @@ public:
 
   explicit MhdFvSolverT(std::shared_ptr<Mesh> mesh)
       : m_mesh(mesh),
+#if 0
+        m_conv(new UpwindConvectionScheme( //
+            *mesh, tHllcFluxScheme<MhdPhysicsT>{}))
+#else
         m_conv(new LinearUpwindConvectionScheme(
             *mesh, tLaxFriedrichsFluxScheme<MhdPhysicsT>{},
             LeastSquaresGradientScheme{*mesh},
             GradientLimiterScheme{*mesh, //
-                                  CubicSlopeLimiter{}, CubicSecondLimiter{}})) {
+                                  CubicSlopeLimiter{}, CubicSecondLimiter{}}))
+#endif
+  {
     m_bcs[Label{1}] = std::make_shared<MhdFvBcFarFieldT<MhdPhysicsT>>();
     m_bcs[Label{2}] = std::make_shared<MhdFvBcSlipT<MhdPhysicsT>>();
+    m_conv->bcs_ = &m_bcs;
   }
 
   /**
    * @brief Compute spacial discretization.
    */
-  void calc_func(tScalarField& u, tScalarField& u_out) const {
-    /*
-     * Clear fields and apply boundary conditions.
-     */
+  void calc_func(tScalarField& u, tScalarField& f) const {
     std::ranges::for_each(m_mesh->cells(),
-                          [&](CellView<Mesh> cell) { u_out[cell].fill(0.0); });
-    for (size_t mark = 1; mark < m_mesh->num_face_labels(); ++mark) {
-      const Label label{mark};
-      const auto& bc = m_bcs.at(label);
-      std::ranges::for_each(m_mesh->faces(label), [&](FaceView<Mesh> face) {
-        bc->get_ghost_state(
-            face.normal3D(), //
-            face.inner_cell().center3D(), face.outer_cell().center3D(),
-            u[face.inner_cell()].data(), u[face.outer_cell()].data());
-      });
-    }
-
-    m_conv->get_cell_convection(5, u_out, u);
+                          [&](CellView<Mesh> cell) { f[cell].fill(0.0); });
+    m_conv->get_cell_convection(5, f, u);
   }
 
   /*

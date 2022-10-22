@@ -63,10 +63,10 @@ public:
 public:
 
   /** @brief Compute the ghost states. */
-  void get_ghost_state(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+  void get_ghost_state(const vec3_t& n, const vec3_t& r, //
                        const real_t* u, real_t* u_ghost) const {
     MhdFluidStateT u_state(n, u), u_ghost_state;
-    get_ghost_state_(n, r, r_ghost, u_state, u_ghost_state);
+    get_ghost_state_(n, r, u_state, u_ghost_state);
     u_ghost_state.make_cons(5, u_ghost);
   }
 
@@ -74,7 +74,7 @@ private:
 
   /** @brief Compute the ghost state. */
   virtual void get_ghost_state_(const vec3_t& n, const vec3_t& r,
-                                const vec3_t& r_ghost, const MhdFluidStateT& u,
+                                const MhdFluidStateT& u,
                                 MhdFluidStateT& u_ghost) const = 0;
 }; // MhdFvBcT
 
@@ -92,12 +92,13 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;
-  } // MhdFvBcFarFieldT::get_ghost_state_
-};  // class MhdFvBcFarFieldT
+  }
+
+}; // class MhdFvBcFarFieldT
 
 /**
  * @brief No-slip wall boundary condition.
@@ -116,12 +117,12 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;
     if (vfunc != nullptr) {
-      u_ghost.vel = vfunc(r_ghost);
+      u_ghost.vel = vfunc(r);
     } else {
       u_ghost.vel = {};
     }
@@ -142,7 +143,7 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r, const vec3_t& r_ghost,
+  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;

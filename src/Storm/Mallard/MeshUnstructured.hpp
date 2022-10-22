@@ -433,43 +433,6 @@ public:
     return insert<I>(std::forward<Shape>(shape));
   }
 
-  /// @brief Insert a ghost cell.
-  /// @returns Index of the ghost cell.
-  constexpr CellIndex insert_ghost(FaceIndex face_index) {
-    // Allocate the entity index,
-    // implicitly assigning the last existing label label.
-    constexpr size_t I = TopologicalDim;
-    const EntityIndex<I> cell_index{std::get<I>(entity_ranges_tuple_).back()++};
-
-    // Assign the entity shape type, volume, center position (and normal).
-    const CellIndex mirror_cell_index = adjacent<I>(face_index).front();
-    std::get<I>(entity_shape_types_tuple_).emplace_back(shapes::Type{0xFF});
-    std::get<I>(entity_volumes_tuple_).emplace_back(volume(mirror_cell_index));
-    std::get<I>(entity_positions_tuple_)
-        .emplace_back(2.0 * position(face_index) -
-                      1.0 * position(mirror_cell_index));
-
-    // Allocate the empty connectivity rows, connect the face with ghost.
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-      using T = Table<CellIndex, EntityIndex<J>>;
-      std::get<T>(connectivity_tuple_).push_back();
-    });
-    using T = Table<FaceIndex, CellIndex>;
-    std::get<T>(connectivity_tuple_).insert(face_index, cell_index);
-
-    return cell_index;
-  }
-
-  constexpr void insert_ghosts() {
-    constexpr size_t I = TopologicalDim - 1;
-    for (Label label : labels<I>() | std::views::drop(1)) {
-      insert_label<I + 1>();
-      for (auto face_index : entities<I>(label)) {
-        insert_ghost(face_index);
-      }
-    }
-  }
-
   /// @brief Permute the entities. Complexity is log²-linear.
   /// @param perm Entity permutation range, it may be modified in order to
   ///             preserve the label ranges correctness.

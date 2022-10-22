@@ -49,8 +49,7 @@ public:
 private:
 
   void init_gradients_() {
-    /* Compute the least-squares
-     * problem matrices for the interior Cells. */
+    // Compute the least-squares problem matrices.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       mat3_t& mat = (m_inverse_matrices[cell][0] = mat3_t(0.0));
       cell.for_each_face_cells(
@@ -60,29 +59,9 @@ private:
           });
     });
 
-    /* Compute the least squares problem right-hand statements for the boundary
-     * cells. Use the same stencil as for the interior cell, but centered to a
-     * boundary cell. */
-    std::ranges::for_each(p_mesh_->boundary_faces(), [&](FaceView<Mesh> face) {
-      const CellView<Mesh> cell_inner = face.inner_cell();
-      const CellView<Mesh> cell_outer = face.inner_cell();
-      mat3_t& mat = (m_inverse_matrices[cell_outer][0] = mat3_t(0.0));
-      const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
-      mat += glm::outerProduct(dr, dr);
-      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
-                                         CellView<Mesh> cell_inner_outer) {
-        if (cell_inner_outer == cell_inner) {
-          std::swap(cell_inner_inner, cell_inner_outer);
-        }
-        const vec3_t dr_inner =
-            cell_inner_outer.center3D() - cell_inner.center3D();
-        mat += glm::outerProduct(dr_inner, dr_inner);
-      });
-    });
-
-    /* Compute the inverse of the least squares problem matrices.
-     * ( Matrix is stabilized by a small number, added to the diagonal. ) */
-    std::ranges::for_each(p_mesh_->cells(), [&](CellView<Mesh> cell) {
+    // Compute the inverse of the least squares problem matrices.
+    // (Matrix is stabilized by a small number, added to the diagonal.)
+    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       static const mat3_t eps(1e-14);
       mat3_t& mat = m_inverse_matrices[cell][0];
       mat = glm::inverse(mat + eps);
@@ -93,14 +72,13 @@ private:
 
 public:
 
-  /** Compute cell-centered gradients. */
+  /// @brief Compute cell-centered gradients.
   void get_gradients(size_t num_vars, tVectorField& grad_u,
                      const tScalarField& u) const {
     if (!initialized_)
       const_cast<LeastSquaresGradientScheme*>(this)->init_gradients_();
 
-    /* Compute the least-squares
-     * problem right-hand statements for the interior Cells. */
+    // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       grad_u[cell].fill(vec3_t(0.0));
       cell.for_each_face_cells(
@@ -112,32 +90,7 @@ public:
           });
     });
 
-    /* Compute the least squares problem right-hand statements for the boundary
-     * cells. Use the same stencil as for the interior cell, but centered to a
-     * boundary cell. */
-    std::ranges::for_each(p_mesh_->boundary_faces(), [&](FaceView<Mesh> face) {
-      const CellView<Mesh> cell_inner = face.inner_cell();
-      const CellView<Mesh> cell_outer = face.inner_cell();
-      grad_u[cell_outer].fill(vec3_t(0.0));
-      const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
-      for (size_t i = 0; i < num_vars; ++i) {
-        grad_u[cell_outer][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
-      }
-      cell_inner.for_each_face_cells([&](CellView<Mesh> cell_inner_inner,
-                                         CellView<Mesh> cell_inner_outer) {
-        if (cell_inner_outer == cell_inner) {
-          std::swap(cell_inner_inner, cell_inner_outer);
-        }
-        const vec3_t dr_inner =
-            cell_inner_outer.center3D() - cell_inner.center3D();
-        for (size_t i = 0; i < num_vars; ++i) {
-          grad_u[cell_outer][i] +=
-              (u[cell_inner_outer][i] - u[cell_inner][i]) * dr_inner;
-        }
-      });
-    });
-
-    /* Solve the least-squares problem. */
+    // Solve the least-squares problem.
     std::ranges::for_each(p_mesh_->cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < num_vars; ++i) {
         const mat3_t& mat = m_inverse_matrices[cell][0];

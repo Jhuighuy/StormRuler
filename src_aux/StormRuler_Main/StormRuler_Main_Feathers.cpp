@@ -111,7 +111,6 @@ int main(int argc, char** argv) {
 
   UnstructuredMesh<2, 2, VovTable> mesh1{};
   read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
-  mesh1.insert_ghosts();
 
   auto mesh = std::make_shared<UnstructuredMesh<2, 2, CsrTable>>();
   mesh->assign(std::move(mesh1));

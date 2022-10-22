@@ -80,7 +80,7 @@ public:
 
       // Compute the flux.
       Subfield<Real, NumVars> flux{};
-      flux_scheme_(face.normal3D(), u[cell_outer], u[cell_inner], flux);
+      flux_scheme_(face.normal(), u[cell_outer], u[cell_inner], flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -93,12 +93,12 @@ public:
       std::ranges::for_each(p_mesh_->faces(label), [&](FaceView<Mesh> face) {
         const CellView<Mesh> cell_inner = face.inner_cell();
         Subfield<Real, NumVars> u_outer{};
-        bc->get_ghost_state(face.normal3D(), face.center3D(),
+        bc->get_ghost_state(face.normal(), face.center3D(),
                             u[face.inner_cell()].data(), u_outer.data());
 
         // Compute the flux.
         Subfield<Real, NumVars> flux{};
-        flux_scheme_(face.normal3D(), u_outer, u[cell_inner], flux);
+        flux_scheme_(face.normal(), u_outer, u[cell_inner], flux);
         const real_t ds = face.area();
         for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -143,12 +143,12 @@ public:
                   const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the gradients.
     CellVecField<Mesh, Real, NumVars> grad_u(p_mesh_->num_cells());
-    CellField<Mesh, Real, NumVars> phi_u(p_mesh_->num_cells());
+    CellField<Mesh, Real, NumVars> lim_u(p_mesh_->num_cells());
     gradient_scheme_(grad_u, u);
-    gradient_limiter_scheme_(phi_u, u, grad_u);
+    gradient_limiter_scheme_(lim_u, u, grad_u);
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < NumVars; ++i) {
-        grad_u[cell][i] *= phi_u[cell][i];
+        grad_u[cell][i] *= lim_u[cell][i];
       }
     });
 
@@ -158,8 +158,8 @@ public:
       const CellView<Mesh> cell_outer = face.outer_cell();
 
       // Reconstruct the face values.
-      const vec3_t dr_outer = face.center3D() - cell_outer.center3D();
-      const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
+      const auto dr_outer = face.center() - cell_outer.center();
+      const auto dr_inner = face.center() - cell_inner.center();
       Subfield<Real, NumVars> u_outer{}, u_inner{};
       for (size_t i = 0; i < NumVars; ++i) {
         u_inner[i] =
@@ -170,7 +170,7 @@ public:
 
       // Compute the flux.
       Subfield<Real, NumVars> flux{};
-      flux_scheme_(face.normal3D(), u_outer, u_inner, flux);
+      flux_scheme_(face.normal(), u_outer, u_inner, flux);
       const real_t ds = face.area();
       for (size_t i = 0; i < NumVars; ++i) {
         div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
@@ -182,20 +182,20 @@ public:
     for (const auto& [label, bc] : *bcs_) {
       std::ranges::for_each(p_mesh_->faces(label), [&](FaceView<Mesh> face) {
         const CellView<Mesh> cell_inner = face.inner_cell();
-        const vec3_t dr_inner = face.center3D() - cell_inner.center3D();
 
         // Reconstruct the face values.
+        const auto dr_inner = face.center() - cell_inner.center();
         Subfield<Real, NumVars> u_outer{}, u_inner{};
         for (size_t i = 0; i < NumVars; ++i) {
           u_inner[i] =
               u[cell_inner][i] + glm::dot(grad_u[cell_inner][i], dr_inner);
         }
-        bc->get_ghost_state(face.normal3D(), face.center3D(), //
+        bc->get_ghost_state(face.normal(), face.center(), //
                             u_inner.data(), u_outer.data());
 
         // Compute the flux.
         Subfield<Real, NumVars> flux{};
-        flux_scheme_(face.normal3D(), u_outer, u_inner, flux);
+        flux_scheme_(face.normal(), u_outer, u_inner, flux);
         const real_t ds = face.area();
         for (size_t i = 0; i < NumVars; ++i) {
           div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();

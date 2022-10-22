@@ -39,18 +39,11 @@ namespace Storm::Feathers {
 
 using vec2_t = glm::dvec2;
 using vec3_t = glm::dvec3;
-using vec4_t = glm::dvec4;
 using mat2_t = glm::dmat2;
 using mat3_t = glm::dmat3;
-using mat4_t = glm::dmat4;
 template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
 using Mesh = UnstructuredMesh<2, 2, CsrTable>;
-
-template<class>
-using Vec = vec3_t;
-template<class>
-using Mat = mat3_t;
 
 template<class T, size_t N = 1>
 using Subfield = std::array<T, N>;
@@ -58,9 +51,9 @@ using Subfield = std::array<T, N>;
 template<class Mesh, class T, size_t N = 1>
 using CellField = IndexedVector<CellIndex<Mesh>, Subfield<T, N>>;
 template<class Mesh, class T, size_t N = 1>
-using CellVecField = IndexedVector<CellIndex<Mesh>, Subfield<Vec<T>, N>>;
+using CellVecField = IndexedVector<CellIndex<Mesh>, Subfield<vec2_t, N>>;
 template<class Mesh, class T, size_t N = 1>
-using CellMatField = IndexedVector<CellIndex<Mesh>, Subfield<Mat<T>, N>>;
+using CellMatField = IndexedVector<CellIndex<Mesh>, Subfield<mat2_t, N>>;
 
 struct sFieldDesc {
   const char* name;

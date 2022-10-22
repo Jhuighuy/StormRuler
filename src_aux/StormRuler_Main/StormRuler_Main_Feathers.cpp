@@ -73,8 +73,8 @@ void save_vtk(auto& mesh, const char* path,
 
   file << "POINTS " << mesh.num_nodes() << " double" << std::endl;
   std::ranges::for_each(mesh.nodes(), [&](auto node) {
-    const vec3_t& pos = node.position3D();
-    file << pos.x << " " << pos.y << " " << pos.z << std::endl;
+    const auto& pos = node.position();
+    file << pos.x << " " << pos.y << " " << 0.0 << std::endl;
   });
   file << std::endl;
 

@@ -212,10 +212,6 @@ public:
   [[nodiscard]] constexpr auto position() const noexcept {
     return this->mesh().position(this->index());
   }
-  /// @todo TRANSITION CODE, REMOVE ME!!!
-  auto position3D() const noexcept {
-    return glm::dvec3(position(), 0.0);
-  }
 
 }; // class NodeView
 
@@ -268,18 +264,10 @@ public:
   [[nodiscard]] constexpr auto center() const noexcept {
     return this->mesh().position(this->index());
   }
-  /// @todo TRANSITION CODE, REMOVE ME!!!
-  auto center3D() const noexcept {
-    return glm::dvec3(center(), 0.0);
-  }
 
   /// @brief Face normal.
   [[nodiscard]] constexpr auto normal() const noexcept {
     return this->mesh().normal(this->index());
-  }
-  /// @todo TRANSITION CODE, REMOVE ME!!!
-  auto normal3D() const noexcept {
-    return glm::dvec3(normal(), 0.0);
   }
 
   /// @brief Get the adjacent inner cell.
@@ -320,10 +308,6 @@ public:
   /// @brief Cell barycenter position.
   [[nodiscard]] constexpr auto center() const noexcept {
     return this->mesh().position(this->index());
-  }
-  /// @todo TRANSITION CODE, REMOVE ME!!!
-  auto center3D() const noexcept {
-    return glm::dvec3(center(), 0.0);
   }
 
 }; // class CellView

@@ -43,6 +43,14 @@ template<>
 class LaxFriedrichsFluxScheme<tGasPhysics> final {
 public:
 
+  template<class Real, size_t NumVars>
+  void operator()(const vec2_t& n, //
+                  const Subfield<Real, NumVars>& cons_r,
+                  const Subfield<Real, NumVars>& cons_l,
+                  Subfield<Real, NumVars>& flux) const noexcept {
+    (*this)(vec3_t(n, 0.0), cons_r, cons_l, flux);
+  }
+
   /// @brief Compute the numerical flux.
   template<class Real, size_t NumVars>
   void operator()(const vec3_t& n, //

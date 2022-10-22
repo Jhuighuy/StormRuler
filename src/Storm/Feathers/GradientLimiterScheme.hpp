@@ -232,10 +232,10 @@ public:
       const real_t eps_sqr = std::pow(k * cell.volume(), 3);
       lim_u[cell].fill(1.0);
       cell.for_each_face([&](FaceView<Mesh> face) {
-        const vec3_t dr = face.center3D() - cell.center3D();
+        const auto dr = face.center() - cell.center();
         for (size_t i = 0; i < NumVars; ++i) {
-          const real_t du_face = glm::dot(grad_u[cell][i], dr);
-          const real_t limiter =
+          const Real du_face = glm::dot(grad_u[cell][i], dr);
+          const Real limiter =
               slope_limiter_(du_min[i], du_max[i], du_face, eps_sqr);
           lim_u[cell][i] = std::min(lim_u[cell][i], limiter);
         }
@@ -244,7 +244,7 @@ public:
       // Compute secondary limiting coefficients by disabling
       // limiting near the smooth regions.
       for (size_t i = 0; i < NumVars; ++i) {
-        const real_t limiter =
+        const Real limiter =
             second_limiter_(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
         lim_u[cell][i] = limiter;
       }

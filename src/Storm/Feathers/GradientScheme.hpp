@@ -50,7 +50,7 @@ public:
       mat = {};
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
+            const auto dr = cell_outer.center() - cell_inner.center();
             mat += glm::outerProduct(dr, dr);
           });
     });
@@ -58,7 +58,8 @@ public:
     // Compute the inverse of the least squares problem matrices.
     // (Matrix is stabilized by a small number, added to the diagonal.)
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      static const mat3_t eps(1e-14);
+      /// @todo `mat2_t`!!
+      static const mat2_t eps(1e-14);
       auto& mat = m_inverse_matrices[cell][0];
       mat = glm::inverse(mat + eps);
     });
@@ -70,10 +71,10 @@ public:
                   const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      grad_u[cell].fill(vec3_t(0.0));
+      grad_u[cell].fill({});
       cell.for_each_face_cells(
           [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const vec3_t dr = cell_outer.center3D() - cell_inner.center3D();
+            const auto dr = cell_outer.center() - cell_inner.center();
             for (size_t i = 0; i < NumVars; ++i) {
               grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
             }
@@ -81,10 +82,9 @@ public:
     });
 
     // Solve the least-squares problem.
-    std::ranges::for_each(p_mesh_->cells(), [&](CellView<Mesh> cell) {
+    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < NumVars; ++i) {
-        const mat3_t& mat = m_inverse_matrices[cell][0];
-        grad_u[cell][i] = mat * grad_u[cell][i];
+        grad_u[cell][i] = m_inverse_matrices[cell][0] * grad_u[cell][i];
       }
     });
   }

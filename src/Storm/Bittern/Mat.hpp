@@ -110,6 +110,21 @@ public:
     return *this;
   }
 
+  constexpr Value* data() noexcept {
+    return &Coeffs_[0][0];
+  }
+  constexpr const Value* data() const noexcept {
+    return &Coeffs_[0][0];
+  }
+
+  constexpr void fill(Value value) noexcept {
+    for (size_t ix = 0; ix < SizeX; ++ix) {
+      for (size_t iy = 0; iy < SizeY; ++iy) {
+        (*this)(ix, iy) = value;
+      }
+    }
+  }
+
   auto num_rows() const noexcept {
     return std::integral_constant<size_t, SizeX>{};
   }
@@ -130,6 +145,12 @@ public:
     STORM_ASSERT_(ix < SizeX && iy < SizeY, "");
     return (Coeffs_[ix])[iy];
   }
+  constexpr Value& operator[](size_t ix) noexcept {
+    return (*this)(ix, 0);
+  }
+  constexpr const Value& operator[](size_t ix) const noexcept {
+    return (*this)(ix, 0);
+  }
   /// @}
 
 }; // class Mat
@@ -137,8 +158,8 @@ public:
 template<class Value, size_t SizeX, size_t SizeY>
 constexpr auto& eval(auto func, Mat<Value, SizeX, SizeY>& mat_lhs,
                      matrix auto&&... mats_rhs) noexcept {
-  for (size_t row_index{0}; row_index < mat_lhs.num_rows(); ++row_index) {
-    for (size_t col_index{0}; col_index < mat_lhs.num_cols(); ++col_index) {
+  for (size_t row_index = 0; row_index < mat_lhs.num_rows(); ++row_index) {
+    for (size_t col_index = 0; col_index < mat_lhs.num_cols(); ++col_index) {
       func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
     }
   }
@@ -149,9 +170,9 @@ template<class Value, size_t SizeX, size_t SizeY>
 constexpr real_t dot_product(Mat<Value, SizeX, SizeY> m1,
                              Mat<Value, SizeX, SizeY> m2) {
   Value d{};
-  for (size_t ix = 0; ix < SizeX; ++ix) {
-    for (size_t iy = 0; iy < SizeY; ++iy) {
-      d += m1(ix, iy) * m2(ix, iy);
+  for (size_t row_index = 0; row_index < SizeX; ++row_index) {
+    for (size_t col_index = 0; col_index < SizeY; ++col_index) {
+      d += m1(row_index, col_index) * m2(row_index, col_index);
     }
   }
   return d;

@@ -44,19 +44,19 @@ class LaxFriedrichsFluxScheme<tGasPhysics> final {
 public:
 
   template<class Real, size_t NumVars>
-  void operator()(const vec2_t& n, //
-                  const Subfield<Real, NumVars>& cons_r,
-                  const Subfield<Real, NumVars>& cons_l,
-                  Subfield<Real, NumVars>& flux) const noexcept {
-    (*this)(vec3_t(n, 0.0), cons_r, cons_l, flux);
+  Subfield<Real, NumVars>
+  operator()(const vec2_t& n, //
+             const Subfield<Real, NumVars>& cons_r,
+             const Subfield<Real, NumVars>& cons_l) const noexcept {
+    return (*this)(vec3_t(n, 0.0), cons_r, cons_l);
   }
 
   /// @brief Compute the numerical flux.
   template<class Real, size_t NumVars>
-  void operator()(const vec3_t& n, //
-                  const Subfield<Real, NumVars>& cons_r,
-                  const Subfield<Real, NumVars>& cons_l,
-                  Subfield<Real, NumVars>& flux) const noexcept {
+  Subfield<Real, NumVars>
+  operator()(const vec3_t& n, //
+             const Subfield<Real, NumVars>& cons_r,
+             const Subfield<Real, NumVars>& cons_l) const noexcept {
     const tGasPhysics::tFluidState ur(n, cons_r.data());
     const tGasPhysics::tFluidState ul(n, cons_l.data());
 
@@ -67,9 +67,12 @@ public:
     Subfield<Real, NumVars> flux_r{}, flux_l{};
     ur.make_flux(NumVars, n, flux_r.data());
     ul.make_flux(NumVars, n, flux_l.data());
+    Subfield<Real, NumVars> flux{};
     for (size_t i = 0; i < NumVars; ++i) {
       flux[i] = 0.5 * ((flux_r[i] + flux_l[i]) - ss * (cons_r[i] - cons_l[i]));
     }
+
+    return flux;
   }
 
 }; // class LaxFriedrichsFluxScheme<tGasPhysics>

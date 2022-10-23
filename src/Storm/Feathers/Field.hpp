@@ -28,6 +28,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Bittern/Mat.hpp>
+
 #include <Storm/Mallard/MeshUnstructured.hpp>
 
 #include <glm/glm.hpp>
@@ -46,7 +48,7 @@ using tObject = std::enable_shared_from_this<type_t>;
 using Mesh = UnstructuredMesh<2, 2, CsrTable>;
 
 template<class T, size_t N = 1>
-using Subfield = std::array<T, N>;
+using Subfield = Vec<T, N>;
 
 template<class Mesh, class T, size_t N = 1>
 using CellField = IndexedVector<CellIndex<Mesh>, Subfield<T, N>>;

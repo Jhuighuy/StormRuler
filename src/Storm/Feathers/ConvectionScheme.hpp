@@ -79,13 +79,10 @@ public:
       const CellView<Mesh> cell_outer = face.outer_cell();
 
       // Compute the flux.
-      Subfield<Real, NumVars> flux{};
-      flux_scheme_(face.normal(), u[cell_outer], u[cell_inner], flux);
-      const real_t ds = face.area();
-      for (size_t i = 0; i < NumVars; ++i) {
-        div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
-        div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
-      }
+      const auto flux =
+          flux_scheme_(face.normal(), u[cell_outer], u[cell_inner]);
+      div_f[cell_inner] += flux * face.area() / cell_inner.volume();
+      div_f[cell_outer] -= flux * face.area() / cell_outer.volume();
     });
 
     // Compute the fluxes for the boundary faces.
@@ -93,16 +90,12 @@ public:
       std::ranges::for_each(p_mesh_->faces(label), [&](FaceView<Mesh> face) {
         const CellView<Mesh> cell_inner = face.inner_cell();
         Subfield<Real, NumVars> u_outer{};
-        bc->get_ghost_state(face.normal(), face.center3D(),
+        bc->get_ghost_state(face.normal(), face.center(),
                             u[face.inner_cell()].data(), u_outer.data());
 
         // Compute the flux.
-        Subfield<Real, NumVars> flux{};
-        flux_scheme_(face.normal(), u_outer, u[cell_inner], flux);
-        const real_t ds = face.area();
-        for (size_t i = 0; i < NumVars; ++i) {
-          div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
-        }
+        const auto flux = flux_scheme_(face.normal(), u_outer, u[cell_inner]);
+        div_f[cell_inner] += flux * face.area() / cell_inner.volume();
       });
     }
   }
@@ -147,9 +140,7 @@ public:
     gradient_scheme_(grad_u, u);
     gradient_limiter_scheme_(lim_u, u, grad_u);
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      for (size_t i = 0; i < NumVars; ++i) {
-        grad_u[cell][i] *= lim_u[cell][i];
-      }
+      grad_u[cell] *= lim_u[cell];
     });
 
     // Compute the fluxes for the interior faces.
@@ -169,12 +160,9 @@ public:
       }
 
       // Compute the flux.
-      Subfield<Real, NumVars> flux{};
-      flux_scheme_(face.normal(), u_outer, u_inner, flux);
-      for (size_t i = 0; i < NumVars; ++i) {
-        div_f[cell_inner][i] += flux[i] * face.area() / cell_inner.volume();
-        div_f[cell_outer][i] -= flux[i] * face.area() / cell_outer.volume();
-      }
+      const auto flux = flux_scheme_(face.normal(), u_outer, u_inner);
+      div_f[cell_inner] += flux * face.area() / cell_inner.volume();
+      div_f[cell_outer] -= flux * face.area() / cell_outer.volume();
     });
 
     // Compute the fluxes for the boundary faces.
@@ -186,18 +174,15 @@ public:
         const auto dr_inner = face.center() - cell_inner.center();
         Subfield<Real, NumVars> u_outer{}, u_inner{};
         for (size_t i = 0; i < NumVars; ++i) {
-          u_inner[i] =
-              u[cell_inner][i] + glm::dot(grad_u[cell_inner][i], dr_inner);
+          u_inner[i] = u[cell_inner][i] +
+                       glm::dot(0.0 * grad_u[cell_inner][i], dr_inner);
         }
         bc->get_ghost_state(face.normal(), face.center(), //
                             u_inner.data(), u_outer.data());
 
         // Compute the flux.
-        Subfield<Real, NumVars> flux{};
-        flux_scheme_(face.normal(), u_outer, u_inner, flux);
-        for (size_t i = 0; i < NumVars; ++i) {
-          div_f[cell_inner][i] += flux[i] * face.area() / cell_inner.volume();
-        }
+        const auto flux = flux_scheme_(face.normal(), u_outer, u_inner);
+        div_f[cell_inner] += flux * face.area() / cell_inner.volume();
       });
     }
   }

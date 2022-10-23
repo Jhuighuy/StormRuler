@@ -484,8 +484,8 @@ public:
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     entity_ranges.clear();
     for (Label label : labels) {
-      entity_ranges.resize(
-          std::max(entity_ranges.size(), static_cast<size_t>(label) + 2));
+      entity_ranges.resize(std::max(entity_ranges.size(), //
+                                    static_cast<size_t>(label) + 2));
       entity_ranges[label + 1] += 1;
     };
     entity_ranges[Label{0} + 1] += delta;
@@ -587,7 +587,7 @@ private:
     // Permute the entity shape properties.
     permutations::permute_inplace(
         perm, [&](EntityIndex<I> index_1, EntityIndex<I> index_2) {
-          const auto gather_shape_properties_ = [&](EntityIndex<I> index) {
+          const auto gather_shape_properties = [&](EntityIndex<I> index) {
             auto& positions = std::get<I>(entity_positions_tuple_);
             if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
               return std::tie(positions[index]);
@@ -603,8 +603,8 @@ private:
               }
             }
           };
-          auto properties_1 = gather_shape_properties_(index_1);
-          auto properties_2 = gather_shape_properties_(index_2);
+          auto properties_1 = gather_shape_properties(index_1);
+          auto properties_2 = gather_shape_properties(index_2);
           std::swap(properties_1, properties_2);
         });
   }

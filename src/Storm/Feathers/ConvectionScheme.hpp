@@ -171,10 +171,9 @@ public:
       // Compute the flux.
       Subfield<Real, NumVars> flux{};
       flux_scheme_(face.normal(), u_outer, u_inner, flux);
-      const real_t ds = face.area();
       for (size_t i = 0; i < NumVars; ++i) {
-        div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
-        div_f[cell_outer][i] -= flux[i] * ds / cell_outer.volume();
+        div_f[cell_inner][i] += flux[i] * face.area() / cell_inner.volume();
+        div_f[cell_outer][i] -= flux[i] * face.area() / cell_outer.volume();
       }
     });
 
@@ -196,9 +195,8 @@ public:
         // Compute the flux.
         Subfield<Real, NumVars> flux{};
         flux_scheme_(face.normal(), u_outer, u_inner, flux);
-        const real_t ds = face.area();
         for (size_t i = 0; i < NumVars; ++i) {
-          div_f[cell_inner][i] += flux[i] * ds / cell_inner.volume();
+          div_f[cell_inner][i] += flux[i] * face.area() / cell_inner.volume();
         }
       });
     }

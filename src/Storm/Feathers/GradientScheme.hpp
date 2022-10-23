@@ -30,38 +30,33 @@
 
 namespace Storm::Feathers {
 
-/// @brief Weighted Least-Squares gradient estimation scheme, cell-based:
+/// @brief Least Squares gradient estimation scheme, cell-based:
 /// computes cell-centered gradients based on the cell-centered values.
 template<mesh Mesh>
 class LeastSquaresGradientScheme final {
 private:
 
   const Mesh* p_mesh_;
-  CellMatField<Mesh, real_t> m_inverse_matrices;
+  CellMatField<Mesh, real_t> g_mats_;
 
 public:
 
   /// @brief Construct the gradient scheme.
   constexpr explicit LeastSquaresGradientScheme(const Mesh& mesh)
-      : p_mesh_{&mesh}, m_inverse_matrices(p_mesh_->num_cells()) {
-    // Compute the least-squares problem matrices.
+      : p_mesh_{&mesh}, g_mats_(p_mesh_->num_cells()) {
+    // Compute the inverse least squares matrices.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      auto& mat = m_inverse_matrices[cell][0];
-      mat = {};
-      cell.for_each_face_cells(
-          [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const auto dr = cell_outer.center() - cell_inner.center();
-            mat += glm::outerProduct(dr, dr);
-          });
-    });
+      // Compute the direct least squares matrices.
+      g_mats_[cell][0] = {};
+      cell.for_each_face_cells([&](CellView<Mesh> cell_inner, //
+                                   CellView<Mesh> cell_outer) {
+        const auto dr = cell_outer.center() - cell_inner.center();
+        g_mats_[cell][0] += glm::outerProduct(dr, dr);
+      });
 
-    // Compute the inverse of the least squares problem matrices.
-    // (Matrix is stabilized by a small number, added to the diagonal.)
-    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
-      /// @todo `mat2_t`!!
+      // Compute the inverse.
       static const mat2_t eps(1e-14);
-      auto& mat = m_inverse_matrices[cell][0];
-      mat = glm::inverse(mat + eps);
+      g_mats_[cell][0] = glm::inverse(eps + g_mats_[cell][0]);
     });
   }
 
@@ -69,22 +64,20 @@ public:
   template<class Real, size_t NumVars>
   void operator()(CellVecField<Mesh, Real, NumVars>& grad_u,
                   const CellField<Mesh, Real, NumVars>& u) const noexcept {
-    // Compute the least-squares problem right-hand statements.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+      // Compute the least squares RHS.
       grad_u[cell].fill({});
-      cell.for_each_face_cells(
-          [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
-            const auto dr = cell_outer.center() - cell_inner.center();
-            for (size_t i = 0; i < NumVars; ++i) {
-              grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
-            }
-          });
-    });
+      cell.for_each_face_cells([&](CellView<Mesh> cell_inner, //
+                                   CellView<Mesh> cell_outer) {
+        const auto dr = cell_outer.center() - cell_inner.center();
+        for (size_t i = 0; i < NumVars; ++i) {
+          grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
+        }
+      });
 
-    // Solve the least-squares problem.
-    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+      // Compute the least squares gradients.
       for (size_t i = 0; i < NumVars; ++i) {
-        grad_u[cell][i] = m_inverse_matrices[cell][0] * grad_u[cell][i];
+        grad_u[cell][i] = g_mats_[cell][0] * grad_u[cell][i];
       }
     });
   }

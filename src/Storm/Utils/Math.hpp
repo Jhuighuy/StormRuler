@@ -56,10 +56,19 @@ namespace math {
     return y == zero ? zero : (x / y);
   }
 
+  /// @name Sign functions.
+  /// @{
+
   using std::abs;
 
   template<class Real>
   constexpr Real sign(Real) noexcept;
+
+  using std::min;
+
+  using std::max;
+
+  /// @}
 
   /// @name Exponential functions.
   /// @{

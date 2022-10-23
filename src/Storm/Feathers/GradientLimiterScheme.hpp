@@ -210,21 +210,14 @@ public:
       const CellVecField<Mesh, Real, NumVars>& grad_u) const noexcept {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Find the largest negative and positive differences
-      // between values of and neighbor cells and the current cell.
+      // between values of the current cell and the adjacent cells.
       auto du_min = u[cell], du_max = u[cell];
-      cell.for_each_face_cells([&](CellView<Mesh> cell_inner,
-                                   CellView<Mesh> cell_outer) {
-        for (size_t i = 0; i < NumVars; ++i) {
-          du_min[i] =
-              std::min(du_min[i], std::min(u[cell_outer][i], u[cell_inner][i]));
-          du_max[i] =
-              std::max(du_max[i], std::max(u[cell_outer][i], u[cell_inner][i]));
-        }
+      cell.for_each_cell([&](CellView<Mesh> adj_cell) {
+        du_min = math::min(du_min, u[adj_cell]);
+        du_max = math::max(du_max, u[adj_cell]);
       });
-      for (size_t i = 0; i < NumVars; ++i) {
-        du_min[i] = std::min(0.0, du_min[i] - u[cell][i]);
-        du_max[i] = std::max(0.0, du_max[i] - u[cell][i]);
-      }
+      du_min = math::min(0.0, du_min - u[cell]);
+      du_max = math::max(0.0, du_max - u[cell]);
 
       // Compute slope limiting coefficients:
       // clamp the face delta with computed local delta extrema.

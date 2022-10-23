@@ -218,29 +218,25 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
         std::forward<Matrix>(mat));                 \
   }
 
-#define MAKE_BINARY_SCALAR_MATRIX_FUNC_(func)                        \
-  template<std::copyable Scalar, viewable_matrix Matrix>             \
-    requires (!matrix<Scalar>)                                       \
-  [[nodiscard]] constexpr auto func(Scalar scal, Matrix&& mat) {     \
-    return MapMatrixView(                                            \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept { \
-          return func(scal, std::forward<Elem>(elem));               \
-        },                                                           \
-        std::forward<Matrix>(mat));                                  \
-  }
-
-#define MAKE_BINARY_MATRIX_SCALAR_FUNC_(func)                        \
-  template<viewable_matrix Matrix, std::copyable Scalar>             \
-    requires (!matrix<Scalar>)                                       \
-  [[nodiscard]] constexpr auto func(Matrix&& mat, Scalar scal) {     \
-    return MapMatrixView(                                            \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept { \
-          return func(std::forward<Elem>(elem), scal);               \
-        },                                                           \
-        std::forward<Matrix>(mat));                                  \
-  }
-
-#define MAKE_BINARY_MATRIX_MATRIX_FUNC_(func)                                  \
+#define MAKE_BINARY_MATRIX_FUNC_(func)                                         \
+  template<std::copyable Scalar, viewable_matrix Matrix>                       \
+    requires (!matrix<Scalar>)                                                 \
+  [[nodiscard]] constexpr auto func(Scalar scal, Matrix&& mat) {               \
+    return MapMatrixView(                                                      \
+        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
+          return func(scal, std::forward<Elem>(elem));                         \
+        },                                                                     \
+        std::forward<Matrix>(mat));                                            \
+  }                                                                            \
+  template<viewable_matrix Matrix, std::copyable Scalar>                       \
+    requires (!matrix<Scalar>)                                                 \
+  [[nodiscard]] constexpr auto func(Matrix&& mat, Scalar scal) {               \
+    return MapMatrixView(                                                      \
+        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
+          return func(std::forward<Elem>(elem), scal);                         \
+        },                                                                     \
+        std::forward<Matrix>(mat));                                            \
+  }                                                                            \
   template<viewable_matrix Matrix1, viewable_matrix Matrix2>                   \
   [[nodiscard]] constexpr auto func(Matrix1&& mat1, Matrix2&& mat2) {          \
     return MapMatrixView(                                                      \
@@ -252,16 +248,23 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 
 namespace math {
 
+  /// @name Sign functions.
+  /// @{
+
   MAKE_UNARY_MATRIX_FUNC_(abs)
+
+  MAKE_UNARY_MATRIX_FUNC_(sign)
+
+  MAKE_BINARY_MATRIX_FUNC_(min)
+
+  MAKE_BINARY_MATRIX_FUNC_(max)
+
+  /// @}
 
   /// @name Power functions.
   /// @{
 
-  MAKE_BINARY_MATRIX_SCALAR_FUNC_(pow)
-
-  MAKE_BINARY_SCALAR_MATRIX_FUNC_(pow)
-
-  MAKE_BINARY_MATRIX_MATRIX_FUNC_(pow)
+  MAKE_BINARY_MATRIX_FUNC_(pow)
 
   MAKE_UNARY_MATRIX_FUNC_(sqrt)
 
@@ -309,7 +312,7 @@ namespace math {
 
   MAKE_UNARY_MATRIX_FUNC_(atan)
 
-  MAKE_BINARY_MATRIX_MATRIX_FUNC_(atan2)
+  MAKE_BINARY_MATRIX_FUNC_(atan2)
 
   /// @} // Trigonometric functions.
 
@@ -333,9 +336,7 @@ namespace math {
 } // namespace math
 
 #undef MAKE_UNARY_MATRIX_FUNC_
-#undef MAKE_BINARY_MATRIX_SCALAR_FUNC_
-#undef MAKE_BINARY_SCALAR_MATRIX_FUNC_
-#undef MAKE_BINARY_MATRIX_MATRIX_FUNC_
+#undef MAKE_BINARY_MATRIX_FUNC_
 
 /// @brief Matrix transpose view.
 template<matrix_view Matrix>

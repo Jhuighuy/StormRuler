@@ -310,6 +310,16 @@ public:
     return this->mesh().position(this->index());
   }
 
+  /// @todo REMOVE ME!
+  template<std::invocable<CellView<Mesh>> Func>
+  constexpr void for_each_cell(Func func) const noexcept {
+    this->for_each_face_cells(
+        [&](CellView<Mesh> cell_inner, CellView<Mesh> cell_outer) {
+          if (cell_inner.index() == this->index()) func(cell_outer);
+          if (cell_outer.index() == this->index()) func(cell_inner);
+        });
+  }
+
 }; // class CellView
 
 /// @brief CRTP interface to a mesh.

@@ -81,8 +81,8 @@ public:
       // Compute the flux.
       const auto flux =
           flux_scheme_(face.normal(), u[cell_outer], u[cell_inner]);
-      div_f[cell_inner] += flux * face.area() / cell_inner.volume();
-      div_f[cell_outer] -= flux * face.area() / cell_outer.volume();
+      div_f[cell_inner] += (face.area() / cell_inner.volume()) * flux;
+      div_f[cell_outer] -= (face.area() / cell_outer.volume()) * flux;
     });
 
     // Compute the fluxes for the boundary faces.
@@ -95,7 +95,7 @@ public:
 
         // Compute the flux.
         const auto flux = flux_scheme_(face.normal(), u_outer, u[cell_inner]);
-        div_f[cell_inner] += flux * face.area() / cell_inner.volume();
+        div_f[cell_inner] += (face.area() / cell_inner.volume()) * flux;
       });
     }
   }
@@ -161,8 +161,8 @@ public:
 
       // Compute the flux.
       const auto flux = flux_scheme_(face.normal(), u_outer, u_inner);
-      div_f[cell_inner] += flux * face.area() / cell_inner.volume();
-      div_f[cell_outer] -= flux * face.area() / cell_outer.volume();
+      div_f[cell_inner] += (face.area() / cell_inner.volume()) * flux;
+      div_f[cell_outer] -= (face.area() / cell_outer.volume()) * flux;
     });
 
     // Compute the fluxes for the boundary faces.
@@ -174,15 +174,15 @@ public:
         const auto dr_inner = face.center() - cell_inner.center();
         Subfield<Real, NumVars> u_outer{}, u_inner{};
         for (size_t i = 0; i < NumVars; ++i) {
-          u_inner[i] = u[cell_inner][i] +
-                       glm::dot(0.0 * grad_u[cell_inner][i], dr_inner);
+          u_inner[i] =
+              u[cell_inner][i] + glm::dot(grad_u[cell_inner][i], dr_inner);
         }
         bc->get_ghost_state(face.normal(), face.center(), //
                             u_inner.data(), u_outer.data());
 
         // Compute the flux.
         const auto flux = flux_scheme_(face.normal(), u_outer, u_inner);
-        div_f[cell_inner] += flux * face.area() / cell_inner.volume();
+        div_f[cell_inner] += (face.area() / cell_inner.volume()) * flux;
       });
     }
   }

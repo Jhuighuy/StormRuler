@@ -48,9 +48,8 @@ public:
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the direct least squares matrices.
       g_mats_[cell][0] = {};
-      cell.for_each_face_cells([&](CellView<Mesh> cell_inner, //
-                                   CellView<Mesh> cell_outer) {
-        const auto dr = cell_outer.center() - cell_inner.center();
+      cell.for_each_cell([&](CellView<Mesh> adj_cell) {
+        const auto dr = adj_cell.center() - cell.center();
         g_mats_[cell][0] += glm::outerProduct(dr, dr);
       });
 
@@ -67,11 +66,10 @@ public:
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the least squares RHS.
       grad_u[cell].fill({});
-      cell.for_each_face_cells([&](CellView<Mesh> cell_inner, //
-                                   CellView<Mesh> cell_outer) {
-        const auto dr = cell_outer.center() - cell_inner.center();
+      cell.for_each_cell([&](CellView<Mesh> adj_cell) {
+        const auto dr = adj_cell.center() - cell.center();
         for (size_t i = 0; i < NumVars; ++i) {
-          grad_u[cell][i] += (u[cell_outer][i] - u[cell_inner][i]) * dr;
+          grad_u[cell][i] += (u[adj_cell][i] - u[cell][i]) * dr;
         }
       });
 

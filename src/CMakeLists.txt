@@ -19,21 +19,13 @@
 # DEALINGS IN THE SOFTWARE.
 
 # Main shared library.
-file(GLOB_RECURSE CXX_SOURCES "Storm/*.c*" "Storm/*.h*")
-add_library(StormRuler SHARED ${CXX_SOURCES})
+file(GLOB_RECURSE CXX_SOURCES "Storm/*.h*")
+add_library(StormRuler INTERFACE ${CXX_SOURCES})
 
 # Link with the base target.
-target_link_libraries(StormRuler PUBLIC StormRuler_BASE)
+target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
 
 # Require C++23.
 set_target_properties(
   StormRuler PROPERTIES 
   CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)
-
-# Specify compilation output directories.
-set_target_properties(
-  StormRuler PROPERTIES 
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set_target_properties(
-  StormRuler PROPERTIES 
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

@@ -107,7 +107,7 @@ target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
 
 # Find spdlog.
 find_package(spdlog CONFIG REQUIRED)
-target_link_libraries(StormRuler_BASE INTERFACE spdlog)
+target_link_libraries(StormRuler_BASE INTERFACE spdlog::spdlog_header_only)
 
 # Find TBB.
 if(StormRuler_NO_TBB)

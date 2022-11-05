@@ -22,8 +22,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/FastVector.hpp>
-
 #include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/Meta.hpp>
@@ -44,7 +42,7 @@ inline constexpr bool enable_mesh_v =
 
 /// @brief Mesh concept.
 template<class Mesh>
-concept mesh = enable_mesh_v<std::remove_const_t<Mesh>>;
+concept mesh = enable_mesh_v<Mesh>;
 
 template<size_t I>
 struct TopologicalIndexTag;
@@ -74,6 +72,6 @@ using mesh_vec_t = std::remove_cvref_t< //
 
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
-inline constexpr size_t mesh_dim_v = fast_vector_size_v<mesh_vec_t<Mesh>>;
+inline constexpr size_t mesh_dim_v = mesh_vec_t<Mesh>::length();
 
 } // namespace Storm

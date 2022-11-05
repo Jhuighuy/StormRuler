@@ -24,6 +24,8 @@
 
 #include <Storm/Mallard/Fwd.hpp>
 
+#include <glm/glm.hpp>
+
 #include <array>
 #include <cstdint>
 #include <initializer_list>

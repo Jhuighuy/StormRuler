@@ -1,27 +1,22 @@
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// Copyright (C) 2022 Oleg Butakov
 ///
-/// Permission is hereby granted, free of charge, to any person
-/// obtaining a copy of this software and associated documentation
-/// files (the "Software"), to deal in the Software without
-/// restriction, including without limitation the rights  to use,
-/// copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the
-/// Software is furnished to do so, subject to the following
-/// conditions:
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
 ///
-/// The above copyright notice and this permission notice shall be
-/// included in all copies or substantial portions of the Software.
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
 ///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-/// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-/// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-/// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-/// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-/// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-/// OTHER DEALINGS IN THE SOFTWARE.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #pragma once
 
@@ -36,10 +31,8 @@
 
 namespace Storm {
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Statically-sized matrix.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-template<class Value, size_t SizeX, size_t SizeY>
+template<class Value, size_t NumRows, size_t NumCols>
 class Mat;
 
 /// @brief 2x2 matrix.
@@ -54,9 +47,7 @@ using Mat3x3 = Mat<Value, 3, 3>;
 template<class Value>
 using Mat4x4 = Mat<Value, 4, 4>;
 
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Statically-sized vector.
-/// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 template<class Value, size_t Size>
 using Vec = Mat<Value, Size, 1>;
 
@@ -72,84 +63,100 @@ using Vec3D = Vec<Value, 3>;
 template<class Value>
 using Vec4D = Vec<Value, 4>;
 
-template<class Value, size_t SizeX, size_t SizeY>
+template<class Value, size_t NumRows, size_t NumCols>
 class Mat final {
 private:
 
-  std::array<std::array<Value, SizeY>, SizeX> Coeffs_;
+  std::array<std::array<Value, NumCols>, NumRows> coeffs_;
 
 public:
 
-  /// @brief Default constructor.
-  constexpr Mat() {
-    for (auto& a : Coeffs_)
-      a.fill({});
+  /// @brief Construct a matrix.
+  constexpr Mat(const Value& value = {}) noexcept {
+    for (auto& row : coeffs_) {
+      row.fill(value);
+    }
   }
 
-  /// @brief Construct the matrix with the initializer list.
+  /// @brief Construct a matrix with the initializer list.
   constexpr explicit Mat(std::initializer_list<Value> initializer) {
-    STORM_ASSERT_(initializer.size() == SizeX * SizeY, "");
-    std::copy(initializer.begin(), initializer.end(), Coeffs_[0].data());
+    STORM_ASSERT_(initializer.size() == NumRows * NumCols,
+                  "Invalid number of the matrix coefficients!");
+    std::copy(initializer.begin(), initializer.end(), data());
   }
 
-  constexpr auto& operator=(const Value& v) noexcept {
-    for (size_t ix = 0; ix < SizeX; ++ix) {
-      for (size_t iy = 0; iy < SizeY; ++iy) {
-        (*this)(ix, iy) = v;
+  /// @brief Fill the matrix with @p value.
+  constexpr void fill(const Value& value) noexcept {
+    for (size_t row_index = 0; row_index < NumRows; ++row_index) {
+      for (size_t col_index = 0; col_index < NumCols; ++col_index) {
+        (*this)(row_index, col_index) = value;
+      }
+    }
+  }
+
+  /// @brief Assign the matrix.
+  template<matrix Matrix>
+  constexpr auto& operator=(Matrix&& other) noexcept {
+    for (size_t row_index = 0; row_index < NumRows; ++row_index) {
+      for (size_t col_index = 0; col_index < NumCols; ++col_index) {
+        (*this)(row_index, col_index) = other(row_index, col_index);
       }
     }
     return *this;
   }
 
-  constexpr auto& operator=(matrix auto&& other) noexcept {
-    for (size_t ix = 0; ix < SizeX; ++ix) {
-      for (size_t iy = 0; iy < SizeY; ++iy) {
-        (*this)(ix, iy) = other(ix, iy);
-      }
-    }
-    return *this;
+  /// @brief Number of the matrix rows.
+  [[nodiscard]] static constexpr auto num_rows() noexcept {
+    return size_t_constant<NumRows>{};
   }
-
-  constexpr Value* data() noexcept {
-    return &Coeffs_[0][0];
+  /// @brief Number of the matrix columns.
+  [[nodiscard]] static constexpr auto num_cols() noexcept {
+    return size_t_constant<NumCols>{};
   }
-  constexpr const Value* data() const noexcept {
-    return &Coeffs_[0][0];
-  }
-
-  constexpr void fill(Value value) noexcept {
-    for (size_t ix = 0; ix < SizeX; ++ix) {
-      for (size_t iy = 0; iy < SizeY; ++iy) {
-        (*this)(ix, iy) = value;
-      }
-    }
-  }
-
-  auto num_rows() const noexcept {
-    return std::integral_constant<size_t, SizeX>{};
-  }
-  auto num_cols() const noexcept {
-    return std::integral_constant<size_t, SizeY>{};
-  }
-  auto shape() const noexcept {
+  /// @brief Matrix shape.
+  [[nodiscard]] static constexpr auto shape() noexcept {
     return MatrixShape{num_rows(), num_cols()};
   }
 
+  /// @brief Matrix size.
+  [[nodiscard]] static constexpr auto size() noexcept {
+    return size_t_constant<NumRows * NumCols>{};
+  }
+  /// @brief Matrix data.
+  /// @{
+  [[nodiscard]] constexpr Value* data() noexcept {
+    return &coeffs_[0][0];
+  }
+  [[nodiscard]] constexpr const Value* data() const noexcept {
+    return &coeffs_[0][0];
+  }
+  /// @}
+
   /// @brief Get reference to the component at the index.
   /// @{
-  constexpr Value& operator()(size_t ix, size_t iy) noexcept {
-    STORM_ASSERT_(ix < SizeX && iy < SizeY, "");
-    return (Coeffs_[ix])[iy];
+  [[nodiscard]] constexpr Value& //
+  operator()(size_t row_index, size_t col_index = 0) noexcept {
+    STORM_ASSERT_(row_index < NumRows && col_index < NumCols,
+                  "Indices are out of range!");
+    return (coeffs_[row_index])[col_index];
   }
-  constexpr const Value& operator()(size_t ix, size_t iy) const noexcept {
-    STORM_ASSERT_(ix < SizeX && iy < SizeY, "");
-    return (Coeffs_[ix])[iy];
+  [[nodiscard]] constexpr const Value&
+  operator()(size_t row_index, size_t col_index = 0) const noexcept {
+    STORM_ASSERT_(row_index < NumRows && col_index < NumCols,
+                  "Indices are out of range!");
+    return (coeffs_[row_index])[col_index];
   }
-  constexpr Value& operator[](size_t ix) noexcept {
-    return (*this)(ix, 0);
+  /// @}
+
+  /// @todo Transition code! Remove me!
+  /// @{
+  [[nodiscard]] constexpr Value& //
+  operator[](size_t row_index) noexcept {
+    return (*this)(row_index);
   }
-  constexpr const Value& operator[](size_t ix) const noexcept {
-    return (*this)(ix, 0);
+  [[nodiscard]] constexpr const Value& //
+  operator[](size_t row_index) const noexcept {
+    return (*this)(row_index);
   }
   /// @}
 

@@ -27,9 +27,6 @@
 
 #include <Storm/Utils/Banner.hpp>
 
-#include <Storm/Bittern/FastVector.hpp>
-#include <Storm/Bittern/Mat.hpp>
-
 #include <Storm/Mallard/IoTetgen.hpp>
 #include <Storm/Mallard/IoVtk.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>

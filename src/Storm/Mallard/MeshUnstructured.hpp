@@ -31,6 +31,8 @@
 #include <Storm/Mallard/Mesh.hpp>
 #include <Storm/Mallard/Shape.hpp>
 
+#include <glm/glm.hpp>
+
 #include <algorithm>
 #include <numeric>
 #include <optional>
@@ -58,7 +60,7 @@ private:
 public:
 
   /// @brief Spatial vector type.
-  using Vec = FastVector<real_t, Dim>;
+  using Vec = glm::vec<Dim, real_t>;
 
   /// @brief Face index type.
   using FaceIndex = EntityIndex<TopologicalDim - 1>;

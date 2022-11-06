@@ -29,22 +29,21 @@
 
 namespace Storm {
 
-/// @brief Matrix generating view.
-template<matrix_shape Shape, std::copy_constructible Func>
-  requires std::is_object_v<Shape> && std::is_object_v<Func> &&
+/// @brief Matrix making view.
+template<std::copy_constructible Func>
+  requires std::is_object_v<Func> &&
            std::regular_invocable<Func, size_t, size_t>
-class MakeMatrixView final :
-    public MatrixViewInterface<MakeMatrixView<Shape, Func>> {
+class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
 private:
 
-  Shape shape_;
+  MatrixShape shape_;
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
 
 public:
 
-  /// @brief Construct a generating view.
-  constexpr MakeMatrixView(Shape shape, Func func)
-      : shape_{shape}, func_{std::move(func)} {}
+  /// @brief Construct a making view.
+  constexpr MakeMatrixView(MatrixShape shape, Func func)
+      : shape_{std::move(shape)}, func_{std::move(func)} {}
 
   /// @copydoc MatrixViewInterface::shape
   [[nodiscard]] constexpr auto shape() const noexcept {
@@ -61,11 +60,11 @@ public:
 
 }; // class MakeMatrixView
 
-/// @brief Generate a constant matrix of @p shape.
+/// @brief Make a constant matrix of @p shape.
 /// @param value Matrix element value.
-template<matrix_shape Shape, std::copyable Element>
+template<std::copyable Element>
 [[nodiscard]] constexpr auto //
-make_constant_matrix(Shape shape, Element value) {
+make_constant_matrix(MatrixShape shape, Element value) {
   return MakeMatrixView( //
       shape,
       [value = std::move(value)]( //
@@ -75,12 +74,12 @@ make_constant_matrix(Shape shape, Element value) {
       });
 }
 
-/// @brief Generate a diagonal matrix of @p shape.
+/// @brief Make a diagonal matrix of @p shape.
 /// @param diagonal Matrix diagonal element value.
 /// @param off_diagonal Matrix off-diagonal element value.
-template<matrix_shape Shape, std::copyable Element>
+template<std::copyable Element>
 [[nodiscard]] constexpr auto
-make_diagonal_matrix(Shape shape, //
+make_diagonal_matrix(MatrixShape shape, //
                      Element diagonal, Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,

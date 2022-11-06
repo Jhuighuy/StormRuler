@@ -98,24 +98,13 @@ template<class Func, viewable_matrix... Matrices>
                        std::forward<Matrices>(mats)...);
 }
 
-/// @brief Cast the @p mat elements to another type.
-/// @tparam To Type, the elements would be cased to.
-template<class To, viewable_matrix Matrix>
-[[nodiscard]] constexpr auto matrix_cast(Matrix&& mat) {
-  return MapMatrixView(
-      []<class Elem>(Elem&& elem) noexcept {
-        return static_cast<To>(std::forward<Elem>(elem));
-      },
-      std::forward<Matrix>(mat));
-}
-
 /// @brief "+" the matrix @p mat.
 template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto operator+(Matrix&& mat) {
-  // Since operator "+" does nothing on artimetic types,
-  // simply forward matrices with artimetic elements as matrix views.
   if constexpr (std::is_arithmetic_v<
                     std::remove_cvref_t<matrix_element_t<Matrix>>>) {
+    // Since operator "+" does nothing on artimetic types,
+    // simply forward matrices with artimetic elements as matrix views.
     return forward_as_matrix_view(std::forward<Matrix>(mat));
   } else {
     return MapMatrixView(
@@ -208,6 +197,17 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
+/// @brief Cast the @p mat elements to another type.
+/// @tparam To Type, the elements would be cased to.
+template<class To, viewable_matrix Matrix>
+[[nodiscard]] constexpr auto matrix_cast(Matrix&& mat) {
+  return MapMatrixView(
+      []<class Elem>(Elem&& elem) noexcept {
+        return static_cast<To>(std::forward<Elem>(elem));
+      },
+      std::forward<Matrix>(mat));
+}
+
 #define MAKE_UNARY_MATRIX_FUNC_(func)               \
   template<viewable_matrix Matrix>                  \
   [[nodiscard]] constexpr auto func(Matrix&& mat) { \
@@ -251,12 +251,16 @@ namespace math {
   /// @name Sign functions.
   /// @{
 
+  /// @brief Component-wise absolute value of the matrix.
   MAKE_UNARY_MATRIX_FUNC_(abs)
 
+  /// @brief Component-wise sign of the matrix.
   MAKE_UNARY_MATRIX_FUNC_(sign)
 
+  /// @brief Component-wise minimum of the matrices.
   MAKE_BINARY_MATRIX_FUNC_(min)
 
+  /// @brief Component-wise maximum of the matrices.
   MAKE_BINARY_MATRIX_FUNC_(max)
 
   /// @}
@@ -266,8 +270,10 @@ namespace math {
 
   MAKE_BINARY_MATRIX_FUNC_(pow)
 
+  /// @brief Component-wise square root.
   MAKE_UNARY_MATRIX_FUNC_(sqrt)
 
+  /// @brief Component-wise cube root.
   MAKE_UNARY_MATRIX_FUNC_(cbrt)
 
   template<viewable_matrix... Matrices>
@@ -285,14 +291,19 @@ namespace math {
   /// @name Exponential functions.
   /// @{
 
+  /// @brief Component-wise exponent.
   MAKE_UNARY_MATRIX_FUNC_(exp)
 
+  /// @brief Component-wise exponent base 2.
   MAKE_UNARY_MATRIX_FUNC_(exp2)
 
+  /// @brief Component-wise logarithm.
   MAKE_UNARY_MATRIX_FUNC_(log)
 
+  /// @brief Component-wise logarithm base 2.
   MAKE_UNARY_MATRIX_FUNC_(log2)
 
+  /// @brief Component-wise logarithm base 10.
   MAKE_UNARY_MATRIX_FUNC_(log10)
 
   /// @} // Exponential functions.
@@ -300,18 +311,25 @@ namespace math {
   /// @name Trigonometric functions.
   /// @{
 
+  /// @brief Component-wise sine.
   MAKE_UNARY_MATRIX_FUNC_(sin)
 
+  /// @brief Component-wise cosine.
   MAKE_UNARY_MATRIX_FUNC_(cos)
 
+  /// @brief Component-wise tangent.
   MAKE_UNARY_MATRIX_FUNC_(tan)
 
+  /// @brief Component-wise inverse sine.
   MAKE_UNARY_MATRIX_FUNC_(asin)
 
+  /// @brief Component-wise inverse cosine.
   MAKE_UNARY_MATRIX_FUNC_(acos)
 
+  /// @brief Component-wise inverse tangent.
   MAKE_UNARY_MATRIX_FUNC_(atan)
 
+  /// @brief Component-wise inverse tangent.
   MAKE_BINARY_MATRIX_FUNC_(atan2)
 
   /// @} // Trigonometric functions.
@@ -319,16 +337,22 @@ namespace math {
   /// @name Hyperbolic functions.
   /// @{
 
+  /// @brief Component-wise hyperbolic sine.
   MAKE_UNARY_MATRIX_FUNC_(sinh)
 
+  /// @brief Component-wise hyperbolic cosine.
   MAKE_UNARY_MATRIX_FUNC_(cosh)
 
+  /// @brief Component-wise hyperbolic tangent.
   MAKE_UNARY_MATRIX_FUNC_(tanh)
 
+  /// @brief Component-wise hyperbolic inverse sine.
   MAKE_UNARY_MATRIX_FUNC_(asinh)
 
+  /// @brief Component-wise hyperbolic inverse cosine.
   MAKE_UNARY_MATRIX_FUNC_(acosh)
 
+  /// @brief Component-wise hyperbolic inverse tangent.
   MAKE_UNARY_MATRIX_FUNC_(atanh)
 
   /// @} // Hyperbolic functions.

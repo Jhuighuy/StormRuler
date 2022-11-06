@@ -34,8 +34,7 @@
 namespace Storm::Feathers {
 
 /// @brief Local Lax-Friedrichs (Rusanov) numerical flux.
-/// Use this numerical flux if all other fails.
-/// It should always work.
+/// Use this numerical flux if all other fails. It should always work.
 template<class Physics>
 class LaxFriedrichsFluxScheme;
 

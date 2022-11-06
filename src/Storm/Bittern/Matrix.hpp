@@ -31,97 +31,38 @@
 
 namespace Storm {
 
-/// @brief Matrix extent type.
-template<class MatrixExtent>
-concept matrix_extent =
-    std::same_as<MatrixExtent, size_t> || is_size_t_constant_v<MatrixExtent>;
-
 /// @brief Matrix shape.
-template<matrix_extent Rows, matrix_extent Cols>
 class MatrixShape final {
 public:
 
   /// @brief Number of the matrix rows.
-  STORM_NO_UNIQUE_ADDRESS_ Rows num_rows{};
+  size_t num_rows{};
 
   /// @brief Number of the matrix columns.
-  STORM_NO_UNIQUE_ADDRESS_ Cols num_cols{};
+  size_t num_cols{};
+
+  /// @brief Compare the matrix shapes.
+  constexpr auto operator<=>(const MatrixShape&) const = default;
 
 }; // class MatrixShape
-
-template<size_t NumRows, size_t NumCols>
-MatrixShape(size_t_constant<NumRows>, size_t_constant<NumCols>)
-    -> MatrixShape<size_t_constant<NumRows>, size_t_constant<NumCols>>;
-
-template<size_t NumRows, std::integral Cols>
-MatrixShape(size_t_constant<NumRows>, Cols)
-    -> MatrixShape<size_t_constant<NumRows>, size_t>;
-
-template<std::integral Rows, size_t NumCols>
-MatrixShape(Rows, size_t_constant<NumCols>)
-    -> MatrixShape<size_t, size_t_constant<NumCols>>;
-
-template<std::integral Rows, std::integral Cols>
-MatrixShape(Rows, Cols) -> MatrixShape<size_t, size_t>;
-
-/// @brief Check if matrix shapes @p a and @p b are equal.
-template<matrix_extent Rows1, matrix_extent Cols1, //
-         matrix_extent Rows2, matrix_extent Cols2>
-[[nodiscard]] constexpr bool
-operator==(const MatrixShape<Rows1, Cols1>& a,
-           const MatrixShape<Rows2, Cols2>& b) noexcept {
-  return a.num_rows == b.num_rows && a.num_cols == b.num_cols;
-}
-
-/// @brief Check if type is a matrix shape.
-/// @{
-template<class>
-inline constexpr bool is_matrix_shape_v = false;
-template<matrix_extent Rows, matrix_extent Cols>
-inline constexpr bool is_matrix_shape_v<MatrixShape<Rows, Cols>> = true;
-/// @}
-
-/// @brief Matrix shape type.
-template<class MatrixShape>
-concept matrix_shape = is_matrix_shape_v<std::remove_cvref_t<MatrixShape>>;
 
 /// @brief Matrix: has matrix shape and two subscripts.
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
-      { mat.shape() } noexcept -> matrix_shape;
+      { mat.shape() } noexcept -> std::same_as<MatrixShape>;
       { mat(std::declval<size_t>(), std::declval<size_t>()) } noexcept;
     };
 
-/// @brief Matrix shape type.
-template<matrix Matrix>
-using matrix_shape_t =
-    std::remove_cvref_t<decltype(std::declval<Matrix>().shape())>;
-
-/// @brief Matrix shape type.
-template<class VectorShape>
-concept vector_shape =
-    matrix_shape<VectorShape> &&
-    std::same_as<
-        std::remove_cvref_t<decltype(std::declval<VectorShape>().num_cols)>,
-        size_t_constant<1>>;
-
-/// @brief Vector: matrix of a single column, subscriptable with a single index.
-template<class Vector>
-concept vector =      //
-    matrix<Vector> && //
-    requires(Vector& vec) {
-      { vec.shape() } noexcept -> vector_shape;
-      { vec(std::declval<size_t>()) } noexcept;
-    };
-
 /// @brief Number of the matrix rows.
-constexpr auto num_rows(const matrix auto& mat) noexcept {
+template<matrix Matrix>
+[[nodiscard]] constexpr size_t num_rows(const Matrix& mat) noexcept {
   return mat.shape().num_rows;
 }
 
 /// @brief Number of the matrix columns.
-constexpr auto num_cols(const matrix auto& mat) noexcept {
+template<matrix Matrix>
+[[nodiscard]] constexpr size_t num_cols(const Matrix& mat) noexcept {
   return mat.shape().num_cols;
 }
 
@@ -141,20 +82,6 @@ using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
 // ========================================================================== //
 // ========================================================================== //
-
-template<class Vector>
-concept legacy_vector_like =
-    vector<Vector> &&
-    requires(Vector& targetVec, const Vector& sourceVector, bool copyContents) {
-      { targetVec.assign(sourceVector) };
-      { targetVec.assign(sourceVector, copyContents) };
-    };
-
-template<class Operator, class InVector, class OutVector = InVector>
-concept legacy_operator_like =
-    requires(Operator& any_op, OutVector& y_vec, const InVector& x_vec) {
-      any_op(y_vec, x_vec);
-    };
 
 #if 0
 constexpr auto eval_vectorized(auto func, //

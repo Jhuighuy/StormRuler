@@ -211,18 +211,6 @@ namespace detail_ {
 
 } // namespace detail_
 
-/// @brief @c size_t compile-time constant.
-template<size_t N>
-using size_t_constant = std::integral_constant<size_t, N>;
-
-/// @brief Check if type is a @c size_t constant.
-/// @{
-template<class>
-inline constexpr bool is_size_t_constant_v = false;
-template<size_t N>
-inline constexpr bool is_size_t_constant_v<size_t_constant<N>> = true;
-/// @}
-
 using Error = std::runtime_error;
 using IoError = std::runtime_error;
 using GlError = std::runtime_error;

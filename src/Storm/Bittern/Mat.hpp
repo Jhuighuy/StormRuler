@@ -107,11 +107,11 @@ public:
 
   /// @brief Number of the matrix rows.
   [[nodiscard]] static constexpr auto num_rows() noexcept {
-    return size_t_constant<NumRows>{};
+    return NumRows;
   }
   /// @brief Number of the matrix columns.
   [[nodiscard]] static constexpr auto num_cols() noexcept {
-    return size_t_constant<NumCols>{};
+    return NumCols;
   }
   /// @brief Matrix shape.
   [[nodiscard]] static constexpr auto shape() noexcept {
@@ -120,7 +120,7 @@ public:
 
   /// @brief Matrix size.
   [[nodiscard]] static constexpr auto size() noexcept {
-    return size_t_constant<NumRows * NumCols>{};
+    return NumRows * NumCols;
   }
   /// @brief Matrix data.
   /// @{

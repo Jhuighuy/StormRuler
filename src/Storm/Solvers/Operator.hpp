@@ -39,79 +39,19 @@
 
 namespace Storm {
 
-template<class T>
-class StormArray {
-public:
+template<class Vector>
+concept legacy_vector_like =
+    matrix<Vector> &&
+    requires(Vector& targetVec, const Vector& sourceVector, bool copyContents) {
+      { targetVec.assign(sourceVector) };
+      { targetVec.assign(sourceVector, copyContents) };
+    };
 
-  stormMesh_t Mesh = nullptr;
-  stormArray_t Array = nullptr;
-  T* MyData = nullptr;
-  size_t MySize = 0;
-
-public:
-
-  StormArray() = default;
-
-  StormArray(stormMesh_t mesh, stormArray_t array) : Mesh{mesh}, Array{array} {
-    stormArrayUnwrap(Mesh, Array, (real_t**) &MyData, &MySize),
-        MySize /= (sizeof(T) / sizeof(real_t));
-  }
-
-  StormArray(StormArray&& oth)
-      : Mesh{std::exchange(oth.Mesh, nullptr)},     //
-        Array{std::exchange(oth.Array, nullptr)},   //
-        MyData{std::exchange(oth.MyData, nullptr)}, //
-        MySize{std::exchange(oth.MySize, 0)} {}
-
-  StormArray& operator=(StormArray&& oth) {
-    if (Array != nullptr) { stormFree(Array); }
-    Mesh = std::exchange(oth.Mesh, nullptr);
-    Array = std::exchange(oth.Array, nullptr);
-    MyData = std::exchange(oth.MyData, nullptr);
-    MySize = std::exchange(oth.MySize, 0);
-    return *this;
-  }
-
-  StormArray(const StormArray& oth) = delete;
-  StormArray& operator=(const StormArray& oth) = delete;
-
-  ~StormArray() {
-    if (Array != nullptr) { stormFree(Array); }
-  }
-
-  void assign(const StormArray& like, bool copy = true) {
-    Mesh = like.Mesh;
-    if (Array != nullptr) { stormFree(Array); }
-    Array = stormAllocLike(like.Array);
-    stormArrayUnwrap(Mesh, Array, (real_t**) &MyData, &MySize),
-        MySize /= (sizeof(T) / sizeof(real_t));
-    STORM_ENSURE_(!copy, "");
-  }
-
-  operator stormArray_t() const noexcept {
-    return Array;
-  }
-
-  auto data() const noexcept {
-    return MyData;
-  }
-
-  auto num_rows() const noexcept {
-    return MySize;
-  }
-  auto shape() const noexcept {
-    return MatrixShape{MySize, size_t_constant<1>{}};
-  }
-
-  const auto& operator()(size_t i, size_t j = 0) const noexcept {
-    STORM_ENSURE_(j == 0, "");
-    return MyData[i];
-  }
-  auto& operator()(size_t i, size_t j = 0) noexcept {
-    STORM_ASSERT_(j == 0, "");
-    return MyData[i];
-  }
-};
+template<class Operator, class InVector, class OutVector = InVector>
+concept legacy_operator_like =
+    requires(Operator& any_op, OutVector& y_vec, const InVector& x_vec) {
+      any_op(y_vec, x_vec);
+    };
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

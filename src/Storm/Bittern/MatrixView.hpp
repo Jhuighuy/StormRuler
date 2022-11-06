@@ -45,7 +45,7 @@ inline constexpr bool enable_matrix_view_v =
 /// @todo In order to add the `movable` constraint, we
 ///   need to box the functor inside the `MapMatrixView`.
 template<class MatrixView>
-concept matrix_view = matrix<MatrixView> && // std::movable<MatrixView> &&
+concept matrix_view = matrix<MatrixView> && std::movable<MatrixView> &&
                       enable_matrix_view_v<MatrixView>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
@@ -99,15 +99,11 @@ public:
   /// @brief Get the vector coefficient at @p row_index.
   /// @{
   [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index) noexcept
-    requires vector_shape<matrix_shape_t<Derived>>
-  {
+  operator()(size_t row_index) noexcept {
     return self_()(row_index, 0);
   }
   [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index) const noexcept
-    requires vector_shape<matrix_shape_t<Derived>>
-  {
+  operator()(size_t row_index) const noexcept {
     return self_()(row_index, 0);
   }
   /// @}

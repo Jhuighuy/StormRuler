@@ -261,6 +261,12 @@ private:
 
 }; // class InnerOuterIterativeSolver
 
+template<template<class> class Solver, class Vector>
+bool solve(Vector& x_vec, const Vector& b_vec, const Operator<Vector>& any_op) {
+  Solver<Vector> solver{};
+  return solver.solve(x_vec, b_vec, any_op);
+}
+
 /// ----------------------------------------------------------------- ///
 /// @brief Solve an operator equation 𝓐(𝒙) = 𝒃,
 ///   when 𝓐(𝒙) is a non-uniform operator (𝓐(𝟢) ≠ 𝟢).

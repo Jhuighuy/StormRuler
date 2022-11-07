@@ -62,6 +62,9 @@ public:
   /// @brief Spatial vector type.
   using Vec = glm::vec<Dim, real_t>;
 
+  /// @brief Spatial vector type.
+  using Mat = glm::mat<Dim, Dim, real_t>;
+
   /// @brief Face index type.
   using FaceIndex = EntityIndex<TopologicalDim - 1>;
 

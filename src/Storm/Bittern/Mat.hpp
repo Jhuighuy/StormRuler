@@ -115,7 +115,7 @@ public:
   }
   /// @brief Matrix shape.
   [[nodiscard]] static constexpr auto shape() noexcept {
-    return MatrixShape{num_rows(), num_cols()};
+    return MatrixShape{NumRows, NumCols};
   }
 
   /// @brief Matrix size.

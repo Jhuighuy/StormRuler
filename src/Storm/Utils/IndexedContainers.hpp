@@ -22,6 +22,9 @@
 
 #include <Storm/Base.hpp>
 
+/// @todo TRANSITION CODE!!
+#include <Storm/Bittern/Matrix.hpp>
+
 #include <Storm/Utils/Index.hpp>
 
 #include <array>
@@ -182,6 +185,29 @@ public:
     STORM_ASSERT_(index < this->size(), "Index is out of range!");
     return std::vector<Value, Allocator>::operator[](
         static_cast<size_t>(index));
+  }
+  /// @}
+
+  /// @brief Matrix shape.
+  [[nodiscard]] constexpr auto shape() const noexcept {
+    return MatrixShape{this->size(), 1};
+  }
+
+  /// @brief Element at @p row_index and @p col_index.
+  /// @{
+  [[nodiscard]] constexpr decltype(auto)
+  operator()(size_t row_index, //
+             [[maybe_unused]] size_t col_index = 0) noexcept {
+    STORM_ASSERT_(row_index < this->size() && col_index == 0,
+                  "Indices are out of range!");
+    return std::vector<Value, Allocator>::operator[](row_index)[0];
+  }
+  [[nodiscard]] constexpr decltype(auto)
+  operator()(size_t row_index,
+             [[maybe_unused]] size_t col_index = 0) const noexcept {
+    STORM_ASSERT_(row_index < this->size() && col_index == 0,
+                  "Indices are out of range!");
+    return std::vector<Value, Allocator>::operator[](row_index)[0];
   }
   /// @}
 

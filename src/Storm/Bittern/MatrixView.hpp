@@ -45,7 +45,7 @@ inline constexpr bool enable_matrix_view_v =
 /// @todo In order to add the `movable` constraint, we
 ///   need to box the functor inside the `MapMatrixView`.
 template<class MatrixView>
-concept matrix_view = matrix<MatrixView> && std::movable<MatrixView> &&
+concept matrix_view = matrix<MatrixView> && // std::movable<MatrixView> &&
                       enable_matrix_view_v<MatrixView>;
 
 /// @brief Matrix that can be safely casted into a matrix view.

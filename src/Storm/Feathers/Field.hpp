@@ -57,10 +57,11 @@ using CellVecField = IndexedVector<CellIndex<Mesh>, Subfield<vec2_t, N>>;
 template<class Mesh, class T, size_t N = 1>
 using CellMatField = IndexedVector<CellIndex<Mesh>, Subfield<mat2_t, N>>;
 
+template<size_t N = 5>
 struct sFieldDesc {
   const char* name;
   size_t var_index;
-  CellField<Mesh, real_t, 5>* scalar;
+  CellField<Mesh, real_t, N>* scalar;
 }; // struct sFieldDesc
 
 } // namespace Storm::Feathers

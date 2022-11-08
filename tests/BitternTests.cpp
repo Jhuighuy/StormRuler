@@ -102,3 +102,17 @@ TEST(BitternTests, BlockMatrixReduction) {
   EXPECT_EQ(sum(mat), 1.0);
 }
 #endif
+
+TEST(BitternTests, CompareMatrices) {
+  Mat2x2<real_t> mat1{+1.0, -2.0, //
+                      +3.0, -4.0};
+  Mat2x2<real_t> mat2{+1.0, -3.0, //
+                      +2.0, -5.0};
+  EXPECT_TRUE(all(mat1 == mat1));
+  EXPECT_TRUE(any(mat1 != mat2));
+  EXPECT_TRUE(all(mat1 >= mat2));
+  EXPECT_TRUE(any(mat1 > mat2));
+  EXPECT_FALSE(all(mat1 > mat2));
+  EXPECT_TRUE(any(mat1 <= mat2));
+  EXPECT_TRUE(none(mat1 < mat2));
+}

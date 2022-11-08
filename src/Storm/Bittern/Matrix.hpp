@@ -110,6 +110,43 @@ template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
+/// @brief Matrix with boolean elements.
+/// @todo Block matrices!
+template<class Matrix>
+concept bool_matrix = matrix<Matrix> &&
+                      (/*bool_matrix<matrix_element_t<Matrix>> ||*/
+                       std::same_as<matrix_element_t<Matrix>, bool>);
+
+/// @brief Matrix with real elements.
+/// @todo Block matrices!
+template<class Matrix>
+concept real_matrix = matrix<Matrix> &&
+                      (/*real_matrix<Matrix> ||*/
+                       std::floating_point<matrix_element_t<Matrix>>);
+
+/// @brief Matrix with complex elements.
+/// @todo Block matrices!
+template<class Matrix>
+concept complex_matrix = matrix<Matrix> &&
+                         (/*complex_matrix<Matrix> ||*/
+                          complex_floating_point<matrix_element_t<Matrix>>);
+
+/// @brief Matrix with real or complex elements.
+/// @todo Block matrices!
+template<class Matrix>
+concept real_or_complex_matrix =
+    matrix<Matrix> &&
+    (/*real_or_complex_matrix<Matrix> ||*/
+     real_or_complex_floating_point<matrix_element_t<Matrix>>);
+
+/// @brief Matrix with numerical elements.
+template<class Matrix>
+concept numeric_matrix = real_or_complex_matrix<Matrix>;
+
+/// @brief Matrix with matrix elements.
+template<class Matrix>
+concept block_matrix = matrix<Matrix> && matrix<matrix_element_t<Matrix>>;
+
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
 [[nodiscard]] constexpr size_t num_rows(Matrix&& mat) noexcept {
@@ -166,8 +203,7 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 
 /// @brief Fill the matrix @p out_mat elements with the random numbers.
 /// @warning This is a sequential operation!
-template<matrix OutMatrix>
-  requires std::floating_point<matrix_element_t<OutMatrix>>
+template<real_matrix OutMatrix>
 constexpr OutMatrix&
 fill_randomly(OutMatrix&& out_mat, //
               matrix_element_t<OutMatrix> min = 0,
@@ -183,7 +219,7 @@ fill_randomly(OutMatrix&& out_mat, //
 }
 
 /// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
-template<matrix OutMatrix, std::copyable Scalar>
+template<numeric_matrix OutMatrix, std::copyable Scalar>
   requires (!matrix<Scalar>)
 constexpr OutMatrix& operator*=(OutMatrix& out_mat, Scalar scal) {
   return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
@@ -192,7 +228,7 @@ constexpr OutMatrix& operator*=(OutMatrix& out_mat, Scalar scal) {
 }
 
 /// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
-template<matrix OutMatrix, std::copyable Scalar>
+template<numeric_matrix OutMatrix, std::copyable Scalar>
   requires (!matrix<Scalar>)
 constexpr OutMatrix& operator/=(OutMatrix& out_mat, Scalar scal) {
   return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
@@ -201,7 +237,7 @@ constexpr OutMatrix& operator/=(OutMatrix& out_mat, Scalar scal) {
 }
 
 /// @brief Add-assign the matrices @p out_mat and @p mat
-template<matrix OutMatrix, matrix Matrix>
+template<numeric_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
       out_mat,
@@ -212,7 +248,7 @@ constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
 }
 
 /// @brief Subtract-assign the matrices @p out_mat and @p mat.
-template<matrix OutMatrix, matrix Matrix>
+template<numeric_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
       out_mat,
@@ -223,7 +259,7 @@ constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
 }
 
 /// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
-template<matrix OutMatrix, matrix Matrix>
+template<numeric_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
       out_mat,
@@ -234,7 +270,7 @@ constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
 }
 
 /// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
-template<matrix OutMatrix, matrix Matrix>
+template<numeric_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
       out_mat,
@@ -276,21 +312,28 @@ template<class Value, class ReduceFunc, class Func, //
 /// @}
 
 /// @brief Sum the matrix @p mat elements.
-template<matrix Matrix>
+template<real_or_complex_matrix Matrix>
 [[nodiscard]] constexpr auto sum(Matrix&& mat) {
   return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
                 std::forward<Matrix>(mat));
 }
 
 /// @brief Check if all the boolean matrix @p mat elements are true.
-template<matrix Matrix>
+template<bool_matrix Matrix>
   requires std::same_as<matrix_element_t<Matrix>, bool>
 [[nodiscard]] constexpr auto all(Matrix&& mat) {
   return reduce(true, std::logical_and{}, std::forward<Matrix>(mat));
 }
 
+/// @brief Check if all the boolean matrix @p mat elements are true.
+template<bool_matrix Matrix>
+  requires std::same_as<matrix_element_t<Matrix>, bool>
+[[nodiscard]] constexpr auto none(Matrix&& mat) {
+  return all(!std::forward<Matrix>(mat));
+}
+
 /// @brief Check if any of the boolean matrix @p mat elements is true.
-template<matrix Matrix>
+template<bool_matrix Matrix>
   requires std::same_as<matrix_element_t<Matrix>, bool>
 [[nodiscard]] constexpr auto any(Matrix&& mat) {
   return reduce(false, std::logical_or{}, std::forward<Matrix>(mat));
@@ -318,7 +361,7 @@ template<matrix Matrix>
 }
 
 /// @brief Element-wise matrix @p mat \f$ L_{1} \f$-norm.
-template<matrix Matrix>
+template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_1(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
@@ -330,21 +373,18 @@ template<matrix Matrix>
 }
 
 /// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
-template<matrix Matrix>
+template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_2(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   const auto temp = reduce(
       Result{0.0}, std::plus{},
-      []<class Elem>(Elem&& elem) noexcept {
-        /// @todo Possibly a better way here, like `elem * conj(elem)`.
-        return abs(pow(std::forward<Elem>(elem), 2));
-      },
+      [](auto elem) noexcept { return real(elem * conj(elem)); },
       std::forward<Matrix>(mat));
   return sqrt(temp);
 }
 
 /// @brief Element-wise matrix @p mat \f$ L_{p} \f$-norm.
-template<matrix Matrix>
+template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_p(Matrix&& mat, real_t p) {
   STORM_ASSERT_(p > 0.0, "Invalid p-norm parameter!");
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
@@ -358,7 +398,7 @@ template<matrix Matrix>
 }
 
 /// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
-template<matrix Matrix>
+template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_inf(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
@@ -371,9 +411,8 @@ template<matrix Matrix>
 }
 
 /// @brief Element-wise dot product of the matrices @p mat1 and @p mat2.
-template<matrix Matrix1, matrix Matrix2>
+template<numeric_matrix Matrix1, numeric_matrix Matrix2>
 constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
-  /// @todo Complex inputs!
   using Result = decltype(std::declval<matrix_element_t<Matrix1>>() *
                           std::declval<matrix_element_t<Matrix2>>());
   return reduce(

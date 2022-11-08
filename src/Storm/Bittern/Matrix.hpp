@@ -122,23 +122,25 @@ template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
-/// @brief Matrix with matrix elements (block matrices).
+/// @brief Matrix with matrix elements (block matrix).
 template<class Matrix>
 concept block_matrix = matrix<Matrix> && matrix<matrix_element_t<Matrix>>;
 
 template<matrix Matrix>
-struct block_matrix_element {
+struct matrix_inner_element {
   using type = matrix_element_t<Matrix>;
 };
 template<matrix Matrix>
   requires block_matrix<Matrix>
-struct block_matrix_element<Matrix> {
-  using type = typename block_matrix_element<matrix_element_t<Matrix>>::type;
+struct matrix_inner_element<Matrix> {
+  using type = typename matrix_inner_element<matrix_element_t<Matrix>>::type;
 };
 
-/// @brief Block matrix element type.
+/// @brief Matrix inner element type.
+/// It is the regular element type for the regular matrices, and
+/// the element type of a block if the matrix is a block matrix.
 template<matrix Matrix>
-using block_matrix_element_t = typename block_matrix_element<Matrix>::type;
+using matrix_inner_element_t = typename matrix_inner_element<Matrix>::type;
 
 /// @brief Treat matrices of the specified type as the sparse matrices.
 template<class Real>
@@ -155,40 +157,41 @@ inline constexpr bool enable_bool_matrix_for_v = std::is_same_v<Bool, bool>;
 /// @brief Matrix with boolean elements.
 template<class Matrix>
 concept bool_matrix =
-    matrix<Matrix> && enable_bool_matrix_for_v<block_matrix_element_t<Matrix>>;
+    matrix<Matrix> && enable_bool_matrix_for_v<matrix_inner_element_t<Matrix>>;
 
 /// @brief Treat matrices of the specified type as the integer matrices.
-/// @todo We do not have any meaningfull integer matrix operations.
 template<class Integer>
 inline constexpr bool enable_integer_matrix_for_v = std::is_integral_v<Integer>;
 
 /// @brief Matrix with integral elements.
+/// We do not have any special integer matrix operations,
+/// integer matrices are defined for completeness.
 template<class Matrix>
 concept integer_matrix =
     matrix<Matrix> &&
-    enable_integer_matrix_for_v<block_matrix_element_t<Matrix>>;
+    enable_integer_matrix_for_v<matrix_inner_element_t<Matrix>>;
 
 /// @brief Treat matrices of the specified type as the real matrices.
 template<class Real>
 inline constexpr bool enable_real_matrix_for_v = std::is_floating_point_v<Real>;
 
-/// @brief Matrix with real elements.
+/// @brief Matrix with real (floating-point) elements.
 template<class Matrix>
 concept real_matrix =
-    matrix<Matrix> && enable_real_matrix_for_v<block_matrix_element_t<Matrix>>;
+    matrix<Matrix> && enable_real_matrix_for_v<matrix_inner_element_t<Matrix>>;
 
 /// @brief Treat matrices of the specified type as the complex matrices.
 template<class Complex>
 inline constexpr bool enable_complex_matrix_for_v =
     is_complex_floating_point_v<Complex>;
 
-/// @brief Matrix with complex elements.
+/// @brief Matrix with complex (floating-point) elements.
 template<class Matrix>
 concept complex_matrix =
     matrix<Matrix> &&
-    enable_complex_matrix_for_v<block_matrix_element_t<Matrix>>;
+    enable_complex_matrix_for_v<matrix_inner_element_t<Matrix>>;
 
-/// @brief Matrix with real or complex elements.
+/// @brief Matrix with real or complex (floating-point) elements.
 template<class Matrix>
 concept real_or_complex_matrix = real_matrix<Matrix> || complex_matrix<Matrix>;
 
@@ -371,7 +374,7 @@ template<class Value, class ReduceFunc, class Func, //
 /// @brief Sum the matrix @p mat elements.
 template<real_or_complex_matrix Matrix>
 [[nodiscard]] constexpr auto sum(Matrix&& mat) {
-  return reduce(block_matrix_element_t<Matrix>{0.0}, std::plus{},
+  return reduce(matrix_inner_element_t<Matrix>{0.0}, std::plus{},
                 std::forward<Matrix>(mat));
 }
 

@@ -180,9 +180,7 @@ static void cahn_hilliard_solve(const Mesh& mesh) {
   CellField<Mesh, real_t> c_hat(mesh.num_cells());
   CellField<Mesh, real_t> w_hat(mesh.num_cells());
 
-  std::ranges::for_each(mesh.interior_cells(), [&](CellView<Mesh> cell) {
-    c[cell][0] = (1.0 * rand()) / RAND_MAX;
-  });
+  fill_randomly(c);
 
   double total_time = 0.0;
   for (int time = 0; time <= 200000; ++time) {

@@ -95,6 +95,18 @@ concept matrix =
     };
 // clang-format on
 
+/// @brief Number of the matrix rows.
+template<matrix Matrix>
+[[nodiscard]] constexpr size_t num_rows(Matrix&& mat) noexcept {
+  return mat.shape().num_rows;
+}
+
+/// @brief Number of the matrix columns.
+template<matrix Matrix>
+[[nodiscard]] constexpr size_t num_cols(Matrix&& mat) noexcept {
+  return mat.shape().num_cols;
+}
+
 /// @brief Matrix element type, as is.
 template<matrix Matrix>
 using matrix_element_decltype_t = decltype( //
@@ -110,54 +122,96 @@ template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
+/// @brief Treat matrices of the specified type as the boolean matrices.
+template<class Bool>
+inline constexpr bool enable_bool_matrix_for_v = std::is_same_v<Bool, bool>;
+
 /// @brief Matrix with boolean elements.
-/// @todo Block matrices!
 template<class Matrix>
-concept bool_matrix = matrix<Matrix> &&
-                      (/*bool_matrix<matrix_element_t<Matrix>> ||*/
-                       std::same_as<matrix_element_t<Matrix>, bool>);
+concept bool_matrix = matrix<Matrix> && //
+                      enable_bool_matrix_for_v<matrix_element_t<Matrix>>;
+
+// Enable block bool matrices.
+template<bool_matrix BoolMatrix>
+inline constexpr bool enable_bool_matrix_for_v<BoolMatrix> = true;
+
+/// @brief Treat matrices of the specified type as the integer matrices.
+/// @todo We do not have any meaningfull integer matrix operations.
+template<class Integer>
+inline constexpr bool enable_integer_matrix_for_v = std::is_integral_v<Integer>;
+
+/// @brief Matrix with integral elements.
+template<class Matrix>
+concept integer_matrix = matrix<Matrix> && //
+                         enable_integer_matrix_for_v<matrix_element_t<Matrix>>;
+
+// Enable block integer matrices.
+template<integer_matrix IntegerMatrix>
+inline constexpr bool enable_integer_matrix_for_v<IntegerMatrix> = true;
+
+/// @brief Treat matrices of the specified type as the real matrices.
+template<class Real>
+inline constexpr bool enable_real_matrix_for_v = std::is_floating_point_v<Real>;
 
 /// @brief Matrix with real elements.
-/// @todo Block matrices!
 template<class Matrix>
-concept real_matrix = matrix<Matrix> &&
-                      (/*real_matrix<Matrix> ||*/
-                       std::floating_point<matrix_element_t<Matrix>>);
+concept real_matrix = matrix<Matrix> && //
+                      enable_real_matrix_for_v<matrix_element_t<Matrix>>;
+
+// Enable block real matrices.
+template<real_matrix RealMatrix>
+inline constexpr bool enable_real_matrix_for_v<RealMatrix> = true;
+
+/// @brief Treat matrices of the specified type as the complex matrices.
+template<class Complex>
+inline constexpr bool enable_complex_matrix_for_v =
+    is_complex_floating_point_v<Complex>;
 
 /// @brief Matrix with complex elements.
-/// @todo Block matrices!
 template<class Matrix>
-concept complex_matrix = matrix<Matrix> &&
-                         (/*complex_matrix<Matrix> ||*/
-                          complex_floating_point<matrix_element_t<Matrix>>);
+concept complex_matrix = matrix<Matrix> && //
+                         enable_complex_matrix_for_v<matrix_element_t<Matrix>>;
+
+// Enable block complex matrices.
+template<complex_matrix ComplexMatrix>
+inline constexpr bool enable_complex_matrix_for_v<ComplexMatrix> = true;
 
 /// @brief Matrix with real or complex elements.
-/// @todo Block matrices!
 template<class Matrix>
-concept real_or_complex_matrix =
-    matrix<Matrix> &&
-    (/*real_or_complex_matrix<Matrix> ||*/
-     real_or_complex_floating_point<matrix_element_t<Matrix>>);
+concept real_or_complex_matrix = real_matrix<Matrix> || complex_matrix<Matrix>;
 
 /// @brief Matrix with numerical elements.
 template<class Matrix>
-concept numeric_matrix = real_or_complex_matrix<Matrix>;
+concept numeric_matrix = integer_matrix<Matrix> || //
+                         real_or_complex_matrix<Matrix>;
 
-/// @brief Matrix with matrix elements.
+/// @brief Matrix with matrix elements (block matrices).
 template<class Matrix>
 concept block_matrix = matrix<Matrix> && matrix<matrix_element_t<Matrix>>;
 
-/// @brief Number of the matrix rows.
 template<matrix Matrix>
-[[nodiscard]] constexpr size_t num_rows(Matrix&& mat) noexcept {
-  return mat.shape().num_rows;
-}
+struct block_matrix_element {
+  using type = matrix_element_t<Matrix>;
+};
+template<matrix Matrix>
+  requires block_matrix<Matrix>
+struct block_matrix_element<Matrix> {
+  using type = typename block_matrix_element<matrix_element_t<Matrix>>::type;
+};
 
-/// @brief Number of the matrix columns.
 template<matrix Matrix>
-[[nodiscard]] constexpr size_t num_cols(Matrix&& mat) noexcept {
-  return mat.shape().num_cols;
-}
+using block_matrix_element_t = typename block_matrix_element<Matrix>::type;
+
+/// @brief Treat matrices of the specified type as the sparse matrices.
+template<class Real>
+inline constexpr bool enable_sparse_matrix_v = false;
+
+/// @brief Sparse matrix.
+template<class Matrix>
+concept sparse_matrix = matrix<Matrix> && enable_sparse_matrix_v<Matrix>;
+
+/// @brief Matrix assignment operations.
+/// @{
 
 /// @brief Assign the matrices.
 /// @todo Restrictions!
@@ -280,6 +334,11 @@ constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
       std::forward<Matrix>(mat));
 }
 
+/// @}
+
+/// @brief Matrix reductions.
+/// @{
+
 /// @brief Reduce the matrix @p mat coefficients to a single value.
 /// @param init Initial reduction value.
 /// @param reduce_func Reduction function.
@@ -289,7 +348,11 @@ template<class Value, class ReduceFunc, matrix Matrix>
                                     Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      init = reduce_func(init, mat(row_index, col_index));
+      if constexpr (block_matrix<Matrix>) {
+        init = reduce(init, reduce_func, mat(row_index, col_index));
+      } else {
+        init = reduce_func(init, mat(row_index, col_index));
+      }
     }
   }
   return init;
@@ -314,7 +377,7 @@ template<class Value, class ReduceFunc, class Func, //
 /// @brief Sum the matrix @p mat elements.
 template<real_or_complex_matrix Matrix>
 [[nodiscard]] constexpr auto sum(Matrix&& mat) {
-  return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
+  return reduce(block_matrix_element_t<Matrix>{0.0}, std::plus{},
                 std::forward<Matrix>(mat));
 }
 
@@ -411,5 +474,7 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
       },
       std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
+
+/// @}
 
 } // namespace Storm

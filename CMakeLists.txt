@@ -247,10 +247,15 @@ endif()
 configure_file("${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp.in" 
                "${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp")
 
-# Add the main shared library.
+# Add the main library.
 message(STATUS "Adding StormRuler shared library.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 
-# Add the test executable.
+# Add the main executable.
 message(STATUS "Adding StormRuler main executable.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
+
+# Add the unit tests.
+message(STATUS "Adding StormRuler unit tests.")
+enable_testing()
+add_subdirectory("${CMAKE_SOURCE_DIR}/tests")

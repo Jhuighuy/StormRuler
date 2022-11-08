@@ -18,8 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-## Main executable library.
-file(GLOB CXX_SOURCES "./*.c*")
+# Main executable.
+file(GLOB CXX_SOURCES "./*.cpp")
 add_executable(StormRuler_Main ${CXX_SOURCES})
 
 # Require C++23.

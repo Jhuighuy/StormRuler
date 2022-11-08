@@ -12,49 +12,24 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
+# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 
-# Ignore everything by default, but scan all directories.
-*
-*~
-!*/
+# Find Google Tests.
+find_package(GTest REQUIRED)
 
-# Git, Markdown, Doxygen, etc.
-!.git*
-!.clang-format
-!ext/*
-!*.md
-!Doxyfile
+# Test executable.
+file(GLOB CXX_SOURCES "./*.cpp")
+add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 
-# CMake.
-!*.cmake
-!CMakeLists.txt
-cmake_install.cmake
-CMakeFiles/
-CTest*
+# Require C++23.
+set_target_properties(
+  StormRuler_UnitTests PROPERTIES 
+  CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)
 
-# C/C++.
-!*.c
-!*.cpp
-!*.h
-!*.hpp
-!*.inl
-!*.m
-!*.mm
-Config.hpp
-!Config.hpp.in
-
-# GLSL
-!*.glsl
-
-# Scripts.
-!*.sh
-!*.bat
-
-# Input files.
-!*.ppm
-!test/mesh/*
+# Link with the main library.
+target_link_libraries(StormRuler_UnitTests PRIVATE StormRuler)
+target_link_libraries(StormRuler_UnitTests PRIVATE GTest::GTest)

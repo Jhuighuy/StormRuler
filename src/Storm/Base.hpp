@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <complex>
 #include <concepts>
 #include <cstdint>
 #include <cstdlib>
@@ -183,6 +184,9 @@ using ptrdiff_t = std::ptrdiff_t;
 
 /// @brief Real floating-point type.
 using real_t = double;
+
+/// @brief Complex floating-point type.
+using complex_t = std::complex<real_t>;
 
 namespace detail_ {
 

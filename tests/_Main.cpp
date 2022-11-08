@@ -18,9 +18,12 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
+#include <Storm/Base.hpp>
+
 #include <gtest/gtest.h>
 
 int main(int argc, char** argv) {
+  STORM_INFO_("Launching the unit tests!");
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

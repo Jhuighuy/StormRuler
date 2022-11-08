@@ -162,27 +162,4 @@ public:
 
 }; // class Mat
 
-template<class Value, size_t SizeX, size_t SizeY>
-constexpr auto& eval(auto func, Mat<Value, SizeX, SizeY>& mat_lhs,
-                     matrix auto&&... mats_rhs) noexcept {
-  for (size_t row_index = 0; row_index < mat_lhs.num_rows(); ++row_index) {
-    for (size_t col_index = 0; col_index < mat_lhs.num_cols(); ++col_index) {
-      func(mat_lhs(row_index, col_index), mats_rhs(row_index, col_index)...);
-    }
-  }
-  return mat_lhs;
-}
-
-template<class Value, size_t SizeX, size_t SizeY>
-constexpr real_t dot_product(Mat<Value, SizeX, SizeY> m1,
-                             Mat<Value, SizeX, SizeY> m2) {
-  Value d{};
-  for (size_t row_index = 0; row_index < SizeX; ++row_index) {
-    for (size_t col_index = 0; col_index < SizeY; ++col_index) {
-      d += m1(row_index, col_index) * m2(row_index, col_index);
-    }
-  }
-  return d;
-}
-
 } // namespace Storm

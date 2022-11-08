@@ -29,19 +29,20 @@
 
 namespace Storm {
 
-namespace detail_ {
-  template<class>
-  inline constexpr bool is_complex_floating_point_v_ = false;
-  template<class T>
-  inline constexpr bool is_complex_floating_point_v_<std::complex<T>> =
-      std::is_floating_point_v<T>;
-} // namespace detail_
+template<class>
+inline constexpr bool is_complex_floating_point_v = false;
+template<class T>
+inline constexpr bool is_complex_floating_point_v<std::complex<T>> =
+    std::is_floating_point_v<T>;
 
-/// @brief Real or complex floaing point numbers,
-///   e.g. @c real_t or @c std::complex<real_t>.
+/// @brief Complex floating-point numbers.
+template<class T>
+concept complex_floating_point = is_complex_floating_point_v<T>;
+
+/// @brief Real or complex floaing point numbers.
 template<class T>
 concept real_or_complex_floating_point =
-    std::floating_point<T> || detail_::is_complex_floating_point_v_<T>;
+    std::floating_point<T> || complex_floating_point<T>;
 
 static real_t deg2rad(real_t) noexcept;
 static real_t rad2deg(real_t) noexcept;
@@ -53,6 +54,24 @@ auto safe_divide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
+
+/// @name Complex function.
+/// @{
+
+/// @{
+[[nodiscard]] constexpr real_t conj(real_t x) noexcept {
+  return x;
+}
+[[nodiscard]] constexpr complex_t conj(const complex_t& x) noexcept {
+  return std::conj(x);
+}
+/// @}
+
+using std::real;
+
+using std::imag;
+
+/// @}
 
 /// @name Sign functions.
 /// @{

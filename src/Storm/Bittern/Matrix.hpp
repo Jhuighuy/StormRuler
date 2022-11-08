@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Utils/Math.hpp>
+
 #include <algorithm>
 #include <concepts>
 #include <limits>
@@ -280,8 +282,23 @@ template<matrix Matrix>
                 std::forward<Matrix>(mat));
 }
 
+/// @brief Check if all the boolean matrix @p mat elements are true.
+template<matrix Matrix>
+  requires std::same_as<matrix_element_t<Matrix>, bool>
+[[nodiscard]] constexpr auto all(Matrix&& mat) {
+  return reduce(true, std::logical_and{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Check if any of the boolean matrix @p mat elements is true.
+template<matrix Matrix>
+  requires std::same_as<matrix_element_t<Matrix>, bool>
+[[nodiscard]] constexpr auto any(Matrix&& mat) {
+  return reduce(false, std::logical_or{}, std::forward<Matrix>(mat));
+}
+
 /// @brief Minimum matrix @p mat element.
 template<matrix Matrix>
+  requires std::totally_ordered<matrix_element_t<Matrix>>
 [[nodiscard]] constexpr auto min_element(Matrix&& mat) {
   using Elem = matrix_element_t<Matrix>;
   return reduce(
@@ -291,6 +308,7 @@ template<matrix Matrix>
 }
 /// @brief Maximum matrix @p mat element.
 template<matrix Matrix>
+  requires std::totally_ordered<matrix_element_t<Matrix>>
 [[nodiscard]] constexpr auto max_element(Matrix&& mat) {
   using Elem = matrix_element_t<Matrix>;
   return reduce(
@@ -302,8 +320,9 @@ template<matrix Matrix>
 /// @brief Element-wise matrix @p mat \f$ L_{1} \f$-norm.
 template<matrix Matrix>
 [[nodiscard]] constexpr auto norm_1(Matrix&& mat) {
+  using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
-      matrix_element_t<Matrix>{0.0}, std::plus{},
+      Result{0.0}, std::plus{},
       []<class Elem>(Elem&& elem) noexcept {
         return abs(std::forward<Elem>(elem));
       },
@@ -313,8 +332,9 @@ template<matrix Matrix>
 /// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
 template<matrix Matrix>
 [[nodiscard]] constexpr auto norm_2(Matrix&& mat) {
+  using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   const auto temp = reduce(
-      matrix_element_t<Matrix>{0.0}, std::plus{},
+      Result{0.0}, std::plus{},
       []<class Elem>(Elem&& elem) noexcept {
         /// @todo Possibly a better way here, like `elem * conj(elem)`.
         return abs(pow(std::forward<Elem>(elem), 2));
@@ -327,8 +347,9 @@ template<matrix Matrix>
 template<matrix Matrix>
 [[nodiscard]] constexpr auto norm_p(Matrix&& mat, real_t p) {
   STORM_ASSERT_(p > 0.0, "Invalid p-norm parameter!");
+  using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   const auto temp = reduce(
-      matrix_element_t<Matrix>{0.0}, std::plus{},
+      Result{0.0}, std::plus{},
       [p]<class Elem>(Elem&& elem) noexcept {
         return pow(abs(std::forward<Elem>(elem)), p);
       },
@@ -339,10 +360,10 @@ template<matrix Matrix>
 /// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
 template<matrix Matrix>
 [[nodiscard]] constexpr auto norm_inf(Matrix&& mat) {
-  using Elem = matrix_element_t<Matrix>;
+  using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
-      Elem{0.0},
-      [](const Elem& a, const Elem& b) noexcept { return max(a, b); },
+      Result{0.0},
+      [](const Result& a, const Result& b) noexcept { return max(a, b); },
       []<class Elem>(Elem&& elem) noexcept {
         return abs(std::forward<Elem>(elem));
       },
@@ -355,8 +376,13 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
   /// @todo Complex inputs!
   using Result = decltype(std::declval<matrix_element_t<Matrix1>>() *
                           std::declval<matrix_element_t<Matrix2>>());
-  return reduce(Result{0.0}, std::plus{}, std::multiplies{},
-                std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return reduce(
+      Result{0.0}, std::plus{},
+      []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {
+        return std::forward<Elem1>(elem1) *
+               Storm::conj(std::forward<Elem2>(elem2));
+      },
+      std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 } // namespace Storm

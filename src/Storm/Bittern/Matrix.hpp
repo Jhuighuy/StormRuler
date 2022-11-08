@@ -324,14 +324,6 @@ template<bool_matrix Matrix>
 [[nodiscard]] constexpr auto all(Matrix&& mat) {
   return reduce(true, std::logical_and{}, std::forward<Matrix>(mat));
 }
-
-/// @brief Check if all the boolean matrix @p mat elements are true.
-template<bool_matrix Matrix>
-  requires std::same_as<matrix_element_t<Matrix>, bool>
-[[nodiscard]] constexpr auto none(Matrix&& mat) {
-  return all(!std::forward<Matrix>(mat));
-}
-
 /// @brief Check if any of the boolean matrix @p mat elements is true.
 template<bool_matrix Matrix>
   requires std::same_as<matrix_element_t<Matrix>, bool>
@@ -371,7 +363,6 @@ template<numeric_matrix Matrix>
       },
       std::forward<Matrix>(mat));
 }
-
 /// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
 template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_2(Matrix&& mat) {
@@ -382,7 +373,6 @@ template<numeric_matrix Matrix>
       std::forward<Matrix>(mat));
   return sqrt(temp);
 }
-
 /// @brief Element-wise matrix @p mat \f$ L_{p} \f$-norm.
 template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_p(Matrix&& mat, real_t p) {
@@ -396,7 +386,6 @@ template<numeric_matrix Matrix>
       std::forward<Matrix>(mat));
   return pow(temp, 1.0 / p);
 }
-
 /// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
 template<numeric_matrix Matrix>
 [[nodiscard]] constexpr auto norm_inf(Matrix&& mat) {
@@ -418,8 +407,7 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
   return reduce(
       Result{0.0}, std::plus{},
       []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {
-        return std::forward<Elem1>(elem1) *
-               Storm::conj(std::forward<Elem2>(elem2));
+        return std::forward<Elem1>(elem1) * conj(std::forward<Elem2>(elem2));
       },
       std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }

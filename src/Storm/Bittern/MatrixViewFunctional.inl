@@ -161,6 +161,19 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 }
 /// @}
 
+template<viewable_matrix Matrix1, viewable_matrix Matrix2>
+  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
+[[nodiscard]] constexpr auto approx_eq(Matrix1&& mat1, //
+                                       Matrix2&& mat2, real_t tolerance) {
+  STORM_ASSERT_(tolerance > 0.0, "Negative comparison tolerance!");
+  return MapMatrixView(
+      [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {
+        return abs(std::forward<Elem1>(elem1) - //
+                   std::forward<Elem2>(elem2)) <= tolerance;
+      },
+      std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+}
+
 /// @brief "+" the matrix @p mat.
 template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
@@ -336,16 +349,6 @@ MAKE_UNARY_MATRIX_FUNC_(sqrt)
 
 /// @brief Element-wise cube root.
 MAKE_UNARY_MATRIX_FUNC_(cbrt)
-
-template<viewable_matrix... Matrices>
-  requires (detail_::in_range_(sizeof...(Matrices), 2, 3))
-[[nodiscard]] constexpr auto hypot(Matrices&&... mats) {
-  return MapMatrixView(
-      []<class... Elems>(Elems&&... elems) noexcept {
-        return hypot(std::forward<Elems>(elems)...);
-      },
-      std::forward<Matrices>(mats)...);
-}
 
 /// @} // Power functions.
 

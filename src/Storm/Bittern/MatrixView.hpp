@@ -222,5 +222,4 @@ using forward_as_matrix_view_t =
 #include <Storm/Bittern/MatrixViewSlicing.inl>
 #undef STORM_INSIDE_MATRIX_VIEW_HPP_
 
-#include "MatrixAction.hpp"
 #include "MatrixIo.hpp"

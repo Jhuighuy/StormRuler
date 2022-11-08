@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <concepts>
 #include <limits>
+#include <random>
 #include <type_traits>
 
 namespace Storm {
@@ -159,6 +160,24 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
   return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
     out_elem = scal;
   });
+}
+
+/// @brief Fill the matrix @p out_mat elements with the random numbers.
+/// @warning This is a sequential operation!
+template<matrix OutMatrix>
+  requires std::floating_point<matrix_element_t<OutMatrix>>
+constexpr OutMatrix&
+fill_randomly(OutMatrix&& out_mat, //
+              matrix_element_t<OutMatrix> min = 0,
+              matrix_element_t<OutMatrix> max = 1) noexcept {
+  static std::mt19937_64 random_engine{};
+  std::uniform_real_distribution distribution{min, max};
+  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
+    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
+      out_mat(row_index, col_index) = distribution(random_engine);
+    }
+  }
+  return out_mat;
 }
 
 /// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.

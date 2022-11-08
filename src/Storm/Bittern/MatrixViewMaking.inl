@@ -90,4 +90,9 @@ make_diagonal_matrix(MatrixShape<> shape, //
       });
 }
 
+/// @todo Find a better place (and a better name) for me.
+constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept {
+  return mat <<= make_diagonal_matrix(mat.shape(), scal);
+}
+
 } // namespace Storm

@@ -249,7 +249,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // ----------------------
   for (size_t i = 0; i < k; ++i) {
     const real_t alpha =
-        math::safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i));
+        safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i));
     u_vecs_[k] -= alpha * u_vecs_[i];
     g_vecs_[k] -= alpha * g_vecs_[i];
   }
@@ -270,7 +270,7 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
   // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
   // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
   // ----------------------
-  const real_t beta = math::safe_divide(phi_(k), mu_(k, k));
+  const real_t beta = safe_divide(phi_(k), mu_(k, k));
   x_vec += beta * u_vecs_[k];
   r_vec_ -= beta * g_vecs_[k];
 
@@ -305,8 +305,8 @@ real_t IdrsSolver<Vector>::inner_iterate(Vector& x_vec, const Vector& b_vec,
     } else {
       lin_op.mul(v_vec_, r_vec_);
     }
-    omega_ = math::safe_divide(dot_product(v_vec_, r_vec_),
-                               dot_product(v_vec_, v_vec_));
+    omega_ =
+        safe_divide(dot_product(v_vec_, r_vec_), dot_product(v_vec_, v_vec_));
     x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
     r_vec_ -= omega_ * v_vec_;
   }

@@ -43,123 +43,120 @@ template<class T>
 concept real_or_complex_floating_point =
     std::floating_point<T> || detail_::is_complex_floating_point_v_<T>;
 
-namespace math {
+static real_t deg2rad(real_t) noexcept;
+static real_t rad2deg(real_t) noexcept;
 
-  static real_t deg2rad(real_t) noexcept;
-  static real_t rad2deg(real_t) noexcept;
+/// @brief If @p y is zero, return zero,
+///   else return value of @p x divided by @p y.
+template<real_or_complex_floating_point Value>
+auto safe_divide(Value x, Value y) {
+  static constexpr Value zero{0.0};
+  return y == zero ? zero : (x / y);
+}
 
-  /// @brief If @p y is zero, return zero,
-  ///   else return value of @p x divided by @p y.
-  template<real_or_complex_floating_point Value>
-  auto safe_divide(Value x, Value y) {
-    static constexpr Value zero{0.0};
-    return y == zero ? zero : (x / y);
+/// @name Sign functions.
+/// @{
+
+using std::abs;
+
+template<class Real>
+constexpr Real sign(Real) noexcept;
+
+using std::min;
+
+using std::max;
+
+/// @}
+
+/// @name Exponential functions.
+/// @{
+
+using std::exp;
+
+using std::exp2;
+
+using std::log;
+
+using std::log2;
+
+using std::log10;
+
+/// @} // Exponential functions.
+
+/// @name Power functions.
+/// @{
+
+using std::pow;
+
+using std::sqrt;
+
+using std::cbrt;
+
+using std::hypot;
+
+/// @} // Power functions.
+
+/// @name Trigonometric functions.
+/// @{
+
+using std::sin;
+
+using std::cos;
+
+using std::tan;
+
+using std::asin;
+
+using std::acos;
+
+using std::atan;
+
+using std::atan2;
+
+/// @} // Trigonometric functions.
+
+/// @name Hyperbolic functions.
+/// @{
+
+using std::sinh;
+
+using std::cosh;
+
+using std::tanh;
+
+using std::asinh;
+
+using std::acosh;
+
+using std::atanh;
+
+/// @} // Hyperbolic functions.
+
+/// @name Givens rotations.
+/// @{
+
+/// @brief Generate the Givens rotation.
+template<real_or_complex_floating_point Value>
+auto sym_ortho(Value a, Value b) {
+  // Compute:
+  // ----------------------
+  // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
+  // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
+  // ----------------------
+  Value cs, sn, rr;
+  rr = std::hypot(a, b);
+  if (rr > Value{0.0}) {
+    cs = a / rr;
+    sn = b / rr;
+  } else {
+    cs = 1.0;
+    sn = 0.0;
   }
 
-  /// @name Sign functions.
-  /// @{
+  return std::tuple(cs, sn, rr);
 
-  using std::abs;
+} // sym_ortho
 
-  template<class Real>
-  constexpr Real sign(Real) noexcept;
+/// @} // Givens rotations.
 
-  using std::min;
-
-  using std::max;
-
-  /// @}
-
-  /// @name Exponential functions.
-  /// @{
-
-  using std::exp;
-
-  using std::exp2;
-
-  using std::log;
-
-  using std::log2;
-
-  using std::log10;
-
-  /// @} // Exponential functions.
-
-  /// @name Power functions.
-  /// @{
-
-  using std::pow;
-
-  using std::sqrt;
-
-  using std::cbrt;
-
-  using std::hypot;
-
-  /// @} // Power functions.
-
-  /// @name Trigonometric functions.
-  /// @{
-
-  using std::sin;
-
-  using std::cos;
-
-  using std::tan;
-
-  using std::asin;
-
-  using std::acos;
-
-  using std::atan;
-
-  using std::atan2;
-
-  /// @} // Trigonometric functions.
-
-  /// @name Hyperbolic functions.
-  /// @{
-
-  using std::sinh;
-
-  using std::cosh;
-
-  using std::tanh;
-
-  using std::asinh;
-
-  using std::acosh;
-
-  using std::atanh;
-
-  /// @} // Hyperbolic functions.
-
-  /// @name Givens rotations.
-  /// @{
-
-  /// @brief Generate the Givens rotation.
-  template<real_or_complex_floating_point Value>
-  auto sym_ortho(Value a, Value b) {
-    // Compute:
-    // ----------------------
-    // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,
-    // 𝑐𝑠 ← 𝑎/𝑟𝑟, 𝑠𝑛 ← 𝑏/𝑟𝑟.
-    // ----------------------
-    Value cs, sn, rr;
-    rr = std::hypot(a, b);
-    if (rr > Value{0.0}) {
-      cs = a / rr;
-      sn = b / rr;
-    } else {
-      cs = 1.0;
-      sn = 0.0;
-    }
-
-    return std::tuple(cs, sn, rr);
-
-  } // sym_ortho
-
-  /// @} // Givens rotations.
-
-} // namespace math
 } // namespace Storm

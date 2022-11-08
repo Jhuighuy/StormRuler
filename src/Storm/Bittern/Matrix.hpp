@@ -22,7 +22,9 @@
 
 #include <Storm/Base.hpp>
 
+#include <algorithm>
 #include <concepts>
+#include <limits>
 #include <type_traits>
 
 namespace Storm {
@@ -117,15 +119,8 @@ template<matrix Matrix>
   return mat.shape().num_cols;
 }
 
-/**
-@todo:
-1. Check for `std::assignable_from` concept is valid for plain assignment.
-2. Determine the correct concept for the functional assignment.
-*. Add the `fill` function.
-4. Add the `random_fill` function.
- */
-
 /// @brief Assign the matrices.
+/// @todo Restrictions!
 /// @{
 template<matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& assign(OutMatrix& out_mat, Matrix&& mat) noexcept {
@@ -206,7 +201,7 @@ constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
       std::forward<Matrix>(mat));
 }
 
-/// @brief Component-wise multiply-assign the matrices @p out_mat and @p mat.
+/// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
 template<matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
@@ -217,7 +212,7 @@ constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
       std::forward<Matrix>(mat));
 }
 
-/// @brief Component-wise divide-assign the matrices @p out_mat and @p mat.
+/// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
 template<matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
   return assign(
@@ -228,25 +223,13 @@ constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
       std::forward<Matrix>(mat));
 }
 
-/**
-@todo:
-1. Add the simpler `reduce` function for a single matrix.
-2. Add the `sum` function.
-3. Add the other simple reduce functions.
-4. Add the `norm_1` function.
-5. Add the `norm_2` function.
-6. Add the `norm_p` function.
-7. Add the `norm_inf` function.
-8. Change the multiinput `reduce` to accept a separate `func` and `reduce_func`.
-9. Add the `dot_product` function.
-*/
-
 /// @brief Reduce the matrix @p mat coefficients to a single value.
 /// @param init Initial reduction value.
 /// @param reduce_func Reduction function.
 /// @{
 template<class Value, class ReduceFunc, matrix Matrix>
-constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
+[[nodiscard]] constexpr auto reduce(Value init, ReduceFunc reduce_func,
+                                    Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
       init = reduce_func(init, mat(row_index, col_index));
@@ -256,8 +239,9 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
 }
 template<class Value, class ReduceFunc, class Func, //
          matrix Matrix, matrix... RestMatrices>
-constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func, //
-                      Matrix&& mat, RestMatrices&&... mats) noexcept {
+[[nodiscard]] constexpr auto reduce(Value init, ReduceFunc reduce_func,
+                                    Func func, Matrix&& mat,
+                                    RestMatrices&&... mats) noexcept {
   STORM_ASSERT_((mat.shape() == mats.shape()) && ...,
                 "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
@@ -270,20 +254,89 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func, //
 }
 /// @}
 
+/// @brief Sum the matrix @p mat elements.
 template<matrix Matrix>
-constexpr auto norm_2(Matrix&& mat) noexcept {
-  real_t value = 0.0;
-  for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      value += std::pow(mat(row_index, col_index), 2);
-    }
-  }
-  return std::sqrt(value);
+[[nodiscard]] constexpr auto sum(Matrix&& mat) {
+  return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
+                std::forward<Matrix>(mat));
 }
 
+/// @brief Minimum matrix @p mat element.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto min_element(Matrix&& mat) {
+  using Elem = matrix_element_t<Matrix>;
+  return reduce(
+      std::numeric_limits<Elem>::max(),
+      [](const Elem& a, const Elem& b) noexcept { return min(a, b); },
+      std::forward<Matrix>(mat));
+}
+/// @brief Maximum matrix @p mat element.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto max_element(Matrix&& mat) {
+  using Elem = matrix_element_t<Matrix>;
+  return reduce(
+      std::numeric_limits<Elem>::lowest(),
+      [](const Elem& a, const Elem& b) noexcept { return max(a, b); },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Element-wise matrix @p mat \f$ L_{1} \f$-norm.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto norm_1(Matrix&& mat) {
+  return reduce(
+      matrix_element_t<Matrix>{0.0}, std::plus{},
+      []<class Elem>(Elem&& elem) noexcept {
+        return abs(std::forward<Elem>(elem));
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto norm_2(Matrix&& mat) {
+  const auto temp = reduce(
+      matrix_element_t<Matrix>{0.0}, std::plus{},
+      []<class Elem>(Elem&& elem) noexcept {
+        /// @todo Possibly a better way here, like `elem * conj(elem)`.
+        return abs(pow(std::forward<Elem>(elem), 2));
+      },
+      std::forward<Matrix>(mat));
+  return sqrt(temp);
+}
+
+/// @brief Element-wise matrix @p mat \f$ L_{p} \f$-norm.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto norm_p(Matrix&& mat, real_t p) {
+  STORM_ASSERT_(p > 0.0, "Invalid p-norm parameter!");
+  const auto temp = reduce(
+      matrix_element_t<Matrix>{0.0}, std::plus{},
+      [p]<class Elem>(Elem&& elem) noexcept {
+        return pow(abs(std::forward<Elem>(elem)), p);
+      },
+      std::forward<Matrix>(mat));
+  return pow(temp, 1.0 / p);
+}
+
+/// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
+template<matrix Matrix>
+[[nodiscard]] constexpr auto norm_inf(Matrix&& mat) {
+  using Elem = matrix_element_t<Matrix>;
+  return reduce(
+      Elem{0.0},
+      [](const Elem& a, const Elem& b) noexcept { return max(a, b); },
+      []<class Elem>(Elem&& elem) noexcept {
+        return abs(std::forward<Elem>(elem));
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Element-wise dot product of the matrices @p mat1 and @p mat2.
 template<matrix Matrix1, matrix Matrix2>
 constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
-  return reduce(0.0, std::plus{}, std::multiplies{},
+  /// @todo Complex inputs!
+  using Result = decltype(std::declval<matrix_element_t<Matrix1>>() *
+                          std::declval<matrix_element_t<Matrix2>>());
+  return reduce(Result{0.0}, std::plus{}, std::multiplies{},
                 std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 

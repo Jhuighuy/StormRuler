@@ -166,9 +166,6 @@
 
 namespace Storm {
 
-/// Library for the math functions.
-namespace math {}
-
 /// A small metaprogramming library.
 namespace meta {}
 

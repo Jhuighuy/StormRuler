@@ -33,7 +33,7 @@
 
 namespace Storm {
 
-/// @brief Component-wise product of function to matrices view.
+/// @brief Element-wise product of function to matrices view.
 template<std::copy_constructible Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
            std::regular_invocable<Func, matrix_element_decltype_t<Matrices>...>
@@ -89,7 +89,7 @@ namespace detail_ {
       };
 } // namespace detail_
 
-/// @brief Make a component-wise product of function @p func
+/// @brief Make a element-wise product of function @p func
 ///   to matrices @p mats.
 template<class Func, viewable_matrix... Matrices>
   requires detail_::can_map_matrix_view_<Func, Matrices...>
@@ -181,7 +181,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
-/// @brief Component-wise multiply the matrices @p mat1 and @p mat2.
+/// @brief Element-wise multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 [[nodiscard]] constexpr auto operator*(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::multiplies{}, //
@@ -189,7 +189,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
-/// @brief Component-wise divide the matrices @p mat1 and @p mat2.
+/// @brief Element-wise divide the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 [[nodiscard]] constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::divides{}, //
@@ -246,118 +246,114 @@ template<class To, viewable_matrix Matrix>
         std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));             \
   }
 
-namespace math {
+/// @name Sign functions.
+/// @{
 
-  /// @name Sign functions.
-  /// @{
+/// @brief Element-wise absolute value of the matrix.
+MAKE_UNARY_MATRIX_FUNC_(abs)
 
-  /// @brief Component-wise absolute value of the matrix.
-  MAKE_UNARY_MATRIX_FUNC_(abs)
+/// @brief Element-wise sign of the matrix.
+MAKE_UNARY_MATRIX_FUNC_(sign)
 
-  /// @brief Component-wise sign of the matrix.
-  MAKE_UNARY_MATRIX_FUNC_(sign)
+/// @brief Element-wise minimum of the matrices.
+MAKE_BINARY_MATRIX_FUNC_(min)
 
-  /// @brief Component-wise minimum of the matrices.
-  MAKE_BINARY_MATRIX_FUNC_(min)
+/// @brief Element-wise maximum of the matrices.
+MAKE_BINARY_MATRIX_FUNC_(max)
 
-  /// @brief Component-wise maximum of the matrices.
-  MAKE_BINARY_MATRIX_FUNC_(max)
+/// @}
 
-  /// @}
+/// @name Power functions.
+/// @{
 
-  /// @name Power functions.
-  /// @{
+MAKE_BINARY_MATRIX_FUNC_(pow)
 
-  MAKE_BINARY_MATRIX_FUNC_(pow)
+/// @brief Element-wise square root.
+MAKE_UNARY_MATRIX_FUNC_(sqrt)
 
-  /// @brief Component-wise square root.
-  MAKE_UNARY_MATRIX_FUNC_(sqrt)
+/// @brief Element-wise cube root.
+MAKE_UNARY_MATRIX_FUNC_(cbrt)
 
-  /// @brief Component-wise cube root.
-  MAKE_UNARY_MATRIX_FUNC_(cbrt)
+template<viewable_matrix... Matrices>
+  requires (detail_::in_range_(sizeof...(Matrices), 2, 3))
+[[nodiscard]] constexpr auto hypot(Matrices&&... mats) {
+  return MapMatrixView(
+      []<class... Elems>(Elems&&... elems) noexcept {
+        return hypot(std::forward<Elems>(elems)...);
+      },
+      std::forward<Matrices>(mats)...);
+}
 
-  template<viewable_matrix... Matrices>
-    requires (detail_::in_range_(sizeof...(Matrices), 2, 3))
-  [[nodiscard]] constexpr auto hypot(Matrices&&... mats) {
-    return MapMatrixView(
-        []<class... Elems>(Elems&&... elems) noexcept {
-          return hypot(std::forward<Elems>(elems)...);
-        },
-        std::forward<Matrices>(mats)...);
-  }
+/// @} // Power functions.
 
-  /// @} // Power functions.
+/// @name Exponential functions.
+/// @{
 
-  /// @name Exponential functions.
-  /// @{
+/// @brief Element-wise exponent.
+MAKE_UNARY_MATRIX_FUNC_(exp)
 
-  /// @brief Component-wise exponent.
-  MAKE_UNARY_MATRIX_FUNC_(exp)
+/// @brief Element-wise exponent base 2.
+MAKE_UNARY_MATRIX_FUNC_(exp2)
 
-  /// @brief Component-wise exponent base 2.
-  MAKE_UNARY_MATRIX_FUNC_(exp2)
+/// @brief Element-wise logarithm.
+MAKE_UNARY_MATRIX_FUNC_(log)
 
-  /// @brief Component-wise logarithm.
-  MAKE_UNARY_MATRIX_FUNC_(log)
+/// @brief Element-wise logarithm base 2.
+MAKE_UNARY_MATRIX_FUNC_(log2)
 
-  /// @brief Component-wise logarithm base 2.
-  MAKE_UNARY_MATRIX_FUNC_(log2)
+/// @brief Element-wise logarithm base 10.
+MAKE_UNARY_MATRIX_FUNC_(log10)
 
-  /// @brief Component-wise logarithm base 10.
-  MAKE_UNARY_MATRIX_FUNC_(log10)
+/// @} // Exponential functions.
 
-  /// @} // Exponential functions.
+/// @name Trigonometric functions.
+/// @{
 
-  /// @name Trigonometric functions.
-  /// @{
+/// @brief Element-wise sine.
+MAKE_UNARY_MATRIX_FUNC_(sin)
 
-  /// @brief Component-wise sine.
-  MAKE_UNARY_MATRIX_FUNC_(sin)
+/// @brief Element-wise cosine.
+MAKE_UNARY_MATRIX_FUNC_(cos)
 
-  /// @brief Component-wise cosine.
-  MAKE_UNARY_MATRIX_FUNC_(cos)
+/// @brief Element-wise tangent.
+MAKE_UNARY_MATRIX_FUNC_(tan)
 
-  /// @brief Component-wise tangent.
-  MAKE_UNARY_MATRIX_FUNC_(tan)
+/// @brief Element-wise inverse sine.
+MAKE_UNARY_MATRIX_FUNC_(asin)
 
-  /// @brief Component-wise inverse sine.
-  MAKE_UNARY_MATRIX_FUNC_(asin)
+/// @brief Element-wise inverse cosine.
+MAKE_UNARY_MATRIX_FUNC_(acos)
 
-  /// @brief Component-wise inverse cosine.
-  MAKE_UNARY_MATRIX_FUNC_(acos)
+/// @brief Element-wise inverse tangent.
+MAKE_UNARY_MATRIX_FUNC_(atan)
 
-  /// @brief Component-wise inverse tangent.
-  MAKE_UNARY_MATRIX_FUNC_(atan)
+/// @brief Element-wise inverse tangent.
+MAKE_BINARY_MATRIX_FUNC_(atan2)
 
-  /// @brief Component-wise inverse tangent.
-  MAKE_BINARY_MATRIX_FUNC_(atan2)
+/// @} // Trigonometric functions.
 
-  /// @} // Trigonometric functions.
+/// @name Hyperbolic functions.
+/// @{
 
-  /// @name Hyperbolic functions.
-  /// @{
+/// @brief Element-wise hyperbolic sine.
+MAKE_UNARY_MATRIX_FUNC_(sinh)
 
-  /// @brief Component-wise hyperbolic sine.
-  MAKE_UNARY_MATRIX_FUNC_(sinh)
+/// @brief Element-wise hyperbolic cosine.
+MAKE_UNARY_MATRIX_FUNC_(cosh)
 
-  /// @brief Component-wise hyperbolic cosine.
-  MAKE_UNARY_MATRIX_FUNC_(cosh)
+/// @brief Element-wise hyperbolic tangent.
+MAKE_UNARY_MATRIX_FUNC_(tanh)
 
-  /// @brief Component-wise hyperbolic tangent.
-  MAKE_UNARY_MATRIX_FUNC_(tanh)
+/// @brief Element-wise hyperbolic inverse sine.
+MAKE_UNARY_MATRIX_FUNC_(asinh)
 
-  /// @brief Component-wise hyperbolic inverse sine.
-  MAKE_UNARY_MATRIX_FUNC_(asinh)
+/// @brief Element-wise hyperbolic inverse cosine.
+MAKE_UNARY_MATRIX_FUNC_(acosh)
 
-  /// @brief Component-wise hyperbolic inverse cosine.
-  MAKE_UNARY_MATRIX_FUNC_(acosh)
+/// @brief Element-wise hyperbolic inverse tangent.
+MAKE_UNARY_MATRIX_FUNC_(atanh)
 
-  /// @brief Component-wise hyperbolic inverse tangent.
-  MAKE_UNARY_MATRIX_FUNC_(atanh)
-
-  /// @} // Hyperbolic functions.
-
-} // namespace math
+/// @} // Hyperbolic functions.
 
 #undef MAKE_UNARY_MATRIX_FUNC_
 #undef MAKE_BINARY_MATRIX_FUNC_

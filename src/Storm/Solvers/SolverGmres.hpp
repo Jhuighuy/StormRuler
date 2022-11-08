@@ -258,8 +258,7 @@ real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
     H_(i + 1, k) = -sn_(i) * H_(i, k) + cs_(i) * H_(i + 1, k);
     H_(i, k) = chi;
   }
-  std::tie(cs_(k), sn_(k), std::ignore) =
-      math::sym_ortho(H_(k, k), H_(k + 1, k));
+  std::tie(cs_(k), sn_(k), std::ignore) = sym_ortho(H_(k, k), H_(k + 1, k));
   H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
   H_(k + 1, k) = 0.0;
 

@@ -88,8 +88,8 @@ public:
       return 1.0;
     }
     // Compute limiter: [1], page 4.
-    const Real delta_pos_sqr = math::pow(delta_pos, 2);
-    const Real delta_neg_sqr = math::pow(delta_neg, 2);
+    const Real delta_pos_sqr = pow(delta_pos, 2);
+    const Real delta_neg_sqr = pow(delta_neg, 2);
     const Real delta_pos_neg = delta_pos * delta_neg;
     const Real limiter =
         (delta_pos_sqr + 2.0 * delta_pos_neg + eps_sqr) /
@@ -126,8 +126,8 @@ public:
     auto limiter = 1.0;
     if (y_cur < y_thr) {
       const Real y_div = y_cur / y_thr;
-      limiter = y_cur + math::pow(y_div, 2) *
-                            (3.0 - 2.0 * y_thr + (y_thr - 2.0) * y_div);
+      limiter =
+          y_cur + pow(y_div, 2) * (3.0 - 2.0 * y_thr + (y_thr - 2.0) * y_div);
     }
     return limiter;
   }
@@ -167,7 +167,7 @@ public:
     if (du_sqr >= 2.0 * eps_sqr) { return limiter; }
     // Compute weight: [1], page 5.
     const Real dy = (du_sqr - eps_sqr) / eps_sqr;
-    const Real dy_sqr = math::pow(dy, 2);
+    const Real dy_sqr = pow(dy, 2);
     const Real weight = (2.0 * dy - 3.0) * dy_sqr + 1.0;
     const Real second_limiter = weight * 1.0 + (1.0 - weight) * limiter;
     return second_limiter;
@@ -213,11 +213,11 @@ public:
       // between values of the current cell and the adjacent cells.
       auto du_min = u[cell], du_max = u[cell];
       cell.for_each_cell([&](CellView<Mesh> adj_cell) {
-        du_min = math::min(du_min, u[adj_cell]);
-        du_max = math::max(du_max, u[adj_cell]);
+        du_min = min(du_min, u[adj_cell]);
+        du_max = max(du_max, u[adj_cell]);
       });
-      du_min = math::min(0.0, du_min - u[cell]);
-      du_max = math::max(0.0, du_max - u[cell]);
+      du_min = min(0.0, du_min - u[cell]);
+      du_max = max(0.0, du_max - u[cell]);
 
       // Compute slope limiting coefficients:
       // clamp the face delta with computed local delta extrema.

@@ -154,7 +154,7 @@ real_t JfnkSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
   // ----------------------
   static const real_t sqrt_of_epsilon =
       std::sqrt(std::numeric_limits<real_t>::epsilon());
-  const real_t mu = sqrt_of_epsilon * math::sqrt(1.0 + norm_2(x_vec));
+  const real_t mu = sqrt_of_epsilon * sqrt(1.0 + norm_2(x_vec));
   t_vec_ <<= r_vec_;
   {
     auto solver = std::make_unique<BiCgStabSolver<Vector>>();
@@ -168,10 +168,10 @@ real_t JfnkSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
       // 𝒛 ← 𝓐(𝒔),
       // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
       // ----------------------
-      const real_t delta = math::safe_divide(mu, norm_2(y_vec));
+      const real_t delta = safe_divide(mu, norm_2(y_vec));
       s_vec_ <<= x_vec + delta * y_vec;
       any_op.mul(z_vec, s_vec_);
-      const real_t delta_inverse = math::safe_divide(1.0, delta);
+      const real_t delta_inverse = safe_divide(1.0, delta);
       z_vec <<= delta_inverse * (z_vec - w_vec_);
     });
     solver->solve(t_vec_, r_vec_, *op);

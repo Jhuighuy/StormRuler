@@ -122,69 +122,6 @@ template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
-/// @brief Treat matrices of the specified type as the boolean matrices.
-template<class Bool>
-inline constexpr bool enable_bool_matrix_for_v = std::is_same_v<Bool, bool>;
-
-/// @brief Matrix with boolean elements.
-template<class Matrix>
-concept bool_matrix = matrix<Matrix> && //
-                      enable_bool_matrix_for_v<matrix_element_t<Matrix>>;
-
-// Enable block bool matrices.
-template<bool_matrix BoolMatrix>
-inline constexpr bool enable_bool_matrix_for_v<BoolMatrix> = true;
-
-/// @brief Treat matrices of the specified type as the integer matrices.
-/// @todo We do not have any meaningfull integer matrix operations.
-template<class Integer>
-inline constexpr bool enable_integer_matrix_for_v = std::is_integral_v<Integer>;
-
-/// @brief Matrix with integral elements.
-template<class Matrix>
-concept integer_matrix = matrix<Matrix> && //
-                         enable_integer_matrix_for_v<matrix_element_t<Matrix>>;
-
-// Enable block integer matrices.
-template<integer_matrix IntegerMatrix>
-inline constexpr bool enable_integer_matrix_for_v<IntegerMatrix> = true;
-
-/// @brief Treat matrices of the specified type as the real matrices.
-template<class Real>
-inline constexpr bool enable_real_matrix_for_v = std::is_floating_point_v<Real>;
-
-/// @brief Matrix with real elements.
-template<class Matrix>
-concept real_matrix = matrix<Matrix> && //
-                      enable_real_matrix_for_v<matrix_element_t<Matrix>>;
-
-// Enable block real matrices.
-template<real_matrix RealMatrix>
-inline constexpr bool enable_real_matrix_for_v<RealMatrix> = true;
-
-/// @brief Treat matrices of the specified type as the complex matrices.
-template<class Complex>
-inline constexpr bool enable_complex_matrix_for_v =
-    is_complex_floating_point_v<Complex>;
-
-/// @brief Matrix with complex elements.
-template<class Matrix>
-concept complex_matrix = matrix<Matrix> && //
-                         enable_complex_matrix_for_v<matrix_element_t<Matrix>>;
-
-// Enable block complex matrices.
-template<complex_matrix ComplexMatrix>
-inline constexpr bool enable_complex_matrix_for_v<ComplexMatrix> = true;
-
-/// @brief Matrix with real or complex elements.
-template<class Matrix>
-concept real_or_complex_matrix = real_matrix<Matrix> || complex_matrix<Matrix>;
-
-/// @brief Matrix with numerical elements.
-template<class Matrix>
-concept numeric_matrix = integer_matrix<Matrix> || //
-                         real_or_complex_matrix<Matrix>;
-
 /// @brief Matrix with matrix elements (block matrices).
 template<class Matrix>
 concept block_matrix = matrix<Matrix> && matrix<matrix_element_t<Matrix>>;
@@ -199,6 +136,7 @@ struct block_matrix_element<Matrix> {
   using type = typename block_matrix_element<matrix_element_t<Matrix>>::type;
 };
 
+/// @brief Block matrix element type.
 template<matrix Matrix>
 using block_matrix_element_t = typename block_matrix_element<Matrix>::type;
 
@@ -209,6 +147,55 @@ inline constexpr bool enable_sparse_matrix_v = false;
 /// @brief Sparse matrix.
 template<class Matrix>
 concept sparse_matrix = matrix<Matrix> && enable_sparse_matrix_v<Matrix>;
+
+/// @brief Treat matrices of the specified type as the boolean matrices.
+template<class Bool>
+inline constexpr bool enable_bool_matrix_for_v = std::is_same_v<Bool, bool>;
+
+/// @brief Matrix with boolean elements.
+template<class Matrix>
+concept bool_matrix =
+    matrix<Matrix> && enable_bool_matrix_for_v<block_matrix_element_t<Matrix>>;
+
+/// @brief Treat matrices of the specified type as the integer matrices.
+/// @todo We do not have any meaningfull integer matrix operations.
+template<class Integer>
+inline constexpr bool enable_integer_matrix_for_v = std::is_integral_v<Integer>;
+
+/// @brief Matrix with integral elements.
+template<class Matrix>
+concept integer_matrix =
+    matrix<Matrix> &&
+    enable_integer_matrix_for_v<block_matrix_element_t<Matrix>>;
+
+/// @brief Treat matrices of the specified type as the real matrices.
+template<class Real>
+inline constexpr bool enable_real_matrix_for_v = std::is_floating_point_v<Real>;
+
+/// @brief Matrix with real elements.
+template<class Matrix>
+concept real_matrix =
+    matrix<Matrix> && enable_real_matrix_for_v<block_matrix_element_t<Matrix>>;
+
+/// @brief Treat matrices of the specified type as the complex matrices.
+template<class Complex>
+inline constexpr bool enable_complex_matrix_for_v =
+    is_complex_floating_point_v<Complex>;
+
+/// @brief Matrix with complex elements.
+template<class Matrix>
+concept complex_matrix =
+    matrix<Matrix> &&
+    enable_complex_matrix_for_v<block_matrix_element_t<Matrix>>;
+
+/// @brief Matrix with real or complex elements.
+template<class Matrix>
+concept real_or_complex_matrix = real_matrix<Matrix> || complex_matrix<Matrix>;
+
+/// @brief Matrix with numerical elements.
+template<class Matrix>
+concept numeric_matrix =
+    integer_matrix<Matrix> || real_or_complex_matrix<Matrix>;
 
 /// @brief Matrix assignment operations.
 /// @{
@@ -342,6 +329,7 @@ constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
 /// @brief Reduce the matrix @p mat coefficients to a single value.
 /// @param init Initial reduction value.
 /// @param reduce_func Reduction function.
+/// @todo Restrictions!
 /// @{
 template<class Value, class ReduceFunc, matrix Matrix>
 [[nodiscard]] constexpr auto reduce(Value init, ReduceFunc reduce_func,
@@ -366,8 +354,14 @@ template<class Value, class ReduceFunc, class Func, //
                 "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      init = reduce_func(init, func(mat(row_index, col_index), //
-                                    mats(row_index, col_index)...));
+      if constexpr (block_matrix<Matrix>) {
+        init = reduce(init, reduce_func, func,   //
+                      mat(row_index, col_index), //
+                      mats(row_index, col_index)...);
+      } else {
+        init = reduce_func(init, func(mat(row_index, col_index),
+                                      mats(row_index, col_index)...));
+      }
     }
   }
   return init;

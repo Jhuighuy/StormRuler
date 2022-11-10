@@ -25,6 +25,7 @@
 
 # Git, Markdown, Doxygen, etc.
 !.git*
+!.vscode/c_cpp_properties.json
 !.clang-format
 !ext/*
 !*.md

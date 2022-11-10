@@ -20,6 +20,6 @@
 
 # -----------------------------------------------------------------------------
 
-# Add the playground application.
+# Add the unit tests.
 message(STATUS "| Adding StormRuler unit tests..")
 add_subdirectory("./unit")

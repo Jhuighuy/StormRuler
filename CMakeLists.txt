@@ -29,7 +29,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Setup the project.
 project(StormRuler
-        VERSION 1.0
+        VERSION 0.1
         DESCRIPTION "A very high order CFD solver"
         LANGUAGES CXX)
 
@@ -37,6 +37,7 @@ project(StormRuler
 add_library(StormRuler_BASE INTERFACE)
 
 # Print the banner.
+# (Prefixed with `--` to match the `message(STATUS "..")` style.)
 set(StormRuler_BANNER [=[
 -- ╔═══════════════════════════════════════════════════════════════════╗
 -- ║ ╔═══════════════════════════════════════════════════════════════╗ ║
@@ -281,12 +282,6 @@ else()
     target_link_libraries(StormRuler_BASE INTERFACE glm::glm)
   endif()
 endif()
-
-# -----------------------------------------------------------------------------
-
-# Configuration file.
-configure_file("${CMAKE_SOURCE_DIR}/source/Storm/Config.hpp.in" 
-               "${CMAKE_SOURCE_DIR}/source/Storm/Config.hpp")
 
 # -----------------------------------------------------------------------------
 

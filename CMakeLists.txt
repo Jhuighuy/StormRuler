@@ -51,7 +51,7 @@ add_library(StormRuler_BASE INTERFACE)
 
 # Library include directories.
 target_include_directories(StormRuler_BASE 
-                           INTERFACE "${CMAKE_SOURCE_DIR}/src")
+                           INTERFACE "${CMAKE_SOURCE_DIR}/source")
 
 # -----------------------------------------------------------------------------
 
@@ -268,14 +268,14 @@ endif()
 # -----------------------------------------------------------------------------
 
 # Configuration file.
-configure_file("${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp.in" 
-               "${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp")
+configure_file("${CMAKE_SOURCE_DIR}/source/Storm/Config.hpp.in" 
+               "${CMAKE_SOURCE_DIR}/source/Storm/Config.hpp")
 
 # -----------------------------------------------------------------------------
 
 # Add the main library.
 message(STATUS "Adding StormRuler header-only library.")
-add_subdirectory("${CMAKE_SOURCE_DIR}/src")
+add_subdirectory("${CMAKE_SOURCE_DIR}/source")
 
 # Add the main executable.
 message(STATUS "Adding StormRuler main executable.")

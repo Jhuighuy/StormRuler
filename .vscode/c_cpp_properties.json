@@ -20,7 +20,7 @@
 {
   "env": {
     "theIncludePaths": [
-      "${workspaceFolder}/src"
+      "${workspaceFolder}/source"
     ]
   },
   "configurations": [

@@ -25,19 +25,6 @@ cmake_minimum_required(VERSION 3.12)
 # Add the CMake modules.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-# Find Git and update submodules.
-find_package(Git)
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
-  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
-    message(FATAL_ERROR "`git submodule update --init --recursive`"
-                        " failed with ${GIT_SUBMODULE_RESULT}.")
-  endif()
-endif()
-
 # -----------------------------------------------------------------------------
 
 # Setup the project.
@@ -72,6 +59,12 @@ target_include_directories(StormRuler_BASE
 
 # -----------------------------------------------------------------------------
 
+# Check build type is valid.
+if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR
+        CMAKE_BUILD_TYPE STREQUAL "Release"))
+  message(FATAL_ERROR "Invalid or unspecified build type!")
+endif()
+
 # Set output directories.
 # (Set globally, since these properties are not inherited by targets.)
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
@@ -88,7 +81,7 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Check C/C++ compiler.
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
-  message(WARNING "Unknown C++ compiler, correct options may not be set.")
+  message(WARNING "Unknown C++ compiler, correct options may not be set!")
 endif()
 
 # Compiler warning and diagnostics.
@@ -111,8 +104,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)
   list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native) 
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)
   list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native)
 endif()
@@ -125,11 +117,19 @@ target_compile_options(StormRuler_BASE INTERFACE
 target_compile_options(StormRuler_BASE INTERFACE
                        $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_OPTIONS}>)
 
-# Detect endianness.
-include(TestBigEndian)
-test_big_endian(STORM_BIG_ENDIAN)
-if(STORM_BIG_ENDIAN)
-  message(STATUS "StormRuler is being compiled on the big endian machine.")
+# -----------------------------------------------------------------------------
+
+# Find Git and update submodules.
+find_package(Git)
+if(GIT_FOUND)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
+  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
+    message(FATAL_ERROR "`git submodule update --init --recursive`"
+                        " failed with ${GIT_SUBMODULE_RESULT}.")
+  endif()
 endif()
 
 # -----------------------------------------------------------------------------

@@ -27,7 +27,7 @@ add_library(StormRuler INTERFACE ${CXX_HEADERS})
 # Link with the base target.
 target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
 
-# Library include directories.
+# Include directories.
 target_include_directories(StormRuler_BASE INTERFACE ".")
 
 # Configuration file.

@@ -110,6 +110,8 @@ public:
 
 }; // class MatrixViewInterface
 
+// -----------------------------------------------------------------------------
+
 /// @brief Matrix reference view.
 template<matrix Matrix>
 class MatrixRefView final : public MatrixViewInterface<MatrixRefView<Matrix>> {
@@ -152,6 +154,8 @@ public:
 template<class Matrix>
 MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 
+// -----------------------------------------------------------------------------
+
 /// @brief Matrix owning view.
 template<matrix Matrix>
   requires std::movable<Matrix>
@@ -184,6 +188,8 @@ public:
   /// @}
 
 }; // class MatrixOwningView
+
+// -----------------------------------------------------------------------------
 
 namespace detail_ {
   template<class Matrix>

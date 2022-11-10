@@ -90,12 +90,15 @@ template<class Func, viewable_matrix... Matrices>
                        std::forward<Matrices>(mats)...);
 }
 
+// -----------------------------------------------------------------------------
+
 /// @brief Logically negate the boolean matrix @p mat.
 template<viewable_matrix Matrix>
   requires bool_matrix<Matrix>
 [[nodiscard]] constexpr auto operator!(Matrix&& mat) {
   return MapMatrixView(std::logical_not{}, std::forward<Matrix>(mat));
 }
+
 /// @brief Element-wise logically "and"
 /// the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -105,6 +108,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
+
 /// @brief Element-wise logically "or"
 /// the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -114,6 +118,8 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
+
+// -----------------------------------------------------------------------------
 
 /// @brief Element-wise compare the matrices @p mat1 and @p mat2.
 /// @{
@@ -173,6 +179,8 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
       },
       std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
+
+// -----------------------------------------------------------------------------
 
 /// @brief "+" the matrix @p mat.
 template<viewable_matrix Matrix>
@@ -281,6 +289,8 @@ template<class To, viewable_matrix Matrix>
       },
       std::forward<Matrix>(mat));
 }
+
+// -----------------------------------------------------------------------------
 
 #define MAKE_UNARY_MATRIX_FUNC_(func)               \
   template<viewable_matrix Matrix>                  \
@@ -424,6 +434,8 @@ MAKE_UNARY_MATRIX_FUNC_(atanh)
 #undef MAKE_UNARY_MATRIX_FUNC_
 #undef MAKE_BINARY_MATRIX_FUNC_
 
+// -----------------------------------------------------------------------------
+
 /// @brief Matrix transpose view.
 template<matrix_view Matrix>
 class MatrixTransposeView final :
@@ -465,6 +477,8 @@ template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto transpose(Matrix&& mat) {
   return MatrixTransposeView(std::forward<Matrix>(mat));
 }
+
+// -----------------------------------------------------------------------------
 
 /// @brief Matrix product view.
 template<matrix_view Matrix1, matrix_view Matrix2>

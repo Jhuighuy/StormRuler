@@ -54,6 +54,19 @@
       "compilerPath": "/opt/homebrew/bin/g++-12",
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-gcc-arm64"
+    },
+    {
+      "name": "Mac (clang-15-arm64)",
+      "includePath": [
+        "${theIncludePaths}",
+        "/opt/homebrew/include"
+      ],
+      "macFrameworkPath": [
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+      ],
+      "compilerPath": "/opt/homebrew/opt/llvm/bin/clang-15",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "macos-clang-arm64"
     }
   ],
   "version": 4

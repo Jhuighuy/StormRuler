@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Find Git and update submodules.
 find_package(Git)

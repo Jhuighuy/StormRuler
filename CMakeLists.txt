@@ -277,9 +277,9 @@ configure_file("${CMAKE_SOURCE_DIR}/source/Storm/Config.hpp.in"
 message(STATUS "Adding StormRuler header-only library.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/source")
 
-# Add the main executable.
+# Add the applications.
 message(STATUS "Adding StormRuler main executable.")
-add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
+add_subdirectory("${CMAKE_SOURCE_DIR}/source_apps")
 
 # Add the unit tests.
 if(StormRuler_NO_UNIT_TESTS)

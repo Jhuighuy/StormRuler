@@ -51,7 +51,7 @@
       "macFrameworkPath": [
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
       ],
-      "compilerPath": "/usr/bin/g++-12", // Is this a right path to the compiler?
+      "compilerPath": "/opt/homebrew/bin/g++-12",
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-gcc-arm64"
     }

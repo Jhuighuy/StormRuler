@@ -18,4 +18,5 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-add_subdirectory("./StormRuler_Main")
+# Add the playground application.
+add_subdirectory("./Playground")

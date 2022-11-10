@@ -18,19 +18,13 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Main executable.
-file(GLOB CXX_SOURCES "./*.cpp")
-add_executable(StormRuler_Main ${CXX_SOURCES})
+# -----------------------------------------------------------------------------
 
-# Require C++23.
-set_target_properties(
-  StormRuler_Main PROPERTIES 
-  CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)
+# Playground application.
+file(GLOB CXX_SOURCES "./*.cpp")
+add_executable(StormRuler_Playground ${CXX_SOURCES})
 
 # Link with the main library.
-target_link_libraries(StormRuler_Main PUBLIC StormRuler)
-
-# Specify binary output directory.
-set_target_properties(
-  StormRuler_Main PROPERTIES
-  VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+target_link_libraries(StormRuler_Playground StormRuler)
+set_target_properties(StormRuler_Playground PROPERTIES
+                      VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

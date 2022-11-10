@@ -18,76 +18,13 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# -----------------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.12)
 
-project(StormRuler
-  VERSION 1.0
-  DESCRIPTION "A very high order CFD solver and beyond"
-  LANGUAGES CXX)
-
-# A container library that stores all the properties.
-add_library(StormRuler_BASE INTERFACE)
-
-# Compilation options.
-
-# Check C/C++ compiler.
-# TODO: Check C/C++ compiler version.
-# TODO: Intel Classic C++ Compiler ('icpc') or 
-#       Intel LLVM C++ Compiler ('icpx')?
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "PGI"))
-  message(WARNING "Unknown C++ compiler, correct options may not be set.")
-endif()
-
-# Warning and diagnostics options (C/C++).
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND CXX_OPTIONS -Werror -Wall -Wextra 
-    -Wpedantic -Wno-unused-function -Wno-unused-parameter -Wno-comment 
-    -Wno-unknown-pragmas -fconcepts-diagnostics-depth=3)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  list(APPEND CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
-    -Wno-unused-function -Wno-unused-parameter -Wno-mismatched-tags
-    -Wno-gnu-zero-variadic-macro-arguments)
-endif()
-
-# Optimization options (C/C++).
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND CXX_DEBUG_OPTIONS -g -O0)
-  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native) #-fopt-info-vec-missed)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  list(APPEND CXX_DEBUG_OPTIONS -g -O0)
-  list(APPEND CXX_RELEASE_OPTIONS -g -Ofast -march=native)
-endif()
-
-# Set the C/C++ options.
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:C,CXX>:${CXX_OPTIONS}>)
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Debug>:${CXX_DEBUG_OPTIONS}>>)
-target_compile_options(StormRuler_BASE INTERFACE
-  $<$<COMPILE_LANGUAGE:C,CXX>:$<$<CONFIG:Release>:${CXX_RELEASE_OPTIONS}>>)
-
-# Detect endianness.
-include(TestBigEndian)
-test_big_endian(STORM_BIG_ENDIAN)
-if(STORM_BIG_ENDIAN)
-  message(STATUS "StormRuler is being compiled on the big endian machine.")
-endif()
-
-# Library include directories.
-target_include_directories(
-  StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/src")
-target_include_directories(
-  StormRuler_BASE INTERFACE "${CMAKE_SOURCE_DIR}/ext")
-
-# Libraries.
+# Add the CMake modules.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
-  
+
 # Find Git and update submodules.
 find_package(Git)
 if(GIT_FOUND)
@@ -101,6 +38,85 @@ if(GIT_FOUND)
   endif()
 endif()
 
+# -----------------------------------------------------------------------------
+
+# Setup the project.
+project(StormRuler
+        VERSION 1.0
+        DESCRIPTION "A very high order CFD solver"
+        LANGUAGES CXX)
+
+# A container library that stores all the properties.
+add_library(StormRuler_BASE INTERFACE)
+
+# Library include directories.
+target_include_directories(StormRuler_BASE 
+                           INTERFACE "${CMAKE_SOURCE_DIR}/src")
+
+# -----------------------------------------------------------------------------
+
+# Set output directories.
+# (Set globally, since these properties are not inherited.)
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+# Require C++23 and disable extensions.
+# (Set globally, since these properties are not inherited.)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+set(CMAKE_CXX_EXTENSIONS NO)
+
+# Check C/C++ compiler.
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
+  message(WARNING "Unknown C++ compiler, correct options may not be set.")
+endif()
+
+# Compiler warning and diagnostics.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
+                                     -Wno-unused-function 
+                                     -Wno-unused-parameter 
+                                     -Wno-comment 
+                                     -Wno-unknown-pragmas 
+                                     -fconcepts-diagnostics-depth=3)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
+                                     -Wno-unused-function 
+                                     -Wno-unused-parameter 
+                                     -Wno-mismatched-tags
+                                     -Wno-gnu-zero-variadic-macro-arguments)
+endif()
+
+# Compiler optimization options.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)
+  list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native) 
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)
+  list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native)
+endif()
+
+# Set the C/C++ options.
+target_compile_options(StormRuler_BASE INTERFACE 
+                       ${StormRuler_CXX_OPTIONS})
+target_compile_options(StormRuler_BASE INTERFACE
+                       $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_OPTIONS}>)
+target_compile_options(StormRuler_BASE INTERFACE
+                       $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_OPTIONS}>)
+
+# Detect endianness.
+include(TestBigEndian)
+test_big_endian(STORM_BIG_ENDIAN)
+if(STORM_BIG_ENDIAN)
+  message(STATUS "StormRuler is being compiled on the big endian machine.")
+endif()
+
+# -----------------------------------------------------------------------------
+
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
@@ -108,6 +124,8 @@ target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
 # Find spdlog.
 find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(StormRuler_BASE INTERFACE spdlog::spdlog_header_only)
+
+# -----------------------------------------------------------------------------
 
 # Find TBB.
 if(StormRuler_NO_TBB)
@@ -132,6 +150,8 @@ else()
     target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
   endif()
 endif()
+
+# -----------------------------------------------------------------------------
 
 # Find MKL.
 if(StormRuler_NO_MKL)
@@ -201,6 +221,8 @@ else()
   endif()
 endif()
 
+# -----------------------------------------------------------------------------
+
 # Find ZLIB.
 if(StormRuler_NO_ZLIB)
   message(STATUS "StormRuler ZLIB was disabled by user.")
@@ -243,12 +265,16 @@ else()
   endif()
 endif()
 
+# -----------------------------------------------------------------------------
+
 # Configuration file.
 configure_file("${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp.in" 
                "${CMAKE_SOURCE_DIR}/src/Storm/Config.hpp")
 
+# -----------------------------------------------------------------------------
+
 # Add the main library.
-message(STATUS "Adding StormRuler shared library.")
+message(STATUS "Adding StormRuler header-only library.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src")
 
 # Add the main executable.
@@ -256,6 +282,9 @@ message(STATUS "Adding StormRuler main executable.")
 add_subdirectory("${CMAKE_SOURCE_DIR}/src_aux/StormRuler_Main")
 
 # Add the unit tests.
-message(STATUS "Adding StormRuler unit tests.")
-enable_testing()
-add_subdirectory("${CMAKE_SOURCE_DIR}/tests")
+if(StormRuler_NO_UNIT_TESTS)
+  message(STATUS "Unit tests are disabled")
+else()
+  message(STATUS "Adding StormRuler unit tests.")
+  add_subdirectory("${CMAKE_SOURCE_DIR}/tests")
+endif()

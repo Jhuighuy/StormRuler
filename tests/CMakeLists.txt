@@ -18,18 +18,19 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# -----------------------------------------------------------------------------
+
 # Find Google Tests.
+enable_testing()
 find_package(GTest REQUIRED)
+
+# -----------------------------------------------------------------------------
 
 # Test executable.
 file(GLOB CXX_SOURCES "./*.cpp")
 add_executable(StormRuler_UnitTests ${CXX_SOURCES})
-
-# Require C++23.
-set_target_properties(
-  StormRuler_UnitTests PROPERTIES 
-  CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)
+add_test(StormRuler_UnitTests StormRuler_UnitTests)
 
 # Link with the main library.
-target_link_libraries(StormRuler_UnitTests PRIVATE StormRuler)
-target_link_libraries(StormRuler_UnitTests PRIVATE GTest::GTest)
+target_link_libraries(StormRuler_UnitTests StormRuler)
+target_link_libraries(StormRuler_UnitTests GTest::gtest GTest::gtest_main)

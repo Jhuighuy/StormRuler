@@ -32,8 +32,5 @@ target_link_libraries(StormRuler_Main PUBLIC StormRuler)
 
 # Specify binary output directory.
 set_target_properties(
-  StormRuler_Main PROPERTIES 
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set_target_properties(
   StormRuler_Main PROPERTIES
   VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")

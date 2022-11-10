@@ -18,14 +18,11 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Main shared library.
+# -----------------------------------------------------------------------------
+
+# Main header-only library.
 file(GLOB_RECURSE CXX_SOURCES "Storm/*.h*")
 add_library(StormRuler INTERFACE ${CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
-
-# Require C++23.
-set_target_properties(
-  StormRuler PROPERTIES 
-  CXX_STANDARD 23 CXX_STANDARD_REQUIRED YES)

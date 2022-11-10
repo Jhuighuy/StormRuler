@@ -56,14 +56,14 @@ target_include_directories(StormRuler_BASE
 # -----------------------------------------------------------------------------
 
 # Set output directories.
-# (Set globally, since these properties are not inherited.)
+# (Set globally, since these properties are not inherited by targets.)
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # Require C++23 and disable extensions.
-# (Set globally, since these properties are not inherited.)
+# (Set globally, since these properties are not inherited by targets.)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)

@@ -23,39 +23,37 @@
 *~
 !*/
 
-# Git, Markdown, Doxygen, etc.
+# Configuration files.
 !.git*
-!.vscode/c_cpp_properties.json
 !.clang-format
-!ext/*
-!*.md
-!Doxyfile
+!.clang-tidy
+!.vscode/c_cpp_properties.json
 
 # CMake.
-!*.cmake
 !CMakeLists.txt
-cmake_install.cmake
+!cmake/*.cmake
 CMakeFiles/
-CTest*
 
+# Source.
 # C/C++.
-!*.c
-!*.cpp
 !*.h
+!*.c
 !*.hpp
+!*.cpp
 !*.inl
-!*.m
-!*.mm
+!*.hpp.in
 Config.hpp
-!Config.hpp.in
-
-# GLSL
 !*.glsl
+
+# Documentation.
+!Doxyfile
+!*.md
 
 # Scripts.
 !*.sh
 !*.bat
 
 # Input files.
+# (To be removed.)
 !*.ppm
 !test/mesh/*

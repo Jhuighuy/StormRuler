@@ -21,7 +21,6 @@
 # -----------------------------------------------------------------------------
 
 # Find Google Tests.
-enable_testing()
 find_package(GTest REQUIRED)
 
 # -----------------------------------------------------------------------------
@@ -29,7 +28,6 @@ find_package(GTest REQUIRED)
 # Test executable.
 file(GLOB CXX_SOURCES "./*.cpp")
 add_executable(StormRuler_UnitTests ${CXX_SOURCES})
-add_test(StormRuler_UnitTests StormRuler_UnitTests)
 
 # Link with the main library.
 target_link_libraries(StormRuler_UnitTests StormRuler)

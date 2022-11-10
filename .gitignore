@@ -39,11 +39,11 @@ CMakeFiles/
 !*.h
 !*.c
 !*.hpp
+!*.hpp.in
 !*.cpp
 !*.inl
-!*.hpp.in
-Config.hpp
 !*.glsl
+Config.hpp
 
 # Documentation.
 !Doxyfile

@@ -18,7 +18,7 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
-#include "_Main.hpp"
+#include "_UnitTests.hpp"
 
 #include <Storm/Bittern/Mat.hpp>
 

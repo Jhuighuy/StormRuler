@@ -18,12 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# -----------------------------------------------------------------------------
-
 # Find Google Tests.
 find_package(GTest REQUIRED)
-
-# -----------------------------------------------------------------------------
 
 # Test executable.
 file(GLOB CXX_SOURCES "./*.cpp")

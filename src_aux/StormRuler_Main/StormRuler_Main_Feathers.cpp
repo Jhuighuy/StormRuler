@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
   print_banner();
 
   UnstructuredMesh<2, 2, VovTable> mesh1{};
-  read_mesh_from_tetgen(mesh1, "test/mesh/step.1.");
+  read_mesh_from_tetgen(mesh1, "tests/_data/mesh/step.1.");
 
   auto mesh = std::make_shared<UnstructuredMesh<2, 2, CsrTable>>();
   mesh->assign(std::move(mesh1));

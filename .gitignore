@@ -18,10 +18,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+# -----------------------------------------------------------------------------
+
 # Ignore everything by default, but scan all directories.
 *
 *~
 !*/
+
+# -----------------------------------------------------------------------------
 
 # Configuration files.
 !.git*
@@ -29,13 +33,16 @@
 !.clang-tidy
 !.vscode/c_cpp_properties.json
 
+# -----------------------------------------------------------------------------
+
 # CMake.
 !CMakeLists.txt
 !cmake/*.cmake
 CMakeFiles/
 
-# Source.
-# C/C++.
+# -----------------------------------------------------------------------------
+
+# Sources.
 !*.h
 !*.c
 !*.hpp
@@ -45,15 +52,12 @@ CMakeFiles/
 !*.glsl
 Config.hpp
 
-# Documentation.
-!Doxyfile
-!*.md
-
 # Scripts.
 !*.sh
 !*.bat
 
-# Input files.
-# (To be removed.)
-!*.ppm
-!test/mesh/*
+# -----------------------------------------------------------------------------
+
+# Documentation.
+!Doxyfile
+!*.md

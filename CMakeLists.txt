@@ -59,12 +59,6 @@ target_include_directories(StormRuler_BASE
 
 # -----------------------------------------------------------------------------
 
-# Check build type is valid.
-if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR
-        CMAKE_BUILD_TYPE STREQUAL "Release"))
-  message(FATAL_ERROR "Invalid or unspecified build type!")
-endif()
-
 # Set output directories.
 # (Set globally, since these properties are not inherited by targets.)
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
@@ -77,6 +71,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
+
+# Check build type is valid.
+if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR
+        CMAKE_BUILD_TYPE STREQUAL "Release"))
+  message(FATAL_ERROR "Invalid or unspecified build type!")
+endif()
 
 # Check C/C++ compiler.
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
@@ -301,3 +301,7 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/source_apps")
 # Add the tests.
 message(STATUS "Adding StormRuler tests..")
 add_subdirectory("${CMAKE_SOURCE_DIR}/tests")
+
+# Add the documentation.
+message(STATUS "Adding StormRuler documentation..")
+add_subdirectory("${CMAKE_SOURCE_DIR}/docs")

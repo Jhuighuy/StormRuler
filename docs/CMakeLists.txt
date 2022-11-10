@@ -20,19 +20,18 @@
 
 # -----------------------------------------------------------------------------
 
-# Find Google Tests.
-find_package(GTest REQUIRED)
-if(NOT GTest_FOUND)
-  message(STATUS "| GTest was not found! Skipping unit tests.")
+# Find Doxygen.
+find_package(Doxygen)
+if(NOT Doxygen_FOUND)
+  message(STATUS "| Doxygen was not found! Skipping documentation.")
   return()
 endif()
 
 # -----------------------------------------------------------------------------
 
-# Test executable.
-file(GLOB CXX_SOURCES "./*.cpp")
-add_executable(StormRuler_UnitTests ${CXX_SOURCES})
-
-# Link with the main library.
-target_link_libraries(StormRuler_UnitTests StormRuler)
-target_link_libraries(StormRuler_UnitTests GTest::gtest GTest::gtest_main)
+#set(StormRuler_DOXYFILE "./Doxyfile")
+#add_custom_target(StormRuler_DOCS
+#  COMMAND ${DOXYGEN_EXECUTABLE} ${StormRuler_DOXYFILE}
+#  WORKING_DIRECTORY ".."
+#  COMMENT "Generating API documentation with Doxygen"
+#  VERBATIM)

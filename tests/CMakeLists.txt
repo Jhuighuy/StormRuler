@@ -18,13 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Find Google Tests.
-find_package(GTest REQUIRED)
+# -----------------------------------------------------------------------------
 
-# Test executable.
-file(GLOB CXX_SOURCES "./*.cpp")
-add_executable(StormRuler_UnitTests ${CXX_SOURCES})
-
-# Link with the main library.
-target_link_libraries(StormRuler_UnitTests StormRuler)
-target_link_libraries(StormRuler_UnitTests GTest::gtest GTest::gtest_main)
+# Add the playground application.
+message(STATUS "| Adding StormRuler unit tests..")
+add_subdirectory("./unit")

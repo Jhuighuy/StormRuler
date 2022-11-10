@@ -207,7 +207,7 @@ public:
   void operator()( //
       CellField<Mesh, Real, NumVars>& lim_u,
       const CellField<Mesh, Real, NumVars>& u,
-      const CellVecField<Mesh, Real, NumVars>& grad_u) const noexcept {
+      const CellVectorField<Mesh, Real, NumVars>& grad_u) const noexcept {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Find the largest negative and positive differences
       // between values of the current cell and the adjacent cells.

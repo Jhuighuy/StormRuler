@@ -47,15 +47,104 @@ template<typename type_t>
 using tObject = std::enable_shared_from_this<type_t>;
 using Mesh = UnstructuredMesh<2, 2, CsrTable>;
 
-template<class T, size_t N = 1>
-using Subfield = Vec<T, N>;
+/// @brief Mesh field entry.
+template<class Value, size_t NumVars = 1>
+using Subfield = std::conditional_t<NumVars == 1, //
+                                    Value, StaticVector<Value, NumVars>>;
 
-template<class Mesh, class T, size_t N = 1>
-using CellField = IndexedVector<CellIndex<Mesh>, Subfield<T, N>>;
-template<class Mesh, class T, size_t N = 1>
-using CellVecField = IndexedVector<CellIndex<Mesh>, Subfield<vec2_t, N>>;
-template<class Mesh, class T, size_t N = 1>
-using CellMatField = IndexedVector<CellIndex<Mesh>, Subfield<mat2_t, N>>;
+/// @brief Generic mesh field.
+template<mesh Mesh, index Index, class Value = real_t, size_t NumVars = 1>
+class Field final {
+private:
+
+  std::string name_;
+  const Mesh* p_mesh_ = nullptr;
+  IndexedVector<Index, Subfield<Value, NumVars>> data_;
+
+public:
+
+  constexpr Field() = default;
+
+  constexpr Field(const Mesh& mesh)
+      : p_mesh_{&mesh}, data_(p_mesh_->num_entities(meta::type_v<Index>)) {}
+
+  /// @brief Field shape.
+  [[nodiscard]] constexpr auto shape() const noexcept {
+    return MatrixShape{p_mesh_->num_entities(meta::type_v<Index>), NumVars};
+  }
+
+  /// @todo Document me!
+  constexpr void assign(const Field& other, bool copy = true) {
+    *this = Field{*other.p_mesh_};
+  }
+
+  /// @brief Element at @p index.
+  /// @{
+  [[nodiscard]] constexpr auto& operator[](Index index) noexcept {
+    STORM_ASSERT_(index < p_mesh_->num_entities(meta::type_v<Index>),
+                  "Index is out of range!");
+    return data_[index];
+  }
+  [[nodiscard]] constexpr const auto& operator[](Index index) const noexcept {
+    STORM_ASSERT_(index < p_mesh_->num_entities(meta::type_v<Index>),
+                  "Index is out of range!");
+    return data_[index];
+  }
+  /// @}
+
+  /// @brief Element at @p row_index and @p col_index.
+  /// @{
+  [[nodiscard]] constexpr Value& //
+  operator()(size_t row_index, size_t col_index = 0) noexcept {
+    return data_[Index{row_index}]; //[col_index];
+  }
+  [[nodiscard]] constexpr const Value&
+  operator()(size_t row_index, size_t col_index = 0) const noexcept {
+    return data_[Index{row_index}]; //[col_index];
+  }
+  /// @}
+
+}; // class Field
+
+/// @brief Node-centered field.
+template<mesh Mesh, class Value, size_t NumVars = 1>
+using NodeField = Field<Mesh, NodeIndex, Value, NumVars>;
+/// @brief Node-centered vector field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using NodeVectorField = NodeField<Mesh, mesh_vec_t<Mesh, Real>, NumVars>;
+/// @brief Node-centered matrix field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using NodeMatrixField = NodeField<Mesh, mesh_mat_t<Mesh, Real>, NumVars>;
+
+/// @brief Edge-centered field.
+template<mesh Mesh, class Value, size_t NumVars = 1>
+using EdgeField = Field<Mesh, EdgeIndex, Value, NumVars>;
+/// @brief Edge-centered vector field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using EdgeVector = EdgeField<Mesh, mesh_vec_t<Mesh, Real>, NumVars>;
+/// @brief Edge-centered matrix field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using EdgeMatrixField = EdgeField<Mesh, mesh_mat_t<Mesh, Real>, NumVars>;
+
+/// @brief Face-centered field.
+template<mesh Mesh, class Value, size_t NumVars = 1>
+using FaceField = Field<Mesh, CellIndex<Mesh>, Value, NumVars>;
+/// @brief Face-centered vector field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using FaceVectorField = FaceField<Mesh, mesh_vec_t<Mesh, Real>, NumVars>;
+/// @brief Face-centered matrix field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using FaceMatrixField = FaceField<Mesh, mesh_mat_t<Mesh, Real>, NumVars>;
+
+/// @brief Cell-centered field.
+template<mesh Mesh, class Value, size_t NumVars = 1>
+using CellField = Field<Mesh, CellIndex<Mesh>, Value, NumVars>;
+/// @brief Cell-centered vector field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using CellVectorField = CellField<Mesh, mesh_vec_t<Mesh, Real>, NumVars>;
+/// @brief Cell-centered matrix field.
+template<mesh Mesh, class Real, size_t NumVars = 1>
+using CellMatrixField = CellField<Mesh, mesh_mat_t<Mesh, Real>, NumVars>;
 
 template<size_t N = 5>
 struct sFieldDesc {

@@ -50,6 +50,8 @@ using Mat4x4 = Mat<Value, 4, 4>;
 /// @brief Statically-sized vector.
 template<class Value, size_t Size>
 using Vec = Mat<Value, Size, 1>;
+template<class Value, size_t Size>
+using StaticVector = Mat<Value, Size, 1>;
 
 /// @brief 2D vector.
 template<class Value>

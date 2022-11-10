@@ -135,7 +135,7 @@ public:
   void operator()(CellField<Mesh, Real, NumVars>& div_f,
                   const CellField<Mesh, Real, NumVars>& u) const noexcept {
     // Compute the gradients.
-    CellVecField<Mesh, Real, NumVars> grad_u(p_mesh_->num_cells());
+    CellVectorField<Mesh, Real, NumVars> grad_u(p_mesh_->num_cells());
     CellField<Mesh, Real, NumVars> lim_u(p_mesh_->num_cells());
     gradient_scheme_(grad_u, u);
     gradient_limiter_scheme_(lim_u, u, grad_u);

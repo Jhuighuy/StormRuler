@@ -102,7 +102,7 @@ void save_vtk(auto& mesh, const char* path,
     file << "SCALARS " << field.name << " double 1" << std::endl;
     file << "LOOKUP_TABLE default" << std::endl;
     std::ranges::for_each(mesh.interior_cells(), [&](auto cell) {
-      file << (*field.scalar)[cell][field.var_index] << std::endl;
+      file << (*field.scalar)[cell] /*[field.var_index]*/ << std::endl;
     });
   }
   file << std::endl;
@@ -143,8 +143,7 @@ static void cahn_hilliard_step(const Mesh& mesh, //
     return 2.0 * c * (c - 1.0) * (2.0 * c - 1.0);
   };
 
-  CellField<Mesh, real_t> f;
-  f.assign(c, false);
+  CellField<Mesh, real_t> f{mesh};
 
   f <<= map(dF_dc, c);
 
@@ -176,11 +175,13 @@ static void cahn_hilliard_step(const Mesh& mesh, //
 
 template<mesh Mesh>
 static void cahn_hilliard_solve(const Mesh& mesh) {
-  CellField<Mesh, real_t> c(mesh.num_cells());
-  CellField<Mesh, real_t> c_hat(mesh.num_cells());
-  CellField<Mesh, real_t> w_hat(mesh.num_cells());
+  CellField<Mesh, real_t> c{mesh};
+  CellField<Mesh, real_t> c_hat{mesh};
+  CellField<Mesh, real_t> w_hat{mesh};
 
-  fill_randomly(c);
+  std::ranges::for_each(mesh.interior_cells(), [&](CellView<Mesh> cell) {
+    c[cell] = (1.0 * rand()) / RAND_MAX;
+  });
 
   double total_time = 0.0;
   for (int time = 0; time <= 200000; ++time) {

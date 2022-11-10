@@ -143,15 +143,6 @@ public:
     return std::vector<Value, Allocator>::operator=(list), *this;
   }
 
-  /// @todo Document me!
-  constexpr void assign(const IndexedVector& other, bool copy = true) {
-    if (copy) {
-      this->operator=(other);
-    } else {
-      this->resize(other.size());
-    }
-  }
-
   /// @brief Swap the indexed array contents.
   constexpr void swap(IndexedVector& other) noexcept( //
       noexcept(std::allocator_traits<
@@ -159,6 +150,7 @@ public:
                std::allocator_traits<Allocator>::is_always_equal::value)) {
     std::vector<Value, Allocator>::swap(other);
   }
+
 
   /// @brief Element at @p index.
   /// @{
@@ -188,29 +180,43 @@ public:
   }
   /// @}
 
-  /// @brief Matrix shape.
-  [[nodiscard]] constexpr auto shape() const noexcept {
-    return MatrixShape{this->size(), 1};
-  }
+}; // class IndexedVector
 
-  /// @brief Element at @p row_index and @p col_index.
+/// @brief Wrapper for std::unique_ptr<T[]> with strict indexing.
+template<class Index, class ValueArray,
+         class Deleter = std::default_delete<ValueArray>>
+class IndexedUniquePtr;
+
+template<index Index, class Value, class Deleter>
+  requires std::is_object_v<Index> && std::is_object_v<Deleter>
+class IndexedUniquePtr<Index, Value[], Deleter> final :
+    public std::unique_ptr<Value[], Deleter> {
+public:
+
+  /// @brief Construct an empty indexed unique pointer.
   /// @{
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, //
-             [[maybe_unused]] size_t col_index = 0) noexcept {
-    STORM_ASSERT_(row_index < this->size() && col_index == 0,
-                  "Indices are out of range!");
-    return std::vector<Value, Allocator>::operator[](row_index)[0];
+  constexpr IndexedUniquePtr() = default;
+  constexpr IndexedUniquePtr(std::nullptr_t) noexcept
+      : std::unique_ptr<Value[], Deleter>(nullptr) {}
+  /// @}
+
+  // constexpr IndexedUniquePtr() noexcept : std::unique_ptr<Value[], Deleter>{}
+  // {}
+
+  /// @brief Element at @p index.
+  /// @{
+  constexpr Value& operator[](size_t) = delete;
+  constexpr const Value& operator[](size_t) const = delete;
+  [[nodiscard]] constexpr Value& operator[](Index index) noexcept {
+    return std::unique_ptr<Value[], Deleter>::operator[](
+        static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index,
-             [[maybe_unused]] size_t col_index = 0) const noexcept {
-    STORM_ASSERT_(row_index < this->size() && col_index == 0,
-                  "Indices are out of range!");
-    return std::vector<Value, Allocator>::operator[](row_index)[0];
+  [[nodiscard]] constexpr const Value& operator[](Index index) const noexcept {
+    return std::unique_ptr<Value[], Deleter>::operator[](
+        static_cast<size_t>(index));
   }
   /// @}
 
-}; // class IndexedVector
+}; // class IndexedUniquePtr
 
 } // namespace Storm

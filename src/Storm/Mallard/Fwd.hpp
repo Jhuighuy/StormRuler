@@ -26,6 +26,8 @@
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/Meta.hpp>
 
+#include <glm/glm.hpp>
+
 #include <compare>
 #include <concepts>
 #include <ranges>
@@ -65,13 +67,17 @@ using FaceIndex = typename Mesh::FaceIndex;
 template<mesh Mesh>
 using CellIndex = typename Mesh::CellIndex;
 
-/// @brief Mesh spatial vector type.
-template<mesh Mesh>
-using mesh_vec_t = std::remove_cvref_t< //
-    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))>;
-
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
-inline constexpr size_t mesh_dim_v = mesh_vec_t<Mesh>::length();
+inline constexpr size_t mesh_dim_v = decltype( //
+    std::declval<Mesh>().position(std::declval<NodeIndex>()))::length();
+
+/// @brief Mesh spatial vector type.
+template<mesh Mesh, class Real = real_t>
+using mesh_vec_t = glm::vec<mesh_dim_v<Mesh>, Real>;
+
+/// @brief Mesh spatial matrix type.
+template<mesh Mesh, class Real = real_t>
+using mesh_mat_t = glm::mat<mesh_dim_v<Mesh>, mesh_dim_v<Mesh>, Real>;
 
 } // namespace Storm

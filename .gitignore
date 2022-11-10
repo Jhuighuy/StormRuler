@@ -29,8 +29,7 @@
 
 # Configuration files.
 !.git*
-!.clang-format
-!.clang-tidy
+!.clang-*
 !.vscode/c_cpp_properties.json
 
 # -----------------------------------------------------------------------------

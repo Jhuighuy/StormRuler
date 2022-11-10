@@ -18,6 +18,18 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# TODO:
+# • clang-format integration:
+#   Format the code on build.
+# • clang-tidy integration:
+#   Impossible now, since clang-tidy doesn't support C++23.
+# • Doxygen integration:
+#   Setup Doxygen for C++23, and decide when to relaunch the generator.
+# • User friendly compilation script:
+#   It is inconvenient to write `CXX=.. cmake . -DCMAKE_BUILD_TYPE=..`
+#   every time.
+# • Problems with GTest linking on ARM-based Mac machines.
+
 # -----------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.12)

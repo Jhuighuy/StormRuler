@@ -20,28 +20,22 @@
 
 # -----------------------------------------------------------------------------
 
-# Core header-only library.
-file(GLOB_RECURSE CXX_HEADERS "Storm/*.hpp" "Storm/*.inl")
-add_library(StormRuler INTERFACE ${CXX_HEADERS})
+import sys
+import re
 
-# Link with the base target.
-target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print(f'Usage: {sys.argv[0]} <input-file> <output-file>')
+        sys.exit(1)
 
-# Include directories.
-target_include_directories(StormRuler_BASE INTERFACE ".")
+    FIND = r'#cmakedefine01\s*(\w+)$'
+    REPLACE = r'#ifndef \1\n#define \1 0\n#endif'
 
-# -----------------------------------------------------------------------------
+    input_file_path = sys.argv[1]
+    with open(input_file_path, 'r') as input_file:
+        contents = input_file.read()
+        generated = re.sub(FIND, REPLACE, contents, flags=re.M)
 
-# Configuration file.
-configure_file("./Storm/Config.hpp.in" "./Storm/Config.hpp")
-
-# "Default" configuration file. 
-# (It should be in the repository, used for non-CMake builds.)
-if (Python3_FOUND)
-  add_custom_command(OUTPUT "./Storm/ConfigDefault.hpp"
-                     COMMAND ${Python3_EXECUTABLE} 
-                             "../scripts/MakeConfigDefault.py" 
-                             "./Storm/Config.hpp.in" "./Storm/ConfigDefault.hpp"
-                     MAIN_DEPENDENCY "./Storm/Config.hpp.in"
-                     VERBATIM)
-endif()
+    output_file_path = sys.argv[2]
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(generated)

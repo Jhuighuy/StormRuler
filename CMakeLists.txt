@@ -141,6 +141,9 @@ endif()
 
 # -----------------------------------------------------------------------------
 
+# Find Python interpreter.
+find_package(Python3 3.9 COMPONENTS Interpreter)
+
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)

@@ -23,6 +23,8 @@
       "${workspaceFolder}/source"
     ]
   },
+  // TODO: Add Windows configuratiuons.
+  // TODO: Add Mac (x64) configuratiuons.
   "configurations": [
     {
       "name": "Linux (gcc-12-x64)",

@@ -63,10 +63,10 @@ message(STATUS "\n${StormRuler_BANNER}")
 
 # Set output directories.
 # (Set globally, since these properties are not inherited by targets.)
-set(CMAKE_PDB_OUTPUT_DIRECTORY "./bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "./bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "./bin")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # Require C++23 and disable extensions.
 # (Set globally, since these properties are not inherited by targets.)
@@ -300,10 +300,10 @@ add_subdirectory("./source")
 message(STATUS "Adding StormRuler applications..")
 add_subdirectory("./source_apps")
 
+# Add the documentation.
+message(STATUS "Adding StormRuler documentation..")
+add_subdirectory("./source_docs")
+
 # Add the tests.
 message(STATUS "Adding StormRuler tests..")
 add_subdirectory("./tests")
-
-# Add the documentation.
-message(STATUS "Adding StormRuler documentation..")
-add_subdirectory("./docs")

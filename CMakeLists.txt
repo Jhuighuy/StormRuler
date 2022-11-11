@@ -30,12 +30,7 @@
 #   every time.
 # • Problems with GTest linking on ARM-based Mac machines.
 
-# -----------------------------------------------------------------------------
-
-cmake_minimum_required(VERSION 3.12)
-
-# Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+cmake_minimum_required(VERSION 3.20..3.26)
 
 # -----------------------------------------------------------------------------
 
@@ -125,6 +120,9 @@ target_compile_options(StormRuler_BASE INTERFACE
                        $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_OPTIONS}>)
 
 # -----------------------------------------------------------------------------
+
+# Add the CMake modules.
+list(APPEND CMAKE_MODULE_PATH "./cmake")
 
 # Find Git and update submodules.
 find_package(Git)

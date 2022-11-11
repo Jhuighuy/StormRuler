@@ -37,11 +37,9 @@ configure_file("./Storm/Config.hpp.in" "./Storm/Config.hpp")
 
 # "Default" configuration file. 
 # (It should be in the repository, used for non-CMake builds.)
-if (Python3_FOUND)
-  add_custom_command(OUTPUT "./Storm/ConfigDefault.hpp"
-                     COMMAND ${Python3_EXECUTABLE} 
-                             "../scripts/MakeConfigDefault.py" 
-                             "./Storm/Config.hpp.in" "./Storm/ConfigDefault.hpp"
-                     MAIN_DEPENDENCY "./Storm/Config.hpp.in"
-                     VERBATIM)
-endif()
+add_custom_command(OUTPUT "./Storm/ConfigDefault.hpp"
+                   COMMAND ${Python3_EXECUTABLE} 
+                           "../scripts/MakeConfigDefault.py" 
+                           "./Storm/Config.hpp.in" "./Storm/ConfigDefault.hpp"
+                   MAIN_DEPENDENCY "./Storm/Config.hpp.in"
+                   VERBATIM)

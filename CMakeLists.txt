@@ -139,10 +139,10 @@ if(GIT_FOUND)
   endif()
 endif()
 
-# -----------------------------------------------------------------------------
-
 # Find Python interpreter.
-find_package(Python3 3.9 COMPONENTS Interpreter)
+find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+
+# -----------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED)

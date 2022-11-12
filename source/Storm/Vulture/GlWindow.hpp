@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-/// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-/// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-/// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-/// DEALINGS IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
@@ -125,31 +126,31 @@ enum class Key : int {
   num_lock = GLFW_KEY_NUM_LOCK,
   print_screen = GLFW_KEY_PRINT_SCREEN,
   pause = GLFW_KEY_PAUSE,
-  f1 = GLFW_KEY_F1,
-  f2 = GLFW_KEY_F2,
-  f3 = GLFW_KEY_F3,
-  f4 = GLFW_KEY_F4,
-  f5 = GLFW_KEY_F5,
-  f6 = GLFW_KEY_F6,
-  f7 = GLFW_KEY_F7,
-  f8 = GLFW_KEY_F8,
-  f9 = GLFW_KEY_F9,
-  f10 = GLFW_KEY_F10,
-  f11 = GLFW_KEY_F11,
-  f12 = GLFW_KEY_F12,
-  f13 = GLFW_KEY_F13,
-  f14 = GLFW_KEY_F14,
-  f15 = GLFW_KEY_F15,
-  f16 = GLFW_KEY_F16,
-  f17 = GLFW_KEY_F17,
-  f18 = GLFW_KEY_F18,
-  f19 = GLFW_KEY_F19,
-  f20 = GLFW_KEY_F20,
-  f21 = GLFW_KEY_F21,
-  f22 = GLFW_KEY_F22,
-  f23 = GLFW_KEY_F23,
-  f24 = GLFW_KEY_F24,
-  f25 = GLFW_KEY_F25,
+  F1 = GLFW_KEY_F1,
+  F2 = GLFW_KEY_F2,
+  F3 = GLFW_KEY_F3,
+  F4 = GLFW_KEY_F4,
+  F5 = GLFW_KEY_F5,
+  F6 = GLFW_KEY_F6,
+  F7 = GLFW_KEY_F7,
+  F8 = GLFW_KEY_F8,
+  F9 = GLFW_KEY_F9,
+  F10 = GLFW_KEY_F10,
+  F11 = GLFW_KEY_F11,
+  F12 = GLFW_KEY_F12,
+  F13 = GLFW_KEY_F13,
+  F14 = GLFW_KEY_F14,
+  F15 = GLFW_KEY_F15,
+  F16 = GLFW_KEY_F16,
+  F17 = GLFW_KEY_F17,
+  F18 = GLFW_KEY_F18,
+  F19 = GLFW_KEY_F19,
+  F20 = GLFW_KEY_F20,
+  F21 = GLFW_KEY_F21,
+  F22 = GLFW_KEY_F22,
+  F23 = GLFW_KEY_F23,
+  F24 = GLFW_KEY_F24,
+  F25 = GLFW_KEY_F25,
   kp_0 = GLFW_KEY_KP_0,
   kp_1 = GLFW_KEY_KP_1,
   kp_2 = GLFW_KEY_KP_2,
@@ -240,6 +241,8 @@ private:
   }
 
 }; // class Framework
+
+// -----------------------------------------------------------------------------
 
 /// @brief OpenGL window.
 class Window final {

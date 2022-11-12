@@ -44,8 +44,7 @@ project(StormRuler
 add_library(StormRuler_BASE INTERFACE)
 
 # Print the banner.
-# (Prefixed with `--` to match the `message(STATUS "..")` style.)
-set(StormRuler_BANNER [=[
+message(STATUS "\n" [=[
 -- ╔═══════════════════════════════════════════════════════════════════╗
 -- ║ ╔═══════════════════════════════════════════════════════════════╗ ║
 -- ║ ║      _____ __                       ____        __            ║ ║
@@ -57,7 +56,6 @@ set(StormRuler_BANNER [=[
 -- ║ ╚═══════════════════════════════════════════════════════════════╝ ║
 -- ╚═══════════════════════════════════════════════════════════════════╝
 --]=])
-message(STATUS "\n${StormRuler_BANNER}")
 
 # -----------------------------------------------------------------------------
 
@@ -121,9 +119,6 @@ target_compile_options(StormRuler_BASE INTERFACE
 
 # -----------------------------------------------------------------------------
 
-# Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH "./cmake")
-
 # Find Git and update submodules.
 find_package(Git)
 if(GIT_FOUND)
@@ -136,6 +131,9 @@ if(GIT_FOUND)
                         " failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
 endif()
+
+# Add the CMake modules.
+list(APPEND CMAKE_MODULE_PATH "./cmake")
 
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)

@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-/// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-/// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-/// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-/// DEALINGS IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -35,7 +35,10 @@
 
 namespace Storm {
 
-/// @brief Wrapper for std::array with strict indexing.
+/// @brief Wrapper for @c std::array with strict indexing.
+/// @tparam Index Array index type.
+/// @tparam Value Array value type.
+/// @tparam Size Array size.
 template<index Index, class Value, size_t Size>
   requires std::is_object_v<Value>
 class IndexedArray final : public std::array<Value, Size> {
@@ -69,7 +72,12 @@ public:
 
 }; // class IndexedArray
 
-/// @brief Wrapper for std::vector with strict indexing.
+// -----------------------------------------------------------------------------
+
+/// @brief Wrapper for @c std::vector with strict indexing.
+/// @tparam Index Vector index type.
+/// @tparam Value Vector value type.
+/// @tparam Allocator Vector allocator type.
 template<index Index, class Value, class Allocator = std::allocator<Value>>
   requires std::is_object_v<Value> && std::is_object_v<Allocator>
 class IndexedVector final : public std::vector<Value, Allocator> {
@@ -151,7 +159,6 @@ public:
     std::vector<Value, Allocator>::swap(other);
   }
 
-
   /// @brief Element at @p index.
   /// @{
   constexpr Value& at(size_t) = delete;
@@ -182,11 +189,13 @@ public:
 
 }; // class IndexedVector
 
-/// @brief Wrapper for std::unique_ptr<T[]> with strict indexing.
+// -----------------------------------------------------------------------------
+
 template<class Index, class ValueArray,
          class Deleter = std::default_delete<ValueArray>>
 class IndexedUniquePtr;
 
+/// @brief Wrapper for @c std::unique_ptr<T[]> with strict indexing.
 template<index Index, class Value, class Deleter>
   requires std::is_object_v<Index> && std::is_object_v<Deleter>
 class IndexedUniquePtr<Index, Value[], Deleter> final :

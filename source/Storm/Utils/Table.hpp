@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-/// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-/// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-/// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-/// DEALINGS IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -50,8 +50,7 @@ struct OffsetTag;
 using OffsetIndex = Index<OffsetTag>;
 
 /// @brief Copy the @p in_table to @p out_table.
-/// @todo `table` concept?
-template<class InTable, class OutTable>
+template<table InTable, table OutTable>
 void copy_table(const InTable& in_table, OutTable& out_table) {
   if constexpr (std::assignable_from<OutTable, InTable>) {
     out_table = in_table;
@@ -64,8 +63,7 @@ void copy_table(const InTable& in_table, OutTable& out_table) {
   }
 }
 /// @brief Move the @p in_table to @p out_table.
-/// @todo `table` concept?
-template<class InTable, class OutTable>
+template<table InTable, table OutTable>
 void move_table(InTable&& in_table, OutTable& out_table) {
   if constexpr (std::assignable_from<OutTable, InTable>) {
     out_table = std::move(in_table);
@@ -120,6 +118,8 @@ public:
 
 }; // TableInterface
 
+// -----------------------------------------------------------------------------
+
 /// @brief Compressed sparse row table.
 template<index RowIndex, class ColValue>
   requires std::is_object_v<ColValue>
@@ -140,7 +140,7 @@ public:
   /// @{
   [[nodiscard]] constexpr auto operator[](RowIndex row_index) noexcept {
     STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    // Here we do `{col_values_[begin - 1], &col_values_[end - 1] + 1}`, 
+    // Here we do `{col_values_[begin - 1], &col_values_[end - 1] + 1}`,
     // since `col_values_[end - 1]` may be outsize of the vector.
     return std::span{&col_values_[row_offsets_[row_index]],
                      &col_values_[row_offsets_[row_index + 1] - 1] + 1};
@@ -186,6 +186,8 @@ public:
   }
 
 }; // class CsrTable
+
+// -----------------------------------------------------------------------------
 
 /// @brief Vector-of-vectors sparse row table.
 template<index RowIndex, class ColValue = void>

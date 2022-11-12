@@ -30,6 +30,7 @@
 namespace Storm {
 
 /// @brief A base object.
+/// @todo To be removed!
 class Object : public detail_::noncopyable_ {
 public:
 

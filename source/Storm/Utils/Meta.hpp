@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2022 Oleg Butakov                                            //
+// Copyright © 2020 - 2023 Oleg Butakov                                       //
 //                                                                            //
 // Permission is hereby granted, free of charge, to any person obtaining a    //
 // copy of this software and associated documentation files (the "Software"), //
@@ -152,6 +152,9 @@ consteval auto second(list<T1, T2, Ts...>) {
 
 template<class List>
 using second_t = decltype(second(List{}));
+
+//
+///////////////////////////////////
 
 ///////////////////////////////////
 // Sublist queries
@@ -397,6 +400,9 @@ using pair_cast_t = decltype(pair_cast<ToPair>(Pair{}));
 
 template<class Pair>
 using as_std_pair_t = raw_t<pair_cast_t<std::pair, Pair>>;
+
+//
+///////////////////////////////////
 
 ///////////////////////////////////
 // List cast

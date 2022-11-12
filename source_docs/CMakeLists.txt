@@ -21,17 +21,25 @@
 # -----------------------------------------------------------------------------
 
 # Find Doxygen.
-find_package(Doxygen)
-if(NOT Doxygen_FOUND)
+find_package(Doxygen REQUIRED dot)
+if(NOT DOXYGEN_FOUND)
   message(STATUS "| Doxygen was not found! Skipping documentation.")
+  return()
+endif()
+
+# Check if Doxygen is recent enough.
+set(DOXYGEN_MIN_REQUIRED_VERSION 1.9.5)
+if(DOXYGEN_VERSION VERSION_LESS DOXYGEN_MIN_REQUIRED_VERSION)
+  message(STATUS "| Outdated Doxygen ${DOXYGEN_VERSION} found! Minimum "
+                 "required version is ${DOXYGEN_MIN_REQUIRED_VERSION}.")
+  message(STATUS "| Skipping documentation.")
   return()
 endif()
 
 # -----------------------------------------------------------------------------
 
-#set(StormRuler_DOXYFILE "./Doxyfile")
-#add_custom_target(StormRuler_DOCS
-#  COMMAND ${DOXYGEN_EXECUTABLE} ${StormRuler_DOXYFILE}
-#  WORKING_DIRECTORY ".."
-#  COMMENT "Generating API documentation with Doxygen"
+#add_custom_target(StormRuler_DOCS ALL
+#  /home/jhuighuy/Downloads/doxygen-1.9.5/bin/doxygen ${DOXYGEN_EXECUTABLE} ${StormRuler_DOXYFILE}
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#  COMMENT "| Generating API documentation with Doxygen"
 #  VERBATIM)

@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-/// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-/// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-/// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-/// DEALINGS IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -31,6 +31,7 @@
 namespace Storm {
 
 /// @brief Strictly-tagged index.
+/// @tparam Tag Any type to distinguish the different index types.
 template<class Tag>
 class Index final {
 private:
@@ -47,7 +48,7 @@ public:
   constexpr explicit Index(Integral value) noexcept
       : value_{static_cast<size_t>(value)} {}
 
-  /// @brief Cast to the underlying value.
+  /// @brief Cast to the inegral value.
   template<std::integral Integral>
   [[nodiscard]] constexpr explicit operator Integral() const noexcept {
     return static_cast<Integral>(value_);
@@ -59,7 +60,7 @@ public:
     return Index<OtherTag>{value_};
   }
 
-  /// @brief Comparison operator.
+  /// @brief Comparison operators.
   /// @{
   [[nodiscard]] constexpr auto operator<=>(const Index& other) const = default;
   template<std::integral Integral>
@@ -134,15 +135,15 @@ public:
 
 }; // class Index
 
-namespace detail_ {
-  template<class>
-  inline constexpr bool is_index_v_ = false;
-  template<class Tag>
-  inline constexpr bool is_index_v_<Index<Tag>> = true;
-} // namespace detail_
+// -----------------------------------------------------------------------------
+
+template<class>
+inline constexpr bool is_index_v = false;
+template<class Tag>
+inline constexpr bool is_index_v<Index<Tag>> = true;
 
 /// @brief Index type.
 template<class Index>
-concept index = detail_::is_index_v_<Index>;
+concept index = is_index_v<Index>;
 
 } // namespace Storm

@@ -27,8 +27,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Enum.hpp>
-
 #include <Storm/Solvers/Operator.hpp>
 
 #include <iostream>
@@ -38,31 +36,24 @@ namespace Storm {
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Preconditioner side.
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
-class PreconditionerSide final : public Enum<PreconditionerSide> {
-  // clang-format off
-
-  StormEnum_(PreconditionerSide)
+enum class PreconditionerSide {
 
   /// @brief Left preconditioned equation is solved, 𝓟𝓐𝒙 = 𝓟𝒃.
-  ///
-  /// When the left preconditioning is used, iterative solver tracks 
-  ///   convergence by the left preconditioned residual norm, ‖𝓟(𝒃 - 𝓐𝒙)‖.
-  StormEnumValue_(Left)
+  /// When the left preconditioning is used, iterative solver tracks
+  /// convergence by the left preconditioned residual norm, ‖𝓟(𝒃 - 𝓐𝒙)‖.
+  Left,
 
-  /// Right preconditioned equation is solved, 𝓐𝓟𝒙̃ = 𝒃, 𝓟𝒙̃ = 𝒙.
-  ///
-  /// When the right preconditioning is used, iterative solver tracks 
-  ///   convergence by the unpreconditioned residual norm, ‖𝒃 - 𝓐𝒙‖.
-  StormEnumValue_(Right)
+  /// @brief Right preconditioned equation is solved, 𝓐𝓟𝒙̃ = 𝒃, 𝓟𝒙̃ = 𝒙.
+  /// When the right preconditioning is used, iterative solver tracks
+  /// convergence by the unpreconditioned residual norm, ‖𝒃 - 𝓐𝒙‖.
+  Right,
 
-  /// Symmetric preconditioned equation is solved, 
+  /// @brief Symmetric preconditioned equation is solved,
   ///   𝓜𝓐𝓝𝒙̃ = 𝓜𝒃, 𝓝𝒙̃ = 𝒙, 𝓟 = 𝓜𝓝.
   ///
-  /// When the symmetric preconditioning is used, iterative solver tracks 
-  ///   convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
-  StormEnumValue_(Symmetric)
-
-  // clang-format on
+  /// When the symmetric preconditioning is used, iterative solver tracks
+  /// convergence by the partially preconditioned residual norm, ‖𝓜(𝒃 - 𝓐𝒙)‖.
+  Symmetric,
 
 }; // enum class PreconditionerSide
 

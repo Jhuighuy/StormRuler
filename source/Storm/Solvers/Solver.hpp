@@ -27,8 +27,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Object.hpp>
-
 #include <Storm/Solvers/Operator.hpp>
 #include <Storm/Solvers/Preconditioner.hpp>
 

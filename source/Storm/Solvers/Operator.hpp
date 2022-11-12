@@ -27,8 +27,6 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Object.hpp>
-
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
 
@@ -52,6 +50,16 @@ concept legacy_operator_like =
     requires(Operator& any_op, OutVector& y_vec, const InVector& x_vec) {
       any_op(y_vec, x_vec);
     };
+
+/// @brief A base object.
+/// @todo To be removed!
+class Object : public detail_::noncopyable_ {
+public:
+
+  /// @brief Object destructor
+  virtual ~Object() = default;
+
+}; // class Object
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract operator 𝒚 ← 𝓐(𝒙).

@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-/// IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -33,46 +33,6 @@
 #include <tuple>
 
 namespace Storm::shapes {
-
-/// @brief Axis-aligned bounding box (AABB).
-template<class Vec>
-class AABB {
-private:
-
-  Vec min_{}, max_{};
-
-public:
-
-  /// @brief Construct an AABB.
-  constexpr AABB() = default;
-
-  /// @brief Construct an AABB with a vector @p vec.
-  constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
-
-  /// @brief AABB min vector.
-  [[nodiscard]] constexpr const Vec& min() const noexcept {
-    return min_;
-  }
-  /// @brief AABB max vector.
-  [[nodiscard]] constexpr const Vec& max() const noexcept {
-    return max_;
-  }
-
-  /// @brief AABB center.
-  [[nodiscard]] constexpr Vec center() const noexcept {
-    return 0.5 * (max_ + min_);
-  }
-  /// @brief AABB extents.
-  [[nodiscard]] constexpr Vec extents() const noexcept {
-    return max_ - min_;
-  }
-
-  /// @brief Extend the AABB.
-  void extend(const Vec& vec) noexcept {
-    min_ = glm::min(min_, vec), max_ = glm::max(max_, vec);
-  }
-
-}; // class AABB
 
 /// @brief Shape type.
 enum class Type : std::uint8_t {
@@ -161,6 +121,8 @@ template<class Shape, class Mesh>
 using piece_t = std::ranges::range_value_t<decltype( //
     std::declval<Shape>().pieces(std::declval<Mesh>()))>;
 
+// -----------------------------------------------------------------------------
+
 namespace detail_ {
   template<class Shape, class Mesh>
   concept has_volume_ =
@@ -183,7 +145,8 @@ namespace detail_ {
       requires(Shape shape, const Mesh& mesh) { normal(shape, mesh); };
 } // namespace detail_
 
-/// @brief Compute the shape "volume" (length in 1D, area in 2D, volume in 3D).
+/// @brief Compute the @p shape "volume"
+/// (length in 1D, area in 2D, volume in 3D).
 template<shape Shape, mesh Mesh>
   requires (detail_::has_volume_<Shape, Mesh> ||
             (complex_shape<Shape, Mesh> &&
@@ -203,7 +166,7 @@ template<shape Shape, mesh Mesh>
   }
 }
 
-/// @brief Compute the shape barycenter.
+/// @brief Compute the @p shape barycenter.
 template<shape Shape, mesh Mesh>
   requires (detail_::has_barycenter_<Shape, Mesh> ||
             (complex_shape<Shape, Mesh> &&
@@ -227,7 +190,7 @@ template<shape Shape, mesh Mesh>
   }
 }
 
-/// @brief Compute the shape normal.
+/// @brief Compute the @p shape normal.
 template<shape Shape, mesh Mesh>
   requires (detail_::has_normal_<Shape, Mesh> ||
             (complex_shape<Shape, Mesh> &&
@@ -248,6 +211,8 @@ template<shape Shape, mesh Mesh>
     return glm::normalize(vol_normal);
   }
 }
+
+// -----------------------------------------------------------------------------
 
 /// @brief Segmental shape.
 /// @verbatim
@@ -309,7 +274,9 @@ public:
 
 }; // class Seg
 
-/// Triangular shape.
+// -----------------------------------------------------------------------------
+
+/// @brief Triangular shape.
 /// @verbatim
 ///
 ///           n3
@@ -385,6 +352,8 @@ public:
 
 }; // class Triangle
 
+// -----------------------------------------------------------------------------
+
 /// @brief Quadrangular shape.
 /// @verbatim
 ///
@@ -436,6 +405,8 @@ public:
   }
 
 }; // class Quadrangle
+
+// -----------------------------------------------------------------------------
 
 /// @brief Triangle strip shape.
 /// @verbatim
@@ -496,6 +467,8 @@ public:
   }
 
 }; // class TriangleStrip
+
+// -----------------------------------------------------------------------------
 
 /// @brief Arbitrary polygon shape.
 /// @verbatim
@@ -561,6 +534,8 @@ public:
 
 }; // class Polygon
 
+// -----------------------------------------------------------------------------
+
 /// @brief Tetrahedral shape.
 /// @verbatim
 ///                 f4
@@ -621,28 +596,26 @@ public:
   }
 
   /// @brief Tetrahedron volume.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
     return glm::abs(glm::dot(v2 - v1, glm::cross(v3 - v1, v4 - v1))) / 6.0;
   }
 
   /// @brief Tetrahedron barycenter.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
-    // clang-format on
     const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
     const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
     return (v1 + v2 + v3 + v4) / 4.0;
   }
 
 }; // class Tetrahedron
+
+// -----------------------------------------------------------------------------
 
 /// @brief Pyramidal shape.
 /// @verbatim
@@ -706,16 +679,16 @@ public:
   }
 
   /// @brief Pyramid pieces.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
-    // clang-format on
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n4, n1, n5}};
   }
 
 }; // class Pyramid
+
+// -----------------------------------------------------------------------------
 
 /// @brief Pentahedral shape (triangular prism).
 /// @verbatim
@@ -784,17 +757,17 @@ public:
   }
 
   /// @brief Pentahedron pieces.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
-    // clang-format on
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n1, n4, n5},
                       Tetrahedron{n4, n6, n3, n5}};
   }
 
 }; // class Pentahedron
+
+// -----------------------------------------------------------------------------
 
 /// @brief Hexahedral shape.
 /// @verbatim
@@ -863,11 +836,9 @@ public:
   }
 
   /// @brief Hexahedron pieces.
-  // clang-format off
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
   [[nodiscard]] constexpr auto pieces(const Mesh& mesh) const noexcept {
-    // clang-format on
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n4, n2, n5}, Tetrahedron{n4, n3, n2, n7},
                       Tetrahedron{n5, n6, n7, n2}, Tetrahedron{n5, n7, n8, n4},

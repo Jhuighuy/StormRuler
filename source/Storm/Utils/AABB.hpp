@@ -22,34 +22,46 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Mat.hpp>
-
-#include <Storm/Utils/Meta.hpp>
-
-#include <Storm/Mallard/Fwd.hpp>
-
 namespace Storm {
 
-/// @brief Mesh field.
-template<mesh Mesh, index Index, class Value, size_t NumVars>
-class Field;
-
-template<mesh Mesh, size_t I, class Value, size_t NumVars>
-class Field<Mesh, EntityIndex<I>, Value, NumVars> {
+/// @brief Axis-aligned bounding box (AABB).
+template<class Vec>
+class AABB {
 private:
 
-  const Mesh* p_mesh_;
-  IndexedVector<EntityIndex<I>,
-                std::conditional_t<NumVars == 1, Value, Vec<Value, NumVars>>>
-      data_;
+  Vec min_{}, max_{};
 
 public:
 
-  /// @brief Field shape.
-  [[nodiscard]] constexpr auto shape() const noexcept {
-    return MatrixShape{};
+  /// @brief Construct an AABB.
+  constexpr AABB() = default;
+
+  /// @brief Construct an AABB with a vector @p vec.
+  constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
+
+  /// @brief AABB min vector.
+  [[nodiscard]] constexpr const Vec& min() const noexcept {
+    return min_;
+  }
+  /// @brief AABB max vector.
+  [[nodiscard]] constexpr const Vec& max() const noexcept {
+    return max_;
   }
 
-}; // class Field
+  /// @brief AABB center.
+  [[nodiscard]] constexpr Vec center() const noexcept {
+    return 0.5 * (max_ + min_);
+  }
+  /// @brief AABB extents.
+  [[nodiscard]] constexpr Vec extents() const noexcept {
+    return max_ - min_;
+  }
+
+  /// @brief Extend the AABB.
+  void extend(const Vec& vec) noexcept {
+    min_ = glm::min(min_, vec), max_ = glm::max(max_, vec);
+  }
+
+}; // class AABB
 
 } // namespace Storm

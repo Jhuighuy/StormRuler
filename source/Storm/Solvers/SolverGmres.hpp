@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-/// IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -31,39 +31,38 @@
 
 namespace Storm {
 
-namespace detail_ {
-  template<legacy_vector_like Vector, bool Flexible, bool Loose = false>
-  class BaseGmresSolver_ : public InnerOuterIterativeSolver<Vector> {
-  private:
+/// @brief Parmetrized GMRES solver.
+template<legacy_vector_like Vector, bool Flexible, bool Loose = false>
+class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
+private:
 
-    DenseVector<real_t> beta_, cs_, sn_;
-    DenseMatrix<real_t> H_;
-    std::vector<Vector> q_vecs_;
-    std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
-        z_vecs_;
+  DenseVector<real_t> beta_, cs_, sn_;
+  DenseMatrix<real_t> H_;
+  std::vector<Vector> q_vecs_;
+  std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
+      z_vecs_;
 
-    real_t outer_init(const Vector& x_vec, const Vector& b_vec,
-                      const Operator<Vector>& lin_op,
-                      const Preconditioner<Vector>* pre_op) override;
-
-    void inner_init(const Vector& x_vec, const Vector& b_vec,
+  real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
                     const Preconditioner<Vector>* pre_op) override;
 
-    real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
-                         const Operator<Vector>& lin_op,
-                         const Preconditioner<Vector>* pre_op) override;
+  void inner_init(const Vector& x_vec, const Vector& b_vec,
+                  const Operator<Vector>& lin_op,
+                  const Preconditioner<Vector>* pre_op) override;
 
-    void inner_finalize(Vector& x_vec, const Vector& b_vec,
-                        const Operator<Vector>& lin_op,
-                        const Preconditioner<Vector>* pre_op) override;
+  real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
+                       const Operator<Vector>& lin_op,
+                       const Preconditioner<Vector>* pre_op) override;
 
-  protected:
+  void inner_finalize(Vector& x_vec, const Vector& b_vec,
+                      const Operator<Vector>& lin_op,
+                      const Preconditioner<Vector>* pre_op) override;
 
-    BaseGmresSolver_() = default;
+protected:
 
-  }; // class BaseGmresSolver_
-} // namespace detail_
+  BaseGmresSolver() = default;
+
+}; // class BaseGmresSolver
 
 /// @brief The GMRES (Generalized Minimal Residual) linear operator equation
 /// solver.
@@ -88,7 +87,7 @@ namespace detail_ {
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class GmresSolver final : public detail_::BaseGmresSolver_<Vector, false> {};
+class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 
 /// @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
 /// equation solver.
@@ -114,10 +113,12 @@ class GmresSolver final : public detail_::BaseGmresSolver_<Vector, false> {};
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class FgmresSolver final : public detail_::BaseGmresSolver_<Vector, true> {};
+class FgmresSolver final : public BaseGmresSolver<Vector, true> {};
+
+// -----------------------------------------------------------------------------
 
 template<legacy_vector_like Vector, bool Flexible, bool Loose>
-real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
+real_t BaseGmresSolver<Vector, Flexible, Loose>::outer_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {
@@ -163,10 +164,10 @@ real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::outer_init(
 
   return beta_(0);
 
-} // BaseGmresSolver_::outer_init
+} // BaseGmresSolver::outer_init
 
 template<legacy_vector_like Vector, bool Flexible, bool Loose>
-void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
+void BaseGmresSolver<Vector, Flexible, Loose>::inner_init(
     const Vector& x_vec, const Vector& b_vec,                             //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {
@@ -192,10 +193,10 @@ void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_init(
   beta_(0) = norm_2(q_vecs_[0]);
   q_vecs_[0] /= beta_(0);
 
-} // BaseGmresSolver_::inner_init
+} // BaseGmresSolver::inner_init
 
 template<legacy_vector_like Vector, bool Flexible, bool Loose>
-real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
+real_t detail_::BaseGmresSolver<Vector, Flexible, Loose>::inner_iterate(
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {
@@ -270,10 +271,10 @@ real_t detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_iterate(
 
   return std::abs(beta_(k + 1));
 
-} // BaseGmresSolver_::inner_iterate
+} // BaseGmresSolver::inner_iterate
 
 template<legacy_vector_like Vector, bool Flexible, bool Loose>
-void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
+void BaseGmresSolver<Vector, Flexible, Loose>::inner_finalize(
     Vector& x_vec, const Vector& b_vec,                                   //
     const Operator<Vector>& lin_op, const Preconditioner<Vector>* pre_op) //
 {
@@ -330,6 +331,6 @@ void detail_::BaseGmresSolver_<Vector, Flexible, Loose>::inner_finalize(
     x_vec += z_vecs_[0];
   }
 
-} // BaseGmresSolver_::inner_finalize
+} // BaseGmresSolver::inner_finalize
 
 } // namespace Storm

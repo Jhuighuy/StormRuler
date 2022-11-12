@@ -1,22 +1,22 @@
-/// Copyright (C) 2022 Oleg Butakov
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to
-/// deal in the Software without restriction, including without limitation the
-/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-/// sell copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in
-/// all copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-/// IN THE SOFTWARE.
+// Copyright © 2020 - 2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+// SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
@@ -32,28 +32,27 @@
 
 namespace Storm {
 
-namespace detail_ {
-  template<legacy_vector_like Vector, bool L1>
-  class BaseTfqmrSolver_ : public IterativeSolver<Vector> {
-  private:
+/// @brief Parametrized TFQMR solver.
+template<legacy_vector_like Vector, bool L1>
+class BaseTfqmrSolver : public IterativeSolver<Vector> {
+private:
 
-    real_t rho_, tau_;
-    Vector d_vec_, r_tilde_vec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
+  real_t rho_, tau_;
+  Vector d_vec_, r_tilde_vec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
 
-    real_t init(const Vector& x_vec, const Vector& b_vec,
-                const Operator<Vector>& lin_op,
-                const Preconditioner<Vector>* pre_op) override;
+  real_t init(const Vector& x_vec, const Vector& b_vec,
+              const Operator<Vector>& lin_op,
+              const Preconditioner<Vector>* pre_op) override;
 
-    real_t iterate(Vector& x_vec, const Vector& b_vec,
-                   const Operator<Vector>& lin_op,
-                   const Preconditioner<Vector>* pre_op) override;
+  real_t iterate(Vector& x_vec, const Vector& b_vec,
+                 const Operator<Vector>& lin_op,
+                 const Preconditioner<Vector>* pre_op) override;
 
-  protected:
+protected:
 
-    BaseTfqmrSolver_() = default;
+  BaseTfqmrSolver() = default;
 
-  }; // class BaseTfqmrSolver_
-} // namespace detail_
+}; // class BaseTfqmrSolver
 
 /// @brief The TFQMR (Transpose-Free Quasi-Minimal Residual) linear operator
 /// equation solver.
@@ -79,7 +78,7 @@ namespace detail_ {
 ///      Systems.” (1994).
 /// @endverbatim
 template<legacy_vector_like Vector>
-class TfqmrSolver final : public detail_::BaseTfqmrSolver_<Vector, false> {};
+class TfqmrSolver final : public BaseTfqmrSolver<Vector, false> {};
 
 /// @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
 /// operator equation solver.
@@ -99,10 +98,12 @@ class TfqmrSolver final : public detail_::BaseTfqmrSolver_<Vector, false> {};
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class Tfqmr1Solver final : public detail_::BaseTfqmrSolver_<Vector, true> {};
+class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true> {};
+
+// -----------------------------------------------------------------------------
 
 template<legacy_vector_like Vector, bool L1>
-real_t detail_::BaseTfqmrSolver_<Vector, L1>::init(
+real_t BaseTfqmrSolver<Vector, L1>::init( //
     const Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {
@@ -149,10 +150,10 @@ real_t detail_::BaseTfqmrSolver_<Vector, L1>::init(
 
   return tau_;
 
-} // BaseTfqmrSolver_::init
+} // BaseTfqmrSolver::init
 
 template<legacy_vector_like Vector, bool L1>
-real_t detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
+real_t BaseTfqmrSolver<Vector, L1>::iterate( //
     Vector& x_vec, const Vector& b_vec, const Operator<Vector>& lin_op,
     const Preconditioner<Vector>* pre_op) //
 {
@@ -284,6 +285,6 @@ real_t detail_::BaseTfqmrSolver_<Vector, L1>::iterate(
 
   return tauTilde;
 
-} // BaseTfqmrSolver_::iterate
+} // BaseTfqmrSolver::iterate
 
 } // namespace Storm

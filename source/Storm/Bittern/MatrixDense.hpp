@@ -27,7 +27,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Bittern/Matrix.hpp>
 
 #include <array>
 #include <initializer_list>

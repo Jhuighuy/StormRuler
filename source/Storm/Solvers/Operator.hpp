@@ -28,7 +28,6 @@
 #include <Storm/Base.hpp>
 
 #include <Storm/Bittern/Matrix.hpp>
-#include <Storm/Bittern/MatrixView.hpp>
 
 #include <cmath>
 #include <functional>

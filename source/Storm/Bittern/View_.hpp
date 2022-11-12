@@ -221,11 +221,11 @@ using forward_as_matrix_view_t =
 
 } // namespace Storm
 
-#include "MatrixIo.hpp"
+// -----------------------------------------------------------------------------
 
-#include <Storm/Bittern/MatrixViewMap_.hpp>
-#include <Storm/Bittern/MatrixViewProduct_.hpp>
-#include <Storm/Bittern/MatrixViewTranspose_.hpp>
+#include <Storm/Bittern/ViewMake_.hpp>
+#include <Storm/Bittern/ViewMap_.hpp>
+#include <Storm/Bittern/ViewProduct_.hpp>
+#include <Storm/Bittern/ViewTranspose_.hpp>
 
-#include <Storm/Bittern/MatrixViewMaking.inl>
 #include <Storm/Bittern/MatrixViewSlicing.inl>

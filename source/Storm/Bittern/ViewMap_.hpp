@@ -18,6 +18,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+// Automatically included with `Matrix.hpp`.
 #pragma once
 
 #include <Storm/Base.hpp>
@@ -343,7 +344,6 @@ MAKE_UNARY_MATRIX_FUNC_(sign)
 MAKE_BINARY_MATRIX_FUNC_(min)
 /// @brief Element-wise maximum of the matrices.
 MAKE_BINARY_MATRIX_FUNC_(max)
-
 
 MAKE_BINARY_MATRIX_FUNC_(pow)
 /// @brief Element-wise square root.

@@ -18,6 +18,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+// Automatically included with `Matrix.hpp`.
 #pragma once
 
 #include <Storm/Base.hpp>
@@ -36,8 +37,8 @@ namespace Storm {
 
 /// @brief Matrix transpose view.
 template<matrix_view Matrix>
-class MatrixTransposeView final :
-    public MatrixViewInterface<MatrixTransposeView<Matrix>> {
+class TransposeMatrixView final :
+    public MatrixViewInterface<TransposeMatrixView<Matrix>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -45,7 +46,7 @@ private:
 public:
 
   /// @brief Construct a matrix transpose view.
-  constexpr explicit MatrixTransposeView(Matrix mat) : mat_{std::move(mat)} {}
+  constexpr explicit TransposeMatrixView(Matrix mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
   [[nodiscard]] constexpr auto shape() const noexcept {
@@ -64,16 +65,16 @@ public:
   }
   /// @}
 
-}; // MatrixTransposeView
+}; // TransposeMatrixView
 
 template<class Matrix>
-MatrixTransposeView(Matrix&&)
-    -> MatrixTransposeView<forward_as_matrix_view_t<Matrix>>;
+TransposeMatrixView(Matrix&&)
+    -> TransposeMatrixView<forward_as_matrix_view_t<Matrix>>;
 
 /// @brief Transpose the matrix @p mat.
 template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto transpose(Matrix&& mat) {
-  return MatrixTransposeView(std::forward<Matrix>(mat));
+  return TransposeMatrixView(std::forward<Matrix>(mat));
 }
 
 } // namespace Storm

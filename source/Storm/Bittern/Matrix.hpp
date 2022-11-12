@@ -472,4 +472,5 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
 
 } // namespace Storm
 
-#include <Storm/Bittern/MatrixView_.hpp>
+#include "MatrixIo.hpp"
+#include <Storm/Bittern/View_.hpp>

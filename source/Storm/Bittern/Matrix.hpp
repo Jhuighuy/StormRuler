@@ -132,8 +132,7 @@ template<matrix Matrix>
 struct matrix_inner_element {
   using type = matrix_element_t<Matrix>;
 };
-template<matrix Matrix>
-  requires block_matrix<Matrix>
+template<block_matrix Matrix>
 struct matrix_inner_element<Matrix> {
   using type = typename matrix_inner_element<matrix_element_t<Matrix>>::type;
 };
@@ -472,5 +471,7 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
 
 } // namespace Storm
 
+// -----------------------------------------------------------------------------
+
 #include "MatrixIo.hpp"
-#include <Storm/Bittern/View_.hpp>
+#include <Storm/Bittern/MatrixView_.hpp>

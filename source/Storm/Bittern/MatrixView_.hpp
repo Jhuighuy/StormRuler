@@ -223,9 +223,9 @@ using forward_as_matrix_view_t =
 
 // -----------------------------------------------------------------------------
 
-#include <Storm/Bittern/ViewMake_.hpp>
-#include <Storm/Bittern/ViewMap_.hpp>
-#include <Storm/Bittern/ViewProduct_.hpp>
-#include <Storm/Bittern/ViewTranspose_.hpp>
+#include <Storm/Bittern/MatrixViewConj_.hpp>
+#include <Storm/Bittern/MatrixViewMake_.hpp>
+#include <Storm/Bittern/MatrixViewMap_.hpp>
+#include <Storm/Bittern/MatrixViewProduct_.hpp>
 
 #include <Storm/Bittern/MatrixViewSlicing.inl>

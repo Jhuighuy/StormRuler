@@ -57,10 +57,14 @@ public:
   /// @{
   [[nodiscard]] constexpr decltype(auto) //
   operator()(size_t row_index, size_t col_index) noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return mat_(col_index, row_index);
   }
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return mat_(col_index, row_index);
   }
   /// @}

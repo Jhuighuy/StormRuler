@@ -163,4 +163,10 @@ TEST(BitternTestSuite, HyperbolicMatrixExpressions) {
   EXPECT_TRUE(all(approx_eq(atanh(tanh_mat), mat, EPS)));
 }
 
+TEST(BitternTestSuite, CrossProductExpressions) {
+  Vec3D<real_t> vec1{1.0, 0.0, 0.0}, vec2{0.0, 1.0, 0.0}, vec3{0.0, 0.0, 1.0};
+
+  EXPECT_TRUE(all(cross_product(vec1, vec2) == vec3));
+}
+
 } // namespace Storm

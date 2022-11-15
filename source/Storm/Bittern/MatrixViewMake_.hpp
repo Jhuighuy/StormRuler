@@ -32,20 +32,21 @@
 namespace Storm {
 
 /// @brief Matrix making view.
-template<std::copy_constructible Func>
-  requires std::is_object_v<Func> &&
+template<matrix_shape Shape, std::copy_constructible Func>
+  requires std::is_object_v<Shape> && std::is_object_v<Func> &&
            std::regular_invocable<Func, size_t, size_t>
-class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
+class MakeMatrixView final :
+    public MatrixViewInterface<MakeMatrixView<Shape, Func>> {
 private:
 
-  MatrixShape<> shape_;
+  STORM_NO_UNIQUE_ADDRESS_ Shape shape_;
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
 
 public:
 
   /// @brief Construct a making view.
-  constexpr MakeMatrixView(MatrixShape<> shape, Func func)
-      : shape_{std::move(shape)}, func_{std::move(func)} {}
+  constexpr MakeMatrixView(Shape shape, Func func)
+      : shape_{shape}, func_{std::move(func)} {}
 
   /// @copydoc MatrixViewInterface::shape
   [[nodiscard]] constexpr auto shape() const noexcept {
@@ -55,7 +56,7 @@ public:
   /// @copydoc MatrixViewInterface::operator()
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(row_index < shape_.num_rows && col_index < shape_.num_cols,
+    STORM_ASSERT_(shape_.in_range(row_index, col_index),
                   "Indices are out of range.");
     return func_(row_index, col_index);
   }
@@ -66,9 +67,9 @@ public:
 
 /// @brief Make a constant matrix of @p shape.
 /// @param value Matrix element value.
-template<std::copyable Element>
+template<matrix_shape Shape, std::copyable Element>
 [[nodiscard]] constexpr auto //
-make_constant_matrix(MatrixShape<> shape, Element value) {
+make_constant_matrix(Shape shape, Element value) {
   return MakeMatrixView( //
       shape,
       [value = std::move(value)]( //
@@ -81,9 +82,9 @@ make_constant_matrix(MatrixShape<> shape, Element value) {
 /// @brief Make a diagonal matrix of @p shape.
 /// @param diagonal Matrix diagonal element value.
 /// @param off_diagonal Matrix off-diagonal element value.
-template<std::copyable Element>
+template<matrix_shape Shape, std::copyable Element>
 [[nodiscard]] constexpr auto
-make_diagonal_matrix(MatrixShape<> shape, //
+make_diagonal_matrix(Shape shape, //
                      Element diagonal, Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,

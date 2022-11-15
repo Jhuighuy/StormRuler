@@ -140,10 +140,14 @@ public:
   /// @{
   [[nodiscard]] constexpr decltype(auto) //
   operator()(size_t row_index, size_t col_index) noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return (*p_mat_)(row_index, col_index);
   }
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return std::as_const(*p_mat_)(row_index, col_index);
   }
   /// @}
@@ -162,7 +166,7 @@ class MatrixOwningView final :
     public MatrixViewInterface<MatrixOwningView<Matrix>> {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_{};
+  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
 
 public:
 
@@ -178,10 +182,14 @@ public:
   /// @{
   [[nodiscard]] constexpr decltype(auto) //
   operator()(size_t row_index, size_t col_index) noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return mat_(row_index, col_index);
   }
   [[nodiscard]] constexpr decltype(auto)
   operator()(size_t row_index, size_t col_index) const noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
+                  "Indices are out of range!");
     return mat_(row_index, col_index);
   }
   /// @}

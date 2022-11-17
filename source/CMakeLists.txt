@@ -21,8 +21,9 @@
 # -----------------------------------------------------------------------------
 
 # Core header-only library.
-file(GLOB_RECURSE CXX_HEADERS "Storm/*.hpp" "Storm/*.inl")
-add_library(StormRuler INTERFACE ${CXX_HEADERS})
+file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
+set(StormRuler_CXX_SOURCES ${StormRuler_CXX_SOURCES} PARENT_SCOPE)
+add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
 
 # Link with the base target.
 target_link_libraries(StormRuler INTERFACE StormRuler_BASE)

@@ -23,8 +23,6 @@
 #   Format the code on build.
 # • clang-tidy integration:
 #   Impossible now, since clang-tidy doesn't support C++23.
-# • Doxygen integration:
-#   Setup Doxygen for C++23, and decide when to relaunch the generator.
 # • User friendly compilation script:
 #   It is inconvenient to write `CXX=.. cmake . -DCMAKE_BUILD_TYPE=..`
 #   every time.
@@ -119,6 +117,9 @@ target_compile_options(StormRuler_BASE INTERFACE
 
 # -----------------------------------------------------------------------------
 
+# Add the CMake modules.
+list(APPEND CMAKE_MODULE_PATH "./cmake")
+
 # Find Git and update submodules.
 find_package(Git)
 if(GIT_FOUND)
@@ -131,9 +132,6 @@ if(GIT_FOUND)
                         " failed with ${GIT_SUBMODULE_RESULT}.")
   endif()
 endif()
-
-# Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH "./cmake")
 
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
@@ -290,7 +288,7 @@ endif()
 
 # -----------------------------------------------------------------------------
 
-# Add the main library.
+# Add the core library.
 message(STATUS "Adding StormRuler core library..")
 add_subdirectory("./source")
 

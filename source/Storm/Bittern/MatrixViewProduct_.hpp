@@ -104,14 +104,14 @@ public:
   /// @brief Construct a matrix product view.
   constexpr explicit CrossProductView(Matrix1 mat1, Matrix2 mat2)
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
-    STORM_ASSERT_((mat1_.shape() == FixedMatrixShape<3, 1>{} &&
-                   mat2_.shape() == FixedMatrixShape<3, 1>{}),
+    STORM_ASSERT_((mat1_.shape() == MatrixShape{3, 1} &&
+                   mat2_.shape() == MatrixShape{3, 1}),
                   "Matrices of shape 3x1 are expected!");
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
-    return FixedMatrixShape<3, 1>{};
+  [[nodiscard]] constexpr static auto shape() noexcept {
+    return MatrixShape{3, 1};
   }
 
   /// @copydoc MatrixViewInterface::operator()

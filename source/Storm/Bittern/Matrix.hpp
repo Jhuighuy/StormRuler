@@ -33,95 +33,41 @@
 
 namespace Storm {
 
-/// @brief Fixed matrix extent.
-template<size_t N>
-  requires (N != 0)
-using fixed_matrix_extent_t = std::integral_constant<size_t, N>;
-
-template<class>
-inline constexpr bool is_fixed_matrix_extent_v = false;
-template<size_t N>
-  requires (N != 0)
-inline constexpr bool is_fixed_matrix_extent_v<fixed_matrix_extent_t<N>> = true;
-
-/// @brief Fixed matrix extent concept.
-template<class FixedExtent>
-concept fixed_matrix_extent = is_fixed_matrix_extent_v<FixedExtent>;
-
-/// @brief Dynamic matrix extent.
-using dynamic_matrix_extent_t = size_t;
-
-/// @brief Dynamic matrix extent concept.
-template<class DynamicExtent>
-concept dynamic_matrix_extent = std::same_as<DynamicExtent, //
-                                             dynamic_matrix_extent_t>;
-
-/// @brief Fixed or dynamic matrix extent.
-template<class Extent>
-concept matrix_extent = fixed_matrix_extent<Extent> || //
-                        dynamic_matrix_extent<Extent>;
-
 /// @brief Matrix shape: a pair of the row and column extents.
-template<matrix_extent RowsExtent, matrix_extent ColsExtent>
 class MatrixShape final {
+private:
+
+  size_t num_rows_, num_cols_;
+
 public:
 
+  /// @brief Construct the matrix shape.
+  constexpr MatrixShape(size_t num_rows, size_t num_cols) noexcept
+      : num_rows_{num_rows}, num_cols_{num_cols} {
+    STORM_ASSERT_(num_rows_ != 0 && num_cols_ != 0,
+                  "Matrix shape cannot be zero!");
+  }
+
   /// @brief Number of the matrix rows.
-  STORM_NO_UNIQUE_ADDRESS_ RowsExtent num_rows{};
+  [[nodiscard]] constexpr size_t num_rows() const noexcept {
+    return num_rows_;
+  }
 
   /// @brief Number of the matrix columns.
-  STORM_NO_UNIQUE_ADDRESS_ ColsExtent num_cols{};
+  [[nodiscard]] constexpr size_t num_cols() const noexcept {
+    return num_cols_;
+  }
+
+  /// @brief Comparison operator.
+  [[nodiscard]] constexpr auto operator<=>(const MatrixShape&) const = default;
 
   /// @brief Check if the @p row_index and @p col_index are in range.
   [[nodiscard]] constexpr bool in_range(size_t row_index,
                                         size_t col_index) const noexcept {
-    return row_index < num_rows && col_index < num_cols;
+    return row_index < num_rows_ && col_index < num_cols_;
   }
-
-  /// @brief Comparison operators.
-  /// @{
-  template<matrix_extent OtherRowsExtent, matrix_extent OtherColsExtent>
-  [[nodiscard]] friend constexpr bool
-  operator==(MatrixShape shape1,
-             MatrixShape<OtherRowsExtent, OtherColsExtent> shape2) noexcept {
-    return shape1.num_rows == shape2.num_rows &&
-           shape1.num_cols == shape2.num_cols;
-  }
-  template<matrix_extent OtherRowsExtent, matrix_extent OtherColsExtent>
-  [[nodiscard]] friend constexpr bool
-  operator!=(MatrixShape shape1,
-             MatrixShape<OtherRowsExtent, OtherColsExtent> shape2) noexcept {
-    return shape1.num_rows != shape2.num_rows ||
-           shape1.num_cols != shape2.num_cols;
-  }
-  /// @}
 
 }; // class MatrixShape
-
-template<fixed_matrix_extent RowsExtent, std::integral ColsExtent>
-MatrixShape(RowsExtent, ColsExtent) -> MatrixShape<RowsExtent, size_t>;
-template<std::integral RowsExtent, fixed_matrix_extent ColsExtent>
-MatrixShape(RowsExtent, ColsExtent) -> MatrixShape<size_t, ColsExtent>;
-template<std::integral RowsExtent, std::integral ColsExtent>
-MatrixShape(RowsExtent, ColsExtent) -> MatrixShape<size_t, size_t>;
-
-template<class>
-inline constexpr bool is_matrix_shape_v = false;
-template<class RowsExtent, class ColsExtent>
-inline constexpr bool is_matrix_shape_v<MatrixShape<RowsExtent, //
-                                                    ColsExtent>> = true;
-
-/// @brief Matrix shape concept.
-template<class MatrixShape>
-concept matrix_shape = is_matrix_shape_v<MatrixShape>;
-
-/// @brief Fixed matrix shape.
-template<size_t NumRows, size_t NumCols>
-  requires (NumRows != 0 && NumCols != 0)
-using FixedMatrixShape = MatrixShape<fixed_matrix_extent_t<NumRows>, //
-                                     fixed_matrix_extent_t<NumCols>>;
-
-// -----------------------------------------------------------------------------
 
 template<class Matrix>
 struct matrix_row_index {
@@ -155,7 +101,7 @@ using matrix_col_index_t = typename matrix_col_index<Matrix>::type;
 template<class Matrix>
 concept matrix = 
     requires(Matrix& mat) {
-      { mat.shape() } noexcept -> matrix_shape;
+      { mat.shape() } noexcept -> std::same_as<MatrixShape>;
       { mat(std::declval<matrix_row_index_t<Matrix>>(),
             std::declval<matrix_col_index_t<Matrix>>()) } noexcept;
     };
@@ -164,14 +110,16 @@ concept matrix =
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
 [[nodiscard]] constexpr size_t num_rows(Matrix&& mat) noexcept {
-  return mat.shape().num_rows;
+  return mat.shape().num_rows();
 }
 
 /// @brief Number of the matrix columns.
 template<matrix Matrix>
 [[nodiscard]] constexpr size_t num_cols(Matrix&& mat) noexcept {
-  return mat.shape().num_cols;
+  return mat.shape().num_cols();
 }
+
+// -----------------------------------------------------------------------------
 
 /// @brief Matrix element type, as is.
 template<matrix Matrix>

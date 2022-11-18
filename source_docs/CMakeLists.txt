@@ -30,8 +30,8 @@ endif()
 # Check if Doxygen is recent enough.
 set(DOXYGEN_MIN_REQUIRED_VERSION 1.9.5)
 if(DOXYGEN_VERSION VERSION_LESS DOXYGEN_MIN_REQUIRED_VERSION)
-  message(WARNING "| Outdated Doxygen ${DOXYGEN_VERSION} found! Minimum "
-                    "required version is ${DOXYGEN_MIN_REQUIRED_VERSION}.")
+  message(STATUS "| Outdated Doxygen ${DOXYGEN_VERSION} found! Minimum "
+                   "required version is ${DOXYGEN_MIN_REQUIRED_VERSION}.")
   message(STATUS "| Skipping documentation.")
   return()
 endif()

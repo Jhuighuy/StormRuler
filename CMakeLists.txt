@@ -30,18 +30,6 @@
 
 cmake_minimum_required(VERSION 3.20..3.26)
 
-# -----------------------------------------------------------------------------
-
-# Setup the project.
-project(StormRuler
-        VERSION 0.1
-        DESCRIPTION "A very high order CFD solver"
-        LANGUAGES CXX)
-
-# A container library that stores all the properties.
-add_library(StormRuler_BASE INTERFACE)
-
-# Print the banner.
 message(STATUS "\n" [=[
 -- ╔═══════════════════════════════════════════════════════════════════╗
 -- ║ ╔═══════════════════════════════════════════════════════════════╗ ║
@@ -54,6 +42,17 @@ message(STATUS "\n" [=[
 -- ║ ╚═══════════════════════════════════════════════════════════════╝ ║
 -- ╚═══════════════════════════════════════════════════════════════════╝
 --]=])
+
+# -----------------------------------------------------------------------------
+
+# Setup the project.
+project(StormRuler
+        VERSION 0.1
+        DESCRIPTION "A very high order CFD solver"
+        LANGUAGES CXX)
+
+# A container library that stores all the properties.
+add_library(StormRuler_BASE INTERFACE)
 
 # -----------------------------------------------------------------------------
 
@@ -70,10 +69,9 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-# Check build type is valid.
-if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR
-        CMAKE_BUILD_TYPE STREQUAL "Release"))
-  message(FATAL_ERROR "Invalid or unspecified build type!")
+# Check build type is specified.
+if(NOT CMAKE_BUILD_TYPE)
+  message(FATAL_ERROR "Build type is not specified!")
 endif()
 
 # Check C/C++ compiler.
@@ -94,6 +92,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
                                      -Wno-unused-function 
                                      -Wno-unused-parameter 
+                                     -Wno-comment 
                                      -Wno-mismatched-tags
                                      -Wno-gnu-zero-variadic-macro-arguments)
 endif()

@@ -48,63 +48,51 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override;
+              const Preconditioner<Vector>* pre_op) override {
+    r_vec_.assign(x_vec, false);
+    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+
+    // Initialize:
+    // ----------------------
+    // 𝒓 ← 𝒃 - 𝓐𝒙,
+    // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+    //   𝒛 ← 𝒓,
+    //   𝒓 ← 𝓟𝒛.
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // ----------------------
+    lin_op.Residual(r_vec_, b_vec, x_vec);
+    if (pre_op != nullptr) {
+      std::swap(z_vec_, r_vec_);
+      pre_op->mul(r_vec_, z_vec_);
+    }
+
+    return norm_2(r_vec_);
+  }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override;
+                 const Preconditioner<Vector>* pre_op) override {
+    const real_t& omega = relaxation_factor;
+
+    // Update the solution and the residual:
+    // ----------------------
+    // 𝒙 ← 𝒙 + 𝜔⋅𝒓,
+    // 𝒓 ← 𝒃 - 𝓐𝒙,
+    // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+    //   𝒛 ← 𝒓,
+    //   𝒓 ← 𝓟𝒛.
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // ----------------------
+    x_vec += omega * r_vec_;
+    lin_op.Residual(r_vec_, b_vec, x_vec);
+    if (pre_op != nullptr) {
+      std::swap(z_vec_, r_vec_);
+      pre_op->mul(r_vec_, z_vec_);
+    }
+
+    return norm_2(r_vec_);
+  }
 
 }; // class RichardsonSolver
-
-template<legacy_vector_like Vector>
-real_t RichardsonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
-                                      const Operator<Vector>& lin_op,
-                                      const Preconditioner<Vector>* pre_op) {
-  r_vec_.assign(x_vec, false);
-  if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
-
-  // Initialize:
-  // ----------------------
-  // 𝒓 ← 𝒃 - 𝓐𝒙,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝒓,
-  //   𝒓 ← 𝓟𝒛.
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  lin_op.Residual(r_vec_, b_vec, x_vec);
-  if (pre_op != nullptr) {
-    std::swap(z_vec_, r_vec_);
-    pre_op->mul(r_vec_, z_vec_);
-  }
-
-  return norm_2(r_vec_);
-
-} // RichardsonSolver::init
-
-template<legacy_vector_like Vector>
-real_t RichardsonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
-                                         const Operator<Vector>& lin_op,
-                                         const Preconditioner<Vector>* pre_op) {
-  const real_t& omega = relaxation_factor;
-
-  // Update the solution and the residual:
-  // ----------------------
-  // 𝒙 ← 𝒙 + 𝜔⋅𝒓,
-  // 𝒓 ← 𝒃 - 𝓐𝒙,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝒓,
-  //   𝒓 ← 𝓟𝒛.
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  x_vec += omega * r_vec_;
-  lin_op.Residual(r_vec_, b_vec, x_vec);
-  if (pre_op != nullptr) {
-    std::swap(z_vec_, r_vec_);
-    pre_op->mul(r_vec_, z_vec_);
-  }
-
-  return norm_2(r_vec_);
-
-} // RichardsonSolver::iterate
 
 } // namespace Storm

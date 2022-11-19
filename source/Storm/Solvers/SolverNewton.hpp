@@ -57,27 +57,17 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
-              const Preconditioner<Vector>* pre_op) override final;
+              const Preconditioner<Vector>* pre_op) override final {
+    STORM_TERMINATE_("Newton solver is not implemented yet!");
+  }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
-                 const Preconditioner<Vector>* pre_op) override final;
+                 const Preconditioner<Vector>* pre_op) override final {
+    STORM_TERMINATE_("Newton solver is not implemented yet!");
+  } // NewtonSolver::iterate
 
 }; // class NewtonSolver
-
-template<legacy_vector_like Vector>
-real_t NewtonSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
-                                  const Operator<Vector>& any_op,
-                                  const Preconditioner<Vector>* pre_op) {
-  STORM_TERMINATE_("Newton solver is not implemented yet!");
-} // NewtonSolver::init
-
-template<legacy_vector_like Vector>
-real_t NewtonSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
-                                     const Operator<Vector>& any_op,
-                                     const Preconditioner<Vector>* pre_op) {
-  STORM_TERMINATE_("Newton solver is not implemented yet!");
-} // NewtonSolver::iterate
 
 // -----------------------------------------------------------------------------
 
@@ -115,82 +105,70 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
-              const Preconditioner<Vector>* pre_op) override;
+              const Preconditioner<Vector>* pre_op) override {
+    s_vec_.assign(x_vec, false);
+    t_vec_.assign(x_vec, false);
+    r_vec_.assign(x_vec, false);
+    w_vec_.assign(x_vec, false);
+
+    // Initialize:
+    // ----------------------
+    // 𝒘 ← 𝓐(𝒙),
+    // 𝒓 ← 𝒃 - 𝒘.
+    // ----------------------
+    any_op.mul(w_vec_, x_vec);
+    r_vec_ <<= b_vec - w_vec_;
+
+    return norm_2(r_vec_);
+  }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
-                 const Preconditioner<Vector>* pre_op) override;
+                 const Preconditioner<Vector>* pre_op) override {
+    // Solve the Jacobian equation:
+    // ----------------------
+    // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
+    // 𝒕 ← 𝒓,
+    // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
+    // ----------------------
+    static const real_t sqrt_of_epsilon =
+        std::sqrt(std::numeric_limits<real_t>::epsilon());
+    const real_t mu = sqrt_of_epsilon * sqrt(1.0 + norm_2(x_vec));
+    t_vec_ <<= r_vec_;
+    {
+      auto solver = std::make_unique<BiCgStabSolver<Vector>>();
+      solver->absolute_error_tolerance = 1.0e-8;
+      solver->relative_error_tolerance = 1.0e-8;
+      auto op = make_operator<Vector>([&](Vector& z_vec, const Vector& y_vec) {
+        // Compute the Jacobian-vector product:
+        // ----------------------
+        // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
+        // 𝒔 ← 𝒙 + 𝛿⋅𝒚,
+        // 𝒛 ← 𝓐(𝒔),
+        // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
+        // ----------------------
+        const real_t delta = safe_divide(mu, norm_2(y_vec));
+        s_vec_ <<= x_vec + delta * y_vec;
+        any_op.mul(z_vec, s_vec_);
+        const real_t delta_inverse = safe_divide(1.0, delta);
+        z_vec <<= delta_inverse * (z_vec - w_vec_);
+      });
+      solver->solve(t_vec_, r_vec_, *op);
+    }
 
-}; // class JfnkSolver
+    // Update the solution and the residual:
+    // ----------------------
+    // 𝒙 ← 𝒙 + 𝒕,
+    // 𝒘 ← 𝓐(𝒙),
+    // 𝒓 ← 𝒃 - 𝒘.
+    // ----------------------
+    x_vec += t_vec_;
+    any_op.mul(w_vec_, x_vec);
+    r_vec_ <<= b_vec - w_vec_;
 
-template<legacy_vector_like Vector>
-real_t JfnkSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
-                                const Operator<Vector>& any_op,
-                                const Preconditioner<Vector>* pre_op) {
-  s_vec_.assign(x_vec, false);
-  t_vec_.assign(x_vec, false);
-  r_vec_.assign(x_vec, false);
-  w_vec_.assign(x_vec, false);
-
-  // Initialize:
-  // ----------------------
-  // 𝒘 ← 𝓐(𝒙),
-  // 𝒓 ← 𝒃 - 𝒘.
-  // ----------------------
-  any_op.mul(w_vec_, x_vec);
-  r_vec_ <<= b_vec - w_vec_;
-
-  return norm_2(r_vec_);
-
-} // JfnkSolver::init
-
-template<legacy_vector_like Vector>
-real_t JfnkSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
-                                   const Operator<Vector>& any_op,
-                                   const Preconditioner<Vector>* pre_op) {
-  // Solve the Jacobian equation:
-  // ----------------------
-  // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,
-  // 𝒕 ← 𝒓,
-  // 𝒕 ← 𝓙(𝒙)⁻¹𝒓.
-  // ----------------------
-  static const real_t sqrt_of_epsilon =
-      std::sqrt(std::numeric_limits<real_t>::epsilon());
-  const real_t mu = sqrt_of_epsilon * sqrt(1.0 + norm_2(x_vec));
-  t_vec_ <<= r_vec_;
-  {
-    auto solver = std::make_unique<BiCgStabSolver<Vector>>();
-    solver->absolute_error_tolerance = 1.0e-8;
-    solver->relative_error_tolerance = 1.0e-8;
-    auto op = make_operator<Vector>([&](Vector& z_vec, const Vector& y_vec) {
-      // Compute the Jacobian-vector product:
-      // ----------------------
-      // 𝛿 ← 𝜇⋅‖𝒚‖⁺,
-      // 𝒔 ← 𝒙 + 𝛿⋅𝒚,
-      // 𝒛 ← 𝓐(𝒔),
-      // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
-      // ----------------------
-      const real_t delta = safe_divide(mu, norm_2(y_vec));
-      s_vec_ <<= x_vec + delta * y_vec;
-      any_op.mul(z_vec, s_vec_);
-      const real_t delta_inverse = safe_divide(1.0, delta);
-      z_vec <<= delta_inverse * (z_vec - w_vec_);
-    });
-    solver->solve(t_vec_, r_vec_, *op);
+    return norm_2(r_vec_);
   }
 
-  // Update the solution and the residual:
-  // ----------------------
-  // 𝒙 ← 𝒙 + 𝒕,
-  // 𝒘 ← 𝓐(𝒙),
-  // 𝒓 ← 𝒃 - 𝒘.
-  // ----------------------
-  x_vec += t_vec_;
-  any_op.mul(w_vec_, x_vec);
-  r_vec_ <<= b_vec - w_vec_;
-
-  return norm_2(r_vec_);
-
-} // JfnkSolver::iterate
+}; // class JfnkSolver
 
 } // namespace Storm

@@ -52,90 +52,78 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override;
+              const Preconditioner<Vector>* pre_op) override {
+    p_vec_.assign(x_vec, false);
+    r_vec_.assign(x_vec, false);
+    z_vec_.assign(x_vec, false);
+
+    // Initialize:
+    // ----------------------
+    // 𝒓 ← 𝒃 - 𝓐𝒙.
+    // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+    //   𝒛 ← 𝓟𝒓,
+    //   𝒑 ← 𝒛,
+    //   𝛾 ← <𝒓⋅𝒛>,
+    // 𝗲𝗹𝘀𝗲:
+    //   𝒑 ← 𝒓,
+    //   𝛾 ← <𝒓⋅𝒓>.
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // ----------------------
+    lin_op.Residual(r_vec_, b_vec, x_vec);
+    if (pre_op != nullptr) {
+      pre_op->mul(z_vec_, r_vec_);
+      p_vec_ <<= z_vec_;
+      gamma_ = dot_product(r_vec_, z_vec_);
+    } else {
+      p_vec_ <<= r_vec_;
+      gamma_ = dot_product(r_vec_, r_vec_);
+    }
+
+    return (pre_op != nullptr) ? norm_2(r_vec_) : std::sqrt(gamma_);
+  }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override;
+                 const Preconditioner<Vector>* pre_op) override {
+    // Iterate:
+    // ----------------------
+    // 𝒛 ← 𝓐𝒑,
+    // 𝛼 ← 𝛾/<𝒑⋅𝒛>,
+    // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
+    // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
+    // ----------------------
+    lin_op.mul(z_vec_, p_vec_);
+    const real_t alpha = safe_divide(gamma_, dot_product(p_vec_, z_vec_));
+    x_vec += alpha * p_vec_;
+    r_vec_ -= alpha * z_vec_;
+
+    // ----------------------
+    // 𝛾̅ ← 𝛾,
+    // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
+    //   𝒛 ← 𝓟𝒓,
+    //   𝛾 ← <𝒓⋅𝒛>,
+    // 𝗲𝗹𝘀𝗲:
+    //   𝛾 ← <𝒓⋅𝒓>.
+    // 𝗲𝗻𝗱 𝗶𝗳
+    // ----------------------
+    const real_t gamma_bar = gamma_;
+    if (pre_op != nullptr) {
+      pre_op->mul(z_vec_, r_vec_);
+      gamma_ = dot_product(r_vec_, z_vec_);
+    } else {
+      gamma_ = dot_product(r_vec_, r_vec_);
+    }
+
+    // ----------------------
+    // 𝛽 ← 𝛾/𝛾̅,
+    // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
+    // ----------------------
+    const real_t beta = safe_divide(gamma_, gamma_bar);
+    p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
+
+    return (pre_op != nullptr) ? norm_2(r_vec_) : sqrt(gamma_);
+  }
 
 }; // class CgSolver
-
-template<legacy_vector_like Vector>
-real_t CgSolver<Vector>::init(const Vector& x_vec, const Vector& b_vec,
-                              const Operator<Vector>& lin_op,
-                              const Preconditioner<Vector>* pre_op) {
-  p_vec_.assign(x_vec, false);
-  r_vec_.assign(x_vec, false);
-  z_vec_.assign(x_vec, false);
-
-  // Initialize:
-  // ----------------------
-  // 𝒓 ← 𝒃 - 𝓐𝒙.
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝓟𝒓,
-  //   𝒑 ← 𝒛,
-  //   𝛾 ← <𝒓⋅𝒛>,
-  // 𝗲𝗹𝘀𝗲:
-  //   𝒑 ← 𝒓,
-  //   𝛾 ← <𝒓⋅𝒓>.
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  lin_op.Residual(r_vec_, b_vec, x_vec);
-  if (pre_op != nullptr) {
-    pre_op->mul(z_vec_, r_vec_);
-    p_vec_ <<= z_vec_;
-    gamma_ = dot_product(r_vec_, z_vec_);
-  } else {
-    p_vec_ <<= r_vec_;
-    gamma_ = dot_product(r_vec_, r_vec_);
-  }
-
-  return (pre_op != nullptr) ? norm_2(r_vec_) : std::sqrt(gamma_);
-
-} // CgSolver::init
-
-template<legacy_vector_like Vector>
-real_t CgSolver<Vector>::iterate(Vector& x_vec, const Vector& b_vec,
-                                 const Operator<Vector>& lin_op,
-                                 const Preconditioner<Vector>* pre_op) {
-  // Iterate:
-  // ----------------------
-  // 𝒛 ← 𝓐𝒑,
-  // 𝛼 ← 𝛾/<𝒑⋅𝒛>,
-  // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
-  // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
-  // ----------------------
-  lin_op.mul(z_vec_, p_vec_);
-  const real_t alpha = safe_divide(gamma_, dot_product(p_vec_, z_vec_));
-  x_vec += alpha * p_vec_;
-  r_vec_ -= alpha * z_vec_;
-
-  // ----------------------
-  // 𝛾̅ ← 𝛾,
-  // 𝗶𝗳 𝓟 ≠ 𝗻𝗼𝗻𝗲:
-  //   𝒛 ← 𝓟𝒓,
-  //   𝛾 ← <𝒓⋅𝒛>,
-  // 𝗲𝗹𝘀𝗲:
-  //   𝛾 ← <𝒓⋅𝒓>.
-  // 𝗲𝗻𝗱 𝗶𝗳
-  // ----------------------
-  const real_t gamma_bar = gamma_;
-  if (pre_op != nullptr) {
-    pre_op->mul(z_vec_, r_vec_);
-    gamma_ = dot_product(r_vec_, z_vec_);
-  } else {
-    gamma_ = dot_product(r_vec_, r_vec_);
-  }
-
-  // ----------------------
-  // 𝛽 ← 𝛾/𝛾̅,
-  // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
-  // ----------------------
-  const real_t beta = safe_divide(gamma_, gamma_bar);
-  p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
-
-  return (pre_op != nullptr) ? norm_2(r_vec_) : sqrt(gamma_);
-
-} // CgSolver::iterate
 
 } // namespace Storm

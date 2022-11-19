@@ -112,8 +112,8 @@ concept complex_shape =
     requires(Shape shape, const Mesh& mesh) {
       { shape.pieces(mesh) } -> std::ranges::forward_range;
     } &&
-    shape<std::ranges::range_value_t<decltype(std::declval<Shape>().pieces(
-        std::declval<Mesh>()))>>;
+    shape<std::ranges::range_value_t< //
+        decltype(std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
 
 /// @brief Piece type of a complex.
 template<class Shape, class Mesh>
@@ -125,16 +125,6 @@ using piece_t = std::ranges::range_value_t<decltype( //
 
 namespace detail_ {
   template<class Shape, class Mesh>
-  concept has_volume_ =
-      requires(Shape shape, const Mesh& mesh) { shape.volume(mesh); };
-  template<class Shape, class Mesh>
-  concept has_barycenter_ =
-      requires(Shape shape, const Mesh& mesh) { shape.barycenter(mesh); };
-  template<class Shape, class Mesh>
-  concept has_normal_ =
-      requires(Shape shape, const Mesh& mesh) { shape.normal(mesh); };
-
-  template<class Shape, class Mesh>
   concept can_volume_ =
       requires(Shape shape, const Mesh& mesh) { volume(shape, mesh); };
   template<class Shape, class Mesh>
@@ -145,71 +135,50 @@ namespace detail_ {
       requires(Shape shape, const Mesh& mesh) { normal(shape, mesh); };
 } // namespace detail_
 
-/// @brief Compute the @p shape "volume"
+/// @brief Compute the complex @p shape "volume"
 /// (length in 1D, area in 2D, volume in 3D).
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_volume_<Shape, Mesh> ||
-            (complex_shape<Shape, Mesh> &&
-             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>) )
+  requires (complex_shape<Shape, Mesh> &&
+            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>)
 [[nodiscard]] constexpr auto volume(const Shape& shape, const Mesh& mesh) {
-  if constexpr (detail_::has_volume_<Shape, Mesh>) {
-    return shape.volume(mesh);
-  } else if constexpr (complex_shape<Shape, Mesh> &&
-                       detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>) {
-    // Compute the complex volume.
-    const auto pieces = shape.pieces(mesh);
-    auto vol = volume(pieces.front(), mesh);
-    for (const auto& piece : pieces | std::views::drop(1)) {
-      vol += volume(piece, mesh);
-    }
-    return vol;
+  // Compute the complex volume.
+  const auto pieces = shape.pieces(mesh);
+  auto vol = volume(pieces.front(), mesh);
+  for (const auto& piece : pieces | std::views::drop(1)) {
+    vol += volume(piece, mesh);
   }
+  return vol;
 }
 
-/// @brief Compute the @p shape barycenter.
+/// @brief Compute the complex @p shape barycenter.
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_barycenter_<Shape, Mesh> ||
-            (complex_shape<Shape, Mesh> &&
-             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>) )
+  requires (complex_shape<Shape, Mesh> &&
+            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
+            detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>)
 [[nodiscard]] constexpr auto barycenter(const Shape& shape, const Mesh& mesh) {
-  if constexpr (detail_::has_barycenter_<Shape, Mesh>) {
-    return shape.barycenter(mesh);
-  } else if constexpr (complex_shape<Shape, Mesh> &&
-                       detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-                       detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>) {
-    // Compute the complex barycenter.
-    const auto pieces = shape.pieces(mesh);
-    auto vol = volume(pieces.front(), mesh);
-    auto vol_center = vol * barycenter(pieces.front(), mesh);
-    for (const auto& piece : pieces | std::views::drop(1)) {
-      const auto dv = volume(piece, mesh);
-      vol += dv, vol_center += dv * barycenter(piece, mesh);
-    }
-    return vol_center / vol;
+  // Compute the complex barycenter.
+  const auto pieces = shape.pieces(mesh);
+  auto vol = volume(pieces.front(), mesh);
+  auto vol_center = vol * barycenter(pieces.front(), mesh);
+  for (const auto& piece : pieces | std::views::drop(1)) {
+    const auto dv = volume(piece, mesh);
+    vol += dv, vol_center += dv * barycenter(piece, mesh);
   }
+  return vol_center / vol;
 }
 
-/// @brief Compute the @p shape normal.
+/// @brief Compute the complex @p shape normal.
 template<shape Shape, mesh Mesh>
-  requires (detail_::has_normal_<Shape, Mesh> ||
-            (complex_shape<Shape, Mesh> &&
-             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>) )
+  requires (complex_shape<Shape, Mesh> &&
+            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
+            detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>)
 [[nodiscard]] constexpr auto normal(const Shape& shape, const Mesh& mesh) {
-  if constexpr (detail_::has_normal_<Shape, Mesh>) {
-    return shape.normal(mesh);
-  } else if constexpr (complex_shape<Shape, Mesh> &&
-                       detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>) {
-    // Compute the complex barycenter.
-    const auto pieces = shape.pieces(mesh);
-    auto vol_normal =
-        volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
-    for (const auto& piece : pieces | std::views::drop(1)) {
-      vol_normal += volume(piece, mesh) * normal(piece, mesh);
-    }
-    return glm::normalize(vol_normal);
+  const auto pieces = shape.pieces(mesh);
+  auto vol_normal = volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
+  for (const auto& piece : pieces | std::views::drop(1)) {
+    vol_normal += volume(piece, mesh) * normal(piece, mesh);
   }
+  return glm::normalize(vol_normal);
 }
 
 // -----------------------------------------------------------------------------
@@ -229,14 +198,15 @@ template<shape Shape, mesh Mesh>
 class Seg final {
 public:
 
-  /// @brief Segment nodes.
-  NodeIndex n1, n2;
+  /// @brief Segment node.
+  /// @{
+  NodeIndex n1{}, n2{};
+  /// @}
 
   /// @brief Construct a segment.
-  /// @{
   constexpr Seg() = default;
+  /// @brief Construct a segment with nodes.
   constexpr Seg(NodeIndex i1, NodeIndex i2) noexcept : n1{i1}, n2{i2} {}
-  /// @}
 
   /// @brief Segment type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -248,31 +218,34 @@ public:
     return std::array{n1, n2};
   }
 
-  /// @brief Segment "volume" (length).
-  template<mesh Mesh>
-  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    return glm::length(v2 - v1);
-  }
-
-  /// @brief Segment barycenter.
-  template<mesh Mesh>
-  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    return (v1 + v2) / 2.0;
-  }
-
-  /// @brief Segment normal.
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> == 2)
-  [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const glm::dvec2 d = glm::normalize(v2 - v1);
-    /// @todo Is sign here correct?
-    return -glm::vec2(-d.y, d.x);
-  }
-
 }; // class Seg
+
+/// @brief Segment @p seg length ("volume").
+template<mesh Mesh>
+[[nodiscard]] constexpr real_t volume(const Seg& seg,
+                                      const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
+  return glm::length(v2 - v1);
+}
+
+/// @brief Segment @p seg barycenter.
+template<mesh Mesh>
+[[nodiscard]] constexpr auto barycenter(const Seg& seg,
+                                        const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
+  return (v1 + v2) / 2.0;
+}
+
+/// @brief Segment @p seg normal.
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> == 2)
+[[nodiscard]] constexpr auto normal(const Seg& seg, //
+                                    const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
+  const glm::dvec2 d = glm::normalize(v2 - v1);
+  /// @todo Is sign here correct?
+  return -glm::vec2(-d.y, d.x);
+}
 
 // -----------------------------------------------------------------------------
 
@@ -293,15 +266,16 @@ public:
 class Triangle final {
 public:
 
-  /// @brief Triangle nodes.
-  NodeIndex n1, n2, n3;
+  /// @brief Triangle node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{};
+  /// @}
 
   /// @brief Construct a triangle.
-  /// @{
   constexpr Triangle() = default;
+  /// @brief Construct a triangle with nodes.
   constexpr Triangle(NodeIndex i1, NodeIndex i2, NodeIndex i3) noexcept
       : n1{i1}, n2{i2}, n3{i3} {}
-  /// @}
 
   /// @brief Triangle type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -318,39 +292,42 @@ public:
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n1}};
   }
 
-  /// @brief Triangle "volume" (area).
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> >= 2)
-  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const auto v3{mesh.position(n3)};
-    if constexpr (mesh_dim_v<Mesh> == 2) {
-      const glm::dmat2 d{v2 - v1, v3 - v1};
-      return glm::abs(glm::determinant(d)) / 2.0;
-    } else {
-      return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
-    }
-  }
-
-  /// @brief Triangle barycenter.
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> >= 2)
-  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const auto v3{mesh.position(n3)};
-    return (v1 + v2 + v3) / 3.0;
-  }
-
-  /// @brief Triangle normal.
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> == 3)
-  [[nodiscard]] constexpr auto normal(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const auto v3{mesh.position(n3)};
-    return glm::normalize(glm::cross(v2 - v1, v3 - v1));
-  }
-
 }; // class Triangle
+
+/// @brief Triangle @p tri "volume" (area).
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> >= 2)
+[[nodiscard]] constexpr real_t volume(const Triangle& tri, //
+                                      const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
+  const auto v3{mesh.position(tri.n3)};
+  if constexpr (mesh_dim_v<Mesh> == 2) {
+    const glm::dmat2 d{v2 - v1, v3 - v1};
+    return glm::abs(glm::determinant(d)) / 2.0;
+  } else {
+    return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
+  }
+}
+
+/// @brief Triangle @p tri barycenter.
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> >= 2)
+[[nodiscard]] constexpr auto barycenter(const Triangle& tri,
+                                        const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
+  const auto v3{mesh.position(tri.n3)};
+  return (v1 + v2 + v3) / 3.0;
+}
+
+/// @brief Triangle @p tri normal.
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> == 3)
+[[nodiscard]] constexpr auto normal(const Triangle& tri,
+                                    const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
+  const auto v3{mesh.position(tri.n3)};
+  return glm::normalize(glm::cross(v2 - v1, v3 - v1));
+}
 
 // -----------------------------------------------------------------------------
 
@@ -369,16 +346,17 @@ public:
 class Quadrangle final {
 public:
 
-  /// @brief Quadrangle nodes.
-  NodeIndex n1, n2, n3, n4;
+  /// @brief Quadrangle node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{}, n4{};
+  /// @}
 
   /// @brief Construct a quadrangle.
-  /// @{
   constexpr Quadrangle() = default;
+  /// @brief Construct a quadrangle with nodes.
   constexpr Quadrangle(NodeIndex i1, NodeIndex i2, //
                        NodeIndex i3, NodeIndex i4) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
-  /// @}
 
   /// @brief Quadrangle type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -427,10 +405,11 @@ public:
   std::vector<NodeIndex> n{};
 
   /// @brief Construct a triangle strip.
-  /// @{
   constexpr TriangleStrip() = default;
-  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {}
-  /// @}
+  /// @brief Construct a triangle strip with nodes.
+  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {
+    STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
+  }
 
   /// @brief Triangle strip type.
   /// May fallback to triangle or quadrangle types.
@@ -494,10 +473,11 @@ public:
   std::vector<NodeIndex> n{};
 
   /// @brief Construct a polygon.
-  /// @{
   constexpr Polygon() = default;
-  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {}
-  /// @}
+  /// @brief Construct a polygon with nodes.
+  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {
+    STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
+  }
 
   /// @brief Polygon type.
   /// May fallback to triangle or quadrangle types.
@@ -562,16 +542,17 @@ public:
 class Tetrahedron final {
 public:
 
-  /// @brief Tetrahedron nodes.
-  NodeIndex n1, n2, n3, n4;
+  /// @brief Tetrahedron node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{}, n4{};
+  /// @}
 
   /// @brief Construct a tetrahedron.
-  /// @{
   constexpr Tetrahedron() = default;
+  /// @brief Construct a tetrahedron with nodes.
   constexpr Tetrahedron(NodeIndex i1, NodeIndex i2, //
                         NodeIndex i3, NodeIndex i4) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
-  /// @}
 
   /// @brief Tetrahedron type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -595,25 +576,27 @@ public:
                       Triangle{n2, n3, n4}, Triangle{n3, n1, n4}};
   }
 
-  /// @brief Tetrahedron volume.
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> >= 3)
-  [[nodiscard]] constexpr real_t volume(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
-    return glm::abs(glm::dot(v2 - v1, glm::cross(v3 - v1, v4 - v1))) / 6.0;
-  }
-
-  /// @brief Tetrahedron barycenter.
-  template<mesh Mesh>
-    requires (mesh_dim_v<Mesh> >= 3)
-  [[nodiscard]] constexpr auto barycenter(const Mesh& mesh) const noexcept {
-    const auto v1{mesh.position(n1)}, v2{mesh.position(n2)};
-    const auto v3{mesh.position(n3)}, v4{mesh.position(n4)};
-    return (v1 + v2 + v3 + v4) / 4.0;
-  }
-
 }; // class Tetrahedron
+
+/// @brief Tetrahedron @p tet volume.
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> >= 3)
+[[nodiscard]] constexpr real_t volume(const Tetrahedron& tet, //
+                                      const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
+  const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
+  return glm::abs(glm::dot(v2 - v1, glm::cross(v3 - v1, v4 - v1))) / 6.0;
+}
+
+/// @brief Tetrahedron @p tet barycenter.
+template<mesh Mesh>
+  requires (mesh_dim_v<Mesh> >= 3)
+[[nodiscard]] constexpr auto barycenter(const Tetrahedron& tet, //
+                                        const Mesh& mesh) noexcept {
+  const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
+  const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
+  return (v1 + v2 + v3 + v4) / 4.0;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -643,17 +626,17 @@ public:
 class Pyramid final {
 public:
 
-  /// @brief Pyramid nodes.
-  NodeIndex n1, n2, n3, n4, n5;
+  /// @brief Pyramid node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{}, n4{}, n5{};
+  /// @}
 
   /// @brief Construct a tetrahedron.
-  /// @{
   constexpr Pyramid() = default;
+  /// @brief Construct a tetrahedron with nodes.
   constexpr Pyramid(NodeIndex i1, NodeIndex i2, //
-                    NodeIndex i3, NodeIndex i4, //
-                    NodeIndex i5) noexcept
+                    NodeIndex i3, NodeIndex i4, NodeIndex i5) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5} {}
-  /// @}
 
   /// @brief Pyramid type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -720,17 +703,18 @@ public:
 class Pentahedron final {
 public:
 
-  /// @brief Pentahedron nodes.
-  NodeIndex n1, n2, n3, n4, n5, n6;
+  /// @brief Pentahedron node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{}, n4{}, n5{}, n6{};
+  /// @}
 
   /// @brief Construct a pentahedron.
-  /// @{
   constexpr Pentahedron() = default;
+  /// @brief Construct a pentahedron with nodes.
   constexpr Pentahedron(NodeIndex i1, NodeIndex i2, //
                         NodeIndex i3, NodeIndex i4, //
                         NodeIndex i5, NodeIndex i6) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6} {}
-  /// @}
 
   /// @brief Pentahedron type.
   [[nodiscard]] constexpr static auto type() noexcept {
@@ -798,18 +782,19 @@ public:
 class Hexahedron final {
 public:
 
-  /// @brief Hexahedron nodes.
-  NodeIndex n1, n2, n3, n4, n5, n6, n7, n8;
+  /// @brief Hexahedron node.
+  /// @{
+  NodeIndex n1{}, n2{}, n3{}, n4{}, n5{}, n6{}, n7{}, n8{};
+  /// @}
 
   /// @brief Construct a hexahedron.
-  /// @{
   constexpr Hexahedron() = default;
+  /// @brief Construct a hexahedron with nodes.
   constexpr Hexahedron(NodeIndex i1, NodeIndex i2, //
                        NodeIndex i3, NodeIndex i4, //
                        NodeIndex i5, NodeIndex i6, //
                        NodeIndex i7, NodeIndex i8) noexcept
       : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6}, n7{i7}, n8{i8} {}
-  /// @}
 
   /// @brief Hexahedron type.
   [[nodiscard]] constexpr static auto type() noexcept {

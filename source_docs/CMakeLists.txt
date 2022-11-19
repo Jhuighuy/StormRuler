@@ -38,15 +38,19 @@ endif()
 
 # -----------------------------------------------------------------------------
 
+# Configure the documentation extraction.
+set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
+set(DOXYGEN_DISTRIBUTE_GROUP_DOC      YES)
+set(DOXYGEN_SHOW_USED_FILES           NO )
+
+# -----------------------------------------------------------------------------
+
 # Configure the required documenation components.
 # (No alphabetical index, and a source browser with comments.)
 set(DOXYGEN_ALPHABETICAL_INDEX  NO )
 set(DOXYGEN_SOURCE_BROWSER      YES)
 set(DOXYGEN_STRIP_CODE_COMMENTS NO )
 set(DOXYGEN_TAB_SIZE            2  )
-
-set(DOXYGEN_DISTRIBUTE_GROUP_DOC YES)
-set(DOXYGEN_SHOW_USED_FILES      NO )
 
 # -----------------------------------------------------------------------------
 

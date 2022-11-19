@@ -105,6 +105,8 @@ template<size_t Index, shape Shape>
   }
 }
 
+// -----------------------------------------------------------------------------
+
 /// @brief Complex shape concept.
 template<class Shape, class Mesh>
 concept complex_shape =
@@ -120,8 +122,6 @@ template<class Shape, class Mesh>
   requires complex_shape<Shape, Mesh>
 using piece_t = std::ranges::range_value_t<decltype( //
     std::declval<Shape>().pieces(std::declval<Mesh>()))>;
-
-// -----------------------------------------------------------------------------
 
 namespace detail_ {
   template<class Shape, class Mesh>

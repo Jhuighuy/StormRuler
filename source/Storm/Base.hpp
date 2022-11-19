@@ -89,6 +89,11 @@
 #endif
 #include "ConfigDefault.hpp"
 
+// Is the code parsed by Doxygen?
+#ifndef STORM_DOXYGEN_
+#define STORM_DOXYGEN_ 0
+#endif
+
 // -----------------------------------------------------------------------------
 
 // Report a trace message.

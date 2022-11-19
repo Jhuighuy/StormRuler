@@ -42,9 +42,9 @@ namespace detail_ {
   };
 } // namespace detail_
 
-/// @brief Checks if and only if 'T' has exactly one public base class
-/// 'CrtpInterface<U>' for some type 'U', and T has no base classes of type
-/// 'CrtpInterface<V>' for any other type V.
+/// @brief Checks if and only if @c T has exactly one public base class
+/// @c CrtpInterface&lt;U&gt; for some type @c U, and @c T has no base classes
+/// of type @c CrtpInterface&lt;V&gt; for any other type @c V.
 template<class T, template<class Derived> class CrtpInterface>
 concept derived_from_crtp_interface =
     requires(T x) { //

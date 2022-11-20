@@ -284,6 +284,19 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
+// -----------------------------------------------------------------------------
+
+/// @brief Normalize the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+[[nodiscard]] constexpr auto normalize(Matrix&& mat) {
+  auto mat_view = forward_as_matrix_view(std::forward<Matrix>(mat));
+  const auto mat_norm = norm_2(mat_view);
+  return safe_divide(1.0, mat_norm) * std::move(mat_view);
+}
+
+// -----------------------------------------------------------------------------
+
 /// @brief Cast the @p mat elements to another type.
 /// @tparam To Type, the elements would be cased to.
 template<class To, viewable_matrix Matrix>

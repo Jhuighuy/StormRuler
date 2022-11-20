@@ -25,7 +25,7 @@
 namespace Storm {
 
 /// @brief Axis-aligned bounding box (AABB).
-template<class Vec>
+template<matrix Vec>
 class AABB {
 private:
 
@@ -59,7 +59,7 @@ public:
 
   /// @brief Extend the AABB.
   void extend(const Vec& vec) noexcept {
-    min_ = glm::min(min_, vec), max_ = glm::max(max_, vec);
+    min_ = Storm::min(min_, vec), max_ = Storm::max(max_, vec);
   }
 
 }; // class AABB

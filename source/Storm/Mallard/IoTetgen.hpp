@@ -78,8 +78,8 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       size_t node_index, node_label = 0;
       mesh_vec_t<Mesh> node_pos{};
       std::vector<real_t> node_attribs(num_node_attribs);
-      node_stream >> node_index >> node_pos.x >> node_pos.y;
-      // if constexpr (mesh3D) { node_stream >> node_pos.z; }
+      node_stream >> node_index >> node_pos(0) >> node_pos(1);
+      if constexpr (mesh3D) { node_stream >> node_pos(2); }
       for (real_t& node_attrib : node_attribs) {
         node_stream >> node_attrib;
       }

@@ -24,9 +24,8 @@
 
 #include <Storm/Utils/Crtp.hpp>
 #include <Storm/Utils/Index.hpp>
-#include <Storm/Utils/Meta.hpp>
 
-#include <glm/glm.hpp>
+#include <Storm/Bittern/Mat.hpp>
 
 #include <compare>
 #include <concepts>
@@ -47,6 +46,11 @@ template<class Mesh>
 concept mesh = enable_mesh_v<Mesh>;
 
 // -----------------------------------------------------------------------------
+
+struct LabelTag;
+
+/// @brief Label index type.
+using Label = Index<LabelTag>;
 
 template<size_t I>
 struct TopologicalIndexTag;
@@ -74,14 +78,14 @@ using CellIndex = typename Mesh::CellIndex;
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
 inline constexpr size_t mesh_dim_v = decltype( //
-    std::declval<Mesh>().position(std::declval<NodeIndex>()))::length();
+    std::declval<Mesh>().position(std::declval<NodeIndex>()))::size();
 
 /// @brief Mesh spatial vector type.
 template<mesh Mesh, class Real = real_t>
-using mesh_vec_t = glm::vec<mesh_dim_v<Mesh>, Real>;
+using mesh_vec_t = Vec<Real, mesh_dim_v<Mesh>>;
 
 /// @brief Mesh spatial matrix type.
 template<mesh Mesh, class Real = real_t>
-using mesh_mat_t = glm::mat<mesh_dim_v<Mesh>, mesh_dim_v<Mesh>, Real>;
+using mesh_mat_t = Mat<Real, mesh_dim_v<Mesh>, mesh_dim_v<Mesh>>;
 
 } // namespace Storm

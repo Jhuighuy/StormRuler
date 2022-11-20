@@ -96,6 +96,11 @@ public:
     }
   }
 
+  template<matrix Matrix>
+  constexpr Mat(Matrix&& other) noexcept {
+    (*this) = std::forward<Matrix>(other);
+  }
+
   /// @brief Assign the matrix.
   template<matrix Matrix>
   constexpr auto& operator=(Matrix&& other) noexcept {

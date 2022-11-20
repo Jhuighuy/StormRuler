@@ -31,6 +31,8 @@
 #include "GradientScheme.hpp"
 #include "SkunkFvBC.hpp"
 
+#include <map>
+
 namespace Storm::Feathers {
 
 /**

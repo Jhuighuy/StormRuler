@@ -24,8 +24,6 @@
 
 #include <Storm/Mallard/Fwd.hpp>
 
-#include <glm/glm.hpp>
-
 #include <array>
 #include <cstdint>
 #include <initializer_list>
@@ -155,7 +153,8 @@ template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>)
-[[nodiscard]] constexpr auto barycenter(const Shape& shape, const Mesh& mesh) {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
+                                                    const Mesh& mesh) {
   // Compute the complex barycenter.
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
@@ -172,13 +171,14 @@ template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>)
-[[nodiscard]] constexpr auto normal(const Shape& shape, const Mesh& mesh) {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Shape& shape,
+                                                const Mesh& mesh) {
   const auto pieces = shape.pieces(mesh);
   auto vol_normal = volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
   for (const auto& piece : pieces | std::views::drop(1)) {
     vol_normal += volume(piece, mesh) * normal(piece, mesh);
   }
-  return glm::normalize(vol_normal);
+  return normalize(vol_normal);
 }
 
 // -----------------------------------------------------------------------------
@@ -225,13 +225,13 @@ template<mesh Mesh>
 [[nodiscard]] constexpr real_t volume(const Seg& seg,
                                       const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
-  return glm::length(v2 - v1);
+  return length(v2 - v1);
 }
 
 /// @brief Segment @p seg barycenter.
 template<mesh Mesh>
-[[nodiscard]] constexpr auto barycenter(const Seg& seg,
-                                        const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg,
+                                                    const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return (v1 + v2) / 2.0;
 }
@@ -239,12 +239,13 @@ template<mesh Mesh>
 /// @brief Segment @p seg normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 2)
-[[nodiscard]] constexpr auto normal(const Seg& seg, //
-                                    const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Seg& seg,
+                                                const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
-  const glm::dvec2 d = glm::normalize(v2 - v1);
+  const auto d = normalize(v2 - v1);
   /// @todo Is sign here correct?
-  return -glm::vec2(-d.y, d.x);
+  /// @todo This looks incomplete:
+  return -mesh_vec_t<Mesh>{-d(1, 0), d(0, 0)};
 }
 
 // -----------------------------------------------------------------------------
@@ -302,18 +303,21 @@ template<mesh Mesh>
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   if constexpr (mesh_dim_v<Mesh> == 2) {
-    const glm::dmat2 d{v2 - v1, v3 - v1};
-    return glm::abs(glm::determinant(d)) / 2.0;
+    // const glm::dmat2 d{v2 - v1, v3 - v1};
+    // return glm::abs(glm::determinant(d)) / 2.0;
+    /// @todo This looks incomplete:
+    auto d0 = v2 - v1, d1 = v3 - v1;
+    return 0.5 * abs(d0(0, 0) * d1(1, 0) - d0(1, 0) * d1(0, 0));
   } else {
-    return glm::length(glm::cross(v2 - v1, v3 - v1)) / 2.0;
+    return length(cross(v2 - v1, v3 - v1)) / 2.0;
   }
 }
 
 /// @brief Triangle @p tri barycenter.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 2)
-[[nodiscard]] constexpr auto barycenter(const Triangle& tri,
-                                        const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Triangle& tri,
+                                                    const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   return (v1 + v2 + v3) / 3.0;
@@ -322,11 +326,11 @@ template<mesh Mesh>
 /// @brief Triangle @p tri normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 3)
-[[nodiscard]] constexpr auto normal(const Triangle& tri,
-                                    const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Triangle& tri,
+                                                const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
-  return glm::normalize(glm::cross(v2 - v1, v3 - v1));
+  return normalize(cross(v2 - v1, v3 - v1));
 }
 
 // -----------------------------------------------------------------------------
@@ -585,14 +589,14 @@ template<mesh Mesh>
                                       const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
   const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
-  return glm::abs(glm::dot(v2 - v1, glm::cross(v3 - v1, v4 - v1))) / 6.0;
+  return abs(dot_product(v2 - v1, cross_product(v3 - v1, v4 - v1))) / 6.0;
 }
 
 /// @brief Tetrahedron @p tet barycenter.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 3)
-[[nodiscard]] constexpr auto barycenter(const Tetrahedron& tet, //
-                                        const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Tetrahedron& tet,
+                                                    const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
   const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
   return (v1 + v2 + v3 + v4) / 4.0;

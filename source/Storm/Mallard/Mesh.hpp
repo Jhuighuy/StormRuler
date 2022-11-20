@@ -33,11 +33,6 @@
 
 namespace Storm {
 
-struct LabelTag;
-
-/// @brief Label index type.
-using Label = Index<LabelTag>;
-
 template<mesh Mesh>
 class NodeView;
 template<mesh Mesh>
@@ -47,14 +42,7 @@ class FaceView;
 template<mesh Mesh>
 class CellView;
 
-template<class Mesh>
-NodeView(const Mesh&, NodeIndex) -> NodeView<Mesh>;
-template<class Mesh>
-EdgeView(const Mesh&, EdgeIndex) -> EdgeView<Mesh>;
-template<class Mesh>
-FaceView(const Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
-template<class Mesh>
-CellView(const Mesh&, CellIndex<Mesh>) -> CellView<Mesh>;
+// -----------------------------------------------------------------------------
 
 namespace detail_ {
   constexpr auto to_node_view_(const auto& mesh) noexcept {
@@ -77,27 +65,21 @@ namespace detail_ {
   }
 } // namespace detail_
 
-// -----------------------------------------------------------------------------
-
 /// @brief Mesh entity view.
 template<mesh Mesh, index Index>
-class EntityView;
-
-template<mesh Mesh, size_t I>
-  requires std::is_object_v<Mesh>
-class EntityView<Mesh, EntityIndex<I>> {
+class EntityView {
 private:
 
   template<mesh, index>
   friend class EntityView;
 
   const Mesh* p_mesh_;
-  EntityIndex<I> index_;
+  Index index_;
 
 protected:
 
   /// @brief Construct an entity view with a @p mesh and @p index.
-  constexpr EntityView(const Mesh& mesh, EntityIndex<I> index) noexcept
+  constexpr EntityView(const Mesh& mesh, Index index) noexcept
       : p_mesh_{&mesh}, index_{index} {}
 
   /// @brief Destroy the entity view.
@@ -117,7 +99,7 @@ public:
 
   /// @brief Entity index.
   /// @{
-  [[nodiscard]] constexpr EntityIndex<I> index() const noexcept {
+  [[nodiscard]] constexpr Index index() const noexcept {
     return index_;
   }
   [[nodiscard]] constexpr size_t index_sz() const noexcept {
@@ -126,7 +108,7 @@ public:
   /// @}
 
   /// @brief Cast to entity index operator.
-  [[nodiscard]] constexpr operator EntityIndex<I>() const noexcept {
+  [[nodiscard]] constexpr operator Index() const noexcept {
     return index_;
   }
 
@@ -219,6 +201,9 @@ public:
 
 }; // class NodeView
 
+template<class Mesh>
+NodeView(const Mesh&, NodeIndex) -> NodeView<Mesh>;
+
 // -----------------------------------------------------------------------------
 
 /// @brief Mesh edge view.
@@ -246,6 +231,9 @@ public:
   }
 
 }; // class EdgeView
+
+template<class Mesh>
+EdgeView(const Mesh&, EdgeIndex) -> EdgeView<Mesh>;
 
 // -----------------------------------------------------------------------------
 
@@ -294,6 +282,9 @@ public:
 
 }; // class FaceView
 
+template<class Mesh>
+FaceView(const Mesh&, FaceIndex<Mesh>) -> FaceView<Mesh>;
+
 // -----------------------------------------------------------------------------
 
 /// @brief Mesh cell view.
@@ -331,6 +322,9 @@ public:
   }
 
 }; // class CellView
+
+template<class Mesh>
+CellView(const Mesh&, CellIndex<Mesh>) -> CellView<Mesh>;
 
 // -----------------------------------------------------------------------------
 

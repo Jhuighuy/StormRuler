@@ -31,7 +31,6 @@
 #include <Storm/Solvers/SolverCg.hpp>
 
 #include <Storm/Mallard/IoTetgen.hpp>
-#include <Storm/Mallard/IoVtk.hpp>
 #include <Storm/Mallard/MeshUnstructured.hpp>
 #include <Storm/Mallard/Shape.hpp>
 // #include <Storm/Bittern/Matrix.hpp>
@@ -75,7 +74,7 @@ void save_vtk(auto& mesh, const char* path,
   file << "POINTS " << mesh.num_nodes() << " double" << std::endl;
   std::ranges::for_each(mesh.nodes(), [&](auto node) {
     const auto& pos = node.position();
-    file << pos.x << " " << pos.y << " " << 0.0 << std::endl;
+    file << pos(0) << " " << pos(1) << " " << 0.0 << std::endl;
   });
   file << std::endl;
 
@@ -124,7 +123,7 @@ static void stormDivGrad(const Mesh& mesh, //
 
     // Compute the flux.
     const auto flux = dt * (c[cell_outer] - c[cell_inner]) /
-                      glm::length(cell_outer.center() - cell_inner.center());
+                      length(cell_outer.center() - cell_inner.center());
     u[cell_inner] += (face.area() / cell_inner.volume()) * flux;
     u[cell_outer] -= (face.area() / cell_outer.volume()) * flux;
   });

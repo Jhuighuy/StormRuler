@@ -22,17 +22,17 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/AABB.hpp>
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
 #include <Storm/Utils/Permutations.hpp>
 #include <Storm/Utils/Table.hpp>
 
+#include <Storm/Bittern/AABB.hpp>
+#include <Storm/Bittern/Mat.hpp>
+
 #include <Storm/Mallard/Mesh.hpp>
 #include <Storm/Mallard/Shape.hpp>
-
-#include <glm/glm.hpp>
 
 #include <algorithm>
 #include <numeric>
@@ -61,10 +61,10 @@ private:
 public:
 
   /// @brief Spatial vector type.
-  using Vec = glm::vec<Dim, real_t>;
+  using Vec = Storm::Vec<real_t, Dim>;
 
   /// @brief Spatial vector type.
-  using Mat = glm::mat<Dim, Dim, real_t>;
+  using Mat = Storm::Mat<real_t, Dim, Dim>;
 
   /// @brief Face index type.
   using FaceIndex = EntityIndex<TopologicalDim - 1>;

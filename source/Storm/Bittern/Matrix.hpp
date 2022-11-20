@@ -481,6 +481,12 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
       std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
+/// @copydoc norm_2
+template<numeric_matrix Matrix>
+[[nodiscard]] constexpr auto length(Matrix&& mat) {
+  return norm_2(std::forward<Matrix>(mat));
+}
+
 } // namespace Storm
 
 // -----------------------------------------------------------------------------

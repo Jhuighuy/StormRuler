@@ -256,7 +256,7 @@ constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
 /// @brief Add-assign the matrices @p out_mat and @p mat.
 template<output_matrix OutMatrix, matrix Matrix>
   requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
+constexpr OutMatrix& operator+=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
       []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
@@ -268,7 +268,7 @@ constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
 /// @brief Subtract-assign the matrices @p out_mat and @p mat.
 template<output_matrix OutMatrix, matrix Matrix>
   requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
+constexpr OutMatrix& operator-=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
       []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
@@ -280,7 +280,7 @@ constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
 /// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
 template<output_matrix OutMatrix, matrix Matrix>
   requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
+constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
       []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
@@ -292,7 +292,7 @@ constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
 /// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
 template<output_matrix OutMatrix, matrix Matrix>
   requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
+constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
       []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {

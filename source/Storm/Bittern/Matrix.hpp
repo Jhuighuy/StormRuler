@@ -69,43 +69,13 @@ public:
 
 }; // class MatrixShape
 
-template<class Matrix>
-struct matrix_row_index {
-  using type = size_t;
-};
-/*template<class Matrix>
-  requires requires { typename Matrix::row_index_type; }
-struct matrix_row_index<Matrix> {
-  using type = typename Matrix::row_index_type;
-};*/
-
-template<class Matrix>
-struct matrix_col_index {
-  using type = size_t;
-};
-/*template<class Matrix>
-  requires requires { typename Matrix::col_index_type; }
-struct matrix_col_index<Matrix> {
-  using type = typename Matrix::col_index_type;
-};*/
-
-/// @brief Matrix row index type.
-template<class Matrix>
-using matrix_row_index_t = typename matrix_row_index<Matrix>::type;
-/// @brief Matrix column index type.
-template<class Matrix>
-using matrix_col_index_t = typename matrix_col_index<Matrix>::type;
-
 /// @brief Matrix: has matrix shape and two subscripts.
-// clang-format off
 template<class Matrix>
-concept matrix = 
+concept matrix = //
     requires(Matrix& mat) {
       { mat.shape() } noexcept -> std::same_as<MatrixShape>;
-      { mat(std::declval<matrix_row_index_t<Matrix>>(),
-            std::declval<matrix_col_index_t<Matrix>>()) } noexcept;
+      { mat(size_t{}, size_t{}) } noexcept;
     };
-// clang-format on
 
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
@@ -123,9 +93,8 @@ template<matrix Matrix>
 
 /// @brief Matrix element type, as is.
 template<matrix Matrix>
-using matrix_element_decltype_t = decltype( //
-    std::declval<Matrix>()(std::declval<matrix_row_index_t<Matrix>>(),
-                           std::declval<matrix_col_index_t<Matrix>>()));
+using matrix_element_decltype_t =
+    decltype(std::declval<Matrix>()(size_t{}, size_t{}));
 
 /// @brief Matrix element type.
 template<matrix Matrix>
@@ -135,6 +104,10 @@ using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
 template<matrix Matrix>
   requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
+
+/// @brief Matrix with assignable elements.
+template<class Matrix>
+concept output_matrix = matrix<Matrix>; /// @todo Implement me!
 
 /// @brief Matrix with matrix elements (block matrix).
 template<class Matrix>
@@ -216,26 +189,35 @@ concept numeric_matrix =
 // -----------------------------------------------------------------------------
 
 /// @brief Assign the matrices.
-/// @todo Restrictions!
 /// @{
-template<matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& assign(OutMatrix& out_mat, Matrix&& mat) noexcept {
-  STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes doesn't match!");
+template<output_matrix OutMatrix, matrix Matrix>
+constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+  STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      out_mat(row_index, col_index) = mat(row_index, col_index);
+      if constexpr (!block_matrix<OutMatrix>) {
+        out_mat(row_index, col_index) = mat(row_index, col_index);
+      } else {
+        assign(out_mat(row_index, col_index), mat(row_index, col_index));
+      }
     }
   }
   return out_mat;
 }
-template<matrix OutMatrix, class AssignFunc, matrix... Matrices>
-constexpr OutMatrix& assign(OutMatrix& out_mat, AssignFunc assign_func,
+template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
+constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
                             Matrices&&... mats) noexcept {
   STORM_ASSERT_((out_mat.shape() == mats.shape()) && ...,
-                "Matrix shapes doesn't match!");
+                "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      assign_func(out_mat(row_index, col_index), mats(row_index, col_index)...);
+      if constexpr (!block_matrix<OutMatrix>) {
+        assign_func(out_mat(row_index, col_index),
+                    mats(row_index, col_index)...);
+      } else {
+        assign(out_mat(row_index, col_index), assign_func,
+               mats(row_index, col_index)...);
+      }
     }
   }
   return out_mat;
@@ -243,10 +225,83 @@ constexpr OutMatrix& assign(OutMatrix& out_mat, AssignFunc assign_func,
 /// @}
 
 /// @brief Assign the matrices.
-template<matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator<<=(OutMatrix& out_mat, Matrix&& mat) noexcept {
-  return assign(out_mat, std::forward<Matrix>(mat));
+/// @todo To be removed!
+template<output_matrix OutMatrix, matrix Matrix>
+constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
 }
+
+/// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
+template<output_matrix OutMatrix, std::copyable Scalar>
+  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
+        std::forward<OutElem>(out_elem) *= scal;
+      });
+}
+
+/// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
+template<output_matrix OutMatrix, std::copyable Scalar>
+  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
+        std::forward<OutElem>(out_elem) /= scal;
+      });
+}
+
+/// @brief Add-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) += std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Subtract-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) -= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) *= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) /= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
+// -----------------------------------------------------------------------------
 
 /// @brief Fill the matrix @p out_mat with a scalar @p scal.
 template<matrix OutMatrix, std::copyable Scalar>
@@ -259,11 +314,12 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 
 /// @brief Fill the matrix @p out_mat elements with the random numbers.
 /// @warning This is a sequential operation!
-template<real_matrix OutMatrix>
-constexpr OutMatrix&
-fill_randomly(OutMatrix&& out_mat, //
-              matrix_element_t<OutMatrix> min = 0,
-              matrix_element_t<OutMatrix> max = 1) noexcept {
+template<output_matrix OutMatrix>
+  requires (real_matrix<OutMatrix> && !block_matrix<OutMatrix>)
+constexpr OutMatrix& fill_randomly(
+    OutMatrix&& out_mat, //
+    matrix_element_t<OutMatrix> min = 0,
+    matrix_element_t<OutMatrix> max = 1) noexcept {
   static std::mt19937_64 random_engine{};
   std::uniform_real_distribution distribution{min, max};
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
@@ -272,68 +328,6 @@ fill_randomly(OutMatrix&& out_mat, //
     }
   }
   return out_mat;
-}
-
-/// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
-template<numeric_matrix OutMatrix, std::copyable Scalar>
-  requires (!matrix<Scalar>)
-constexpr OutMatrix& operator*=(OutMatrix& out_mat, Scalar scal) {
-  return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
-    out_elem *= scal;
-  });
-}
-
-/// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
-template<numeric_matrix OutMatrix, std::copyable Scalar>
-  requires (!matrix<Scalar>)
-constexpr OutMatrix& operator/=(OutMatrix& out_mat, Scalar scal) {
-  return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
-    out_elem /= scal;
-  });
-}
-
-/// @brief Add-assign the matrices @p out_mat and @p mat
-template<numeric_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator+=(OutMatrix& out_mat, Matrix&& mat) {
-  return assign(
-      out_mat,
-      []<class Elem>(auto& out_elem, Elem&& elem) noexcept {
-        out_elem += std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Subtract-assign the matrices @p out_mat and @p mat.
-template<numeric_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator-=(OutMatrix& out_mat, Matrix&& mat) {
-  return assign(
-      out_mat,
-      []<class Elem>(auto& out_elem, Elem&& elem) noexcept {
-        out_elem -= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
-template<numeric_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator*=(OutMatrix& out_mat, Matrix&& mat) {
-  return assign(
-      out_mat,
-      []<class Elem>(auto& out_elem, Elem&& elem) noexcept {
-        out_elem *= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
-template<numeric_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator/=(OutMatrix& out_mat, Matrix&& mat) {
-  return assign(
-      out_mat,
-      []<class Elem>(auto& out_elem, Elem&& elem) noexcept {
-        out_elem /= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
 }
 
 // -----------------------------------------------------------------------------
@@ -348,10 +342,10 @@ template<class Value, class ReduceFunc, matrix Matrix>
                                     Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      if constexpr (block_matrix<Matrix>) {
-        init = reduce(init, reduce_func, mat(row_index, col_index));
-      } else {
+      if constexpr (!block_matrix<Matrix>) {
         init = reduce_func(init, mat(row_index, col_index));
+      } else {
+        init = reduce(init, reduce_func, mat(row_index, col_index));
       }
     }
   }
@@ -366,13 +360,12 @@ template<class Value, class ReduceFunc, class Func, //
                 "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      if constexpr (block_matrix<Matrix>) {
-        init = reduce(init, reduce_func, func,   //
-                      mat(row_index, col_index), //
-                      mats(row_index, col_index)...);
-      } else {
+      if constexpr (!block_matrix<Matrix>) {
         init = reduce_func(init, func(mat(row_index, col_index),
                                       mats(row_index, col_index)...));
+      } else {
+        init = reduce(init, reduce_func, func, mat(row_index, col_index),
+                      mats(row_index, col_index)...);
       }
     }
   }

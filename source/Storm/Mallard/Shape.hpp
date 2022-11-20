@@ -309,7 +309,7 @@ template<mesh Mesh>
     auto d0 = v2 - v1, d1 = v3 - v1;
     return 0.5 * abs(d0(0, 0) * d1(1, 0) - d0(1, 0) * d1(0, 0));
   } else {
-    return length(cross(v2 - v1, v3 - v1)) / 2.0;
+    return length(cross_product(v2 - v1, v3 - v1)) / 2.0;
   }
 }
 

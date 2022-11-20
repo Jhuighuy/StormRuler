@@ -172,7 +172,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 /// @}
 
 /// @brief Element-wise compare the matrices @p mat1 and @p mat2
-/// to be approximately equal.
+/// to be approximately equal (within tolerance @p tolerance ).
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 [[nodiscard]] constexpr auto approx_eq(Matrix1&& mat1, //

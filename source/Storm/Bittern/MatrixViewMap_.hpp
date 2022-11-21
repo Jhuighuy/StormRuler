@@ -123,6 +123,23 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
+/// @brief Element-wise merge the matrices @p mat1 and @p mat2
+/// based on the mask matrix @p mask_mat.
+template<viewable_matrix MaskMatrix, //
+         viewable_matrix Matrix1, viewable_matrix Matrix2>
+  requires bool_matrix<MaskMatrix> &&
+           std::common_with<matrix_element_t<Matrix1>,
+                            matrix_element_t<Matrix2>>
+[[nodiscard]] constexpr auto merge(MaskMatrix&& mask_mat, //
+                                   Matrix1&& mat1, Matrix2&& mat2) {
+  return MapMatrixView(
+      []<>(bool condition, auto&& elem1, auto&& elem2) noexcept {
+        return condition ? elem1 : elem2;
+      },
+      std::forward<MaskMatrix>(mask_mat), //
+      std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+}
+
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise compare the matrices @p mat1 and @p mat2.

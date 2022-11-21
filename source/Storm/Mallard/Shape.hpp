@@ -138,8 +138,8 @@ namespace detail_ {
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>)
-[[nodiscard]] constexpr auto volume(const Shape& shape, const Mesh& mesh) {
-  // Compute the complex volume.
+[[nodiscard]] constexpr real_t volume( //
+    const Shape& shape, const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
   for (const auto& piece : pieces | std::views::drop(1)) {
@@ -153,9 +153,8 @@ template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>)
-[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
-                                                    const Mesh& mesh) {
-  // Compute the complex barycenter.
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter( //
+    const Shape& shape, const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
   auto vol_center = vol * barycenter(pieces.front(), mesh);
@@ -171,8 +170,8 @@ template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>)
-[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Shape& shape,
-                                                const Mesh& mesh) {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal( //
+    const Shape& shape, const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
   auto vol_normal = volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
   for (const auto& piece : pieces | std::views::drop(1)) {
@@ -222,16 +221,16 @@ public:
 
 /// @brief Segment @p seg length ("volume").
 template<mesh Mesh>
-[[nodiscard]] constexpr real_t volume(const Seg& seg,
-                                      const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr real_t volume( //
+    const Seg& seg, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return length(v2 - v1);
 }
 
 /// @brief Segment @p seg barycenter.
 template<mesh Mesh>
-[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg,
-                                                    const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter( //
+    const Seg& seg, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return (v1 + v2) / 2.0;
 }
@@ -239,8 +238,8 @@ template<mesh Mesh>
 /// @brief Segment @p seg normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 2)
-[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Seg& seg,
-                                                const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal( //
+    const Seg& seg, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   const auto d = normalize(v2 - v1);
   /// @todo Is sign here correct?
@@ -298,8 +297,8 @@ public:
 /// @brief Triangle @p tri "volume" (area).
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 2)
-[[nodiscard]] constexpr real_t volume(const Triangle& tri, //
-                                      const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr real_t
+    volume(const Triangle& tri, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   if constexpr (mesh_dim_v<Mesh> == 2) {
@@ -316,8 +315,8 @@ template<mesh Mesh>
 /// @brief Triangle @p tri barycenter.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 2)
-[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter(const Triangle& tri,
-                                                    const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> barycenter( //
+    const Triangle& tri, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   return (v1 + v2 + v3) / 3.0;
@@ -326,8 +325,8 @@ template<mesh Mesh>
 /// @brief Triangle @p tri normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 3)
-[[nodiscard]] constexpr mesh_vec_t<Mesh> normal(const Triangle& tri,
-                                                const Mesh& mesh) noexcept {
+[[nodiscard]] constexpr mesh_vec_t<Mesh> normal( //
+    const Triangle& tri, const Mesh& mesh) noexcept {
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   return normalize(cross(v2 - v1, v3 - v1));

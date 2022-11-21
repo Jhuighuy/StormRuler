@@ -133,7 +133,7 @@ template<viewable_matrix MaskMatrix, //
 [[nodiscard]] constexpr auto merge(MaskMatrix&& mask_mat, //
                                    Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(
-      []<>(bool condition, auto&& elem1, auto&& elem2) noexcept {
+      [](bool condition, auto elem1, auto elem2) noexcept {
         return condition ? elem1 : elem2;
       },
       std::forward<MaskMatrix>(mask_mat), //

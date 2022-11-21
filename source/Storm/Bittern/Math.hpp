@@ -47,7 +47,7 @@ inline constexpr bool enable_bool_type_v = std::is_same_v<Bool, bool>;
 
 /// @brief Bool type.
 template<class Bool>
-concept bool_type = enable_bool_type_v<std::remove_cv_t<Bool>>;
+concept bool_type = enable_bool_type_v<std::remove_cvref_t<Bool>>;
 
 /// @brief Treat the specified type as the integer.
 template<class Integer>
@@ -55,7 +55,7 @@ inline constexpr bool enable_integer_type_v = std::is_integral_v<Integer>;
 
 /// @brief Integer type.
 template<class Integer>
-concept integer_type = enable_integer_type_v<std::remove_cv_t<Integer>>;
+concept integer_type = enable_integer_type_v<std::remove_cvref_t<Integer>>;
 
 /// @brief Treat the specified type as real (floating-point).
 template<class Real>
@@ -63,7 +63,7 @@ inline constexpr bool enable_real_type_v = std::is_floating_point_v<Real>;
 
 /// @brief Real (floating-point) type.
 template<class Real>
-concept real_type = enable_real_type_v<std::remove_cv_t<Real>>;
+concept real_type = enable_real_type_v<std::remove_cvref_t<Real>>;
 
 /// @brief Treat the specified type as complex (floating-point).
 template<class Complex>
@@ -73,7 +73,7 @@ inline constexpr bool enable_complex_type_v =
 
 /// @brief Complex (floating-point) type.
 template<class Complex>
-concept complex_type = enable_complex_type_v<std::remove_cv_t<Complex>>;
+concept complex_type = enable_complex_type_v<std::remove_cvref_t<Complex>>;
 
 /// @brief Real or complex (floating-point) type.
 template<class Type>
@@ -112,15 +112,16 @@ template<real_type Real>
 
 // -----------------------------------------------------------------------------
 
-/// @brief Conjugate of complex number @p x.
-/// @{
-[[nodiscard]] constexpr real_t conj(real_t x) noexcept {
-  return x;
+/// @brief Conjugate of real number @p x (noop).
+template<real_type Real>
+[[nodiscard]] constexpr auto conj(Real&& x) noexcept {
+  return std::forward<Real>(x);
 }
-[[nodiscard]] constexpr complex_t conj(const complex_t& x) noexcept {
+/// @brief Conjugate of complex number @p x.
+template<real_type Number>
+[[nodiscard]] constexpr auto conj(const std::complex<Number>& x) noexcept {
   return std::conj(x);
 }
-/// @}
 
 using std::real;
 
@@ -139,6 +140,25 @@ using std::max;
 
 // -----------------------------------------------------------------------------
 
+using std::pow;
+
+/// @brief @f$ \sqrt{2} @f$ constant.
+inline constexpr real_t sqrt2 = std::numbers::sqrt2_v<real_t>;
+
+/// @brief @f$ \sqrt{3} @f$ constant.
+inline constexpr real_t sqrt3 = std::numbers::sqrt3_v<real_t>;
+
+using std::sqrt;
+
+using std::cbrt;
+
+using std::hypot;
+
+// -----------------------------------------------------------------------------
+
+/// @brief @f$ e @f$ constant.
+inline constexpr real_t e = std::numbers::e_v<real_t>;
+
 using std::exp;
 
 using std::exp2;
@@ -148,16 +168,6 @@ using std::log;
 using std::log2;
 
 using std::log10;
-
-// -----------------------------------------------------------------------------
-
-using std::pow;
-
-using std::sqrt;
-
-using std::cbrt;
-
-using std::hypot;
 
 // -----------------------------------------------------------------------------
 
@@ -192,6 +202,7 @@ using std::atanh;
 // -----------------------------------------------------------------------------
 
 /// @brief Generate the Givens rotation.
+/// @todo Move me somewhere else!
 template<real_or_complex_type Value>
 auto sym_ortho(Value a, Value b) {
   // Compute:

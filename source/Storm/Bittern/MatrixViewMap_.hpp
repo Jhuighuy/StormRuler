@@ -195,7 +195,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                                        Matrix2&& mat2, real_t tolerance) {
   STORM_ASSERT_(tolerance > 0.0, "Negative comparison tolerance!");
   return MapMatrixView(
-      [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {
+      [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) noexcept {
         return abs(std::forward<Elem1>(elem1) - //
                    std::forward<Elem2>(elem2)) <= tolerance;
       },

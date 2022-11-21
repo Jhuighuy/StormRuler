@@ -26,7 +26,4 @@ namespace Storm {
 
 inline constexpr real_t EPS = 1.0e-5;
 
-inline constexpr real_t sqrt2 = std::numbers::sqrt2_v<real_t>;
-inline constexpr real_t sqrt3 = std::numbers::sqrt3_v<real_t>;
-
 } // namespace Storm

@@ -28,7 +28,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Math.hpp>
+#include <Storm/Bittern/Math.hpp>
 
 #include "Field.hpp"
 

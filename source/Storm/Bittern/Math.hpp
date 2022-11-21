@@ -25,11 +25,13 @@
 #include <cmath>
 #include <complex>
 #include <concepts>
+#include <numbers>
 #include <type_traits>
 
 namespace Storm {
 
 /// @brief Check if the specified class is an instantion of a template.
+/// @todo Move me somewhere else!
 /// @{
 template<class, template<class...> class>
 inline constexpr bool is_instantiation_v = false;
@@ -45,7 +47,7 @@ inline constexpr bool enable_bool_type_v = std::is_same_v<Bool, bool>;
 
 /// @brief Bool type.
 template<class Bool>
-concept bool_type = enable_bool_type_v<Bool>;
+concept bool_type = enable_bool_type_v<std::remove_cv_t<Bool>>;
 
 /// @brief Treat the specified type as the integer.
 template<class Integer>
@@ -53,7 +55,7 @@ inline constexpr bool enable_integer_type_v = std::is_integral_v<Integer>;
 
 /// @brief Integer type.
 template<class Integer>
-concept integer_type = enable_integer_type_v<Integer>;
+concept integer_type = enable_integer_type_v<std::remove_cv_t<Integer>>;
 
 /// @brief Treat the specified type as real (floating-point).
 template<class Real>
@@ -61,7 +63,7 @@ inline constexpr bool enable_real_type_v = std::is_floating_point_v<Real>;
 
 /// @brief Real (floating-point) type.
 template<class Real>
-concept real_type = enable_real_type_v<Real>;
+concept real_type = enable_real_type_v<std::remove_cv_t<Real>>;
 
 /// @brief Treat the specified type as complex (floating-point).
 template<class Complex>
@@ -71,7 +73,7 @@ inline constexpr bool enable_complex_type_v =
 
 /// @brief Complex (floating-point) type.
 template<class Complex>
-concept complex_type = enable_complex_type_v<Complex>;
+concept complex_type = enable_complex_type_v<std::remove_cv_t<Complex>>;
 
 /// @brief Real or complex (floating-point) type.
 template<class Type>
@@ -83,17 +85,29 @@ concept numeric_type = integer_type<Type> || real_or_complex_type<Type>;
 
 // -----------------------------------------------------------------------------
 
-static real_t deg2rad(real_t) noexcept;
-static real_t rad2deg(real_t) noexcept;
-
-// -----------------------------------------------------------------------------
-
 /// @brief If @p y is zero, return zero,
 /// else return value of @p x divided by @p y.
 template<real_or_complex_type Value>
-auto safe_divide(Value x, Value y) {
+[[nodiscard]] constexpr auto safe_divide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
+}
+
+// -----------------------------------------------------------------------------
+
+/// @brief @f$ \pi @f$ constant.
+inline constexpr real_t pi = std::numbers::pi_v<real_t>;
+
+/// @brief Convert degrees to radians.
+template<real_type Real>
+[[nodiscard]] constexpr auto deg2rad(Real&& degrees) noexcept {
+  return (pi / 180.0) * std::forward<Real>(degrees);
+}
+
+/// @brief Convert radians to degrees.
+template<real_type Real>
+[[nodiscard]] constexpr auto rad2deg(Real&& radians) noexcept {
+  return (180.0 / pi) * std::forward<Real>(radians);
 }
 
 // -----------------------------------------------------------------------------

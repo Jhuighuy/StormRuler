@@ -228,12 +228,3 @@ using forward_as_matrix_view_t =
     decltype(forward_as_matrix_view(std::declval<Matrix>()));
 
 } // namespace Storm
-
-// -----------------------------------------------------------------------------
-
-#include <Storm/Bittern/MatrixViewConj_.hpp>
-#include <Storm/Bittern/MatrixViewMake_.hpp>
-#include <Storm/Bittern/MatrixViewMap_.hpp>
-#include <Storm/Bittern/MatrixViewProduct_.hpp>
-
-#include <Storm/Bittern/MatrixViewSlicing.inl>

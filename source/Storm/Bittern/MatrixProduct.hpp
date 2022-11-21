@@ -24,6 +24,7 @@
 
 #include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
 
 #include <concepts>
 #include <functional>

@@ -171,150 +171,6 @@ concept sparse_matrix = matrix<Matrix> && enable_sparse_matrix_v<Matrix>;
 
 // -----------------------------------------------------------------------------
 
-/// @brief Assign the matrices.
-/// @{
-template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
-  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      if constexpr (!block_matrix<OutMatrix>) {
-        out_mat(row_index, col_index) = mat(row_index, col_index);
-      } else {
-        assign(out_mat(row_index, col_index), mat(row_index, col_index));
-      }
-    }
-  }
-  return out_mat;
-}
-template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
-constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
-                            Matrices&&... mats) noexcept {
-  STORM_ASSERT_((out_mat.shape() == mats.shape()) && ...,
-                "Matrix shapes do not match!");
-  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      if constexpr (!block_matrix<OutMatrix>) {
-        assign_func(out_mat(row_index, col_index),
-                    mats(row_index, col_index)...);
-      } else {
-        assign(out_mat(row_index, col_index), assign_func,
-               mats(row_index, col_index)...);
-      }
-    }
-  }
-  return out_mat;
-}
-/// @}
-
-/// @brief Assign the matrices.
-/// @todo To be removed!
-template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
-}
-
-/// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
-template<output_matrix OutMatrix, std::copyable Scalar>
-  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
-constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
-        std::forward<OutElem>(out_elem) *= scal;
-      });
-}
-
-/// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
-template<output_matrix OutMatrix, std::copyable Scalar>
-  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
-constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
-        std::forward<OutElem>(out_elem) /= scal;
-      });
-}
-
-/// @brief Add-assign the matrices @p out_mat and @p mat.
-template<output_matrix OutMatrix, matrix Matrix>
-  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator+=(OutMatrix&& out_mat, Matrix&& mat) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
-        std::forward<OutElem>(out_elem) += std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Subtract-assign the matrices @p out_mat and @p mat.
-template<output_matrix OutMatrix, matrix Matrix>
-  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator-=(OutMatrix&& out_mat, Matrix&& mat) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
-        std::forward<OutElem>(out_elem) -= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
-template<output_matrix OutMatrix, matrix Matrix>
-  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Matrix&& mat) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
-        std::forward<OutElem>(out_elem) *= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-/// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
-template<output_matrix OutMatrix, matrix Matrix>
-  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
-constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Matrix&& mat) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
-        std::forward<OutElem>(out_elem) /= std::forward<Elem>(elem);
-      },
-      std::forward<Matrix>(mat));
-}
-
-// -----------------------------------------------------------------------------
-
-/// @brief Fill the matrix @p out_mat with a scalar @p scal.
-template<matrix OutMatrix, std::copyable Scalar>
-  requires (!matrix<Scalar>)
-constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
-  return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
-    out_elem = scal;
-  });
-}
-
-/// @brief Fill the matrix @p out_mat elements with the random numbers.
-/// @warning This is a sequential operation!
-template<output_matrix OutMatrix>
-  requires (real_matrix<OutMatrix> && !block_matrix<OutMatrix>)
-constexpr OutMatrix& fill_randomly(
-    OutMatrix&& out_mat, //
-    matrix_element_t<OutMatrix> min = 0,
-    matrix_element_t<OutMatrix> max = 1) noexcept {
-  static std::mt19937_64 random_engine{};
-  std::uniform_real_distribution distribution{min, max};
-  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      out_mat(row_index, col_index) = distribution(random_engine);
-    }
-  }
-  return out_mat;
-}
-
-// -----------------------------------------------------------------------------
-
 /// @brief Reduce the matrix @p mat coefficients to a single value.
 /// @param init Initial reduction value.
 /// @param reduce_func Reduction function.
@@ -465,7 +321,9 @@ template<numeric_matrix Matrix>
 
 } // namespace Storm
 
-// -----------------------------------------------------------------------------
-
-#include "MatrixIo.hpp"
-#include <Storm/Bittern/MatrixView_.hpp>
+#include <Storm/Bittern/MatrixAlgorithms.hpp>
+#include <Storm/Bittern/MatrixIo.hpp>
+#include <Storm/Bittern/MatrixMath.hpp>
+#include <Storm/Bittern/MatrixProduct.hpp>
+#include <Storm/Bittern/MatrixSlicing.hpp>
+#include <Storm/Bittern/MatrixTranspose.hpp>

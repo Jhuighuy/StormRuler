@@ -18,13 +18,14 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Automatically included with `Matrix.hpp`.
 #pragma once
 
 #include <Storm/Base.hpp>
 
 #include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/MatrixAlgorithms.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
 
 #include <concepts>
 #include <functional>
@@ -220,6 +221,24 @@ template<viewable_matrix Matrix>
   return MapMatrixView(std::negate{}, std::forward<Matrix>(mat));
 }
 
+/// @brief Assign the matrices.
+/// @todo To be removed!
+template<output_matrix OutMatrix, matrix Matrix>
+constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
+}
+
+/// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
+template<output_matrix OutMatrix, std::copyable Scalar>
+  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
+        std::forward<OutElem>(out_elem) *= scal;
+      });
+}
+
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
 template<viewable_matrix Matrix, std::copyable Scalar>
@@ -242,6 +261,17 @@ template<std::copyable Scalar, viewable_matrix Matrix>
 }
 /// @}
 
+/// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
+template<output_matrix OutMatrix, std::copyable Scalar>
+  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
+        std::forward<OutElem>(out_elem) /= scal;
+      });
+}
+
 /// @brief Divide the matrix @p mat by a scalar @p scal.
 template<viewable_matrix Matrix, std::copyable Scalar>
   requires (numeric_matrix<Matrix> && !matrix<Scalar>)
@@ -252,7 +282,6 @@ template<viewable_matrix Matrix, std::copyable Scalar>
       },
       std::forward<Matrix>(mat));
 }
-
 /// @brief Divide the scalar @p scal by a matrix @p mat.
 template<std::copyable Scalar, viewable_matrix Matrix>
   requires (!matrix<Scalar> && numeric_matrix<Matrix>)
@@ -260,6 +289,18 @@ template<std::copyable Scalar, viewable_matrix Matrix>
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return scal / std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
+/// @brief Add-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator+=(OutMatrix&& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) += std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
 }
@@ -273,6 +314,18 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
+/// @brief Subtract-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator-=(OutMatrix&& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) -= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
 /// @brief Subtract the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
@@ -282,6 +335,18 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
                        std::forward<Matrix2>(mat2));
 }
 
+/// @brief Element-wise multiply-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) *= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
+}
+
 /// @brief Element-wise multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
@@ -289,6 +354,18 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   return MapMatrixView(std::multiplies{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
+}
+
+/// @brief Element-wise divide-assign the matrices @p out_mat and @p mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires numeric_matrix<OutMatrix> && numeric_matrix<Matrix>
+constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Matrix&& mat) {
+  return assign(
+      std::forward<OutMatrix>(out_mat),
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+        std::forward<OutElem>(out_elem) /= std::forward<Elem>(elem);
+      },
+      std::forward<Matrix>(mat));
 }
 
 /// @brief Element-wise divide the matrices @p mat1 and @p mat2.

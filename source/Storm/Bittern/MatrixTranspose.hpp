@@ -18,7 +18,6 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Automatically included with `Matrix.hpp`.
 #pragma once
 
 #include <Storm/Base.hpp>

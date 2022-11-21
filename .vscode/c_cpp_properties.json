@@ -22,10 +22,6 @@
     "theIncludePaths": [
       "${workspaceFolder}/source"
     ],
-    "theMacIncludePaths": [
-      "${theIncludePaths}",
-      "/opt/homebrew/include"
-    ],
     "theMacFrameworkPaths": [
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
     ]
@@ -54,7 +50,8 @@
     {
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
-        "${theMacIncludePaths}"
+        "${theIncludePaths}",
+        "/opt/homebrew/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"
@@ -66,7 +63,8 @@
     {
       "name": "Mac (clang-15-arm64)",
       "includePath": [
-        "${theMacIncludePaths}"
+        "${theIncludePaths}",
+        "/opt/homebrew/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"

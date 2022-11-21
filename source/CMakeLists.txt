@@ -18,7 +18,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Core header-only library.
 file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
@@ -31,7 +31,7 @@ target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
 # Include directories.
 target_include_directories(StormRuler_BASE INTERFACE ".")
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Configuration file.
 configure_file("./Storm/Config.hpp.in" "./Storm/Config.hpp")

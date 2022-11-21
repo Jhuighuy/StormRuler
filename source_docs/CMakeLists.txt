@@ -18,7 +18,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Find Doxygen.
 find_package(Doxygen REQUIRED dot)
@@ -36,14 +36,14 @@ if(DOXYGEN_VERSION VERSION_LESS DOXYGEN_MIN_REQUIRED_VERSION)
   return()
 endif()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Configure the documentation extraction.
 set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
 set(DOXYGEN_DISTRIBUTE_GROUP_DOC      YES)
 set(DOXYGEN_SHOW_USED_FILES           NO )
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Configure the required documenation components.
 # (No alphabetical index, and a source browser with comments.)
@@ -52,7 +52,7 @@ set(DOXYGEN_SOURCE_BROWSER      YES)
 set(DOXYGEN_STRIP_CODE_COMMENTS NO )
 set(DOXYGEN_TAB_SIZE            2  )
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Configure the DOT utility.
 # (Enable it, and specify the parameters and style.)
@@ -69,7 +69,7 @@ set(DOXYGEN_GRAPHICAL_HIERARCHY  NO )
 set(DOXYGEN_DIRECTORY_GRAPH      NO )
 set(DOXYGEN_GENERATE_LEGEND      NO )
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Configure the HTML pages layout.
 # (Disable the navigation panel, enable the 
@@ -94,13 +94,13 @@ set(DOXYGEN_USE_MATHJAX YES)
 set(DOXYGEN_ENUM_VALUES_PER_LINE 1 )
 set(DOXYGEN_OBFUSCATE_EMAILS     NO)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Generate the HTML documentation.
 set(DOXYGEN_GENERATE_HTML YES)
 set(DOXYGEN_HTML_OUTPUT   "${CMAKE_SOURCE_DIR}/bin/docs")
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Generate the Doxygen inputs list.
 set(StormRuler_DOXYGEN_INPUTS)

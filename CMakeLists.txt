@@ -43,7 +43,7 @@ message(STATUS "\n" [=[
 -- ╚═══════════════════════════════════════════════════════════════════╝
 --]=])
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Setup the project.
 project(StormRuler
@@ -54,7 +54,7 @@ project(StormRuler
 # A container library that stores all the properties.
 add_library(StormRuler_BASE INTERFACE)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Set output directories.
 # (Set globally, since these properties are not inherited by targets.)
@@ -114,7 +114,7 @@ target_compile_options(StormRuler_BASE INTERFACE
 target_compile_options(StormRuler_BASE INTERFACE
                        $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_OPTIONS}>)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Add the CMake modules.
 list(APPEND CMAKE_MODULE_PATH "./cmake")
@@ -135,7 +135,7 @@ endif()
 # Find Python interpreter.
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED)
@@ -145,7 +145,7 @@ target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
 find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(StormRuler_BASE INTERFACE spdlog::spdlog_header_only)
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Find TBB.
 if(StormRuler_NO_TBB)
@@ -171,7 +171,7 @@ else()
   endif()
 endif()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Find MKL.
 if(StormRuler_NO_MKL)
@@ -241,7 +241,7 @@ else()
   endif()
 endif()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Find ZLIB.
 if(StormRuler_NO_ZLIB)
@@ -285,7 +285,7 @@ else()
   endif()
 endif()
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Add the core library.
 message(STATUS "Adding StormRuler core library..")

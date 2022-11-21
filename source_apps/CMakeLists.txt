@@ -18,7 +18,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # Add the playground application.
 message(STATUS "| Adding StormRuler playground app..")

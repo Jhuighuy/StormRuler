@@ -18,10 +18,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-import sys
 import re
+import sys
+
+# ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:

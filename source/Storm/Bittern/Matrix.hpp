@@ -317,7 +317,6 @@ constexpr auto length(Matrix&& mat) {
 } // namespace Storm
 
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
-#include <Storm/Bittern/MatrixIo.hpp>
 #include <Storm/Bittern/MatrixMath.hpp>
 #include <Storm/Bittern/MatrixProduct.hpp>
 #include <Storm/Bittern/MatrixSlicing.hpp>

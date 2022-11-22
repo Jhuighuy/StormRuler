@@ -51,8 +51,7 @@ using Mesh = UnstructuredMesh<2, 2, CsrTable>;
 
 /// @brief Mesh field entry.
 template<class Value, size_t NumVars = 1>
-using Subfield = std::conditional_t<NumVars == 1, //
-                                    Value, StaticVector<Value, NumVars>>;
+using Subfield = std::conditional_t<NumVars == 1, Value, Vec<Value, NumVars>>;
 
 /// @brief Generic mesh field.
 template<mesh Mesh, index Index, class Value = real_t, size_t NumVars = 1>

@@ -26,10 +26,6 @@
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
 
-#include <concepts>
-#include <functional>
-#include <tuple>
-#include <type_traits>
 #include <utility>
 
 namespace Storm {
@@ -63,9 +59,9 @@ public:
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     // This is a default very slow generic implementation.
-    auto val{mat1_(row_index, 0) * mat2_(0, col_index)};
-    const auto cross_size = static_cast<size_t>(num_cols(mat1_));
-    for (size_t cross_index{1}; cross_index < cross_size; ++cross_index) {
+    auto val = mat1_(row_index, 0) * mat2_(0, col_index);
+    const size_t cross_size = num_cols(mat1_);
+    for (size_t cross_index = 1; cross_index < cross_size; ++cross_index) {
       val += mat1_(row_index, cross_index) * mat2_(cross_index, col_index);
     }
     return val;

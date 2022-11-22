@@ -23,72 +23,48 @@
 #include <Storm/Base.hpp>
 
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/MatrixAlgorithms.hpp>
 
 #include <array>
-#include <cmath>
-#include <iostream>
-#include <type_traits>
+#include <concepts>
 
 namespace Storm {
 
 /// @brief Statically-sized matrix.
-template<class Value, size_t NumRows, size_t NumCols>
-class Mat;
-
-/// @brief 2x2 matrix.
-template<class Value>
-using Mat2x2 = Mat<Value, 2, 2>;
-
-/// @brief 3x3 matrix.
-template<class Value>
-using Mat3x3 = Mat<Value, 3, 3>;
-
-/// @brief 4x4 matrix.
-template<class Value>
-using Mat4x4 = Mat<Value, 4, 4>;
-
-/// @brief Statically-sized vector.
-template<class Value, size_t Size>
-using Vec = Mat<Value, Size, 1>;
-template<class Value, size_t Size>
-using StaticVector = Mat<Value, Size, 1>;
-
-/// @brief 2D vector.
-template<class Value>
-using Vec2D = Vec<Value, 2>;
-
-/// @brief 3D vector.
-template<class Value>
-using Vec3D = Vec<Value, 3>;
-
-/// @brief 4D vector.
-template<class Value>
-using Vec4D = Vec<Value, 4>;
-
-template<class Value, size_t NumRows, size_t NumCols>
-class Mat final {
+template<class Elem, size_t NumRows, size_t NumCols>
+class StaticMatrix final {
 private:
 
-  std::array<std::array<Value, NumCols>, NumRows> coeffs_;
+  std::array<Elem, NumRows * NumCols> elems_{};
 
 public:
 
   /// @brief Construct a matrix.
-  constexpr Mat(const Value& value = {}) noexcept {
-    for (auto& row : coeffs_) {
-      row.fill(value);
-    }
+  constexpr StaticMatrix(const Elem& init = {}) noexcept {
+    fill(init);
   }
 
-  /// @brief Construct a matrix with the initializer list.
-  constexpr explicit Mat(std::initializer_list<Value> initializer) {
-    STORM_ASSERT_(initializer.size() == NumRows * NumCols,
-                  "Invalid number of the matrix coefficients!");
-    std::copy(initializer.begin(), initializer.end(), data());
+  /// @brief Construct a matrix with the elements.
+  template<class... RestElems>
+    requires (std::convertible_to<RestElems, Elem> && ...) &&
+             (sizeof...(RestElems) + 1 == NumRows * NumCols)
+  constexpr explicit StaticMatrix(const Elem& first_elem,
+                                  const RestElems&... rest_elems) noexcept
+      : elems_{first_elem, static_cast<Elem>(rest_elems)...} {}
+
+  /// @brief Construct a matrix with another matrix.
+  template<matrix Matrix>
+  constexpr StaticMatrix(Matrix&& other) noexcept {
+    assign(*this, std::forward<Matrix>(other));
+  }
+  /// @brief Assign the matrix.
+  template<matrix Matrix>
+  constexpr auto& operator=(Matrix&& other) noexcept {
+    return assign(*this, std::forward<Matrix>(other));
   }
 
   /// @brief Fill the matrix with @p value.
-  constexpr void fill(const Value& value) noexcept {
+  constexpr void fill(const Elem& value) noexcept {
     for (size_t row_index = 0; row_index < NumRows; ++row_index) {
       for (size_t col_index = 0; col_index < NumCols; ++col_index) {
         (*this)(row_index, col_index) = value;
@@ -96,77 +72,69 @@ public:
     }
   }
 
-  template<matrix Matrix>
-  constexpr Mat(Matrix&& other) noexcept {
-    (*this) = std::forward<Matrix>(other);
-  }
-
-  /// @brief Assign the matrix.
-  template<matrix Matrix>
-  constexpr auto& operator=(Matrix&& other) noexcept {
-    for (size_t row_index = 0; row_index < NumRows; ++row_index) {
-      for (size_t col_index = 0; col_index < NumCols; ++col_index) {
-        (*this)(row_index, col_index) = other(row_index, col_index);
-      }
-    }
-    return *this;
-  }
-
-  /// @brief Number of the matrix rows.
-  [[nodiscard]] static constexpr auto num_rows() noexcept {
-    return NumRows;
-  }
-  /// @brief Number of the matrix columns.
-  [[nodiscard]] static constexpr auto num_cols() noexcept {
-    return NumCols;
-  }
   /// @brief Matrix shape.
-  [[nodiscard]] static constexpr auto shape() noexcept {
+  static constexpr auto shape() noexcept {
     return MatrixShape{NumRows, NumCols};
   }
 
-  /// @brief Matrix size.
-  [[nodiscard]] static constexpr auto size() noexcept {
-    return NumRows * NumCols;
-  }
-  /// @brief Matrix data.
+  /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
-  [[nodiscard]] constexpr Value* data() noexcept {
-    return &coeffs_[0][0];
-  }
-  [[nodiscard]] constexpr const Value* data() const noexcept {
-    return &coeffs_[0][0];
-  }
-  /// @}
-
-  /// @brief Get reference to the component at the index.
-  /// @{
-  [[nodiscard]] constexpr Value& //
-  operator()(size_t row_index, size_t col_index = 0) noexcept {
-    STORM_ASSERT_(row_index < NumRows && col_index < NumCols,
+  constexpr Elem& operator()(size_t row_index, //
+                             size_t col_index = 0) noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
-    return (coeffs_[row_index])[col_index];
+    return elems_[row_index * NumCols + col_index];
   }
-  [[nodiscard]] constexpr const Value&
-  operator()(size_t row_index, size_t col_index = 0) const noexcept {
-    STORM_ASSERT_(row_index < NumRows && col_index < NumCols,
+  constexpr const Elem& operator()(size_t row_index,
+                                   size_t col_index = 0) const noexcept {
+    STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
-    return (coeffs_[row_index])[col_index];
+    return elems_[row_index * NumCols + col_index];
   }
   /// @}
 
   /// @todo Transition code! Remove me!
   /// @{
-  [[nodiscard]] constexpr Value& //
-  operator[](size_t row_index) noexcept {
+  constexpr Elem& operator[](size_t row_index) noexcept {
     return (*this)(row_index);
   }
-  [[nodiscard]] constexpr const Value& //
-  operator[](size_t row_index) const noexcept {
+  constexpr const Elem& operator[](size_t row_index) const noexcept {
     return (*this)(row_index);
   }
   /// @}
 
-}; // class Mat
+}; // class StaticMatrix
+
+/// @brief Statically-sized (small) matrix.
+template<class Elem, size_t NumRows, size_t NumCols>
+using Mat = StaticMatrix<Elem, NumRows, NumCols>;
+
+/// @brief 2x2 matrix.
+template<class Elem>
+using Mat2x2 = Mat<Elem, 2, 2>;
+
+/// @brief 3x3 matrix.
+template<class Elem>
+using Mat3x3 = Mat<Elem, 3, 3>;
+
+/// @brief 4x4 matrix.
+template<class Elem>
+using Mat4x4 = Mat<Elem, 4, 4>;
+
+/// @brief Statically-sized (small) vector.
+template<class Elem, size_t NumRows>
+using Vec = Mat<Elem, NumRows, 1>;
+
+/// @brief 2D vector.
+template<class Elem>
+using Vec2D = Vec<Elem, 2>;
+
+/// @brief 3D vector.
+template<class Elem>
+using Vec3D = Vec<Elem, 3>;
+
+/// @brief 4D vector.
+template<class Elem>
+using Vec4D = Vec<Elem, 4>;
 
 } // namespace Storm

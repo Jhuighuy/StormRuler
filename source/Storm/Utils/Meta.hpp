@@ -499,8 +499,8 @@ consteval auto type_name() {
   prefix = "auto __cdecl Storm::meta::type_name<";
   suffix = ">(void)";
 #endif
-  if (!name.starts_with(prefix)) { throw std::range_error("Invalid prefix!"); }
-  if (!name.ends_with(suffix)) { throw std::range_error("Invalid suffix!"); }
+  if (!name.starts_with(prefix)) throw std::range_error("Invalid prefix!");
+  if (!name.ends_with(suffix)) throw std::range_error("Invalid suffix!");
   name.remove_prefix(prefix.size());
   name.remove_suffix(suffix.size());
   return name;

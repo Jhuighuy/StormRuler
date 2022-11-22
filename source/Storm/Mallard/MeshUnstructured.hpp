@@ -246,7 +246,7 @@ public:
     // and intersect with the recently found.
     STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> temp{}, update{};
     for (NodeIndex node_index : node_indices | std::views::drop(1)) {
-      if (found.empty()) { break; }
+      if (found.empty()) break;
       adj = adjacent<I>(node_index);
       temp.assign(adj.begin(), adj.end());
       std::ranges::sort(temp);
@@ -560,14 +560,13 @@ private:
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
       meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
-        /// @todo Use parallel loop here!
-        std::ranges::for_each(entities<J>(), [&](EntityIndex<J> index) {
+        for (EntityIndex<J> index : entities<J>()) {
           using T = Table<EntityIndex<J>, EntityIndex<I>>;
           decltype(auto) adj = std::get<T>(connectivity_tuple_)[index];
           for (EntityIndex<I>& adjacent_index : adj) {
             adjacent_index = iperm[adjacent_index];
           }
-        });
+        }
       });
     }
 

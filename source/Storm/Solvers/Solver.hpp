@@ -123,7 +123,9 @@ bool IterativeSolver<InVector, OutVector>::solve(
     InVector& x_vec, const OutVector& b_vec,
     const Operator<InVector, OutVector>& any_op) {
   // Initialize the solver.
-  if (pre_op != nullptr) { pre_op->build(x_vec, b_vec, any_op); }
+  if (pre_op != nullptr) {
+    pre_op->build(x_vec, b_vec, any_op);
+  }
   const real_t initial_error{init(x_vec, b_vec, any_op, pre_op.get())};
   absolute_error = initial_error;
   if (absolute_error_tolerance > 0.0 &&
@@ -240,7 +242,9 @@ private:
                  const Operator<InVector, OutVector>& any_op,
                  const Preconditioner<InVector>* pre_op) override final {
     inner_iteration = this->iteration % num_inner_iterations;
-    if (inner_iteration == 0) { inner_init(x_vec, b_vec, any_op, pre_op); }
+    if (inner_iteration == 0) {
+      inner_init(x_vec, b_vec, any_op, pre_op);
+    }
     const real_t residual_norm{inner_iterate(x_vec, b_vec, any_op, pre_op)};
     if (inner_iteration == num_inner_iterations - 1) {
       inner_finalize(x_vec, b_vec, any_op, pre_op);

@@ -152,10 +152,9 @@ public:
   }
 
   /// @brief Swap the indexed array contents.
-  constexpr void swap(IndexedVector& other) noexcept( //
-      noexcept(std::allocator_traits<
-                   Allocator>::propagate_on_container_swap::value ||
-               std::allocator_traits<Allocator>::is_always_equal::value)) {
+  constexpr void swap(IndexedVector& other) noexcept(noexcept(
+      std::allocator_traits<Allocator>::propagate_on_container_swap::value ||
+      std::allocator_traits<Allocator>::is_always_equal::value)) {
     std::vector<Value, Allocator>::swap(other);
   }
 

@@ -51,7 +51,7 @@ private:
     v_vec_.assign(x_vec, false);
     y_vec_.assign(x_vec, false);
     s_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -123,13 +123,9 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      if (left_pre) {
-        pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-      } else if (right_pre) {
-        lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-      } else {
-        lin_op.mul(s_vec_, y_vec_);
-      }
+      if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+      else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
+      else lin_op.mul(s_vec_, y_vec_);
       v_vec_ <<= s_vec_;
     } else {
       const real_t rho_bar =
@@ -137,13 +133,9 @@ private:
       const real_t beta = safe_divide(rho_, rho_bar);
       v_vec_ <<= s_vec_ + beta * v_vec_;
       y_vec_ <<= u_vec_ + beta * y_vec_;
-      if (left_pre) {
-        pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-      } else if (right_pre) {
-        lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-      } else {
-        lin_op.mul(s_vec_, y_vec_);
-      }
+      if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+      else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
+      else lin_op.mul(s_vec_, y_vec_);
       v_vec_ <<= s_vec_ + beta * v_vec_;
     }
 
@@ -182,7 +174,7 @@ private:
       d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
       const real_t omega = norm_2(u_vec_);
       if constexpr (L1) {
-        if (omega < tau_) { tau_ = omega, x_vec <<= d_vec_; }
+        if (omega < tau_) tau_ = omega, x_vec <<= d_vec_;
       } else {
         const auto [cs, sn, rr] = sym_ortho(tau_, omega);
         tau_ = omega * cs;
@@ -191,13 +183,9 @@ private:
       }
       if (m == 0) {
         y_vec_ -= alpha * v_vec_;
-        if (left_pre) {
-          pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-        } else if (right_pre) {
-          lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-        } else {
-          lin_op.mul(s_vec_, y_vec_);
-        }
+        if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
+        else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
+        else lin_op.mul(s_vec_, y_vec_);
       }
     }
 

@@ -124,9 +124,9 @@
 #if STORM_COMPILER_MSVC_
 #define STORM_ASSUME_(expression) __assume(expression)
 #else
-#define STORM_ASSUME_(expression)                   \
-  do {                                              \
-    if (!(expression)) { __builtin_unreachable(); } \
+#define STORM_ASSUME_(expression)               \
+  do {                                          \
+    if (!(expression)) __builtin_unreachable(); \
   } while (false)
 #endif
 

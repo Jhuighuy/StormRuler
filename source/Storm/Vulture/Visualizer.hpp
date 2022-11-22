@@ -240,9 +240,9 @@ void visualize_mesh(const Mesh& mesh) {
   std::optional<EdgeIndex> last_selected_edge;
   std::optional<CellIndex<const Mesh>> last_selected_cell;
   const auto unselect_all = [&]() {
-    if (last_selected_node) { select_node(*last_selected_node, 0); }
-    if (last_selected_edge) { select_edge(*last_selected_edge, 0); }
-    if (last_selected_cell) { select_cell(*last_selected_cell, 0); }
+    if (last_selected_node) select_node(*last_selected_node, 0);
+    if (last_selected_edge) select_edge(*last_selected_edge, 0);
+    if (last_selected_cell) select_cell(*last_selected_cell, 0);
   };
 
   window.main_loop([&] {

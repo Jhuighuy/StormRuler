@@ -50,7 +50,7 @@ private:
               const Operator<Vector>& lin_op,
               const Preconditioner<Vector>* pre_op) override {
     r_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
     // Initialize:
     // ----------------------

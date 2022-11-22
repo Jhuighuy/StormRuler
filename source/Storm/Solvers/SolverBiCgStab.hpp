@@ -64,7 +64,7 @@ private:
     r_tilde_vec_.assign(x_vec, false);
     t_vec_.assign(x_vec, false);
     v_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -129,13 +129,10 @@ private:
     // 𝒙 ← 𝒙 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒑),
     // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
     // ----------------------
-    if (left_pre) {
-      pre_op->mul(v_vec_, z_vec_, lin_op, p_vec_);
-    } else if (right_pre) {
-      lin_op.mul(v_vec_, z_vec_, *pre_op, p_vec_);
-    } else {
-      lin_op.mul(v_vec_, p_vec_);
-    }
+    if (left_pre) pre_op->mul(v_vec_, z_vec_, lin_op, p_vec_);
+    else if (right_pre) lin_op.mul(v_vec_, z_vec_, *pre_op, p_vec_);
+    else lin_op.mul(v_vec_, p_vec_);
+
     alpha_ = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
     x_vec += alpha_ * (right_pre ? z_vec_ : p_vec_);
     r_vec_ -= alpha_ * v_vec_;
@@ -153,13 +150,9 @@ private:
     // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
     // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
     // ----------------------
-    if (left_pre) {
-      pre_op->mul(t_vec_, z_vec_, lin_op, r_vec_);
-    } else if (right_pre) {
-      lin_op.mul(t_vec_, z_vec_, *pre_op, r_vec_);
-    } else {
-      lin_op.mul(t_vec_, r_vec_);
-    }
+    if (left_pre) pre_op->mul(t_vec_, z_vec_, lin_op, r_vec_);
+    else if (right_pre) lin_op.mul(t_vec_, z_vec_, *pre_op, r_vec_);
+    else lin_op.mul(t_vec_, r_vec_);
     omega_ =
         safe_divide(dot_product(t_vec_, r_vec_), dot_product(t_vec_, t_vec_));
     x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
@@ -207,16 +200,12 @@ private:
     tau_.assign(l + 1, l + 1);
 
     r_tilde_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
     r_vecs_.resize(l + 1);
     u_vecs_.resize(l + 1);
-    for (Vector& r_vec : r_vecs_) {
-      r_vec.assign(x_vec, false);
-    }
-    for (Vector& u_vec : u_vecs_) {
-      u_vec.assign(x_vec, false);
-    }
+    for (Vector& r_vec : r_vecs_) r_vec.assign(x_vec, false);
+    for (Vector& u_vec : u_vecs_) u_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------

@@ -165,8 +165,8 @@ public:
                                 Real du_max,  //
                                 Real eps_sqr) const noexcept {
     const Real du_sqr = std::pow(du_max - du_min, 2);
-    if (du_sqr <= eps_sqr) { return 1.0; }
-    if (du_sqr >= 2.0 * eps_sqr) { return limiter; }
+    if (du_sqr <= eps_sqr) return 1.0;
+    if (du_sqr >= 2.0 * eps_sqr) return limiter;
     // Compute weight: [1], page 5.
     const Real dy = (du_sqr - eps_sqr) / eps_sqr;
     const Real dy_sqr = pow(dy, 2);

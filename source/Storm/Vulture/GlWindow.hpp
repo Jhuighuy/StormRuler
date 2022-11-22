@@ -220,7 +220,7 @@ public:
 
   /// @brief Load the framework.
   void load() {
-    if (loaded_) { return; }
+    if (loaded_) return;
     glfwSetErrorCallback(&on_error_);
     glfwInit();
     STORM_INFO_("GLFW initialized, version '{}'!", glfwGetVersionString());
@@ -229,7 +229,7 @@ public:
 
   /// @brief Unload the framework.
   void unload() {
-    if (!loaded_) { return; }
+    if (!loaded_) return;
   }
 
 private:
@@ -247,14 +247,20 @@ class Window final {
 private:
 
   GLFWwindow* underlying_{};
+  // clang-format off
   std::vector<std::function<void()>> on_close_funcs_{};
   std::vector<std::function<void(size_t, size_t)>> on_resize_funcs_{};
-  std::multimap<std::pair<Key, Modifiers>, std::function<void()>>
-      on_key_down_funcs_{}, on_key_up_funcs_{};
-  std::multimap<std::pair<MouseButton, Modifiers>, std::function<void()>>
-      on_mouse_button_down_funcs_{}, on_mouse_button_up_funcs_{};
+  std::multimap<
+    std::pair<Key, Modifiers>, 
+    std::function<void()>
+  > on_key_down_funcs_{}, on_key_up_funcs_{};
+  std::multimap<
+    std::pair<MouseButton, Modifiers>, 
+    std::function<void()>
+  > on_mouse_button_down_funcs_{}, on_mouse_button_up_funcs_{};
   std::vector<std::function<void(glm::dvec2)>> on_scroll_funcs_{};
   std::vector<std::function<void(size_t, size_t)>> on_set_cursor_pos_funcs_{};
+  // clang-format on
 
 public:
 

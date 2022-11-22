@@ -146,7 +146,7 @@ public:
     if constexpr (std::ranges::sized_range<Range>) {
       assign(static_cast<GLsizei>(values.size()));
       const auto pointer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-      if (pointer == nullptr) { STORM_THROW_GL_("Failed to map the buffer!"); }
+      if (pointer == nullptr) STORM_THROW_GL_("Failed to map the buffer!");
       std::ranges::copy(values, static_cast<Type*>(pointer));
       if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
         STORM_THROW_GL_("Failed to unmap the buffer!");
@@ -171,7 +171,7 @@ public:
     const auto pointer = glMapBufferRange(
         GL_ARRAY_BUFFER, static_cast<GLintptr>(index * sizeof(Type)),
         static_cast<GLsizeiptr>(sizeof(Type)), GL_MAP_READ_BIT);
-    if (pointer == nullptr) { STORM_THROW_GL_("Failed to map the buffer!"); }
+    if (pointer == nullptr) STORM_THROW_GL_("Failed to map the buffer!");
     Type value = *static_cast<const Type*>(pointer);
     if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
       STORM_THROW_GL_("Failed to unmap the buffer!");

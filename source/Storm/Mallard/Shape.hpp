@@ -52,9 +52,10 @@ concept shape =
     requires(Shape shape) {
       { shape.type() } noexcept -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::forward_range;
-    } && std::same_as<std::ranges::range_value_t< //
-                          decltype(std::declval<Shape>().nodes())>,
-                      NodeIndex>;
+    } &&
+    std::same_as<
+        std::ranges::range_value_t<decltype(std::declval<Shape>().nodes())>,
+        NodeIndex>;
 
 /// @brief 1D Shape concept.
 template<class Shape>
@@ -112,8 +113,8 @@ concept complex_shape =
     requires(Shape shape, const Mesh& mesh) {
       { shape.pieces(mesh) } -> std::ranges::forward_range;
     } &&
-    shape<std::ranges::range_value_t< //
-        decltype(std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
+    shape<std::ranges::range_value_t<decltype( //
+        std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
 
 /// @brief Piece type of a complex.
 template<class Shape, class Mesh>

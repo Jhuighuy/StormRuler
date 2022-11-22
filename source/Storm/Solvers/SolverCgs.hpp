@@ -131,13 +131,9 @@ private:
     // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
     // 𝒗 ← 𝒖 + 𝒒.
     // ----------------------
-    if (left_pre) {
-      pre_op->mul(v_vec_, q_vec_, lin_op, p_vec_);
-    } else if (right_pre) {
-      lin_op.mul(v_vec_, q_vec_, *pre_op, p_vec_);
-    } else {
-      lin_op.mul(v_vec_, p_vec_);
-    }
+    if (left_pre) pre_op->mul(v_vec_, q_vec_, lin_op, p_vec_);
+    else if (right_pre) lin_op.mul(v_vec_, q_vec_, *pre_op, p_vec_);
+    else lin_op.mul(v_vec_, p_vec_);
     const real_t alpha = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
     q_vec_ <<= u_vec_ - alpha * v_vec_;
     v_vec_ <<= u_vec_ + q_vec_;

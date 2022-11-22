@@ -51,14 +51,10 @@ private:
     H_.assign(m + 1, m);
 
     q_vecs_.resize(m + 1);
-    for (Vector& q_vec : q_vecs_) {
-      q_vec.assign(x_vec, false);
-    }
+    for (Vector& q_vec : q_vecs_) q_vec.assign(x_vec, false);
     if (pre_op != nullptr) {
-      if constexpr (Flexible) { z_vecs_.resize(m); }
-      for (Vector& z_vec : z_vecs_) {
-        z_vec.assign(x_vec, false);
-      }
+      if constexpr (Flexible) z_vecs_.resize(m);
+      for (Vector& z_vec : z_vecs_) z_vec.assign(x_vec, false);
     }
 
     /// @todo Refactor without duplication a code from

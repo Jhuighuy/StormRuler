@@ -70,20 +70,14 @@ private:
 
     r_vec_.assign(x_vec, false);
     v_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) { z_vec_.assign(x_vec, false); }
+    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
     p_vecs_.resize(s);
     u_vecs_.resize(s);
     g_vecs_.resize(s);
-    for (Vector& p_vec : p_vecs_) {
-      p_vec.assign(x_vec, false);
-    }
-    for (Vector& u_vec : u_vecs_) {
-      u_vec.assign(x_vec, false);
-    }
-    for (Vector& g_vec : g_vecs_) {
-      g_vec.assign(x_vec, false);
-    }
+    for (Vector& p_vec : p_vecs_) p_vec.assign(x_vec, false);
+    for (Vector& u_vec : u_vecs_) u_vec.assign(x_vec, false);
+    for (Vector& g_vec : g_vecs_) g_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -272,13 +266,10 @@ private:
       // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
       // 𝒓 ← 𝒓 - 𝜔⋅𝒗.
       // ----------------------
-      if (left_pre) {
-        pre_op->mul(v_vec_, z_vec_, lin_op, r_vec_);
-      } else if (right_pre) {
-        lin_op.mul(v_vec_, z_vec_, *pre_op, r_vec_);
-      } else {
-        lin_op.mul(v_vec_, r_vec_);
-      }
+      if (left_pre) pre_op->mul(v_vec_, z_vec_, lin_op, r_vec_);
+      else if (right_pre) lin_op.mul(v_vec_, z_vec_, *pre_op, r_vec_);
+      else lin_op.mul(v_vec_, r_vec_);
+
       omega_ =
           safe_divide(dot_product(v_vec_, r_vec_), dot_product(v_vec_, v_vec_));
       x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);

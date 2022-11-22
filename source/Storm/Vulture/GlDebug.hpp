@@ -34,7 +34,9 @@ public:
   /// Sticks to GL_ARB_debug_output extension since debug output
   /// is inside OpenGL since 4.3, and we are using 3.3.
   DebugOutput() noexcept {
-    if (GLEW_ARB_debug_output != GL_TRUE) { return; }
+    if (GLEW_ARB_debug_output != GL_TRUE) {
+      return;
+    }
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
     glDebugMessageCallbackARB(&on_message_, nullptr);
     STORM_INFO_("OpenGL debug output enabled.");
@@ -42,7 +44,9 @@ public:
 
   /// @brief Disable OpenGL debug output.
   ~DebugOutput() noexcept {
-    if (GLEW_ARB_debug_output != GL_TRUE) { return; }
+    if (GLEW_ARB_debug_output != GL_TRUE) {
+      return;
+    }
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
     STORM_INFO_("OpenGL debug output disabled.");
   }
@@ -53,28 +57,28 @@ private:
                           GLenum severity, [[maybe_unused]] GLsizei length,
                           const GLchar* message,
                           [[maybe_unused]] const void* user_param) {
-    const char* debug_error_source;
+    const char* error_source;
     switch (source) {
       case GL_DEBUG_SOURCE_API_ARB: //
-        debug_error_source = "API call";
+        error_source = "API call";
         break;
       case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-        debug_error_source = "window system API all";
+        error_source = "window system API all";
         break;
       case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-        debug_error_source = "shader compiler";
+        error_source = "shader compiler";
         break;
       case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-        debug_error_source = "third party API";
+        error_source = "third party API";
         break;
-      case GL_DEBUG_SOURCE_APPLICATION_ARB:
-        debug_error_source = "application";
+      case GL_DEBUG_SOURCE_APPLICATION_ARB: //
+        error_source = "application";
         break;
       case GL_DEBUG_SOURCE_OTHER_ARB: //
-        debug_error_source = "other";
+        error_source = "other";
         break;
       default: //
-        debug_error_source = "unknown source";
+        error_source = "unknown source";
         break;
     }
 
@@ -104,19 +108,19 @@ private:
     switch (severity) {
       default:
         STORM_DEBUG_("OpenGL: {} {} {:#x}: {}", //
-                     debug_error_source, debug_type, id, message);
+                     error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_LOW_ARB:
         STORM_INFO_("OpenGL: {} {} {:#x}: {}", //
-                    debug_error_source, debug_type, id, message);
+                    error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_MEDIUM_ARB:
         STORM_WARNING_("OpenGL: {} {} {:#x}: {}", //
-                       debug_error_source, debug_type, id, message);
+                       error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_HIGH_ARB:
         STORM_ERROR_("OpenGL: {} {} {:#x}: {}", //
-                     debug_error_source, debug_type, id, message);
+                     error_source, debug_type, id, message);
         break;
     }
   }

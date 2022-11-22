@@ -50,21 +50,21 @@ public:
 
   /// @brief Cast to the inegral value.
   template<std::integral Integral>
-  [[nodiscard]] constexpr explicit operator Integral() const noexcept {
+  constexpr explicit operator Integral() const noexcept {
     return static_cast<Integral>(value_);
   }
 
   /// @brief Cast into another tagged index.
   template<class OtherTag>
-  [[nodiscard]] constexpr explicit operator Index<OtherTag>() const noexcept {
+  constexpr explicit operator Index<OtherTag>() const noexcept {
     return Index<OtherTag>{value_};
   }
 
   /// @brief Comparison operators.
   /// @{
-  [[nodiscard]] constexpr auto operator<=>(const Index& other) const = default;
+  constexpr auto operator<=>(const Index& other) const = default;
   template<std::integral Integral>
-  [[nodiscard]] constexpr auto operator<=>(Integral value) const noexcept {
+  constexpr auto operator<=>(Integral value) const noexcept {
     return value_ <=> static_cast<size_t>(value);
   }
   /// @}
@@ -96,12 +96,10 @@ public:
   constexpr Index& operator+=(ptrdiff_t delta) noexcept {
     return value_ += delta, *this;
   }
-  [[nodiscard]] friend constexpr Index //
-  operator+(Index i, ptrdiff_t d) noexcept {
+  friend constexpr Index operator+(Index i, ptrdiff_t d) noexcept {
     return Index{i.value_ + d};
   }
-  [[nodiscard]] friend constexpr Index //
-  operator+(ptrdiff_t d, Index i) noexcept {
+  friend constexpr Index operator+(ptrdiff_t d, Index i) noexcept {
     return Index{d + i.value_};
   }
   /// @}
@@ -111,15 +109,13 @@ public:
   constexpr Index& operator-=(ptrdiff_t delta) noexcept {
     return value_ -= delta, *this;
   }
-  [[nodiscard]] friend constexpr Index //
-  operator-(Index i, ptrdiff_t d) noexcept {
+  friend constexpr Index operator-(Index i, ptrdiff_t d) noexcept {
     return Index{i.value_ - d};
   }
   /// @}
 
   /// @brief Difference operator.
-  [[nodiscard]] friend constexpr ptrdiff_t //
-  operator-(Index i1, Index i2) noexcept {
+  friend constexpr ptrdiff_t operator-(Index i1, Index i2) noexcept {
     return static_cast<ptrdiff_t>(i1.value_ - i2.value_);
   }
 

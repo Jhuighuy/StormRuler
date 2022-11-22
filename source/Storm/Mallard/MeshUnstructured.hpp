@@ -137,28 +137,26 @@ public:
 
   /// @brief Number of entity labels.
   template<size_t I>
-  [[nodiscard]] constexpr size_t
-  num_labels(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr size_t num_labels(meta::type<EntityIndex<I>> = {}) const noexcept {
     return std::get<I>(entity_ranges_tuple_).size() - 1;
   }
 
   /// @brief Label range.
   template<size_t I>
-  [[nodiscard]] constexpr auto
-  labels(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr auto labels(meta::type<EntityIndex<I>> = {}) const noexcept {
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(Label{0}, Label{entity_ranges.size() - 1});
   }
 
   /// @brief Number of entities.
   template<size_t I>
-  [[nodiscard]] constexpr size_t
+  constexpr size_t
   num_entities(meta::type<EntityIndex<I>> = {}) const noexcept {
     return static_cast<size_t>(std::get<I>(entity_ranges_tuple_).back());
   }
   /// @brief Number of entities with label @p label.
   template<size_t I>
-  [[nodiscard]] constexpr size_t
+  constexpr size_t
   num_entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
@@ -167,15 +165,14 @@ public:
 
   /// @brief Index range of the entitites.
   template<size_t I>
-  [[nodiscard]] constexpr auto
-  entities(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr auto entities(meta::type<EntityIndex<I>> = {}) const noexcept {
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(entity_ranges.front(), entity_ranges.back());
   }
   /// @brief Index range of the entitites with label @p label.
   template<size_t I>
-  [[nodiscard]] constexpr auto
-  entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr auto entities(Label label,
+                          meta::type<EntityIndex<I>> = {}) const noexcept {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(entity_ranges[label], entity_ranges[label + 1]);
@@ -183,7 +180,7 @@ public:
 
   /// @brief Label of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr Label label(EntityIndex<I> index) const noexcept {
+  constexpr Label label(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     // Binary search for entity in the label ranges.
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
@@ -193,43 +190,41 @@ public:
 
   /// @brief Shape type of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr shapes::Type
-  shape_type(EntityIndex<I> index) const noexcept {
+  constexpr shapes::Type shape_type(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_shape_types_tuple_)[index];
   }
 
   /// @brief "Volume" of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr real_t volume(EntityIndex<I> index) const noexcept {
+  constexpr real_t volume(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_volumes_tuple_)[index];
   }
 
   /// @brief Position of the entitity at @p index.
   template<size_t I>
-  [[nodiscard]] constexpr Vec position(EntityIndex<I> index) const noexcept {
+  constexpr Vec position(EntityIndex<I> index) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_positions_tuple_)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
-  [[nodiscard]] constexpr Vec normal(FaceIndex face_index) const noexcept {
+  constexpr Vec normal(FaceIndex face_index) const noexcept {
     STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
                   "Face index is out of range!");
     return face_normals_[face_index];
   }
 
   /// @brief Mesh AABB.
-  [[nodiscard]] constexpr const auto& aabb() const noexcept {
+  constexpr const auto& aabb() const noexcept {
     return aabb_;
   }
 
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
   template<size_t J, size_t I>
-  [[nodiscard]] constexpr auto
-  adjacent(EntityIndex<I> index,
-           meta::type<EntityIndex<J>> = {}) const noexcept {
+  constexpr auto adjacent(EntityIndex<I> index,
+                          meta::type<EntityIndex<J>> = {}) const noexcept {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     using T = Table<EntityIndex<I>, EntityIndex<J>>;
     return std::get<T>(connectivity_tuple_)[index];
@@ -239,7 +234,7 @@ public:
   template<size_t I, std::ranges::input_range Range>
     requires (I != 0) &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
-  [[nodiscard]] constexpr std::optional<EntityIndex<I>> find(
+  constexpr std::optional<EntityIndex<I>> find(
       Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());

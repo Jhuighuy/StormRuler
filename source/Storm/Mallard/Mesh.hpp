@@ -89,62 +89,61 @@ public:
 
   /// @brief Entity mesh.
   /// @{
-  [[nodiscard]] constexpr Mesh& mesh() noexcept {
+  constexpr Mesh& mesh() noexcept {
     return *p_mesh_;
   }
-  [[nodiscard]] constexpr const Mesh& mesh() const noexcept {
+  constexpr const Mesh& mesh() const noexcept {
     return *p_mesh_;
   }
   /// @}
 
   /// @brief Entity index.
   /// @{
-  [[nodiscard]] constexpr Index index() const noexcept {
+  constexpr Index index() const noexcept {
     return index_;
   }
-  [[nodiscard]] constexpr size_t index_sz() const noexcept {
+  constexpr size_t index_sz() const noexcept {
     return static_cast<size_t>(index_);
   }
   /// @}
 
   /// @brief Cast to entity index operator.
-  [[nodiscard]] constexpr operator Index() const noexcept {
+  constexpr operator Index() const noexcept {
     return index_;
   }
 
   /// @brief Comparison operator.
-  [[nodiscard]] constexpr auto
-  operator<=>(const EntityView& other) const noexcept {
+  constexpr auto operator<=>(const EntityView& other) const noexcept {
     STORM_ASSERT_(p_mesh_ == other.p_mesh_,
                   "Entities correspond to the different meshes!");
     return index_ <=> other.index_;
   }
 
   /// @brief Entity label.
-  [[nodiscard]] constexpr auto label() const noexcept {
+  constexpr auto label() const noexcept {
     return mesh().label(index_);
   }
 
   /// @brief Range of the adjacent nodes.
-  [[nodiscard]] constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept {
     return mesh().adjacent(index_, meta::type_v<NodeIndex>) |
            detail_::to_node_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent edges.
-  [[nodiscard]] constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept {
     return mesh().adjacent(index_, meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent faces.
-  [[nodiscard]] constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept {
     return mesh().adjacent(index_, meta::type_v<FaceIndex<Mesh>>) |
            detail_::to_face_view_(*p_mesh_);
   }
 
   /// @brief Range of the adjacent cells.
-  [[nodiscard]] constexpr auto cells() const noexcept {
+  constexpr auto cells() const noexcept {
     return mesh().adjacent(index_, meta::type_v<CellIndex<Mesh>>) |
            detail_::to_cell_view_(*p_mesh_);
   }
@@ -195,7 +194,7 @@ public:
       : EntityView<Mesh, NodeIndex>(mesh, index) {}
 
   /// @brief Node coordinates.
-  [[nodiscard]] constexpr auto position() const noexcept {
+  constexpr auto position() const noexcept {
     return this->mesh().position(this->index());
   }
 
@@ -216,17 +215,17 @@ public:
       : EntityView<Mesh, EdgeIndex>(mesh, index) {}
 
   /// @brief Edge shape type.
-  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+  constexpr shapes::Type shape_type() const noexcept {
     return this->mesh().shape_type(this->index());
   }
 
   /// @brief Edge length.
-  [[nodiscard]] constexpr real_t length() const noexcept {
+  constexpr real_t length() const noexcept {
     return this->mesh().volume(this->index());
   }
 
   /// @brief Edge barycenter position.
-  [[nodiscard]] constexpr auto center() const noexcept {
+  constexpr auto center() const noexcept {
     return this->mesh().position(this->index());
   }
 
@@ -247,34 +246,34 @@ public:
       : EntityView<Mesh, FaceIndex<Mesh>>(mesh, index) {}
 
   /// @brief Face shape type.
-  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+  constexpr shapes::Type shape_type() const noexcept {
     return this->mesh().shape_type(this->index());
   }
 
   /// @brief Face area (or length in 2D).
-  [[nodiscard]] constexpr real_t area() const noexcept {
+  constexpr real_t area() const noexcept {
     return this->mesh().volume(this->index());
   }
 
   /// @brief Face barycenter position.
-  [[nodiscard]] constexpr auto center() const noexcept {
+  constexpr auto center() const noexcept {
     return this->mesh().position(this->index());
   }
 
   /// @brief Face normal.
-  [[nodiscard]] constexpr auto normal() const noexcept {
+  constexpr auto normal() const noexcept {
     return this->mesh().normal(this->index());
   }
 
   /// @brief Get the adjacent inner cell.
-  [[nodiscard]] constexpr CellView<Mesh> inner_cell() const noexcept {
+  constexpr CellView<Mesh> inner_cell() const noexcept {
     STORM_ASSERT_(!this->cells().empty(),
                   "The face does not have an adjacent inner cell!");
     return this->cells().front();
   }
 
   /// @brief Get the adjacent outer cell.
-  [[nodiscard]] constexpr CellView<Mesh> outer_cell() const noexcept {
+  constexpr CellView<Mesh> outer_cell() const noexcept {
     STORM_ASSERT_(this->cells().size() == 2,
                   "The face does not have an adjacent outer cell!");
     return this->cells().back();
@@ -297,17 +296,17 @@ public:
       : EntityView<Mesh, CellIndex<Mesh>>(mesh, index) {}
 
   /// @brief Cell shape type.
-  [[nodiscard]] constexpr shapes::Type shape_type() const noexcept {
+  constexpr shapes::Type shape_type() const noexcept {
     return this->mesh().shape_type(this->index());
   }
 
   /// @brief Cell volume (or area in 2D).
-  [[nodiscard]] constexpr real_t volume() const noexcept {
+  constexpr real_t volume() const noexcept {
     return this->mesh().volume(this->index());
   }
 
   /// @brief Cell barycenter position.
-  [[nodiscard]] constexpr auto center() const noexcept {
+  constexpr auto center() const noexcept {
     return this->mesh().position(this->index());
   }
 
@@ -344,139 +343,139 @@ private:
 public:
 
   /// @brief Number of the node labels.
-  [[nodiscard]] constexpr size_t num_node_labels() const noexcept {
+  constexpr size_t num_node_labels() const noexcept {
     return self_().num_labels(meta::type_v<NodeIndex>);
   }
   /// @brief Number of the edge labels.
-  [[nodiscard]] constexpr size_t num_edge_labels() const noexcept {
+  constexpr size_t num_edge_labels() const noexcept {
     return self_().num_labels(meta::type_v<EdgeIndex>);
   }
   /// @brief Number of the face labels.
-  [[nodiscard]] constexpr size_t num_face_labels() const noexcept {
+  constexpr size_t num_face_labels() const noexcept {
     return self_().num_labels(meta::type_v<FaceIndex<Derived>>);
   }
   /// @brief Number of the cell labels.
-  [[nodiscard]] constexpr size_t num_cell_labels() const noexcept {
+  constexpr size_t num_cell_labels() const noexcept {
     return self_().num_labels(meta::type_v<CellIndex<Derived>>);
   }
 
   /// @brief Number of the nodes.
-  [[nodiscard]] constexpr size_t num_nodes() const noexcept {
+  constexpr size_t num_nodes() const noexcept {
     return self_().num_entities(meta::type_v<NodeIndex>);
   }
   /// @brief Number of the nodes with a @p label.
-  [[nodiscard]] constexpr size_t num_nodes(Label label) const noexcept {
+  constexpr size_t num_nodes(Label label) const noexcept {
     return self_().num_entities(label, meta::type_v<NodeIndex>);
   }
 
   /// @brief Number of the edges.
-  [[nodiscard]] constexpr size_t num_edges() const noexcept {
+  constexpr size_t num_edges() const noexcept {
     return self_().num_entities(meta::type_v<EdgeIndex>);
   }
   /// @brief Number of the edges with a @p label.
-  [[nodiscard]] constexpr size_t num_edges(Label label) const noexcept {
+  constexpr size_t num_edges(Label label) const noexcept {
     return self_().num_entities(label, meta::type_v<EdgeIndex>);
   }
 
   /// @brief Number of the faces.
-  [[nodiscard]] constexpr size_t num_faces() const noexcept {
+  constexpr size_t num_faces() const noexcept {
     return self_().num_entities(meta::type_v<FaceIndex<Derived>>);
   }
   /// @brief Number of the faces with a @p label.
-  [[nodiscard]] constexpr size_t num_faces(Label label) const noexcept {
+  constexpr size_t num_faces(Label label) const noexcept {
     return self_().num_entities(label, meta::type_v<FaceIndex<Derived>>);
   }
 
   /// @brief Number of the cells.
-  [[nodiscard]] constexpr size_t num_cells() const noexcept {
+  constexpr size_t num_cells() const noexcept {
     return self_().num_entities(meta::type_v<CellIndex<Derived>>);
   }
   /// @brief Number of the cells with a @p label.
-  [[nodiscard]] constexpr size_t num_cells(Label label) const noexcept {
+  constexpr size_t num_cells(Label label) const noexcept {
     return self_().num_entities(label, meta::type_v<CellIndex<Derived>>);
   }
 
   /// @brief Range of the nodes.
-  [[nodiscard]] constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept {
     return self_().entities(meta::type_v<NodeIndex>) |
            detail_::to_node_view_(self_());
   }
   /// @brief Range of the nodes with a @p label.
-  [[nodiscard]] constexpr auto nodes(Label label) const noexcept {
+  constexpr auto nodes(Label label) const noexcept {
     return self_().entities(label, meta::type_v<NodeIndex>) |
            detail_::to_node_view_(self_());
   }
 
   /// @brief Range of the edges.
-  [[nodiscard]] constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept {
     return self_().entities(meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(self_());
   }
   /// @brief Range of the edges with @p label.
-  [[nodiscard]] constexpr auto edges(Label label) const noexcept {
+  constexpr auto edges(Label label) const noexcept {
     return self_().entities(label, meta::type_v<EdgeIndex>) |
            detail_::to_edge_view_(self_());
   }
 
   /// @brief Range of the faces.
-  [[nodiscard]] constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept {
     return self_().entities(meta::type_v<FaceIndex<Derived>>) |
            detail_::to_face_view_(self_());
   }
   /// @brief Range of the faces with @p label.
-  [[nodiscard]] constexpr auto faces(Label label) const noexcept {
+  constexpr auto faces(Label label) const noexcept {
     return self_().entities(label, meta::type_v<FaceIndex<Derived>>) |
            detail_::to_face_view_(self_());
   }
 
   /// @brief Range of the cells.
-  [[nodiscard]] constexpr auto cells() const noexcept {
+  constexpr auto cells() const noexcept {
     return self_().entities(meta::type_v<CellIndex<Derived>>) |
            detail_::to_cell_view_(self_());
   }
   /// @brief Range of the cells with @p label.
-  [[nodiscard]] constexpr auto cells(Label label) const noexcept {
+  constexpr auto cells(Label label) const noexcept {
     return self_().entities(label, meta::type_v<CellIndex<Derived>>) |
            detail_::to_cell_view_(self_());
   }
 
   /// @brief Range of the interior nodes.
-  [[nodiscard]] constexpr auto interior_nodes() const noexcept {
+  constexpr auto interior_nodes() const noexcept {
     return nodes(Label{0});
   }
 
   /// @brief Range of the interior edges.
-  [[nodiscard]] constexpr auto interior_edges() const noexcept {
+  constexpr auto interior_edges() const noexcept {
     return edges(Label{0});
   }
 
   /// @brief Range of the interior faces.
-  [[nodiscard]] constexpr auto interior_faces() const noexcept {
+  constexpr auto interior_faces() const noexcept {
     return faces(Label{0});
   }
 
   /// @brief Range of the interior cells.
-  [[nodiscard]] constexpr auto interior_cells() const noexcept {
+  constexpr auto interior_cells() const noexcept {
     return cells(Label{0});
   }
 
   /// @brief Range of the boundary nodes.
-  [[nodiscard]] constexpr auto boundary_nodes() const noexcept {
+  constexpr auto boundary_nodes() const noexcept {
     return nodes() | std::views::drop(num_nodes(Label{0}));
   }
 
   /// @brief Range of the boundary edges.
-  [[nodiscard]] constexpr auto boundary_edges() const noexcept {
+  constexpr auto boundary_edges() const noexcept {
     return edges() | std::views::drop(num_edges(Label{0}));
   }
 
   /// @brief Range of the boundary faces.
-  [[nodiscard]] constexpr auto boundary_faces() const noexcept {
+  constexpr auto boundary_faces() const noexcept {
     return faces() | std::views::drop(num_faces(Label{0}));
   }
 
   /// @brief Range of the boundary cells.
-  [[nodiscard]] constexpr auto boundary_cells() const noexcept {
+  constexpr auto boundary_cells() const noexcept {
     return cells() | std::views::drop(num_cells(Label{0}));
   }
 

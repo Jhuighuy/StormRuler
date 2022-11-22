@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
+
 namespace Storm {
 
 /// @brief Axis-aligned bounding box (AABB).

@@ -69,11 +69,10 @@ public:
 
 /// @brief Matrix: has matrix shape and two subscripts.
 template<class Matrix>
-concept matrix = //
-    requires(Matrix& mat) {
-      { mat.shape() } noexcept -> std::same_as<MatrixShape>;
-      { mat(size_t{}, size_t{}) } noexcept;
-    };
+concept matrix = requires(Matrix& mat) {
+                   { mat.shape() } -> std::same_as<MatrixShape>;
+                   { mat(size_t{}, size_t{}) };
+                 };
 
 /// @brief Number of the matrix rows.
 template<matrix Matrix>

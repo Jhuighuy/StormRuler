@@ -35,10 +35,10 @@
 
 namespace Storm {
 
-/// @brief Element-wise product of function to matrices view.
+/// @brief Element-wise apply function to the matrices.
 template<std::copy_constructible Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
-           std::regular_invocable<Func, matrix_element_decltype_t<Matrices>...>
+           std::regular_invocable<Func, matrix_element_t<Matrices>...>
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
 private:
@@ -51,15 +51,12 @@ public:
   /// @brief Construct a map view.
   constexpr MapMatrixView(Func func, Matrices... mats)
       : func_{std::move(func)}, mats_{std::move(mats)...} {
-#if !STORM_COMPILER_MSVC_
-    STORM_ASSERT_( //
-        std::apply(
-            [](const auto& first_mat, const auto&... rest_mats) {
-              return ((first_mat.shape() == rest_mats.shape()) && ...);
-            },
-            mats_),
-        "Shapes of the matrix arguments are mismatched.");
-#endif
+    std::apply(
+        [](const auto& first_mat, const auto&... rest_mats) {
+          STORM_ASSERT_((first_mat.shape() == rest_mats.shape()) && ...,
+                        "Shapes of the matrix arguments are mismatched.");
+        },
+        mats_);
   }
 
   /// @copydoc MatrixViewInterface::shape
@@ -71,11 +68,10 @@ public:
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
-    return std::apply(
-        [&](const Matrices&... mats) {
-          return func_(mats(row_index, col_index)...);
-        },
-        mats_);
+    auto compute_element = [&](const Matrices&... mats) {
+      return func_(mats(row_index, col_index)...);
+    };
+    return std::apply(compute_element, mats_);
   }
 
 }; // class MapMatrixView
@@ -84,10 +80,9 @@ template<class Func, class... Matrices>
 MapMatrixView(Func, Matrices&&...)
     -> MapMatrixView<Func, forward_as_matrix_view_t<Matrices>...>;
 
-/// @brief Make a element-wise product of function @p func
-///   to matrices @p mats.
+/// @brief Element-wise apply function @p func to the matrices @p mats.
 template<class Func, viewable_matrix... Matrices>
-  requires std::regular_invocable<Func, matrix_element_decltype_t<Matrices>...>
+  requires std::regular_invocable<Func, matrix_element_t<Matrices>...>
 constexpr auto map(Func&& func, Matrices&&... mats) {
   return MapMatrixView(std::forward<Func>(func),
                        std::forward<Matrices>(mats)...);
@@ -193,7 +188,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 constexpr auto approx_eq(Matrix1&& mat1, Matrix2&& mat2, real_t tolerance) {
   STORM_ASSERT_(tolerance > 0.0, "Negative comparison tolerance!");
   return MapMatrixView(
-      [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) noexcept {
+      [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {
         return abs(std::forward<Elem1>(elem1) - //
                    std::forward<Elem2>(elem2)) <= tolerance;
       },
@@ -222,11 +217,10 @@ constexpr auto operator-(Matrix&& mat) {
 template<output_matrix OutMatrix, std::copyable Scalar>
   requires numeric_matrix<OutMatrix> && numeric_type<Scalar>
 constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
-        std::forward<OutElem>(out_elem) *= scal;
-      });
+  return assign(std::forward<OutMatrix>(out_mat),
+                [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) {
+                  std::forward<OutElem>(out_elem) *= scal;
+                });
 }
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
@@ -235,7 +229,7 @@ template<viewable_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr auto operator*(Matrix&& mat, Scalar scal) {
   return MapMatrixView(
-      [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
+      [scal = std::move(scal)]<class Elem>(Elem&& elem) {
         return std::forward<Elem>(elem) * scal;
       },
       std::forward<Matrix>(mat));
@@ -244,7 +238,7 @@ template<std::copyable Scalar, viewable_matrix Matrix>
   requires numeric_type<Scalar> && numeric_matrix<Matrix>
 constexpr auto operator*(Scalar scal, Matrix&& mat) {
   return MapMatrixView(
-      [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
+      [scal = std::move(scal)]<class Elem>(Elem&& elem) {
         return scal * std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -255,11 +249,10 @@ constexpr auto operator*(Scalar scal, Matrix&& mat) {
 template<output_matrix OutMatrix, std::copyable Scalar>
   requires numeric_matrix<OutMatrix> && numeric_type<Scalar>
 constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
-  return assign(
-      std::forward<OutMatrix>(out_mat),
-      [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) noexcept {
-        std::forward<OutElem>(out_elem) /= scal;
-      });
+  return assign(std::forward<OutMatrix>(out_mat),
+                [scal = std::move(scal)]<class OutElem>(OutElem&& out_elem) {
+                  std::forward<OutElem>(out_elem) /= scal;
+                });
 }
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
@@ -267,7 +260,7 @@ template<viewable_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr auto operator/(Matrix&& mat, Scalar scal) {
   return MapMatrixView(
-      [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
+      [scal = std::move(scal)]<class Elem>(Elem&& elem) {
         return std::forward<Elem>(elem) / scal;
       },
       std::forward<Matrix>(mat));
@@ -277,7 +270,7 @@ template<std::copyable Scalar, viewable_matrix Matrix>
   requires numeric_type<Scalar> && numeric_matrix<Matrix>
 constexpr auto operator/(Scalar scal, Matrix&& mat) {
   return MapMatrixView(
-      [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
+      [scal = std::move(scal)]<class Elem>(Elem&& elem) {
         return scal / std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -289,7 +282,7 @@ template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator+=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) {
         std::forward<OutElem>(out_elem) += std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -310,7 +303,7 @@ template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator-=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) {
         std::forward<OutElem>(out_elem) -= std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -331,7 +324,7 @@ template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) {
         std::forward<OutElem>(out_elem) *= std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -352,7 +345,7 @@ template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Matrix&& mat) {
   return assign(
       std::forward<OutMatrix>(out_mat),
-      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) noexcept {
+      []<class OutElem, class Elem>(OutElem&& out_elem, Elem&& elem) {
         std::forward<OutElem>(out_elem) /= std::forward<Elem>(elem);
       },
       std::forward<Matrix>(mat));
@@ -367,9 +360,7 @@ constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2) {
                        std::forward<Matrix2>(mat2));
 }
 
-// -----------------------------------------------------------------------------
-
-/// @brief Normalize the matrix @p mat.
+/// @brief Normalize the matrix @p mat (divide by it's norm).
 template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
 constexpr auto normalize(Matrix&& mat) {
@@ -380,26 +371,12 @@ constexpr auto normalize(Matrix&& mat) {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Cast the @p mat elements to another type.
-/// @tparam To Type, the elements would be cased to.
-template<class To, viewable_matrix Matrix>
-  requires std::convertible_to<matrix_element_decltype_t<Matrix>, To>
-constexpr auto matrix_cast(Matrix&& mat) {
-  return MapMatrixView(
-      []<class Elem>(Elem&& elem) noexcept {
-        return static_cast<To>(std::forward<Elem>(elem));
-      },
-      std::forward<Matrix>(mat));
-}
-
-// -----------------------------------------------------------------------------
-
 #define MAKE_UNARY_MATRIX_FUNC_(func)            \
   template<viewable_matrix Matrix>               \
     requires numeric_matrix<Matrix>              \
   constexpr auto func(Matrix&& mat) {            \
     return MapMatrixView(                        \
-        []<class Elem>(Elem&& elem) noexcept {   \
+        []<class Elem>(Elem&& elem) {            \
           return func(std::forward<Elem>(elem)); \
         },                                       \
         std::forward<Matrix>(mat));              \
@@ -410,7 +387,7 @@ constexpr auto matrix_cast(Matrix&& mat) {
     requires numeric_matrix<Matrix> && numeric_type<Scalar>                    \
   constexpr auto func(Matrix&& mat, Scalar scal) {                             \
     return MapMatrixView(                                                      \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
+        [scal = std::move(scal)]<class Elem>(Elem&& elem) {                    \
           return func(std::forward<Elem>(elem), scal);                         \
         },                                                                     \
         std::forward<Matrix>(mat));                                            \
@@ -419,7 +396,7 @@ constexpr auto matrix_cast(Matrix&& mat) {
     requires numeric_type<Scalar> && numeric_matrix<Matrix>                    \
   constexpr auto func(Scalar scal, Matrix&& mat) {                             \
     return MapMatrixView(                                                      \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
+        [scal = std::move(scal)]<class Elem>(Elem&& elem) {                    \
           return func(scal, std::forward<Elem>(elem));                         \
         },                                                                     \
         std::forward<Matrix>(mat));                                            \
@@ -428,7 +405,7 @@ constexpr auto matrix_cast(Matrix&& mat) {
     requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>                \
   constexpr auto func(Matrix1&& mat1, Matrix2&& mat2) {                        \
     return MapMatrixView(                                                      \
-        []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) noexcept {  \
+        []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {           \
           return func(std::forward<Elem1>(elem1), std::forward<Elem2>(elem2)); \
         },                                                                     \
         std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));             \
@@ -490,5 +467,19 @@ MAKE_UNARY_MATRIX_FUNC_(atanh)
 
 #undef MAKE_UNARY_MATRIX_FUNC_
 #undef MAKE_BINARY_MATRIX_FUNC_
+
+// -----------------------------------------------------------------------------
+
+/// @brief Cast the @p mat elements to another type.
+/// @tparam To Type, the elements would be cased to.
+template<class To, viewable_matrix Matrix>
+  requires std::convertible_to<matrix_element_decltype_t<Matrix>, To>
+constexpr auto matrix_cast(Matrix&& mat) {
+  return MapMatrixView(
+      []<class Elem>(Elem&& elem) {
+        return static_cast<To>(std::forward<Elem>(elem));
+      },
+      std::forward<Matrix>(mat));
+}
 
 } // namespace Storm

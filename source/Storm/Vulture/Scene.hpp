@@ -45,22 +45,22 @@ public:
   constexpr Transform() = default;
 
   /// @brief Transform position.
-  [[nodiscard]] constexpr const glm::vec3& position() const noexcept {
+  constexpr const glm::vec3& position() const noexcept {
     return position_;
   }
 
   /// @brief Transform rotation.
   /// @{
-  [[nodiscard]] constexpr const glm::quat& rotation() const noexcept {
+  constexpr const glm::quat& rotation() const noexcept {
     return rotation_;
   }
-  [[nodiscard]] glm::vec3 rotation_degrees() const noexcept {
+  glm::vec3 rotation_degrees() const noexcept {
     return glm::degrees(glm::eulerAngles(rotation_));
   }
   /// @}
 
   /// @brief Transform scale.
-  [[nodiscard]] constexpr const glm::vec3& scale() const noexcept {
+  constexpr const glm::vec3& scale() const noexcept {
     return scale_;
   }
 
@@ -91,7 +91,7 @@ public:
 
   /// @brief Transform model matrix.
   /// @todo GLM's matmul operator is not constexpr?
-  [[nodiscard]] glm::mat4 model_matrix() const noexcept {
+  glm::mat4 model_matrix() const noexcept {
     auto model_matrix = glm::translate(glm::mat4(1.0f), position_) *
                         glm::toMat4(rotation_) *
                         glm::scale(glm::mat4(1.0f), scale_);
@@ -121,17 +121,17 @@ public:
 
   /// @brief Camera transform.
   /// @{
-  [[nodiscard]] constexpr Transform& transform() noexcept {
+  constexpr Transform& transform() noexcept {
     return transform_;
   }
-  [[nodiscard]] constexpr const Transform& transform() const noexcept {
+  constexpr const Transform& transform() const noexcept {
     return transform_;
   }
   /// @}
 
   /// @brief Camera orbit.
   /// @{
-  [[nodiscard]] constexpr float orbit() const noexcept {
+  constexpr float orbit() const noexcept {
     return orbit_;
   }
   constexpr void set_orbit(float orbit) noexcept {
@@ -163,7 +163,7 @@ public:
 
   /// @brief Camera view-projection matrix.
   /// @todo GLM's matmul operator is not constexpr?
-  [[nodiscard]] glm::mat4 view_projection_matrix() const noexcept {
+  glm::mat4 view_projection_matrix() const noexcept {
     const glm::mat4 view_matrix = glm::inverse(
         transform_.model_matrix() *
         glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, orbit_)));
@@ -192,30 +192,30 @@ public:
 
   /// @brief Mesh renderer transform.
   /// @{
-  [[nodiscard]] constexpr Transform& transform() noexcept {
+  constexpr Transform& transform() noexcept {
     return transform_;
   }
-  [[nodiscard]] constexpr const Transform& transform() const noexcept {
+  constexpr const Transform& transform() const noexcept {
     return transform_;
   }
   /// @}
 
   /// @brief Mesh renderer mesh.
   /// @{
-  //[[nodiscard]] constexpr gl::Mesh& mesh() noexcept {
+  // constexpr gl::Mesh& mesh() noexcept {
   //  return mesh_;
   //}
-  //[[nodiscard]] constexpr const gl::Mesh& mesh() const noexcept {
+  // constexpr const gl::Mesh& mesh() const noexcept {
   //  return mesh_;
   //}
   /// @}
 
   /// @brief Mesh renderer program.
   /// @{
-  [[nodiscard]] constexpr gl::Program& program() noexcept {
+  constexpr gl::Program& program() noexcept {
     return program_;
   }
-  [[nodiscard]] constexpr const gl::Program& program() const noexcept {
+  constexpr const gl::Program& program() const noexcept {
     return program_;
   }
   /// @}

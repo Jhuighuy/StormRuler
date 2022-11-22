@@ -48,13 +48,12 @@ public:
       : shape_{shape}, func_{std::move(func)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return shape_;
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape_.in_range(row_index, col_index),
                   "Indices are out of range.");
     return func_(row_index, col_index);
@@ -67,8 +66,7 @@ public:
 /// @brief Make a constant matrix of @p shape.
 /// @param value Matrix element value.
 template<std::copyable Element>
-[[nodiscard]] constexpr auto //
-make_constant_matrix(MatrixShape shape, Element value) {
+constexpr auto make_constant_matrix(MatrixShape shape, Element value) {
   return MakeMatrixView( //
       shape,
       [value = std::move(value)]( //
@@ -82,9 +80,8 @@ make_constant_matrix(MatrixShape shape, Element value) {
 /// @param diagonal Matrix diagonal element value.
 /// @param off_diagonal Matrix off-diagonal element value.
 template<std::copyable Element>
-[[nodiscard]] constexpr auto
-make_diagonal_matrix(MatrixShape shape, //
-                     Element diagonal, Element off_diagonal = Element{}) {
+constexpr auto make_diagonal_matrix(MatrixShape shape, Element diagonal,
+                                    Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,
       [diagonal = std::move(diagonal), //

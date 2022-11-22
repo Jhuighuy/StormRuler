@@ -61,7 +61,7 @@ public:
   }
 
   /// @brief Cast to framebuffer ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return framebuffer_id_;
   }
 

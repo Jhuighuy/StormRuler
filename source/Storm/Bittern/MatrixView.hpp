@@ -79,30 +79,28 @@ protected:
 public:
 
   /// @brief Shape of the matrix.
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return self_().shape();
   }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) noexcept {
     return self_()(row_index, col_index);
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) const noexcept {
     return self_()(row_index, col_index);
   }
   /// @}
 
   /// @brief Get the vector coefficient at @p row_index.
   /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index) noexcept {
+  constexpr decltype(auto) operator()(size_t row_index) noexcept {
     return self_()(row_index, 0);
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index) const noexcept {
+  constexpr decltype(auto) operator()(size_t row_index) const noexcept {
     return self_()(row_index, 0);
   }
   /// @}
@@ -132,20 +130,20 @@ public:
             static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return p_mat_->shape();
   }
 
   /// @copydoc MatrixViewInterface::operator()
   /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return (*p_mat_)(row_index, col_index);
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return std::as_const(*p_mat_)(row_index, col_index);
@@ -174,20 +172,20 @@ public:
   constexpr MatrixOwningView(Matrix&& mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return mat_.shape();
   }
 
   /// @copydoc MatrixViewInterface::operator()
   /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return mat_(row_index, col_index);
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return mat_(row_index, col_index);
@@ -212,7 +210,7 @@ template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> ||
            detail_::matrix_can_ref_view_<Matrix> ||
            detail_::matrix_can_owning_view_<Matrix>
-[[nodiscard]] constexpr auto forward_as_matrix_view(Matrix&& mat) {
+constexpr auto forward_as_matrix_view(Matrix&& mat) {
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
   } else if constexpr (detail_::matrix_can_ref_view_<Matrix>) {

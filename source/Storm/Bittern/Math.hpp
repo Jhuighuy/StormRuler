@@ -68,8 +68,9 @@ concept real_type = enable_real_type_v<std::remove_cvref_t<Real>>;
 /// @brief Treat the specified type as complex (floating-point).
 template<class Complex>
 inline constexpr bool enable_complex_type_v =
-    is_instantiation_v<Complex, std::complex> &&
-    enable_real_type_v<typename Complex::value_type>;
+    is_instantiation_v<Complex, std::complex> /*&&
+    enable_real_type_v<typename Complex::value_type>*/
+    ;
 
 /// @brief Complex (floating-point) type.
 template<class Complex>
@@ -88,7 +89,7 @@ concept numeric_type = integer_type<Type> || real_or_complex_type<Type>;
 /// @brief If @p y is zero, return zero,
 /// else return value of @p x divided by @p y.
 template<real_or_complex_type Value>
-[[nodiscard]] constexpr auto safe_divide(Value x, Value y) {
+constexpr auto safe_divide(Value x, Value y) {
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
@@ -100,13 +101,13 @@ inline constexpr real_t pi = std::numbers::pi_v<real_t>;
 
 /// @brief Convert degrees to radians.
 template<real_type Real>
-[[nodiscard]] constexpr auto deg2rad(Real&& degrees) noexcept {
+constexpr auto deg2rad(Real&& degrees) noexcept {
   return (pi / 180.0) * std::forward<Real>(degrees);
 }
 
 /// @brief Convert radians to degrees.
 template<real_type Real>
-[[nodiscard]] constexpr auto rad2deg(Real&& radians) noexcept {
+constexpr auto rad2deg(Real&& radians) noexcept {
   return (180.0 / pi) * std::forward<Real>(radians);
 }
 
@@ -114,12 +115,12 @@ template<real_type Real>
 
 /// @brief Conjugate of real number @p x (noop).
 template<real_type Real>
-[[nodiscard]] constexpr auto conj(Real&& x) noexcept {
+constexpr auto conj(Real&& x) noexcept {
   return std::forward<Real>(x);
 }
 /// @brief Conjugate of complex number @p x.
 template<real_type Number>
-[[nodiscard]] constexpr auto conj(const std::complex<Number>& x) noexcept {
+constexpr auto conj(const std::complex<Number>& x) noexcept {
   return std::conj(x);
 }
 

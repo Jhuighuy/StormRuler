@@ -104,12 +104,12 @@ public:
   }
 
   /// @brief Cast to buffer ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return buffer_id_;
   }
 
   /// @brief Buffer size.
-  [[nodiscard]] constexpr GLsizei size() const noexcept {
+  constexpr GLsizei size() const noexcept {
     return buffer_size_;
   }
 

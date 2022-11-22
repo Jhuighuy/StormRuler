@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <concepts>
 #include <limits>
-#include <random>
 #include <type_traits>
 #include <utility>
 
@@ -49,21 +48,20 @@ public:
   }
 
   /// @brief Number of the matrix rows.
-  [[nodiscard]] constexpr size_t num_rows() const noexcept {
+  constexpr size_t num_rows() const noexcept {
     return num_rows_;
   }
 
   /// @brief Number of the matrix columns.
-  [[nodiscard]] constexpr size_t num_cols() const noexcept {
+  constexpr size_t num_cols() const noexcept {
     return num_cols_;
   }
 
   /// @brief Comparison operator.
-  [[nodiscard]] constexpr auto operator<=>(const MatrixShape&) const = default;
+  constexpr auto operator<=>(const MatrixShape&) const = default;
 
   /// @brief Check if the @p row_index and @p col_index are in range.
-  [[nodiscard]] constexpr bool in_range(size_t row_index,
-                                        size_t col_index) const noexcept {
+  constexpr bool in_range(size_t row_index, size_t col_index) const noexcept {
     return row_index < num_rows_ && col_index < num_cols_;
   }
 
@@ -79,13 +77,13 @@ concept matrix = //
 
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
-[[nodiscard]] constexpr size_t num_rows(Matrix&& mat) noexcept {
+constexpr size_t num_rows(Matrix&& mat) noexcept {
   return mat.shape().num_rows();
 }
 
 /// @brief Number of the matrix columns.
 template<matrix Matrix>
-[[nodiscard]] constexpr size_t num_cols(Matrix&& mat) noexcept {
+constexpr size_t num_cols(Matrix&& mat) noexcept {
   return mat.shape().num_cols();
 }
 
@@ -177,8 +175,7 @@ concept sparse_matrix = matrix<Matrix> && enable_sparse_matrix_v<Matrix>;
 /// @todo Restrictions!
 /// @{
 template<class Value, class ReduceFunc, matrix Matrix>
-[[nodiscard]] constexpr auto reduce(Value init, ReduceFunc reduce_func,
-                                    Matrix&& mat) {
+constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
       if constexpr (!block_matrix<Matrix>) {
@@ -192,9 +189,8 @@ template<class Value, class ReduceFunc, matrix Matrix>
 }
 template<class Value, class ReduceFunc, class Func, //
          matrix Matrix, matrix... RestMatrices>
-[[nodiscard]] constexpr auto reduce(Value init, ReduceFunc reduce_func,
-                                    Func func, Matrix&& mat,
-                                    RestMatrices&&... mats) noexcept {
+constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
+                      Matrix&& mat, RestMatrices&&... mats) noexcept {
   STORM_ASSERT_((mat.shape() == mats.shape()) && ...,
                 "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
@@ -214,7 +210,7 @@ template<class Value, class ReduceFunc, class Func, //
 
 /// @brief Sum the matrix @p mat elements.
 template<real_or_complex_matrix Matrix>
-[[nodiscard]] constexpr auto sum(Matrix&& mat) {
+constexpr auto sum(Matrix&& mat) {
   return reduce(matrix_inner_element_t<Matrix>{0.0}, std::plus{},
                 std::forward<Matrix>(mat));
 }
@@ -222,20 +218,20 @@ template<real_or_complex_matrix Matrix>
 /// @brief Check if all the boolean matrix @p mat elements are true.
 template<bool_matrix Matrix>
   requires std::same_as<matrix_element_t<Matrix>, bool>
-[[nodiscard]] constexpr auto all(Matrix&& mat) {
+constexpr auto all(Matrix&& mat) {
   return reduce(true, std::logical_and{}, std::forward<Matrix>(mat));
 }
 /// @brief Check if any of the boolean matrix @p mat elements is true.
 template<bool_matrix Matrix>
   requires std::same_as<matrix_element_t<Matrix>, bool>
-[[nodiscard]] constexpr auto any(Matrix&& mat) {
+constexpr auto any(Matrix&& mat) {
   return reduce(false, std::logical_or{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Minimum matrix @p mat element.
 template<matrix Matrix>
   requires std::totally_ordered<matrix_element_t<Matrix>>
-[[nodiscard]] constexpr auto min_element(Matrix&& mat) {
+constexpr auto min_element(Matrix&& mat) {
   using Elem = matrix_element_t<Matrix>;
   return reduce(
       std::numeric_limits<Elem>::max(),
@@ -245,7 +241,7 @@ template<matrix Matrix>
 /// @brief Maximum matrix @p mat element.
 template<matrix Matrix>
   requires std::totally_ordered<matrix_element_t<Matrix>>
-[[nodiscard]] constexpr auto max_element(Matrix&& mat) {
+constexpr auto max_element(Matrix&& mat) {
   using Elem = matrix_element_t<Matrix>;
   return reduce(
       std::numeric_limits<Elem>::lowest(),
@@ -255,7 +251,7 @@ template<matrix Matrix>
 
 /// @brief Element-wise matrix @p mat \f$ L_{1} \f$-norm.
 template<numeric_matrix Matrix>
-[[nodiscard]] constexpr auto norm_1(Matrix&& mat) {
+constexpr auto norm_1(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
       Result{0.0}, std::plus{},
@@ -266,7 +262,7 @@ template<numeric_matrix Matrix>
 }
 /// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
 template<numeric_matrix Matrix>
-[[nodiscard]] constexpr auto norm_2(Matrix&& mat) {
+constexpr auto norm_2(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   const auto temp = reduce(
       Result{0.0}, std::plus{},
@@ -276,7 +272,7 @@ template<numeric_matrix Matrix>
 }
 /// @brief Element-wise matrix @p mat \f$ L_{p} \f$-norm.
 template<numeric_matrix Matrix>
-[[nodiscard]] constexpr auto norm_p(Matrix&& mat, real_t p) {
+constexpr auto norm_p(Matrix&& mat, real_t p) {
   STORM_ASSERT_(p > 0.0, "Invalid p-norm parameter!");
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   const auto temp = reduce(
@@ -289,7 +285,7 @@ template<numeric_matrix Matrix>
 }
 /// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
 template<numeric_matrix Matrix>
-[[nodiscard]] constexpr auto norm_inf(Matrix&& mat) {
+constexpr auto norm_inf(Matrix&& mat) {
   using Result = decltype(abs(std::declval<matrix_element_t<Matrix>>()));
   return reduce(
       Result{0.0},
@@ -315,7 +311,7 @@ constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
 
 /// @copydoc norm_2
 template<numeric_matrix Matrix>
-[[nodiscard]] constexpr auto length(Matrix&& mat) {
+constexpr auto length(Matrix&& mat) {
   return norm_2(std::forward<Matrix>(mat));
 }
 

@@ -211,11 +211,11 @@ namespace detail_ {
     noncopyable_& operator=(const noncopyable_&) = delete;
   }; // struct noncopyable_
 
-  [[nodiscard]] constexpr bool in_range_(auto t, auto min, auto max) {
+  constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
   }
 
-  [[nodiscard]] constexpr bool one_of_(auto x, auto... vals) {
+  constexpr bool one_of_(auto x, auto... vals) {
     return ((x == vals) || ...);
   }
 

@@ -113,7 +113,7 @@ public:
   }
 
   /// @brief Cast to vertex array ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return vertex_array_id_;
   }
 

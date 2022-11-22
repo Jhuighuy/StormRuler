@@ -46,12 +46,10 @@ enum class Modifiers : int {
   num_lock = GLFW_MOD_NUM_LOCK,
 }; // enum class Modifiers
 
-[[nodiscard]] constexpr inline auto operator&(Modifiers a,
-                                              Modifiers b) noexcept {
+constexpr inline auto operator&(Modifiers a, Modifiers b) noexcept {
   return static_cast<int>(a) & static_cast<int>(b);
 }
-[[nodiscard]] constexpr inline auto operator|(Modifiers a,
-                                              Modifiers b) noexcept {
+constexpr inline auto operator|(Modifiers a, Modifiers b) noexcept {
   return static_cast<Modifiers>(static_cast<int>(a) | static_cast<int>(b));
 }
 
@@ -277,23 +275,23 @@ public:
   }
 
   /// @brief Underlying window pointer.
-  [[nodiscard]] constexpr GLFWwindow* underlying() const noexcept {
+  constexpr GLFWwindow* underlying() const noexcept {
     return underlying_;
   }
   /// @brief Cast to underlying window pointer.
-  [[nodiscard]] constexpr operator GLFWwindow*() const noexcept {
+  constexpr operator GLFWwindow*() const noexcept {
     return underlying_;
   }
 
   /// @brief Get window width.
-  [[nodiscard]] size_t width() const {
+  size_t width() const {
     STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
     int width;
     glfwGetWindowSize(underlying_, &width, nullptr);
     return static_cast<size_t>(width);
   }
   /// @brief Get window height.
-  [[nodiscard]] size_t height() const {
+  size_t height() const {
     STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
     int height;
     glfwGetWindowSize(underlying_, nullptr, &height);
@@ -301,14 +299,14 @@ public:
   }
 
   /// @brief Get cursor position's x.
-  [[nodiscard]] size_t cursor_pos_x() const {
+  size_t cursor_pos_x() const {
     STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
     double pos_xd;
     glfwGetCursorPos(underlying_, &pos_xd, nullptr);
     return make_cursor_pos_x_(pos_xd);
   }
   /// @brief Get cursor position's y.
-  [[nodiscard]] size_t cursor_pos_y() const {
+  size_t cursor_pos_y() const {
     STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
     double pos_yd;
     glfwGetCursorPos(underlying_, nullptr, &pos_yd);
@@ -530,12 +528,12 @@ private:
     }
   }
 
-  [[nodiscard]] size_t make_cursor_pos_x_(double pos_xd) const {
+  size_t make_cursor_pos_x_(double pos_xd) const {
     return static_cast<size_t>(
         std::clamp(pos_xd, 0.0, static_cast<double>(width() - 1)));
   }
   /// @brief Get cursor position's y.
-  [[nodiscard]] size_t make_cursor_pos_y_(double pos_yd) const {
+  size_t make_cursor_pos_y_(double pos_yd) const {
     const size_t height = this->height();
     const auto pos_y = static_cast<size_t>(
         std::clamp(pos_yd, 0.0, static_cast<double>(height - 1)));

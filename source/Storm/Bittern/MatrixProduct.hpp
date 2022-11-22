@@ -54,13 +54,12 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return MatrixShape{num_rows(mat1_), num_cols(mat2_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  [[nodiscard]] constexpr auto operator()(size_t row_index,
-                                          size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     // This is a default very slow generic implementation.
@@ -82,7 +81,7 @@ MatrixProductView(Matrix1&&, Matrix2&&)
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
   return MatrixProductView(std::forward<Matrix1>(mat1),
                            std::forward<Matrix2>(mat2));
 }
@@ -110,13 +109,12 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr static auto shape() noexcept {
+  constexpr static auto shape() noexcept {
     return MatrixShape{3, 1};
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  [[nodiscard]] constexpr auto operator()(size_t row_index,
-                                          size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     switch (row_index) {
@@ -137,7 +135,7 @@ CrossProductView(Matrix1&&, Matrix2&&)
 /// @brief Cross product of the 3x1 matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2) {
   return CrossProductView(std::forward<Matrix1>(mat1),
                           std::forward<Matrix2>(mat2));
 }

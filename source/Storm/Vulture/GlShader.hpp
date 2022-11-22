@@ -81,7 +81,7 @@ public:
   }
 
   /// @brief Cast to shader ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return shader_id_;
   }
 
@@ -141,7 +141,7 @@ public:
   }
 
   /// @brief Cast to shader ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return program_id_;
   }
 
@@ -169,10 +169,10 @@ public:
 
   /// @brief Get program uniform location.
   /// @{
-  [[nodiscard]] GLint operator[](const std::string& name) const {
+  GLint operator[](const std::string& name) const {
     return (*this)[name.c_str()];
   }
-  [[nodiscard]] GLint operator[](const char* name) const {
+  GLint operator[](const char* name) const {
     STORM_ASSERT_(name != nullptr, "Invalid uniform name!");
     return glGetUniformLocation(program_id_, name);
   }

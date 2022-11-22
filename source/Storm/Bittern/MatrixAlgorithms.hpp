@@ -66,6 +66,13 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
 }
 /// @}
 
+/// @brief Assign the matrices.
+/// @todo To be removed!
+template<output_matrix OutMatrix, matrix Matrix>
+constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
+}
+
 // -----------------------------------------------------------------------------
 
 /// @brief Fill the matrix @p out_mat with a scalar @p scal.

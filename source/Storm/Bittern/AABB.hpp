@@ -40,20 +40,20 @@ public:
   constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
 
   /// @brief AABB min vector.
-  [[nodiscard]] constexpr const Vec& min() const noexcept {
+  constexpr const Vec& min() const noexcept {
     return min_;
   }
   /// @brief AABB max vector.
-  [[nodiscard]] constexpr const Vec& max() const noexcept {
+  constexpr const Vec& max() const noexcept {
     return max_;
   }
 
   /// @brief AABB center.
-  [[nodiscard]] constexpr Vec center() const noexcept {
+  constexpr Vec center() const noexcept {
     return 0.5 * (max_ + min_);
   }
   /// @brief AABB extents.
-  [[nodiscard]] constexpr Vec extents() const noexcept {
+  constexpr Vec extents() const noexcept {
     return max_ - min_;
   }
 

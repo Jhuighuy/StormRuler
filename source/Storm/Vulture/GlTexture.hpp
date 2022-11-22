@@ -146,7 +146,7 @@ public:
   }
 
   /// @brief Cast to texture ID.
-  [[nodiscard]] constexpr operator GLuint() const noexcept {
+  constexpr operator GLuint() const noexcept {
     return texture_id_;
   }
 

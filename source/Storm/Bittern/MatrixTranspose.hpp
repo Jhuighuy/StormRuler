@@ -47,20 +47,20 @@ public:
   constexpr explicit TransposeMatrixView(Matrix mat) : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return MatrixShape{num_cols(mat_), num_rows(mat_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()
   /// @{
-  [[nodiscard]] constexpr decltype(auto) //
-  operator()(size_t row_index, size_t col_index) noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return mat_(col_index, row_index);
   }
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr decltype(auto) operator()(size_t row_index,
+                                      size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return mat_(col_index, row_index);
@@ -75,7 +75,7 @@ TransposeMatrixView(Matrix&&)
 
 /// @brief Transpose the matrix @p mat.
 template<viewable_matrix Matrix>
-[[nodiscard]] constexpr auto transpose(Matrix&& mat) {
+constexpr auto transpose(Matrix&& mat) {
   return TransposeMatrixView(std::forward<Matrix>(mat));
 }
 

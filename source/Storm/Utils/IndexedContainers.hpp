@@ -48,10 +48,10 @@ public:
   /// @{
   constexpr Value& at(size_t) = delete;
   constexpr const Value& at(size_t) const = delete;
-  [[nodiscard]] constexpr Value& at(Index index) {
+  constexpr Value& at(Index index) {
     return std::array<Value, Size>::at(static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr const Value& at(Index index) const {
+  constexpr const Value& at(Index index) const {
     return std::array<Value, Size>::at(static_cast<size_t>(index));
   }
   /// @}
@@ -60,11 +60,11 @@ public:
   /// @{
   constexpr Value& operator[](size_t) = delete;
   constexpr const Value& operator[](size_t) const = delete;
-  [[nodiscard]] constexpr Value& operator[](Index index) noexcept {
+  constexpr Value& operator[](Index index) noexcept {
     STORM_ASSERT_(index < Size, "Index is out of range!");
     return std::array<Value, Size>::operator[](static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr const Value& operator[](Index index) const noexcept {
+  constexpr const Value& operator[](Index index) const noexcept {
     STORM_ASSERT_(index < Size, "Index is out of range!");
     return std::array<Value, Size>::operator[](static_cast<size_t>(index));
   }
@@ -163,10 +163,10 @@ public:
   /// @{
   constexpr Value& at(size_t) = delete;
   constexpr const Value& at(size_t) const = delete;
-  [[nodiscard]] constexpr Value& at(Index index) {
+  constexpr Value& at(Index index) {
     return std::vector<Value, Allocator>::at(static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr const Value& at(Index index) const {
+  constexpr const Value& at(Index index) const {
     return std::vector<Value, Allocator>::at(static_cast<size_t>(index));
   }
   /// @}
@@ -175,12 +175,12 @@ public:
   /// @{
   constexpr Value& operator[](size_t) = delete;
   constexpr const Value& operator[](size_t) const = delete;
-  [[nodiscard]] constexpr Value& operator[](Index index) noexcept {
+  constexpr Value& operator[](Index index) noexcept {
     STORM_ASSERT_(index < this->size(), "Index is out of range!");
     return std::vector<Value, Allocator>::operator[](
         static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr const Value& operator[](Index index) const noexcept {
+  constexpr const Value& operator[](Index index) const noexcept {
     STORM_ASSERT_(index < this->size(), "Index is out of range!");
     return std::vector<Value, Allocator>::operator[](
         static_cast<size_t>(index));
@@ -216,11 +216,11 @@ public:
   /// @{
   constexpr Value& operator[](size_t) = delete;
   constexpr const Value& operator[](size_t) const = delete;
-  [[nodiscard]] constexpr Value& operator[](Index index) noexcept {
+  constexpr Value& operator[](Index index) noexcept {
     return std::unique_ptr<Value[], Deleter>::operator[](
         static_cast<size_t>(index));
   }
-  [[nodiscard]] constexpr const Value& operator[](Index index) const noexcept {
+  constexpr const Value& operator[](Index index) const noexcept {
     return std::unique_ptr<Value[], Deleter>::operator[](
         static_cast<size_t>(index));
   }

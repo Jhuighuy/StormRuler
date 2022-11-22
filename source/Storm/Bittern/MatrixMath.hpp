@@ -63,13 +63,12 @@ public:
   }
 
   /// @copydoc MatrixViewInterface::shape
-  [[nodiscard]] constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept {
     return std::get<0>(mats_).shape();
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  [[nodiscard]] constexpr decltype(auto)
-  operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape().in_range(row_index, col_index),
                   "Indices are out of range!");
     return std::apply(
@@ -89,7 +88,7 @@ MapMatrixView(Func, Matrices&&...)
 ///   to matrices @p mats.
 template<class Func, viewable_matrix... Matrices>
   requires std::regular_invocable<Func, matrix_element_decltype_t<Matrices>...>
-[[nodiscard]] constexpr auto map(Func&& func, Matrices&&... mats) {
+constexpr auto map(Func&& func, Matrices&&... mats) {
   return MapMatrixView(std::forward<Func>(func),
                        std::forward<Matrices>(mats)...);
 }
@@ -99,7 +98,7 @@ template<class Func, viewable_matrix... Matrices>
 /// @brief Logically negate the boolean matrix @p mat.
 template<viewable_matrix Matrix>
   requires bool_matrix<Matrix>
-[[nodiscard]] constexpr auto operator!(Matrix&& mat) {
+constexpr auto operator!(Matrix&& mat) {
   return MapMatrixView(std::logical_not{}, std::forward<Matrix>(mat));
 }
 
@@ -107,7 +106,7 @@ template<viewable_matrix Matrix>
 /// the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires bool_matrix<Matrix1> && bool_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator&&(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator&&(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::logical_and{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -117,7 +116,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 /// the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires bool_matrix<Matrix1> && bool_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator||(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator||(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::logical_or{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -130,8 +129,7 @@ template<viewable_matrix MaskMatrix, //
   requires bool_matrix<MaskMatrix> &&
            std::common_with<matrix_element_t<Matrix1>,
                             matrix_element_t<Matrix2>>
-[[nodiscard]] constexpr auto merge(MaskMatrix&& mask_mat, //
-                                   Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto merge(MaskMatrix&& mask_mat, Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(
       [](bool condition, auto elem1, auto elem2) noexcept {
         return condition ? elem1 : elem2;
@@ -145,43 +143,43 @@ template<viewable_matrix MaskMatrix, //
 /// @brief Element-wise compare the matrices @p mat1 and @p mat2.
 /// @{
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator==(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator==(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::equal_to{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator!=(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator!=(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::not_equal_to{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator<(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator<(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::less{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator<=(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator<=(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::less_equal{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator>(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator>(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::greater{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator>=(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator>=(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::greater_equal{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
 }
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-[[nodiscard]] constexpr auto operator<=>(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator<=>(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::compare_three_way{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -192,8 +190,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 /// to be approximately equal (within tolerance @p tolerance ).
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto approx_eq(Matrix1&& mat1, //
-                                       Matrix2&& mat2, real_t tolerance) {
+constexpr auto approx_eq(Matrix1&& mat1, Matrix2&& mat2, real_t tolerance) {
   STORM_ASSERT_(tolerance > 0.0, "Negative comparison tolerance!");
   return MapMatrixView(
       [=]<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) noexcept {
@@ -208,7 +205,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 /// @brief "+" the matrix @p mat.
 template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
-[[nodiscard]] constexpr auto operator+(Matrix&& mat) {
+constexpr auto operator+(Matrix&& mat) {
   // Since operator "+" does nothing on artimetic types,
   // simply forward matrices with artimetic elements as matrix views.
   return forward_as_matrix_view(std::forward<Matrix>(mat));
@@ -217,20 +214,13 @@ template<viewable_matrix Matrix>
 /// @brief Negate the matrix @p mat.
 template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
-[[nodiscard]] constexpr auto operator-(Matrix&& mat) {
+constexpr auto operator-(Matrix&& mat) {
   return MapMatrixView(std::negate{}, std::forward<Matrix>(mat));
-}
-
-/// @brief Assign the matrices.
-/// @todo To be removed!
-template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
 }
 
 /// @brief Multiply-assign the matrix @p out_mat by a scalar @p scal.
 template<output_matrix OutMatrix, std::copyable Scalar>
-  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+  requires numeric_matrix<OutMatrix> && numeric_type<Scalar>
 constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
   return assign(
       std::forward<OutMatrix>(out_mat),
@@ -242,8 +232,8 @@ constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Scalar scal) {
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
 template<viewable_matrix Matrix, std::copyable Scalar>
-  requires (numeric_matrix<Matrix> && !matrix<Scalar>)
-[[nodiscard]] constexpr auto operator*(Matrix&& mat, Scalar scal) {
+  requires numeric_matrix<Matrix> && numeric_type<Scalar>
+constexpr auto operator*(Matrix&& mat, Scalar scal) {
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return std::forward<Elem>(elem) * scal;
@@ -251,8 +241,8 @@ template<viewable_matrix Matrix, std::copyable Scalar>
       std::forward<Matrix>(mat));
 }
 template<std::copyable Scalar, viewable_matrix Matrix>
-  requires (!matrix<Scalar> && numeric_matrix<Matrix>)
-[[nodiscard]] constexpr auto operator*(Scalar scal, Matrix&& mat) {
+  requires numeric_type<Scalar> && numeric_matrix<Matrix>
+constexpr auto operator*(Scalar scal, Matrix&& mat) {
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return scal * std::forward<Elem>(elem);
@@ -263,7 +253,7 @@ template<std::copyable Scalar, viewable_matrix Matrix>
 
 /// @brief Divide-assign the matrix @p out_mat by a scalar @p scal.
 template<output_matrix OutMatrix, std::copyable Scalar>
-  requires (numeric_matrix<OutMatrix> && !matrix<Scalar>)
+  requires numeric_matrix<OutMatrix> && numeric_type<Scalar>
 constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
   return assign(
       std::forward<OutMatrix>(out_mat),
@@ -274,8 +264,8 @@ constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Scalar scal) {
 
 /// @brief Divide the matrix @p mat by a scalar @p scal.
 template<viewable_matrix Matrix, std::copyable Scalar>
-  requires (numeric_matrix<Matrix> && !matrix<Scalar>)
-[[nodiscard]] constexpr auto operator/(Matrix&& mat, Scalar scal) {
+  requires numeric_matrix<Matrix> && numeric_type<Scalar>
+constexpr auto operator/(Matrix&& mat, Scalar scal) {
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return std::forward<Elem>(elem) / scal;
@@ -284,8 +274,8 @@ template<viewable_matrix Matrix, std::copyable Scalar>
 }
 /// @brief Divide the scalar @p scal by a matrix @p mat.
 template<std::copyable Scalar, viewable_matrix Matrix>
-  requires (!matrix<Scalar> && numeric_matrix<Matrix>)
-[[nodiscard]] constexpr auto operator/(Scalar scal, Matrix&& mat) {
+  requires numeric_type<Scalar> && numeric_matrix<Matrix>
+constexpr auto operator/(Scalar scal, Matrix&& mat) {
   return MapMatrixView(
       [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {
         return scal / std::forward<Elem>(elem);
@@ -308,7 +298,7 @@ constexpr OutMatrix& operator+=(OutMatrix&& out_mat, Matrix&& mat) {
 /// @brief Add the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator+(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator+(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::plus{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -329,7 +319,7 @@ constexpr OutMatrix& operator-=(OutMatrix&& out_mat, Matrix&& mat) {
 /// @brief Subtract the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator-(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator-(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::minus{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -350,7 +340,7 @@ constexpr OutMatrix& operator*=(OutMatrix&& out_mat, Matrix&& mat) {
 /// @brief Element-wise multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator*(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator*(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::multiplies{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -371,7 +361,7 @@ constexpr OutMatrix& operator/=(OutMatrix&& out_mat, Matrix&& mat) {
 /// @brief Element-wise divide the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-[[nodiscard]] constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2) {
   return MapMatrixView(std::divides{}, //
                        std::forward<Matrix1>(mat1),
                        std::forward<Matrix2>(mat2));
@@ -382,7 +372,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 /// @brief Normalize the matrix @p mat.
 template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
-[[nodiscard]] constexpr auto normalize(Matrix&& mat) {
+constexpr auto normalize(Matrix&& mat) {
   auto mat_view = forward_as_matrix_view(std::forward<Matrix>(mat));
   const auto mat_norm = norm_2(mat_view);
   return safe_divide(1.0, mat_norm) * std::move(mat_view);
@@ -394,7 +384,7 @@ template<viewable_matrix Matrix>
 /// @tparam To Type, the elements would be cased to.
 template<class To, viewable_matrix Matrix>
   requires std::convertible_to<matrix_element_decltype_t<Matrix>, To>
-[[nodiscard]] constexpr auto matrix_cast(Matrix&& mat) {
+constexpr auto matrix_cast(Matrix&& mat) {
   return MapMatrixView(
       []<class Elem>(Elem&& elem) noexcept {
         return static_cast<To>(std::forward<Elem>(elem));
@@ -404,21 +394,21 @@ template<class To, viewable_matrix Matrix>
 
 // -----------------------------------------------------------------------------
 
-#define MAKE_UNARY_MATRIX_FUNC_(func)               \
-  template<viewable_matrix Matrix>                  \
-    requires numeric_matrix<Matrix>                 \
-  [[nodiscard]] constexpr auto func(Matrix&& mat) { \
-    return MapMatrixView(                           \
-        []<class Elem>(Elem&& elem) noexcept {      \
-          return func(std::forward<Elem>(elem));    \
-        },                                          \
-        std::forward<Matrix>(mat));                 \
+#define MAKE_UNARY_MATRIX_FUNC_(func)            \
+  template<viewable_matrix Matrix>               \
+    requires numeric_matrix<Matrix>              \
+  constexpr auto func(Matrix&& mat) {            \
+    return MapMatrixView(                        \
+        []<class Elem>(Elem&& elem) noexcept {   \
+          return func(std::forward<Elem>(elem)); \
+        },                                       \
+        std::forward<Matrix>(mat));              \
   }
 
 #define MAKE_BINARY_MATRIX_FUNC_(func)                                         \
   template<viewable_matrix Matrix, std::copyable Scalar>                       \
-    requires (numeric_matrix<Matrix> && !matrix<Scalar>)                       \
-  [[nodiscard]] constexpr auto func(Matrix&& mat, Scalar scal) {               \
+    requires numeric_matrix<Matrix> && numeric_type<Scalar>                    \
+  constexpr auto func(Matrix&& mat, Scalar scal) {                             \
     return MapMatrixView(                                                      \
         [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
           return func(std::forward<Elem>(elem), scal);                         \
@@ -426,8 +416,8 @@ template<class To, viewable_matrix Matrix>
         std::forward<Matrix>(mat));                                            \
   }                                                                            \
   template<std::copyable Scalar, viewable_matrix Matrix>                       \
-    requires (!matrix<Scalar> && numeric_matrix<Matrix>)                       \
-  [[nodiscard]] constexpr auto func(Scalar scal, Matrix&& mat) {               \
+    requires numeric_type<Scalar> && numeric_matrix<Matrix>                    \
+  constexpr auto func(Scalar scal, Matrix&& mat) {                             \
     return MapMatrixView(                                                      \
         [scal = std::move(scal)]<class Elem>(Elem&& elem) noexcept {           \
           return func(scal, std::forward<Elem>(elem));                         \
@@ -436,7 +426,7 @@ template<class To, viewable_matrix Matrix>
   }                                                                            \
   template<viewable_matrix Matrix1, viewable_matrix Matrix2>                   \
     requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>                \
-  [[nodiscard]] constexpr auto func(Matrix1&& mat1, Matrix2&& mat2) {          \
+  constexpr auto func(Matrix1&& mat1, Matrix2&& mat2) {                        \
     return MapMatrixView(                                                      \
         []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) noexcept {  \
           return func(std::forward<Elem1>(elem1), std::forward<Elem2>(elem2)); \

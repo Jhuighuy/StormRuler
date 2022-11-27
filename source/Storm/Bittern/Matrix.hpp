@@ -106,46 +106,25 @@ using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 template<class Matrix>
 concept output_matrix = matrix<Matrix>; /// @todo Implement me!
 
-/// @brief Matrix with matrix elements (block matrix).
-template<class Matrix>
-concept block_matrix = matrix<Matrix> && matrix<matrix_element_t<Matrix>>;
-
-template<matrix Matrix>
-struct matrix_inner_element {
-  using type = matrix_element_t<Matrix>;
-};
-template<block_matrix Matrix>
-struct matrix_inner_element<Matrix> {
-  using type = typename matrix_inner_element<matrix_element_t<Matrix>>::type;
-};
-
-/// @brief Matrix inner element type.
-/// It is the regular element type for the regular matrices, and
-/// the element type of a block if the matrix is a block matrix.
-template<matrix Matrix>
-using matrix_inner_element_t = typename matrix_inner_element<Matrix>::type;
-
 /// @brief Matrix with boolean elements.
 template<class Matrix>
-concept bool_matrix =
-    matrix<Matrix> && bool_type<matrix_inner_element_t<Matrix>>;
+concept bool_matrix = matrix<Matrix> && bool_type<matrix_element_t<Matrix>>;
 
 /// @brief Matrix with integral elements.
 /// We do not have any special integer matrix operations,
 /// integer matrices are defined for completeness.
 template<class Matrix>
 concept integer_matrix =
-    matrix<Matrix> && integer_type<matrix_inner_element_t<Matrix>>;
+    matrix<Matrix> && integer_type<matrix_element_t<Matrix>>;
 
 /// @brief Matrix with real (floating-point) elements.
 template<class Matrix>
-concept real_matrix =
-    matrix<Matrix> && real_type<matrix_inner_element_t<Matrix>>;
+concept real_matrix = matrix<Matrix> && real_type<matrix_element_t<Matrix>>;
 
 /// @brief Matrix with complex (floating-point) elements.
 template<class Matrix>
 concept complex_matrix =
-    matrix<Matrix> && complex_type<matrix_inner_element_t<Matrix>>;
+    matrix<Matrix> && complex_type<matrix_element_t<Matrix>>;
 
 /// @brief Matrix with real or complex (floating-point) elements.
 template<class Matrix>
@@ -158,16 +137,6 @@ concept numeric_matrix =
 
 // -----------------------------------------------------------------------------
 
-/// @brief Treat matrices of the specified type as the sparse matrices.
-template<class Real>
-inline constexpr bool enable_sparse_matrix_v = false;
-
-/// @brief Sparse matrix.
-template<class Matrix>
-concept sparse_matrix = matrix<Matrix> && enable_sparse_matrix_v<Matrix>;
-
-// -----------------------------------------------------------------------------
-
 /// @brief Reduce the matrix @p mat coefficients to a single value.
 /// @param init Initial reduction value.
 /// @param reduce_func Reduction function.
@@ -177,11 +146,7 @@ template<class Value, class ReduceFunc, matrix Matrix>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      if constexpr (!block_matrix<Matrix>) {
-        init = reduce_func(init, mat(row_index, col_index));
-      } else {
-        init = reduce(init, reduce_func, mat(row_index, col_index));
-      }
+      init = reduce_func(init, mat(row_index, col_index));
     }
   }
   return init;
@@ -194,13 +159,8 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
                 "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
-      if constexpr (!block_matrix<Matrix>) {
-        init = reduce_func(init, func(mat(row_index, col_index),
-                                      mats(row_index, col_index)...));
-      } else {
-        init = reduce(init, reduce_func, func, mat(row_index, col_index),
-                      mats(row_index, col_index)...);
-      }
+      init = reduce_func(
+          init, func(mat(row_index, col_index), mats(row_index, col_index)...));
     }
   }
   return init;
@@ -210,7 +170,7 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
 /// @brief Sum the matrix @p mat elements.
 template<real_or_complex_matrix Matrix>
 constexpr auto sum(Matrix&& mat) {
-  return reduce(matrix_inner_element_t<Matrix>{0.0}, std::plus{},
+  return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
                 std::forward<Matrix>(mat));
 }
 

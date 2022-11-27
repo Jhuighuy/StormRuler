@@ -30,6 +30,8 @@
 
 namespace Storm {
 
+// -----------------------------------------------------------------------------
+
 /// @brief Check if the specified class is an instantion of a template.
 /// @todo Move me somewhere else!
 /// @{
@@ -224,5 +226,7 @@ auto sym_ortho(Value a, Value b) {
   return std::tuple(cs, sn, rr);
 
 } // sym_ortho
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

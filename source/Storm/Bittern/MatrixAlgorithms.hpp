@@ -38,11 +38,7 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
   STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      if constexpr (!block_matrix<OutMatrix>) {
-        out_mat(row_index, col_index) = mat(row_index, col_index);
-      } else {
-        assign(out_mat(row_index, col_index), mat(row_index, col_index));
-      }
+      out_mat(row_index, col_index) = mat(row_index, col_index);
     }
   }
   return out_mat;
@@ -54,13 +50,7 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
                 "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      if constexpr (!block_matrix<OutMatrix>) {
-        assign_func(out_mat(row_index, col_index),
-                    mats(row_index, col_index)...);
-      } else {
-        assign(out_mat(row_index, col_index), assign_func,
-               mats(row_index, col_index)...);
-      }
+      assign_func(out_mat(row_index, col_index), mats(row_index, col_index)...);
     }
   }
   return out_mat;
@@ -88,7 +78,7 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 /// @brief Fill the matrix @p out_mat elements with the random numbers.
 /// @warning This is a sequential operation!
 template<output_matrix OutMatrix>
-  requires (real_matrix<OutMatrix> && !block_matrix<OutMatrix>)
+  requires (real_matrix<OutMatrix>)
 constexpr OutMatrix& fill_randomly(
     OutMatrix&& out_mat, //
     matrix_element_t<OutMatrix> min = 0,

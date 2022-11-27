@@ -102,15 +102,4 @@ TEST(BitternTestSuite, MatrixExpressionReductions) {
   EXPECT_NEAR(norm_inf(mat), 25.94224, EPS);
 }
 
-TEST(BitternTestSuite, BlockMatrixReduction) {
-  Mat2x2<real_t> A{1.0, 2.0, //
-                   3.0, 4.0};
-  Mat2x2<real_t> B{5.0, 6.0, //
-                   7.0, 8.0};
-  Mat2x2<Mat2x2<real_t>> mat{A, B, //
-                             B, A};
-
-  EXPECT_EQ(sum(mat), 72.0);
-}
-
 } // namespace Storm

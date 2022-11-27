@@ -48,7 +48,7 @@ message(STATUS "\n" [=[
 # Setup the project.
 project(StormRuler
         VERSION 0.1
-        DESCRIPTION "A very high order CFD solver"
+        DESCRIPTION "A very high order FVM framework"
         LANGUAGES CXX)
 
 # A container library that stores all the properties.

@@ -24,11 +24,13 @@
 
 #include <Storm/Mallard/Fwd.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <initializer_list>
 #include <ranges>
 #include <tuple>
+#include <vector>
 
 namespace Storm::shapes {
 

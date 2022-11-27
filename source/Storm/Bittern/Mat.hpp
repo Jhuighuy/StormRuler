@@ -74,20 +74,20 @@ public:
 
   /// @brief Matrix shape.
   static constexpr auto shape() noexcept {
-    return MatrixShape{NumRows, NumCols};
+    return std::array{NumRows, NumCols};
   }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
   constexpr Elem& operator()(size_t row_index, //
                              size_t col_index = 0) noexcept {
-    STORM_ASSERT_(shape().in_range(row_index, col_index),
+    STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return elems_[row_index * NumCols + col_index];
   }
   constexpr const Elem& operator()(size_t row_index,
                                    size_t col_index = 0) const noexcept {
-    STORM_ASSERT_(shape().in_range(row_index, col_index),
+    STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return elems_[row_index * NumCols + col_index];
   }

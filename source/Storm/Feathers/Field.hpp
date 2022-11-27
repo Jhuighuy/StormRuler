@@ -71,7 +71,7 @@ public:
 
   /// @brief Field shape.
   [[nodiscard]] constexpr auto shape() const noexcept {
-    return MatrixShape{p_mesh_->num_entities(meta::type_v<Index>), NumVars};
+    return std::array{p_mesh_->num_entities(meta::type_v<Index>), NumVars};
   }
 
   /// @todo Document me!

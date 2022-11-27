@@ -22,6 +22,8 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Utils/Index.hpp>
+
 #include <Storm/Bittern/Math.hpp>
 
 #include <algorithm>
@@ -32,58 +34,52 @@
 
 namespace Storm {
 
-/// @brief Matrix shape: a pair of the row and column extents.
-class MatrixShape final {
-private:
+// -----------------------------------------------------------------------------
 
-  size_t num_rows_, num_cols_;
+/// @brief Matrix shape: a size_t array.
+template<class MatrixShape>
+concept matrix_shape =
+    std::same_as<std::remove_cvref_t<MatrixShape>,
+                 std::array<size_t, std::tuple_size_v<MatrixShape>>>;
 
-public:
+/// @brief Rank of a matrix shape.
+template<matrix_shape MatrixShape>
+inline constexpr size_t matrix_shape_rank_v = std::tuple_size_v<MatrixShape>;
 
-  /// @brief Construct the matrix shape.
-  constexpr MatrixShape(size_t num_rows, size_t num_cols) noexcept
-      : num_rows_{num_rows}, num_cols_{num_cols} {
-    STORM_ASSERT_(num_rows_ != 0 && num_cols_ != 0,
-                  "Matrix shape cannot be zero!");
-  }
+/// @brief Check if all indices are in range.
+template<matrix_shape MatrixShape, index... Indices>
+  requires (matrix_shape_rank_v<MatrixShape> == sizeof...(Indices))
+constexpr bool in_range(const MatrixShape& shape, Indices...) {
+  return false; // to be implemented.
+}
 
-  /// @brief Number of the matrix rows.
-  constexpr size_t num_rows() const noexcept {
-    return num_rows_;
-  }
+// -----------------------------------------------------------------------------
 
-  /// @brief Number of the matrix columns.
-  constexpr size_t num_cols() const noexcept {
-    return num_cols_;
-  }
+/// @brief Matrix index: a tuple-like object with indices.
+template<class MatrixIndices>
+concept matrix_indices =
+    requires { std::tuple_size_v<MatrixIndices>; } &&
+    requires {
+      std::apply([](index auto...) {}, std::declval<MatrixIndices>());
+    };
 
-  /// @brief Comparison operator.
-  constexpr auto operator<=>(const MatrixShape&) const = default;
-
-  /// @brief Check if the @p row_index and @p col_index are in range.
-  constexpr bool in_range(size_t row_index, size_t col_index) const noexcept {
-    return row_index < num_rows_ && col_index < num_cols_;
-  }
-
-}; // class MatrixShape
-
-/// @brief Matrix: has matrix shape and two subscripts.
+/// @brief Matrix: has shape and subscripts.
 template<class Matrix>
 concept matrix = requires(Matrix& mat) {
-                   { mat.shape() } -> std::same_as<MatrixShape>;
+                   { mat.shape() } -> matrix_shape;
                    { mat(size_t{}, size_t{}) };
                  };
 
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
 constexpr size_t num_rows(Matrix&& mat) noexcept {
-  return mat.shape().num_rows();
+  return std::get<0>(mat.shape());
 }
 
 /// @brief Number of the matrix columns.
 template<matrix Matrix>
 constexpr size_t num_cols(Matrix&& mat) noexcept {
-  return mat.shape().num_cols();
+  return std::get<1>(mat.shape());
 }
 
 // -----------------------------------------------------------------------------
@@ -279,5 +275,5 @@ constexpr auto length(Matrix&& mat) {
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
 #include <Storm/Bittern/MatrixMath.hpp>
 #include <Storm/Bittern/MatrixProduct.hpp>
-#include <Storm/Bittern/MatrixSlicing.hpp>
 #include <Storm/Bittern/MatrixTranspose.hpp>
+// #include <Storm/Bittern/MatrixSlicing.hpp>

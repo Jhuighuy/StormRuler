@@ -77,9 +77,10 @@ using CellIndex = typename Mesh::CellIndex;
 
 /// @brief Mesh spatial dimensionality.
 template<mesh Mesh>
-inline constexpr size_t mesh_dim_v =
-    decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))::shape()
-        .num_rows();
+inline constexpr size_t mesh_dim_v = 2 /*
+     decltype(std::declval<Mesh>().position(std::declval<NodeIndex>()))::shape()
+         .num_rows()*/
+    ;
 
 /// @brief Mesh spatial vector type.
 template<mesh Mesh, class Real = real_t>

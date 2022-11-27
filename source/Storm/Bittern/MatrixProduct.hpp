@@ -51,12 +51,12 @@ public:
 
   /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept {
-    return MatrixShape{num_rows(mat1_), num_cols(mat2_)};
+    return std::array{num_rows(mat1_), num_cols(mat2_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(shape().in_range(row_index, col_index),
+    STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     // This is a default very slow generic implementation.
     auto val = mat1_(row_index, 0) * mat2_(0, col_index);
@@ -99,19 +99,18 @@ public:
   /// @brief Construct a matrix product view.
   constexpr explicit CrossProductView(Matrix1 mat1, Matrix2 mat2)
       : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
-    STORM_ASSERT_((mat1_.shape() == MatrixShape{3, 1} &&
-                   mat2_.shape() == MatrixShape{3, 1}),
+    STORM_ASSERT_((mat1_.shape() == shape() && mat2_.shape() == shape()),
                   "Matrices of shape 3x1 are expected!");
   }
 
   /// @copydoc MatrixViewInterface::shape
   constexpr static auto shape() noexcept {
-    return MatrixShape{3, 1};
+    return std::array{3_sz, 1_sz};
   }
 
   /// @copydoc MatrixViewInterface::operator()
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(shape().in_range(row_index, col_index),
+    STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     switch (row_index) {
       case 0: return mat1_(1, 0) * mat2_(2, 0) - mat1_(2, 0) * mat2_(1, 0);

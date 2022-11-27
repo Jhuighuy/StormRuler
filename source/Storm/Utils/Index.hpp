@@ -140,6 +140,6 @@ inline constexpr bool is_index_v<Index<Tag>> = true;
 
 /// @brief Index type.
 template<class Index>
-concept index = is_index_v<Index>;
+concept index = std::convertible_to<Index, size_t> || is_index_v<Index>;
 
 } // namespace Storm

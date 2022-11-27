@@ -201,6 +201,10 @@ using real_t = double;
 /// @brief Complex floating-point type.
 using complex_t = std::complex<real_t>;
 
+constexpr size_t operator""_sz(unsigned long long arg) noexcept {
+  return static_cast<size_t>(arg);
+}
+
 namespace detail_ {
 
   struct noncopyable_ {

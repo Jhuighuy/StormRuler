@@ -114,44 +114,39 @@ protected:
 public:
 
   bool solve(InVector& x_vec, const OutVector& b_vec,
-             const Operator<InVector, OutVector>& any_op) override final;
+             const Operator<InVector, OutVector>& any_op) final {
+    // Initialize the solver.
+    if (pre_op != nullptr) {
+      pre_op->build(x_vec, b_vec, any_op);
+    }
+    const real_t initial_error = init(x_vec, b_vec, any_op, pre_op.get());
+    absolute_error = initial_error;
+    if (absolute_error_tolerance > 0.0 &&
+        absolute_error < absolute_error_tolerance) {
+      finalize(x_vec, b_vec, any_op, pre_op.get());
+      return true;
+    }
+
+    // Iterate the solver:
+    bool converged = false;
+    for (iteration = 0; !converged && (iteration < num_iterations);
+         ++iteration) {
+      absolute_error = iterate(x_vec, b_vec, any_op, pre_op.get());
+      relative_error = absolute_error / initial_error;
+      converged |= (absolute_error_tolerance > 0.0) &&
+                   (absolute_error < absolute_error_tolerance);
+      converged |= (relative_error_tolerance > 0.0) &&
+                   (relative_error < relative_error_tolerance);
+    }
+
+    // Exit the solver.
+    finalize(x_vec, b_vec, any_op, pre_op.get());
+    STORM_INFO_("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
+                iteration, absolute_error, relative_error);
+    return converged;
+  }
 
 }; // class IterativeSolver
-
-template<legacy_vector_like InVector, legacy_vector_like OutVector>
-bool IterativeSolver<InVector, OutVector>::solve(
-    InVector& x_vec, const OutVector& b_vec,
-    const Operator<InVector, OutVector>& any_op) {
-  // Initialize the solver.
-  if (pre_op != nullptr) {
-    pre_op->build(x_vec, b_vec, any_op);
-  }
-  const real_t initial_error{init(x_vec, b_vec, any_op, pre_op.get())};
-  absolute_error = initial_error;
-  if (absolute_error_tolerance > 0.0 &&
-      absolute_error < absolute_error_tolerance) {
-    finalize(x_vec, b_vec, any_op, pre_op.get());
-    return true;
-  }
-
-  // Iterate the solver:
-  bool converged = false;
-  for (iteration = 0; !converged && (iteration < num_iterations); ++iteration) {
-    absolute_error = iterate(x_vec, b_vec, any_op, pre_op.get());
-    relative_error = absolute_error / initial_error;
-    converged |= (absolute_error_tolerance > 0.0) &&
-                 (absolute_error < absolute_error_tolerance);
-    converged |= (relative_error_tolerance > 0.0) &&
-                 (relative_error < relative_error_tolerance);
-  }
-
-  // Exit the solver.
-  finalize(x_vec, b_vec, any_op, pre_op.get());
-  STORM_INFO_("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
-              iteration, absolute_error, relative_error);
-  return converged;
-
-} // IterativeSolver::Solve
 
 /// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///
 /// @brief Abstract inner-outer iterative solver.
@@ -234,13 +229,13 @@ private:
 
   real_t init(const InVector& x_vec, const OutVector& b_vec,
               const Operator<InVector, OutVector>& any_op,
-              const Preconditioner<InVector>* pre_op) override final {
+              const Preconditioner<InVector>* pre_op) final {
     return outer_init(x_vec, b_vec, any_op, pre_op);
   }
 
   real_t iterate(InVector& x_vec, const OutVector& b_vec,
                  const Operator<InVector, OutVector>& any_op,
-                 const Preconditioner<InVector>* pre_op) override final {
+                 const Preconditioner<InVector>* pre_op) final {
     inner_iteration = this->iteration % num_inner_iterations;
     if (inner_iteration == 0) {
       inner_init(x_vec, b_vec, any_op, pre_op);
@@ -254,7 +249,7 @@ private:
 
   void finalize(InVector& x_vec, const OutVector& b_vec,
                 const Operator<InVector, OutVector>& any_op,
-                const Preconditioner<InVector>* pre_op) override final {
+                const Preconditioner<InVector>* pre_op) final {
     if (inner_iteration != num_inner_iterations - 1) {
       inner_finalize(x_vec, b_vec, any_op, pre_op);
     }

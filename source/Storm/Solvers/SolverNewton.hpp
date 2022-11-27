@@ -56,13 +56,13 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
-              const Preconditioner<Vector>* pre_op) override final {
+              const Preconditioner<Vector>* pre_op) final {
     STORM_TERMINATE_("Newton solver is not implemented yet!");
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
-                 const Preconditioner<Vector>* pre_op) override final {
+                 const Preconditioner<Vector>* pre_op) final {
     STORM_TERMINATE_("Newton solver is not implemented yet!");
   } // NewtonSolver::iterate
 

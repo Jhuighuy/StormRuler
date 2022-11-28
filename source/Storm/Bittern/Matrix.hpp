@@ -270,6 +270,8 @@ constexpr auto length(Matrix&& mat) {
   return norm_2(std::forward<Matrix>(mat));
 }
 
+// -----------------------------------------------------------------------------
+
 } // namespace Storm
 
 #include <Storm/Bittern/MatrixAlgorithms.hpp>

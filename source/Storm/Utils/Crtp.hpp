@@ -25,7 +25,10 @@
 #include <concepts>
 #include <type_traits>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief A semi-valid argument for the CRTP classes.
 template<class Derived>
@@ -33,7 +36,8 @@ concept crtp_derived = std::is_class_v<Derived> &&
                        std::same_as<Derived, std::remove_cv_t<Derived>>;
 
 // Based on /*is-derived-from-view-interface*/<T> implementation.
-namespace detail_ {
+namespace detail_
+{
   template<template<crtp_derived Derived> class CrtpInterface>
   struct DerivedFromCrtpInterfaceImpl_ {
     template<class T, class U>
@@ -50,5 +54,7 @@ concept derived_from_crtp_interface =
     requires(T x) { //
       detail_::DerivedFromCrtpInterfaceImpl_<CrtpInterface>{x, x};
     };
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

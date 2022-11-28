@@ -20,6 +20,8 @@
 
 #pragma once
 
+// -----------------------------------------------------------------------------
+
 // Threading libraries configutation.
 #cmakedefine01 STORM_OpenMP_ENABLED
 #cmakedefine01 STORM_TBB_ENABLED
@@ -40,3 +42,5 @@
 #cmakedefine01 STORM_GLEW_ENABLED
 #cmakedefine01 STORM_GLFW_ENABLED
 #cmakedefine01 STORM_GLM_ENABLED
+
+// -----------------------------------------------------------------------------

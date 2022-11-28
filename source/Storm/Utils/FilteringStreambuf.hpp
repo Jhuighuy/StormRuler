@@ -27,13 +27,17 @@
 #include <istream>
 #include <streambuf>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Filtering stream buffer.
 /// @tparam BeginFilter First filtering character, typically '#'.
 /// @tparam EndFilter Last filtering character, typically '\n'.
 template<class Char, Char BeginFilter, Char EndFilter>
-class FilteringStreambuf final : public std::basic_streambuf<Char> {
+class FilteringStreambuf final : public std::basic_streambuf<Char>
+{
 private:
 
   std::istream* p_stream_;
@@ -50,18 +54,21 @@ public:
 
   /// @brief Construct a filtering stream buffer.
   FilteringStreambuf(std::basic_istream<Char>& stream)
-      : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()} {
+      : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()}
+  {
     p_stream_->rdbuf(this);
   }
 
   /// @brief Destroy a filtering stream buffer.
-  ~FilteringStreambuf() final {
+  ~FilteringStreambuf() final
+  {
     p_stream_->rdbuf(p_streambuf_);
   }
 
 protected:
 
-  typename std::basic_streambuf<Char>::int_type underflow() final {
+  typename std::basic_streambuf<Char>::int_type underflow() final
+  {
     auto bumped = p_streambuf_->sbumpc();
     if (bumped == begin_filter_) {
       while (bumped != eof_ && bumped != end_filter_) {
@@ -76,5 +83,7 @@ protected:
   }
 
 }; // class FilteringStreambuf
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

@@ -178,16 +178,25 @@
 
 // -----------------------------------------------------------------------------
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// A small metaprogramming library.
-namespace meta {}
+namespace meta
+{
+}
 
 /// Shapes collection.
-namespace shapes {}
+namespace shapes
+{
+}
 
 /// @brief Contains the internal implementation details.
-namespace detail_ {}
+namespace detail_
+{
+}
 
 /// @brief Size type.
 using size_t = std::size_t;
@@ -215,11 +224,13 @@ namespace detail_ {
     noncopyable_& operator=(const noncopyable_&) = delete;
   }; // struct noncopyable_
 
-  constexpr bool in_range_(auto t, auto min, auto max) {
+  constexpr bool in_range_(auto t, auto min, auto max)
+  {
     return min <= t && t <= max;
   }
 
-  constexpr bool one_of_(auto x, auto... vals) {
+  constexpr bool one_of_(auto x, auto... vals)
+  {
     return ((x == vals) || ...);
   }
 
@@ -229,8 +240,12 @@ namespace detail_ {
 
 } // namespace detail_
 
+// -----------------------------------------------------------------------------
+
 using Error = std::runtime_error;
 using IoError = std::runtime_error;
 using GlError = std::runtime_error;
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

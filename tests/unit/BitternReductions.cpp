@@ -25,7 +25,7 @@
 namespace Storm
 {
 
-using namespace std::complex_literals;
+using namespace std::complex_literals; // NOLINT
 
 // -----------------------------------------------------------------------------
 

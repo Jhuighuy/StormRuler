@@ -52,7 +52,7 @@ template<matrix_shape MatrixShape, index... Indices>
   requires (matrix_shape_rank_v<MatrixShape> == sizeof...(Indices))
 constexpr bool in_range(const MatrixShape& shape, Indices...)
 {
-  return false; // to be implemented.
+  return true; // to be implemented.
 }
 
 // -----------------------------------------------------------------------------

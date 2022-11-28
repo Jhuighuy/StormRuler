@@ -12,24 +12,15 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Download the latest Doctest.
-file(DOWNLOAD 
-  "https://raw.githubusercontent.com/doctest/doctest/master/doctest/doctest.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/_doctest.h")
+# Ignore the doctest.
+_doctest.h
 
 # ------------------------------------------------------------------------------
-
-# Playground executable.
-file(GLOB CXX_SOURCES "./*.cpp")
-add_executable(StormRuler_UnitTests ${CXX_SOURCES})
-
-# Link with the core library.
-target_link_libraries(StormRuler_UnitTests StormRuler)

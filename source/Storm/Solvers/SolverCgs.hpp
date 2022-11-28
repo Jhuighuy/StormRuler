@@ -29,7 +29,10 @@
 
 #include <utility>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief The CGS (Conjugate Gradients Squared) linear operator equation
 /// solver.
@@ -46,7 +49,8 @@ namespace Storm {
 ///     SIAM J. Sci. Stat. Comput., 10:36-52, 1989.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class CgsSolver final : public IterativeSolver<Vector> {
+class CgsSolver final : public IterativeSolver<Vector>
+{
 private:
 
   real_t rho_;
@@ -54,7 +58,8 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override {
+              const Preconditioner<Vector>* pre_op) override
+  {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
@@ -88,7 +93,8 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override {
+                 const Preconditioner<Vector>* pre_op) override
+  {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
     const bool right_pre =
@@ -172,5 +178,7 @@ private:
   }
 
 }; // class CgsSolver
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

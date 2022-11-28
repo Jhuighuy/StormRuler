@@ -24,15 +24,19 @@
 
 #include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
-#include <Storm/Bittern/MatrixDense.hpp>
 
+#include <Storm/Solvers/MatrixDense.hpp>
 #include <Storm/Solvers/Solver.hpp>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Parmetrized GMRES solver.
 template<legacy_vector_like Vector, bool Flexible, bool Loose = false>
-class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
+class BaseGmresSolver : public InnerOuterIterativeSolver<Vector>
+{
 private:
 
   DenseVector<real_t> beta_, cs_, sn_;
@@ -43,7 +47,8 @@ private:
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
-                    const Preconditioner<Vector>* pre_op) override {
+                    const Preconditioner<Vector>* pre_op) override
+  {
     const size_t m = this->num_inner_iterations;
 
     beta_.assign(m + 1);
@@ -85,7 +90,8 @@ private:
 
   void inner_init(const Vector& x_vec, const Vector& b_vec,
                   const Operator<Vector>& lin_op,
-                  const Preconditioner<Vector>* pre_op) override {
+                  const Preconditioner<Vector>* pre_op) override
+  {
     // Force right preconditioning for the flexible GMRES.
     const bool left_pre = (pre_op != nullptr) && (!Flexible) &&
                           (this->pre_side == PreconditionerSide::Left);
@@ -111,7 +117,8 @@ private:
 
   real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
                        const Operator<Vector>& lin_op,
-                       const Preconditioner<Vector>* pre_op) override {
+                       const Preconditioner<Vector>* pre_op) override
+  {
     const size_t k = this->inner_iteration;
 
     // Force right preconditioning for the flexible GMRES.
@@ -186,7 +193,8 @@ private:
 
   void inner_finalize(Vector& x_vec, const Vector& b_vec,
                       const Operator<Vector>& lin_op,
-                      const Preconditioner<Vector>* pre_op) override {
+                      const Preconditioner<Vector>* pre_op) override
+  {
     const size_t k = this->inner_iteration;
 
     const bool right_pre =
@@ -272,7 +280,9 @@ protected:
 ///     SIAM J. Sci. Stat. Comput., 7:856–869, 1986.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class GmresSolver final : public BaseGmresSolver<Vector, false> {};
+class GmresSolver final : public BaseGmresSolver<Vector, false>
+{
+}; // class GmresSolver
 
 /// @brief The FGMRES (Flexible Generalized Minimal Residual) linear operator
 /// equation solver.
@@ -298,6 +308,10 @@ class GmresSolver final : public BaseGmresSolver<Vector, false> {};
 ///     SIAM J. Sci. Comput. 14 (1993): 461-469.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class FgmresSolver final : public BaseGmresSolver<Vector, true> {};
+class FgmresSolver final : public BaseGmresSolver<Vector, true>
+{
+}; // class FgmresSolver
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

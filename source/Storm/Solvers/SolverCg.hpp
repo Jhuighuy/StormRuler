@@ -27,7 +27,10 @@
 
 #include <Storm/Solvers/Solver.hpp>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief The CG (Conjugate Gradients) linear self-adjoint definite operator
 /// equation solver.
@@ -43,7 +46,8 @@ namespace Storm {
 /// 409-435.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class CgSolver final : public IterativeSolver<Vector> {
+class CgSolver final : public IterativeSolver<Vector>
+{
 private:
 
   real_t gamma_;
@@ -51,7 +55,8 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override {
+              const Preconditioner<Vector>* pre_op) override
+  {
     p_vec_.assign(x_vec, false);
     r_vec_.assign(x_vec, false);
     z_vec_.assign(x_vec, false);
@@ -83,7 +88,8 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override {
+                 const Preconditioner<Vector>* pre_op) override
+  {
     // Iterate:
     // ----------------------
     // 𝒛 ← 𝓐𝒑,
@@ -124,5 +130,7 @@ private:
   }
 
 }; // class CgSolver
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

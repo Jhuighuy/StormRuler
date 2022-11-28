@@ -32,7 +32,10 @@
 #include <tuple>
 #include <vector>
 
-namespace Storm::shapes {
+namespace Storm::shapes
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Shape type.
 enum class Type : std::uint8_t {
@@ -52,8 +55,10 @@ enum class Type : std::uint8_t {
 template<class Shape>
 concept shape =
     requires(Shape shape) {
-      { shape.type() } noexcept -> std::same_as<Type>;
+      // clang-format off
+      { shape.type() } -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::forward_range;
+      // clang-format off
     } &&
     std::same_as<
         std::ranges::range_value_t<decltype(std::declval<Shape>().nodes())>,
@@ -96,7 +101,8 @@ template<size_t Index, shape Shape>
   requires ((Index == 0) ||
             (Index == 1 && (shape2D<Shape> || shape3D<Shape>) ) ||
             (Index == 2 && shape3D<Shape>) )
-constexpr auto parts(const Shape& shape) noexcept {
+constexpr auto parts(const Shape& shape) noexcept
+{
   if constexpr (Index == 0) {
     return shape.nodes();
   } else if constexpr (Index == 1) {
@@ -113,7 +119,9 @@ template<class Shape, class Mesh>
 concept complex_shape =
     shape<Shape> && mesh<Mesh> &&
     requires(Shape shape, const Mesh& mesh) {
+      // clang-format off
       { shape.pieces(mesh) } -> std::ranges::forward_range;
+      // clang-format on
     } &&
     shape<std::ranges::range_value_t<decltype( //
         std::declval<Shape>().pieces(std::declval<Mesh>()))>>;
@@ -124,7 +132,8 @@ template<class Shape, class Mesh>
 using piece_t = std::ranges::range_value_t<decltype( //
     std::declval<Shape>().pieces(std::declval<Mesh>()))>;
 
-namespace detail_ {
+namespace detail_
+{
   template<class Shape, class Mesh>
   concept can_volume_ =
       requires(Shape shape, const Mesh& mesh) { volume(shape, mesh); };
@@ -141,7 +150,8 @@ namespace detail_ {
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>)
-constexpr real_t volume(const Shape& shape, const Mesh& mesh) noexcept {
+constexpr real_t volume(const Shape& shape, const Mesh& mesh) noexcept
+{
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
   for (const auto& piece : pieces | std::views::drop(1)) {
@@ -156,7 +166,8 @@ template<shape Shape, mesh Mesh>
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>)
 constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
-                                      const Mesh& mesh) noexcept {
+                                      const Mesh& mesh) noexcept
+{
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
   auto vol_center = vol * barycenter(pieces.front(), mesh);
@@ -172,8 +183,8 @@ template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
             detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
             detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>)
-constexpr mesh_vec_t<Mesh> normal(const Shape& shape,
-                                  const Mesh& mesh) noexcept {
+constexpr mesh_vec_t<Mesh> normal(const Shape& shape, const Mesh& mesh) noexcept
+{
   const auto pieces = shape.pieces(mesh);
   auto vol_normal = volume(pieces.front(), mesh) * normal(pieces.front(), mesh);
   for (const auto& piece : pieces | std::views::drop(1)) {
@@ -196,7 +207,8 @@ constexpr mesh_vec_t<Mesh> normal(const Shape& shape,
 ///        n2 @ f2
 ///
 /// @endverbatim
-class Seg final {
+class Seg final
+{
 public:
 
   /// @brief Segment node.
@@ -210,12 +222,14 @@ public:
   constexpr Seg(NodeIndex i1, NodeIndex i2) noexcept : n1{i1}, n2{i2} {}
 
   /// @brief Segment type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::segment;
   }
 
   /// @brief Segment nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2};
   }
 
@@ -223,15 +237,16 @@ public:
 
 /// @brief Segment @p seg length ("volume").
 template<mesh Mesh>
-constexpr real_t volume(const Seg& seg, const Mesh& mesh) noexcept {
+constexpr real_t volume(const Seg& seg, const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return length(v2 - v1);
 }
 
 /// @brief Segment @p seg barycenter.
 template<mesh Mesh>
-constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg,
-                                      const Mesh& mesh) noexcept {
+constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg, const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return (v1 + v2) / 2.0;
 }
@@ -239,7 +254,8 @@ constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg,
 /// @brief Segment @p seg normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 2)
-constexpr mesh_vec_t<Mesh> normal(const Seg& seg, const Mesh& mesh) noexcept {
+constexpr mesh_vec_t<Mesh> normal(const Seg& seg, const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   const auto d = normalize(v2 - v1);
   /// @todo Is sign here correct?
@@ -263,7 +279,8 @@ constexpr mesh_vec_t<Mesh> normal(const Seg& seg, const Mesh& mesh) noexcept {
 ///         e1/f1
 ///
 /// @endverbatim
-class Triangle final {
+class Triangle final
+{
 public:
 
   /// @brief Triangle node.
@@ -275,20 +292,25 @@ public:
   constexpr Triangle() = default;
   /// @brief Construct a triangle with nodes.
   constexpr Triangle(NodeIndex i1, NodeIndex i2, NodeIndex i3) noexcept
-      : n1{i1}, n2{i2}, n3{i3} {}
+      : n1{i1}, n2{i2}, n3{i3}
+  {
+  }
 
   /// @brief Triangle type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::triangle;
   }
 
   /// @brief Triangle nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3};
   }
 
   /// @brief Triangle edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n1}};
   }
 
@@ -297,7 +319,8 @@ public:
 /// @brief Triangle @p tri "volume" (area).
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 2)
-constexpr real_t volume(const Triangle& tri, const Mesh& mesh) noexcept {
+constexpr real_t volume(const Triangle& tri, const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   if constexpr (mesh_dim_v<Mesh> == 2) {
@@ -315,7 +338,8 @@ constexpr real_t volume(const Triangle& tri, const Mesh& mesh) noexcept {
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 2)
 constexpr mesh_vec_t<Mesh> barycenter(const Triangle& tri,
-                                      const Mesh& mesh) noexcept {
+                                      const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   return (v1 + v2 + v3) / 3.0;
@@ -325,7 +349,8 @@ constexpr mesh_vec_t<Mesh> barycenter(const Triangle& tri,
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 3)
 constexpr mesh_vec_t<Mesh> normal(const Triangle& tri,
-                                  const Mesh& mesh) noexcept {
+                                  const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
   const auto v3{mesh.position(tri.n3)};
   return normalize(cross(v2 - v1, v3 - v1));
@@ -345,7 +370,8 @@ constexpr mesh_vec_t<Mesh> normal(const Triangle& tri,
 ///          e2/f2
 ///
 /// @endverbatim
-class Quadrangle final {
+class Quadrangle final
+{
 public:
 
   /// @brief Quadrangle node.
@@ -358,27 +384,33 @@ public:
   /// @brief Construct a quadrangle with nodes.
   constexpr Quadrangle(NodeIndex i1, NodeIndex i2, //
                        NodeIndex i3, NodeIndex i4) noexcept
-      : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
+      : n1{i1}, n2{i2}, n3{i3}, n4{i4}
+  {
+  }
 
   /// @brief Quadrangle type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::quadrangle;
   }
 
   /// @brief Quadrangle nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3, n4};
   }
 
   /// @brief Quadrangle edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n4}, Seg{n4, n1}};
   }
 
   /// @brief Quadrangle pieces.
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 2)
-  constexpr auto pieces(const Mesh& mesh) const noexcept {
+  constexpr auto pieces(const Mesh& mesh) const noexcept
+  {
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Triangle{n1, n2, n3}, Triangle{n3, n4, n1}};
     // return std::array{Triangle{n1, n2, n4}, Triangle{n2, n3, n4}};
@@ -400,7 +432,8 @@ public:
 ///       n1      n3      n5      n9
 ///
 /// @endverbatim
-class TriangleStrip final {
+class TriangleStrip final
+{
 public:
 
   /// @brief Triangle strip nodes.
@@ -409,13 +442,15 @@ public:
   /// @brief Construct a triangle strip.
   constexpr TriangleStrip() = default;
   /// @brief Construct a triangle strip with nodes.
-  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i} {
+  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i}
+  {
     STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
   }
 
   /// @brief Triangle strip type.
   /// May fallback to triangle or quadrangle types.
-  constexpr auto type() const noexcept {
+  constexpr auto type() const noexcept
+  {
     STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
     switch (n.size()) {
       case 3: return Type::triangle;
@@ -425,13 +460,15 @@ public:
   }
 
   /// @brief Triangle strip nodes.
-  constexpr const auto& nodes() const noexcept {
+  constexpr const auto& nodes() const noexcept
+  {
     return n;
   }
 
   /// @brief Triangle strip edges.
   template<class T = void>
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     static_assert(meta::always_false<T>,
                   "TriangleStrip::edges is not implemented yet!");
     return std::vector<Seg>{};
@@ -439,7 +476,8 @@ public:
 
   /// @brief Triangle strip pieces.
   template<mesh Mesh>
-  constexpr auto pieces(const Mesh& mesh) const noexcept {
+  constexpr auto pieces(const Mesh& mesh) const noexcept
+  {
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::views::iota(size_t{2}, n.size()) |
            std::views::transform([&](size_t i) {
@@ -468,7 +506,8 @@ public:
 ///          e1/f1
 ///
 /// @endverbatim
-class Polygon final {
+class Polygon final
+{
 public:
 
   /// @brief Polygon nodes.
@@ -477,13 +516,15 @@ public:
   /// @brief Construct a polygon.
   constexpr Polygon() = default;
   /// @brief Construct a polygon with nodes.
-  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i} {
+  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i}
+  {
     STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
   }
 
   /// @brief Polygon type.
   /// May fallback to triangle or quadrangle types.
-  constexpr auto type() const noexcept {
+  constexpr auto type() const noexcept
+  {
     STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
     switch (n.size()) {
       case 3: return Type::triangle;
@@ -493,12 +534,14 @@ public:
   }
 
   /// @brief Polygon nodes.
-  constexpr const auto& nodes() const noexcept {
+  constexpr const auto& nodes() const noexcept
+  {
     return n;
   }
 
   /// @brief Polygon edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::views::iota(size_t{1}, n.size()) |
            std::views::transform([&](size_t i) {
              return Seg{n[i - 1], n[i]};
@@ -507,7 +550,8 @@ public:
 
   /// @brief Polygon pieces.
   template<mesh Mesh>
-  constexpr auto pieces(const Mesh& mesh) const {
+  constexpr auto pieces(const Mesh& mesh) const
+  {
     static_assert(meta::always_false<Mesh>,
                   "Polygon::pieces is not implemented yet!");
     static_cast<void>(mesh); /// @todo Convexity check!
@@ -541,7 +585,8 @@ public:
 ///             @ n2  v
 ///                   f1
 /// @endverbatim
-class Tetrahedron final {
+class Tetrahedron final
+{
 public:
 
   /// @brief Tetrahedron node.
@@ -554,26 +599,32 @@ public:
   /// @brief Construct a tetrahedron with nodes.
   constexpr Tetrahedron(NodeIndex i1, NodeIndex i2, //
                         NodeIndex i3, NodeIndex i4) noexcept
-      : n1{i1}, n2{i2}, n3{i3}, n4{i4} {}
+      : n1{i1}, n2{i2}, n3{i3}, n4{i4}
+  {
+  }
 
   /// @brief Tetrahedron type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::tetrahedron;
   }
 
   /// @brief Tetrahedron nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3, n4};
   }
 
   /// @brief Tetrahedron edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n1},
                       Seg{n1, n4}, Seg{n2, n4}, Seg{n3, n4}};
   }
 
   /// @brief Tetrahedron faces.
-  constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept
+  {
     return std::array{Triangle{n1, n3, n2}, Triangle{n1, n2, n4},
                       Triangle{n2, n3, n4}, Triangle{n3, n1, n4}};
   }
@@ -583,7 +634,8 @@ public:
 /// @brief Tetrahedron @p tet volume.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 3)
-constexpr real_t volume(const Tetrahedron& tet, const Mesh& mesh) noexcept {
+constexpr real_t volume(const Tetrahedron& tet, const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
   const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
   return abs(dot_product(v2 - v1, cross_product(v3 - v1, v4 - v1))) / 6.0;
@@ -593,7 +645,8 @@ constexpr real_t volume(const Tetrahedron& tet, const Mesh& mesh) noexcept {
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> >= 3)
 constexpr mesh_vec_t<Mesh> barycenter(const Tetrahedron& tet,
-                                      const Mesh& mesh) noexcept {
+                                      const Mesh& mesh) noexcept
+{
   const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
   const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
   return (v1 + v2 + v3 + v4) / 4.0;
@@ -624,7 +677,8 @@ constexpr mesh_vec_t<Mesh> barycenter(const Tetrahedron& tet,
 ///                            v
 ///                            f1
 /// @endverbatim
-class Pyramid final {
+class Pyramid final
+{
 public:
 
   /// @brief Pyramid node.
@@ -637,26 +691,32 @@ public:
   /// @brief Construct a tetrahedron with nodes.
   constexpr Pyramid(NodeIndex i1, NodeIndex i2, //
                     NodeIndex i3, NodeIndex i4, NodeIndex i5) noexcept
-      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5} {}
+      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}
+  {
+  }
 
   /// @brief Pyramid type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::pyramid;
   }
 
   /// @brief Pyramid nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3, n4, n5};
   }
 
   /// @brief Pyramid edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n4}, Seg{n4, n1},
                       Seg{n1, n5}, Seg{n2, n5}, Seg{n3, n5}, Seg{n4, n5}};
   }
 
   /// @brief Pyramid faces.
-  constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept
+  {
     return std::tuple{Quadrangle{n1, n4, n3, n2}, Triangle{n1, n2, n5},
                       Triangle{n2, n3, n5}, Triangle{n3, n4, n5},
                       Triangle{n4, n1, n5}};
@@ -665,7 +725,8 @@ public:
   /// @brief Pyramid pieces.
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
-  constexpr auto pieces(const Mesh& mesh) const noexcept {
+  constexpr auto pieces(const Mesh& mesh) const noexcept
+  {
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n4, n1, n5}};
   }
@@ -701,7 +762,8 @@ public:
 ///                 @ n2  v
 ///                       f4
 /// @endverbatim
-class Pentahedron final {
+class Pentahedron final
+{
 public:
 
   /// @brief Pentahedron node.
@@ -715,27 +777,33 @@ public:
   constexpr Pentahedron(NodeIndex i1, NodeIndex i2, //
                         NodeIndex i3, NodeIndex i4, //
                         NodeIndex i5, NodeIndex i6) noexcept
-      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6} {}
+      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6}
+  {
+  }
 
   /// @brief Pentahedron type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::pentahedron;
   }
 
   /// @brief Pentahedron nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3, n4, n5, n6};
   }
 
   /// @brief Pentahedron edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n1},
                       Seg{n1, n4}, Seg{n2, n5}, Seg{n3, n6},
                       Seg{n4, n5}, Seg{n5, n6}, Seg{n6, n4}};
   }
 
   /// @brief Pentahedron faces.
-  constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept
+  {
     return std::tuple{Quadrangle{n1, n2, n5, n4}, Quadrangle{n2, n3, n6, n5},
                       Quadrangle{n3, n1, n4, n6}, Triangle{n1, n3, n2},
                       Triangle{n4, n5, n6}};
@@ -744,7 +812,8 @@ public:
   /// @brief Pentahedron pieces.
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
-  constexpr auto pieces(const Mesh& mesh) const noexcept {
+  constexpr auto pieces(const Mesh& mesh) const noexcept
+  {
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n2, n3, n5}, Tetrahedron{n3, n1, n4, n5},
                       Tetrahedron{n4, n6, n3, n5}};
@@ -780,7 +849,8 @@ public:
 ///            v         f1                      f6 = (n5,n6,n7,n8)
 ///            f5
 /// @endverbatim
-class Hexahedron final {
+class Hexahedron final
+{
 public:
 
   /// @brief Hexahedron node.
@@ -795,27 +865,33 @@ public:
                        NodeIndex i3, NodeIndex i4, //
                        NodeIndex i5, NodeIndex i6, //
                        NodeIndex i7, NodeIndex i8) noexcept
-      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6}, n7{i7}, n8{i8} {}
+      : n1{i1}, n2{i2}, n3{i3}, n4{i4}, n5{i5}, n6{i6}, n7{i7}, n8{i8}
+  {
+  }
 
   /// @brief Hexahedron type.
-  constexpr static auto type() noexcept {
+  constexpr static auto type() noexcept
+  {
     return Type::hexahedron;
   }
 
   /// @brief Hexahedron nodes.
-  constexpr auto nodes() const noexcept {
+  constexpr auto nodes() const noexcept
+  {
     return std::array{n1, n2, n3, n4, n5, n6, n7, n8};
   }
 
   /// @brief Hexahedron edges.
-  constexpr auto edges() const noexcept {
+  constexpr auto edges() const noexcept
+  {
     return std::array{Seg{n1, n2}, Seg{n2, n3}, Seg{n3, n4}, Seg{n4, n1},
                       Seg{n1, n5}, Seg{n2, n6}, Seg{n3, n7}, Seg{n4, n8},
                       Seg{n5, n6}, Seg{n6, n7}, Seg{n7, n8}, Seg{n8, n5}};
   }
 
   /// @brief Hexahedron faces.
-  constexpr auto faces() const noexcept {
+  constexpr auto faces() const noexcept
+  {
     return std::array{Quadrangle{n1, n4, n3, n2}, Quadrangle{n1, n2, n6, n5},
                       Quadrangle{n2, n3, n7, n6}, Quadrangle{n3, n4, n8, n7},
                       Quadrangle{n1, n5, n8, n4}, Quadrangle{n5, n6, n7, n8}};
@@ -824,7 +900,8 @@ public:
   /// @brief Hexahedron pieces.
   template<mesh Mesh>
     requires (mesh_dim_v<Mesh> >= 3)
-  constexpr auto pieces(const Mesh& mesh) const noexcept {
+  constexpr auto pieces(const Mesh& mesh) const noexcept
+  {
     static_cast<void>(mesh); /// @todo Convexity check!
     return std::array{Tetrahedron{n1, n4, n2, n5}, Tetrahedron{n4, n3, n2, n7},
                       Tetrahedron{n5, n6, n7, n2}, Tetrahedron{n5, n7, n8, n4},

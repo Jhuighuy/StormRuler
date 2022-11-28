@@ -42,7 +42,10 @@
 #include <utility>
 #include <vector>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Hybrid unstructured multidimensional mesh.
 /// @tparam Dim Spatial dimensionality.
@@ -52,7 +55,8 @@ template<size_t Dim, size_t TopologicalDim = Dim,
          template<class, class> class Table = CsrTable>
   requires (2 <= TopologicalDim && TopologicalDim <= Dim && Dim <= 3)
 class UnstructuredMesh final :
-    public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>> {
+    public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>>
+{
 private:
 
   template<size_t, size_t, template<class, class> class>
@@ -129,7 +133,8 @@ private:
 public:
 
   /// @brief Construct the mesh.
-  constexpr UnstructuredMesh() {
+  constexpr UnstructuredMesh()
+  {
     // Initialize the default label.
     meta::for_each<EntityIndices_>(
         [&]<size_t I>(meta::type<EntityIndex<I>>) { insert_label<I>(); });
@@ -137,27 +142,30 @@ public:
 
   /// @brief Number of entity labels.
   template<size_t I>
-  constexpr size_t num_labels(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr size_t num_labels(meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     return std::get<I>(entity_ranges_tuple_).size() - 1;
   }
 
   /// @brief Label range.
   template<size_t I>
-  constexpr auto labels(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr auto labels(meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(Label{0}, Label{entity_ranges.size() - 1});
   }
 
   /// @brief Number of entities.
   template<size_t I>
-  constexpr size_t
-  num_entities(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr size_t num_entities(meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     return static_cast<size_t>(std::get<I>(entity_ranges_tuple_).back());
   }
   /// @brief Number of entities with label @p label.
   template<size_t I>
-  constexpr size_t
-  num_entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr size_t num_entities(Label label,
+                                meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return entity_ranges[label + 1] - entity_ranges[label];
@@ -165,14 +173,16 @@ public:
 
   /// @brief Index range of the entitites.
   template<size_t I>
-  constexpr auto entities(meta::type<EntityIndex<I>> = {}) const noexcept {
+  constexpr auto entities(meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(entity_ranges.front(), entity_ranges.back());
   }
   /// @brief Index range of the entitites with label @p label.
   template<size_t I>
   constexpr auto entities(Label label,
-                          meta::type<EntityIndex<I>> = {}) const noexcept {
+                          meta::type<EntityIndex<I>> = {}) const noexcept
+  {
     STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     return std::views::iota(entity_ranges[label], entity_ranges[label + 1]);
@@ -180,7 +190,8 @@ public:
 
   /// @brief Label of the entitity at @p index.
   template<size_t I>
-  constexpr Label label(EntityIndex<I> index) const noexcept {
+  constexpr Label label(EntityIndex<I> index) const noexcept
+  {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     // Binary search for entity in the label ranges.
     const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
@@ -190,41 +201,47 @@ public:
 
   /// @brief Shape type of the entitity at @p index.
   template<size_t I>
-  constexpr shapes::Type shape_type(EntityIndex<I> index) const noexcept {
+  constexpr shapes::Type shape_type(EntityIndex<I> index) const noexcept
+  {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_shape_types_tuple_)[index];
   }
 
   /// @brief "Volume" of the entitity at @p index.
   template<size_t I>
-  constexpr real_t volume(EntityIndex<I> index) const noexcept {
+  constexpr real_t volume(EntityIndex<I> index) const noexcept
+  {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_volumes_tuple_)[index];
   }
 
   /// @brief Position of the entitity at @p index.
   template<size_t I>
-  constexpr Vec position(EntityIndex<I> index) const noexcept {
+  constexpr Vec position(EntityIndex<I> index) const noexcept
+  {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     return std::get<I>(entity_positions_tuple_)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
-  constexpr Vec normal(FaceIndex face_index) const noexcept {
+  constexpr Vec normal(FaceIndex face_index) const noexcept
+  {
     STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
                   "Face index is out of range!");
     return face_normals_[face_index];
   }
 
   /// @brief Mesh AABB.
-  constexpr const auto& aabb() const noexcept {
+  constexpr const auto& aabb() const noexcept
+  {
     return aabb_;
   }
 
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
   template<size_t J, size_t I>
   constexpr auto adjacent(EntityIndex<I> index,
-                          meta::type<EntityIndex<J>> = {}) const noexcept {
+                          meta::type<EntityIndex<J>> = {}) const noexcept
+  {
     STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
     using T = Table<EntityIndex<I>, EntityIndex<J>>;
     return std::get<T>(connectivity_tuple_)[index];
@@ -235,7 +252,8 @@ public:
     requires (I != 0) &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr std::optional<EntityIndex<I>> find(
-      Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
+      Range&& node_indices, meta::type<EntityIndex<I>> = {}) const
+  {
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());
     STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> found{};
@@ -265,7 +283,8 @@ public:
   /// @brief Copy-assign the unstructured @p mesh with different table type.
   template<template<class, class> class OtherTable>
   constexpr void
-  assign(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
+  assign(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh)
+  {
     // Copy the ranges and shape properties.
     entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
     entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
@@ -288,7 +307,8 @@ public:
   /// @brief Move-assign the unstructured @p mesh with different table type.
   template<template<class, class> class OtherTable>
   constexpr void
-  assign(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
+  assign(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh)
+  {
     // Move the ranges and shape properties.
     /// @todo Ranges of the source mesh would be invalid.
     entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
@@ -315,7 +335,8 @@ public:
 
   /// @brief Reverve memory for the entities.
   template<size_t I>
-  constexpr void reserve(size_t capacity, meta::type<EntityIndex<I>> = {}) {
+  constexpr void reserve(size_t capacity, meta::type<EntityIndex<I>> = {})
+  {
     std::get<I>(entity_positions_tuple_).reserve(capacity);
     if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
       std::get<I>(entity_shape_types_tuple_).reserve(capacity);
@@ -332,7 +353,8 @@ public:
 
   /// @brief Insert a new entity label.
   template<size_t I>
-  constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
+  constexpr void insert_label(meta::type<EntityIndex<I>> = {})
+  {
     auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
     if (entity_ranges.empty()) {
       entity_ranges.reserve(2);
@@ -349,7 +371,8 @@ public:
     requires ((I == 0 && std::constructible_from<Vec, Shape>) ||
               (shapes::shape<Shape> && I == shapes::shape_dim_v<Shape>) )
   constexpr EntityIndex<I> insert(Shape&& shape,
-                                  meta::type<EntityIndex<I>> = {}) {
+                                  meta::type<EntityIndex<I>> = {})
+  {
     // Allocate the entity index,
     // implicitly assigning the last existing label label.
     const EntityIndex<I> index{std::get<I>(entity_ranges_tuple_).back()++};
@@ -427,7 +450,8 @@ public:
   template<size_t I, shapes::shape Shape>
     requires (I == shapes::shape_dim_v<Shape>)
   constexpr EntityIndex<I> find_or_insert(Shape&& shape,
-                                          meta::type<EntityIndex<I>> = {}) {
+                                          meta::type<EntityIndex<I>> = {})
+  {
     if (const auto index = find<I>(shape.nodes()); index.has_value()) {
       return *index;
     }
@@ -442,7 +466,8 @@ public:
     requires std::ranges::random_access_range<Range> &&
              std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
-  constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
+  constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {})
+  {
     STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
                   "Invalid permutation size!");
 
@@ -462,8 +487,8 @@ public:
   template<size_t I, std::ranges::sized_range Range>
     requires std::ranges::random_access_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, Label>
-  constexpr void assign_labels(Range&& labels,
-                               meta::type<EntityIndex<I>> = {}) {
+  constexpr void assign_labels(Range&& labels, meta::type<EntityIndex<I>> = {})
+  {
     STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
                   "Invalid labels range size!");
 
@@ -505,7 +530,8 @@ private:
     requires std::ranges::sized_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
   constexpr void update_face_orientation_(FaceIndex face_index,
-                                          Range&& cell_face_nodes) {
+                                          Range&& cell_face_nodes)
+  {
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;
@@ -555,7 +581,8 @@ private:
   template<size_t I, std::ranges::random_access_range Range>
     requires std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
-  constexpr void permute_base_(Range&& perm, meta::type<EntityIndex<I>> = {}) {
+  constexpr void permute_base_(Range&& perm, meta::type<EntityIndex<I>> = {})
+  {
     { // Update the connectivity with inverse permutations.
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
@@ -610,5 +637,7 @@ private:
   }
 
 }; // class UnstructuredMesh
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

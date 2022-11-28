@@ -31,7 +31,10 @@
 #include <concepts>
 #include <ranges>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 template<crtp_derived Derived>
 class MeshInterface;
@@ -89,5 +92,7 @@ using mesh_vec_t = Vec<Real, mesh_dim_v<Mesh>>;
 /// @brief Mesh spatial matrix type.
 template<mesh Mesh, class Real = real_t>
 using mesh_mat_t = Mat<Real, mesh_dim_v<Mesh>, mesh_dim_v<Mesh>>;
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

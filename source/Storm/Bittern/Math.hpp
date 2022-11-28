@@ -28,7 +28,8 @@
 #include <numbers>
 #include <type_traits>
 
-namespace Storm {
+namespace Storm
+{
 
 // -----------------------------------------------------------------------------
 
@@ -91,7 +92,8 @@ concept numeric_type = integer_type<Type> || real_or_complex_type<Type>;
 /// @brief If @p y is zero, return zero,
 /// else return value of @p x divided by @p y.
 template<real_or_complex_type Value>
-constexpr auto safe_divide(Value x, Value y) {
+constexpr auto safe_divide(Value x, Value y)
+{
   static constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
@@ -103,13 +105,15 @@ inline constexpr real_t pi = std::numbers::pi_v<real_t>;
 
 /// @brief Convert degrees to radians.
 template<real_type Real>
-constexpr auto deg2rad(Real&& degrees) noexcept {
+constexpr auto deg2rad(Real&& degrees) noexcept
+{
   return (pi / 180.0) * std::forward<Real>(degrees);
 }
 
 /// @brief Convert radians to degrees.
 template<real_type Real>
-constexpr auto rad2deg(Real&& radians) noexcept {
+constexpr auto rad2deg(Real&& radians) noexcept
+{
   return (180.0 / pi) * std::forward<Real>(radians);
 }
 
@@ -117,12 +121,14 @@ constexpr auto rad2deg(Real&& radians) noexcept {
 
 /// @brief Conjugate of real number @p x (noop).
 template<real_type Real>
-constexpr auto conj(Real&& x) noexcept {
+constexpr auto conj(Real&& x) noexcept
+{
   return std::forward<Real>(x);
 }
 /// @brief Conjugate of complex number @p x.
 template<real_type Number>
-constexpr auto conj(const std::complex<Number>& x) noexcept {
+constexpr auto conj(const std::complex<Number>& x) noexcept
+{
   return std::conj(x);
 }
 
@@ -132,10 +138,10 @@ using std::imag;
 
 // -----------------------------------------------------------------------------
 
-using std::abs;
-
 template<class Real>
 constexpr Real sign(Real) noexcept;
+
+using std::abs;
 
 using std::min;
 
@@ -207,7 +213,8 @@ using std::atanh;
 /// @brief Generate the Givens rotation.
 /// @todo Move me somewhere else!
 template<real_or_complex_type Value>
-auto sym_ortho(Value a, Value b) {
+auto sym_ortho(Value a, Value b)
+{
   // Compute:
   // ----------------------
   // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,

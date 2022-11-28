@@ -29,12 +29,14 @@
 #include <random>
 #include <utility>
 
-namespace Storm {
+namespace Storm
+{
 
 /// @brief Assign the matrices.
 /// @{
 template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept
+{
   STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
@@ -44,8 +46,9 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
   return out_mat;
 }
 template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
-constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
-                            Matrices&&... mats) noexcept {
+constexpr OutMatrix& assign(AssignFunc assign_func, //
+                            OutMatrix&& out_mat, Matrices&&... mats) noexcept
+{
   STORM_ASSERT_((out_mat.shape() == mats.shape()) && ...,
                 "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
@@ -60,7 +63,8 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, AssignFunc assign_func,
 /// @brief Assign the matrices.
 /// @todo To be removed!
 template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
+constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept
+{
   return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
 }
 
@@ -69,7 +73,8 @@ constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
 /// @brief Fill the matrix @p out_mat with a scalar @p scal.
 template<matrix OutMatrix, std::copyable Scalar>
   requires (!matrix<Scalar>)
-constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
+constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal)
+{
   return assign(out_mat, [scal = std::move(scal)](auto& out_elem) noexcept {
     out_elem = scal;
   });
@@ -79,10 +84,10 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 /// @warning This is a sequential operation!
 template<output_matrix OutMatrix>
   requires (real_matrix<OutMatrix>)
-constexpr OutMatrix& fill_randomly(
-    OutMatrix&& out_mat, //
-    matrix_element_t<OutMatrix> min = 0,
-    matrix_element_t<OutMatrix> max = 1) noexcept {
+constexpr OutMatrix& fill_randomly(OutMatrix&& out_mat, //
+                                   matrix_element_t<OutMatrix> min = 0,
+                                   matrix_element_t<OutMatrix> max = 1) noexcept
+{
   static std::mt19937_64 random_engine{};
   std::uniform_real_distribution distribution{min, max};
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
@@ -97,7 +102,8 @@ constexpr OutMatrix& fill_randomly(
 
 /// @brief Print a @p mat.
 /// @todo This is too trivial implementation, we need something fancier :)
-std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
+std::ostream& operator<<(std::ostream& out, const matrix auto& mat)
+{
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     out << "( ";
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {

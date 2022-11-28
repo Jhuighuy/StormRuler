@@ -20,6 +20,8 @@
 
 #pragma once
 
+// -----------------------------------------------------------------------------
+
 // Threading libraries configutation.
 #ifndef STORM_OpenMP_ENABLED
 #define STORM_OpenMP_ENABLED 0
@@ -62,3 +64,5 @@
 #ifndef STORM_GLM_ENABLED
 #define STORM_GLM_ENABLED 0
 #endif
+
+// -----------------------------------------------------------------------------

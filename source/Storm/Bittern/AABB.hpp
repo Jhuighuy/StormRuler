@@ -24,11 +24,15 @@
 
 #include <Storm/Bittern/Matrix.hpp>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Axis-aligned bounding box (AABB).
 template<matrix Vec>
-class AABB {
+class AABB
+{
 private:
 
   Vec min_{}, max_{};
@@ -42,28 +46,35 @@ public:
   constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
 
   /// @brief AABB min vector.
-  constexpr const Vec& min() const noexcept {
+  constexpr const Vec& min() const noexcept
+  {
     return min_;
   }
   /// @brief AABB max vector.
-  constexpr const Vec& max() const noexcept {
+  constexpr const Vec& max() const noexcept
+  {
     return max_;
   }
 
   /// @brief AABB center.
-  constexpr Vec center() const noexcept {
+  constexpr Vec center() const noexcept
+  {
     return 0.5 * (max_ + min_);
   }
   /// @brief AABB extents.
-  constexpr Vec extents() const noexcept {
+  constexpr Vec extents() const noexcept
+  {
     return max_ - min_;
   }
 
   /// @brief Extend the AABB.
-  void extend(const Vec& vec) noexcept {
+  void extend(const Vec& vec) noexcept
+  {
     min_ = Storm::min(min_, vec), max_ = Storm::max(max_, vec);
   }
 
 }; // class AABB
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

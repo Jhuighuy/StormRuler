@@ -28,13 +28,17 @@
 
 #include <utility>
 
-namespace Storm {
+namespace Storm
+{
+
+// -----------------------------------------------------------------------------
 
 /// @brief Matrix product view.
 template<matrix_view Matrix1, matrix_view Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 class MatrixProductView final :
-    public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
+    public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>>
+{
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
@@ -44,18 +48,21 @@ public:
 
   /// @brief Construct a matrix product view.
   constexpr explicit MatrixProductView(Matrix1 mat1, Matrix2 mat2)
-      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
+      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)}
+  {
     STORM_ASSERT_(num_cols(mat1_) == num_rows(mat2),
                   "Shapes of the matrix product arguments are invalid!");
   }
 
   /// @copydoc MatrixViewInterface::shape
-  constexpr auto shape() const noexcept {
+  constexpr auto shape() const noexcept
+  {
     return std::array{num_rows(mat1_), num_cols(mat2_)};
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     // This is a default very slow generic implementation.
@@ -77,7 +84,8 @@ MatrixProductView(Matrix1&&, Matrix2&&)
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2)
+{
   return MatrixProductView(std::forward<Matrix1>(mat1),
                            std::forward<Matrix2>(mat2));
 }
@@ -87,8 +95,8 @@ constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
 /// @brief Cross product of the 3x1 matrices view.
 template<matrix_view Matrix1, matrix_view Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-class CrossProductView :
-    MatrixViewInterface<CrossProductView<Matrix1, Matrix2>> {
+class CrossProductView : MatrixViewInterface<CrossProductView<Matrix1, Matrix2>>
+{
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix1 mat1_;
@@ -98,18 +106,21 @@ public:
 
   /// @brief Construct a matrix product view.
   constexpr explicit CrossProductView(Matrix1 mat1, Matrix2 mat2)
-      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
+      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)}
+  {
     STORM_ASSERT_((mat1_.shape() == shape() && mat2_.shape() == shape()),
                   "Matrices of shape 3x1 are expected!");
   }
 
   /// @copydoc MatrixViewInterface::shape
-  constexpr static auto shape() noexcept {
+  constexpr static auto shape() noexcept
+  {
     return std::array{3_sz, 1_sz};
   }
 
   /// @copydoc MatrixViewInterface::operator()
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
+  {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     switch (row_index) {
@@ -130,9 +141,12 @@ CrossProductView(Matrix1&&, Matrix2&&)
 /// @brief Cross product of the 3x1 matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2) {
+constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2)
+{
   return CrossProductView(std::forward<Matrix1>(mat1),
                           std::forward<Matrix2>(mat2));
 }
+
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

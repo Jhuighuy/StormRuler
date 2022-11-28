@@ -103,14 +103,14 @@ set(DOXYGEN_HTML_OUTPUT   "${CMAKE_SOURCE_DIR}/bin/docs")
 # ------------------------------------------------------------------------------
 
 # Generate the Doxygen inputs list.
-set(StormRuler_DOXYGEN_INPUTS)
+set(StormRuler_Doxygen_INPUTS)
 
 # Add the core library headers.
 message(STATUS "| Adding the core library documentation..")
-list(APPEND StormRuler_DOXYGEN_INPUTS ${StormRuler_CXX_SOURCES})
-list(APPEND StormRuler_DOXYGEN_INPUTS ${StormRuler_MD_SOURCES})
+list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_CXX_SOURCES})
+list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_MD_SOURCES})
 
 # Add the Doxygen target.
-doxygen_add_docs(StormRuler_DOXYGEN ALL
-                 USE_STAMP_FILE ${StormRuler_CXX_SOURCES}
+doxygen_add_docs(StormRuler_Doxygen ALL
+                 USE_STAMP_FILE ${StormRuler_Doxygen_INPUTS}
                  COMMENT "Generate Doxygen documentation")

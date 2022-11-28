@@ -93,7 +93,7 @@ template<matrix Matrix, matrix... RestMatrices>
 inline constexpr bool compatible_matrices_v = true;
 
 template<class, class...>
-inline constexpr bool compatible_indices_v = true;
+inline constexpr bool compatible_matrix_indices_v = true;
 
 // -----------------------------------------------------------------------------
 

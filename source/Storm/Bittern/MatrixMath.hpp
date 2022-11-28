@@ -72,7 +72,7 @@ public:
 
   /// @copydoc MatrixViewInterface::operator()
   template<class... Indices>
-    requires compatible_indices_v<MapMatrixView, Indices...>
+    requires compatible_matrix_indices_v<MapMatrixView, Indices...>
   constexpr auto operator()(Indices... indices) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");

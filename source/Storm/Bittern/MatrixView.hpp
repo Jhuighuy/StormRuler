@@ -93,13 +93,13 @@ public:
   /// @brief Get the matrix coefficient at @p indices.
   /// @{
   template<class... Indices>
-    requires compatible_indices_v<Derived, Indices...>
+    requires compatible_matrix_indices_v<Derived, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) noexcept
   {
     return self_()(indices...);
   }
   template<class... Indices>
-    requires compatible_indices_v<Derived, Indices...>
+    requires compatible_matrix_indices_v<Derived, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) const noexcept
   {
     return self_()(indices...);
@@ -142,14 +142,14 @@ public:
   /// @copydoc MatrixViewInterface::operator()
   /// @{
   template<class... Indices>
-    requires compatible_indices_v<MatrixRefView, Indices...>
+    requires compatible_matrix_indices_v<MatrixRefView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return (*p_mat_)(indices...);
   }
   template<class... Indices>
-    requires compatible_indices_v<MatrixRefView, Indices...>
+    requires compatible_matrix_indices_v<MatrixRefView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
@@ -188,14 +188,14 @@ public:
   /// @copydoc MatrixViewInterface::operator()
   /// @{
   template<class... Indices>
-    requires compatible_indices_v<MatrixOwningView, Indices...>
+    requires compatible_matrix_indices_v<MatrixOwningView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return mat_(indices...);
   }
   template<class... Indices>
-    requires compatible_indices_v<MatrixOwningView, Indices...>
+    requires compatible_matrix_indices_v<MatrixOwningView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");

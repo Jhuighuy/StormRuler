@@ -38,6 +38,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install g++
+        run: |
+          sudo apt install -y g++-12
+
       - name: Install vcpkg
         run: |
           cd ..
@@ -48,6 +52,7 @@ jobs:
       - name: Run build-wrapper
         run: |
           mkdir bin
+          export CXX=g++-12
           cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Release
 

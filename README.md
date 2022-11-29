@@ -2,6 +2,7 @@
 # StormRuler🦜 — A very high order FVM framework
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 
+[![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 
 **StormRuler** is a FVM-based multidimensional partial 

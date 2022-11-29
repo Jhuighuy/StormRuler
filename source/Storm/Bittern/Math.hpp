@@ -94,7 +94,7 @@ concept numeric_type = integer_type<Type> || real_or_complex_type<Type>;
 template<real_or_complex_type Value>
 constexpr auto safe_divide(Value x, Value y)
 {
-  static constexpr Value zero{0.0};
+  constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
 

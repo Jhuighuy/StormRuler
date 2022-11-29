@@ -28,6 +28,8 @@
 #   every time.
 # • Problems with GTest linking on ARM-based Mac machines.
 
+# ------------------------------------------------------------------------------
+
 cmake_minimum_required(VERSION 3.20..3.26)
 
 message(STATUS "\n" [=[
@@ -65,7 +67,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # Require C++23 and disable extensions.
 # (Set globally, since these properties are not inherited by targets.)
-set(CMAKE_CXX_STANDARD 23)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 23)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -119,21 +123,8 @@ target_compile_options(StormRuler_BASE INTERFACE
 # Add the CMake modules.
 list(APPEND CMAKE_MODULE_PATH "./cmake")
 
-# Find Git and update submodules.
-find_package(Git)
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    RESULT_VARIABLE GIT_SUBMODULE_RESULT)
-  if(NOT GIT_SUBMODULE_RESULT EQUAL "0")
-    message(FATAL_ERROR "`git submodule update --init --recursive`"
-                        " failed with ${GIT_SUBMODULE_RESULT}.")
-  endif()
-endif()
-
 # Find Python interpreter.
-find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 # ------------------------------------------------------------------------------
 
@@ -302,3 +293,5 @@ add_subdirectory("./source_docs")
 # Add the tests.
 message(STATUS "Adding StormRuler tests..")
 add_subdirectory("./tests")
+
+# ------------------------------------------------------------------------------

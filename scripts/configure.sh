@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (C) 2020-2023 Oleg Butakov
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,3 +19,15 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
+
+# ------------------------------------------------------------------------------
+
+# Find vcpkg.
+VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
+
+# Configure CMake.
+export CXX=g++-12
+cmake -S. -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+
+# ------------------------------------------------------------------------------

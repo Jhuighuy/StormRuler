@@ -53,6 +53,9 @@ jobs:
           cd vcpkg
           ./bootstrap-vcpkg.sh
 
+      - name: Install sonar-scanner and build-wrapper
+        uses: SonarSource/sonarcloud-github-c-cpp@v1
+
       - name: Run build-wrapper
         run: |
           mkdir bin

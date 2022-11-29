@@ -1,8 +1,10 @@
-//  ______  ______   ______   ______  __  __   ______   ______   ______
-// /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\ 
-// \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \ 
-//  \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\ 
-//   \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║   ______  ______   ______   ______  __  __   ______   ______   ______     ║
+// ║  /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\    ║
+// ║  \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \   ║
+// ║   \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\  ║
+// ║    \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/  ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
 //
 // Copyright (C) 2020-2023 Oleg Butakov
 //
@@ -28,17 +30,20 @@
 
 #include <Storm/Base.hpp>
 
-namespace Storm::Feathers {
+namespace Storm::Feathers
+{
 
 static const real_t Gamma = 1.4;
 static const real_t Gamma1 = Gamma - 1.0;
 
-namespace {
+namespace
+{
   const double gamma = Gamma;
   const double gamma_2 = (gamma + 1.0) / (2.0 * gamma);
 } // namespace
 
-class MhdHydroVars {
+class MhdHydroVars
+{
 public:
 
   real_t rho = 0.0; /**< Fluid density, 𝜌. */
@@ -62,14 +67,16 @@ public:
 public:
 
   /** make primitive variables, 𝑸 = (𝜌,𝑝,𝒗,𝑞ᵢ,…)ᵀ. */
-  real_t* make_prim(size_t num_vars, real_t* prim) const {
+  real_t* make_prim(size_t num_vars, real_t* prim) const
+  {
     *reinterpret_cast<std::array<real_t, 5>*>(prim) = {rho, p, vel.x, vel.y,
                                                        vel.z};
     return prim;
   }
 
   /** make conserved variables, 𝑼 = (𝜌,𝜌𝐸,𝜌𝒗,𝜌𝑞ᵢ,…)ᵀ. */
-  real_t* make_cons(size_t num_vars, real_t* cons) const {
+  real_t* make_cons(size_t num_vars, real_t* cons) const
+  {
     *reinterpret_cast<std::array<real_t, 5>*>(cons) = {
         rho, rho * nrg, rho * vel.x, rho * vel.y, rho * vel.z};
     for (size_t i = 5; i < num_vars; ++i) {
@@ -83,7 +90,8 @@ public:
   }
 
   /** make flux variables, 𝑭ₙ = (𝜌𝒗ₙ,𝜌𝐻𝒗ₙ,𝜌𝒗𝒗ₙ,𝜌𝑞ᵢ𝒗ₙ,…)ᵀ. */
-  real_t* make_flux(size_t num_vars, const vec3_t& n, real_t* flux) const {
+  real_t* make_flux(size_t num_vars, const vec3_t& n, real_t* flux) const
+  {
     *reinterpret_cast<std::array<real_t, 5>*>(flux) = {
         rho * vel_n, rho * vel_n * ent, rho * vel_n * vel.x + p * n.x,
         rho * vel_n * vel.y + p * n.y, rho * vel_n * vel.z + p * n.z};
@@ -100,7 +108,8 @@ public:
 
 inline MhdHydroVars::MhdHydroVars(const vec3_t& n, const real_t* q_cons,
                                   const real_t* q_prim)
-    : MhdHydroVars() {
+    : MhdHydroVars()
+{
   if (q_cons != nullptr) {
     rho = q_cons[0];
     nrg = q_cons[1] / rho;
@@ -127,7 +136,8 @@ inline MhdHydroVars::MhdHydroVars(const vec3_t& n, const real_t* q_cons,
 
 typedef class MhdHydroVars MhdFluidVarsIdealGas;
 
-class tGasPhysics {
+class tGasPhysics
+{
 public:
 
   static constexpr size_t num_vars = 5;

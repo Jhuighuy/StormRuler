@@ -1,8 +1,10 @@
-//  ______  ______   ______   ______  __  __   ______   ______   ______
-// /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\ 
-// \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \ 
-//  \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\ 
-//   \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║   ______  ______   ______   ______  __  __   ______   ______   ______     ║
+// ║  /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\    ║
+// ║  \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \   ║
+// ║   \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\  ║
+// ║    \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/  ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
 //
 // Copyright (C) 2020-2023 Oleg Butakov
 //
@@ -34,14 +36,16 @@
 
 #include <map>
 
-namespace Storm::Feathers {
+namespace Storm::Feathers
+{
 
 /**
  * @brief A Finite volume solver.
  */
 template<typename MhdPhysicsT>
 class MhdFvSolverT :
-    public std::enable_shared_from_this<MhdFvSolverT<MhdPhysicsT>> {
+    public std::enable_shared_from_this<MhdFvSolverT<MhdPhysicsT>>
+{
 public:
 
   using MhdFluidStateT = typename MhdPhysicsT::MhdFluidStateT;
@@ -55,8 +59,7 @@ private:
 
 public:
 
-  explicit MhdFvSolverT(std::shared_ptr<Mesh> mesh)
-      : m_mesh(mesh),
+  explicit MhdFvSolverT(std::shared_ptr<Mesh> mesh) : m_mesh(mesh),
 #if 0
         m_conv(new UpwindConvectionScheme( //
             *mesh, tHllcFluxScheme<MhdPhysicsT>{}))
@@ -77,7 +80,8 @@ public:
    * @brief Compute spacial discretization.
    */
   void calc_func(CellField<Mesh, real_t, 5>& u,
-                 CellField<Mesh, real_t, 5>& f) const {
+                 CellField<Mesh, real_t, 5>& f) const
+  {
     std::ranges::for_each(m_mesh->cells(),
                           [&](CellView<Mesh> cell) { f[cell].fill(0.0); });
     m_conv->get_cell_convection(f, u);
@@ -88,7 +92,8 @@ public:
    */
   void calc_step(real_t& dt, //
                  CellField<Mesh, real_t, 5>& u,
-                 CellField<Mesh, real_t, 5>& u_hat) const {
+                 CellField<Mesh, real_t, 5>& u_hat) const
+  {
     calc_func(u, u_hat);
     std::ranges::for_each(m_mesh->interior_cells(), [&](CellView<Mesh> cell) {
       for (size_t i = 0; i < 5; ++i) {

@@ -1,8 +1,10 @@
-//  ______  ______   ______   ______  __  __   ______   ______   ______
-// /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\ 
-// \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \ 
-//  \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\ 
-//   \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║   ______  ______   ______   ______  __  __   ______   ______   ______     ║
+// ║  /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\    ║
+// ║  \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \   ║
+// ║   \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\  ║
+// ║    \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/  ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
 //
 // Copyright (C) 2020-2023 Oleg Butakov
 //
@@ -33,12 +35,14 @@
 
 #include <map>
 
-namespace Storm::Feathers {
+namespace Storm::Feathers
+{
 
 /**
  * Abstract convection scheme.
  */
-class iConvectionScheme : public tObject<iConvectionScheme> {
+class iConvectionScheme : public tObject<iConvectionScheme>
+{
 public:
 
   std::map<Label, std::shared_ptr<MhdFvBcPT<tGasPhysics>>>* bcs_;
@@ -53,7 +57,8 @@ public:
 /// @brief Piecewise-constant upwind convection scheme.
 template<mesh Mesh, class FluxScheme>
   requires std::is_object_v<FluxScheme>
-class UpwindConvectionScheme final : public iConvectionScheme {
+class UpwindConvectionScheme final : public iConvectionScheme
+{
 private:
 
   const Mesh* p_mesh_;
@@ -64,17 +69,21 @@ public:
   /// @brief Construct the first order upwind convection scheme.
   constexpr explicit UpwindConvectionScheme(const Mesh& mesh,
                                             FluxScheme flux_scheme) noexcept
-      : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)} {}
+      : p_mesh_{&mesh}, flux_scheme_{std::move(flux_scheme)}
+  {
+  }
 
   void get_cell_convection(CellField<Mesh, real_t, 5>& div_f,
-                           const CellField<Mesh, real_t, 5>& u) const final {
+                           const CellField<Mesh, real_t, 5>& u) const final
+  {
     (*this)(div_f, u);
   }
 
   /// @brief Compute the first order upwind nonlinear convection.
   template<class Real, size_t NumVars>
   void operator()(CellField<Mesh, Real, NumVars>& div_f,
-                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept
+  {
     // Compute the fluxes for the interior faces.
     std::ranges::for_each(p_mesh_->interior_faces(), [&](FaceView<Mesh> face) {
       const CellView<Mesh> cell_inner = face.inner_cell();
@@ -111,7 +120,8 @@ template<mesh Mesh, class FluxScheme, //
          class GradientScheme, class GradientLimiterScheme>
   requires std::is_object_v<FluxScheme> && std::is_object_v<GradientScheme> &&
            std::is_object_v<GradientLimiterScheme>
-class LinearUpwindConvectionScheme final : public iConvectionScheme {
+class LinearUpwindConvectionScheme final : public iConvectionScheme
+{
 public:
 
   const Mesh* p_mesh_;
@@ -127,17 +137,21 @@ public:
       GradientLimiterScheme gradient_limiter_scheme) noexcept
       : p_mesh_{&mesh}, flux_scheme_{flux_scheme}, //
         gradient_scheme_{std::move(gradient_scheme)},
-        gradient_limiter_scheme_{std::move(gradient_limiter_scheme)} {}
+        gradient_limiter_scheme_{std::move(gradient_limiter_scheme)}
+  {
+  }
 
   void get_cell_convection(CellField<Mesh, real_t, 5>& div_f,
-                           const CellField<Mesh, real_t, 5>& u) const final {
+                           const CellField<Mesh, real_t, 5>& u) const final
+  {
     (*this)(div_f, u);
   }
 
   /// @brief Compute the second-order upwind nonlinear convection.
   template<class Real, size_t NumVars>
   void operator()(CellField<Mesh, Real, NumVars>& div_f,
-                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept
+  {
     // Compute the gradients.
     CellVectorField<Mesh, Real, NumVars> grad_u(p_mesh_->num_cells());
     CellField<Mesh, Real, NumVars> lim_u(p_mesh_->num_cells());

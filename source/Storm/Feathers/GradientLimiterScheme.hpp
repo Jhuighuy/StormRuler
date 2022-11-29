@@ -1,8 +1,10 @@
-//  ______  ______   ______   ______  __  __   ______   ______   ______
-// /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\ 
-// \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \ 
-//  \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\ 
-//   \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║   ______  ______   ______   ______  __  __   ______   ______   ______     ║
+// ║  /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\    ║
+// ║  \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \   ║
+// ║   \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\  ║
+// ║    \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/  ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
 //
 // Copyright (C) 2020-2023 Oleg Butakov
 //
@@ -34,12 +36,14 @@
 
 #include <type_traits>
 
-namespace Storm::Feathers {
+namespace Storm::Feathers
+{
 
 /// @brief Barth-Jespersen (minmod) slope limiter.
 /// This is a non-differentiable limiter, so it may
 /// affect convergence properties of the implicit scheme.
-class MinmodSlopeLimiter {
+class MinmodSlopeLimiter
+{
 public:
 
   /// @brief Compute limiter value.
@@ -47,7 +51,8 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                [[maybe_unused]] Real eps_sqr) const noexcept {
+                                [[maybe_unused]] Real eps_sqr) const noexcept
+  {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -68,7 +73,8 @@ public:
 
 /// @brief Venkatakrishnan slope limiter.
 /// This is a differentiable limiter.
-class VenkatakrishnanSlopeLimiter {
+class VenkatakrishnanSlopeLimiter
+{
 public:
 
   /// @brief Compute limiter value.
@@ -76,7 +82,8 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                Real eps_sqr) const noexcept {
+                                Real eps_sqr) const noexcept
+  {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -101,7 +108,8 @@ public:
 
 /// @brief Michalak Ollivier-Gooch (cubic) slope limiter.
 /// This is a differentiable limiter.
-class CubicSlopeLimiter {
+class CubicSlopeLimiter
+{
 public:
 
   /// @brief Compute limiter value.
@@ -109,7 +117,8 @@ public:
   [[nodiscard]] Real operator()(Real du_min,  //
                                 Real du_max,  //
                                 Real du_face, //
-                                [[maybe_unused]] Real eps_sqr) const noexcept {
+                                [[maybe_unused]] Real eps_sqr) const noexcept
+  {
     // Compute deltas: [1], page 4.
     const Real delta_neg = du_face;
     Real delta_pos;
@@ -138,7 +147,8 @@ public:
 
 /// @brief Dummy second slope limiter.
 /// This is a differentiable limiter.
-class DummySecondLimiter {
+class DummySecondLimiter
+{
 public:
 
   /// @brief Compute limiter value.
@@ -146,7 +156,8 @@ public:
   [[nodiscard]] Real operator()(Real limiter, //
                                 [[maybe_unused]] Real du_min,
                                 [[maybe_unused]] Real du_max,
-                                [[maybe_unused]] Real eps_sqr) const noexcept {
+                                [[maybe_unused]] Real eps_sqr) const noexcept
+  {
     const Real second_limiter = limiter;
     return second_limiter;
   }
@@ -155,7 +166,8 @@ public:
 
 /// @brief Michalak Ollivier-Gooch cubic second slope limiter.
 /// This is a differentiable limiter.
-class CubicSecondLimiter {
+class CubicSecondLimiter
+{
 public:
 
   /// @brief Compute limiter value.
@@ -163,7 +175,8 @@ public:
   [[nodiscard]] Real operator()(Real limiter, //
                                 Real du_min,  //
                                 Real du_max,  //
-                                Real eps_sqr) const noexcept {
+                                Real eps_sqr) const noexcept
+  {
     const Real du_sqr = std::pow(du_max - du_min, 2);
     if (du_sqr <= eps_sqr) return 1.0;
     if (du_sqr >= 2.0 * eps_sqr) return limiter;
@@ -190,7 +203,8 @@ public:
 template<mesh Mesh, class SlopeLimiter, class SecondLimiter>
   requires std::is_object_v<SlopeLimiter> &&
            std::is_object_v<DummySecondLimiter>
-class GradientLimiterScheme final {
+class GradientLimiterScheme final
+{
 private:
 
   const Mesh* p_mesh_;
@@ -204,14 +218,17 @@ public:
       const Mesh& mesh, SlopeLimiter slope_limiter = {},
       SecondLimiter second_limiter = {}) noexcept
       : p_mesh_{&mesh}, slope_limiter_{std::move(slope_limiter)},
-        second_limiter_{std::move(second_limiter)} {}
+        second_limiter_{std::move(second_limiter)}
+  {
+  }
 
   /// @brief Compute cell-centered gradient limiter coefficients.
   template<class Real, size_t NumVars>
   void operator()( //
       CellField<Mesh, Real, NumVars>& lim_u,
       const CellField<Mesh, Real, NumVars>& u,
-      const CellVectorField<Mesh, Real, NumVars>& grad_u) const noexcept {
+      const CellVectorField<Mesh, Real, NumVars>& grad_u) const noexcept
+  {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Find the largest negative and positive differences
       // between values of the current cell and the adjacent cells.

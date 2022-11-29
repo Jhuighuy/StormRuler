@@ -1,8 +1,10 @@
-//  ______  ______   ______   ______  __  __   ______   ______   ______
-// /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\ 
-// \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \ 
-//  \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\ 
-//   \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║   ______  ______   ______   ______  __  __   ______   ______   ______     ║
+// ║  /\  ___\/\  ___\ /\  __ \ /\__  _\/\ \_\ \ /\  ___\ /\  __ \ /\  ___\    ║
+// ║  \ \  __\\ \  _\  \ \  __ \\/_/\ \/\ \  __ \\ \  __\ \ \  __/ \ \___  \   ║
+// ║   \ \_\   \ \_____\\ \_\ \_\  \ \_\ \ \_\ \_\\ \_____\\ \_\ \_\\/\_____\  ║
+// ║    \/_/    \/_____/ \/_/\/_/   \/_/  \/_/\/_/ \/_____/ \/_/ /_/ \/_____/  ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
 //
 // Copyright (C) 2020-2023 Oleg Butakov
 //
@@ -30,13 +32,15 @@
 #include "SkunkHydro.hpp"
 #include <functional>
 
-namespace Storm::Feathers {
+namespace Storm::Feathers
+{
 
 /**
  * @brief Abstract boundary condition.
  */
 template<typename MhdPhysicsT>
-class MhdFvBcPT : public std::enable_shared_from_this<MhdFvBcPT<MhdPhysicsT>> {
+class MhdFvBcPT : public std::enable_shared_from_this<MhdFvBcPT<MhdPhysicsT>>
+{
 public:
 
   using MhdFluidStateT = typename MhdPhysicsT::MhdFluidStateT;
@@ -46,11 +50,13 @@ public:
 
   /** @brief Compute the ghost states. */
   void get_ghost_state(const vec2_t& n, const vec2_t& r, //
-                       const real_t* u, real_t* u_ghost) const {
+                       const real_t* u, real_t* u_ghost) const
+  {
     get_ghost_state(vec3_t(n, 0.0), vec3_t(r, 0.0), u, u_ghost);
   }
   void get_ghost_state(const vec3_t& n, const vec3_t& r, //
-                       const real_t* u, real_t* u_ghost) const {
+                       const real_t* u, real_t* u_ghost) const
+  {
     MhdFluidStateT u_state(n, u), u_ghost_state;
     get_ghost_state_(n, r, u_state, u_ghost_state);
     u_ghost_state.make_cons(5, u_ghost);
@@ -69,7 +75,8 @@ private:
  * Sets ghost state values to infinity state.
  */
 template<typename MhdPhysicsT>
-class MhdFvBcFarFieldT : public MhdFvBcPT<MhdPhysicsT> {
+class MhdFvBcFarFieldT : public MhdFvBcPT<MhdPhysicsT>
+{
 public:
 
   using typename MhdFvBcPT<MhdPhysicsT>::MhdFluidStateT;
@@ -80,7 +87,8 @@ private:
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override {
+                        MhdFluidStateT& u_ghost) const override
+  {
     u_ghost = u;
   }
 
@@ -90,7 +98,8 @@ private:
  * @brief No-slip wall boundary condition.
  */
 template<typename MhdPhysicsT>
-class MhdFvBcNoSlipT : public MhdFvBcPT<MhdPhysicsT> {
+class MhdFvBcNoSlipT : public MhdFvBcPT<MhdPhysicsT>
+{
 public:
 
   using typename MhdFvBcPT<MhdPhysicsT>::MhdFluidStateT;
@@ -98,14 +107,17 @@ public:
   std::function<vec3_t(vec3_t)> vfunc;
 
   MhdFvBcNoSlipT(std::function<vec3_t(vec3_t)> vfunc = nullptr)
-      : vfunc(std::move(vfunc)) {}
+      : vfunc(std::move(vfunc))
+  {
+  }
 
 private:
 
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override {
+                        MhdFluidStateT& u_ghost) const override
+  {
     u_ghost = u;
     if (vfunc != nullptr) {
       u_ghost.vel = vfunc(r);
@@ -120,7 +132,8 @@ private:
  * @brief Slip wall boundary condition.
  */
 template<typename MhdPhysicsT>
-class MhdFvBcSlipT : public MhdFvBcPT<MhdPhysicsT> {
+class MhdFvBcSlipT : public MhdFvBcPT<MhdPhysicsT>
+{
 public:
 
   using typename MhdFvBcPT<MhdPhysicsT>::MhdFluidStateT;
@@ -131,7 +144,8 @@ private:
   /** @brief Compute the ghost state. */
   void get_ghost_state_(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
-                        MhdFluidStateT& u_ghost) const override {
+                        MhdFluidStateT& u_ghost) const override
+  {
     u_ghost = u;
     u_ghost.vel -= u.vel_n * n;
   }

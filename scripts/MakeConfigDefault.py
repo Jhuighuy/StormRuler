@@ -12,49 +12,32 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
+# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Ignore everything by default, but scan all directories.
-*
-*~
-!*/
+import re
+import sys
 
 # ------------------------------------------------------------------------------
 
-# Configuration files.
-!.git*
-!.clang-*
-!CPPLINT.cfg
-!.vscode/c_cpp_properties.json
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print(f'Usage: {sys.argv[0]} <input-file> <output-file>')
+        sys.exit(1)
 
-# ------------------------------------------------------------------------------
+    FIND = r'#cmakedefine01\s*(\w+)$'
+    REPLACE = r'#ifndef \1\n#define \1 0\n#endif'
 
-# CMake.
-!CMakeLists.txt
-!cmake/*.cmake
-CMakeFiles/
+    input_file_path = sys.argv[1]
+    with open(input_file_path, 'r') as input_file:
+        contents = input_file.read()
+        generated = re.sub(FIND, REPLACE, contents, flags=re.M)
 
-# ------------------------------------------------------------------------------
-
-# Sources.
-!*.h
-!*.c
-!*.hpp
-!*.hpp.in
-!*.cpp
-!*.inl
-!*.glsl
-
-# Scripts.
-!*.py
-!*.sh
-!*.bat
-
-# Documentation.
-!*.md
+    output_file_path = sys.argv[2]
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(generated)

@@ -17,3 +17,30 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
+
+# ------------------------------------------------------------------------------
+
+# Core header-only library.
+file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
+set(StormRuler_CXX_SOURCES ${StormRuler_CXX_SOURCES} PARENT_SCOPE)
+add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
+
+# Link with the base target.
+target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
+
+# Include directories.
+target_include_directories(StormRuler_BASE INTERFACE ".")
+
+# ------------------------------------------------------------------------------
+
+# Configuration file.
+configure_file("./Storm/Config.hpp.in" "./Storm/Config.hpp")
+
+# "Default" configuration file. 
+# (It should be in the repository, used for non-CMake builds.)
+add_custom_command(OUTPUT "./Storm/ConfigDefault.hpp"
+                   COMMAND ${Python3_EXECUTABLE} 
+                           "../scripts/MakeConfigDefault.py" 
+                           "./Storm/Config.hpp.in" "./Storm/ConfigDefault.hpp"
+                   MAIN_DEPENDENCY "./Storm/Config.hpp.in"
+                   VERBATIM)

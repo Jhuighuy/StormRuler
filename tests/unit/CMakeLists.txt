@@ -12,49 +12,24 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
+# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Ignore everything by default, but scan all directories.
-*
-*~
-!*/
+# Download the latest Doctest.
+file(DOWNLOAD 
+  "https://raw.githubusercontent.com/doctest/doctest/master/doctest/doctest.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/_doctest.h")
 
 # ------------------------------------------------------------------------------
 
-# Configuration files.
-!.git*
-!.clang-*
-!CPPLINT.cfg
-!.vscode/c_cpp_properties.json
+# Playground executable.
+file(GLOB CXX_SOURCES "./*.cpp")
+add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 
-# ------------------------------------------------------------------------------
-
-# CMake.
-!CMakeLists.txt
-!cmake/*.cmake
-CMakeFiles/
-
-# ------------------------------------------------------------------------------
-
-# Sources.
-!*.h
-!*.c
-!*.hpp
-!*.hpp.in
-!*.cpp
-!*.inl
-!*.glsl
-
-# Scripts.
-!*.py
-!*.sh
-!*.bat
-
-# Documentation.
-!*.md
+# Link with the core library.
+target_link_libraries(StormRuler_UnitTests StormRuler)

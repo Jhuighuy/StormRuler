@@ -1,0 +1,78 @@
+// Copyright (C) 2020-2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
+{
+  "env": {
+    "theIncludePaths": [
+      "${workspaceFolder}/source"
+    ],
+    "theMacFrameworkPaths": [
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+    ]
+  },
+  // TODO: Add Windows configuratiuons.
+  // TODO: Add Mac (x64) configuratiuons.
+  "configurations": [
+    {
+      "name": "Linux (gcc-12-x64)",
+      "includePath": [
+        "${theIncludePaths}"
+      ],
+      "compilerPath": "/usr/bin/g++-12",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "linux-gcc-x64"
+    },
+    {
+      "name": "Linux (clang-15-x64)",
+      "includePath": [
+        "${theIncludePaths}"
+      ],
+      "compilerPath": "/usr/bin/clang++-15",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "linux-clang-x64"
+    },
+    {
+      "name": "Mac (gcc-12-arm64)",
+      "includePath": [
+        "${theIncludePaths}",
+        "/opt/homebrew/include"
+      ],
+      "macFrameworkPath": [
+        "${theMacFrameworkPaths}"
+      ],
+      "compilerPath": "/opt/homebrew/bin/g++-12",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "macos-gcc-arm64"
+    },
+    {
+      "name": "Mac (clang-15-arm64)",
+      "includePath": [
+        "${theIncludePaths}",
+        "/opt/homebrew/include"
+      ],
+      "macFrameworkPath": [
+        "${theMacFrameworkPaths}"
+      ],
+      "compilerPath": "/opt/homebrew/opt/llvm/bin/clang-15",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "macos-clang-arm64"
+    }
+  ],
+  "version": 4
+}

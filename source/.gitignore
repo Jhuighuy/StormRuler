@@ -20,41 +20,8 @@
 
 # ------------------------------------------------------------------------------
 
-# Ignore everything by default, but scan all directories.
-*
-*~
-!*/
-
-# ------------------------------------------------------------------------------
-
-# Configuration files.
-!.git*
-!.clang-*
-!CPPLINT.cfg
-!.vscode/c_cpp_properties.json
-
-# ------------------------------------------------------------------------------
-
-# CMake.
-!CMakeLists.txt
-!cmake/*.cmake
-CMakeFiles/
-
-# ------------------------------------------------------------------------------
-
-# Sources.
-!*.h
-!*.c
-!*.hpp
-!*.hpp.in
-!*.cpp
-!*.inl
-!*.glsl
-
-# Scripts.
-!*.py
-!*.sh
-!*.bat
-
-# Documentation.
-!*.md
+# Ignore the generated configuration file.
+# Default configuration file should be in the repository, 
+# it is used for non-CMake builds.
+Storm/Config.hpp
+!Storm/ConfigDefault.hpp

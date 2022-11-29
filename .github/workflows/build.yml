@@ -32,7 +32,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       # Directory where build-wrapper output will be placed.
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 

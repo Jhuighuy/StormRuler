@@ -2,8 +2,9 @@
 # StormRuler🦜 — A very high order FVM framework
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 
-[![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml)
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
+
+[![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/Jhuighuy/StormRuler/badge.svg?branch=main)](https://coveralls.io/github/Jhuighuy/StormRuler?branch=main)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 

@@ -33,14 +33,13 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      # Directory where build-wrapper output will be placed.
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Install g++
-        run: |
-          sudo apt install -y g++-12
 
       - name: Install vcpkg
         run: |

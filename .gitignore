@@ -29,6 +29,8 @@
 
 # Configuration files.
 !.git*
+vcpkg*
+!vcpkg.json
 !.vscode/c_cpp_properties.json
 !.clang-*
 !CPPLINT.cfg

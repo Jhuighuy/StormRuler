@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
+#include <utility>
 
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -62,11 +63,29 @@
 #warning Storm has detected multiple compilers, something is terribly wrong...
 #endif
 
+// C++23 allows `static` inside of the `constexpr` functions.
+#if STORM_CPP23_
+#define STORM_CPP23_STATIC_ static
+#else
+#define STORM_CPP23_STATIC_
+#endif
+
 // C++23 allows `thread_local` inside of the `constexpr` functions.
 #if STORM_CPP23_
 #define STORM_CPP23_THREAD_LOCAL_ thread_local
 #else
 #define STORM_CPP23_THREAD_LOCAL_
+#endif
+
+// C++23 `std::unreachable()`.
+#if STORM_CPP23_
+#define STORM_UNREACHABLE_() std::unreachable()
+#else
+#if STORM_COMPILER_MSVC_
+#define STORM_UNREACHABLE_() __assume(false)
+#else
+#define STORM_UNREACHABLE_() __builtin_unreachable()
+#endif
 #endif
 
 // Force (kindly ask) the compiler to inline the function.
@@ -210,11 +229,13 @@ using real_t = double;
 /// @brief Complex floating-point type.
 using complex_t = std::complex<real_t>;
 
-constexpr size_t operator""_sz(unsigned long long arg) noexcept {
+constexpr size_t operator""_sz(unsigned long long arg) noexcept
+{
   return static_cast<size_t>(arg);
 }
 
-namespace detail_ {
+namespace detail_
+{
 
   struct noncopyable_ {
     noncopyable_() = default;

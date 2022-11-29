@@ -127,7 +127,7 @@ public:
       case 0: return mat1_(1, 0) * mat2_(2, 0) - mat1_(2, 0) * mat2_(1, 0);
       case 1: return mat1_(2, 0) * mat2_(0, 0) - mat1_(0, 0) * mat2_(2, 0);
       case 2: return mat1_(0, 0) * mat2_(1, 0) - mat1_(1, 0) * mat2_(0, 0);
-      default: std::unreachable();
+      default: STORM_UNREACHABLE_();
     }
   }
 

@@ -88,7 +88,7 @@ constexpr OutMatrix& fill_randomly(OutMatrix&& out_mat, //
                                    matrix_element_t<OutMatrix> min = 0,
                                    matrix_element_t<OutMatrix> max = 1) noexcept
 {
-  static std::mt19937_64 random_engine{};
+  STORM_CPP23_STATIC_ std::mt19937_64 random_engine{};
   std::uniform_real_distribution distribution{min, max};
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {

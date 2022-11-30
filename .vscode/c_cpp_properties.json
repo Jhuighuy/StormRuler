@@ -33,7 +33,8 @@
     {
       "name": "Linux (gcc-12-x64)",
       "includePath": [
-        "${theIncludePaths}"
+        "${theIncludePaths}",
+        "${theVcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/g++-12",
       "cppStandard": "c++23",
@@ -52,7 +53,7 @@
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/arm64-osx/include"
+        "${theVcpkgPackagesPath}/x64-linux/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"

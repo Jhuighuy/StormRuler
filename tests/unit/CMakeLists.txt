@@ -20,10 +20,8 @@
 
 # ------------------------------------------------------------------------------
 
-# Download the latest Doctest.
-file(DOWNLOAD 
-  "https://raw.githubusercontent.com/doctest/doctest/master/doctest/doctest.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/_doctest.h")
+# Find doctest.
+find_package(doctest CONFIG REQUIRED)
 
 # ------------------------------------------------------------------------------
 
@@ -33,6 +31,9 @@ add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 
 # Link with the core library.
 target_link_libraries(StormRuler_UnitTests StormRuler)
+
+# Link with doctest.
+target_link_libraries(StormRuler_UnitTests doctest::doctest)
 
 # # Enable coverage.
 # target_compile_options(StormRuler_UnitTests PRIVATE "--coverage" "-fPIC")

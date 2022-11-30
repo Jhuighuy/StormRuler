@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include "_doctest.h"
+#include <doctest/doctest.h>
 
 namespace Storm
 {

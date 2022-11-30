@@ -22,6 +22,7 @@
     "theIncludePaths": [
       "${workspaceFolder}/source"
     ],
+    "theVcpkgPackagesPath": "${workspaceFolder}/vcpkg_installed",
     "theMacFrameworkPaths": [
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
     ]
@@ -51,7 +52,7 @@
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "/opt/homebrew/include"
+        "${theVcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"
@@ -64,7 +65,7 @@
       "name": "Mac (clang-15-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "/opt/homebrew/include"
+        "${theVcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"

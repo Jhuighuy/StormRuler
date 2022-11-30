@@ -35,5 +35,5 @@ add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 target_link_libraries(StormRuler_UnitTests StormRuler)
 
 # Enable coverage.
-target_compile_options(StormRuler_UnitTests PRIVATE "-fprofile-arcs" "-ftest-coverage" "--coverage" "-fPIC" "-O0")
+target_compile_options(StormRuler_UnitTests PRIVATE "--coverage" "-fPIC")
 target_link_options(StormRuler_UnitTests PRIVATE "-lgcov")

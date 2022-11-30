@@ -68,10 +68,8 @@ jobs:
 
       - name: Install vcpkg
         run: |
-          cd ..
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.sh
+          git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
+          ../vcpkg/bootstrap-vcpkg.sh
 
       # ------------------------------------------------------------------------
 

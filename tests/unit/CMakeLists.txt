@@ -33,3 +33,6 @@ add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 
 # Link with the core library.
 target_link_libraries(StormRuler_UnitTests StormRuler)
+
+# Enable coverage.
+target_compile_options(StormRuler_UnitTests PRIVATE "--coverage")

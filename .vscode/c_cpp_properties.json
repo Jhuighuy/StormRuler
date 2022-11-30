@@ -22,6 +22,7 @@
     "theIncludePaths": [
       "${workspaceFolder}/source"
     ],
+    "theVcpkgPackagesPath": "${workspaceFolder}/vcpkg_installed",
     "theMacFrameworkPaths": [
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
     ]
@@ -32,7 +33,8 @@
     {
       "name": "Linux (gcc-12-x64)",
       "includePath": [
-        "${theIncludePaths}"
+        "${theIncludePaths}",
+        "${theVcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/g++-12",
       "cppStandard": "c++23",
@@ -51,7 +53,7 @@
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "/opt/homebrew/include"
+        "${theVcpkgPackagesPath}/x64-linux/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"
@@ -64,7 +66,7 @@
       "name": "Mac (clang-15-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "/opt/homebrew/include"
+        "${theVcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"

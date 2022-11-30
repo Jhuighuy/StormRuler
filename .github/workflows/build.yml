@@ -22,6 +22,8 @@
 
 name: Build
 
+# ------------------------------------------------------------------------------
+
 on:
   push:
     branches:
@@ -29,45 +31,85 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# ------------------------------------------------------------------------------
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-22.04
     env:
+      # vcpkg installation directory.
+      VCPKG_ROOT: ../vcpkg
+
       # Directory where build-wrapper output will be placed.
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 
 
     steps:
+
+      # ------------------------------------------------------------------------
+
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install modern g++
+      # ------------------------------------------------------------------------
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      # ------------------------------------------------------------------------
+
+      - name: Install gcovr 5.0
         run: |
-          sudo apt update
-          sudo apt install gcc-12 g++-12
+          pip install gcovr==5.0 # 5.1 is not supported
+
+      # ------------------------------------------------------------------------
 
       - name: Install vcpkg
         run: |
-          cd ..
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.sh
+          git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
+          ../vcpkg/bootstrap-vcpkg.sh
+
+      # ------------------------------------------------------------------------
 
       - name: Install sonar-scanner and build-wrapper
         uses: SonarSource/sonarcloud-github-c-cpp@v1
+
+      # ------------------------------------------------------------------------
 
       - name: Run build-wrapper
         run: |
           mkdir bin
           export CXX=g++-12
-          cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Release
+          cmake . \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_STANDARD=20 \
+              -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          build-wrapper-linux-x86-64 \
+              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Release
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests
+        run: |
+          ./bin/StormRuler_UnitTests
+
+      # ------------------------------------------------------------------------
+
+      - name: Collect coverage
+        run: |
+          gcovr --sonarqube > coverage.xml
+
+      # ------------------------------------------------------------------------
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+          sonar-scanner \
+              --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+              --define sonar.coverageReportPaths=coverage.xml
 
 # ------------------------------------------------------------------------------

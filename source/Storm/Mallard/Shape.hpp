@@ -160,6 +160,21 @@ constexpr real_t volume(const Shape& shape, const Mesh& mesh) noexcept
   return vol;
 }
 
+/// @brief Compute the simplex @p shape barycenter.
+template<shape Shape, mesh Mesh>
+  requires (!complex_shape<Shape, Mesh> &&
+            (mesh_dim_v<Mesh> >= shape_dim_v<Shape>) )
+constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
+                                      const Mesh& mesh) noexcept
+{
+  const auto nodes = shape.nodes();
+  mesh_vec_t<Mesh> sum_position{mesh.position(nodes.front())};
+  for (const auto& node : nodes | std::views::drop(1)) {
+    sum_position += mesh.position(node);
+  }
+  return sum_position / nodes.size();
+}
+
 /// @brief Compute the complex @p shape barycenter.
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
@@ -243,14 +258,6 @@ constexpr real_t volume(const Seg& seg, const Mesh& mesh) noexcept
 {
   const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
   return length(v2 - v1);
-}
-
-/// @brief Segment @p seg barycenter.
-template<mesh Mesh>
-constexpr mesh_vec_t<Mesh> barycenter(const Seg& seg, const Mesh& mesh) noexcept
-{
-  const auto v1{mesh.position(seg.n1)}, v2{mesh.position(seg.n2)};
-  return (v1 + v2) / 2.0;
 }
 
 /// @brief Segment @p seg normal.
@@ -338,17 +345,6 @@ constexpr real_t volume(const Triangle& tri, const Mesh& mesh) noexcept
   }
 }
 
-/// @brief Triangle @p tri barycenter.
-template<mesh Mesh>
-  requires (mesh_dim_v<Mesh> >= 2)
-constexpr mesh_vec_t<Mesh> barycenter(const Triangle& tri,
-                                      const Mesh& mesh) noexcept
-{
-  const auto v1{mesh.position(tri.n1)}, v2{mesh.position(tri.n2)};
-  const auto v3{mesh.position(tri.n3)};
-  return (v1 + v2 + v3) / 3.0;
-}
-
 /// @brief Triangle @p tri normal.
 template<mesh Mesh>
   requires (mesh_dim_v<Mesh> == 3)
@@ -365,16 +361,16 @@ constexpr mesh_vec_t<Mesh> normal(const Triangle& tri,
 /// @brief Quadrangular shape.
 /// @verbatim
 /// +==========================================================================+
-/// |                                                   | Edges /              |
-/// |                         e4/f4                     |      / Faces:        |
-/// |                 n1 @------<------@ n4             |----------------------|
-/// |                   /             /                 | e1 = f1 = (n1,n2)    |
-/// |            e1/f1 v             /                  | e2 = f2 = (n2,n3)    |
-/// |                 /             ^ e3/f3             | e3 = f3 = (n3,n4)    |
-/// |                /             /                    | e4 = f4 = (n4,n1)    |
-/// |            n2 @------>------@ n3                  |                      |
-/// |                   e2/f2                           |                      |
-/// |                                                   |                      |
+/// |                                                  | Edges /               |
+/// |                         e4/f4                    |      / Faces:         |
+/// |                 n1 @------<------@ n4            |-----------------------|
+/// |                   /             /                | e1 = f1 = (n1,n2)     |
+/// |            e1/f1 v             /                 | e2 = f2 = (n2,n3)     |
+/// |                 /             ^ e3/f3            | e3 = f3 = (n3,n4)     |
+/// |                /             /                   | e4 = f4 = (n4,n1)     |
+/// |            n2 @------>------@ n3                 |                       |
+/// |                   e2/f2                          |                       |
+/// |                                                  |                       |
 /// +==========================================================================+
 /// @endverbatim
 class Quadrangle final
@@ -576,28 +572,28 @@ public:
 /// @brief Tetrahedral shape.
 /// @verbatim
 /// +==========================================================================+
-/// |                                                  | Edges:                |
-/// |                          f4                      |-----------------------|
-/// |                     n4   ^                       | e1 = (n1,n2)          |
-/// |                      @   |                       | e2 = (n2,n3)          |
-/// |               f2    /|\. |     f3                | e3 = (n3,n1)          |
-/// |               ^    / | `\.     ^                 | e4 = (n1,n4)          |
-/// |                \  /  |   `\.  /                  | e5 = (n2,n4)          |
-/// |                 \`   |   | `\/                   | e6 = (n3,n4)          |
-/// |                 ,\   |   o  /`\                  |                       |
-/// |             e4 ^  *  |     *   `^.e6             |                       |
-/// |               /   e5 ^           `\              |-----------------------|
-/// |           n1 @-------|--<----------@ n3          | Faces:                |
-/// |               \      |  e3       ,/              |-----------------------|
-/// |                \     |     o   ,/`               | f1 = (n1,n3,n2)       |
-/// |                 \    ^ e5  | ,/`                 | f2 = (n1,n2,n4)       |
-/// |               e1 v   |     ,^ e2                 | f3 = (n2,n3,n4)       |
-/// |                   \  |   ,/`                     | f4 = (n3,n1,n4)       |
-/// |                    \ | ,/` |                     |                       |
-/// |                     \|/`   |                     |                       |
-/// |                      @ n2  v                     |                       |
-/// |                            f1                    |                       |
-/// |                                                  |                       |
+/// |                                                 | Edges:                 |
+/// |                         f4                      |------------------------|
+/// |                    n4   ^                       | e1 = (n1,n2)           |
+/// |                     @   |                       | e2 = (n2,n3)           |
+/// |              f2    /|\. |     f3                | e3 = (n3,n1)           |
+/// |              ^    / | `\.     ^                 | e4 = (n1,n4)           |
+/// |               \  /  |   `\.  /                  | e5 = (n2,n4)           |
+/// |                \`   |   | `\/                   | e6 = (n3,n4)           |
+/// |                ,\   |   o  /`\                  |                        |
+/// |            e4 ^  *  |     *   `^.e6             |                        |
+/// |              /   e5 ^           `\              |------------------------|
+/// |          n1 @-------|--<----------@ n3          | Faces:                 |
+/// |              \      |  e3       ,/              |------------------------|
+/// |               \     |     o   ,/`               | f1 = (n1,n3,n2)        |
+/// |                \    ^ e5  | ,/`                 | f2 = (n1,n2,n4)        |
+/// |              e1 v   |     ,^ e2                 | f3 = (n2,n3,n4)        |
+/// |                  \  |   ,/`                     | f4 = (n3,n1,n4)        |
+/// |                   \ | ,/` |                     |                        |
+/// |                    \|/`   |                     |                        |
+/// |                     @ n2  v                     |                        |
+/// |                           f1                    |                        |
+/// |                                                 |                        |
 /// +==========================================================================+
 /// @endverbatim
 class Tetrahedron final
@@ -645,16 +641,6 @@ public:
   }
 
 }; // class Tetrahedron
-
-/// @brief Tetrahedron @p tet volume.
-template<mesh Mesh>
-  requires (mesh_dim_v<Mesh> >= 3)
-constexpr real_t volume(const Tetrahedron& tet, const Mesh& mesh) noexcept
-{
-  const auto v1{mesh.position(tet.n1)}, v2{mesh.position(tet.n2)};
-  const auto v3{mesh.position(tet.n3)}, v4{mesh.position(tet.n4)};
-  return abs(dot_product(v2 - v1, cross_product(v3 - v1, v4 - v1))) / 6.0;
-}
 
 /// @brief Tetrahedron @p tet barycenter.
 template<mesh Mesh>
@@ -758,32 +744,32 @@ public:
 /// @brief Pentahedral shape (triangular prism).
 /// @verbatim
 /// +==========================================================================+
-/// |                                           | Edges:                       |
-/// |                 f5                        |------------------------------|
-/// |                 ^  f3                     | e1 = (n1,n2)                 |
-/// |                 |  ^                      | e2 = (n2,n3)                 |
-/// |             e9  |  |                      | e3 = (n3,n1)                 |
-/// |      n4 @---<---|-------------@ n6        | e4 = (n1,n4)                 |
-/// |         |\      *  |        ,/|           | e5 = (n2,n5)                 |
-/// |         | \        o      ,/` |           | e6 = (n3,n6)                 |
-/// |         |  \         e8 ,^`   |           | e7 = (n4,n5)                 |
-/// |         |   v e7      ,/`     |           | e8 = (n5,n6)                 |
-/// |      e4 ^    \      ,/`       ^ e6        | e9 = (n6,n4)                 |
-/// |         |     \   ,/`         |           |                              |
-/// |         |      \ /`        *-------> f2   |------------------------------|
-/// |  f1 <-------*   @ n5          |           | Faces:                       |
-/// |         |       |             |           |------------------------------|
-/// |      n1 @-------|---------<---@ n3        | f1 = (n1,n2,n5,n4)           |
-/// |          \      |        e3 ,/            | f2 = (n2,n3,n6,n5)           |
-/// |           \     |     o   ,/`             | f3 = (n3,n1,n4,n6)           |
-/// |            \    ^ e5  | ,/`               | f4 = (n1,n3,n2)              |
-/// |          e1 v   |     ,^ e2               | f5 = (n4,n5,n6)              |
-/// |              \  |   ,/|                   |                              |
-/// |               \ | ,/` |                   |                              |
-/// |                \|/`   |                   |                              |
-/// |                 @ n2  v                   |                              |
-/// |                       f4                  |                              |
-/// |                                           |                              |
+/// |                                            | Edges:                      |
+/// |                  f5                        |-----------------------------|
+/// |                  ^  f3                     | e1 = (n1,n2)                |
+/// |                  |  ^                      | e2 = (n2,n3)                |
+/// |              e9  |  |                      | e3 = (n3,n1)                |
+/// |       n4 @---<---|-------------@ n6        | e4 = (n1,n4)                |
+/// |          |\      *  |        ,/|           | e5 = (n2,n5)                |
+/// |          | \        o      ,/` |           | e6 = (n3,n6)                |
+/// |          |  \         e8 ,^`   |           | e7 = (n4,n5)                |
+/// |          |   v e7      ,/`     |           | e8 = (n5,n6)                |
+/// |       e4 ^    \      ,/`       ^ e6        | e9 = (n6,n4)                |
+/// |          |     \   ,/`         |           |                             |
+/// |          |      \ /`        *-------> f2   |-----------------------------|
+/// |   f1 <-------*   @ n5          |           | Faces:                      |
+/// |          |       |             |           |-----------------------------|
+/// |       n1 @-------|---------<---@ n3        | f1 = (n1,n2,n5,n4)          |
+/// |           \      |        e3 ,/            | f2 = (n2,n3,n6,n5)          |
+/// |            \     |     o   ,/`             | f3 = (n3,n1,n4,n6)          |
+/// |             \    ^ e5  | ,/`               | f4 = (n1,n3,n2)             |
+/// |           e1 v   |     ,^ e2               | f5 = (n4,n5,n6)             |
+/// |               \  |   ,/|                   |                             |
+/// |                \ | ,/` |                   |                             |
+/// |                 \|/`   |                   |                             |
+/// |                  @ n2  v                   |                             |
+/// |                        f4                  |                             |
+/// |                                            |                             |
 /// +==========================================================================+
 /// @endverbatim
 class Pentahedron final
@@ -850,32 +836,32 @@ public:
 /// @brief Hexahedral shape.
 /// @verbatim
 /// +==========================================================================+
-/// |                                              | Edges:                    |
-/// |                      f6                      |---------------------------|
-/// |                      ^       f3              |  e1 = (n1,n2)             |
-/// |                      |       ^               |  e2 = (n2,n3)             |
-/// |                  e10 |      /                |  e3 = (n3,n4)             |
-/// |            n7 @---<--|----------@ n6         |  e4 = (n4,n1)             |
-/// |              /|      |    /    /|            |  e5 = (n1,n5)             |
-/// |             / |      |   o    / |            |  e6 = (n2,n6)             |
-/// |        e11 v  |      *    e9 ^  ^ e6         |  e7 = (n3,n7)             |
-/// |           /   ^ e7          /   |            |  e8 = (n4,n8)             |
-/// |          /    |      e12   /  *-------> f2   |  e9 = (n5,n6)             |
-/// |      n8 @------------->---@ n5  |            | e10 = (n6,n7)             |
-/// |  f4 <---|--o  |           |     |            | e11 = (n7,n8)             |
-/// |         |  n3 @---<-------|-----@ n2         | e12 = (n8,n5)             |
-/// |         |    /    e2      |    /             |                           |
-/// |      e8 ^   /          e5 ^   /              |---------------------------|
-/// |         |  v e3  *        |  ^ e1            | Faces:                    |
-/// |         | /     /    o    | /                |---------------------------|
-/// |         |/     /     |    |/                 | f1 = (n1,n4,n3,n2)        |
-/// |      n4 @-----/-->--------@ n1               | f2 = (n1,n2,n6,n5)        |
-/// |              /   e4  |                       | f3 = (n2,n3,n7,n6)        |
-/// |             /        v                       | f4 = (n3,n4,n8,n7)        |
-/// |            v         f1                      | f5 = (n1,n5,n8,n4)        |
-/// |            f5                                | f6 = (n5,n6,n7,n8)        |
-/// |                                              |                           |
-/// |                                              |                           |
+/// |                                               | Edges:                   |
+/// |                       f6                      |--------------------------|
+/// |                       ^       f3              |  e1 = (n1,n2)            |
+/// |                       |       ^               |  e2 = (n2,n3)            |
+/// |                   e10 |      /                |  e3 = (n3,n4)            |
+/// |             n7 @---<--|----------@ n6         |  e4 = (n4,n1)            |
+/// |               /|      |    /    /|            |  e5 = (n1,n5)            |
+/// |              / |      |   o    / |            |  e6 = (n2,n6)            |
+/// |         e11 v  |      *    e9 ^  ^ e6         |  e7 = (n3,n7)            |
+/// |            /   ^ e7          /   |            |  e8 = (n4,n8)            |
+/// |           /    |      e12   /  *-------> f2   |  e9 = (n5,n6)            |
+/// |       n8 @------------->---@ n5  |            | e10 = (n6,n7)            |
+/// |   f4 <---|--o  |           |     |            | e11 = (n7,n8)            |
+/// |          |  n3 @---<-------|-----@ n2         | e12 = (n8,n5)            |
+/// |          |    /    e2      |    /             |                          |
+/// |       e8 ^   /          e5 ^   /              |--------------------------|
+/// |          |  v e3  *        |  ^ e1            | Faces:                   |
+/// |          | /     /    o    | /                |--------------------------|
+/// |          |/     /     |    |/                 | f1 = (n1,n4,n3,n2)       |
+/// |       n4 @-----/-->--------@ n1               | f2 = (n1,n2,n6,n5)       |
+/// |               /   e4  |                       | f3 = (n2,n3,n7,n6)       |
+/// |              /        v                       | f4 = (n3,n4,n8,n7)       |
+/// |             v         f1                      | f5 = (n1,n5,n8,n4)       |
+/// |             f5                                | f6 = (n5,n6,n7,n8)       |
+/// |                                               |                          |
+/// |                                               |                          |
 /// +==========================================================================+
 /// @endverbatim
 class Hexahedron final

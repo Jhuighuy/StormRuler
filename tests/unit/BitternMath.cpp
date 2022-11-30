@@ -66,9 +66,9 @@ TEST_CASE("Bittern/LogicalMatrixExpressions")
 
   CHECK_FALSE(any(!mat1));
   CHECK(all(!mat2));
-  CHECK_FALSE(any(mat1 && mat2));
-  CHECK(all(mat1 || mat2));
-  CHECK(any(mat1 && mat3));
+  CHECK_FALSE(any(matrix_and(mat1, mat2)));
+  CHECK(all(matrix_or(mat1, mat2)));
+  CHECK(any(matrix_and(mat1, mat3)));
 }
 
 // -----------------------------------------------------------------------------
@@ -169,7 +169,9 @@ TEST_CASE("Bittern/HyperbolicMatrixExpressions")
                              1.0 / sqrt2, sqrt3 / 2.0};
 
   CHECK(all(approx_equal(cosh(mat), cosh_mat, EPS)));
-  // CHECK(all(approx_equal(acosh(cosh_mat), 1.0i * abs(mat), EPS)));
+#if 0 /// @todo This check fails on x64 for some reason.
+  CHECK(all(approx_equal(acosh(cosh_mat), 1.0i * abs(mat), EPS)));
+#endif
 
   Mat2x2<complex_t> tanh_mat{-1.0i / sqrt3, 1.0i, //
                              1.0i, 1.0i / -sqrt3};

@@ -76,7 +76,7 @@ public:
   constexpr auto operator()(Indices... indices) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
-    auto compute_element = [&](const Matrices&... mats) {
+    auto compute_element = [this, &indices...](const Matrices&... mats) {
       return func_(mats(indices...)...);
     };
     return std::apply(compute_element, mats_);
@@ -124,7 +124,7 @@ constexpr auto operator!(Matrix&& mat)
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2> && //
            bool_matrix<Matrix1> && bool_matrix<Matrix2>
-constexpr auto operator&&(Matrix1&& mat1, Matrix2&& mat2)
+constexpr auto matrix_and(Matrix1&& mat1, Matrix2&& mat2)
 {
   return map(And{}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
@@ -135,7 +135,7 @@ constexpr auto operator&&(Matrix1&& mat1, Matrix2&& mat2)
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2> && //
            bool_matrix<Matrix1> && bool_matrix<Matrix2>
-constexpr auto operator||(Matrix1&& mat1, Matrix2&& mat2)
+constexpr auto matrix_or(Matrix1&& mat1, Matrix2&& mat2)
 {
   return map(Or{}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
@@ -271,14 +271,14 @@ template<viewable_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr auto operator*(Matrix&& mat, Scalar scal)
 {
-  return map(BindFirst{std::move(scal), Multiply{}}, //
+  return map(BindFirst{Multiply{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
 template<std::copyable Scalar, viewable_matrix Matrix>
   requires numeric_type<Scalar> && numeric_matrix<Matrix>
 constexpr auto operator*(Scalar scal, Matrix&& mat)
 {
-  return map(BindLast{std::move(scal), Multiply{}}, //
+  return map(BindLast{Multiply{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
 /// @}
@@ -287,7 +287,7 @@ template<output_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr decltype(auto) operator*=(Matrix&& mat, Scalar scal)
 {
-  return assign(BindLast{std::move(scal), MultiplyAssign{}},
+  return assign(BindLast{MultiplyAssign{}, std::move(scal)},
                 std::forward<Matrix>(mat));
 }
 
@@ -296,7 +296,7 @@ template<std::copyable Scalar, viewable_matrix Matrix>
   requires numeric_type<Scalar> && numeric_matrix<Matrix>
 constexpr auto operator/(Scalar scal, Matrix&& mat)
 {
-  return map(BindFirst{std::move(scal), Divide{}}, //
+  return map(BindFirst{Divide{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
 /// @brief Divide the matrix @p mat by a scalar @p scal.
@@ -304,7 +304,7 @@ template<viewable_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr auto operator/(Matrix&& mat, Scalar scal)
 {
-  return map(BindLast{std::move(scal), Divide{}}, //
+  return map(BindLast{Divide{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
 /// @brief Divide-assign the matrix @p mat by a scalar @p scal.
@@ -312,7 +312,7 @@ template<output_matrix Matrix, std::copyable Scalar>
   requires numeric_matrix<Matrix> && numeric_type<Scalar>
 constexpr decltype(auto) operator/=(Matrix&& mat, Scalar scal)
 {
-  return assign(BindLast{std::move(scal), DivideAssign{}}, //
+  return assign(BindLast{DivideAssign{}, std::move(scal)}, //
                 std::forward<Matrix>(mat));
 }
 

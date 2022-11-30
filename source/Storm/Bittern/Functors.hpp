@@ -28,9 +28,100 @@
 #include <concepts>
 #include <functional>
 #include <limits>
+#include <tuple>
 
 namespace Storm
 {
+
+// -----------------------------------------------------------------------------
+
+/// @brief Function call result type.
+template<class Func, class... Args>
+using func_result_t = decltype(std::declval<Func>()(std::declval<Args>()...));
+
+/// @brief Bind the first arguments of the function to values.
+template<class Func, class... FirstArgs>
+  requires std::is_object_v<Func>
+struct BindFirst {
+private:
+
+  STORM_NO_UNIQUE_ADDRESS_ Func func_;
+  STORM_NO_UNIQUE_ADDRESS_ std::tuple<FirstArgs...> first_args_;
+
+public:
+
+  constexpr explicit BindFirst(Func func, FirstArgs... first_args)
+      : func_{std::move(func)}, first_args_{std::move(first_args)...}
+  {
+  }
+
+  template<class... RestArgs>
+    requires std::regular_invocable<Func, FirstArgs..., RestArgs...>
+  constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept
+  {
+    return std::apply(
+        [this, &rest_args...](const FirstArgs&... first_args) {
+          return func_(first_args..., std::forward<RestArgs>(rest_args)...);
+        },
+        first_args_);
+  }
+
+}; // struct BindFirst
+
+/// @brief Bind the last arguments of the function to values.
+template<class Func, class... LastArgs>
+  requires std::is_object_v<Func>
+struct BindLast {
+private:
+
+  STORM_NO_UNIQUE_ADDRESS_ Func func_;
+  STORM_NO_UNIQUE_ADDRESS_ std::tuple<LastArgs...> last_args_;
+
+public:
+
+  constexpr explicit BindLast(Func func, LastArgs... last_args)
+      : func_{std::move(func)}, last_args_{std::move(last_args)...}
+  {
+  }
+
+  template<class... RestArgs>
+    requires std::regular_invocable<Func, RestArgs..., LastArgs...>
+  constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept
+  {
+    return std::apply(
+        [this, &rest_args...](const LastArgs&... last_args) {
+          return func_(std::forward<RestArgs>(rest_args)..., last_args...);
+        },
+        last_args_);
+  }
+
+}; // struct BindLast
+
+/// @brief Compose two functions.
+template<class Func1, class Func2>
+  requires std::is_object_v<Func1> && std::is_object_v<Func2>
+struct Compose {
+private:
+
+  STORM_NO_UNIQUE_ADDRESS_ Func1 func1_;
+  STORM_NO_UNIQUE_ADDRESS_ Func2 func2_;
+
+public:
+
+  constexpr Compose(Func1 func1, Func2 func2)
+      : func1_{std::move(func1)}, func2_{std::move(func2)}
+  {
+  }
+
+  template<class... Args>
+    requires std::regular_invocable<Func2, Args...> && //
+             std::regular_invocable<Func1, std::invoke_result_t<Func2, Args...>>
+  constexpr decltype(auto) operator()(Args&&... args) const noexcept
+  {
+    return func1_(func2_(std::forward<Args>(args)...));
+  }
+
+}; // struct Compose
 
 // -----------------------------------------------------------------------------
 
@@ -44,56 +135,6 @@ struct Cast {
     return static_cast<To>(std::forward<Arg>(arg));
   }
 }; // struct Cast
-
-/// @brief Bind the first argument of the function to a value.
-template<class FirstArg, class Func>
-  requires std::is_object_v<Func>
-struct BindFirst {
-private:
-
-  STORM_NO_UNIQUE_ADDRESS_ FirstArg first_arg_;
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-
-public:
-
-  constexpr explicit BindFirst(FirstArg first_arg, Func func)
-      : first_arg_{std::move(first_arg)}, func_{std::move(func)}
-  {
-  }
-
-  template<class... RestArgs>
-    requires std::regular_invocable<Func, FirstArg, RestArgs...>
-  constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept
-  {
-    return func_(first_arg_, std::forward<RestArgs>(rest_args)...);
-  }
-
-}; // struct BindFirst
-
-/// @brief Bind the last argument of the function to a value.
-template<class LastArg, class Func>
-  requires std::is_object_v<Func>
-struct BindLast {
-private:
-
-  STORM_NO_UNIQUE_ADDRESS_ LastArg last_arg_;
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-
-public:
-
-  constexpr explicit BindLast(LastArg last_arg, Func func)
-      : last_arg_{std::move(last_arg)}, func_{std::move(func)}
-  {
-  }
-
-  template<class... RestArgs>
-    requires std::regular_invocable<Func, RestArgs..., LastArg>
-  constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept
-  {
-    return func_(std::forward<RestArgs>(rest_args)..., last_arg_);
-  }
-
-}; // struct BindLast
 
 // -----------------------------------------------------------------------------
 
@@ -208,6 +249,39 @@ struct DivideAssign {
     return std::forward<Arg1>(arg1) /= std::forward<Arg2>(arg2);
   }
 }; // struct DivideAssign
+
+// -----------------------------------------------------------------------------
+
+/// @brief Absolute value function.
+struct Abs {
+  template<class Arg>
+  constexpr auto operator()(Arg&& arg) const noexcept
+  {
+    return abs(std::forward<Arg>(arg));
+  }
+}; // struct Abs
+
+// -----------------------------------------------------------------------------
+
+/// @brief Power function.
+struct Pow {
+  template<class Arg1, class Arg2>
+  constexpr auto operator()(Arg1&& arg1, Arg2&& arg2) const noexcept
+  {
+    return pow(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
+  }
+}; // struct Pow
+
+// -----------------------------------------------------------------------------
+
+/// @brief Scalar dot product function: @f$ x \cdot y := x \, \bar{y} @f$.
+struct DotProduct {
+  template<class Arg1, class Arg2>
+  constexpr auto operator()(Arg1&& arg1, Arg2&& arg2) const noexcept
+  {
+    return std::forward<Arg1>(arg1) * conj(std::forward<Arg2>(arg2));
+  }
+}; // struct DotProduct
 
 // -----------------------------------------------------------------------------
 

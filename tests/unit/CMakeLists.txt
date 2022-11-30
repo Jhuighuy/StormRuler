@@ -36,5 +36,4 @@ target_link_libraries(StormRuler_UnitTests StormRuler)
 target_link_libraries(StormRuler_UnitTests doctest::doctest)
 
 # Enable coverage.
-set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} --coverage")
-# target_link_options(StormRuler_UnitTests PRIVATE "-lgcov")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")

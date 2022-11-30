@@ -41,6 +41,13 @@ jobs:
       # vcpkg installation directory.
       VCPKG_ROOT: ../vcpkg
 
+      # gcc and gcov executables.
+      GXX_EXE: g++-12
+      GCOV_EXE: gcov-12
+
+      # Coverage report file path.
+      COVERAGE_REPORT_PATH: coverage.xml
+
       # Directory where build-wrapper output will be placed.
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 
 
@@ -53,16 +60,16 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       # ------------------------------------------------------------------------
 
-      - name: Install gcovr 5.0
+      - name: Install gcovr
         run: |
-          pip install gcovr==5.0 # 5.1 is not supported
+          pip install gcovr
 
       # ------------------------------------------------------------------------
 
@@ -81,7 +88,7 @@ jobs:
       - name: Run build-wrapper
         run: |
           mkdir bin
-          export CXX=g++-12
+          export CXX=${{ env.GXX_EXE }}
           cmake . \
               -DCMAKE_BUILD_TYPE=Release \
               -DCMAKE_CXX_STANDARD=20 \
@@ -97,9 +104,12 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Collect coverage
+      - name: Run gcovr
         run: |
-          gcovr --sonarqube > coverage.xml
+          gcovr \
+              -e "vcpkg_installed/*" -e "test/*" \
+              --gcov-executable "${{ env.GCOV_EXE }}" \
+              --sonarqube -o "${{ env.COVERAGE_REPORT_PATH }}"
 
       # ------------------------------------------------------------------------
 
@@ -110,6 +120,6 @@ jobs:
         run: |
           sonar-scanner \
               --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
-              --define sonar.coverageReportPaths=coverage.xml
+              --define sonar.coverageReportPaths="${{ env.COVERAGE_REPORT_PATH }}"
 
 # ------------------------------------------------------------------------------

@@ -38,17 +38,11 @@ namespace Storm
 template<crtp_derived Derived>
 class MatrixViewInterface;
 
-/// @brief Types, enabled to be a matrix view.
-template<class T>
-inline constexpr bool enable_matrix_view_v =
-    derived_from_crtp_interface<T, MatrixViewInterface>;
-
 /// @brief Matrix view concept.
-/// @todo In order to add the `movable` constraint, we
-///   need to box the functor inside the `MapMatrixView`.
 template<class MatrixView>
-concept matrix_view = matrix<MatrixView> && // std::movable<MatrixView> &&
-                      enable_matrix_view_v<MatrixView>;
+concept matrix_view =
+    matrix<MatrixView> && std::movable<MatrixView> &&
+    derived_from_crtp_interface<MatrixView, MatrixViewInterface>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
 template<class Matrix>

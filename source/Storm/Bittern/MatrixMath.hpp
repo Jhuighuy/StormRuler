@@ -39,7 +39,7 @@ namespace Storm
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise apply function to the matrices.
-template<std::copy_constructible Func, matrix_view... Matrices>
+template<std::copyable Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
            std::regular_invocable<Func, matrix_element_t<Matrices>...>
 class MapMatrixView final :
@@ -267,16 +267,16 @@ constexpr auto operator-(Matrix&& mat)
 
 /// @brief Multiply the matrix @p mat by a scalar @p scal.
 /// @{
-template<viewable_matrix Matrix, std::copyable Scalar>
-  requires numeric_matrix<Matrix> && numeric_type<Scalar>
-constexpr auto operator*(Matrix&& mat, Scalar scal)
+template<std::copyable Scalar, viewable_matrix Matrix>
+  requires numeric_type<Scalar> && numeric_matrix<Matrix>
+constexpr auto operator*(Scalar scal, Matrix&& mat)
 {
   return map(BindFirst{Multiply{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
-template<std::copyable Scalar, viewable_matrix Matrix>
-  requires numeric_type<Scalar> && numeric_matrix<Matrix>
-constexpr auto operator*(Scalar scal, Matrix&& mat)
+template<viewable_matrix Matrix, std::copyable Scalar>
+  requires numeric_matrix<Matrix> && numeric_type<Scalar>
+constexpr auto operator*(Matrix&& mat, Scalar scal)
 {
   return map(BindLast{Multiply{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
@@ -404,48 +404,45 @@ constexpr auto normalize(Matrix&& mat)
 
 // -----------------------------------------------------------------------------
 
-#define MAKE_UNARY_MATRIX_FUNC_(func)            \
-  template<viewable_matrix Matrix>               \
-    requires numeric_matrix<Matrix>              \
-  constexpr auto func(Matrix&& mat)              \
-  {                                              \
-    return MapMatrixView(                        \
-        []<class Elem>(Elem&& elem) {            \
-          return func(std::forward<Elem>(elem)); \
-        },                                       \
-        std::forward<Matrix>(mat));              \
+#define MAKE_UNARY_MATRIX_FUNC_(func)                   \
+  template<viewable_matrix Matrix>                      \
+    requires numeric_matrix<Matrix>                     \
+  constexpr auto func(Matrix&& mat)                     \
+  {                                                     \
+    auto func_object = []<class Arg>(Arg&& arg) {       \
+      return func(std::forward<Arg>(arg));              \
+    };                                                  \
+    return map(func_object, std::forward<Matrix>(mat)); \
   }
 
-#define MAKE_BINARY_MATRIX_FUNC_(func)                                         \
-  template<viewable_matrix Matrix, std::copyable Scalar>                       \
-    requires numeric_matrix<Matrix> && numeric_type<Scalar>                    \
-  constexpr auto func(Matrix&& mat, Scalar scal)                               \
-  {                                                                            \
-    return MapMatrixView(                                                      \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) {                    \
-          return func(std::forward<Elem>(elem), scal);                         \
-        },                                                                     \
-        std::forward<Matrix>(mat));                                            \
-  }                                                                            \
-  template<std::copyable Scalar, viewable_matrix Matrix>                       \
-    requires numeric_type<Scalar> && numeric_matrix<Matrix>                    \
-  constexpr auto func(Scalar scal, Matrix&& mat)                               \
-  {                                                                            \
-    return MapMatrixView(                                                      \
-        [scal = std::move(scal)]<class Elem>(Elem&& elem) {                    \
-          return func(scal, std::forward<Elem>(elem));                         \
-        },                                                                     \
-        std::forward<Matrix>(mat));                                            \
-  }                                                                            \
-  template<viewable_matrix Matrix1, viewable_matrix Matrix2>                   \
-    requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>                \
-  constexpr auto func(Matrix1&& mat1, Matrix2&& mat2)                          \
-  {                                                                            \
-    return MapMatrixView(                                                      \
-        []<class Elem1, class Elem2>(Elem1&& elem1, Elem2&& elem2) {           \
-          return func(std::forward<Elem1>(elem1), std::forward<Elem2>(elem2)); \
-        },                                                                     \
-        std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));             \
+#define MAKE_BINARY_MATRIX_FUNC_(func)                                        \
+  template<std::copyable Scalar, viewable_matrix Matrix>                      \
+    requires numeric_type<Scalar> && numeric_matrix<Matrix>                   \
+  constexpr auto func(Scalar scal, Matrix&& mat)                              \
+  {                                                                           \
+    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
+      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
+    };                                                                        \
+    return map(BindFirst{func_object, scal}, std::forward<Matrix>(mat));      \
+  }                                                                           \
+  template<viewable_matrix Matrix, std::copyable Scalar>                      \
+    requires numeric_matrix<Matrix> && numeric_type<Scalar>                   \
+  constexpr auto func(Matrix&& mat, Scalar scal)                              \
+  {                                                                           \
+    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
+      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
+    };                                                                        \
+    return map(BindLast{func_object, scal}, std::forward<Matrix>(mat));       \
+  }                                                                           \
+  template<viewable_matrix Matrix1, viewable_matrix Matrix2>                  \
+    requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>               \
+  constexpr auto func(Matrix1&& mat1, Matrix2&& mat2)                         \
+  {                                                                           \
+    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
+      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
+    };                                                                        \
+    return map(func_object, /**/                                              \
+               std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));     \
   }
 
 /// @brief Element-wise absolute value of the matrix.

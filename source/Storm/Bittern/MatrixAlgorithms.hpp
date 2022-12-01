@@ -138,6 +138,7 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat)
 }
 template<class Value, class ReduceFunc, class Func, //
          matrix Matrix, matrix... RestMatrices>
+  requires compatible_matrices_v<Matrix, RestMatrices...>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
                       Matrix&& mat, RestMatrices&&... mats) noexcept
 {

@@ -37,33 +37,16 @@ namespace Storm
 
 // -----------------------------------------------------------------------------
 
-/// @brief Matrix shape: a size_t array.
+/// @brief Shape.
+template<size_t Rank>
+using shape_t = std::array<size_t, Rank>;
+
+/// @brief Matrix shape: instantiation of shape_t.
 template<class MatrixShape>
 concept matrix_shape =
-    std::same_as<std::remove_cvref_t<MatrixShape>,
-                 std::array<size_t, std::tuple_size_v<MatrixShape>>>;
-
-/// @brief Rank of a matrix shape.
-template<matrix_shape MatrixShape>
-inline constexpr size_t matrix_shape_rank_v = std::tuple_size_v<MatrixShape>;
-
-/// @brief Check if all indices are in range.
-template<matrix_shape MatrixShape, index... Indices>
-  requires (matrix_shape_rank_v<MatrixShape> == sizeof...(Indices))
-constexpr bool in_range(const MatrixShape& shape, Indices...)
-{
-  return true; // to be implemented.
-}
-
-// -----------------------------------------------------------------------------
-
-/// @brief Matrix index: a tuple-like object with indices.
-template<class MatrixIndices>
-concept matrix_indices =
-    requires { std::tuple_size_v<MatrixIndices>; } &&
-    requires {
-      std::apply([](index auto...) {}, std::declval<MatrixIndices>());
-    };
+    requires { std::tuple_size_v<MatrixShape>; } &&
+    (std::tuple_size_v<MatrixShape> != 0) &&
+    std::same_as<MatrixShape, shape_t<std::tuple_size_v<MatrixShape>>>;
 
 /// @brief Matrix: has shape and subscripts.
 template<class Matrix>
@@ -71,35 +54,17 @@ concept matrix = //
     requires(Matrix& mat) {
       // clang-format off
       { mat.shape() } -> matrix_shape;
-      { mat(size_t{}, size_t{}) } /*-> referenceable */;
+      { std::apply(mat, mat.shape()) } /*-> referenceable */;
       // clang-format on
     };
 
-/// @brief Number of the matrix rows.
-template<matrix Matrix>
-constexpr size_t num_rows(Matrix&& mat) noexcept
-{
-  return std::get<0>(mat.shape());
-}
-
-/// @brief Number of the matrix columns.
-template<matrix Matrix>
-constexpr size_t num_cols(Matrix&& mat) noexcept
-{
-  return std::get<1>(mat.shape());
-}
-
 // -----------------------------------------------------------------------------
-
-/// @brief Matrix shape type, as is.
-template<class Matrix>
-using matrix_shape_decltype_t = decltype(std::declval<Matrix>().shape());
 
 /// @brief Matrix shape type.
 template<class Matrix>
-using matrix_shape_t = std::remove_cvref_t<matrix_shape_decltype_t<Matrix>>;
+using matrix_shape_t = decltype(std::declval<Matrix>().shape());
 
-/// @brief Matrix rank.
+/// @brief Matrix rank value.
 template<class Matrix>
 inline constexpr size_t matrix_rank_v =
     std::tuple_size_v<matrix_shape_t<Matrix>>;
@@ -107,6 +72,21 @@ inline constexpr size_t matrix_rank_v =
 /// @brief Matrix of a specified rank.
 template<class Matrix, size_t Rank>
 concept matrix_r = matrix<Matrix> && (matrix_rank_v<Matrix> == Rank);
+
+/// @brief Number of the matrix rows.
+template<matrix Matrix>
+constexpr size_t num_rows(Matrix&& mat) noexcept
+{
+  return mat.shape()[0];
+}
+
+/// @brief Number of the matrix columns.
+template<matrix Matrix>
+  requires (matrix_rank_v<Matrix> >= 2)
+constexpr size_t num_cols(Matrix&& mat) noexcept
+{
+  return mat.shape()[1];
+}
 
 // -----------------------------------------------------------------------------
 
@@ -117,6 +97,14 @@ inline constexpr bool compatible_matrices_v =
 template<class Matrix, class... Indices>
 inline constexpr bool compatible_matrix_indices_v =
     matrix_rank_v<Matrix> == sizeof...(Indices);
+
+/// @brief Check if all indices are in range.
+template<size_t Rank, index... Indices>
+  requires (Rank == sizeof...(Indices))
+constexpr bool in_range(const shape_t<Rank>&, Indices...)
+{
+  return true; // to be implemented.
+}
 
 // -----------------------------------------------------------------------------
 

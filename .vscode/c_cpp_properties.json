@@ -30,6 +30,7 @@
   // TODO: Add Windows configuratiuons.
   // TODO: Add Mac (x64) configuratiuons.
   "configurations": [
+    // -------------------------------------------------------------------------
     {
       "name": "Linux (gcc-12-x64)",
       "includePath": [
@@ -40,20 +41,23 @@
       "cppStandard": "c++23",
       "intelliSenseMode": "linux-gcc-x64"
     },
+    // -------------------------------------------------------------------------
     {
       "name": "Linux (clang-15-x64)",
       "includePath": [
-        "${theIncludePaths}"
+        "${theIncludePaths}",
+        "${theVcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/clang++-15",
       "cppStandard": "c++23",
       "intelliSenseMode": "linux-clang-x64"
     },
+    // -------------------------------------------------------------------------
     {
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
         "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/x64-linux/include"
+        "${theVcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"
@@ -62,6 +66,7 @@
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-gcc-arm64"
     },
+    // -------------------------------------------------------------------------
     {
       "name": "Mac (clang-15-arm64)",
       "includePath": [
@@ -75,6 +80,7 @@
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-clang-arm64"
     }
+    // -------------------------------------------------------------------------
   ],
   "version": 4
 }

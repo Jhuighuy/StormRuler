@@ -81,6 +81,7 @@ TEST_CASE("Bittern/ArithmeticMatrixExpressions")
                       +7.0, -8.0};
   Mat2x2<real_t> mat3{+3.0, +9.0, //
                       +2.0, -1.0};
+
   CHECK(all((mat1 + 2.0 * mat2) * mat3 == //
             mat2 * 2.0 * mat3 + mat3 * mat1));
   // CHECK(all((mat1 / mat2 + mat2 / mat3) * mat3 * mat2 == //

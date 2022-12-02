@@ -40,7 +40,7 @@ template<class Func, class... Args>
 using func_result_t = decltype(std::declval<Func>()(std::declval<Args>()...));
 
 /// @brief Bind the first arguments of the function to values.
-template<std::copyable Func, std::copyable... FirstArgs>
+template<class Func, class... FirstArgs>
   requires std::is_object_v<Func>
 struct BindFirst {
 private:
@@ -69,7 +69,7 @@ public:
 }; // struct BindFirst
 
 /// @brief Bind the last arguments of the function to values.
-template<std::copyable Func, std::copyable... LastArgs>
+template<class Func, class... LastArgs>
   requires std::is_object_v<Func>
 struct BindLast {
 private:
@@ -98,7 +98,7 @@ public:
 }; // struct BindLast
 
 /// @brief Compose two functions.
-template<std::copyable Func1, std::copyable Func2>
+template<class Func1, class Func2>
   requires std::is_object_v<Func1> && std::is_object_v<Func2>
 struct Compose {
 private:

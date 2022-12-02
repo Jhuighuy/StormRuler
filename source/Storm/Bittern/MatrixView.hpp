@@ -41,7 +41,7 @@ class MatrixViewInterface;
 /// @brief Matrix view concept.
 template<class MatrixView>
 concept matrix_view =
-    matrix<MatrixView> && std::movable<MatrixView> &&
+    matrix<MatrixView> && std::move_constructible<MatrixView> &&
     derived_from_crtp_interface<MatrixView, MatrixViewInterface>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
@@ -56,7 +56,7 @@ concept viewable_matrix =
 
 /// @brief CRTP interface to a matrix views.
 template<crtp_derived Derived>
-class MatrixViewInterface
+class MatrixViewInterface : public NonAssignable
 {
 private:
 
@@ -68,13 +68,8 @@ private:
   }
   constexpr const Derived& self_() const noexcept
   {
-    return static_cast<MatrixViewInterface&>(*this).self_();
+    return const_cast<MatrixViewInterface&>(*this).self_();
   }
-
-protected:
-
-  /// @brief Construct a matrix view interface.
-  constexpr MatrixViewInterface() = default;
 
 public:
 
@@ -84,7 +79,7 @@ public:
     return self_().shape();
   }
 
-  /// @brief Get the matrix coefficient at @p indices.
+  /// @brief Get the matrix element at @p indices.
   /// @{
   template<class... Indices>
     requires compatible_matrix_indices_v<Derived, Indices...>
@@ -100,6 +95,14 @@ public:
   }
   /// @}
 
+  /// @brief Assign the matrix elements to the elements of matrix @p mat.
+  template<matrix Matrix>
+    requires output_matrix<Derived>
+  constexpr decltype(auto) operator=(Matrix&& mat)
+  {
+    return self_() = std::forward<Matrix>(mat);
+  }
+
 }; // class MatrixViewInterface
 
 // -----------------------------------------------------------------------------
@@ -112,15 +115,15 @@ private:
 
   Matrix* p_mat_;
 
-  static void funс_(Matrix&); // not defined
-  static void funс_(Matrix&&) = delete;
+  static consteval void rvalue_shall_not_pass_(Matrix&); // not defined
+  static consteval void rvalue_shall_not_pass_(Matrix&&) = delete;
 
 public:
 
   /// @brief Construct a matrix reference view.
   template<detail_::different_from_<MatrixRefView> OtherMatrix>
-    requires std::convertible_to<OtherMatrix, Matrix&> &&
-             requires { funс_(std::declval<OtherMatrix>()); }
+    requires (std::convertible_to<OtherMatrix, Matrix&> &&
+              requires { rvalue_shall_not_pass_(std::declval<OtherMatrix>()); })
   constexpr MatrixRefView(OtherMatrix&& mat) noexcept
       : p_mat_{std::addressof(
             static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))}
@@ -151,6 +154,14 @@ public:
   }
   /// @}
 
+  /// @copydoc MatrixViewInterface::operator=
+  template<matrix OtherMatrix>
+    requires output_matrix<MatrixRefView>
+  constexpr MatrixRefView& operator=(OtherMatrix&& mat)
+  {
+    return assign(*this, std::forward<OtherMatrix>(mat));
+  }
+
 }; // class MatrixRefView
 
 template<class Matrix>
@@ -159,10 +170,12 @@ MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 // -----------------------------------------------------------------------------
 
 /// @brief Matrix owning view.
+/// Matrix should be noexcept-movable.
 template<matrix Matrix>
-  requires std::movable<Matrix>
+  requires std::move_constructible<Matrix>
 class MatrixOwningView final :
-    public MatrixViewInterface<MatrixOwningView<Matrix>>
+    public MatrixViewInterface<MatrixOwningView<Matrix>>,
+    public NonCopyable
 {
 private:
 
@@ -171,7 +184,7 @@ private:
 public:
 
   /// @brief Construct an owning view.
-  constexpr MatrixOwningView(Matrix&& mat) : mat_{std::move(mat)} {}
+  constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
 
   /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept
@@ -197,6 +210,14 @@ public:
   }
   /// @}
 
+  /// @copydoc MatrixViewInterface::operator=
+  template<matrix OtherMatrix>
+    requires output_matrix<MatrixOwningView>
+  constexpr MatrixOwningView& operator=(OtherMatrix&& mat)
+  {
+    return assign(*this, std::forward<OtherMatrix>(mat));
+  }
+
 }; // class MatrixOwningView
 
 // -----------------------------------------------------------------------------
@@ -204,25 +225,25 @@ public:
 namespace detail_
 {
   template<class Matrix>
-  concept matrix_can_ref_view_ =
+  concept can_matrix_ref_view_ =
       requires { MatrixRefView{std::declval<Matrix>()}; };
   template<class Matrix>
-  concept matrix_can_owning_view_ =
+  concept can_matrix_owning_view_ =
       requires { MatrixOwningView{std::declval<Matrix>()}; };
 } // namespace detail_
 
 /// @brief Forward the viewable matrix @p mat as a matrix view.
 template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> ||
-           detail_::matrix_can_ref_view_<Matrix> ||
-           detail_::matrix_can_owning_view_<Matrix>
-constexpr auto forward_as_matrix_view(Matrix&& mat)
+           detail_::can_matrix_ref_view_<Matrix> ||
+           detail_::can_matrix_owning_view_<Matrix>
+constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept
 {
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
-  } else if constexpr (detail_::matrix_can_ref_view_<Matrix>) {
+  } else if constexpr (detail_::can_matrix_ref_view_<Matrix>) {
     return MatrixRefView{std::forward<Matrix>(mat)};
-  } else if constexpr (detail_::matrix_can_owning_view_<Matrix>) {
+  } else if constexpr (detail_::can_matrix_owning_view_<Matrix>) {
     return MatrixOwningView{std::forward<Matrix>(mat)};
   }
 }

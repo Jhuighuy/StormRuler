@@ -217,6 +217,8 @@ namespace detail_
 {
 }
 
+// -----------------------------------------------------------------------------
+
 /// @brief Size type.
 using size_t = std::size_t;
 
@@ -229,21 +231,101 @@ using real_t = double;
 /// @brief Complex floating-point type.
 using complex_t = std::complex<real_t>;
 
+/// @brief size_t literal.
 constexpr size_t operator""_sz(unsigned long long arg) noexcept
 {
   return static_cast<size_t>(arg);
 }
 
+/// @brief real_t literal.
+constexpr real_t operator""_dp(long double arg) noexcept
+{
+  return static_cast<real_t>(arg);
+}
+
+// -----------------------------------------------------------------------------
+
+/// @brief Non movable (and non copyable) object interface.
+class NonMovable
+{
+protected:
+
+  /// @brief Non movable object is default initializible.
+  NonMovable() = default;
+
+  /// @brief Non copyable object is NOT move constructible.
+  NonMovable(NonMovable&&) = default;
+
+  /// @brief Non copyable object is NOT copy constructible.
+  NonMovable(const NonMovable&) = delete;
+
+  /// @brief Non copyable object is NOT move assignable.
+  NonMovable& operator=(NonMovable&&) = delete;
+
+  /// @brief Non copyable object is NOT copy assignable.
+  NonMovable& operator=(const NonMovable&) = delete;
+
+  /// @brief Non movable object is destructible.
+  ~NonMovable() = default;
+
+}; // class NonMovable
+
+/// @brief Non copyable object interface.
+class NonCopyable
+{
+protected:
+
+  /// @brief Non copyable object is default initializible.
+  NonCopyable() = default;
+
+  /// @brief Non copyable object is move constructible.
+  NonCopyable(NonCopyable&&) = default;
+
+  /// @brief Non copyable object is NOT copy constructible.
+  NonCopyable(const NonCopyable&) = delete;
+
+  /// @brief Non copyable object is move assignable.
+  NonCopyable& operator=(NonCopyable&&) = default;
+
+  /// @brief Non copyable object is NOT copy assignable.
+  NonCopyable& operator=(const NonCopyable&) = delete;
+
+  /// @brief Non copyable object is destructible.
+  ~NonCopyable() = default;
+
+}; // class NonCopyable
+
+/// @brief Non assignable object interface.
+class NonAssignable
+{
+protected:
+
+  /// @brief Non assignable object is default initializible.
+  NonAssignable() = default;
+
+  /// @brief Non assignable object is move constructible.
+  NonAssignable(NonAssignable&&) = default;
+
+  /// @brief Non assignable object is copy constructible.
+  NonAssignable(const NonAssignable&) = default;
+
+  /// @brief Non assignable object is NOT move assignable.
+  NonAssignable& operator=(NonAssignable&&) = delete;
+
+  /// @brief Non assignable object is NOT copy assignable.
+  NonAssignable& operator=(const NonAssignable&) = delete;
+
+  /// @brief Non assignable object is destructible.
+  ~NonAssignable() = default;
+
+}; // class NonAssignable
+
+// -----------------------------------------------------------------------------
+
 namespace detail_
 {
 
-  struct noncopyable_ {
-    noncopyable_() = default;
-    noncopyable_(noncopyable_&&) = default;
-    noncopyable_& operator=(noncopyable_&&) = default;
-    noncopyable_(const noncopyable_&) = delete;
-    noncopyable_& operator=(const noncopyable_&) = delete;
-  }; // struct noncopyable_
+  using noncopyable_ = NonCopyable;
 
   constexpr bool in_range_(auto t, auto min, auto max)
   {

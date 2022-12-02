@@ -39,7 +39,7 @@ namespace Storm
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise apply function to the matrices.
-template<std::copyable Func, matrix_view... Matrices>
+template<std::copy_constructible Func, matrix_view... Matrices>
   requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
            std::regular_invocable<Func, matrix_element_t<Matrices>...>
 class MapMatrixView final :

@@ -125,6 +125,17 @@ public:
 
 // -----------------------------------------------------------------------------
 
+/// @brief Identity function.
+struct Identity {
+  template<class Arg>
+  constexpr auto operator()(Arg&& arg) const noexcept
+  {
+    return std::forward<Arg>(arg);
+  }
+}; // struct Identity
+
+// -----------------------------------------------------------------------------
+
 /// @brief Static cast function.
 template<class To>
 struct Cast {
@@ -260,6 +271,15 @@ struct Abs {
     return abs(std::forward<Arg>(arg));
   }
 }; // struct Abs
+
+/// @brief Squared absolute value function: @f$ |x|^{2} @f$.
+struct AbsSquared {
+  template<class Arg>
+  constexpr auto operator()(const Arg& arg) const noexcept
+  {
+    return real(arg * conj(arg));
+  }
+}; // struct AbsSquared
 
 // -----------------------------------------------------------------------------
 

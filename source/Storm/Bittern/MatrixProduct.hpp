@@ -78,8 +78,7 @@ public:
 
 template<class Matrix1, class Matrix2>
 MatrixProductView(Matrix1&&, Matrix2&&)
-    -> MatrixProductView<forward_as_matrix_view_t<Matrix1>,
-                         forward_as_matrix_view_t<Matrix2>>;
+    -> MatrixProductView<matrix_view_t<Matrix1>, matrix_view_t<Matrix2>>;
 
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -135,8 +134,7 @@ public:
 
 template<class Matrix1, class Matrix2>
 CrossProductView(Matrix1&&, Matrix2&&)
-    -> CrossProductView<forward_as_matrix_view_t<Matrix1>,
-                        forward_as_matrix_view_t<Matrix2>>;
+    -> CrossProductView<matrix_view_t<Matrix1>, matrix_view_t<Matrix2>>;
 
 /// @brief Cross product of the 3x1 matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>

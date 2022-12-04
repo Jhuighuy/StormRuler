@@ -22,19 +22,19 @@
 
 #include <Storm/Bittern/Mat.hpp>
 
+#include <iostream>
+
 namespace Storm
 {
-
-using namespace std::complex_literals; // NOLINT
 
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Bittern/CompareMatrixExpressions")
 {
-  Mat2x2<real_t> mat1{+1.0, -2.0, //
-                      +3.0, -4.0};
-  Mat2x2<real_t> mat2{+1.0, -3.0, //
-                      +2.0, -5.0};
+  Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                      +3.0_dp, -4.0_dp};
+  Mat2x2<real_t> mat2{+1.0_dp, -3.0_dp, //
+                      +2.0_dp, -5.0_dp};
 
   // Exact comparisons.
   CHECK(all(mat1 == mat1));
@@ -45,12 +45,12 @@ TEST_CASE("Bittern/CompareMatrixExpressions")
   CHECK(any(mat1 <= mat2));
   CHECK_FALSE(any(mat1 < mat2));
 
-  Mat2x2<real_t> approx_mat1{+1.001, -2.001, //
-                             +3.001, -4.001};
+  Mat2x2<real_t> approx_mat1{+1.001_dp, -2.001_dp, //
+                             +3.001_dp, -4.001_dp};
 
   // Approximate comparisons.
-  CHECK(all(approx_equal(mat1, approx_mat1, 0.002)));
-  CHECK_FALSE(any(approx_equal(mat1, approx_mat1, 0.0001)));
+  CHECK(all(approx_equal(mat1, approx_mat1, 0.002_dp)));
+  CHECK_FALSE(any(approx_equal(mat1, approx_mat1, 0.0001_dp)));
 }
 
 // -----------------------------------------------------------------------------
@@ -75,17 +75,30 @@ TEST_CASE("Bittern/LogicalMatrixExpressions")
 
 TEST_CASE("Bittern/ArithmeticMatrixExpressions")
 {
-  Mat2x2<real_t> mat1{+1.0, -2.0, //
-                      +3.0, -4.0};
-  Mat2x2<real_t> mat2{+5.0, -6.0, //
-                      +7.0, -8.0};
-  Mat2x2<real_t> mat3{+3.0, +9.0, //
-                      +2.0, -1.0};
+  Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                      +3.0_dp, -4.0_dp};
+  Mat2x2<real_t> mat2{+5.0_dp, -6.0_dp, //
+                      +7.0_dp, -8.0_dp};
+  Mat2x2<real_t> mat3{+3.0_dp, +9.0_dp, //
+                      +2.0_dp, -1.0_dp};
 
-  CHECK(all((mat1 + 2.0 * mat2) * mat3 == //
-            mat2 * 2.0 * mat3 + mat3 * mat1));
-  // CHECK(all((mat1 / mat2 + mat2 / mat3) * mat3 * mat2 == //
-  //           mat2 * mat2 + mat1 * mat2));
+  Mat2x2<real_t> result_mat1{+21.0_dp, -152.0_dp, //
+                             +53.0_dp, -74.0_dp};
+  CHECK(all(mat1 + 10.0 * (mat2 - mat3) == result_mat1));
+
+  Mat2x2<real_t> result_mat2{+297.5_dp, +894.0_dp, //
+                             +189.5_dp, -116.0_dp};
+  CHECK(all(-mat1 * mat2 * 0.5_dp + mat3 / 0.01_dp == result_mat2));
+
+  Mat2x2<real_t> result_mat3{+58.0_dp, +174.0_dp, //
+                             +16.0_dp, +8.0_dp};
+  CHECK(all(24.0_dp / +mat1 + (18.0_dp * mat3 - 4.0_dp * mat2) == result_mat3));
+
+  Mat2x2<real_t> result_mat4{-4.0_dp, +8.0_dp, //
+                             +13.0_dp, +88.0_dp};
+  CHECK(all(2.0_dp * ((9.0_dp * mat1 / mat3) - mat2) == result_mat4));
+
+  // We also need to check complex-real expressions to ensure the casting.
 }
 
 // -----------------------------------------------------------------------------
@@ -96,25 +109,25 @@ TEST_CASE("Bittern/ArithmeticMatrixExpressions")
 // testing the power functions to output the correct result.
 TEST_CASE("Bittern/PowerMatrixExpressions")
 {
-  Mat2x2<real_t> mat{2.0, 3.0, //
-                     3.0, 2.0};
+  Mat2x2<real_t> mat{2.0_dp, 3.0_dp, //
+                     3.0_dp, 2.0_dp};
 
   Mat2x2<real_t> sqrt_mat{sqrt2, sqrt3, //
                           sqrt3, sqrt2};
 
   CHECK(all(approx_equal(sqrt(mat), sqrt_mat, EPS)));
-  CHECK(all(approx_equal(pow(mat, 0.5), sqrt_mat, EPS)));
+  CHECK(all(approx_equal(pow(mat, 0.5_dp), sqrt_mat, EPS)));
   CHECK(all(approx_equal(pow(sqrt_mat, 2), mat, EPS)));
 
-  Mat2x2<real_t> cbrt_mat{cbrt(2.0), cbrt(3.0), //
-                          cbrt(3.0), cbrt(2.0)};
+  Mat2x2<real_t> cbrt_mat{cbrt(2.0_dp), cbrt(3.0_dp), //
+                          cbrt(3.0_dp), cbrt(2.0_dp)};
 
   CHECK(all(approx_equal(cbrt(mat), cbrt_mat, EPS)));
-  CHECK(all(approx_equal(pow(mat, 1.0 / 3.0), cbrt_mat, EPS)));
+  CHECK(all(approx_equal(pow(mat, 1.0_dp / 3.0_dp), cbrt_mat, EPS)));
   CHECK(all(approx_equal(pow(cbrt_mat, 3), mat, EPS)));
 
-  Mat2x2<real_t> two_pow_mat{4.0, 8.0, //
-                             8.0, 4.0};
+  Mat2x2<real_t> two_pow_mat{4.0_dp, 8.0_dp, //
+                             8.0_dp, 4.0_dp};
 
   CHECK(all(approx_equal(pow(2, mat), two_pow_mat, EPS)));
 }
@@ -127,23 +140,23 @@ TEST_CASE("Bittern/PowerMatrixExpressions")
 // testing the trigonometric functions to output the correct result.
 TEST_CASE("Bittern/TrigonometricMatrixExpressions")
 {
-  Mat2x2<real_t> mat{+pi / 6.0, -pi / 4.0, //
-                     -pi / 4.0, +pi / 6.0};
+  Mat2x2<real_t> mat{+pi / 6.0_dp, -pi / 4.0_dp, //
+                     -pi / 4.0_dp, +pi / 6.0_dp};
 
-  Mat2x2<real_t> sin_mat{+0.5, -1.0 / sqrt2, //
-                         -1.0 / sqrt2, +0.5};
+  Mat2x2<real_t> sin_mat{+0.5_dp, -1.0_dp / sqrt2, //
+                         -1.0_dp / sqrt2, +0.5_dp};
 
   CHECK(all(approx_equal(sin(mat), sin_mat, EPS)));
   CHECK(all(approx_equal(asin(sin_mat), mat, EPS)));
 
-  Mat2x2<real_t> cos_mat{sqrt3 / 2.0, 1.0 / sqrt2, //
-                         1.0 / sqrt2, sqrt3 / 2.0};
+  Mat2x2<real_t> cos_mat{sqrt3 / 2.0_dp, 1.0_dp / sqrt2, //
+                         1.0_dp / sqrt2, sqrt3 / 2.0_dp};
 
   CHECK(all(approx_equal(cos(mat), cos_mat, EPS)));
   CHECK(all(approx_equal(acos(cos_mat), abs(mat), EPS)));
 
-  Mat2x2<real_t> tan_mat{1.0 / sqrt3, -1.0, //
-                         -1.0, 1.0 / sqrt3};
+  Mat2x2<real_t> tan_mat{+1.0_dp / sqrt3, -1.0_dp, //
+                         -1.0_dp, +1.0_dp / sqrt3};
 
   CHECK(all(approx_equal(tan(mat), tan_mat, EPS)));
   CHECK(all(approx_equal(atan(tan_mat), mat, EPS)));
@@ -157,25 +170,23 @@ TEST_CASE("Bittern/TrigonometricMatrixExpressions")
 // testing the hyperbolic functions to output the correct result.
 TEST_CASE("Bittern/HyperbolicMatrixExpressions")
 {
-  Mat2x2<complex_t> mat{+pi / 6.0i, -pi / 4.0i, //
-                        -pi / 4.0i, +pi / 6.0i};
+  Mat2x2<complex_t> mat{+pi / (6.0_dp * i), -pi / (4.0_dp * i), //
+                        -pi / (4.0_dp * i), +pi / (6.0_dp * i)};
 
-  Mat2x2<complex_t> sinh_mat{-0.5i, +1.0i / sqrt2, //
-                             +1.0i / sqrt2, -0.5i};
+  Mat2x2<complex_t> sinh_mat{-0.5_dp * i, +1.0_dp * i / sqrt2, //
+                             +1.0_dp * i / sqrt2, -0.5_dp * i};
 
   CHECK(all(approx_equal(sinh(mat), sinh_mat, EPS)));
   CHECK(all(approx_equal(asinh(sinh_mat), mat, EPS)));
 
-  Mat2x2<complex_t> cosh_mat{sqrt3 / 2.0, 1.0 / sqrt2, //
-                             1.0 / sqrt2, sqrt3 / 2.0};
+  Mat2x2<complex_t> cosh_mat{sqrt3 / 2.0_dp, 1.0_dp / sqrt2, //
+                             1.0_dp / sqrt2, sqrt3 / 2.0_dp};
 
   CHECK(all(approx_equal(cosh(mat), cosh_mat, EPS)));
-#if 0 /// @todo This check fails on x64 for some reason.
-  CHECK(all(approx_equal(acosh(cosh_mat), 1.0i * abs(mat), EPS)));
-#endif
+  CHECK(all(approx_equal(acosh(cosh_mat), (1.0_dp * i) * abs(mat), EPS)));
 
-  Mat2x2<complex_t> tanh_mat{-1.0i / sqrt3, 1.0i, //
-                             1.0i, 1.0i / -sqrt3};
+  Mat2x2<complex_t> tanh_mat{-1.0_dp * i / sqrt3, +1.0_dp * i, //
+                             +1.0_dp * i, 1.0_dp * i / -sqrt3};
 
   CHECK(all(approx_equal(tanh(mat), tanh_mat, EPS)));
   CHECK(all(approx_equal(atanh(tanh_mat), mat, EPS)));

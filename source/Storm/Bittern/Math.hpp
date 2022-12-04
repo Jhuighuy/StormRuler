@@ -119,6 +119,9 @@ constexpr auto rad2deg(Real&& radians) noexcept
 
 // -----------------------------------------------------------------------------
 
+/// @brief @f$ i = \sqrt{-1} @f$.
+inline constexpr complex_t i{0.0_dp, 1.0_dp};
+
 /// @brief Conjugate of real number @p x (noop).
 template<real_type Real>
 constexpr auto conj(Real&& x) noexcept

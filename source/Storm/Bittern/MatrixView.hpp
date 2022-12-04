@@ -41,7 +41,7 @@ class MatrixViewInterface;
 /// @brief Matrix view concept.
 template<class MatrixView>
 concept matrix_view =
-    matrix<MatrixView> && std::move_constructible<MatrixView> &&
+    matrix<MatrixView> && std::movable<MatrixView> &&
     derived_from_crtp_interface<MatrixView, MatrixViewInterface>;
 
 /// @brief Matrix that can be safely casted into a matrix view.
@@ -56,7 +56,7 @@ concept viewable_matrix =
 
 /// @brief CRTP interface to a matrix views.
 template<crtp_derived Derived>
-class MatrixViewInterface : public NonAssignable
+class MatrixViewInterface
 {
 private:
 
@@ -94,14 +94,6 @@ public:
     return self_()(indices...);
   }
   /// @}
-
-  /// @brief Assign the matrix elements to the elements of matrix @p mat.
-  template<matrix Matrix>
-    requires output_matrix<Derived>
-  constexpr decltype(auto) operator=(Matrix&& mat)
-  {
-    return self_() = std::forward<Matrix>(mat);
-  }
 
 }; // class MatrixViewInterface
 
@@ -154,14 +146,6 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::operator=
-  template<matrix OtherMatrix>
-    requires output_matrix<MatrixRefView>
-  constexpr MatrixRefView& operator=(OtherMatrix&& mat)
-  {
-    return assign(*this, std::forward<OtherMatrix>(mat));
-  }
-
 }; // class MatrixRefView
 
 template<class Matrix>
@@ -174,8 +158,7 @@ MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 template<matrix Matrix>
   requires std::move_constructible<Matrix>
 class MatrixOwningView final :
-    public MatrixViewInterface<MatrixOwningView<Matrix>>,
-    public NonCopyable
+    public MatrixViewInterface<MatrixOwningView<Matrix>>
 {
 private:
 
@@ -185,6 +168,21 @@ public:
 
   /// @brief Construct an owning view.
   constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
+
+  /// @brief Move-construct an owning view.
+  constexpr MatrixOwningView(MatrixOwningView&&) = default;
+
+  /// @brief Owning view is move constructible only.
+  constexpr MatrixOwningView(const MatrixOwningView&) = delete;
+
+  /// @brief Move-assign the owning view.
+  constexpr MatrixOwningView& operator=(MatrixOwningView&&) = default;
+
+  /// @brief Owning view is move assignable only.
+  constexpr MatrixOwningView& operator=(const MatrixOwningView&) = delete;
+
+  /// @brief Destruct the owning view.
+  constexpr ~MatrixOwningView() = default;
 
   /// @copydoc MatrixViewInterface::shape
   constexpr auto shape() const noexcept
@@ -210,14 +208,6 @@ public:
   }
   /// @}
 
-  /// @copydoc MatrixViewInterface::operator=
-  template<matrix OtherMatrix>
-    requires output_matrix<MatrixOwningView>
-  constexpr MatrixOwningView& operator=(OtherMatrix&& mat)
-  {
-    return assign(*this, std::forward<OtherMatrix>(mat));
-  }
-
 }; // class MatrixOwningView
 
 // -----------------------------------------------------------------------------
@@ -232,12 +222,12 @@ namespace detail_
       requires { MatrixOwningView{std::declval<Matrix>()}; };
 } // namespace detail_
 
-/// @brief Forward the viewable matrix @p mat as a matrix view.
+/// @brief Wrap the viewable matrix @p mat into a matrix view.
 template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> ||
            detail_::can_matrix_ref_view_<Matrix> ||
            detail_::can_matrix_owning_view_<Matrix>
-constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept
+constexpr auto make_matrix_view(Matrix&& mat) noexcept
 {
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
@@ -250,8 +240,7 @@ constexpr auto forward_as_matrix_view(Matrix&& mat) noexcept
 
 /// @brief Suitable matrix view type for a viewable matrix.
 template<viewable_matrix Matrix>
-using forward_as_matrix_view_t =
-    decltype(forward_as_matrix_view(std::declval<Matrix>()));
+using matrix_view_t = decltype(make_matrix_view(std::declval<Matrix>()));
 
 // -----------------------------------------------------------------------------
 

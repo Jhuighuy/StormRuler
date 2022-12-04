@@ -47,6 +47,8 @@ class MapMatrixView final :
 {
 private:
 
+  static_assert(std::copyable<Func>, "Boxing is not implemented yet!");
+
   STORM_NO_UNIQUE_ADDRESS_ Func func_;
   STORM_NO_UNIQUE_ADDRESS_ std::tuple<Matrices...> mats_;
 
@@ -86,7 +88,7 @@ public:
 
 template<class Func, class... Matrices>
 MapMatrixView(Func, Matrices&&...)
-    -> MapMatrixView<Func, forward_as_matrix_view_t<Matrices>...>;
+    -> MapMatrixView<Func, matrix_view_t<Matrices>...>;
 
 /// @brief Element-wise apply function @p func to the matrices @p mats.
 template<class Func, viewable_matrix... Matrices>
@@ -104,7 +106,7 @@ constexpr auto map(Func&& func, Matrices&&... mats)
 /// @tparam To Type, the elements would be cased to.
 template<class To, viewable_matrix Matrix>
   requires std::convertible_to<matrix_element_t<Matrix>, To>
-constexpr auto matrix_cast(Matrix&& mat)
+constexpr auto cast_matrix(Matrix&& mat)
 {
   return map(Cast<To>{}, std::forward<Matrix>(mat));
 }
@@ -119,26 +121,22 @@ constexpr auto operator!(Matrix&& mat)
   return map(Not{}, std::forward<Matrix>(mat));
 }
 
-/// @brief Element-wise logically "and"
-/// the boolean matrices @p mat1 and @p mat2.
+/// @brief Element-wise logically AND the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2> && //
            bool_matrix<Matrix1> && bool_matrix<Matrix2>
 constexpr auto matrix_and(Matrix1&& mat1, Matrix2&& mat2)
 {
-  return map(And{}, //
-             std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return map(And{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
-/// @brief Element-wise logically "or"
-/// the boolean matrices @p mat1 and @p mat2.
+/// @brief Element-wise logically OR the boolean matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2> && //
            bool_matrix<Matrix1> && bool_matrix<Matrix2>
 constexpr auto matrix_or(Matrix1&& mat1, Matrix2&& mat2)
 {
-  return map(Or{}, //
-             std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return map(Or{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 /// @brief Element-wise merge the matrices @p then_mat and @p else_mat
@@ -252,9 +250,7 @@ template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
 constexpr auto operator+(Matrix&& mat)
 {
-  // Since operator "+" does nothing on artimetic types,
-  // simply forward matrices with artimetic elements as matrix views.
-  return forward_as_matrix_view(std::forward<Matrix>(mat));
+  return map(Identity{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Negate the matrix @p mat.
@@ -322,8 +318,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
            numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 constexpr auto operator+(Matrix1&& mat1, Matrix2&& mat2)
 {
-  return map(Add{}, //
-             std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return map(Add{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 /// @brief Add-assign the matrices @p mat1 and @p mat2.
 template<output_matrix Matrix1, matrix Matrix2>
@@ -397,9 +392,9 @@ template<viewable_matrix Matrix>
   requires numeric_matrix<Matrix>
 constexpr auto normalize(Matrix&& mat)
 {
-  auto mat_view = forward_as_matrix_view(std::forward<Matrix>(mat));
+  auto mat_view = make_matrix_view(std::forward<Matrix>(mat));
   const auto mat_norm = norm_2(mat_view);
-  return safe_divide(1.0, mat_norm) * std::move(mat_view);
+  return safe_divide(1.0_dp, mat_norm) * std::move(mat_view);
 }
 
 // -----------------------------------------------------------------------------

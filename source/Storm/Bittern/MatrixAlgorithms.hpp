@@ -204,7 +204,7 @@ constexpr auto max_element(Matrix&& mat)
 
 // -----------------------------------------------------------------------------
 
-/// @brief Element-wise matrix @p mat \f$ L_{1} \f$-norm.
+/// @brief Element-wise matrix @p mat @f$ L_{1} @f$-norm.
 template<numeric_matrix Matrix>
 constexpr auto norm_1(Matrix&& mat)
 {
@@ -214,7 +214,7 @@ constexpr auto norm_1(Matrix&& mat)
   return reduce(Result{}, Add{}, Abs{}, std::forward<Matrix>(mat));
 }
 
-/// @brief Element-wise matrix @p mat \f$ L_{2} \f$-norm.
+/// @brief Element-wise matrix @p mat @f$ L_{2} @f$-norm.
 /// @{
 template<numeric_matrix Matrix>
 constexpr auto norm_2_2(Matrix&& mat)
@@ -222,8 +222,7 @@ constexpr auto norm_2_2(Matrix&& mat)
   using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
-  auto abs_squared = [](auto elem) { return real(elem * conj(elem)); };
-  return reduce(Result{}, Add{}, abs_squared, std::forward<Matrix>(mat));
+  return reduce(Result{}, Add{}, AbsSquared{}, std::forward<Matrix>(mat));
 }
 template<numeric_matrix Matrix>
 constexpr auto norm_2(Matrix&& mat)
@@ -232,26 +231,26 @@ constexpr auto norm_2(Matrix&& mat)
 }
 /// @}
 
-/// @brief Element-wise matrix @p mat \f$ L_{p} \f$-norm.
+/// @brief Element-wise matrix @p mat @f$ L_{p} @f$-norm.
 /// @{
-template<numeric_matrix Matrix>
-constexpr auto norm_p_p(Matrix&& mat, real_t p)
+template<numeric_matrix Matrix, numeric_type Number>
+constexpr auto norm_p_p(Matrix&& mat, Number p)
 {
-  STORM_ASSERT_(p > 0.0, "Invalid p-norm parameter!");
+  STORM_ASSERT_(p > 0, "Invalid p-norm parameter!");
   using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
-  return reduce(Result{}, Add{}, Compose{Abs{}, BindLast{Pow{}, p}}, //
+  return reduce(Result{}, Add{}, Compose{Abs{}, BindLast{Pow{}, std::move(p)}},
                 std::forward<Matrix>(mat));
 }
-template<numeric_matrix Matrix>
-constexpr auto norm_p(Matrix&& mat, real_t p)
+template<numeric_matrix Matrix, numeric_type Number>
+constexpr auto norm_p(Matrix&& mat, Number p)
 {
   return pow(norm_p_p(std::forward<Matrix>(mat), p), 1.0 / p);
 }
 /// @}
 
-/// @brief Element-wise matrix @p mat \f$ L_{\infty} \f$-norm.
+/// @brief Element-wise matrix @p mat @f$ L_{\infty} @f$-norm.
 template<numeric_matrix Matrix>
 constexpr auto norm_inf(Matrix&& mat)
 {

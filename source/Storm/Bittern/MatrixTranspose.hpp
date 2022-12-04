@@ -77,8 +77,7 @@ public:
 }; // TransposeMatrixView
 
 template<class Matrix>
-TransposeMatrixView(Matrix&&)
-    -> TransposeMatrixView<forward_as_matrix_view_t<Matrix>>;
+TransposeMatrixView(Matrix&&) -> TransposeMatrixView<matrix_view_t<Matrix>>;
 
 /// @brief Transpose the matrix @p mat.
 template<viewable_matrix Matrix>

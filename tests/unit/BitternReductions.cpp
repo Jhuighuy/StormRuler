@@ -25,8 +25,6 @@
 namespace Storm
 {
 
-using namespace std::complex_literals; // NOLINT
-
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Bittern/BoolMatrixReductions")
@@ -54,51 +52,51 @@ TEST_CASE("Bittern/BoolMatrixReductions")
 
 TEST_CASE("Bittern/RealMatrixReductions")
 {
-  Mat2x2<real_t> mat{+1.0, -2.0, //
-                     +3.0, -4.0};
+  Mat2x2<real_t> mat{+1.0_dp, -2.0_dp, //
+                     +3.0_dp, -4.0_dp};
 
-  CHECK_EQ(sum(mat), -2.0);
-  CHECK_EQ(min_element(mat), -4.0);
-  CHECK_EQ(max_element(mat), +3.0);
-  CHECK_EQ(norm_1(mat), 10.0);
-  CHECK_NEAR(norm_2(mat), 5.47723, EPS);
-  CHECK_NEAR(norm_p(mat, 3), 4.64158, EPS);
-  CHECK_EQ(norm_inf(mat), 4.0);
+  CHECK_EQ(sum(mat), -2.0_dp);
+  CHECK_EQ(min_element(mat), -4.0_dp);
+  CHECK_EQ(max_element(mat), +3.0_dp);
+  CHECK_EQ(norm_1(mat), 10.0_dp);
+  CHECK_NEAR(norm_2(mat), 5.47723_dp, EPS);
+  CHECK_NEAR(norm_p(mat, 3), 4.64158_dp, EPS);
+  CHECK_EQ(norm_inf(mat), 4.0_dp);
 }
 
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Bittern/ComplexMatrixReductions")
 {
-  Mat2x2<complex_t> mat{+1.0 - 2.0i, -2.0 + 3.0i, //
-                        +3.0 - 4.0i, -4.0 + 5.0i};
+  Mat2x2<complex_t> mat{+1.0_dp - i * 2.0_dp, -2.0_dp + i * 3.0_dp, //
+                        +3.0_dp - i * 4.0_dp, -4.0_dp + i * 5.0_dp};
 
-  CHECK_EQ(sum(mat), -2.0 + 2.0i);
-  CHECK_NEAR(norm_1(mat), 17.24474, EPS);
-  CHECK_NEAR(norm_2(mat), 9.16515, EPS);
-  CHECK_NEAR(norm_p(mat, 3), 7.63792, EPS);
-  CHECK_NEAR(norm_inf(mat), 6.40312, EPS);
+  CHECK_EQ(sum(mat), -2.0_dp + i * 2.0_dp);
+  CHECK_NEAR(norm_1(mat), 17.24474_dp, EPS);
+  CHECK_NEAR(norm_2(mat), 9.16515_dp, EPS);
+  CHECK_NEAR(norm_p(mat, 3), 7.63792_dp, EPS);
+  CHECK_NEAR(norm_inf(mat), 6.40312_dp, EPS);
 }
 
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Bittern/DotProductReductions")
 {
-  Mat2x2<real_t> mat1{+1.0, -2.0, //
-                      +3.0, -4.0};
-  Mat2x2<real_t> mat2{+5.0, -6.0, //
-                      +7.0, -8.0};
-  Mat2x2<complex_t> mat3{+1.0 - 2.0i, -2.0 + 3.0i, //
-                         +3.0 - 4.0i, -4.0 + 5.0i};
+  Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                      +3.0_dp, -4.0_dp};
+  Mat2x2<real_t> mat2{+5.0_dp, -6.0_dp, //
+                      +7.0_dp, -8.0_dp};
+  Mat2x2<complex_t> mat3{+1.0_dp - i * 2.0_dp, -2.0_dp + i * 3.0_dp, //
+                         +3.0_dp - i * 4.0_dp, -4.0_dp + i * 5.0_dp};
 
-  CHECK_EQ(dot_product(mat1, mat2), 70.0);
+  CHECK_EQ(dot_product(mat1, mat2), 70.0_dp);
 
   // We should get dot(mat2, mat3) == conj(dot(mat3, mat2)).
-  CHECK_EQ(dot_product(mat2, mat3), 70.0 + 96.0i);
-  CHECK_EQ(dot_product(mat3, mat2), 70.0 - 96.0i);
+  CHECK_EQ(dot_product(mat2, mat3), 70.0_dp + i * 96.0_dp);
+  CHECK_EQ(dot_product(mat3, mat2), 70.0_dp - i * 96.0_dp);
 
   // We should get a real number.
-  CHECK_EQ(dot_product(mat3, mat3), 84.0);
+  CHECK_EQ(dot_product(mat3, mat3), 84.0_dp);
 }
 
 // -----------------------------------------------------------------------------
@@ -106,14 +104,14 @@ TEST_CASE("Bittern/DotProductReductions")
 TEST_CASE("Bittern/MatrixExpressionReductions")
 {
   // Assuming the expressions are working.
-  Mat2x2<real_t> mat1{+1.0, -2.0, //
-                      +3.0, -4.0};
-  Mat2x2<complex_t> mat2{+1.0 - 2.0i, -2.0 + 3.0i, //
-                         +3.0 - 4.0i, -4.0 + 5.0i};
-  const auto mat = 2.0 * mat1 + 3.0i * mat2;
+  Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                      +3.0_dp, -4.0_dp};
+  Mat2x2<complex_t> mat2{+1.0_dp - i * 2.0_dp, -2.0_dp + i * 3.0_dp, //
+                         +3.0_dp - i * 4.0_dp, -4.0_dp + i * 5.0_dp};
+  const auto mat = 2.0_dp * mat1 + i * 3.0_dp * mat2;
 
-  CHECK_EQ(sum(mat), -10.0 - 6.0i);
-  CHECK_NEAR(norm_inf(mat), 25.94224, EPS);
+  CHECK_EQ(sum(mat), -10.0_dp - i * 6.0_dp);
+  CHECK_NEAR(norm_inf(mat), 25.94224_dp, EPS);
 }
 
 } // namespace Storm

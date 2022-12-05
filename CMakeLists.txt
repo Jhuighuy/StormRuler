@@ -91,7 +91,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
                                      -Wno-unused-parameter 
                                      -Wno-comment 
                                      -Wno-unknown-pragmas 
-                                     -fconcepts-diagnostics-depth=3)
+                                     -fconcepts-diagnostics-depth=3
+                                     -Wno-psabi)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
                                      -Wno-unused-function 

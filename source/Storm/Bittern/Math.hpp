@@ -122,27 +122,32 @@ constexpr auto rad2deg(Real&& radians) noexcept
 /// @brief @f$ i = \sqrt{-1} @f$.
 inline constexpr complex_t i{0.0_dp, 1.0_dp};
 
-/// @brief Conjugate of real number @p x (noop).
-template<real_type Real>
-constexpr auto conj(Real&& x) noexcept
-{
-  return std::forward<Real>(x);
-}
-/// @brief Conjugate of complex number @p x.
-template<real_type Number>
-constexpr auto conj(const std::complex<Number>& x) noexcept
-{
-  return std::conj(x);
-}
-
 using std::real;
 
 using std::imag;
 
+/// @brief Conjugate of real number argument @p arg (noop).
+/// @note Unlike standard function, this function preserves real type.
+template<real_type Arg>
+constexpr auto conj(Arg&& arg) noexcept
+{
+  return std::forward<Arg>(arg);
+}
+/// @brief Conjugate of complex number argument @p arg.
+template<real_type Type>
+constexpr auto conj(const std::complex<Type>& arg) noexcept
+{
+  return std::conj(arg);
+}
+
 // -----------------------------------------------------------------------------
 
-template<class Real>
-constexpr Real sign(Real) noexcept;
+template<class Arg>
+  requires real_type<Arg> || integer_type<Arg>
+constexpr int sign(const Arg& arg) noexcept
+{
+  return (Arg{0} < arg) - (arg < Arg{0});
+}
 
 using std::abs;
 

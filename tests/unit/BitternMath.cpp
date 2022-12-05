@@ -29,6 +29,10 @@ namespace Storm
 
 // -----------------------------------------------------------------------------
 
+// TODO: cast expressions!
+
+// -----------------------------------------------------------------------------
+
 TEST_CASE("Bittern/CompareMatrixExpressions")
 {
   const Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
@@ -58,6 +62,8 @@ TEST_CASE("Bittern/CompareMatrixExpressions")
   }
 }
 
+// TODO: Min/Max!
+
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Bittern/LogicalMatrixExpressions")
@@ -69,12 +75,27 @@ TEST_CASE("Bittern/LogicalMatrixExpressions")
   Mat2x2<bool> mat3{true, false, //
                     false, true};
 
-  CHECK_FALSE(any(!mat1));
-  CHECK(all(!mat2));
-  CHECK_FALSE(any(matrix_and(mat1, mat2)));
-  CHECK(all(matrix_or(mat1, mat2)));
-  CHECK(any(matrix_and(mat1, mat3)));
+  SUBCASE("logical-not")
+  {
+    CHECK_FALSE(any(!mat1));
+    CHECK(all(!mat2));
+  }
+
+  SUBCASE("logical-and")
+  {
+    CHECK_FALSE(any(matrix_and(mat1, mat2)));
+    CHECK(any(matrix_and(mat1, mat3)));
+    // TODO: check the multiargument versions.
+  }
+
+  SUBCASE("logical-or")
+  {
+    CHECK(all(matrix_or(mat1, mat2)));
+    // TODO: check the multiargument versions.
+  }
 }
+
+// TODO: Merge!
 
 // -----------------------------------------------------------------------------
 
@@ -90,36 +111,138 @@ TEST_CASE("Bittern/ArithmeticMatrixExpressions")
     const Mat2x2<real_t> mat3{+3.0_dp, +9.0_dp, //
                               +2.0_dp, -1.0_dp};
 
-    const Mat2x2<real_t> result_mat1{+21.0_dp, -152.0_dp, //
-                                     +53.0_dp, -74.0_dp};
-    CHECK(all(mat1 + 10.0 * (mat2 - mat3) == result_mat1));
+    SUBCASE("expr-1")
+    {
+      const Mat2x2<real_t> result{+21.0_dp, -152.0_dp, //
+                                  +53.0_dp, -74.0_dp};
 
-    const Mat2x2<real_t> result_mat2{+297.5_dp, +894.0_dp, //
-                                     +189.5_dp, -116.0_dp};
-    CHECK(all(-mat1 * mat2 * 0.5_dp + mat3 / 0.01_dp == result_mat2));
+      CHECK(all(mat1 + 10.0 * (mat2 - mat3) == result));
+    }
 
-    const Mat2x2<real_t> result_mat3{+58.0_dp, +174.0_dp, //
-                                     +16.0_dp, +8.0_dp};
-    CHECK(all(24.0_dp / +mat1 + (18.0_dp * mat3 - 4.0_dp * mat2) == //
-              result_mat3));
+    SUBCASE("expr-2")
+    {
+      const Mat2x2<real_t> result{+297.5_dp, +894.0_dp, //
+                                  +189.5_dp, -116.0_dp};
 
-    const Mat2x2<real_t> result_mat4{-4.0_dp, +8.0_dp, //
-                                     +13.0_dp, +88.0_dp};
-    CHECK(all(2.0_dp * ((9.0_dp * mat1 / mat3) - mat2) == result_mat4));
+      CHECK(all(-mat1 * mat2 * 0.5_dp + mat3 / 0.01_dp == result));
+    }
+
+    SUBCASE("expr-3")
+    {
+      const Mat2x2<real_t> result{+58.0_dp, +174.0_dp, //
+                                  +16.0_dp, +8.0_dp};
+
+      CHECK(all(24.0_dp / +mat1 + (18.0_dp * mat3 - 4.0_dp * mat2) == result));
+    }
+
+    SUBCASE("expr-4")
+    {
+      const Mat2x2<real_t> result{-4.0_dp, +8.0_dp, //
+                                  +13.0_dp, +88.0_dp};
+      CHECK(all(2.0_dp * ((9.0_dp * mat1 / mat3) - mat2) == result));
+    }
+  }
+}
+
+TEST_CASE("Bittern/NormalizeMatrixExpressions")
+{
+  SUBCASE("normalize")
+  {
+    const Mat2x2<real_t> mat{0.0_dp, 1.0_dp, //
+                             2.0_dp, 2.0_dp};
+
+    CHECK(all(approx_equal(normalize(mat), mat / 3.0_dp)));
   }
 
-  SUBCASE("real-complex-expressions")
+  SUBCASE("normalize-zero")
   {
-    /// @todo
+    const Mat2x2<real_t> mat{0.0_dp, 0.0_dp, //
+                             0.0_dp, 0.0_dp};
+
+    CHECK(all(normalize(mat) == mat));
   }
 }
 
 // -----------------------------------------------------------------------------
 
-/// @todo SignMatrixExpressions
+TEST_CASE("Bittern/ComplexMatrixExpressions")
+{
+  const Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                            +3.0_dp, -4.0_dp};
+  const Mat2x2<complex_t> mat2{+3.0_dp - i * 4.0_dp, -5.0_dp + i * 12.0_dp, //
+                               -8.0_dp - i * 15.0_dp, +7.0_dp + i * 24.0_dp};
 
-// Assuming the expressions are working,
-// testing the power functions to output the correct result.
+  SUBCASE("real")
+  {
+    const Mat2x2<real_t> re_mat2{+3.0_dp, -5.0_dp, //
+                                 -8.0_dp, +7.0_dp};
+
+    CHECK(all(real(mat1) == mat1));
+    CHECK(all(real(mat2) == re_mat2));
+  }
+
+  SUBCASE("imag")
+  {
+    const Mat2x2<real_t> im_mat1{0.0_dp, 0.0_dp, //
+                                 0.0_dp, 0.0_dp};
+    const Mat2x2<real_t> im_mat2{-4.0_dp, 12.0_dp, //
+                                 -15.0_dp, 24.0_dp};
+
+    CHECK(all(imag(mat1) == im_mat1));
+    CHECK(all(imag(mat2) == im_mat2));
+  }
+
+  SUBCASE("conj")
+  {
+    const Mat2x2<complex_t> conj_mat2{
+        +3.0_dp + i * 4.0_dp, -5.0_dp - i * 12.0_dp, //
+        -8.0_dp + i * 15.0_dp, +7.0_dp - i * 24.0_dp};
+
+    CHECK(all(conj(mat1) == mat1));
+    CHECK(all(conj(mat2) == conj_mat2));
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+TEST_CASE("Bittern/AbsMatrixExpressions")
+{
+  SUBCASE("real-abs-sign")
+  {
+    const Mat2x2<real_t> mat{+1.0_dp, -2.0_dp, //
+                             +3.0_dp, -4.0_dp};
+
+    SUBCASE("abs")
+    {
+      const Mat2x2<real_t> abs_mat{1.0_dp, 2.0_dp, //
+                                   3.0_dp, 4.0_dp};
+
+      CHECK(all(abs(mat) == abs_mat));
+    }
+
+    SUBCASE("sign")
+    {
+      const Mat2x2<int> sign_mat{+1, -1, //
+                                 +1, -1};
+
+      CHECK(all(sign(mat) == sign_mat));
+    }
+  }
+
+  SUBCASE("complex-abs")
+  {
+    const Mat2x2<complex_t> mat{+3.0_dp - i * 4.0_dp, -5.0_dp + i * 12.0_dp, //
+                                -8.0_dp - i * 15.0_dp, +7.0_dp + i * 24.0_dp};
+
+    const Mat2x2<real_t> abs_mat{5.0_dp, 13.0_dp, //
+                                 17.0_dp, 25.0_dp};
+
+    CHECK(all(abs(mat) == abs_mat));
+  }
+}
+
+// -----------------------------------------------------------------------------
+
 TEST_CASE("Bittern/PowerMatrixExpressions")
 {
   const Mat2x2<real_t> mat{2.0_dp, 3.0_dp, //
@@ -164,8 +287,6 @@ TEST_CASE("Bittern/PowerMatrixExpressions")
 
 // -----------------------------------------------------------------------------
 
-// Assuming the expressions are working,
-// testing the exponential functions to output the correct result.
 TEST_CASE("Bittern/ExponentialMatrixExpression")
 {
   const Mat2x2<real_t> mat{0.0_dp, 1.0_dp, //
@@ -200,8 +321,6 @@ TEST_CASE("Bittern/ExponentialMatrixExpression")
 
 // -----------------------------------------------------------------------------
 
-// Assuming the expressions are working,
-// testing the trigonometric functions to output the correct result.
 TEST_CASE("Bittern/TrigonometricMatrixExpressions")
 {
   const Mat2x2<real_t> mat{+pi / 6.0_dp, -pi / 4.0_dp, //
@@ -233,17 +352,10 @@ TEST_CASE("Bittern/TrigonometricMatrixExpressions")
     CHECK(all(approx_equal(tan(mat), tan_mat)));
     CHECK(all(approx_equal(atan(tan_mat), mat)));
   }
-
-  SUBCASE("atan2")
-  {
-    /// @todo atan2 tests!
-  }
 }
 
 // -----------------------------------------------------------------------------
 
-// Assuming the expressions are working,
-// testing the hyperbolic functions to output the correct result.
 TEST_CASE("Bittern/HyperbolicMatrixExpressions")
 {
   const Mat2x2<complex_t> mat{+pi / (6.0_dp * i), -pi / (4.0_dp * i), //

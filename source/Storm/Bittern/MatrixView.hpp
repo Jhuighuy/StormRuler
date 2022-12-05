@@ -73,27 +73,7 @@ private:
 
 public:
 
-  /// @brief Shape of the matrix.
-  constexpr auto shape() const noexcept
-  {
-    return self_().shape();
-  }
-
-  /// @brief Get the matrix element at @p indices.
-  /// @{
-  template<class... Indices>
-    requires compatible_matrix_indices_v<MatrixView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) noexcept
-  {
-    return self_()(indices...);
-  }
-  template<class... Indices>
-    requires compatible_matrix_indices_v<MatrixView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) const noexcept
-  {
-    return self_()(indices...);
-  }
-  /// @}
+  // Something to be added.
 
 }; // class MatrixViewInterface
 
@@ -122,13 +102,13 @@ public:
   {
   }
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept
   {
     return p_mat_->shape();
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   /// @{
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixRefView, Indices...>
@@ -158,7 +138,8 @@ MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 template<matrix Matrix>
   requires std::move_constructible<Matrix>
 class MatrixOwningView final :
-    public MatrixViewInterface<MatrixOwningView<Matrix>>
+    public MatrixViewInterface<MatrixOwningView<Matrix>>,
+    public NonCopyable
 {
 private:
 
@@ -169,28 +150,13 @@ public:
   /// @brief Construct an owning view.
   constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
 
-  /// @brief Move-construct an owning view.
-  constexpr MatrixOwningView(MatrixOwningView&&) = default;
-
-  /// @brief Owning view is move constructible only.
-  constexpr MatrixOwningView(const MatrixOwningView&) = delete;
-
-  /// @brief Move-assign the owning view.
-  constexpr MatrixOwningView& operator=(MatrixOwningView&&) = default;
-
-  /// @brief Owning view is move assignable only.
-  constexpr MatrixOwningView& operator=(const MatrixOwningView&) = delete;
-
-  /// @brief Destruct the owning view.
-  constexpr ~MatrixOwningView() = default;
-
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept
   {
     return mat_.shape();
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   /// @{
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixOwningView, Indices...>

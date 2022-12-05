@@ -50,13 +50,13 @@ public:
   /// @brief Construct a matrix transpose view.
   constexpr explicit TransposeMatrixView(Matrix mat) : mat_{std::move(mat)} {}
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept
   {
     return std::array{num_cols(mat_), num_rows(mat_)};
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   /// @{
   constexpr decltype(auto) operator()(size_t row_index,
                                       size_t col_index) noexcept

@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Functors.hpp>
+#include <Storm/Bittern/Functions.hpp>
 #include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
@@ -55,7 +55,7 @@ private:
 public:
 
   /// @brief Construct a map view.
-  constexpr MapMatrixView(Func func, Matrices... mats)
+  constexpr explicit MapMatrixView(Func func, Matrices... mats)
       : func_{std::move(func)}, mats_{std::move(mats)...}
   {
     std::apply(
@@ -66,13 +66,13 @@ public:
         mats_);
   }
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept
   {
     return std::get<0>(mats_).shape();
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   template<class... Indices>
     requires compatible_matrix_indices_v<MapMatrixView, Indices...>
   constexpr auto operator()(Indices... indices) const noexcept
@@ -121,22 +121,20 @@ constexpr auto operator!(Matrix&& mat)
   return map(Not{}, std::forward<Matrix>(mat));
 }
 
-/// @brief Element-wise logically AND the boolean matrices @p mat1 and @p mat2.
-template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           bool_matrix<Matrix1> && bool_matrix<Matrix2>
-constexpr auto matrix_and(Matrix1&& mat1, Matrix2&& mat2)
+/// @brief Element-wise logically AND the boolean matrices @p mats.
+template<viewable_matrix... Matrices>
+  requires compatible_matrices_v<Matrices...> && (... && bool_matrix<Matrices>)
+constexpr auto matrix_and(Matrices&&... mats)
 {
-  return map(And{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return map(And{}, std::forward<Matrices>(mats)...);
 }
 
-/// @brief Element-wise logically OR the boolean matrices @p mat1 and @p mat2.
-template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           bool_matrix<Matrix1> && bool_matrix<Matrix2>
-constexpr auto matrix_or(Matrix1&& mat1, Matrix2&& mat2)
+/// @brief Element-wise logically OR the boolean matrices @p mats.
+template<viewable_matrix... Matrices>
+  requires compatible_matrices_v<Matrices...> && (... && bool_matrix<Matrices>)
+constexpr auto matrix_or(Matrices&&... mats)
 {
-  return map(Or{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+  return map(Or{}, std::forward<Matrices>(mats)...);
 }
 
 /// @brief Element-wise merge the matrices @p then_mat and @p else_mat
@@ -347,99 +345,230 @@ constexpr auto normalize(Matrix&& mat)
 
 // -----------------------------------------------------------------------------
 
-#define MAKE_UNARY_MATRIX_FUNC_(func)                   \
-  template<viewable_matrix Matrix>                      \
-    requires numeric_matrix<Matrix>                     \
-  constexpr auto func(Matrix&& mat)                     \
-  {                                                     \
-    auto func_object = []<class Arg>(Arg&& arg) {       \
-      return func(std::forward<Arg>(arg));              \
-    };                                                  \
-    return map(func_object, std::forward<Matrix>(mat)); \
-  }
+/// @brief Get the element-wise real component of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto real(Matrix&& mat)
+{
+  return map(Real{}, std::forward<Matrix>(mat));
+}
 
-#define MAKE_BINARY_MATRIX_FUNC_(func)                                        \
-  template<std::copyable Scalar, viewable_matrix Matrix>                      \
-    requires numeric_type<Scalar> && numeric_matrix<Matrix>                   \
-  constexpr auto func(Scalar scal, Matrix&& mat)                              \
-  {                                                                           \
-    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
-      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
-    };                                                                        \
-    return map(BindFirst{func_object, scal}, std::forward<Matrix>(mat));      \
-  }                                                                           \
-  template<viewable_matrix Matrix, std::copyable Scalar>                      \
-    requires numeric_matrix<Matrix> && numeric_type<Scalar>                   \
-  constexpr auto func(Matrix&& mat, Scalar scal)                              \
-  {                                                                           \
-    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
-      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
-    };                                                                        \
-    return map(BindLast{func_object, scal}, std::forward<Matrix>(mat));       \
-  }                                                                           \
-  template<viewable_matrix Matrix1, viewable_matrix Matrix2>                  \
-    requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>               \
-  constexpr auto func(Matrix1&& mat1, Matrix2&& mat2)                         \
-  {                                                                           \
-    auto func_object = []<class Arg1, class Arg2>(Arg1&& arg1, Arg2&& arg2) { \
-      return func(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));        \
-    };                                                                        \
-    return map(func_object, /**/                                              \
-               std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));     \
-  }
+/// @brief Get the element-wise imaginary component of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto imag(Matrix&& mat)
+{
+  return map(Imag{}, std::forward<Matrix>(mat));
+}
 
-/// @brief Element-wise absolute value of the matrix.
-MAKE_UNARY_MATRIX_FUNC_(abs)
-/// @brief Element-wise sign of the matrix.
-MAKE_UNARY_MATRIX_FUNC_(sign)
+/// @brief Element-wise conjugate the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto conj(Matrix&& mat)
+{
+  return map(Conj{}, std::forward<Matrix>(mat));
+}
 
-MAKE_BINARY_MATRIX_FUNC_(pow)
-/// @brief Element-wise square root.
-MAKE_UNARY_MATRIX_FUNC_(sqrt)
-/// @brief Element-wise cube root.
-MAKE_UNARY_MATRIX_FUNC_(cbrt)
+// -----------------------------------------------------------------------------
 
-/// @brief Element-wise exponent.
-MAKE_UNARY_MATRIX_FUNC_(exp)
-/// @brief Element-wise exponent base 2.
-MAKE_UNARY_MATRIX_FUNC_(exp2)
-/// @brief Element-wise logarithm.
-MAKE_UNARY_MATRIX_FUNC_(log)
-/// @brief Element-wise logarithm base 2.
-MAKE_UNARY_MATRIX_FUNC_(log2)
-/// @brief Element-wise logarithm base 10.
-MAKE_UNARY_MATRIX_FUNC_(log10)
+/// @brief Compute the element-wise absolute value of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto abs(Matrix&& mat)
+{
+  return map(Abs{}, std::forward<Matrix>(mat));
+}
 
-/// @brief Element-wise sine.
-MAKE_UNARY_MATRIX_FUNC_(sin)
-/// @brief Element-wise cosine.
-MAKE_UNARY_MATRIX_FUNC_(cos)
-/// @brief Element-wise tangent.
-MAKE_UNARY_MATRIX_FUNC_(tan)
-/// @brief Element-wise inverse sine.
-MAKE_UNARY_MATRIX_FUNC_(asin)
-/// @brief Element-wise inverse cosine.
-MAKE_UNARY_MATRIX_FUNC_(acos)
-/// @brief Element-wise inverse tangent.
-MAKE_UNARY_MATRIX_FUNC_(atan)
-/// @brief Element-wise inverse tangent.
-MAKE_BINARY_MATRIX_FUNC_(atan2)
+/// @brief Compute the element-wise sign of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires real_matrix<Matrix> || integer_matrix<Matrix>
+constexpr auto sign(Matrix&& mat)
+{
+  return map(Sign{}, std::forward<Matrix>(mat));
+}
 
-/// @brief Element-wise hyperbolic sine.
-MAKE_UNARY_MATRIX_FUNC_(sinh)
-/// @brief Element-wise hyperbolic cosine.
-MAKE_UNARY_MATRIX_FUNC_(cosh)
-/// @brief Element-wise hyperbolic tangent.
-MAKE_UNARY_MATRIX_FUNC_(tanh)
-/// @brief Element-wise hyperbolic inverse sine.
-MAKE_UNARY_MATRIX_FUNC_(asinh)
-/// @brief Element-wise hyperbolic inverse cosine.
-MAKE_UNARY_MATRIX_FUNC_(acosh)
-/// @brief Element-wise hyperbolic inverse tangent.
-MAKE_UNARY_MATRIX_FUNC_(atanh)
+// -----------------------------------------------------------------------------
 
-#undef MAKE_UNARY_MATRIX_FUNC_
-#undef MAKE_BINARY_MATRIX_FUNC_
+/// @brief Compute the element-wise square root of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto sqrt(Matrix&& mat)
+{
+  return map(Sqrt{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise cube root of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto cbrt(Matrix&& mat)
+{
+  return map(Cbrt{}, std::forward<Matrix>(mat));
+}
+
+template<std::copyable Scalar, viewable_matrix Matrix>
+  requires numeric_type<Scalar> && numeric_matrix<Matrix>
+constexpr auto pow(Scalar scal, Matrix&& mat)
+{
+  return map(BindFirst{Pow{}, scal}, std::forward<Matrix>(mat));
+}
+/// @brief Element-wise raise matrix @p to the power @p power.
+template<viewable_matrix Matrix, std::copyable Scalar>
+  requires numeric_matrix<Matrix> && numeric_type<Scalar>
+constexpr auto pow(Matrix&& mat, Scalar power)
+{
+  return map(BindLast{Pow{}, power}, std::forward<Matrix>(mat));
+}
+template<viewable_matrix Matrix1, viewable_matrix Matrix2>
+  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
+constexpr auto pow(Matrix1&& mat1, Matrix2&& mat2)
+{
+  return map(Pow{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+}
+
+// -----------------------------------------------------------------------------
+
+/// @brief Compute the element-wise exponent of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto exp(Matrix&& mat)
+{
+  return map(Exp{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise exponent (base 2) of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto exp2(Matrix&& mat)
+{
+  return map(Exp2{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise logarithm of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto log(Matrix&& mat)
+{
+  return map(Log{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise logarithm (base 2) of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto log2(Matrix&& mat)
+{
+  return map(Log2{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise logarithm (base 10) of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto log10(Matrix&& mat)
+{
+  return map(Log10{}, std::forward<Matrix>(mat));
+}
+
+// -----------------------------------------------------------------------------
+
+/// @brief Compute the element-wise sine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto sin(Matrix&& mat)
+{
+  return map(Sin{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise cosine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto cos(Matrix&& mat)
+{
+  return map(Cos{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise tangent of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto tan(Matrix&& mat)
+{
+  return map(Tan{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse sine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto asin(Matrix&& mat)
+{
+  return map(Asin{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse cosine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto acos(Matrix&& mat)
+{
+  return map(Acos{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse tangent of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto atan(Matrix&& mat)
+{
+  return map(Atan{}, std::forward<Matrix>(mat));
+}
+
+// -----------------------------------------------------------------------------
+
+/// @brief Compute the element-wise hyperbolic sine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto sinh(Matrix&& mat)
+{
+  return map(Sinh{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise hyperbolic cosine of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto cosh(Matrix&& mat)
+{
+  return map(Cosh{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise hyperbolic tangent of the matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto tanh(Matrix&& mat)
+{
+  return map(Tanh{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse hyperbolic sine of the
+/// matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto asinh(Matrix&& mat)
+{
+  return map(Asinh{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse hyperbolic cosine of the
+/// matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto acosh(Matrix&& mat)
+{
+  return map(Acosh{}, std::forward<Matrix>(mat));
+}
+
+/// @brief Compute the element-wise inverse hyperbolic tangent of the
+/// matrix @p mat.
+template<viewable_matrix Matrix>
+  requires numeric_matrix<Matrix>
+constexpr auto atanh(Matrix&& mat)
+{
+  return map(Atanh{}, std::forward<Matrix>(mat));
+}
 
 // -----------------------------------------------------------------------------
 

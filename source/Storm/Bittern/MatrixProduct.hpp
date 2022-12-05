@@ -54,13 +54,13 @@ public:
                   "Shapes of the matrix product arguments are invalid!");
   }
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept
   {
     return std::array{num_rows(mat1_), num_cols(mat2_)};
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
@@ -111,13 +111,13 @@ public:
                   "Matrices of shape 3x1 are expected!");
   }
 
-  /// @copydoc MatrixViewInterface::shape
+  /// @brief Get the matrix shape.
   constexpr static auto shape() noexcept
   {
     return std::array{3_sz, 1_sz};
   }
 
-  /// @copydoc MatrixViewInterface::operator()
+  /// @brief Get the matrix element at @p indices.
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
   {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),

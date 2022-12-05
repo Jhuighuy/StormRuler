@@ -24,10 +24,11 @@
 
 #include <Storm/Utils/Crtp.hpp>
 
-#include <Storm/Bittern/Functors.hpp>
+#include <Storm/Bittern/Functions.hpp>
 #include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
 
+#include <limits>
 #include <ostream>
 #include <random>
 #include <type_traits>
@@ -89,96 +90,6 @@ constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept
 {
   return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
 }
-
-// -----------------------------------------------------------------------------
-
-template<crtp_derived TargetMatrix>
-class TargetMatrixInterface;
-
-/// @brief Target matrix: an output matrix that is an assignment target.
-template<class TargetMatrix>
-concept target_matrix =
-    output_matrix<TargetMatrix> &&
-    derived_from_crtp_interface<TargetMatrix, TargetMatrixInterface>;
-
-/// @brief CRTP interface to a target matrix.
-template<crtp_derived TargetMatrix>
-class TargetMatrixInterface
-{
-private:
-
-  constexpr TargetMatrix& self_() noexcept
-  {
-    static_assert(std::derived_from<TargetMatrix, TargetMatrixInterface>);
-    return static_cast<TargetMatrix&>(*this);
-  }
-  constexpr const TargetMatrix& self_() const noexcept
-  {
-    return const_cast<TargetMatrixInterface&>(*this).self_();
-  }
-
-public:
-
-  /// @brief Assign the matrices.
-  template<matrix Matrix>
-  constexpr TargetMatrix& operator=(Matrix&& mat) noexcept
-  {
-    return assign(self_(), std::forward<Matrix>(mat));
-  }
-
-  /// @brief Multiply-assign the matrix by a scalar @p scal.
-  template<std::copyable Scalar>
-    requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
-  constexpr TargetMatrix& operator*=(Scalar scal)
-  {
-    return assign(BindLast{MultiplyAssign{}, std::move(scal)}, *this);
-  }
-
-  /// @brief Divide-assign the matrix by a scalar @p scal.
-  template<std::copyable Scalar>
-    requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
-  constexpr TargetMatrix& operator/=(Scalar scal)
-  {
-    return assign(BindLast{DivideAssign{}, std::move(scal)}, *this);
-  }
-
-  /// @brief Add-assign the matrices @p mat.
-  template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr TargetMatrix& operator+=(Matrix&& mat)
-  {
-    return assign(AddAssign{}, self_(), std::forward<Matrix>(mat));
-  }
-
-  /// @brief Subtract-assign the matrix @p mat.
-  template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr TargetMatrix& operator-=(Matrix&& mat)
-  {
-    return assign(SubtractAssign{}, self_(), std::forward<Matrix>(mat));
-  }
-
-  /// @brief Element-wise multiply-assign by the matrix @p mat.
-  template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr TargetMatrix& operator*=(Matrix&& mat)
-  {
-    return assign(MultiplyAssign{}, self_(), std::forward<Matrix>(mat));
-  }
-
-  /// @brief Element-wise divide-assign by the matrix @p mat.
-  template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr TargetMatrix& operator/=(Matrix&& mat)
-  {
-    return assign(DivideAssign{}, self_(), std::forward<Matrix>(mat));
-  }
-
-}; // class TargetMatrixInterface
 
 // -----------------------------------------------------------------------------
 
@@ -300,7 +211,7 @@ constexpr auto max_element(Matrix&& mat)
 template<numeric_matrix Matrix>
 constexpr auto norm_1(Matrix&& mat)
 {
-  using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
+  using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, Abs{}, std::forward<Matrix>(mat));
@@ -311,7 +222,7 @@ constexpr auto norm_1(Matrix&& mat)
 template<numeric_matrix Matrix>
 constexpr auto norm_2_2(Matrix&& mat)
 {
-  using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
+  using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, AbsSquared{}, std::forward<Matrix>(mat));
@@ -329,7 +240,7 @@ template<numeric_matrix Matrix, numeric_type Number>
 constexpr auto norm_p_p(Matrix&& mat, Number p)
 {
   STORM_ASSERT_(p > 0, "Invalid p-norm parameter!");
-  using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
+  using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, Compose{Abs{}, BindLast{Pow{}, std::move(p)}},
@@ -346,7 +257,7 @@ constexpr auto norm_p(Matrix&& mat, Number p)
 template<numeric_matrix Matrix>
 constexpr auto norm_inf(Matrix&& mat)
 {
-  using Result = func_result_t<Abs, matrix_element_t<Matrix>>;
+  using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Max{}, Abs{}, std::forward<Matrix>(mat));
@@ -372,7 +283,7 @@ template<numeric_matrix Matrix1, numeric_matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2>
 constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept
 {
-  using Result = func_result_t< //
+  using Result = std::invoke_result_t< //
       DotProduct, matrix_element_t<Matrix1>, matrix_element_t<Matrix2>>;
   return reduce(Result{}, Add{}, DotProduct{}, //
                 std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));

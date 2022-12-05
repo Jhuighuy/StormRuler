@@ -26,9 +26,8 @@
 
 #include <Storm/Bittern/Math.hpp>
 
-#include <algorithm>
 #include <concepts>
-#include <limits>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -117,14 +116,15 @@ using matrix_element_decltype_t =
 template<matrix Matrix>
 using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
 
-/// @brief Matrix element reference type.
-template<matrix Matrix>
-  requires std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>
-using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
-
 /// @brief Matrix with assignable elements.
 template<class Matrix>
-concept output_matrix = matrix<Matrix>; /// @todo Implement me!
+concept output_matrix =
+    matrix<Matrix> && /// @todo Check if reference is not const!
+    std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>;
+
+/// @brief Matrix element reference type.
+template<output_matrix Matrix>
+using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 
 /// @brief Matrix with boolean elements.
 template<class Matrix>
@@ -160,6 +160,9 @@ concept numeric_matrix =
 } // namespace Storm
 
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
+#include <Storm/Bittern/MatrixTarget.hpp>
+
+// #include <Storm/Bittern/MatrixGenerator.hpp>
 #include <Storm/Bittern/MatrixMath.hpp>
 #include <Storm/Bittern/MatrixProduct.hpp>
 #include <Storm/Bittern/MatrixTranspose.hpp>

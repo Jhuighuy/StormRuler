@@ -64,12 +64,8 @@ public:
   {
     assign(*this, std::forward<Matrix>(other));
   }
-  /// @brief Assign the matrix.
-  template<matrix Matrix>
-  constexpr auto& operator=(Matrix&& other) noexcept
-  {
-    return assign(*this, std::forward<Matrix>(other));
-  }
+
+  using TargetMatrixInterface<StaticMatrix<Elem, NumRows, NumCols>>::operator=;
 
   /// @brief Fill the matrix with @p value.
   constexpr void fill(const Elem& value) noexcept

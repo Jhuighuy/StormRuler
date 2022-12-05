@@ -22,9 +22,6 @@
 
 #include <Storm/Base.hpp>
 
-/// @todo TRANSITION CODE!!
-#include <Storm/Bittern/Matrix.hpp>
-
 #include <Storm/Utils/Index.hpp>
 
 #include <array>

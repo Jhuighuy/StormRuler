@@ -278,14 +278,6 @@ constexpr auto operator*(Matrix&& mat, Scalar scal)
              std::forward<Matrix>(mat));
 }
 /// @}
-/// @brief Multiply-assign the matrix @p mat by a scalar @p scal.
-template<output_matrix Matrix, std::copyable Scalar>
-  requires numeric_matrix<Matrix> && numeric_type<Scalar>
-constexpr decltype(auto) operator*=(Matrix&& mat, Scalar scal)
-{
-  return assign(BindLast{MultiplyAssign{}, std::move(scal)},
-                std::forward<Matrix>(mat));
-}
 
 /// @brief Divide the scalar @p scal by a matrix @p mat.
 template<std::copyable Scalar, viewable_matrix Matrix>
@@ -303,14 +295,6 @@ constexpr auto operator/(Matrix&& mat, Scalar scal)
   return map(BindLast{Divide{}, std::move(scal)}, //
              std::forward<Matrix>(mat));
 }
-/// @brief Divide-assign the matrix @p mat by a scalar @p scal.
-template<output_matrix Matrix, std::copyable Scalar>
-  requires numeric_matrix<Matrix> && numeric_type<Scalar>
-constexpr decltype(auto) operator/=(Matrix&& mat, Scalar scal)
-{
-  return assign(BindLast{DivideAssign{}, std::move(scal)}, //
-                std::forward<Matrix>(mat));
-}
 
 /// @brief Add the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -319,15 +303,6 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
 constexpr auto operator+(Matrix1&& mat1, Matrix2&& mat2)
 {
   return map(Add{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
-}
-/// @brief Add-assign the matrices @p mat1 and @p mat2.
-template<output_matrix Matrix1, matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr decltype(auto) operator+=(Matrix1&& mat1, Matrix2&& mat2)
-{
-  return assign(AddAssign{}, //
-                std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 /// @brief Subtract the matrices @p mat1 and @p mat2.
@@ -339,15 +314,6 @@ constexpr auto operator-(Matrix1&& mat1, Matrix2&& mat2)
   return map(Subtract{}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
-/// @brief Subtract-assign the matrices @p mat1 and @p mat2.
-template<output_matrix Matrix1, matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr decltype(auto) operator-=(Matrix1&& mat1, Matrix2&& mat2)
-{
-  return assign(SubtractAssign{}, //
-                std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
-}
 
 /// @brief Element-wise multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -358,15 +324,6 @@ constexpr auto operator*(Matrix1&& mat1, Matrix2&& mat2)
   return map(Multiply{}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
-/// @brief Element-wise multiply-assign the matrices @p mat1 and @p mat2.
-template<output_matrix Matrix1, matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr decltype(auto) operator*=(Matrix1&& mat1, Matrix2&& mat2)
-{
-  return assign(MultiplyAssign{}, //
-                std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
-}
 
 /// @brief Element-wise divide the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
@@ -376,15 +333,6 @@ constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2)
 {
   return map(Divide{}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
-}
-/// @brief Element-wise divide-assign the matrices @p mat1 and @p mat2.
-template<output_matrix Matrix1, matrix Matrix2>
-  requires compatible_matrices_v<Matrix1, Matrix2> && //
-           numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
-constexpr decltype(auto) operator/=(Matrix1&& mat1, Matrix2&& mat2)
-{
-  return assign(DivideAssign{}, //
-                std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 /// @brief Normalize the matrix @p mat (divide by it's norm).

@@ -35,10 +35,10 @@ namespace Storm
 
 // -----------------------------------------------------------------------------
 
-template<crtp_derived Derived>
+template<crtp_derived MatrixView>
 class MatrixViewInterface;
 
-/// @brief Matrix view concept.
+/// @brief Matrix view: a movable matrix with lazy elements evaluation.
 template<class MatrixView>
 concept matrix_view =
     matrix<MatrixView> && std::movable<MatrixView> &&
@@ -55,18 +55,18 @@ concept viewable_matrix =
        std::movable<std::remove_reference_t<Matrix>>) ));
 
 /// @brief CRTP interface to a matrix views.
-template<crtp_derived Derived>
+template<crtp_derived MatrixView>
 class MatrixViewInterface
 {
 private:
 
-  constexpr Derived& self_() noexcept
+  constexpr MatrixView& self_() noexcept
   {
-    static_assert(std::derived_from<Derived, MatrixViewInterface>);
-    static_assert(matrix_view<Derived>);
-    return static_cast<Derived&>(*this);
+    static_assert(std::derived_from<MatrixView, MatrixViewInterface>);
+    static_assert(matrix_view<MatrixView>);
+    return static_cast<MatrixView&>(*this);
   }
-  constexpr const Derived& self_() const noexcept
+  constexpr const MatrixView& self_() const noexcept
   {
     return const_cast<MatrixViewInterface&>(*this).self_();
   }
@@ -82,13 +82,13 @@ public:
   /// @brief Get the matrix element at @p indices.
   /// @{
   template<class... Indices>
-    requires compatible_matrix_indices_v<Derived, Indices...>
+    requires compatible_matrix_indices_v<MatrixView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) noexcept
   {
     return self_()(indices...);
   }
   template<class... Indices>
-    requires compatible_matrix_indices_v<Derived, Indices...>
+    requires compatible_matrix_indices_v<MatrixView, Indices...>
   constexpr decltype(auto) operator()(Indices... indices) const noexcept
   {
     return self_()(indices...);

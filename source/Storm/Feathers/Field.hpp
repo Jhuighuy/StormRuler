@@ -58,7 +58,8 @@ using Subfield = std::conditional_t<NumVars == 1, Value, Vec<Value, NumVars>>;
 
 /// @brief Generic mesh field.
 template<mesh Mesh, index Index, class Value = real_t, size_t NumVars = 1>
-class Field final
+class Field final :
+    public TargetMatrixInterface<Field<Mesh, Index, Value, NumVars>>
 {
 private:
 
@@ -102,6 +103,8 @@ public:
     return data_[index];
   }
   /// @}
+
+  using TargetMatrixInterface<Field<Mesh, Index, Value, NumVars>>::operator=;
 
   /// @brief Element at @p row_index and @p col_index.
   /// @{

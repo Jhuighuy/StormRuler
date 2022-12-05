@@ -24,17 +24,10 @@
 
 #include <doctest/doctest.h>
 
-namespace Storm
-{
-
 // -----------------------------------------------------------------------------
 
 // Convenience macro for the floating-point checks.
 #define CHECK_NEAR(actual, expected, eps) \
   CHECK(actual == doctest::Approx(expected).epsilon(eps))
 
-inline constexpr real_t EPS = 1.0e-5;
-
 // -----------------------------------------------------------------------------
-
-} // namespace Storm

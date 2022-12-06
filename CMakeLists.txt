@@ -283,13 +283,19 @@ endif()
 message(STATUS "Adding StormRuler core library..")
 add_subdirectory("./source")
 
+# ------------------------------------------------------------------------------
+
 # Add the applications.
 message(STATUS "Adding StormRuler applications..")
 add_subdirectory("./source_apps")
 
+# ------------------------------------------------------------------------------
+
 # Add the documentation.
 message(STATUS "Adding StormRuler documentation..")
 add_subdirectory("./source_docs")
+
+# ------------------------------------------------------------------------------
 
 # Add the tests.
 message(STATUS "Adding StormRuler tests..")

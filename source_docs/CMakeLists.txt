@@ -114,3 +114,5 @@ list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_MD_SOURCES})
 doxygen_add_docs(StormRuler_Doxygen ALL
                  USE_STAMP_FILE ${StormRuler_Doxygen_INPUTS}
                  COMMENT "Generate Doxygen documentation")
+
+# ------------------------------------------------------------------------------

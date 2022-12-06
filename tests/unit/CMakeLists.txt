@@ -20,20 +20,26 @@
 
 # ------------------------------------------------------------------------------
 
-# Find doctest.
-find_package(doctest CONFIG REQUIRED)
-
-# ------------------------------------------------------------------------------
-
-# Playground executable.
+# Unit tests executable.
 file(GLOB CXX_SOURCES "./*.cpp")
 add_executable(StormRuler_UnitTests ${CXX_SOURCES})
+
+# ------------------------------------------------------------------------------
 
 # Link with the core library.
 target_link_libraries(StormRuler_UnitTests StormRuler)
 
-# Link with doctest.
+# ------------------------------------------------------------------------------
+
+# Find doctest.
+find_package(doctest CONFIG REQUIRED)
 target_link_libraries(StormRuler_UnitTests doctest::doctest)
 
-# Enable coverage.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+# ------------------------------------------------------------------------------
+
+# Enable coverage (for GCC only).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+endif()
+
+# ------------------------------------------------------------------------------

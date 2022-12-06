@@ -20,31 +20,43 @@
 
 # ------------------------------------------------------------------------------
 
-# Core header-only library.
-file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
-set(StormRuler_CXX_SOURCES ${StormRuler_CXX_SOURCES} PARENT_SCOPE)
-add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
-
-# Include directories.
-target_include_directories(StormRuler_BASE INTERFACE ".")
+# Benchmarks executable.
+file(GLOB CXX_SOURCES "./*.cpp")
+add_executable(StormRuler_Benchmarks ${CXX_SOURCES})
 
 # ------------------------------------------------------------------------------
 
-# Configuration file.
-configure_file("./Storm/Config.hpp.in" "./Storm/Config.hpp")
-
-# "Default" configuration file. 
-# (It should be in the repository, used for non-CMake builds.)
-add_custom_command(OUTPUT "./Storm/ConfigDefault.hpp"
-                   COMMAND ${Python3_EXECUTABLE} 
-                           "../scripts/MakeConfigDefault.py" 
-                           "./Storm/Config.hpp.in" "./Storm/ConfigDefault.hpp"
-                   MAIN_DEPENDENCY "./Storm/Config.hpp.in"
-                   VERBATIM)
+# Link with the core library.
+target_link_libraries(StormRuler_UnitTests StormRuler)
 
 # ------------------------------------------------------------------------------
 
-# Link with the base target.
-target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
+# Find Armadillo.
+find_package(Armadillo CONFIG)
+if(Armadillo_FOUND)
+  set(STORM_BENCH_ARMADILLO_ENABLED 1)
+  message(STATUS "| Benchmarks: Armadillo enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE ${ARMADILLO_LIBRARIES})
+endif()
+
+# ------------------------------------------------------------------------------
+
+# Find Blaze.
+find_package(blaze CONFIG)
+if(blaze_FOUND)
+  set(STORM_BENCH_BLAZE_ENABLED 1)
+  message(STATUS "| Benchmarks: Blaze enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE blaze::blaze)
+endif()
+
+# ------------------------------------------------------------------------------
+
+# Find Eigen.
+find_package(Eigen3 3.4 NO_MODULE)
+if(Eigen3_FOUND)
+  set(STORM_BENCH_EIGEN_ENABLED 1)
+  message(STATUS "| Benchmarks: Eigen enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE Eigen3::Eigen)
+endif()
 
 # ------------------------------------------------------------------------------

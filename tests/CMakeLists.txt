@@ -23,3 +23,11 @@
 # Add the unit tests.
 message(STATUS "| Adding StormRuler unit tests..")
 add_subdirectory("./unit")
+
+# ------------------------------------------------------------------------------
+
+# Add the benchmarks.
+message(STATUS "| Adding StormRuler benchmarks..")
+add_subdirectory("./benchmark")
+
+# ------------------------------------------------------------------------------

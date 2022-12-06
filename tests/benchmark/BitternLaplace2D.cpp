@@ -33,62 +33,11 @@
 
 // -----------------------------------------------------------------------------
 
+// Based on:
+// https://github.com/romeric/expression_templates_benchmark
+
 namespace Storm::Benchmarks
 {
-
-template<template<class, size_t, size_t> class Laplace2D, //
-         class T, size_t N, size_t NumIterations>
-T run_laplace_2D(const char* library_name = nullptr)
-{
-  const auto laplace_2D_name =
-      library_name == nullptr ?
-          fmt::format("BitternBenchmarks/Laplace2D(T={}, N={}, I={})", //
-                      meta::type_name_v<T>, N, NumIterations) :
-          fmt::format("BitternBenchmarks/Laplace2D({}, T={}, N={}, I={})", //
-                      library_name, meta::type_name_v<T>, N, NumIterations);
-
-  T error;
-  ankerl::nanobench::Bench().run(laplace_2D_name, [&] {
-    error = Laplace2D<T, N, NumIterations>::run_finite_differences();
-    ankerl::nanobench::doNotOptimizeAway(error);
-  });
-
-  return error;
-}
-
-template<template<class, size_t, size_t> class Laplace2D>
-void bench_laplace_2D(const char* name)
-{
-  {
-    static constexpr size_t N = 100;
-    static constexpr size_t NumIterations = 1000;
-    static constexpr double expected_error = 0.0069143;
-
-    const double error = //
-        run_laplace_2D<Laplace2D, double, N, NumIterations>(name);
-    CHECK_NEAR(error, expected_error, 1.0e-6);
-  }
-
-  {
-    static constexpr size_t N = 150;
-    static constexpr size_t NumIterations = 1000;
-    static constexpr double expected_error = 0.00994008;
-
-    const double error = //
-        run_laplace_2D<Laplace2D, double, N, NumIterations>(name);
-    CHECK_NEAR(error, expected_error, 1.0e-6);
-  }
-
-  {
-    static constexpr size_t N = 200;
-    static constexpr size_t NumIterations = 1000;
-    static constexpr double expected_error = 0.0121789;
-
-    const double error = //
-        run_laplace_2D<Laplace2D, double, N, NumIterations>(name);
-    CHECK_NEAR(error, expected_error, 1.0e-6);
-  }
-}
 
 // TODO: our implementation!
 
@@ -113,7 +62,7 @@ class Laplace2D_Armadillo
 {
 public:
 
-  static T run_finite_differences()
+  T operator()() const
   {
     static constexpr T pi = std::numbers::pi_v<T>;
 
@@ -125,39 +74,28 @@ public:
 
     T error;
     for (size_t iteration = 0; iteration < NumIterations; iteration++) {
-      error = finite_differences_iteration(u);
+      const arma_mat<T, N> u_old = u;
+      u(arma::span(1, N - 2), arma::span(1, N - 2)) =
+          (T{4.0} * (u_old(arma::span(0, N - 3), arma::span(1, N - 2)) +
+                     u_old(arma::span(2, N - 1), arma::span(1, N - 2)) +
+                     u_old(arma::span(1, N - 2), arma::span(0, N - 3)) +
+                     u_old(arma::span(1, N - 2), arma::span(2, N - 1))) +
+           T{1.0} * (u_old(arma::span(0, N - 3), arma::span(0, N - 3)) +
+                     u_old(arma::span(0, N - 3), arma::span(2, N - 1)) +
+                     u_old(arma::span(2, N - 1), arma::span(0, N - 3)) +
+                     u_old(arma::span(2, N - 1), arma::span(2, N - 1)))) /
+          T{20.0};
+
+      // `arma::norm` is notoriously slow.
+      const T square_norm = arma::accu(arma::pow(u - u_old, 2));
+      error = std::sqrt(square_norm);
       ankerl::nanobench::doNotOptimizeAway(error);
     }
 
     return error;
   }
 
-  static T finite_differences_iteration(arma_mat<T, N>& u)
-  {
-    const arma_mat<T, N> u_old = u;
-
-    u(arma::span(1, N - 2), arma::span(1, N - 2)) =
-        (T{4.0} * (u_old(arma::span(0, N - 3), arma::span(1, N - 2)) +
-                   u_old(arma::span(2, N - 1), arma::span(1, N - 2)) +
-                   u_old(arma::span(1, N - 2), arma::span(0, N - 3)) +
-                   u_old(arma::span(1, N - 2), arma::span(2, N - 1))) +
-         T{1.0} * (u_old(arma::span(0, N - 3), arma::span(0, N - 3)) +
-                   u_old(arma::span(0, N - 3), arma::span(2, N - 1)) +
-                   u_old(arma::span(2, N - 1), arma::span(0, N - 3)) +
-                   u_old(arma::span(2, N - 1), arma::span(2, N - 1)))) /
-        T{20.0};
-
-    // `arma::norm` is notoriously slow.
-    const T square_norm = arma::accu(arma::pow(u - u_old, 2));
-    return std::sqrt(square_norm);
-  }
-
 }; // class Laplace2D_Armadillo
-
-TEST_CASE("BitternBenchmarks/Laplace2D-Armadillo")
-{
-  bench_laplace_2D<Laplace2D_Armadillo>("Armadillo");
-}
 
 } // namespace Storm::Benchmarks
 
@@ -177,7 +115,7 @@ class Laplace2D_Blaze
 {
 public:
 
-  static T run_finite_differences()
+  T operator()() const
   {
     static constexpr T pi = std::numbers::pi_v<T>;
 
@@ -188,39 +126,26 @@ public:
 
     T error;
     for (size_t iteration = 0; iteration < NumIterations; iteration++) {
-      error = finite_differences_iteration(u);
+      const blaze::StaticMatrix<T, N, N> u_old = u;
+      blaze::submatrix(u, 1, 1, N - 2, N - 2) =
+          (T{4.0} * (blaze::submatrix(u_old, 0, 1, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 2, 1, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 1, 0, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 1, 2, N - 2, N - 2)) +
+           T{1.0} * (blaze::submatrix(u_old, 0, 0, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 0, 2, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 2, 0, N - 2, N - 2) +
+                     blaze::submatrix(u_old, 2, 2, N - 2, N - 2))) /
+          T{20.0};
+
+      error = norm(u - u_old);
       ankerl::nanobench::doNotOptimizeAway(error);
     }
 
     return error;
   }
 
-  template<bool SO, blaze::AlignmentFlag AL, blaze::PaddingFlag PD>
-  static T finite_differences_iteration( //
-      blaze::StaticMatrix<T, N, N, SO, AL, PD>& u)
-  {
-    const blaze::StaticMatrix<T, N, N, SO, AL, PD> u_old = u;
-
-    blaze::submatrix(u, 1, 1, N - 2, N - 2) =
-        (T{4.0} * (blaze::submatrix(u_old, 0, 1, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 2, 1, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 1, 0, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 1, 2, N - 2, N - 2)) +
-         T{1.0} * (blaze::submatrix(u_old, 0, 0, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 0, 2, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 2, 0, N - 2, N - 2) +
-                   blaze::submatrix(u_old, 2, 2, N - 2, N - 2))) /
-        T{20.0};
-
-    return norm(u - u_old);
-  }
-
 }; // class Laplace2D_Blaze
-
-TEST_CASE("BitternBenchmarks/Laplace2D-Blaze")
-{
-  bench_laplace_2D<Laplace2D_Blaze>("Blaze");
-}
 
 } // namespace Storm::Benchmarks
 
@@ -241,7 +166,7 @@ class Laplace2D_Eigen
 {
 public:
 
-  static T run_finite_differences()
+  T operator()() const
   {
     static constexpr T pi = std::numbers::pi_v<T>;
 
@@ -253,38 +178,26 @@ public:
 
     T error;
     for (size_t iteration = 0; iteration < NumIterations; iteration++) {
-      error = finite_differences_iteration(u);
+      const Eigen::Matrix<T, N, N> u_old = u;
+      u.block(1, 1, N - 2, N - 2) = //
+          (T{4.0} * (u_old.block(0, 1, N - 2, N - 2) +
+                     u_old.block(2, 1, N - 1, N - 2) +
+                     u_old.block(1, 0, N - 2, N - 3) +
+                     u_old.block(1, 2, N - 2, N - 1)) +
+           T{1.0} * (u_old.block(0, 0, N - 3, N - 3) +
+                     u_old.block(0, 2, N - 3, N - 1) +
+                     u_old.block(2, 0, N - 1, N - 3) +
+                     u_old.block(2, 2, N - 1, N - 1))) /
+          T{20.0};
+
+      error = (u - u_old).norm();
       ankerl::nanobench::doNotOptimizeAway(error);
     }
 
     return error;
   }
 
-  template<int SO>
-  static T finite_differences_iteration(Eigen::Matrix<T, N, N, SO>& u)
-  {
-    const Eigen::Matrix<T, N, N, SO> u_old = u;
-
-    u.block(1, 1, N - 2, N - 2) =                      //
-        (T{4.0} * (u_old.block(0, 1, N - 2, N - 2) +   //
-                   u_old.block(2, 1, N - 1, N - 2) +   //
-                   u_old.block(1, 0, N - 2, N - 3) +   //
-                   u_old.block(1, 2, N - 2, N - 1)) +  //
-         T{1.0} * (u_old.block(0, 0, N - 3, N - 3) +   //
-                   u_old.block(0, 2, N - 3, N - 1) +   //
-                   u_old.block(2, 0, N - 1, N - 3) +   //
-                   u_old.block(2, 2, N - 1, N - 1))) / //
-        T{20.0};
-
-    return (u - u_old).norm();
-  }
-
 }; // class Laplace2D_Eigen
-
-TEST_CASE("BitternBenchmarks/Laplace2D-Eigen")
-{
-  bench_laplace_2D<Laplace2D_Eigen>("Eigen");
-}
 
 } // namespace Storm::Benchmarks
 
@@ -306,7 +219,7 @@ class Laplace2D_XTensor
 {
 public:
 
-  static T run_finite_differences()
+  T operator()() const
   {
     static constexpr T pi = std::numbers::pi_v<T>;
 
@@ -317,42 +230,139 @@ public:
 
     T error;
     for (size_t iteration = 0; iteration < NumIterations; iteration++) {
-      error = finite_differences_iteration(u);
+      const xt::xtensor_fixed<T, xt::xshape<N, N>> u_old = u;
+      xt::view(u, xt::range(1, N - 1), xt::range(1, N - 1)) =
+          (T{4.0} *
+               (xt::view(u_old, xt::range(0, N - 2), xt::range(1, N - 1)) +
+                xt::view(u_old, xt::range(2, N - 0), xt::range(1, N - 1)) +
+                xt::view(u_old, xt::range(1, N - 1), xt::range(0, N - 2)) +
+                xt::view(u_old, xt::range(1, N - 1), xt::range(2, N - 0))) +
+           T{1.0} *
+               (xt::view(u_old, xt::range(0, N - 2), xt::range(0, N - 2)) +
+                xt::view(u_old, xt::range(0, N - 2), xt::range(2, N - 0)) +
+                xt::view(u_old, xt::range(2, N - 0), xt::range(0, N - 2)) +
+                xt::view(u_old, xt::range(2, N - 0), xt::range(2, N - 0)))) /
+          T{20.0};
+
+      const T square_norm = xt::sum(xt::pow(u - u_old, 2))();
+      error = std::sqrt(square_norm);
       ankerl::nanobench::doNotOptimizeAway(error);
     }
 
     return error;
   }
 
-  static T finite_differences_iteration( //
-      xt::xtensor_fixed<T, xt::xshape<N, N>>& u)
-  {
-    const xt::xtensor_fixed<T, xt::xshape<N, N>> u_old = u;
-    xt::view(u, xt::range(1, N - 1), xt::range(1, N - 1)) =
-        (T{4.0} * (xt::view(u_old, xt::range(0, N - 2), xt::range(1, N - 1)) +
-                   xt::view(u_old, xt::range(2, N - 0), xt::range(1, N - 1)) +
-                   xt::view(u_old, xt::range(1, N - 1), xt::range(0, N - 2)) +
-                   xt::view(u_old, xt::range(1, N - 1), xt::range(2, N - 0))) +
-         T{1.0} * (xt::view(u_old, xt::range(0, N - 2), xt::range(0, N - 2)) +
-                   xt::view(u_old, xt::range(0, N - 2), xt::range(2, N - 0)) +
-                   xt::view(u_old, xt::range(2, N - 0), xt::range(0, N - 2)) +
-                   xt::view(u_old, xt::range(2, N - 0), xt::range(2, N - 0)))) /
-        T{20.0};
-
-    // `xt::linalg::norm` is notoriously slow.
-    const T square_norm = xt::sum(xt::pow(u - u_old, 2))();
-    return std::sqrt(square_norm);
-  }
-
 }; // class Laplace2D_XTensor
-
-TEST_CASE("BitternBenchmarks/Laplace2D-XTensor")
-{
-  bench_laplace_2D<Laplace2D_XTensor>("XTensor");
-}
 
 } // namespace Storm::Benchmarks
 
 #endif // if STORM_BENCH_XTENSOR_ENABLED
+
+// -----------------------------------------------------------------------------
+
+namespace Storm::Benchmarks
+{
+
+template<class T, size_t N, size_t NumIterations, //
+         template<class, size_t, size_t> class Laplace2D>
+T run_laplace_2D(const char* library_name)
+{
+  const auto benchmark_name =
+      fmt::format("BitternBenchmarks/Laplace2D({}, T={}, N={}, I={})", //
+                  library_name, meta::type_name_v<T>, N, NumIterations);
+
+  const auto laplace_2D = Laplace2D<T, N, NumIterations>{};
+
+  T error;
+  ankerl::nanobench::Bench().run(benchmark_name, [&] {
+    error = laplace_2D();
+    ankerl::nanobench::doNotOptimizeAway(error);
+  });
+
+  return error;
+}
+
+TEST_CASE("BitternBenchmarks/Laplace2D")
+{
+  auto run_subcase = [&]<class T, size_t N, size_t NumIterations>(
+                         meta::type<T>, size_t_constant<N>,
+                         size_t_constant<NumIterations>, //
+                         T expected_error, T eps) {
+    SUBCASE("Bittern")
+    {
+      // TODO: our implementation!
+    }
+
+#if STORM_BENCH_BLAZE_ENABLED
+    SUBCASE("Armadillo")
+    {
+      const double error =
+          run_laplace_2D<T, N, NumIterations, Laplace2D_Armadillo>("Armadillo");
+      CHECK_NEAR(error, expected_error, eps);
+    }
+#endif
+
+#if STORM_BENCH_BLAZE_ENABLED
+    SUBCASE("Blaze")
+    {
+      const double error =
+          run_laplace_2D<T, N, NumIterations, Laplace2D_Blaze>("Blaze");
+      CHECK_NEAR(error, expected_error, eps);
+    }
+#endif
+
+#if STORM_BENCH_EIGEN_ENABLED
+    SUBCASE("Eigen")
+    {
+      const double error =
+          run_laplace_2D<T, N, NumIterations, Laplace2D_Eigen>("Eigen");
+      CHECK_NEAR(error, expected_error, eps);
+    }
+#endif
+
+#if STORM_BENCH_XTENSOR_ENABLED
+    SUBCASE("XTensor")
+    {
+      const double error =
+          run_laplace_2D<T, N, NumIterations, Laplace2D_XTensor>("XTensor");
+      CHECK_NEAR(error, expected_error, eps);
+    }
+#endif
+  };
+
+  static constexpr size_t NumIterations = 1000;
+
+  SUBCASE("T=double")
+  {
+    using T = double;
+    static constexpr T eps = 1.0e-6;
+
+    SUBCASE("N=100")
+    {
+      static constexpr size_t N = 100;
+      static constexpr T expected_error = 0.0069143;
+      run_subcase(meta::type_v<T>, size_t_constant<N>{},
+                  size_t_constant<NumIterations>{}, expected_error, eps);
+    }
+
+    SUBCASE("N=150")
+    {
+      static constexpr size_t N = 150;
+      static constexpr T expected_error = 0.00994008;
+      run_subcase(meta::type_v<T>, size_t_constant<N>{},
+                  size_t_constant<NumIterations>{}, expected_error, eps);
+    }
+
+    SUBCASE("N=200")
+    {
+      static constexpr size_t N = 200;
+      static constexpr T expected_error = 0.0121789;
+      run_subcase(meta::type_v<T>, size_t_constant<N>{},
+                  size_t_constant<NumIterations>{}, expected_error, eps);
+    }
+  }
+}
+
+} // namespace Storm::Benchmarks
 
 // -----------------------------------------------------------------------------

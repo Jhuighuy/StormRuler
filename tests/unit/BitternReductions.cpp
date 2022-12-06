@@ -20,9 +20,11 @@
 
 #include "./_UnitTests.hpp"
 
-#include <Storm/Bittern/Mat.hpp>
+#include <Storm/Bittern/Mat.hpp> // TODO: some more relevent include file.
 
-namespace Storm
+#include <doctest/doctest.h>
+
+namespace Storm::UnitTests
 {
 
 // -----------------------------------------------------------------------------
@@ -140,4 +142,4 @@ TEST_CASE("Bittern/MatrixExpressionReductions")
   CHECK_NEAR(norm_inf(mat_expr), 25.94224_dp, eps);
 }
 
-} // namespace Storm
+} // namespace Storm::UnitTests

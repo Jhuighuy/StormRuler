@@ -36,10 +36,3 @@ find_package(doctest CONFIG REQUIRED)
 target_link_libraries(StormRuler_UnitTests doctest::doctest)
 
 # ------------------------------------------------------------------------------
-
-# Enable coverage (for GCC only).
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-endif()
-
-# ------------------------------------------------------------------------------

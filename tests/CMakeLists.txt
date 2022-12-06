@@ -20,6 +20,14 @@
 
 # ------------------------------------------------------------------------------
 
+# Enable coverage (for GCC only).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  message(STATUS "| Coverage enabled.")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+endif()
+
+# ------------------------------------------------------------------------------
+
 # Add the unit tests.
 message(STATUS "| Adding StormRuler unit tests..")
 add_subdirectory("./unit")

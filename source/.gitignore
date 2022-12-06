@@ -25,3 +25,5 @@
 # it is used for non-CMake builds.
 Storm/Config.hpp
 !Storm/ConfigDefault.hpp
+
+# ------------------------------------------------------------------------------

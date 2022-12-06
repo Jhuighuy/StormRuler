@@ -20,11 +20,11 @@
 
 #include "./_UnitTests.hpp"
 
-#include <Storm/Bittern/Mat.hpp>
+#include <Storm/Bittern/Mat.hpp> // TODO: some more relevent include file.
 
-#include <iostream>
+#include <doctest/doctest.h>
 
-namespace Storm
+namespace Storm::UnitTests
 {
 
 // -----------------------------------------------------------------------------
@@ -391,4 +391,4 @@ TEST_CASE("Bittern/HyperbolicMatrixExpressions")
 
 // -----------------------------------------------------------------------------
 
-} // namespace Storm
+} // namespace Storm::UnitTests

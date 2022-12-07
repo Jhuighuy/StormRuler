@@ -268,7 +268,7 @@ template<class T, size_t N, size_t NumIterations, //
 T run_laplace_2D(const char* library_name)
 {
   const auto benchmark_name =
-      fmt::format("BitternBenchmarks/Laplace2D({}, T={}, N={}, I={})", //
+      fmt::format("Bittern/Laplace2D({}, T={}, N={}, I={})", //
                   library_name, meta::type_name_v<T>, N, NumIterations);
 
   const auto laplace_2D = Laplace2D<T, N, NumIterations>{};
@@ -282,7 +282,7 @@ T run_laplace_2D(const char* library_name)
   return error;
 }
 
-TEST_CASE("BitternBenchmarks/Laplace2D")
+TEST_CASE("Bittern/Laplace2D")
 {
   auto run_subcase = [&]<class T, size_t N, size_t NumIterations>(
                          meta::type<T>, size_t_constant<N>,

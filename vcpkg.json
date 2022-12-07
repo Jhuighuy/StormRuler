@@ -6,6 +6,7 @@
         "fmt",
         "spdlog",
         "doctest",
+        "nanobench",
         "glm"
     ]
 }

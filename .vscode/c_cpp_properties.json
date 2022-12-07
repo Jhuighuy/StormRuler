@@ -34,8 +34,8 @@
     {
       "name": "Linux (gcc-12-x64)",
       "includePath": [
-        "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/x64-linux/include"
+        "${theVcpkgPackagesPath}/x64-linux/include",
+        "${theIncludePaths}"
       ],
       "compilerPath": "/usr/bin/g++-12",
       "cppStandard": "c++23",
@@ -45,8 +45,8 @@
     {
       "name": "Linux (clang-15-x64)",
       "includePath": [
-        "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/x64-linux/include"
+        "${theVcpkgPackagesPath}/x64-linux/include",
+        "${theIncludePaths}"
       ],
       "compilerPath": "/usr/bin/clang++-15",
       "cppStandard": "c++23",
@@ -56,8 +56,9 @@
     {
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
-        "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/arm64-osx/include"
+        "/opt/homebrew/include",
+        "${theVcpkgPackagesPath}/arm64-osx/include",
+        "${theIncludePaths}"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"
@@ -70,8 +71,9 @@
     {
       "name": "Mac (clang-15-arm64)",
       "includePath": [
-        "${theIncludePaths}",
-        "${theVcpkgPackagesPath}/arm64-osx/include"
+        "/opt/homebrew/include",
+        "${theVcpkgPackagesPath}/arm64-osx/include",
+        "${theIncludePaths}"
       ],
       "macFrameworkPath": [
         "${theMacFrameworkPaths}"

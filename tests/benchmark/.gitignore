@@ -12,30 +12,15 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR Allocator PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-# SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Enable coverage (for GCC only).
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  message(STATUS "| Coverage enabled.")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
-endif()
-
-# ------------------------------------------------------------------------------
-
-# Add the unit tests.
-message(STATUS "| Adding StormRuler unit tests..")
-add_subdirectory("./unit")
-
-# ------------------------------------------------------------------------------
-
-# Add the benchmarks.
-message(STATUS "| Adding StormRuler benchmarks..")
-add_subdirectory("./benchmark")
+# Ignore the generated configuration file.
+_BenchmarksConfig.hpp
 
 # ------------------------------------------------------------------------------

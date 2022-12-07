@@ -22,7 +22,9 @@
 
 #include <Storm/Bittern/Mat.hpp>
 
-namespace Storm
+#include <doctest/doctest.h>
+
+namespace Storm::UnitTests
 {
 
 // -----------------------------------------------------------------------------
@@ -140,4 +142,4 @@ TEST_CASE("Bittern/MatrixExpressionReductions")
   CHECK_NEAR(norm_inf(mat_expr), 25.94224_dp, eps);
 }
 
-} // namespace Storm
+} // namespace Storm::UnitTests

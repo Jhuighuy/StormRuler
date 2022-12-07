@@ -18,10 +18,10 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
-#include "../unit/_UnitTests.hpp" // TODO: share CHECK_NEAR somehow.
+#include "../unit/_UnitTests.hpp" /// @todo share CHECK_NEAR somehow.
 #include "./_Benchmarks.hpp"
 
-#include <Storm/Base.hpp> // TODO: some more relevent include file
+#include <Storm/Base.hpp> /// @todo some more relevent include file
 #include <Storm/Utils/Meta.hpp>
 
 #include <doctest/doctest.h>
@@ -39,7 +39,7 @@
 namespace Storm::Benchmarks
 {
 
-// TODO: our implementation!
+/// @todo Our implementation!
 
 } // namespace Storm::Benchmarks
 

@@ -20,7 +20,7 @@
 
 #include "./_UnitTests.hpp"
 
-#include <Storm/Bittern/Mat.hpp> // TODO: some more relevent include file.
+#include <Storm/Bittern/Mat.hpp>
 
 #include <doctest/doctest.h>
 

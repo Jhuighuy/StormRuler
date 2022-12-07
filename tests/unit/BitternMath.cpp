@@ -20,7 +20,7 @@
 
 #include "./_UnitTests.hpp"
 
-#include <Storm/Bittern/Mat.hpp> // TODO: some more relevent include file.
+#include <Storm/Bittern/Mat.hpp>
 
 #include <doctest/doctest.h>
 
@@ -29,7 +29,7 @@ namespace Storm::UnitTests
 
 // -----------------------------------------------------------------------------
 
-// TODO: cast expressions!
+/// @todo cast expressions!
 
 // -----------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ TEST_CASE("Bittern/CompareMatrixExpressions")
   }
 }
 
-// TODO: Min/Max!
+/// @todo Min/Max!
 
 // -----------------------------------------------------------------------------
 
@@ -85,17 +85,17 @@ TEST_CASE("Bittern/LogicalMatrixExpressions")
   {
     CHECK_FALSE(any(matrix_and(mat1, mat2)));
     CHECK(any(matrix_and(mat1, mat3)));
-    // TODO: check the multiargument versions.
+    /// @todo Check the multiargument versions.
   }
 
   SUBCASE("logical-or")
   {
     CHECK(all(matrix_or(mat1, mat2)));
-    // TODO: check the multiargument versions.
+    /// @todo Check the multiargument versions.
   }
 }
 
-// TODO: Merge!
+/// @todo Merge!
 
 // -----------------------------------------------------------------------------
 

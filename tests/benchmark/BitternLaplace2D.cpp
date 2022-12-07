@@ -290,7 +290,7 @@ TEST_CASE("Bittern/Laplace2D")
                          T expected_error, T eps) {
     SUBCASE("Bittern")
     {
-      // TODO: our implementation!
+      /// @todo Our implementation!
     }
 
 #if STORM_BENCH_BLAZE_ENABLED

@@ -27,8 +27,6 @@
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
     ]
   },
-  // TODO: Add Windows configuratiuons.
-  // TODO: Add Mac (x64) configuratiuons.
   "configurations": [
     // -------------------------------------------------------------------------
     {
@@ -81,6 +79,27 @@
       "compilerPath": "/opt/homebrew/opt/llvm/bin/clang-15",
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-clang-arm64"
+    },
+    // TODO: Add Mac (x64) configuratiuons.
+    // -------------------------------------------------------------------------
+    {
+      "name": "Windows (msvc-x64)",
+      "includePath": [
+        "${theVcpkgPackagesPath}/arm64-osx/include",
+        "${theIncludePaths}"
+      ],
+      "cppStandard": "c++23",
+      "intelliSenseMode": "windows-msvc-x64"
+    },
+    // -------------------------------------------------------------------------
+    {
+      "name": "Windows (msvc-x64)",
+      "includePath": [
+        "${theVcpkgPackagesPath}/arm64-osx/include",
+        "${theIncludePaths}"
+      ],
+      "cppStandard": "c++23",
+      "intelliSenseMode": "windows-clang-x64"
     }
     // -------------------------------------------------------------------------
   ],

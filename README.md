@@ -7,7 +7,7 @@
 [![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
-
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
 

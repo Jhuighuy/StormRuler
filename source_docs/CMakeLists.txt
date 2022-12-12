@@ -21,7 +21,7 @@
 # ------------------------------------------------------------------------------
 
 # Find Doxygen.
-find_package(Doxygen)
+find_package(Doxygen QUIET)
 if(NOT DOXYGEN_FOUND)
   message(STATUS "| Doxygen was not found! Skipping documentation.")
   return()

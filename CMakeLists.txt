@@ -104,7 +104,9 @@ endif()
 
 # Compiler optimization options.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0 -fno-inline)
+  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0 
+                                           -fno-inline 
+                                           -fno-elide-constructors)
   list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native) 
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)

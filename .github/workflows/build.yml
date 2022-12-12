@@ -46,7 +46,8 @@ jobs:
       GCOV_EXE: gcov-12
 
       # Coverage report file path.
-      COVERAGE_REPORT_PATH: coverage.xml
+      SONAR_COVERAGE_REPORT_PATH: sonar_coverage.xml
+      CODECOV_COVERAGE_REPORT_PATH: codecov_coverage.xml
 
       # Directory where build-wrapper output will be placed.
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 
@@ -118,9 +119,17 @@ jobs:
               -e "vcpkg_installed/*" -e "test/*" \
               --exclude-throw-branches \
               --gcov-executable "${{ env.GCOV_EXE }}" \
-              --sonarqube -o "${{ env.COVERAGE_REPORT_PATH }}"
+              --xml "{{ env.CODECOV_COVERAGE_REPORT_PATH }}" \
+              --sonarqube "${{ env.SONAR_COVERAGE_REPORT_PATH }}"
           # See why `--exclude-throw-branches` below:
           # https://www.gcovr.com/en/stable/faq.html#why-does-c-code-have-so-many-uncovered-branches
+
+      # ------------------------------------------------------------------------
+
+      - name: Upload to CodeCov
+        uses: codecov/codecov-action@v2
+        with:
+          files: "{{ env.CODECOV_COVERAGE_REPORT_PATH }}"
 
       # ------------------------------------------------------------------------
 
@@ -131,6 +140,6 @@ jobs:
         run: |
           sonar-scanner \
               --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
-              --define sonar.coverageReportPaths="${{ env.COVERAGE_REPORT_PATH }}"
+              --define sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_REPORT_PATH }}"
 
 # ------------------------------------------------------------------------------

@@ -116,8 +116,11 @@ jobs:
         run: |
           gcovr \
               -e "vcpkg_installed/*" -e "test/*" \
+              --exclude-throw-branches \
               --gcov-executable "${{ env.GCOV_EXE }}" \
               --sonarqube -o "${{ env.COVERAGE_REPORT_PATH }}"
+          # See why `--exclude-throw-branches` below:
+          # https://www.gcovr.com/en/stable/faq.html#why-does-c-code-have-so-many-uncovered-branches
 
       # ------------------------------------------------------------------------
 

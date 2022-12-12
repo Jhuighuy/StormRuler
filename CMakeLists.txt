@@ -23,10 +23,11 @@
 #   Format the code on build.
 # • clang-tidy integration:
 #   Impossible now, since clang-tidy doesn't support C++23.
+#   (But now we support C++20.. again)
 # • User friendly compilation script:
 #   It is inconvenient to write `CXX=.. cmake . -DCMAKE_BUILD_TYPE=..`
 #   every time.
-# • Problems with GTest linking on ARM-based Mac machines.
+# • Add sanitizers for the Coverage build.
 
 # ------------------------------------------------------------------------------
 
@@ -73,53 +74,92 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-# Check build type is specified.
-if(NOT CMAKE_BUILD_TYPE)
-  message(FATAL_ERROR "Build type is not specified!")
-endif()
-
 # Check C/C++ compiler.
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
   message(WARNING "Unknown C++ compiler, correct options may not be set!")
 endif()
 
-# Compiler warning and diagnostics.
+# Lists of compile options.
+set(StormRuler_CXX_COMPILE_OPTIONS "")
+set(StormRuler_CXX_DEBUG_COMPILE_OPTIONS "")
+set(StormRuler_CXX_RELEASE_COMPILE_OPTIONS "")
+set(StormRuler_CXX_COVERAGE_COMPILE_OPTIONS "")
+
+# Lists of link options.
+set(StormRuler_CXX_LINK_OPTIONS "")
+set(StormRuler_CXX_DEBUG_LINK_OPTIONS "")
+set(StormRuler_CXX_RELEASE_LINK_OPTIONS "")
+set(StormRuler_CXX_COVERAGE_LINK_OPTIONS "")
+
+# Set the warnings and diagnostics options.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
-                                     -Wno-unused-function 
-                                     -Wno-unused-parameter 
-                                     -Wno-comment 
-                                     -Wno-unknown-pragmas 
-                                     -fconcepts-diagnostics-depth=3
-                                     -Wno-psabi)
+  # Enable maaany warnings, treated as errors.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+       -Werror -Wall -Wextra -Wpedantic 
+       -Wno-unused-function -Wno-unused-parameter -Wno-comment 
+       -Wno-unknown-pragmas -Wno-psabi
+       -fconcepts-diagnostics-depth=3)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  list(APPEND StormRuler_CXX_OPTIONS -Werror -Wall -Wextra -Wpedantic 
-                                     -Wno-unused-function 
-                                     -Wno-unused-parameter 
-                                     -Wno-comment 
-                                     -Wno-mismatched-tags
-                                     -Wno-gnu-zero-variadic-macro-arguments)
+  # Enable maaany warnings, treated as errors.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+       -Werror -Wall -Wextra -Wpedantic 
+       -Wno-unused-function -Wno-unused-parameter -Wno-comment 
+       -Wno-mismatched-tags -Wno-gnu-zero-variadic-macro-arguments)
 endif()
 
-# Compiler optimization options.
+# Set the optimization options.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0 
-                                           -fno-inline 
-                                           -fno-elide-constructors)
-  list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native) 
+  # Debug: debug information, no optimizations.
+  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS -g -O0)
+  # Release: debug information, full optimizations.
+  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
+  # Coverage: coverage, debug information, no optimizations, no inlining.
+  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS 
+       --coverage -g -O0 -fno-inline -fno-default-inline
+       -fno-inline-small-functions -fno-elide-constructors)
+  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  list(APPEND StormRuler_CXX_DEBUG_OPTIONS -g -O0)
-  list(APPEND StormRuler_CXX_RELEASE_OPTIONS -g -Ofast -march=native)
+  # Debug: debug information, no optimizations.
+  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS -g -O0)
+  # Release: debug information, full optimizations.
+  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
+  # Coverage: coverage, debug information, no optimizations.
+  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS --coverage -g -O0)
+  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
 endif()
 
-# Set the C/C++ options.
-target_compile_options(StormRuler_BASE INTERFACE 
-                       ${StormRuler_CXX_OPTIONS})
-target_compile_options(StormRuler_BASE INTERFACE
-                       $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_OPTIONS}>)
-target_compile_options(StormRuler_BASE INTERFACE
-                       $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_OPTIONS}>)
+# Apply the options (for all build types).
+target_compile_options(
+    StormRuler_BASE INTERFACE 
+    ${StormRuler_CXX_COMPILE_OPTIONS})
+target_link_options(
+    StormRuler_BASE INTERFACE 
+    ${StormRuler_CXX_LINK_OPTIONS})
+
+# Apply the options (for Debug build type).
+target_compile_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_COMPILE_OPTIONS}>)
+target_link_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_LINK_OPTIONS}>)
+
+# Apply the options (for Release build type).
+target_compile_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_COMPILE_OPTIONS}>)
+target_link_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_LINK_OPTIONS}>)
+
+# Apply the options (for Coverage build type).
+target_compile_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_COMPILE_OPTIONS}>)
+target_link_options(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_LINK_OPTIONS}>)
 
 # ------------------------------------------------------------------------------
 

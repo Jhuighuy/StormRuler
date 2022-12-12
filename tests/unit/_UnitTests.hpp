@@ -20,6 +20,7 @@
 
 #pragma once
 
+#define STORM_ENABLE_ASSERTS_ 1
 #include <Storm/Base.hpp>
 
 #include <doctest/doctest.h>

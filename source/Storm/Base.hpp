@@ -150,7 +150,7 @@
 #endif
 
 #ifndef __FUNCSIG__
-#define __FUNCSIG__ __PRETTY_FUNCTION__
+#define __FUNCSIG__ static_cast<const char*>(__PRETTY_FUNCTION__)
 #endif
 
 // Report a fatal error and exit the application.
@@ -171,7 +171,16 @@
     }                                                                   \
   } while (false)
 
-// Check the expression in the debug mode, exit with fatal error if it fails.
+// Enable or disable asserts.
+#ifndef STORM_ENABLE_ASSERTS_
+#ifdef NDEBUG
+#define STORM_ENABLE_ASSERTS_ 0
+#else
+#define STORM_ENABLE_ASSERTS_ 1
+#endif
+#endif
+
+// Check the expression, exit with fatal error if it fails.
 #ifdef NDEBUG
 #define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
 #else

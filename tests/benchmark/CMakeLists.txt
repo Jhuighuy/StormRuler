@@ -43,7 +43,7 @@ target_link_libraries(StormRuler_Benchmarks doctest::doctest)
 # ------------------------------------------------------------------------------
 
 # Find Armadillo.
-find_package(Armadillo CONFIG)
+find_package(Armadillo CONFIG QUIET)
 if(Armadillo_FOUND)
   set(STORM_BENCH_ARMADILLO_ENABLED 1)
   message(STATUS "| Benchmarks: Armadillo enabled.")
@@ -51,7 +51,7 @@ if(Armadillo_FOUND)
 endif()
 
 # Find Blaze.
-find_package(blaze CONFIG)
+find_package(blaze CONFIG QUIET)
 if(blaze_FOUND)
   set(STORM_BENCH_BLAZE_ENABLED 1)
   message(STATUS "| Benchmarks: Blaze enabled.")
@@ -59,7 +59,7 @@ if(blaze_FOUND)
 endif()
 
 # Find Eigen.
-find_package(Eigen3 3.4 NO_MODULE)
+find_package(Eigen3 3.4 NO_MODULE QUIET)
 if(Eigen3_FOUND)
   set(STORM_BENCH_EIGEN_ENABLED 1)
   message(STATUS "| Benchmarks: Eigen enabled.")
@@ -67,7 +67,7 @@ if(Eigen3_FOUND)
 endif()
 
 # Find XTensor.
-find_package(xtensor)
+find_package(xtensor QUIET)
 if(xtensor_FOUND)
   set(STORM_BENCH_XTENSOR_ENABLED 1)
   message(STATUS "| Benchmarks: XTensor enabled.")

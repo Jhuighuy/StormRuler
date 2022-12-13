@@ -103,10 +103,10 @@
 #endif
 
 // Include the configuration file.
-#if __has_include("Config.hpp")
-#include "Config.hpp"
+#if __has_include("./Config.hpp")
+#include "./Config.hpp"
 #endif
-#include "ConfigDefault.hpp"
+#include "./ConfigDefault.hpp"
 
 // Is the code parsed by Doxygen?
 #ifndef STORM_DOXYGEN_
@@ -241,7 +241,7 @@ using real_t = double;
 using complex_t = std::complex<real_t>;
 
 /// @brief size_t literal.
-constexpr size_t operator""_sz(unsigned long long arg) noexcept
+constexpr size_t operator""_sz(unsigned long long arg) noexcept // NOLINT
 {
   return static_cast<size_t>(arg);
 }

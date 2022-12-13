@@ -30,8 +30,8 @@
 
 #include <Storm/Base.hpp>
 
-#include "Field.hpp"
-#include "SkunkHydro.hpp"
+#include "./Field.hpp"
+#include "./SkunkHydro.hpp"
 
 namespace Storm::Feathers
 {

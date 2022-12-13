@@ -96,7 +96,7 @@ public:
   template<detail_::different_from_<MatrixRefView> OtherMatrix>
     requires (std::convertible_to<OtherMatrix, Matrix&> &&
               requires { rvalue_shall_not_pass_(std::declval<OtherMatrix>()); })
-  constexpr MatrixRefView(OtherMatrix&& mat) noexcept
+  constexpr MatrixRefView(OtherMatrix&& mat) noexcept // NOLINT
       : p_mat_{std::addressof(
             static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))}
   {
@@ -148,7 +148,10 @@ private:
 public:
 
   /// @brief Construct an owning view.
-  constexpr MatrixOwningView(Matrix&& mat) noexcept : mat_{std::move(mat)} {}
+  constexpr MatrixOwningView(Matrix&& mat) noexcept // NOLINT
+      : mat_{std::move(mat)}
+  {
+  }
 
   /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept

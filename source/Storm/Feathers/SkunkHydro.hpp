@@ -60,9 +60,9 @@ public:
 
 public:
 
-  explicit MhdHydroVars() = default;
-  explicit MhdHydroVars(const vec3_t& n, const real_t* q_cons,
-                        const real_t* q_prim = nullptr);
+  MhdHydroVars() = default;
+  MhdHydroVars(const vec3_t& n, const real_t* q_cons,
+               const real_t* q_prim = nullptr);
 
 public:
 

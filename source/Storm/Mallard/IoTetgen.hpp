@@ -31,6 +31,7 @@
 #include <filesystem>
 #include <fstream>
 #include <type_traits>
+#include <vector>
 
 namespace Storm
 {

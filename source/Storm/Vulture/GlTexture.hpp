@@ -249,7 +249,7 @@ public:
 
   /// @brief Construct a texture.
   template<pixel Pixel>
-  TextureBuffer(const Buffer<Pixel>& buffer) {
+  explicit TextureBuffer(const Buffer<Pixel>& buffer) {
     assign(buffer);
   }
 

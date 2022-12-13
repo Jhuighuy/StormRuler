@@ -28,6 +28,11 @@
 #include <Storm/Solvers/MatrixDense.hpp>
 #include <Storm/Solvers/Solver.hpp>
 
+#include <array>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 namespace Storm
 {
 

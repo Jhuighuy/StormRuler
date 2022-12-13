@@ -43,7 +43,7 @@ public:
   constexpr AABB() = default;
 
   /// @brief Construct an AABB with a vector @p vec.
-  constexpr AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
+  constexpr explicit AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
 
   /// @brief AABB min vector.
   constexpr const Vec& min() const noexcept

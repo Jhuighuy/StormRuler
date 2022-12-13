@@ -28,10 +28,10 @@
 
 #pragma once
 
-#include "FluxScheme.hpp"
-#include "GradientLimiterScheme.hpp"
-#include "GradientScheme.hpp"
-#include "SkunkFvBC.hpp"
+#include "./FluxScheme.hpp"
+#include "./GradientLimiterScheme.hpp"
+#include "./GradientScheme.hpp"
+#include "./SkunkFvBC.hpp"
 
 #include <map>
 

@@ -32,7 +32,7 @@
 
 #include <Storm/Bittern/Math.hpp>
 
-#include "Field.hpp"
+#include "./Field.hpp"
 
 #include <type_traits>
 

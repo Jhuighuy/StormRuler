@@ -33,6 +33,7 @@
 #include <Storm/Vulture/GlWindow.hpp>
 #include <Storm/Vulture/Scene.hpp>
 
+#include <algorithm>
 #include <concepts>
 #include <cstddef> // std::byte
 #include <optional>

@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "Field.hpp"
-#include "SkunkHydro.hpp"
+#include "./Field.hpp"
+#include "./SkunkHydro.hpp"
 #include <functional>
 
 namespace Storm::Feathers
@@ -106,7 +106,7 @@ public:
   using MhdFvBcPT<MhdPhysicsT>::num_vars;
   std::function<vec3_t(vec3_t)> vfunc;
 
-  MhdFvBcNoSlipT(std::function<vec3_t(vec3_t)> vfunc = nullptr)
+  explicit MhdFvBcNoSlipT(std::function<vec3_t(vec3_t)> vfunc = nullptr)
       : vfunc(std::move(vfunc))
   {
   }

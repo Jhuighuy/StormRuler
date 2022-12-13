@@ -29,6 +29,7 @@
 #include <Storm/Solvers/Solver.hpp>
 
 #include <utility>
+#include <vector>
 
 namespace Storm
 {

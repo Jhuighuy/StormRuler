@@ -27,6 +27,7 @@
 #include <array>
 #include <compare>
 #include <concepts>
+#include <memory>
 #include <type_traits>
 #include <vector>
 

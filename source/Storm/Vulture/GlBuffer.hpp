@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <concepts>
 #include <ranges>
+#include <utility>
 #include <vector>
 
 #include <GL/glew.h>
@@ -88,7 +89,7 @@ public:
   /// @param usage Intended buffer usage.
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Type>
-  Buffer(Range&& values, BufferUsage usage = BufferUsage::static_draw)
+  explicit Buffer(Range&& values, BufferUsage usage = BufferUsage::static_draw)
       : Buffer{} {
     assign(std::forward<Range>(values), usage);
   }

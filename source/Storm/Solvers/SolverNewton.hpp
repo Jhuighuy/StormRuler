@@ -144,9 +144,9 @@ private:
     const real_t mu = sqrt_of_epsilon * sqrt(1.0 + norm_2(x_vec));
     t_vec_ <<= r_vec_;
     {
-      auto solver = std::make_unique<BiCgStabSolver<Vector>>();
-      solver->absolute_error_tolerance = 1.0e-8;
-      solver->relative_error_tolerance = 1.0e-8;
+      BiCgStabSolver<Vector> solver{};
+      solver.absolute_error_tolerance = 1.0e-8;
+      solver.relative_error_tolerance = 1.0e-8;
       auto op = make_operator<Vector>([&](Vector& z_vec, const Vector& y_vec) {
         // Compute the Jacobian-vector product:
         // ----------------------
@@ -161,7 +161,7 @@ private:
         const real_t delta_inverse = safe_divide(1.0, delta);
         z_vec <<= delta_inverse * (z_vec - w_vec_);
       });
-      solver->solve(t_vec_, r_vec_, *op);
+      solver.solve(t_vec_, r_vec_, *op);
     }
 
     // Update the solution and the residual:

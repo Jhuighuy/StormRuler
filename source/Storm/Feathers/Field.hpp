@@ -38,6 +38,7 @@
 
 #include <memory>
 #include <ranges>
+#include <string>
 
 namespace Storm::Feathers
 {
@@ -71,7 +72,7 @@ public:
 
   constexpr Field() = default;
 
-  constexpr Field(const Mesh& mesh)
+  constexpr explicit Field(const Mesh& mesh)
       : p_mesh_{&mesh}, data_(p_mesh_->num_entities(meta::type_v<Index>))
   {
   }

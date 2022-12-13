@@ -50,7 +50,7 @@ jobs:
       CODECOV_COVERAGE_REPORT_PATH: codecov_coverage.xml
 
       # Directory where build-wrapper output will be placed.
-      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory 
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
 
     steps:
 

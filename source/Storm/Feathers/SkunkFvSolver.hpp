@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include "ConvectionScheme.hpp"
-#include "Field.hpp"
-#include "FluxScheme.hpp"
-#include "GradientLimiterScheme.hpp"
-#include "SkunkFvBC.hpp"
+#include "./ConvectionScheme.hpp"
+#include "./Field.hpp"
+#include "./FluxScheme.hpp"
+#include "./GradientLimiterScheme.hpp"
+#include "./SkunkFvBC.hpp"
 
 #include <map>
 

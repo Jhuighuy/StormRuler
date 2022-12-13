@@ -53,7 +53,7 @@ private:
 public:
 
   /// @brief Construct a filtering stream buffer.
-  FilteringStreambuf(std::basic_istream<Char>& stream)
+  explicit FilteringStreambuf(std::basic_istream<Char>& stream)
       : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()}
   {
     p_stream_->rdbuf(this);

@@ -41,42 +41,48 @@ jobs:
       # vcpkg installation directory.
       VCPKG_ROOT: ../vcpkg
 
-      # gcc executable.
+      # g++ executable.
       GXX_EXE: g++-12
 
     steps:
 
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+      # ------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Install vcpkg
-      run: |
-        git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
-        ../vcpkg/bootstrap-vcpkg.sh
+      # ------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
+          ../vcpkg/bootstrap-vcpkg.sh
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      # ------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: cpp
+          debug: true # Since C++20 does not work correctly.
 
-    - name: Build
-      run: |
-        mkdir bin
-        export CXX=${{ env.GXX_EXE }}
-        cmake . \
-            -DCMAKE_BUILD_TYPE=Coverage \
-            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-        cmake --build . --config Coverage
+      # ------------------------------------------------------------------------
 
-    # --------------------------------------------------------------------------
+      - name: Build
+        run: |
+          mkdir bin
+          export CXX=${{ env.GXX_EXE }}
+          # Have to use C++20, CodeQL does not know C++23 yet.
+          # UPD: CodeQL cannot handle C++20 too :(
+          cmake . \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_STANDARD=20 \
+              -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+          cmake --build . --config Release
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      # ------------------------------------------------------------------------
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
 
 # ------------------------------------------------------------------------------

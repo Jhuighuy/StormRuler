@@ -54,93 +54,91 @@ jobs:
 
     steps:
 
-      # ------------------------------------------------------------------------
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Install gcovr
+      run: |
+        pip install gcovr
 
-      - name: Install gcovr
-        run: |
-          pip install gcovr
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Install vcpkg
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
+        ../vcpkg/bootstrap-vcpkg.sh
 
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
-          ../vcpkg/bootstrap-vcpkg.sh
+    # ------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Install sonar-scanner and build-wrapper
+      uses: SonarSource/sonarcloud-github-c-cpp@v1
 
-      - name: Install sonar-scanner and build-wrapper
-        uses: SonarSource/sonarcloud-github-c-cpp@v1
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Run build-wrapper
+      run: |
+        mkdir bin
+        export CXX=${{ env.GXX_EXE }}
+        # Have to use C++20, Sonar does not know C++23 yet.
+        cmake . \
+            -DCMAKE_BUILD_TYPE=Coverage \
+            -DCMAKE_CXX_STANDARD=20 \
+            -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+        build-wrapper-linux-x86-64 \
+            --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Coverage
 
-      - name: Run build-wrapper
-        run: |
-          mkdir bin
-          export CXX=${{ env.GXX_EXE }}
-          # Have to use C++20, Sonar does not know C++23 yet.
-          cmake . \
-              -DCMAKE_BUILD_TYPE=Coverage \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
-          build-wrapper-linux-x86-64 \
-              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Coverage
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Run tests
+      run: |
+        ./bin/StormRuler_UnitTests
 
-      - name: Run tests
-        run: |
-          ./bin/StormRuler_UnitTests
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Run benchmarks
+      run: |
+        ./bin/StormRuler_Benchmarks
 
-      - name: Run benchmarks
-        run: |
-          ./bin/StormRuler_Benchmarks
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Run gcovr
+      run: |
+        gcovr \
+            -e "vcpkg_installed/*" -e "test/*" \
+            --exclude-throw-branches \
+            --gcov-executable "${{ env.GCOV_EXE }}" \
+            --xml "{{ env.CODECOV_COVERAGE_REPORT_PATH }}" \
+            --sonarqube "${{ env.SONAR_COVERAGE_REPORT_PATH }}"
+        # See why `--exclude-throw-branches` below:
+        # https://www.gcovr.com/en/stable/faq.html#why-does-c-code-have-so-many-uncovered-branches
 
-      - name: Run gcovr
-        run: |
-          gcovr \
-              -e "vcpkg_installed/*" -e "test/*" \
-              --exclude-throw-branches \
-              --gcov-executable "${{ env.GCOV_EXE }}" \
-              --xml "{{ env.CODECOV_COVERAGE_REPORT_PATH }}" \
-              --sonarqube "${{ env.SONAR_COVERAGE_REPORT_PATH }}"
-          # See why `--exclude-throw-branches` below:
-          # https://www.gcovr.com/en/stable/faq.html#why-does-c-code-have-so-many-uncovered-branches
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
+    - name: Upload to CodeCov
+      uses: codecov/codecov-action@v2
+      with:
+        files: "{{ env.CODECOV_COVERAGE_REPORT_PATH }}"
 
-      - name: Upload to CodeCov
-        uses: codecov/codecov-action@v2
-        with:
-          files: "{{ env.CODECOV_COVERAGE_REPORT_PATH }}"
+    # --------------------------------------------------------------------------
 
-      # ------------------------------------------------------------------------
-
-      - name: Run sonar-scanner
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-              --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
-              --define sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_REPORT_PATH }}"
+    - name: Run sonar-scanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        sonar-scanner \
+            --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+            --define sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_REPORT_PATH }}"
 
 # ------------------------------------------------------------------------------

@@ -20,7 +20,7 @@
 
 # ------------------------------------------------------------------------------
 
-name: CodeQL Analysis
+name: CodeQL
 
 # ------------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ on:
 
 jobs:
   code-ql:
-    name: Analyze (CodeQL)
+    name: Build
     runs-on: ubuntu-22.04
     env:
       # vcpkg installation directory.

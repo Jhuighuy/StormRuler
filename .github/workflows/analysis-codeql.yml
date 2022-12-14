@@ -44,7 +44,7 @@ jobs:
       # gcc executable.
       GXX_EXE: g++-12
 
-  steps:
+    steps:
 
     - name: Checkout
       uses: actions/checkout@v3

@@ -61,6 +61,7 @@ public:
 
   /// @brief Construct a matrix with another matrix.
   template<matrix Matrix>
+    requires (!std::same_as<StaticMatrix, std::remove_cvref_t<Matrix>>)
   constexpr StaticMatrix(Matrix&& other) noexcept
   {
     assign(*this, std::forward<Matrix>(other));

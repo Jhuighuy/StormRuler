@@ -106,7 +106,7 @@ jobs:
         run: |
           ./bin/StormRuler_UnitTests
           ./bin/StormRuler_Benchmarks
-  
+
       # ------------------------------------------------------------------------
 
       - name: Run gcovr

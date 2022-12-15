@@ -10,6 +10,7 @@
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![codecov](https://codecov.io/github/Jhuighuy/StormRuler/branch/main/graph/badge.svg?token=GUSIUDW3G0)](https://codecov.io/github/Jhuighuy/StormRuler)
 [![CodeQL](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/27159/badge.svg)](https://scan.coverity.com/projects/jhuighuy-stormruler)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
 

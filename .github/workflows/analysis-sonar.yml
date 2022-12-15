@@ -63,23 +63,9 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
-      # ------------------------------------------------------------------------
-
       - name: Install gcovr
         run: |
           pip install gcovr
-
-      # ------------------------------------------------------------------------
-
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/Microsoft/vcpkg.git ../vcpkg
-          ../vcpkg/bootstrap-vcpkg.sh
 
       # ------------------------------------------------------------------------
 
@@ -96,7 +82,7 @@ jobs:
           cmake . \
               -DCMAKE_BUILD_TYPE=Coverage \
               -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
+              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
           build-wrapper-linux-x86-64 \
               --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Coverage
 

@@ -29,19 +29,18 @@
 
 # Configuration files.
 !.git*
-vcpkg*
 !vcpkg.json
 !.vscode/c_cpp_properties.json
 !.clang-*
 !CPPLINT.cfg
 !sonar-project.properties
 !*.yml
+!CMakeLists.txt
 
 # ------------------------------------------------------------------------------
 
-# CMake.
-!CMakeLists.txt
-!cmake/*.cmake
+# Build directories.
+bin/
 build/
 
 # ------------------------------------------------------------------------------
@@ -56,6 +55,7 @@ build/
 !*.glsl
 
 # Scripts.
+!*.cmake
 !*.py
 !*.sh
 !*.bat

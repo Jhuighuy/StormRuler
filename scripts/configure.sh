@@ -27,7 +27,10 @@ VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
 
 # Configure CMake.
 export CXX=g++-12
-cmake -S. -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+cmake -S . \
+      -B build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_STANDARD=20 \
+      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 
 # ------------------------------------------------------------------------------

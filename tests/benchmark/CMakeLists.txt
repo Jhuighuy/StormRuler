@@ -77,6 +77,8 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Configuration file.
-configure_file("./_BenchmarksConfig.hpp.in" "./_BenchmarksConfig.hpp")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/_BenchmarksConfig.hpp.in" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/_BenchmarksConfig.hpp")
 
 # ------------------------------------------------------------------------------

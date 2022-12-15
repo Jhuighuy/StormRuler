@@ -14,6 +14,7 @@
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![codecov](https://codecov.io/github/Jhuighuy/StormRuler/branch/main/graph/badge.svg?token=GUSIUDW3G0)](https://codecov.io/github/Jhuighuy/StormRuler)
 [![CodeQL](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml)
+[![Coverity](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/27159/badge.svg)](https://scan.coverity.com/projects/jhuighuy-stormruler)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e7a26478673f403aa32f41a7c2a86d8d)](https://www.codacy.com/gh/Jhuighuy/StormRuler/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Jhuighuy/StormRuler&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)

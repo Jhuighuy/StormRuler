@@ -20,10 +20,11 @@
 
 # ------------------------------------------------------------------------------
 
-name: Windows
+name: Coverity
 
 # ------------------------------------------------------------------------------
 
+# Temporarily, later -- on schedule.
 on:
   push:
     branches:
@@ -34,7 +35,7 @@ on:
 # ------------------------------------------------------------------------------
 
 jobs:
-  build-windows:
+  coverity:
     name: Build
     runs-on: windows-latest
 
@@ -47,19 +48,44 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Build
+      - name: Install coverity-build-tool
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+        shell: bash
+        run: |
+          # Download the archieve.
+          curl \
+              "https://scan.coverity.com/download/win64" \
+              --data "token=${{ env.COVERITY_TOKEN }}&project=Jhuighuy%2FStormRuler" \
+              --output ../cov-analysis-win64.zip
+          # Unzip it.
+          7z x \
+              "../cov-analysis-win64.zip" \
+              "-o../cov-analysis-win64"
+
+      # ------------------------------------------------------------------------
+
+      - name: Run coverity-build-tool
         shell: bash
         run: |
           cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=Release \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build ./build
+          export PATH="../cov-analysis-win64/cov-analysis-win64-2022.6.0/bin:$PATH"
+          echo $PATH
+          cov-configure --msvc
+          cov-build \
+              --dir cov-int \
+              cmake --build ./build
 
       # ------------------------------------------------------------------------
 
-      - name: Run tests
-        run: |
-          ./bin/Debug/StormRuler_UnitTests.exe
+      - name: Upload results
+        uses: actions/upload-artifact@v3
+        with:
+          name: cov-int
+          path: cov-int/
 
 # ------------------------------------------------------------------------------

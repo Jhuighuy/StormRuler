@@ -22,7 +22,7 @@
     "theIncludePaths": [
       "${workspaceFolder}/source"
     ],
-    "theVcpkgPackagesPath": "${workspaceFolder}/vcpkg_installed",
+    "theVcpkgPackagesPath": "${workspaceFolder}/build/vcpkg_installed",
     "theMacFrameworkPaths": [
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
     ]

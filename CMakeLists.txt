@@ -84,6 +84,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0.0")
     message(FATAL_ERROR "Clang version 16.0 or more recent is required!")
   endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(Storm_CXX_COMPILER_MSVC_LIKE YES)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.34.0")
+    message(FATAL_ERROR "MSVC version 19.34.0 or more recent is required!")
+  endif()
 else()
   message(FATAL_ERROR "Unsupported C++ compiler!")
 endif()
@@ -113,6 +118,9 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
   # Extended concepts diagnostics.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # Enable new preprocessor.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS "/Zc:preprocessor")
 endif()
 
 # Set the warnings and diagnostics options.

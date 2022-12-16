@@ -66,6 +66,24 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
+# ------------------------------------------------------------------------------
+
+# Check C/C++ compiler.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(Storm_CXX_COMPILER_GNU_LIKE YES)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.1.0")
+    message(FATAL_ERROR "GCC version 12.1.0 or more recent is required!")
+  endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set(Storm_CXX_COMPILER_CLANG_LIKE YES)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9000.0.0")
+    message(FATAL_ERROR "Clang is not C++20-ready yet :( Please "
+                        "consider using our good old GCC friend instead.")
+  endif()
+else()
+  message(FATAL_ERROR "Unsupported C++ compiler!")
+endif()
+
 # Require C++23 and disable extensions.
 # (Set globally, since these properties are not inherited by targets.)
 if(NOT CMAKE_CXX_STANDARD)
@@ -73,12 +91,6 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
-
-# Check C/C++ compiler.
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-        CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
-  message(WARNING "Unknown C++ compiler, correct options may not be set!")
-endif()
 
 # Lists of compile options.
 set(StormRuler_CXX_COMPILE_OPTIONS "")
@@ -92,24 +104,25 @@ set(StormRuler_CXX_DEBUG_LINK_OPTIONS "")
 set(StormRuler_CXX_RELEASE_LINK_OPTIONS "")
 set(StormRuler_CXX_COVERAGE_LINK_OPTIONS "")
 
+# Set the general options.
+if(Storm_CXX_COMPILER_GNU_LIKE)
+  # Extended concepts diagnostics.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
+elseif(Storm_CXX_COMPILER_CLANG_LIKE)
+endif()
+
 # Set the warnings and diagnostics options.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(Storm_CXX_COMPILER_GNU_LIKE)
   # Enable maaany warnings, treated as errors.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
-       -Werror -Wall -Wextra -Wpedantic 
-       -Wno-unused-function -Wno-unused-parameter -Wno-comment 
-       -Wno-unknown-pragmas -Wno-psabi
-       -fconcepts-diagnostics-depth=3)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
-       -Werror -Wall -Wextra -Wpedantic 
-       -Wno-unused-function -Wno-unused-parameter -Wno-comment 
-       -Wno-mismatched-tags -Wno-gnu-zero-variadic-macro-arguments)
+       -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
+  # TODO: to be removed!
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
+elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 endif()
 
 # Set the optimization options.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(Storm_CXX_COMPILER_GNU_LIKE)
   # Debug: debug information, no optimizations.
   list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS -g -O0)
   # Release: debug information, full optimizations.
@@ -119,14 +132,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
        --coverage -g -O0 -fno-inline -fno-default-inline
        -fno-inline-small-functions -fno-elide-constructors)
   list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  # Debug: debug information, no optimizations.
-  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS -g -O0)
-  # Release: debug information, full optimizations.
-  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
-  # Coverage: coverage, debug information, no optimizations.
-  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS --coverage -g -O0)
-  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
+elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 endif()
 
 # Apply the options (for all build types).
@@ -163,7 +169,7 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
-message(STATUS "Finding libraries..")
+message(STATUS "Looking for libraries..")
 
 # Add the CMake modules.
 list(APPEND CMAKE_MODULE_PATH "./cmake")

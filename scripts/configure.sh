@@ -25,6 +25,14 @@
 # Find vcpkg.
 VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
 
+# ------------------------------------------------------------------------------
+
+# Remove old build directory.
+rm -rf ./bin
+rm -rf ./build
+
+# ------------------------------------------------------------------------------
+
 # Configure CMake.
 export CXX=g++-12
 cmake -S . \

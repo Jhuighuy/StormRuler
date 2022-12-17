@@ -120,7 +120,7 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # Enable new preprocessor.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS "/Zc:preprocessor")
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS /Zc:preprocessor)
 endif()
 
 # Set the warnings and diagnostics options.
@@ -130,6 +130,28 @@ if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
        -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
   # TODO: to be removed!
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # Enable maaany warnings, treated as errors.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+       /WX /Wall 
+       /wd4365  # signed/unsigned mismatch (occures in STL)
+       /wd4458  # declaration of '..' hides class member
+       /wd4459  # declaration of '..' hides global declaration
+       /wd4464  # relative include path contains '..'
+       /wd4625  # copy constructor was implicitly defined as deleted
+       /wd4626  # assignment operator was implicitly defined as deleted
+       /wd4820  # '..' bytes padding added after data member '..'
+       /wd4868  # compiler may not enforce left-to-right evaluation order in braced initializer list 
+       /wd5026  # move constructor was implicitly defined as deleted
+       /wd5027  # move assignment operator was implicitly defined as deleted
+       /wd5045  # Compiler will insert Spectre mitigation...
+       /wd5246  # the initialization of a subobject should be wrapped in braces (occures in STL)
+       /wd5262  # implicit fall-through occurs here (occures in STL)
+       /wd5264) # 'const' variable is not used
+  # TODO: to be removed!
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+       /wd4100  # unused parameter
+       /wd5219) # implicit conversion from '..' to '..', possible loss of data
 endif()
 
 # Set the optimization options.
@@ -144,6 +166,14 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
        -fno-inline-small-functions -fno-elide-constructors)
   list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # Debug: no optimizations.
+  # TODO: debug information?
+  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS /Od)
+  # Release: full optimizations.
+  # TODO: AVX512?
+  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS /02 /arch:AVX2)
+  # TODO: Coverage options.
 endif()
 
 # Apply the options (for all build types).

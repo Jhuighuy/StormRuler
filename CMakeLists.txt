@@ -134,10 +134,14 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # Enable maaany warnings, treated as errors.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
        /WX /Wall 
+       /wd4061  # enumerator '..' in switch of enum '..' is not explicitly handled by a case label
        /wd4365  # signed/unsigned mismatch (occures in STL)
        /wd4458  # declaration of '..' hides class member
        /wd4459  # declaration of '..' hides global declaration
        /wd4464  # relative include path contains '..'
+       /wd4514  # unreferenced inline function has been removed
+       /wd4582  # constructor is not implicitly called
+       /wd4623  # default constructor was implicitly defined as deleted
        /wd4625  # copy constructor was implicitly defined as deleted
        /wd4626  # assignment operator was implicitly defined as deleted
        /wd4710  # '..': function not inlined 
@@ -146,7 +150,10 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd4868  # compiler may not enforce left-to-right evaluation order in braced initializer list 
        /wd5026  # move constructor was implicitly defined as deleted
        /wd5027  # move assignment operator was implicitly defined as deleted
+       /wd5039  # pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception. 
        /wd5045  # Compiler will insert Spectre mitigation...
+       /wd5105  # macro expansion producing 'defined' has undefined behavior (occures in STL)
+       /wd5214  # applying '..' to an operand with a volatile qualified type is deprecated in C++20
        /wd5246  # the initialization of a subobject should be wrapped in braces (occures in STL)
        /wd5262  # implicit fall-through occurs here (occures in STL)
        /wd5264) # 'const' variable is not used

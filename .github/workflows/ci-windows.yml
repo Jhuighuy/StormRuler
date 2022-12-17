@@ -39,7 +39,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
+        compiler: [cl, g++]
         config: [Debug, Release]
+      fail-fast: false
 
     steps:
 
@@ -50,9 +52,11 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Build
+      - name: Build (MSVC)
+        if: matrix.compiler == 'cl'
         shell: bash
         run: |
+          export CXX=${{ matrix.compiler }}
           cmake -S . -B build \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
@@ -60,8 +64,47 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Run tests
+      - name: Run tests (MSVC)
+        if: matrix.compiler == 'cl'
+        shell: bash
         run: |
           ./bin/${{ matrix.config }}/StormRuler_UnitTests.exe
+
+      # ------------------------------------------------------------------------
+
+      - name: Setup MSYS2 (MinGW)
+        if: matrix.compiler == 'g++'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+
+      # ------------------------------------------------------------------------
+
+      - name: Build (MinGW)
+        if: matrix.compiler == 'g++'
+        shell: msys2 {0}
+        run: |
+          export VCPKG_DEFAULT_TRIPLET=x64-mingw-dynamic
+          export VCPKG_DEFAULT_HOST_TRIPLET=x64-mingw-dynamic
+          mkdir bin
+          cmake . \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_STANDARD=20 \
+              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          cmake --build . --config Release
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests (MinGW)
+        if: matrix.compiler == 'g++'
+        shell: msys2 {0}
+        run: |
+          ./bin/StormRuler_UnitTests.exe
+          ./bin/StormRuler_Benchmarks.exe
 
 # ------------------------------------------------------------------------------

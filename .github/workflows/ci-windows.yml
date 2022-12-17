@@ -34,9 +34,12 @@ on:
 # ------------------------------------------------------------------------------
 
 jobs:
-  build-windows:
+  build:
     name: Build
     runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [Debug, Release]
 
     steps:
 
@@ -51,15 +54,14 @@ jobs:
         shell: bash
         run: |
           cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=Release \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build ./build
+          cmake --build ./build --config ${{ matrix.config }}
 
       # ------------------------------------------------------------------------
 
       - name: Run tests
         run: |
-          ./bin/Debug/StormRuler_UnitTests.exe
+          ./bin/${{ matrix.config }}/StormRuler_UnitTests.exe
 
 # ------------------------------------------------------------------------------

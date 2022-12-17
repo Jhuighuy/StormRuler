@@ -52,6 +52,20 @@ jobs:
 
       # ------------------------------------------------------------------------
 
+      - name: Setup MSYS2 (MinGW)
+        if: matrix.compiler == 'g++'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git 
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+
+      # ------------------------------------------------------------------------
+
       - name: Build (MSVC)
         if: matrix.compiler == 'cl'
         shell: bash
@@ -64,27 +78,6 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Run tests (MSVC)
-        if: matrix.compiler == 'cl'
-        shell: bash
-        run: |
-          ./bin/${{ matrix.config }}/StormRuler_UnitTests.exe
-
-      # ------------------------------------------------------------------------
-
-      - name: Setup MSYS2 (MinGW)
-        if: matrix.compiler == 'g++'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            git base-devel
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-cmake
-
-      # ------------------------------------------------------------------------
-
       - name: Build (MinGW)
         if: matrix.compiler == 'g++'
         shell: msys2 {0}
@@ -93,10 +86,18 @@ jobs:
           export VCPKG_DEFAULT_HOST_TRIPLET=x64-mingw-dynamic
           mkdir bin
           cmake . \
-              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build . --config Release
+          cmake --build .
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests (MSVC)
+        if: matrix.compiler == 'cl'
+        shell: bash
+        run: |
+          ./bin/${{ matrix.config }}/StormRuler_UnitTests.exe
 
       # ------------------------------------------------------------------------
 

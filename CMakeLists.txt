@@ -140,6 +140,8 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd4464  # relative include path contains '..'
        /wd4625  # copy constructor was implicitly defined as deleted
        /wd4626  # assignment operator was implicitly defined as deleted
+       /wd4710  # '..': function not inlined 
+       /wd4711  # function '..' selected for automatic inline expansion 
        /wd4820  # '..' bytes padding added after data member '..'
        /wd4868  # compiler may not enforce left-to-right evaluation order in braced initializer list 
        /wd5026  # move constructor was implicitly defined as deleted
@@ -172,7 +174,7 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS /Od)
   # Release: full optimizations.
   # TODO: AVX512?
-  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS /02 /arch:AVX2)
+  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS /O2 /arch:AVX2)
   # TODO: Coverage options.
 endif()
 

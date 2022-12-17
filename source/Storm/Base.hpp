@@ -123,8 +123,23 @@
 #else
 #  if STORM_COMPILER_MSVC_
 #    define STORM_UNREACHABLE_() __assume(false)
-#  else
+#  elif STORM_COMPILER_CLANG_ || STORM_COMPILER_GCC_
 #    define STORM_UNREACHABLE_() __builtin_unreachable()
+#  endif
+#endif
+
+// C++23 `[[assume(..)]]`.
+// Double parentheses are needed here for fold expressions to work.
+#if STORM_CPP23_
+#  define STORM_ASSUME_(expression) [[assume((expression))]]
+#else
+#  if STORM_COMPILER_MSVC_
+#    define STORM_ASSUME_(expression) __assume((expression))
+#  elif STORM_COMPILER_CLANG_ || STORM_COMPILER_GCC_
+#    define STORM_ASSUME_(expression)               \
+      do {                                          \
+        if (!(expression)) __builtin_unreachable(); \
+      } while (false)
 #  endif
 #endif
 
@@ -178,16 +193,6 @@
 // Report a critical error.
 #define STORM_CRITICAL_(message, ...) \
   (spdlog::critical(message __VA_OPT__(, __VA_ARGS__)))
-
-// Assume the expression is always true.
-#if STORM_COMPILER_MSVC_
-#  define STORM_ASSUME_(expression) __assume(expression)
-#else
-#  define STORM_ASSUME_(expression)               \
-    do {                                          \
-      if (!(expression)) __builtin_unreachable(); \
-    } while (false)
-#endif
 
 #ifndef __FUNCSIG__
 #  define __FUNCSIG__ static_cast<const char*>(__PRETTY_FUNCTION__)

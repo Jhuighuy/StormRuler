@@ -134,33 +134,40 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # Enable maaany warnings, treated as errors.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
        /WX /Wall 
-       /wd4061  # enumerator '..' in switch of enum '..' is not explicitly handled by a case label
-       /wd4365  # signed/unsigned mismatch (occures in STL)
-       /wd4458  # declaration of '..' hides class member
-       /wd4459  # declaration of '..' hides global declaration
-       /wd4464  # relative include path contains '..'
-       /wd4514  # unreferenced inline function has been removed
-       /wd4582  # constructor is not implicitly called
-       /wd4623  # default constructor was implicitly defined as deleted
-       /wd4625  # copy constructor was implicitly defined as deleted
-       /wd4626  # assignment operator was implicitly defined as deleted
-       /wd4710  # '..': function not inlined 
-       /wd4711  # function '..' selected for automatic inline expansion 
-       /wd4820  # '..' bytes padding added after data member '..'
-       /wd4868  # compiler may not enforce left-to-right evaluation order in braced initializer list 
-       /wd5026  # move constructor was implicitly defined as deleted
-       /wd5027  # move assignment operator was implicitly defined as deleted
-       /wd5039  # pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception. 
-       /wd5045  # Compiler will insert Spectre mitigation...
-       /wd5105  # macro expansion producing 'defined' has undefined behavior (occures in STL)
-       /wd5214  # applying '..' to an operand with a volatile qualified type is deprecated in C++20
-       /wd5246  # the initialization of a subobject should be wrapped in braces (occures in STL)
-       /wd5262  # implicit fall-through occurs here (occures in STL)
-       /wd5264) # 'const' variable is not used
+       /wd4061  # Enumerator '..' in switch of enum '..' is not explicitly 
+                # handled by a case label.
+       /wd4365  # Signed/unsigned mismatch.
+       /wd4458  # Declaration of '..' hides class member.
+       /wd4459  # Declaration of '..' hides global declaration.
+       /wd4464  # Relative include path contains '..'.
+       /wd4514  # Unreferenced inline function has been removed.
+       /wd4557  # '__assume' contains effect '..'.
+       /wd4582  # Constructor is not implicitly called.
+       /wd4623  # Default constructor was implicitly defined as deleted.
+       /wd4625  # Copy constructor was implicitly defined as deleted.
+       /wd4626  # Assignment operator was implicitly defined as deleted.
+       /wd4710  # '..': function not inlined.
+       /wd4711  # Function '..' selected for automatic inline expansion.
+       /wd4820  # '..' bytes padding added after data member '..'.
+       /wd4868  # Compiler may not enforce left-to-right evaluation order in 
+                # braced initializer list.
+       /wd5026  # Move constructor was implicitly defined as deleted.
+       /wd5027  # Move assignment operator was implicitly defined as deleted.
+       /wd5039  # Pointer or reference to potentially throwing function passed
+                # to extern C function under -EHc. Undefined behavior may occur 
+                # if this function throws an exception. 
+       /wd5045  # Compiler will insert Spectre mitigation for memory load if 
+                # /Qspectre switch specified.
+       /wd5105  # Macro expansion producing 'defined' has undefined behavior 
+       /wd5214  # Applying '..' to an operand with a volatile qualified type 
+                # is deprecated in C++20.
+       /wd5246  # The initialization of a subobject should be wrapped in braces
+       /wd5262  # Implicit fall-through occurs here.
+       /wd5264) # 'const' variable is not used.
   # TODO: to be removed!
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
-       /wd4100  # unused parameter
-       /wd5219) # implicit conversion from '..' to '..', possible loss of data
+       /wd4100  # Unused parameter.
+       /wd5219) # Implicit conversion from '..' to '..', possible loss of data.
 endif()
 
 # Set the optimization options.

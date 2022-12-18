@@ -79,12 +79,12 @@ jobs:
           mkdir bin
           export CXX=${{ env.GXX_EXE }}
           # Have to use C++20, Sonar does not know C++23 yet.
-          cmake . \
+          cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=Coverage \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
           build-wrapper-linux-x86-64 \
-              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build . --config Coverage
+              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build
 
       # ------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ jobs:
       - name: Run gcovr
         run: |
           gcovr \
-              -e "vcpkg_installed/*" -e "test/*" \
+              -e "build/vcpkg_installed/*" -e "test/*" \
               --exclude-throw-branches \
               --gcov-executable "${{ env.GCOV_EXE }}" \
               --xml "{{ env.CODECOV_COVERAGE_REPORT_PATH }}" \

@@ -72,13 +72,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   set(Storm_CXX_COMPILER_GNU_LIKE YES)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.1.0")
-    message(FATAL_ERROR "GCC version 12.1.0 or more recent is required!")
+    message(FATAL_ERROR "GCC version 12.1 or more recent is required!")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set(Storm_CXX_COMPILER_CLANG_LIKE YES)
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9000.0.0")
-    message(FATAL_ERROR "Clang is not C++20-ready yet :( Please "
-                        "consider using our good old GCC friend instead.")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0.0")
+    message(FATAL_ERROR "Clang version 16.0 or more recent is required!")
   endif()
 else()
   message(FATAL_ERROR "Unsupported C++ compiler!")
@@ -112,13 +111,12 @@ elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 endif()
 
 # Set the warnings and diagnostics options.
-if(Storm_CXX_COMPILER_GNU_LIKE)
+if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
   # Enable maaany warnings, treated as errors.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
        -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
   # TODO: to be removed!
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
-elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 endif()
 
 # Set the optimization options.

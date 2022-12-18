@@ -53,12 +53,12 @@ namespace Storm
 /// @tparam Table Connectivity table class.
 template<size_t Dim, size_t TopologicalDim = Dim,
          template<class, class> class Table = CsrTable>
-  requires (2 <= TopologicalDim && TopologicalDim <= Dim && Dim <= 3)
 class UnstructuredMesh final :
     public MeshInterface<UnstructuredMesh<Dim, TopologicalDim, Table>>
 {
 private:
 
+  static_assert(2 <= TopologicalDim && TopologicalDim <= Dim && Dim <= 3);
   template<size_t, size_t, template<class, class> class>
   friend class UnstructuredMesh;
 

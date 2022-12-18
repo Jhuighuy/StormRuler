@@ -61,6 +61,13 @@
 #warning Storm has detected multiple compilers, something is terribly wrong!
 #endif
 
+// C++23 constexpr.
+#if STORM_CPP23_
+#define STORM_CPP23_CONSTEXPR_ constexpr
+#else
+#define STORM_CPP23_CONSTEXPR_
+#endif
+
 // C++23 allows `static` inside of the `constexpr` functions.
 #if STORM_CPP23_
 #define STORM_CPP23_STATIC_ static

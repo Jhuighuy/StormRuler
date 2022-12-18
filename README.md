@@ -11,6 +11,7 @@
 [![codecov](https://codecov.io/github/Jhuighuy/StormRuler/branch/main/graph/badge.svg?token=GUSIUDW3G0)](https://codecov.io/github/Jhuighuy/StormRuler)
 [![CodeQL](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/27159/badge.svg)](https://scan.coverity.com/projects/jhuighuy-stormruler)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e7a26478673f403aa32f41a7c2a86d8d)](https://www.codacy.com/gh/Jhuighuy/StormRuler/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Jhuighuy/StormRuler&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
 
@@ -45,21 +46,21 @@ _To be written..._
 ### Iterative solvers:
 | Name                    | Problem type                 | Flexible | Status   |
 |:------------------------|:-----------------------------|:--------:|:--------:|
-| **Richardson**          | General Square Nonsingular   | Yes      | Complete |
+| **Richardson**          | General Square Nonsingular   | Yes      | ✅       |
 | **Broyden**             | General Square Nonsingular   | No       | Planned  |
-| **Newton**              | General Square Nonsingular   | Yes      | Complete |
-| **JFNK**                | General Square Nonsingular   | No       | Complete |
-| **CG**                  | Linear Definite Symmetric    | No       | Complete |
+| **Newton**              | General Square Nonsingular   | Yes      | ✅       |
+| **JFNK**                | General Square Nonsingular   | No       | ✅       |
+| **CG**                  | Linear Definite Symmetric    | No       | ✅       |
 | **FCG**                 | Linear Definite Symmetric    | Yes      | Planned  |
 | **MINRES**              | Linear Indefinite Symmetric  | No       | Planned  |
-| **CGS**                 | Linear Square Nonsingular    | No       | Complete |
-| **BiCGStab**            | Linear Square Nonsingular    | No       | Complete |
-| **BiCGStab(l)**         | Linear Square Nonsingular    | No       | Complete |
-| **TFQMR**               | Linear Square Nonsingular    | No       | Complete |
-| **TFQMR(1)**            | Linear Square Nonsingular    | No       | Complete |
-| **IDR(s)**              | Linear Square Nonsingular    | No       | Complete |
-| **GMRES**               | Linear Square                | No       | Complete |
-| **FGMRES**              | Linear Square                | Yes      | Complete |
+| **CGS**                 | Linear Square Nonsingular    | No       | ✅       |
+| **BiCGStab**            | Linear Square Nonsingular    | No       | ✅       |
+| **BiCGStab(l)**         | Linear Square Nonsingular    | No       | ✅       |
+| **TFQMR**               | Linear Square Nonsingular    | No       | ✅       |
+| **TFQMR(1)**            | Linear Square Nonsingular    | No       | ✅       |
+| **IDR(s)**              | Linear Square Nonsingular    | No       | ✅       |
+| **GMRES**               | Linear Square                | No       | ✅       |
+| **FGMRES**              | Linear Square                | Yes      | ✅       |
 | **LGMRES**              | Linear Square                | No       | Planned  |
 | **LFGMRES**             | Linear Square                | Yes      | Planned  |
 | **LSQR**                | Linear Rectangular           | No       | Planned  |
@@ -83,3 +84,10 @@ _To be written..._
 <!----------------------------------------------------------------------------->
 
 _To be written..._
+
+| Compiler               | Linux           | macOS           | Windows         |
+|:----------------------:|:---------------:|:---------------:|:---------------:|
+| **GCC** 12.1+          | ✅              | ✅              | ✅              |
+| **Clang** 16.0+        | Partial         | Planned         | Planned         |
+| **Intel LLVM**         | Planned         |                 | Planned         |
+| **MSVC** 19.34+        |                 |                 | ✅              |

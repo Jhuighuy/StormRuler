@@ -108,11 +108,12 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal)
 /// @note This is a sequential operation!
 template<output_matrix Matrix>
   requires real_matrix<Matrix>
-constexpr Matrix& fill_randomly(Matrix&& out_mat, //
-                                matrix_element_t<Matrix> min = 0,
-                                matrix_element_t<Matrix> max = 1) noexcept
+STORM_CPP23_CONSTEXPR_ Matrix&
+fill_randomly(Matrix&& out_mat, //
+              matrix_element_t<Matrix> min = 0,
+              matrix_element_t<Matrix> max = 1) noexcept
 {
-  STORM_CPP23_STATIC_ std::mt19937_64 random_engine{};
+  static std::mt19937_64 random_engine{}; // NOSONAR
   std::uniform_real_distribution distribution{min, max};
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {

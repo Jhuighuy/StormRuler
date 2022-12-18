@@ -53,10 +53,7 @@ jobs:
 
       - name: Run Doxygen
         run: |
-          cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=Debug \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build build --target StormRuler_Doxygen
+          cmake -S source_docs -B build \
+          cmake --build build
 
       # ------------------------------------------------------------------------

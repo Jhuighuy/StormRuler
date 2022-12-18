@@ -20,6 +20,17 @@
 
 # ------------------------------------------------------------------------------
 
+# Configure so that `cmake .` can be ran directly from this folder.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  cmake_minimum_required(VERSION 3.20..3.26)
+  project(StormRuler
+          VERSION 0.1
+          DESCRIPTION "A very high order FVM framework" 
+          LANGUAGES NONE)
+endif()
+
+# ------------------------------------------------------------------------------
+
 # Find Doxygen.
 find_package(Doxygen QUIET)
 if(NOT DOXYGEN_FOUND)
@@ -65,7 +76,7 @@ set(DOXYGEN_TEMPLATE_RELATIONS   NO )
 
 # Generate the HTML documentation.
 set(DOXYGEN_GENERATE_HTML YES)
-set(DOXYGEN_HTML_OUTPUT ${CMAKE_SOURCE_DIR}/docs)
+set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)
 
 # Configure the HTML pages layout.
 # (Disable the navigation panel, enable the 
@@ -86,12 +97,11 @@ set(DOXYGEN_USE_MATHJAX          YES )
 
 # ------------------------------------------------------------------------------
 
-# Generate the Doxygen inputs list.
-set(StormRuler_Doxygen_INPUTS)
-
-# Add the core library headers.
-list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_CXX_SOURCES})
-list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_MD_SOURCES})
+# Add the C++ sources and Markdown pages.
+file(GLOB_RECURSE MD_SOURCES ./*.md)
+list(APPEND StormRuler_Doxygen_INPUTS ${MD_SOURCES})
+file(GLOB_RECURSE CXX_SOURCES ../source/*.hpp)
+list(APPEND StormRuler_Doxygen_INPUTS ${CXX_SOURCES})
 
 # Add the Doxygen target.
 message(STATUS "| Adding the Doxygen documentation..")

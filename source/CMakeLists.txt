@@ -22,7 +22,6 @@
 
 # Core header-only library.
 file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
-set(StormRuler_CXX_SOURCES ${StormRuler_CXX_SOURCES} PARENT_SCOPE)
 add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
 
 # Include directories.

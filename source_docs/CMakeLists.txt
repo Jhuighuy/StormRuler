@@ -20,27 +20,34 @@
 
 # ------------------------------------------------------------------------------
 
+# Configure so that `cmake .` can be ran directly from this folder.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  cmake_minimum_required(VERSION 3.20..3.26)
+  project(StormRuler
+          VERSION 0.1
+          DESCRIPTION "A very high order FVM framework" 
+          LANGUAGES NONE)
+endif()
+
+# ------------------------------------------------------------------------------
+
 # Find Doxygen.
 find_package(Doxygen QUIET)
 if(NOT DOXYGEN_FOUND)
-  message(STATUS "| Doxygen was not found! Skipping documentation.")
   return()
 endif()
 
 # Check if Doxygen is recent enough.
-set(DOXYGEN_MIN_REQUIRED_VERSION 1.9.5)
-if(DOXYGEN_VERSION VERSION_LESS DOXYGEN_MIN_REQUIRED_VERSION)
-  message(STATUS "| Outdated Doxygen ${DOXYGEN_VERSION} found! Minimum "
-                   "required version is ${DOXYGEN_MIN_REQUIRED_VERSION}.")
-  message(STATUS "| Skipping documentation.")
+if(DOXYGEN_VERSION VERSION_LESS "1.9.4")
+  message(STATUS "| Doxygen 1.9.4 or more recent is required!")
   return()
 endif()
 
 # ------------------------------------------------------------------------------
 
 # Configure the documentation extraction.
-set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
 set(DOXYGEN_DISTRIBUTE_GROUP_DOC      YES)
+set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
 set(DOXYGEN_SHOW_USED_FILES           NO )
 
 # ------------------------------------------------------------------------------
@@ -50,67 +57,54 @@ set(DOXYGEN_SHOW_USED_FILES           NO )
 set(DOXYGEN_ALPHABETICAL_INDEX  NO )
 set(DOXYGEN_SOURCE_BROWSER      YES)
 set(DOXYGEN_STRIP_CODE_COMMENTS NO )
-set(DOXYGEN_TAB_SIZE            2  )
 
 # ------------------------------------------------------------------------------
 
-# Configure the DOT utility.
+# Configure graphs.
 # (Enable it, and specify the parameters and style.)
-set(DOXYGEN_CLASS_GRAPH          YES)
-set(DOXYGEN_HIDE_UNDOC_RELATIONS YES)
-set(DOXYGEN_COLLABORATION_GRAPH  NO )
-set(DOXYGEN_GROUP_GRAPHS         YES)
-set(DOXYGEN_TEMPLATE_RELATIONS   NO )
-set(DOXYGEN_INCLUDE_GRAPH        NO )
-set(DOXYGEN_INCLUDED_BY_GRAPH    NO )
-set(DOXYGEN_CALL_GRAPH           NO )
 set(DOXYGEN_CALLER_GRAPH         NO )
-set(DOXYGEN_GRAPHICAL_HIERARCHY  NO )
+set(DOXYGEN_CALL_GRAPH           NO )
+set(DOXYGEN_COLLABORATION_GRAPH  NO )
 set(DOXYGEN_DIRECTORY_GRAPH      NO )
 set(DOXYGEN_GENERATE_LEGEND      NO )
-
-# ------------------------------------------------------------------------------
-
-# Configure the HTML pages layout.
-# (Disable the navigation panel, enable the 
-#  side bar with a tree-view that is folded by default.)
-set(DOXYGEN_HTML_TIMESTAMP         NO )
-set(DOXYGEN_HTML_DYNAMIC_MENUS     YES)
-set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES)
-set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1  )
-set(DOXYGEN_DISABLE_INDEX          YES)
-set(DOXYGEN_GENERATE_TREEVIEW      YES)
-set(DOXYGEN_FULL_SIDEBAR           YES)
-
-# Configure the HTML style.
-# TODO: we definitely need better documentation styling :)
-set(DOXYGEN_HTML_COLORSTYLE DARK)
-
-# Configure the HTML formulas rendering.
-# (No LaTeX, render formulas with MathJax.)
-set(DOXYGEN_USE_MATHJAX YES)
-
-# Other HTML options.
-set(DOXYGEN_ENUM_VALUES_PER_LINE 1 )
-set(DOXYGEN_OBFUSCATE_EMAILS     NO)
+set(DOXYGEN_GRAPHICAL_HIERARCHY  NO )
+set(DOXYGEN_INCLUDED_BY_GRAPH    NO )
+set(DOXYGEN_INCLUDE_GRAPH        NO )
+set(DOXYGEN_TEMPLATE_RELATIONS   NO )
 
 # ------------------------------------------------------------------------------
 
 # Generate the HTML documentation.
 set(DOXYGEN_GENERATE_HTML YES)
-set(DOXYGEN_HTML_OUTPUT   "${CMAKE_SOURCE_DIR}/bin/docs")
+set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)
+
+# Configure the HTML pages layout.
+# (Disable the navigation panel, enable the 
+#  side bar with a tree-view that is folded by default.)
+set(DOXYGEN_DISABLE_INDEX          YES)
+set(DOXYGEN_FULL_SIDEBAR           YES)
+set(DOXYGEN_GENERATE_TREEVIEW      YES)
+set(DOXYGEN_HTML_DYNAMIC_MENUS     YES)
+set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES)
+set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1  )
+set(DOXYGEN_HTML_TIMESTAMP         NO )
+
+# Other HTML options.
+set(DOXYGEN_ENUM_VALUES_PER_LINE 1   )
+set(DOXYGEN_HTML_COLORSTYLE      DARK)
+set(DOXYGEN_OBFUSCATE_EMAILS     NO  )
+set(DOXYGEN_USE_MATHJAX          YES )
 
 # ------------------------------------------------------------------------------
 
-# Generate the Doxygen inputs list.
-set(StormRuler_Doxygen_INPUTS)
-
-# Add the core library headers.
-message(STATUS "| Adding the core library documentation..")
-list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_CXX_SOURCES})
-list(APPEND StormRuler_Doxygen_INPUTS ${StormRuler_MD_SOURCES})
+# Add the C++ sources and Markdown pages.
+file(GLOB_RECURSE MD_SOURCES ./*.md)
+list(APPEND StormRuler_Doxygen_INPUTS ${MD_SOURCES})
+file(GLOB_RECURSE CXX_SOURCES ../source/*.hpp)
+list(APPEND StormRuler_Doxygen_INPUTS ${CXX_SOURCES})
 
 # Add the Doxygen target.
+message(STATUS "| Adding the Doxygen documentation..")
 doxygen_add_docs(StormRuler_Doxygen ALL
                  USE_STAMP_FILE ${StormRuler_Doxygen_INPUTS}
                  COMMENT "Generate Doxygen documentation")

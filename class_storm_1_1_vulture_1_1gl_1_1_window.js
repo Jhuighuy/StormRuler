@@ -1,0 +1,27 @@
+var class_storm_1_1_vulture_1_1gl_1_1_window =
+[
+    [ "Window", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a26f4a90d28b81fedb89894b5d59732ae", null ],
+    [ "Window", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ac494b1546ce8b0d93744487fa4042ef5", null ],
+    [ "~Window", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ad9e49de53f9432db3dfc6929b8f8fc86", null ],
+    [ "cursor_pos_x", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a313f95b8579ec32b03be66621d1523c8", null ],
+    [ "cursor_pos_y", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ac3f981ca579e7d26ba29965825a62915", null ],
+    [ "height", "class_storm_1_1_vulture_1_1gl_1_1_window.html#aadcc3745a50ca135c4919a6d56472d1c", null ],
+    [ "load", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a82d4962e1d18d0491f56291dcdffc971", null ],
+    [ "main_loop", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a711c11308a4bc9c270f073e7df4a22ae", null ],
+    [ "on_close", "class_storm_1_1_vulture_1_1gl_1_1_window.html#abea9d3b7bec679c4911b296a8e01e171", null ],
+    [ "on_key_down", "class_storm_1_1_vulture_1_1gl_1_1_window.html#af3f28ac2dcc8bed9eac79387cf28676d", null ],
+    [ "on_key_down", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a619446c5368f2e47ee2a8bcc802bea17", null ],
+    [ "on_key_up", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a0bb277ba16a4b1df07527b8743ed6662", null ],
+    [ "on_key_up", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ad6913a3b0cf66ca0e798bce71fb4d5e0", null ],
+    [ "on_mouse_button_down", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a5e99e15bfa039bfc63710b56405a245f", null ],
+    [ "on_mouse_button_down", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a18cd3b65493c3a92723460ea7496203f", null ],
+    [ "on_mouse_button_up", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a2147544bd96650e2b993172c71f0cea9", null ],
+    [ "on_mouse_button_up", "class_storm_1_1_vulture_1_1gl_1_1_window.html#aa7cf086bb2cfdb7998b8941a512535ea", null ],
+    [ "on_resize", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a8126d9cc59b2210df80eee9106064190", null ],
+    [ "on_scroll", "class_storm_1_1_vulture_1_1gl_1_1_window.html#aab96fa7b214cf5fbd5159ac48e18092f", null ],
+    [ "on_set_cursor_pos", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ac3ebfaa9f73be6abd62ef77c32a2bf2e", null ],
+    [ "operator GLFWwindow *", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ad7a1054c690dbd799ef948ea4264b0c8", null ],
+    [ "operator=", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a46fc1077fe64b36a6b398857101fad01", null ],
+    [ "underlying", "class_storm_1_1_vulture_1_1gl_1_1_window.html#ab15db49e4b6469eb889131c090088aef", null ],
+    [ "width", "class_storm_1_1_vulture_1_1gl_1_1_window.html#a81bc9a588150a19ca3c8791c8d173ca0", null ]
+];

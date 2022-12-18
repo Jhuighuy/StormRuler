@@ -40,8 +40,23 @@ jobs:
 
       # ------------------------------------------------------------------------
 
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # ------------------------------------------------------------------------
+
       - name: Install Doxygen
         run:
           brew install doxygen
+
+      # ------------------------------------------------------------------------
+
+      - name: Run Doxygen
+        run: |
+          cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_CXX_STANDARD=20 \
+              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          cmake --build build --target StormRuler_Doxygen
 
       # ------------------------------------------------------------------------

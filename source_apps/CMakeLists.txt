@@ -22,4 +22,6 @@
 
 # Add the playground application.
 message(STATUS "| Adding StormRuler playground app..")
-add_subdirectory("./playground")
+add_subdirectory(./playground)
+
+# ------------------------------------------------------------------------------

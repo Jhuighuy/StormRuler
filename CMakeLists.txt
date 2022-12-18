@@ -61,10 +61,10 @@ add_library(StormRuler_BASE INTERFACE)
 
 # Set output directories.
 # (Set globally, since these properties are not inherited by targets.)
-set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+set(CMAKE_PDB_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # ------------------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ target_link_options(
 message(STATUS "Looking for libraries..")
 
 # Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH "./cmake")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # Find Python interpreter.
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -329,24 +329,24 @@ endif()
 
 # Add the core library.
 message(STATUS "Adding StormRuler core library..")
-add_subdirectory("./source")
+add_subdirectory(./source)
 
 # ------------------------------------------------------------------------------
 
 # Add the applications.
 message(STATUS "Adding StormRuler applications..")
-add_subdirectory("./source_apps")
-
-# ------------------------------------------------------------------------------
-
-# Add the documentation.
-message(STATUS "Adding StormRuler documentation..")
-add_subdirectory("./source_docs")
+add_subdirectory(./source_apps)
 
 # ------------------------------------------------------------------------------
 
 # Add the tests.
 message(STATUS "Adding StormRuler tests..")
-add_subdirectory("./tests")
+add_subdirectory(./tests)
+
+# ------------------------------------------------------------------------------
+
+# Add the documentation.
+message(STATUS "Adding StormRuler documentation..")
+add_subdirectory(./source_docs)
 
 # ------------------------------------------------------------------------------

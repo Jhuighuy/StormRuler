@@ -4,7 +4,6 @@
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 
-
 [![SonarCloud](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)

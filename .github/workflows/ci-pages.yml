@@ -20,27 +20,27 @@
 
 # ------------------------------------------------------------------------------
 
-name: Documentation
+name: Pages
 
 # ------------------------------------------------------------------------------
 
 on:
   push:
     branches:
-      -  setup-docs-gh-pages # should be main!
+      -  main
 
 # ------------------------------------------------------------------------------
 
 jobs:
-  build_documentation:
-    name: Build documentation
+  build_pages:
+    name: Build pages
     runs-on: macos-latest
 
     steps:
 
       # ------------------------------------------------------------------------
 
-      - name: Checkout
+      - name: Checkout (main)
         uses: actions/checkout@v3
 
       # ------------------------------------------------------------------------
@@ -53,7 +53,15 @@ jobs:
 
       - name: Run Doxygen
         run: |
-          cmake -S source_docs -B build \
+          cmake -S source_docs -B build
           cmake --build build
+          touch docs/.nojekyll
 
       # ------------------------------------------------------------------------
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs
+
+# ------------------------------------------------------------------------------

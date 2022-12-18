@@ -84,12 +84,11 @@ jobs:
         run: |
           export VCPKG_DEFAULT_TRIPLET=x64-mingw-dynamic
           export VCPKG_DEFAULT_HOST_TRIPLET=x64-mingw-dynamic
-          mkdir bin
-          cmake . \
+          cmake -S . -B build \
               -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
               -DCMAKE_CXX_STANDARD=20 \
               -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build .
+          cmake --build ./build
 
       # ------------------------------------------------------------------------
 

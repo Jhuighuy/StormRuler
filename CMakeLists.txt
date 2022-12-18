@@ -183,6 +183,7 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
   list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # TODO: https://gitlab.kitware.com/cmake/cmake/-/issues/20812
   # Debug: no optimizations.
   # TODO: debug information?
   list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS /Od)

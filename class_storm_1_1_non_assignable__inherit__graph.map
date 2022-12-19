@@ -1,14 +1,14 @@
 <map id="Storm::NonAssignable" name="Storm::NonAssignable">
-<area shape="rect" id="node1" title="Non assignable object interface." coords="5,171,159,196"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_interface.html" title=" " coords="223,5,411,60"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_target_matrix_interface.html" title=" " coords="207,84,427,139"/>
-<area shape="rect" id="node6" href="$class_storm_1_1_target_matrix_interface.html" title=" " coords="213,163,420,203"/>
-<area shape="rect" id="node8" href="$class_storm_1_1_target_matrix_interface.html" title=" " coords="217,227,417,267"/>
-<area shape="rect" id="node9" href="$class_storm_1_1_target_matrix_interface.html" title="CRTP interface to a target matrix." coords="223,293,411,333"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_static_matrix.html" title=" " coords="499,30,660,70"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_static_matrix.html" title="Statically&#45;sized matrix." coords="475,94,684,134"/>
-<area shape="rect" id="node7" href="$class_storm_1_1_target_matrix_view.html" title="Output matrix as target wrapper." coords="496,161,663,201"/>
-<area shape="rect" id="node10" href="$class_storm_1_1_feathers_1_1_field.html" title=" " coords="503,225,655,265"/>
-<area shape="rect" id="node11" href="$class_storm_1_1_feathers_1_1_field.html" title=" " coords="485,289,673,344"/>
-<area shape="rect" id="node12" href="$class_storm_1_1_feathers_1_1_field.html" title="Generic mesh field." coords="503,368,655,423"/>
+<area shape="rect" id="node1" title="Non assignable object interface." alt="" coords="5,171,159,196"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="223,5,411,60"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="207,84,427,139"/>
+<area shape="rect" id="node6" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="213,163,420,203"/>
+<area shape="rect" id="node8" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="217,227,417,267"/>
+<area shape="rect" id="node9" href="$class_storm_1_1_target_matrix_interface.html" title="CRTP interface to a target matrix." alt="" coords="223,293,411,333"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_static_matrix.html" title=" " alt="" coords="499,30,660,70"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_static_matrix.html" title="Statically&#45;sized matrix." alt="" coords="475,94,684,134"/>
+<area shape="rect" id="node7" href="$class_storm_1_1_target_matrix_view.html" title="Output matrix as target wrapper." alt="" coords="496,161,663,201"/>
+<area shape="rect" id="node10" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="503,225,655,265"/>
+<area shape="rect" id="node11" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="485,289,673,344"/>
+<area shape="rect" id="node12" href="$class_storm_1_1_feathers_1_1_field.html" title="Generic mesh field." alt="" coords="503,368,655,423"/>
 </map>

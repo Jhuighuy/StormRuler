@@ -1,4 +1,4 @@
 <map id="Storm::NonMovable" name="Storm::NonMovable">
-<area shape="rect" id="node1" title="Non movable (and non copyable) object interface." coords="19,5,158,31"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_view.html" title="Output matrix as target wrapper." coords="5,79,172,119"/>
+<area shape="rect" id="node1" title="Non movable (and non copyable) object interface." alt="" coords="19,5,158,31"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_view.html" title="Output matrix as target wrapper." alt="" coords="5,79,172,119"/>
 </map>

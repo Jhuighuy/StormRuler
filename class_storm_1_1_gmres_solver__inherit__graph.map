@@ -1,9 +1,9 @@
 <map id="Storm::GmresSolver&lt; Vector &gt;" name="Storm::GmresSolver&lt; Vector &gt;">
-<area shape="rect" id="node1" title="The GMRES (Generalized Minimal Residual) linear operator equation solver." coords="21,504,163,544"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_base_gmres_solver.html" title=" " coords="7,416,177,456"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " coords="5,328,179,368"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." coords="11,240,173,280"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." coords="9,152,175,192"/>
-<area shape="rect" id="node6" href="$class_storm_1_1_object.html" title="A base object." coords="41,79,143,104"/>
-<area shape="rect" id="node7" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="18,5,166,31"/>
+<area shape="rect" id="node1" title="The GMRES (Generalized Minimal Residual) linear operator equation solver." alt="" coords="21,504,163,544"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_base_gmres_solver.html" title=" " alt="" coords="7,416,177,456"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="5,328,179,368"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="11,240,173,280"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="9,152,175,192"/>
+<area shape="rect" id="node6" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="41,79,143,104"/>
+<area shape="rect" id="node7" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="18,5,166,31"/>
 </map>

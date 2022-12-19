@@ -1,8 +1,8 @@
 <map id="Storm::BaseGmresSolver&lt; Vector, Flexible, Loose &gt;" name="Storm::BaseGmresSolver&lt; Vector, Flexible, Loose &gt;">
-<area shape="rect" id="node1" title="Parmetrized GMRES solver." coords="5,416,184,456"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " coords="8,328,181,368"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." coords="14,240,175,280"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." coords="11,152,178,192"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_object.html" title="A base object." coords="43,79,146,104"/>
-<area shape="rect" id="node6" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="21,5,169,31"/>
+<area shape="rect" id="node1" title="Parmetrized GMRES solver." alt="" coords="5,416,184,456"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="8,328,181,368"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="14,240,175,280"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="11,152,178,192"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="43,79,146,104"/>
+<area shape="rect" id="node6" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="21,5,169,31"/>
 </map>

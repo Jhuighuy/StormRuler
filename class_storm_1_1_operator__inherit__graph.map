@@ -1,6 +1,6 @@
 <map id="Storm::Operator&lt; InVector, OutVector &gt;" name="Storm::Operator&lt; InVector, OutVector &gt;">
-<area shape="rect" id="node1" title="Abstract operator 𝒚 ← 𝓐(𝒙). &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ///." coords="5,152,184,192"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_functional_operator.html" title="Operator implementation with external function pointers. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." coords="7,240,182,280"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_object.html" title="A base object." coords="43,79,146,104"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="21,5,169,31"/>
+<area shape="rect" id="node1" title="Abstract operator 𝒚 ← 𝓐(𝒙). &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ///." alt="" coords="5,152,184,192"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_functional_operator.html" title="Operator implementation with external function pointers. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="7,240,182,280"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="43,79,146,104"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="21,5,169,31"/>
 </map>

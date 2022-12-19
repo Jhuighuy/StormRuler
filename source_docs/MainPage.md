@@ -1,3 +1,5 @@
-# User Manual {#mainpage}
+# Main Page {#mainpage}
+
+\tableofcontents
 
 ## 🏗 Under construction.

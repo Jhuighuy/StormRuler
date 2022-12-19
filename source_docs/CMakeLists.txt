@@ -46,65 +46,67 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Configure the documentation extraction.
-set(DOXYGEN_DISTRIBUTE_GROUP_DOC      YES)
+set(DOXYGEN_DISTRIBUTE_GROUP_DOC   YES )
 set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
-set(DOXYGEN_SHOW_USED_FILES           NO )
-
-# ------------------------------------------------------------------------------
+set(DOXYGEN_SHOW_USED_FILES        NO  )
 
 # Configure the required documenation components.
-# (No alphabetical index, and a source browser with comments.)
-set(DOXYGEN_ALPHABETICAL_INDEX  NO )
-set(DOXYGEN_SOURCE_BROWSER      YES)
-set(DOXYGEN_STRIP_CODE_COMMENTS NO )
+set(DOXYGEN_ALPHABETICAL_INDEX     NO  )
+set(DOXYGEN_SOURCE_BROWSER         YES )
+set(DOXYGEN_STRIP_CODE_COMMENTS    NO  )
 
-# ------------------------------------------------------------------------------
-
-# Configure graphs.
-set(DOXYGEN_DOT_IMAGE_FORMAT     svg)
-set(DOXYGEN_DOT_TRANSPARENT      YES)
-set(DOXYGEN_CALLER_GRAPH         NO )
-set(DOXYGEN_CALL_GRAPH           NO )
-set(DOXYGEN_COLLABORATION_GRAPH  NO )
-set(DOXYGEN_DIRECTORY_GRAPH      NO )
-set(DOXYGEN_GENERATE_LEGEND      NO )
-set(DOXYGEN_GRAPHICAL_HIERARCHY  NO )
-set(DOXYGEN_INCLUDED_BY_GRAPH    NO )
-set(DOXYGEN_INCLUDE_GRAPH        NO )
-set(DOXYGEN_TEMPLATE_RELATIONS   NO )
-
-# ------------------------------------------------------------------------------
-
-# Generate the HTML documentation.
-set(DOXYGEN_GENERATE_HTML YES)
+# Configure the HTML output.
 set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)
 
 # Configure the HTML pages layout.
-set(DOXYGEN_DISABLE_INDEX          NO )
-set(DOXYGEN_FULL_SIDEBAR           NO )
-set(DOXYGEN_GENERATE_TREEVIEW      YES)
-set(DOXYGEN_HTML_DYNAMIC_MENUS     YES)
-set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES)
-set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1  )
-set(DOXYGEN_HTML_TIMESTAMP         NO )
+set(DOXYGEN_DISABLE_INDEX          NO  )
+set(DOXYGEN_FULL_SIDEBAR           NO  )
+set(DOXYGEN_GENERATE_TREEVIEW      YES )
 
-# Other HTML options.
-set(DOXYGEN_ENUM_VALUES_PER_LINE 1   )
-set(DOXYGEN_HTML_COLORSTYLE      DARK)
-set(DOXYGEN_OBFUSCATE_EMAILS     NO  )
-set(DOXYGEN_USE_MATHJAX          YES )
+# Configure the HTML pages components.
+set(DOXYGEN_ENUM_VALUES_PER_LINE   1   )
+set(DOXYGEN_HTML_COLORSTYLE        DARK)
+set(DOXYGEN_HTML_DYNAMIC_MENUS     YES )
+set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES )
+set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1   )
+set(DOXYGEN_HTML_TIMESTAMP         NO  )
+set(DOXYGEN_OBFUSCATE_EMAILS       NO  )
+set(DOXYGEN_USE_MATHJAX            YES )
+
+# Configure graphs.
+set(DOXYGEN_DOT_IMAGE_FORMAT       svg )
+set(DOXYGEN_DOT_TRANSPARENT        YES )
+set(DOXYGEN_CALLER_GRAPH           NO  )
+set(DOXYGEN_CALL_GRAPH             NO  )
+set(DOXYGEN_COLLABORATION_GRAPH    NO  )
+set(DOXYGEN_DIRECTORY_GRAPH        NO  )
+set(DOXYGEN_GENERATE_LEGEND        NO  )
+set(DOXYGEN_GRAPHICAL_HIERARCHY    NO  )
+set(DOXYGEN_INCLUDED_BY_GRAPH      NO  )
+set(DOXYGEN_INCLUDE_GRAPH          NO  )
+set(DOXYGEN_TEMPLATE_RELATIONS     NO  )
+
+# ------------------------------------------------------------------------------
+
+# Fetch Doxygen Awesome CSS.
+include(FetchContent)
+FetchContent_Declare(
+    doxygen_awesome_css
+    GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css
+    GIT_TAG        a3c119b4797be2039761ec1fa0731f038e3026f6) # release-2.1.0
+FetchContent_MakeAvailable(doxygen_awesome_css)
 
 # Enable Doxygen Awesome theme.
 set(DOXYGEN_HTML_HEADER Header.html)
 set(DOXYGEN_HTML_EXTRA_FILES
-    doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js
-    doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js
-    doxygen-awesome-css/doxygen-awesome-paragraph-link.js
-    doxygen-awesome-css/doxygen-awesome-interactive-toc.js)
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js)
 set(DOXYGEN_HTML_EXTRA_STYLESHEET 
-    doxygen-awesome-css/doxygen-awesome.css
-    doxygen-awesome-css/doxygen-awesome-sidebar-only.css
-    doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css)
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome.css
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-sidebar-only.css
+    ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-sidebar-only-darkmode-toggle.css)
 
 # ------------------------------------------------------------------------------
 

@@ -30,6 +30,7 @@ export CXX=${CXX:-g++-12}
 
 # Remove old build directory.
 rm -rf ./bin
+rm -rf ./docs
 rm -rf ./build
 
 # ------------------------------------------------------------------------------

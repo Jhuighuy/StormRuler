@@ -28,6 +28,7 @@
 #   It is inconvenient to write `CXX=.. cmake . -DCMAKE_BUILD_TYPE=..`
 #   every time.
 # • Add sanitizers for the Coverage build.
+# • Share project description with `source_docs`.
 
 # ------------------------------------------------------------------------------
 

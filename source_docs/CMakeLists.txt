@@ -20,7 +20,8 @@
 
 # ------------------------------------------------------------------------------
 
-# This may be a standalone source directory.
+# This may be a standalone source directory. Because of this, consider using 
+# paths relative to `CMAKE_CURRENT_SOURCE_DIR` instead of `CMAKE_SOURCE_DIR`.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   cmake_minimum_required(VERSION 3.20..3.26)
   project(StormRuler
@@ -49,11 +50,12 @@ endif()
 set(DOXYGEN_DISTRIBUTE_GROUP_DOC   YES )
 set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")
 set(DOXYGEN_SHOW_USED_FILES        NO  )
+set(DOXYGEN_STRIP_CODE_COMMENTS    NO  )
+set(DOXYGEN_STRIP_FROM_INC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../source)
 
 # Configure the required documenation components.
 set(DOXYGEN_ALPHABETICAL_INDEX     NO  )
 set(DOXYGEN_SOURCE_BROWSER         YES )
-set(DOXYGEN_STRIP_CODE_COMMENTS    NO  )
 
 # Configure the HTML output.
 set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)

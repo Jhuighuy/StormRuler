@@ -20,13 +20,8 @@
 
 # ------------------------------------------------------------------------------
 
-# HTML files.
-!*.html
-!*.css
-!*.xml
-
-# ------------------------------------------------------------------------------
-
-!doxygen-awesome-css
+[submodule "source_docs/doxygen-awesome-css"]
+	path = source_docs/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git
 
 # ------------------------------------------------------------------------------

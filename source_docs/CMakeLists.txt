@@ -81,13 +81,23 @@ set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)
 # Configure the HTML pages layout.
 # (Disable the navigation panel, enable the 
 #  side bar with a tree-view that is folded by default.)
-set(DOXYGEN_DISABLE_INDEX          YES)
-set(DOXYGEN_FULL_SIDEBAR           YES)
+set(DOXYGEN_DISABLE_INDEX          NO )
+set(DOXYGEN_FULL_SIDEBAR           NO )
 set(DOXYGEN_GENERATE_TREEVIEW      YES)
 set(DOXYGEN_HTML_DYNAMIC_MENUS     YES)
 set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES)
 set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1  )
 set(DOXYGEN_HTML_TIMESTAMP         NO )
+
+set(DOXYGEN_HTML_HEADER Header.html)
+
+# Enable Doxygen Awesome theme.
+set(DOXYGEN_HTML_EXTRA_FILES
+    doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js)
+set(DOXYGEN_HTML_EXTRA_STYLESHEET 
+    doxygen-awesome-css/doxygen-awesome.css
+    doxygen-awesome-css/doxygen-awesome-sidebar-only.css
+    doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css)
 
 # Other HTML options.
 set(DOXYGEN_ENUM_VALUES_PER_LINE 1   )
@@ -98,8 +108,10 @@ set(DOXYGEN_USE_MATHJAX          YES )
 # ------------------------------------------------------------------------------
 
 # Add the C++ sources and Markdown pages.
-file(GLOB_RECURSE MD_SOURCES ./*.md)
+file(GLOB MD_SOURCES ./*.md)
 list(APPEND StormRuler_Doxygen_INPUTS ${MD_SOURCES})
+file(GLOB HTML_SOURCES ./*.html)
+list(APPEND StormRuler_Doxygen_INPUTS ${HTML_SOURCES})
 file(GLOB_RECURSE CXX_SOURCES ../source/*.hpp)
 list(APPEND StormRuler_Doxygen_INPUTS ${CXX_SOURCES})
 

@@ -27,22 +27,33 @@
   <link href="$relpath^$stylesheet" rel="stylesheet" type="text/css" />
   $extrastylesheet
 
-  <head>
-    <script type="text/javascript" src="$relpath^doxygen-awesome-darkmode-toggle.js"></script>
-    <script type="text/javascript">
-      DoxygenAwesomeDarkModeToggle.init()
-    </script>
-  </head>
+  <!--DARK MODE-->
+  <script type="text/javascript" src="$relpath^doxygen-awesome-darkmode-toggle.js"></script>
+  <script type="text/javascript">
+    DoxygenAwesomeDarkModeToggle.init()
+  </script>
+
+  <!--COPY BUTTON-->
+  <script type="text/javascript" src="$relpath^doxygen-awesome-fragment-copy-button.js"></script>
+  <script type="text/javascript">
+    DoxygenAwesomeFragmentCopyButton.init()
+  </script>
+
+  <!--INTERACTIVE TABLE OF CONTENTS-->
+  <script type="text/javascript" src="$relpath^doxygen-awesome-interactive-toc.js"></script>
+  <script type="text/javascript">
+    DoxygenAwesomeInteractiveToc.init()
+  </script>
 </head>
 
 <body>
   <!--BEGIN DISABLE_INDEX-->
   <!--BEGIN FULL_SIDEBAR-->
-  <div id="side-nav" class="ui-resizable side-nav-resizable"><!-- do not remove this div, it is closed by doxygen! -->
+  <div id="side-nav" class="ui-resizable side-nav-resizable">
     <!--END FULL_SIDEBAR-->
     <!--END DISABLE_INDEX-->
 
-    <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+    <div id="top">
 
       <!--BEGIN TITLEAREA-->
       <div id="titlearea">

@@ -61,7 +61,8 @@ set(DOXYGEN_STRIP_CODE_COMMENTS NO )
 # ------------------------------------------------------------------------------
 
 # Configure graphs.
-# (Enable it, and specify the parameters and style.)
+set(DOXYGEN_DOT_IMAGE_FORMAT     svg)
+set(DOXYGEN_DOT_TRANSPARENT      YES)
 set(DOXYGEN_CALLER_GRAPH         NO )
 set(DOXYGEN_CALL_GRAPH           NO )
 set(DOXYGEN_COLLABORATION_GRAPH  NO )
@@ -79,8 +80,6 @@ set(DOXYGEN_GENERATE_HTML YES)
 set(DOXYGEN_HTML_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/../docs)
 
 # Configure the HTML pages layout.
-# (Disable the navigation panel, enable the 
-#  side bar with a tree-view that is folded by default.)
 set(DOXYGEN_DISABLE_INDEX          NO )
 set(DOXYGEN_FULL_SIDEBAR           NO )
 set(DOXYGEN_GENERATE_TREEVIEW      YES)
@@ -89,21 +88,23 @@ set(DOXYGEN_HTML_DYNAMIC_SECTIONS  YES)
 set(DOXYGEN_HTML_INDEX_NUM_ENTRIES 1  )
 set(DOXYGEN_HTML_TIMESTAMP         NO )
 
-set(DOXYGEN_HTML_HEADER Header.html)
-
-# Enable Doxygen Awesome theme.
-set(DOXYGEN_HTML_EXTRA_FILES
-    doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js)
-set(DOXYGEN_HTML_EXTRA_STYLESHEET 
-    doxygen-awesome-css/doxygen-awesome.css
-    doxygen-awesome-css/doxygen-awesome-sidebar-only.css
-    doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css)
-
 # Other HTML options.
 set(DOXYGEN_ENUM_VALUES_PER_LINE 1   )
 set(DOXYGEN_HTML_COLORSTYLE      DARK)
 set(DOXYGEN_OBFUSCATE_EMAILS     NO  )
 set(DOXYGEN_USE_MATHJAX          YES )
+
+# Enable Doxygen Awesome theme.
+set(DOXYGEN_HTML_HEADER Header.html)
+set(DOXYGEN_HTML_EXTRA_FILES
+    doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js
+    doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js
+    doxygen-awesome-css/doxygen-awesome-paragraph-link.js
+    doxygen-awesome-css/doxygen-awesome-interactive-toc.js)
+set(DOXYGEN_HTML_EXTRA_STYLESHEET 
+    doxygen-awesome-css/doxygen-awesome.css
+    doxygen-awesome-css/doxygen-awesome-sidebar-only.css
+    doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css)
 
 # ------------------------------------------------------------------------------
 

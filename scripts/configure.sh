@@ -22,8 +22,9 @@
 
 # ------------------------------------------------------------------------------
 
-# Find vcpkg.
-VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
+# Setup environment.
+export VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
+export CXX=${CXX:-g++-12}
 
 # ------------------------------------------------------------------------------
 
@@ -34,7 +35,6 @@ rm -rf ./build
 # ------------------------------------------------------------------------------
 
 # Configure CMake.
-export CXX=g++-12
 cmake -S . \
       -B build \
       -DCMAKE_BUILD_TYPE=Release \

@@ -20,7 +20,7 @@
 
 # ------------------------------------------------------------------------------
 
-# Configure so that `cmake .` can be ran directly from this folder.
+# This may be a standalone source directory.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   cmake_minimum_required(VERSION 3.20..3.26)
   project(StormRuler
@@ -97,7 +97,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(doxygen_awesome_css)
 
 # Enable Doxygen Awesome theme.
-set(DOXYGEN_HTML_HEADER Header.html)
+set(DOXYGEN_HTML_HEADER PageHeader.html.in)
+set(DOXYGEN_HTML_FOOTER PageFooter.html.in)
 set(DOXYGEN_HTML_EXTRA_FILES
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js

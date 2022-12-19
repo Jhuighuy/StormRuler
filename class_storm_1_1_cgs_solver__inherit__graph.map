@@ -1,0 +1,7 @@
+<map id="Storm::CgsSolver&lt; Vector &gt;" name="Storm::CgsSolver&lt; Vector &gt;">
+<area shape="rect" id="node1" title="The CGS (Conjugate Gradients Squared) linear operator equation solver." coords="5,328,193,353"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " coords="25,240,174,280"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." coords="16,152,183,192"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." coords="48,79,151,104"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="25,5,173,31"/>
+</map>

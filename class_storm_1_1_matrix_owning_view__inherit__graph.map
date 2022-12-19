@@ -1,0 +1,5 @@
+<map id="Storm::MatrixOwningView&lt; Matrix &gt;" name="Storm::MatrixOwningView&lt; Matrix &gt;">
+<area shape="rect" id="node1" title="Matrix owning view. Matrix should be noexcept&#45;movable." coords="127,93,301,133"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_matrix_view_interface.html" title=" " coords="5,5,220,45"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="245,13,389,38"/>
+</map>

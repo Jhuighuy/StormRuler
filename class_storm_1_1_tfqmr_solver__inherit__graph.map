@@ -1,0 +1,8 @@
+<map id="Storm::TfqmrSolver&lt; Vector &gt;" name="Storm::TfqmrSolver&lt; Vector &gt;">
+<area shape="rect" id="node1" title="The TFQMR (Transpose&#45;Free Quasi&#45;Minimal Residual) linear operator equation solver." coords="21,416,157,456"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_base_tfqmr_solver.html" title=" " coords="5,328,172,368"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_iterative_solver.html" title=" " coords="14,240,163,280"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." coords="5,152,172,192"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_object.html" title="A base object." coords="37,79,140,104"/>
+<area shape="rect" id="node6" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="15,5,163,31"/>
+</map>

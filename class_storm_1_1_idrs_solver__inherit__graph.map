@@ -1,0 +1,8 @@
+<map id="Storm::IdrsSolver&lt; Vector &gt;" name="Storm::IdrsSolver&lt; Vector &gt;">
+<area shape="rect" id="node1" title="The IDR(s) (Induced Dimension Reduction) linear operator equation solver." coords="26,416,158,456"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " coords="5,328,179,368"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." coords="11,240,173,280"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." coords="9,152,175,192"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_object.html" title="A base object." coords="41,79,143,104"/>
+<area shape="rect" id="node6" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="18,5,166,31"/>
+</map>

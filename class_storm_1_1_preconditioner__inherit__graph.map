@@ -1,0 +1,7 @@
+<map id="Storm::Preconditioner&lt; Vector &gt;" name="Storm::Preconditioner&lt; Vector &gt;">
+<area shape="rect" id="node1" title="Abstract preconditioner operator. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; /..." coords="27,225,175,265"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_identity_preconditioner.html" title="Identity preconditioner, intended to be used for debugging only. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." coords="5,313,196,353"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_operator.html" title=" " coords="12,152,189,177"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_object.html" title="A base object." coords="49,79,152,104"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." coords="27,5,175,31"/>
+</map>

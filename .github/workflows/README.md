@@ -52,17 +52,6 @@ and Storm fails to compile/be parsed under `clang++`.*
 --------------------------------------------------------------------------------
 
 <!----------------------------------------------------------------------------->
-## `analysis-codeql.yml`
-<!----------------------------------------------------------------------------->
-Build and analyze with **Coverity**. *Coverity Build Tool **2022.6.0** is the
-current avaliable version, it does not work with Storm properly. Although,
-Windows version works fine, so we are using it. At least for now.*
-
-[![Coverity](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml)
-
---------------------------------------------------------------------------------
-
-<!----------------------------------------------------------------------------->
 ## CD: `analysis-coverity.yml`
 <!----------------------------------------------------------------------------->
 Build and analyze with **Coverity**. *Coverity Build Tool **2022.6.0** is the
@@ -77,7 +66,7 @@ Windows version works fine, so we are using it. At least for now.*
 ## CD: `analysis-sonar.yml`
 <!----------------------------------------------------------------------------->
 
-Build, run tests, collect coverage, analyze with **SonarCloud** and upload the 
+Build, run tests, collect coverage, analyze with **SonarCloud** and upload the
 coverage data to **Codecov**.
 
 [![SonarCloud](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml)

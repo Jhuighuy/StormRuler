@@ -63,6 +63,13 @@ jobs:
 
       # ------------------------------------------------------------------------
 
+      - name: Install mold
+        uses: rui314/setup-mold@v1
+        with:
+          make-default: false
+
+      # ------------------------------------------------------------------------
+
       - name: Install gcovr
         run: |
           pip install gcovr

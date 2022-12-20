@@ -111,6 +111,11 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 endif()
 
+# Setup the mold linker.
+if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
+  list(APPEND StormRuler_CXX_LINK_OPTIONS -fuse-ld=mold)
+endif()
+
 # Set the warnings and diagnostics options.
 if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
   # Enable maaany warnings, treated as errors.

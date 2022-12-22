@@ -134,21 +134,21 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # Enable maaany warnings, treated as errors.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
        /WX /Wall 
-       /wd4061  # Enumerator '..' in switch of enum '..' is not explicitly 
+       /wd4061  # Enumerator '...' in switch of enum '...' is not explicitly 
                 # handled by a case label.
        /wd4365  # Signed/unsigned mismatch.
-       /wd4458  # Declaration of '..' hides class member.
-       /wd4459  # Declaration of '..' hides global declaration.
-       /wd4464  # Relative include path contains '..'.
+       /wd4458  # Declaration of '...' hides class member.
+       /wd4459  # Declaration of '...' hides global declaration.
+       /wd4464  # Relative include path contains '...'.
        /wd4514  # Unreferenced inline function has been removed.
-       /wd4557  # '__assume' contains effect '..'.
+       /wd4557  # '__assume' contains effect '...'.
        /wd4582  # Constructor is not implicitly called.
        /wd4623  # Default constructor was implicitly defined as deleted.
        /wd4625  # Copy constructor was implicitly defined as deleted.
        /wd4626  # Assignment operator was implicitly defined as deleted.
-       /wd4710  # '..': function not inlined.
-       /wd4711  # Function '..' selected for automatic inline expansion.
-       /wd4820  # '..' bytes padding added after data member '..'.
+       /wd4710  # '...': function not inlined.
+       /wd4711  # Function '...' selected for automatic inline expansion.
+       /wd4820  # '...' bytes padding added after data member '...'.
        /wd4868  # Compiler may not enforce left-to-right evaluation order in 
                 # braced initializer list.
        /wd5026  # Move constructor was implicitly defined as deleted.
@@ -159,7 +159,7 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd5045  # Compiler will insert Spectre mitigation for memory load if 
                 # /Qspectre switch specified.
        /wd5105  # Macro expansion producing 'defined' has undefined behavior 
-       /wd5214  # Applying '..' to an operand with a volatile qualified type 
+       /wd5214  # Applying '...' to an operand with a volatile qualified type 
                 # is deprecated in C++20.
        /wd5246  # The initialization of a subobject should be wrapped in braces
        /wd5262  # Implicit fall-through occurs here.

@@ -114,10 +114,8 @@ set(DOXYGEN_HTML_EXTRA_STYLESHEET
 # ------------------------------------------------------------------------------
 
 # Add the C++ sources and Markdown pages.
-file(GLOB MD_SOURCES ./*.md)
+file(GLOB_RECURSE MD_SOURCES ./*.md)
 list(APPEND StormRuler_Doxygen_INPUTS ${MD_SOURCES})
-file(GLOB HTML_SOURCES ./*.html)
-list(APPEND StormRuler_Doxygen_INPUTS ${HTML_SOURCES})
 file(GLOB_RECURSE CXX_SOURCES ../source/*.hpp)
 list(APPEND StormRuler_Doxygen_INPUTS ${CXX_SOURCES})
 

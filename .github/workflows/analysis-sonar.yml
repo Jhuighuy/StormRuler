@@ -38,9 +38,6 @@ jobs:
     name: Build
     runs-on: ubuntu-22.04
     env:
-      # vcpkg installation directory.
-      VCPKG_ROOT: ../vcpkg
-
       # g++ and gcov executables.
       GXX_EXE: g++-12
       GCOV_EXE: gcov-12

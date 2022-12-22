@@ -19,6 +19,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 # TODO:
+# • more native mold integration.
 # • clang-format integration:
 #   Format the code on build.
 # • clang-tidy integration:
@@ -66,6 +67,9 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
+# Set the CMake modules directory.
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 # ------------------------------------------------------------------------------
 
@@ -168,15 +172,30 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
-message(STATUS "Looking for libraries..")
+# Setup the mold linker.
+if(StormRuler_NO_MOLD)
+  message(STATUS "| mold was disabled by user.")
+else()
+  # TODO: once `mold` has a CMake integration.
+  # find_package(mold CONFIG QUIET)
+  # if(mold_FOUND)
+  #   message(STATUS "| mold enabled.")
+  #   target_use_mold(StormRuler_BASE)
+  # endif()
+  # For now we have to use this:
+  if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
+    find_program(MOLD_EXECUTABLE NAMES mold)
+    if(MOLD_EXECUTABLE)
+      message(STATUS "| mold enabled.")
+      target_link_options(StormRuler_BASE INTERFACE -fuse-ld=mold)
+    endif()
+  endif()
+endif()
 
-# Add the CMake modules.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+# ------------------------------------------------------------------------------
 
 # Find Python interpreter.
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-# ------------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED)

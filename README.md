@@ -4,6 +4,8 @@
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 
+[![macOS](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml)
+[![Pages](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml)
 [![SonarCloud](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
@@ -13,7 +15,6 @@
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/27159/badge.svg)](https://scan.coverity.com/projects/jhuighuy-stormruler)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e7a26478673f403aa32f41a7c2a86d8d)](https://www.codacy.com/gh/Jhuighuy/StormRuler/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Jhuighuy/StormRuler&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
-[![Pages](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
 
 **StormRuler** is a FVM-based multidimensional partial 

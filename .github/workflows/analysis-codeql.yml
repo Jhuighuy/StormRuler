@@ -69,15 +69,9 @@ jobs:
 
       - name: Build
         run: |
-          mkdir bin
           export CXX=${{ env.GXX_EXE }}
-          # Have to use C++20, CodeQL does not know C++23 yet.
-          # UPD: CodeQL cannot handle C++20 too :(
-          cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build build
+          ./scripts/configure.sh Coverage
+          ./scripts/build.sh
 
       # ------------------------------------------------------------------------
 

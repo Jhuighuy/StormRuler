@@ -36,7 +36,9 @@ namespace Storm
 /// @tparam BeginFilter First filtering character, typically '#'.
 /// @tparam EndFilter Last filtering character, typically '\n'.
 template<class Char, Char BeginFilter, Char EndFilter>
-class FilteringStreambuf final : public std::basic_streambuf<Char>
+class FilteringStreambuf final :
+    public std::basic_streambuf<Char>,
+    public NonCopyable
 {
 private:
 
@@ -60,14 +62,14 @@ public:
   }
 
   /// @brief Destroy a filtering stream buffer.
-  ~FilteringStreambuf() final
+  ~FilteringStreambuf() override
   {
     p_stream_->rdbuf(p_streambuf_);
   }
 
 protected:
 
-  typename std::basic_streambuf<Char>::int_type underflow() final
+  typename std::basic_streambuf<Char>::int_type underflow() override
   {
     auto bumped = p_streambuf_->sbumpc();
     if (bumped == begin_filter_) {
@@ -76,7 +78,7 @@ protected:
       }
     }
     if (bumped != eof_) {
-      buffer_ = bumped;
+      buffer_ = static_cast<Char>(bumped);
       this->setg(&buffer_, &buffer_, &buffer_ + 1);
     }
     return bumped;

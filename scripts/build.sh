@@ -22,6 +22,23 @@
 
 # ------------------------------------------------------------------------------
 
-time cmake --build ./build -- -j
+# Get the numeber of cores.
+case $(uname) in
+  Linux* | MINGW*)
+    NUM_PROC=$(nproc --all)
+    ;;
+  Darwin*)
+    NUM_PROC=$(sysctl -n hw.logicalcpu)
+    ;;
+  *)
+    NUM_PROC=1
+    ;;
+esac
+
+# ------------------------------------------------------------------------------
+
+# Build!
+echo "Building with $NUM_PROC cores..."
+time cmake --build ./build -- -j "$NUM_PROC"
 
 # ------------------------------------------------------------------------------

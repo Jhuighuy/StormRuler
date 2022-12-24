@@ -356,6 +356,12 @@ TEST_CASE("Bittern/TrigonometricMatrixExpressions")
 
 // -----------------------------------------------------------------------------
 
+/// @todo What is wrong with you, GCC?
+#if STORM_COMPILER_GCC_ && defined(NDEBUG)
+#pragma GCC push_options
+#pragma GCC optimize("O2")
+#endif
+
 TEST_CASE("Bittern/HyperbolicMatrixExpressions")
 {
   const Mat2x2<complex_t> mat{+pi / (6.0_dp * i), -pi / (4.0_dp * i), //
@@ -388,6 +394,10 @@ TEST_CASE("Bittern/HyperbolicMatrixExpressions")
     CHECK(all(approx_equal(atanh(tanh_mat), mat)));
   }
 }
+
+#if STORM_COMPILER_GCC_ && defined(NDEBUG)
+#pragma GCC pop_options
+#endif
 
 // -----------------------------------------------------------------------------
 

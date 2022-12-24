@@ -186,7 +186,7 @@
 #endif
 
 // Check the expression, exit with fatal error if it fails.
-#ifdef NDEBUG
+#ifdef STORM_ENABLE_ASSERTS_
 #define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
 #else
 #define STORM_ASSERT_(expression, message, ...) \

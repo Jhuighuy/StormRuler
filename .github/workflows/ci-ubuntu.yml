@@ -20,7 +20,7 @@
 
 # ------------------------------------------------------------------------------
 
-name: CodeQL
+name: Ubuntu
 
 # ------------------------------------------------------------------------------
 
@@ -34,13 +34,14 @@ on:
 # ------------------------------------------------------------------------------
 
 jobs:
-  code-ql:
+  build:
     name: Build
-    runs-on: ubuntu-22.04
-    env:
-
-      # g++ executable.
-      GXX_EXE: g++-12
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++-12]
+        config: [Debug, Release]
+      fail-fast: false
 
     steps:
 
@@ -59,23 +60,17 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: cpp
-          debug: true # Since C++20 does not work correctly.
-
-      # ------------------------------------------------------------------------
-
       - name: Build
         run: |
-          export CXX=${{ env.GXX_EXE }}
-          ./scripts/configure.sh Coverage
+          export CXX=${{ matrix.compiler }}
+          ./scripts/configure.sh ${{ matrix.config }}
           ./scripts/build.sh
 
       # ------------------------------------------------------------------------
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+      - name: Run tests
+        run: |
+          ./bin/StormRuler_UnitTests
+          ./bin/StormRuler_Benchmarks
 
 # ------------------------------------------------------------------------------

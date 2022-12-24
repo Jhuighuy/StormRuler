@@ -195,14 +195,14 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Find Python interpreter.
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
 
 # Find {fmt}.
-find_package(fmt CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED QUIET)
 target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
 
 # Find spdlog.
-find_package(spdlog CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED QUIET)
 target_link_libraries(StormRuler_BASE INTERFACE spdlog::spdlog_header_only)
 
 # ------------------------------------------------------------------------------

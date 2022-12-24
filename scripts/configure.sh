@@ -22,9 +22,23 @@
 
 # ------------------------------------------------------------------------------
 
-# Setup environment.
-export VCPKG_ROOT=${VCPKG_ROOT:-$HOME/vcpkg}
-export CXX=${CXX:-g++-12}
+# Setup C++ compiler and standard.
+CXX=${CXX:-g++-12}
+CXX_STD=${CXX_STD:-20}
+echo "C++$CXX_STD compiler: $CXX"
+
+# Setup the configuration.
+CONFIG=${1:-Release}
+echo "Configuration: $CONFIG"
+
+# Setup vcpck root directory.
+VCPKG_ROOT=${VCPKG_ROOT:-${VCPKG_INSTALLATION_ROOT:-$HOME/vcpkg}}
+echo "vcpkg root directory: $VCPKG_ROOT"
+VCPKG_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
+    echo "Broken vcpkg installation!"
+    exit 1
+fi
 
 # ------------------------------------------------------------------------------
 
@@ -36,10 +50,11 @@ rm -rf ./build
 # ------------------------------------------------------------------------------
 
 # Configure CMake.
+export CXX
 cmake -S . \
       -B build \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_STANDARD=20 \
-      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+      -DCMAKE_BUILD_TYPE="$CONFIG" \
+      -DCMAKE_CXX_STANDARD="$CXX_STD" \
+      -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE"
 
 # ------------------------------------------------------------------------------

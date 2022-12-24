@@ -64,6 +64,7 @@ jobs:
         uses: rui314/setup-mold@v1
         with:
           make-default: false
+        continue-on-error: true # might fail for unknown reason.
 
       # ------------------------------------------------------------------------
 
@@ -80,15 +81,10 @@ jobs:
 
       - name: Run build-wrapper
         run: |
-          mkdir bin
           export CXX=${{ env.GXX_EXE }}
-          # Have to use C++20, Sonar does not know C++23 yet.
-          cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=Coverage \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          ./scripts/configure.sh Coverage
           build-wrapper-linux-x86-64 \
-              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build
+              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./scripts/build.sh
 
       # ------------------------------------------------------------------------
 

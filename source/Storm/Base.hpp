@@ -32,90 +32,125 @@
 
 // -----------------------------------------------------------------------------
 
-// Detect the C++ version.
-#if __cplusplus < 202002L && !defined(_MSC_VER)
-#error Storm requires C++20 support!
-#endif
-#if __cplusplus > 202002L
-#define STORM_CPP23_ 1
+// Detect the C++ compiler.
+#ifdef _MSC_VER
+#  define STORM_COMPILER_MSVC_ 1
 #else
-#define STORM_CPP23_ 0
+#  define STORM_COMPILER_MSVC_ 0
+#endif
+#ifdef __clang__
+#  define STORM_COMPILER_CLANG_ 1
+#else
+#  define STORM_COMPILER_CLANG_ 0
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  define STORM_COMPILER_GCC_ 1
+#else
+#  define STORM_COMPILER_GCC_ 0
 #endif
 
-// Detect the C++ compiler.
-#ifdef __GNUC__
-#ifdef __clang__
-#define STORM_COMPILER_CLANG_ 1
-#define STORM_COMPILER_GCC_ 0
-#else
-#define STORM_COMPILER_GCC_ 1
-#define STORM_COMPILER_CLANG_ 0
-#endif
-#endif
-#ifdef _MSC_VER
-#define STORM_COMPILER_MSVC_ 1
-#else
-#define STORM_COMPILER_MSVC_ 0
-#endif
 #if (STORM_COMPILER_GCC_ + STORM_COMPILER_CLANG_ + STORM_COMPILER_MSVC_) != 1
-#warning Storm has detected multiple compilers, something is terribly wrong!
+#  warning Storm has detected multiple compilers, something is terribly wrong!
+#endif
+
+// -----------------------------------------------------------------------------
+
+// Detect the CPU architecture.
+#if STORM_COMPILER_MSVC_
+#  ifdef _M_X64
+#    define STORM_X64_ 1
+#  else
+#    define STORM_X64_ 0
+#  endif
+#  ifdef _M_ARM64
+#    define STORM_ARM64_ 1
+#  else
+#    define STORM_ARM64_ 0
+#  endif
+#elif STORM_COMPILER_CLANG_ || STORM_COMPILER_GCC_
+#  ifdef __amd64__
+#    define STORM_X64_ 1
+#  else
+#    define STORM_X64_ 0
+#  endif
+#  ifdef __aarch64__
+#    define STORM_ARM64_ 1
+#  else
+#    define STORM_ARM64_ 0
+#  endif
+#endif
+
+#if (STORM_X64_ + STORM_ARM64_) != 1
+#  warning Storm has detected multiple CPU architectures, something is terribly wrong!
+#endif
+
+// -----------------------------------------------------------------------------
+
+// Detect the C++ version.
+#if __cplusplus < 202002L && !defined(_MSC_VER)
+#  error Storm requires C++20 support!
+#endif
+#if __cplusplus > 202002L || _MSC_VER > 202002L
+#  define STORM_CPP23_ 1
+#else
+#  define STORM_CPP23_ 0
 #endif
 
 // C++23 constexpr.
 #if STORM_CPP23_
-#define STORM_CPP23_CONSTEXPR_ constexpr
+#  define STORM_CPP23_CONSTEXPR_ constexpr
 #else
-#define STORM_CPP23_CONSTEXPR_
+#  define STORM_CPP23_CONSTEXPR_
 #endif
 
 // C++23 allows `static` inside of the `constexpr` functions.
 #if STORM_CPP23_
-#define STORM_CPP23_STATIC_ static
+#  define STORM_CPP23_STATIC_ static
 #else
-#define STORM_CPP23_STATIC_
+#  define STORM_CPP23_STATIC_
 #endif
 
 // C++23 allows `thread_local` inside of the `constexpr` functions.
 #if STORM_CPP23_
-#define STORM_CPP23_THREAD_LOCAL_ thread_local
+#  define STORM_CPP23_THREAD_LOCAL_ thread_local
 #else
-#define STORM_CPP23_THREAD_LOCAL_
+#  define STORM_CPP23_THREAD_LOCAL_
 #endif
 
 // C++23 `std::unreachable()`.
 #if STORM_CPP23_
-#define STORM_UNREACHABLE_() std::unreachable()
+#  define STORM_UNREACHABLE_() std::unreachable()
 #else
-#if STORM_COMPILER_MSVC_
-#define STORM_UNREACHABLE_() __assume(false)
-#else
-#define STORM_UNREACHABLE_() __builtin_unreachable()
-#endif
+#  if STORM_COMPILER_MSVC_
+#    define STORM_UNREACHABLE_() __assume(false)
+#  else
+#    define STORM_UNREACHABLE_() __builtin_unreachable()
+#  endif
 #endif
 
 // Force (kindly ask) the compiler to inline the function.
 #if STORM_COMPILER_MSVC_
-#define STORM_FORCE_INLINE_ inline __forceinline
-#else
-#define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
+#  define STORM_FORCE_INLINE_ inline __forceinline
+#elif STORM_COMPILER_CLANG_ || STORM_COMPILER_GCC_
+#  define STORM_FORCE_INLINE_ inline __attribute__((always_inline))
 #endif
 
 // Cross-compiler version of `[[no_unique_address]]`.
 #if STORM_COMPILER_MSVC_
-#define STORM_NO_UNIQUE_ADDRESS_ [[msvc::no_unique_address]]
+#  define STORM_NO_UNIQUE_ADDRESS_ [[msvc::no_unique_address]]
 #else
-#define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
+#  define STORM_NO_UNIQUE_ADDRESS_ [[no_unique_address]]
 #endif
 
 // Include the configuration file.
 #if __has_include("./Config.hpp")
-#include "./Config.hpp"
+#  include "./Config.hpp"
 #endif
 #include "./ConfigDefault.hpp"
 
 // Is the code parsed by Doxygen?
 #ifndef STORM_DOXYGEN_
-#define STORM_DOXYGEN_ 0
+#  define STORM_DOXYGEN_ 0
 #endif
 
 // -----------------------------------------------------------------------------
@@ -146,16 +181,16 @@
 
 // Assume the expression is always true.
 #if STORM_COMPILER_MSVC_
-#define STORM_ASSUME_(expression) __assume(expression)
+#  define STORM_ASSUME_(expression) __assume(expression)
 #else
-#define STORM_ASSUME_(expression)               \
-  do {                                          \
-    if (!(expression)) __builtin_unreachable(); \
-  } while (false)
+#  define STORM_ASSUME_(expression)               \
+    do {                                          \
+      if (!(expression)) __builtin_unreachable(); \
+    } while (false)
 #endif
 
 #ifndef __FUNCSIG__
-#define __FUNCSIG__ static_cast<const char*>(__PRETTY_FUNCTION__)
+#  define __FUNCSIG__ static_cast<const char*>(__PRETTY_FUNCTION__)
 #endif
 
 // Report a fatal error and exit the application.
@@ -178,19 +213,19 @@
 
 // Enable or disable asserts.
 #ifndef STORM_ENABLE_ASSERTS_
-#ifdef NDEBUG
-#define STORM_ENABLE_ASSERTS_ 0
-#else
-#define STORM_ENABLE_ASSERTS_ 1
-#endif
+#  ifdef NDEBUG
+#    define STORM_ENABLE_ASSERTS_ 0
+#  else
+#    define STORM_ENABLE_ASSERTS_ 1
+#  endif
 #endif
 
 // Check the expression, exit with fatal error if it fails.
-#ifdef NDEBUG
-#define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
+#ifdef STORM_ENABLE_ASSERTS_
+#  define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
 #else
-#define STORM_ASSERT_(expression, message, ...) \
-  STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
+#  define STORM_ASSERT_(expression, message, ...) \
+    STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
 #endif
 
 // -----------------------------------------------------------------------------

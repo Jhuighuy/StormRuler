@@ -53,8 +53,8 @@ rm -rf ./build
 export CXX
 cmake -S . \
       -B build \
-      -DCMAKE_BUILD_TYPE=$CONFIG \
-      -DCMAKE_CXX_STANDARD=$CXX_STD \
-      -DCMAKE_TOOLCHAIN_FILE=$VCPKG_TOOLCHAIN_FILE
+      -DCMAKE_BUILD_TYPE="$CONFIG" \
+      -DCMAKE_CXX_STANDARD="$CXX_STD" \
+      -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE"
 
 # ------------------------------------------------------------------------------

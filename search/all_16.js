@@ -4,7 +4,7 @@ var searchData=
   ['_7ebuffer_1',['~Buffer',['../class_storm_1_1_vulture_1_1gl_1_1_buffer.html#a5723646f02da5c3180f95f3dc33b4f1d',1,'Storm::Vulture::gl::Buffer']]],
   ['_7edebugoutput_2',['~DebugOutput',['../class_storm_1_1_vulture_1_1gl_1_1_debug_output.html#af0bd990df1b44f5aa8720962ea3199da',1,'Storm::Vulture::gl::DebugOutput']]],
   ['_7eentityview_3',['~EntityView',['../class_storm_1_1_entity_view.html#aa9d5799c623ffb4471e4d150d92843b2',1,'Storm::EntityView']]],
-  ['_7efilteringstreambuf_4',['~FilteringStreambuf',['../class_storm_1_1_filtering_streambuf.html#ad0bc7d2d8cc9ee59b13af1aa8f23cf03',1,'Storm::FilteringStreambuf']]],
+  ['_7efilteringstreambuf_4',['~FilteringStreambuf',['../class_storm_1_1_filtering_streambuf.html#ae608b5efdf4c32c6a191d795a685958d',1,'Storm::FilteringStreambuf']]],
   ['_7eframebuffer_5',['~Framebuffer',['../class_storm_1_1_vulture_1_1gl_1_1_framebuffer.html#a08448b461bdc897465b8379cdaf4a93b',1,'Storm::Vulture::gl::Framebuffer']]],
   ['_7eframework_6',['~Framework',['../class_storm_1_1_vulture_1_1gl_1_1_framework.html#aed0f7bd584c53181825cff505a3cfdef',1,'Storm::Vulture::gl::Framework']]],
   ['_7enonassignable_7',['~NonAssignable',['../class_storm_1_1_non_assignable.html#ad21c2e5fcb4ad7a4851d871f99fe3a1b',1,'Storm::NonAssignable']]],

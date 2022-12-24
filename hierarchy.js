@@ -139,6 +139,7 @@ var hierarchy =
       ] ]
     ] ],
     [ "Storm::NonCopyable", "class_storm_1_1_non_copyable.html", [
+      [ "Storm::FilteringStreambuf< Char, BeginFilter, EndFilter >", "class_storm_1_1_filtering_streambuf.html", null ],
       [ "Storm::MatrixOwningView< Matrix >", "class_storm_1_1_matrix_owning_view.html", null ],
       [ "Storm::Object", "class_storm_1_1_object.html", [
         [ "Storm::Operator< InVector, InVector >", "class_storm_1_1_operator.html", null ],

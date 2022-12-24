@@ -357,9 +357,9 @@ TEST_CASE("Bittern/TrigonometricMatrixExpressions")
 // -----------------------------------------------------------------------------
 
 /// @todo What is wrong with you, GCC?
-#if STORM_COMPILER_GCC_ && defined(NDEBUG)
-#pragma GCC push_options
-#pragma GCC optimize("O2")
+#if STORM_COMPILER_GCC_ && STORM_X64_ && defined(NDEBUG)
+#  pragma GCC push_options
+#  pragma GCC optimize("O2")
 #endif
 
 TEST_CASE("Bittern/HyperbolicMatrixExpressions")
@@ -395,8 +395,8 @@ TEST_CASE("Bittern/HyperbolicMatrixExpressions")
   }
 }
 
-#if STORM_COMPILER_GCC_ && defined(NDEBUG)
-#pragma GCC pop_options
+#if STORM_COMPILER_GCC_ && STORM_X64_ && defined(NDEBUG)
+#  pragma GCC pop_options
 #endif
 
 // -----------------------------------------------------------------------------

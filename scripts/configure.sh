@@ -36,8 +36,12 @@ VCPKG_ROOT=${VCPKG_ROOT:-${VCPKG_INSTALLATION_ROOT:-$HOME/vcpkg}}
 echo "vcpkg root directory: $VCPKG_ROOT"
 VCPKG_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
-    echo "Broken vcpkg installation!"
-    exit 1
+  echo "Broken vcpkg installation!"
+  exit 1
+fi
+if [ "$(uname)" ~= "MINGW*" ]; then
+  export VCPKG_DEFAULT_TRIPLET=x64-mingw-dynamic
+  export VCPKG_DEFAULT_HOST_TRIPLET=x64-mingw-dynamic
 fi
 
 # ------------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright (C) 2020-2023 Oleg Butakov
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,13 +28,12 @@ import sys
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-
     if len(sys.argv) != 3:
         print(f'Usage: {sys.argv[0]} <input-file> <output-file>')
         sys.exit(1)
 
     FIND = r'#cmakedefine01\s*(\w+)$'
-    REPLACE = r'#ifndef \1\n#define \1 0\n#endif'
+    REPLACE = r'#ifndef \1\n#  define \1 0\n#endif'
 
     input_file_path = sys.argv[1]
     with open(input_file_path, 'r') as input_file:
@@ -42,3 +43,6 @@ if __name__ == '__main__':
     output_file_path = sys.argv[2]
     with open(output_file_path, 'w') as output_file:
         output_file.write(generated)
+
+
+# ------------------------------------------------------------------------------

@@ -250,7 +250,21 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Find Python interpreter.
-find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
+find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter QUIET)
+
+# Custom configuration function.
+function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
+  configure_file(${INPUT_FILE} ${OUTPUT_FILE})
+  add_custom_command(
+    OUTPUT ${DEFAULTS_OUTPUT_FILE}
+    COMMAND ${Python3_EXECUTABLE} 
+      ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py 
+      ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
+    MAIN_DEPENDENCY ${INPUT_FILE}
+    VERBATIM)
+endfunction()
+
+# ------------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED QUIET)

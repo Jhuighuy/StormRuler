@@ -68,9 +68,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# Set the CMake modules directory.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-
 # ------------------------------------------------------------------------------
 
 # Check C/C++ compiler.
@@ -93,10 +90,12 @@ else()
   message(FATAL_ERROR "Unsupported C++ compiler!")
 endif()
 
-# Require C++23 and disable extensions.
+# Require C++20 and disable extensions.
 # (Set globally, since these properties are not inherited by targets.)
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 23)
+  set(CMAKE_CXX_STANDARD 20)
+elseif(CMAKE_CXX_STANDARD LESS 20)
+  message(FATAL_ERROR "C++20 or more recent is required!")
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
@@ -227,7 +226,12 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
-# Setup the mold linker.
+# Setup the CMake modules directory.
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+# ------------------------------------------------------------------------------
+
+# Find the mold linker.
 if(StormRuler_NO_MOLD)
   message(STATUS "| mold was disabled by user.")
 else()

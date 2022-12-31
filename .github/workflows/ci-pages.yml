@@ -53,6 +53,7 @@ jobs:
 
       - name: Run Doxygen
         run: |
+          # No fancy scripts in here :)
           cmake -S source_docs -B build
           cmake --build build
           touch docs/.nojekyll

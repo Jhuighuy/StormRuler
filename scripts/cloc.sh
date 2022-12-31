@@ -23,12 +23,13 @@
 # ------------------------------------------------------------------------------
 
 if [ $# -ne 0 ]; then
-    echo "Usage: $0"
+    # Mock the output of Python's `argparse.ArgumentParser`.
+    echo "usage: $0 [-h]"
     echo ""
     echo "Count lines of code of the repository files."
     echo ""
-    echo "Options:"
-    echo "  -h Print this help."
+    echo "options:"
+    echo "  -h, --help show this help message and exit"
     exit 1
 fi
 

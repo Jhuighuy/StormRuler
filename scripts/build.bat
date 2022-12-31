@@ -22,7 +22,6 @@ rem DEALINGS IN THE SOFTWARE.
 
 rem ----------------------------------------------------------------------------
 
-rem Build!
-cmake --build ./build --config %CONFIG%
+python3 scripts\build.py %*
 
 rem ----------------------------------------------------------------------------

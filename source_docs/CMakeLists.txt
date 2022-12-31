@@ -46,6 +46,9 @@ endif()
 
 # ------------------------------------------------------------------------------
 
+# Doxygen in too verbose by default.
+set(DOXYGEN_QUIET YES)
+
 # Configure the documentation extraction.
 set(DOXYGEN_DISTRIBUTE_GROUP_DOC   YES )
 set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")

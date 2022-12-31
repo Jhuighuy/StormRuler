@@ -38,6 +38,9 @@ jobs:
   coverity:
     name: Build
     runs-on: windows-latest
+    env:
+      # Directory where build-wrapper output will be placed.
+      CONV_BUILD_OUT_DIR: "cov_build_out_dir"
 
     steps:
 
@@ -69,16 +72,12 @@ jobs:
       - name: Run coverity-build-tool
         shell: bash
         run: |
-          cmake -S . -B build \
-              -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
           export PATH="../cov-analysis-win64/cov-analysis-win64-2022.6.0/bin:$PATH"
-          echo $PATH
+          ./scripts/configure.py -std=c++20 -cfg=Debug
           cov-configure --msvc
           cov-build \
-              --dir cov-int \
-              cmake --build ./build
+              --dir ${{ env.CONV_BUILD_OUT_DIR }} \
+              ./scripts/build.py -j
 
       # ------------------------------------------------------------------------
 

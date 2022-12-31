@@ -22,10 +22,6 @@ rem DEALINGS IN THE SOFTWARE.
 
 rem ----------------------------------------------------------------------------
 
-rem TODO: this is incomplete!
-cmake -S . -B build^
-      -DCMAKE_BUILD_TYPE=Release^
-      -DCMAKE_CXX_STANDARD=20^
-      -DCMAKE_TOOLCHAIN_FILE=h:\vcpkg\scripts\buildsystems\vcpkg.cmake
+python3 scripts\configure.py %*
 
 rem ----------------------------------------------------------------------------

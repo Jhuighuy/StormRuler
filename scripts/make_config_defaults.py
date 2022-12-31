@@ -22,26 +22,28 @@
 
 # ------------------------------------------------------------------------------
 
+import argparse
 import re
 import sys
 
 # ------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print(f'Usage: {sys.argv[0]} <input-file> <output-file>')
-        sys.exit(1)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generate the default values for the CMake configuration file."
+    )
+    parser.add_argument("input_file_path", help="Input CMake configuration file path.")
+    parser.add_argument("output_file_path", help="Generated output file path")
+    args = parser.parse_args()
 
-    FIND = r'#cmakedefine01\s*(\w+)$'
-    REPLACE = r'#ifndef \1\n#  define \1 0\n#endif'
+    FIND_REGEXP = r"#cmakedefine01\s*(\w+)$"
+    REPLACE_REGEXP = r"#ifndef \1\n#  define \1 0\n#endif"
 
-    input_file_path = sys.argv[1]
-    with open(input_file_path, 'r') as input_file:
+    with open(args.input_file_path, "r") as input_file:
         contents = input_file.read()
-        generated = re.sub(FIND, REPLACE, contents, flags=re.M)
+        generated = re.sub(FIND_REGEXP, REPLACE_REGEXP, contents, flags=re.M)
 
-    output_file_path = sys.argv[2]
-    with open(output_file_path, 'w') as output_file:
+    with open(args.output_file_path, "w") as output_file:
         output_file.write(generated)
 
 

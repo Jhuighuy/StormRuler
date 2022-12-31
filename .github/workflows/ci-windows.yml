@@ -40,7 +40,8 @@ jobs:
     strategy:
       matrix:
         compiler: [cl, g++]
-        config: [Debug, Release]
+        standard: [c++20]
+        configuration: [Debug, Release]
       fail-fast: false
 
     steps:
@@ -68,13 +69,9 @@ jobs:
 
       - name: Build (MSVC)
         if: matrix.compiler == 'cl'
-        shell: bash
         run: |
-          export CXX=${{ matrix.compiler }}
-          cmake -S . -B build \
-              -DCMAKE_CXX_STANDARD=20 \
-              -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build ./build --config ${{ matrix.config }}
+          scripts\configure.bat -std=${{ matrix.standard }}
+          scripts\build.bat -cfg=${{ matrix.configuration }}
 
       # ------------------------------------------------------------------------
 
@@ -82,25 +79,16 @@ jobs:
         if: matrix.compiler == 'g++'
         shell: msys2 {0}
         run: |
-          export CXX=${{ matrix.compiler }}
-          ./scripts/configure.sh ${{ matrix.config }}
-          ./scripts/build.sh
+          ./scripts/configure.py \
+              -cxx=${{ matrix.compiler }} -std=${{ matrix.standard }} \
+              -args -G "Ninja Multi-Config"
+          ./scripts/build.py -cfg=${{ matrix.configuration }} -j
 
       # ------------------------------------------------------------------------
 
-      - name: Run tests (MSVC)
-        if: matrix.compiler == 'cl'
-        shell: bash
+      - name: Run tests
         run: |
-          ./bin/${{ matrix.config }}/StormRuler_UnitTests.exe
-
-      # ------------------------------------------------------------------------
-
-      - name: Run tests (MinGW)
-        if: matrix.compiler == 'g++'
-        shell: msys2 {0}
-        run: |
-          ./bin/StormRuler_UnitTests.exe
-          ./bin/StormRuler_Benchmarks.exe
+          bin\${{ matrix.configuration }}\StormRuler_UnitTests.exe
+          bin\${{ matrix.configuration }}\StormRuler_Benchmarks.exe
 
 # ------------------------------------------------------------------------------

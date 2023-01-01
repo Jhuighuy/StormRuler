@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
 # Copyright (C) 2020-2023 Oleg Butakov
 #
@@ -22,19 +22,23 @@
 
 # ------------------------------------------------------------------------------
 
-if [ $# -ne 0 ]; then
-    # Mock the output of Python's `argparse.ArgumentParser`.
-    echo "usage: $0 [-h]"
-    echo ""
-    echo "Count lines of code of the repository files."
-    echo ""
-    echo "options:"
-    echo "  -h, --help show this help message and exit"
-    exit 1
-fi
+import argparse
+import subprocess
+import sys
 
 # ------------------------------------------------------------------------------
 
-git ls-files | xargs cloc
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Count lines of code of the repository files."
+    )
+    parser.parse_args()
+
+    # Get the repository files.
+    repository_files = subprocess.check_output(["git", "ls-files"]).splitlines()
+
+    # Count the lines of code!
+    results = subprocess.run(["cloc"] + repository_files)
+    sys.exit(results.returncode)
 
 # ------------------------------------------------------------------------------

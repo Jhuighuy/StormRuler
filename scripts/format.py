@@ -23,6 +23,7 @@
 # ------------------------------------------------------------------------------
 
 import argparse
+import os
 import subprocess
 import sys
 
@@ -32,13 +33,34 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Count lines of code of the repository files."
     )
-    parser.parse_args()
+    parser.add_argument(
+        "directory",
+        metavar="DIR",
+        action="store",
+        nargs="?",
+        default=None,
+        help="Directory to format files in",
+    )
+    args = parser.parse_args()
 
     # Get the indexed files.
-    indexed_files = subprocess.check_output(["git", "ls-files"]).splitlines()
+    git_ls_files_args = ["git", "ls-files"]
+    if args.directory is not None:
+        git_ls_files_args.append(args.directory)
+    indexed_files = subprocess.check_output(git_ls_files_args).decode().splitlines()
 
-    # Count the lines of code!
-    results = subprocess.run(["cloc"] + indexed_files)
-    sys.exit(results.returncode)
+    # Format the files!
+    for indexed_file in indexed_files:
+        _, extension = os.path.splitext(indexed_file)
+        if extension == ".py":
+            print(f"Format Python file {indexed_file} with Black..")
+            results = subprocess.run(["black", "-q", indexed_file])
+        elif extension in [".h", ".c", ".hpp", ".cpp"]:
+            print(f"Format C++ file {indexed_file} wih clang-format..")
+            results = subprocess.run(["clang-format", "-i", indexed_file])
+        else:
+            continue
+        if results.returncode != 0:
+            sys.exit(results.returncode)
 
 # ------------------------------------------------------------------------------

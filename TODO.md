@@ -13,7 +13,8 @@
 - [ ] `cmake-format` setup.
 - [ ] *Visual Studio 2022* configuration files.
 - [x] `scripts/cloc.py` in Python.
-- [ ] `scripts/format.py` and linting pipeline.
+- [x] `scripts/format.py` script.
+- [ ] Linting pipeline.
 
 ### Have to wait:
 - [ ] `mold` with `find_package`.

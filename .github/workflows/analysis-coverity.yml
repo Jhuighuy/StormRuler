@@ -77,7 +77,7 @@ jobs:
           cov-configure --msvc
           cov-build \
               --dir ${{ env.CONV_BUILD_OUT_DIR }} \
-              ./scripts/build.py -j
+              python3 ./scripts/build.py -j
 
       # ------------------------------------------------------------------------
 

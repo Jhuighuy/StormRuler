@@ -69,9 +69,10 @@ jobs:
 
       - name: Build (MSVC)
         if: matrix.compiler == 'cl'
+        shell: bash
         run: |
-          scripts\configure.bat -std=${{ matrix.standard }}
-          scripts\build.bat -cfg=${{ matrix.configuration }}
+          ./scripts/configure.py -std=${{ matrix.standard }}
+          ./scripts/build.py -cfg=${{ matrix.configuration }}
 
       # ------------------------------------------------------------------------
 
@@ -87,8 +88,9 @@ jobs:
       # ------------------------------------------------------------------------
 
       - name: Run tests
+        shell: bash
         run: |
-          bin\${{ matrix.configuration }}\StormRuler_UnitTests.exe
-          bin\${{ matrix.configuration }}\StormRuler_Benchmarks.exe
+          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
+          ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
 
 # ------------------------------------------------------------------------------

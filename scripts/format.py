@@ -25,7 +25,6 @@
 import argparse
 import os
 import subprocess
-import sys
 
 # ------------------------------------------------------------------------------
 
@@ -54,13 +53,11 @@ if __name__ == "__main__":
         _, extension = os.path.splitext(indexed_file)
         if extension == ".py":
             print(f"Format Python file {indexed_file} with Black..")
-            results = subprocess.run(["black", "-q", indexed_file])
+            black_args = ["black", "-q", indexed_file]
+            results = subprocess.check_call(black_args)
         elif extension in [".h", ".c", ".hpp", ".cpp"]:
             print(f"Format C++ file {indexed_file} wih clang-format..")
-            results = subprocess.run(["clang-format", "-i", indexed_file])
-        else:
-            continue
-        if results.returncode != 0:
-            sys.exit(results.returncode)
+            clang_format_args = ["clang-format", "-i", indexed_file]
+            results = subprocess.check_call(clang_format_args)
 
 # ------------------------------------------------------------------------------

@@ -25,7 +25,6 @@
 import argparse
 import os
 import shutil
-import sys
 import subprocess
 
 # ------------------------------------------------------------------------------
@@ -122,7 +121,6 @@ if __name__ == "__main__":
         cmake_args += args.arguments
 
     # Run CMake!
-    results = subprocess.run(cmake_args)
-    sys.exit(results.returncode)
+    subprocess.check_call(cmake_args)
 
 # ------------------------------------------------------------------------------

@@ -27,7 +27,6 @@ import multiprocessing
 import os
 import re
 import subprocess
-import sys
 
 # ------------------------------------------------------------------------------
 
@@ -84,7 +83,6 @@ if __name__ == "__main__":
             cmake_args += ["--", "-j", str(num_threads)]
 
     # Run CMake!
-    results = subprocess.run(cmake_args)
-    sys.exit(results.returncode)
+    subprocess.check_call(cmake_args)
 
 # ------------------------------------------------------------------------------

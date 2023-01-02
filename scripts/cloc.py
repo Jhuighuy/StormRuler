@@ -24,7 +24,6 @@
 
 import argparse
 import subprocess
-import sys
 
 # ------------------------------------------------------------------------------
 
@@ -35,10 +34,11 @@ if __name__ == "__main__":
     parser.parse_args()
 
     # Get the indexed files.
-    indexed_files = subprocess.check_output(["git", "ls-files"]).splitlines()
+    git_ls_files_args = ["git", "ls-files"]
+    indexed_files = subprocess.check_output(git_ls_files_args).splitlines()
 
     # Count the lines of code!
-    results = subprocess.run(["cloc"] + indexed_files)
-    sys.exit(results.returncode)
+    cloc_args = ["cloc"] + indexed_files
+    subprocess.check_call(cloc_args)
 
 # ------------------------------------------------------------------------------

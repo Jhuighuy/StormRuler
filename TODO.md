@@ -3,23 +3,48 @@
 <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 
 <!----------------------------------------------------------------------------->
+## Documentation and Marketing
+<!----------------------------------------------------------------------------->
+
+### Marketing
+
+- [ ] Logo.
+
+<!----------------------------------------------------------------------------->
 ## Devops/CI things
 <!----------------------------------------------------------------------------->
 
-### Can be done now:
-- [ ] Logo.
-- [ ] Merge `windows-port` branch.
-- [ ] `.vscode/settings.json` and `.vscode/launch.json` files.
-- [ ] `cmake-format` setup.
+### IDE/editors
+
+- [ ] *CLion* configuration files.
+- [ ] *VSCode* `.vscode/settings.json` and `.vscode/launch.json` files.
 - [ ] *Visual Studio 2022* configuration files.
+
+### CMake and build scripts
+
+- [ ] `CMake` mutli-config builds.
+- [ ] `CMakePresets.json` file.
+- [ ] `mold` with `find_package`.
+- [ ] `make_config_defaults.cmake` in `CMake`.
+- [ ] `scripts/test.py` script and `CTest` integration.
 - [x] `scripts/cloc.py` in Python.
+
+### Linting
+
 - [x] `scripts/format.py` script.
+- [ ] `cmake-format` setup.
+- [ ] `clang-tidy` setup.
+- [ ] Sanitizing setup.
 - [ ] Linting pipeline.
 
-### Have to wait:
-- [ ] `mold` with `find_package`.
-- [ ] `clang-16` support.
-- [ ] `cl-clang` support (`clang-16`).
+### CI
+
 - [ ] *Coverity* integration (when `2022.9` releases).
 - [ ] *CodeQL* integration (when `clang-16` releases).
-- [ ] *C++23* support (probably, with `g++-13` and `clang-16`).
+
+### Compilers and Language support
+
+- [ ] *C++23* support.
+- [ ] `g++-13` support.
+- [ ] `clang-16` support.
+- [ ] `clang-cl` support (`clang-16`).

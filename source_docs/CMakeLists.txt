@@ -49,6 +49,9 @@ endif()
 # Doxygen in too verbose by default.
 set(DOXYGEN_QUIET YES)
 
+# Configure the project logo.
+set(DOXYGEN_PROJECT_LOGO ${CMAKE_CURRENT_SOURCE_DIR}/Images/LogoIcon.svg)
+
 # Configure the documentation extraction.
 set(DOXYGEN_DISTRIBUTE_GROUP_DOC   YES )
 set(DOXYGEN_PREDEFINED "STORM_DOXYGEN_=1")

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="144mm"
+   height="50mm"
+   viewBox="0 0 144 49.999999"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a84865, 2022-12-01)"
+   sodipodi:docname="Logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.3948531"
+     inkscape:cx="250.20556"
+     inkscape:cy="70.975217"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Storm Logo"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-3.436151,16.804356)">
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:31.75px;font-family:'Avenir Next Condensed';-inkscape-font-specification:'Avenir Next Condensed,  Bold Italic Condensed';letter-spacing:0px;fill:#0a5078;fill-opacity:1;stroke:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       x="50.720142"
+       y="31.732405"
+       id="text12090"
+       inkscape:label="Storm"><tspan
+         sodipodi:role="line"
+         id="tspan12088"
+         style="font-style:italic;font-variant:normal;font-weight:900;font-stretch:condensed;font-family:'Avenir Next Condensed';-inkscape-font-specification:'Avenir Next Condensed,  Heavy Italic Condensed';fill:#0a5078;fill-opacity:1;stroke:none;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         x="50.720142"
+         y="31.732405"><tspan
+   style="font-style:italic;font-variant:normal;font-weight:900;font-stretch:condensed;font-size:35.2778px;font-family:'Avenir Next Condensed';-inkscape-font-specification:'Avenir Next Condensed,  Heavy Italic Condensed';letter-spacing:0px;stroke:none;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;fill:#0a5078;fill-opacity:1"
+   id="tspan12815">S</tspan><tspan
+   style="letter-spacing:-0.132292px;fill:#0a5078;fill-opacity:1"
+   id="tspan85924">T</tspan><tspan
+   style="font-style:italic;font-variant:normal;font-weight:900;font-stretch:condensed;font-family:'Avenir Next Condensed';-inkscape-font-specification:'Avenir Next Condensed,  Heavy Italic Condensed';letter-spacing:-1.05833px;stroke:none;stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;fill:#0a5078;fill-opacity:1"
+   id="tspan13013">O</tspan>RM</tspan></text>
+    <path
+       id="path39461"
+       style="fill:#0a5078;fill-opacity:1;stroke:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       inkscape:label="Petrel"
+       d="m 6.3249396,-15.97408 c -0.8886564,-0.04929 -1.8329631,0.807019 -1.1932088,1.344104 9.7618682,6.5700624 22.3540462,16.5287558 20.0762942,20.0359863 -1.390334,1.6907973 -4.572633,5.3011727 -12.189954,8.9002317 -3.1993223,1.447697 4.317274,5.184522 6.119006,3.900021 5.416249,-3.7211 16.536105,-5.613896 20.440613,-10.6975387 1.885464,-2.6015984 3.5699,-3.7214124 5.704562,-5.6735555 1.501356,-0.2345547 3.010965,0.014675 4.225581,0.7751465 0.182385,-0.4558795 0.55958,-1.4007396 0.234611,-1.89859211 -0.42898,-0.5959264 -1.024552,-0.81420455 -3.647322,-1.42316894 C 45.688167,-1.5550309 45.248545,-2.3768429 44.213583,-2.8017574 42.614645,-3.3694289 41.636748,-3.1790926 39.82367,-1.75686 37.039509,0.34162892 35.485216,-0.32916822 32.598271,0.33035112 27.617989,-8.3256262 15.784383,-14.622135 6.5011562,-15.951342 c -0.058264,-0.01169 -0.1169728,-0.01945 -0.1762166,-0.02274 z M 39.941492,8.2518314 c -1.385471,1.6645415 -3.405666,2.9462776 -5.67924,4.0529826 6.275252,3.550644 8.412266,7.427088 13.852902,15.334981 0.360462,0.536617 1.417251,-0.11456 1.246952,-0.833024 C 47.834636,18.88932 44.351041,11.91348 39.941492,8.2518314 Z" />
+  </g>
+</svg>

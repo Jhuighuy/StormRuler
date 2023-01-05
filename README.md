@@ -1,4 +1,4 @@
-### ![Storm Ruler](./source_docs/Logo.svg)
+# <p align="center">![Storm Ruler](./source_docs/Images/Logo.svg)</p>
 
 [![Ubuntu](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml)
 [![macOS](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml)

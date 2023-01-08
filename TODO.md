@@ -8,7 +8,7 @@
 
 ### Marketing
 
-- [ ] Logo.
+- [x] Logo.
 
 <!----------------------------------------------------------------------------->
 ## Devops/CI things
@@ -48,3 +48,7 @@
 - [ ] `g++-13` support.
 - [ ] `clang-16` support.
 - [ ] `clang-cl` support (`clang-16`).
+
+### Other
+
+- [x] Localize the `.gitignore` files.

@@ -24,18 +24,7 @@
 *
 *~
 !*/
-
-# ------------------------------------------------------------------------------
-
-# Configuration files.
 !.git*
-!vcpkg.json
-!.vscode/c_cpp_properties.json
-!.clang-*
-!CPPLINT.cfg
-!sonar-project.properties
-!*.yml
-!CMakeLists.txt
 
 # ------------------------------------------------------------------------------
 
@@ -46,6 +35,17 @@ build/
 
 # ------------------------------------------------------------------------------
 
+# Configuration files.
+!.clang-*
+!vcpkg.json
+!sonar-project.properties
+!CPPLINT.cfg
+
+# ------------------------------------------------------------------------------
+
+# CMake.
+!CMakeLists.txt
+
 # Sources.
 !*.h
 !*.c
@@ -55,13 +55,7 @@ build/
 !*.inl
 !*.glsl
 
-# Scripts.
-!*.cmake
-!*.py
-!*.sh
-!*.bat
-
-# Documentation.
+# Markdown.
 !*.md
 
 # ------------------------------------------------------------------------------

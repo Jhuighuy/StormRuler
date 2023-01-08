@@ -41,6 +41,7 @@
 
 - [ ] *Coverity* integration (when `2022.9` releases).
 - [ ] *CodeQL* integration (when `clang-16` releases).
+- [ ] Switch to `macos-latest` in the *macOS* pipeline.
 
 ### Compilers and Language support
 

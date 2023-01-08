@@ -36,7 +36,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: macos-11 # macos-latest fails because the bug in native linker.
     strategy:
       matrix:
         compiler: [g++-12]

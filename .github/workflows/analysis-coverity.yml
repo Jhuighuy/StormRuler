@@ -39,8 +39,8 @@ jobs:
     name: Build
     runs-on: windows-latest
     env:
-      # Directory where build-wrapper output will be placed.
-      CONV_BUILD_OUT_DIR: "cov_build_out_dir"
+      # Directory where cov-build output will be placed.
+      CONV_BUILD_OUT_DIR: cov_build_out_dir
 
     steps:
 
@@ -84,7 +84,7 @@ jobs:
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
-          name: cov-int
-          path: cov-int/
+          name: cov-build-out-dir
+          path: ${{ env.CONV_BUILD_OUT_DIR }}/
 
 # ------------------------------------------------------------------------------

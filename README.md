@@ -17,14 +17,14 @@
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**StormRuler** is a FVM-based multidimensional partial 
+**StormRuler** is a FVM-based multidimensional partial
 differential equations solving framework, written in C++23.
 
 <!----------------------------------------------------------------------------->
 ## 🌀 Equations solved
 <!----------------------------------------------------------------------------->
 
-**StormRuler** can be used to solve various partial differential equations, 
+**StormRuler** can be used to solve various partial differential equations,
 including:
 * 🌊 Incompressible Navier-Stokes equations,
 * 🌪 _(planned)_ Сompressible Navier-Stokes/Euler equations,

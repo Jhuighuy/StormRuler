@@ -23,5 +23,7 @@
 # VSCode configuration files.
 !c_cpp_properties.json
 !settings.json
+#!tasks.json
+#!launch.json
 
 # ------------------------------------------------------------------------------

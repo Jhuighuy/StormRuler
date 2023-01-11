@@ -125,15 +125,15 @@ endif()
 # Set the warnings and diagnostics options.
 if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
   # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
        -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
   # TODO: to be removed!
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
 elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
-       /WX /Wall 
-       /wd4061  # Enumerator '...' in switch of enum '...' is not explicitly 
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+       /WX /Wall
+       /wd4061  # Enumerator '...' in switch of enum '...' is not explicitly
                 # handled by a case label.
        /wd4365  # Signed/unsigned mismatch.
        /wd4458  # Declaration of '...' hides class member.
@@ -148,23 +148,23 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd4710  # '...': function not inlined.
        /wd4711  # Function '...' selected for automatic inline expansion.
        /wd4820  # '...' bytes padding added after data member '...'.
-       /wd4868  # Compiler may not enforce left-to-right evaluation order in 
+       /wd4868  # Compiler may not enforce left-to-right evaluation order in
                 # braced initializer list.
        /wd5026  # Move constructor was implicitly defined as deleted.
        /wd5027  # Move assignment operator was implicitly defined as deleted.
        /wd5039  # Pointer or reference to potentially throwing function passed
-                # to extern C function under -EHc. Undefined behavior may occur 
-                # if this function throws an exception. 
-       /wd5045  # Compiler will insert Spectre mitigation for memory load if 
+                # to extern C function under -EHc. Undefined behavior may occur
+                # if this function throws an exception.
+       /wd5045  # Compiler will insert Spectre mitigation for memory load if
                 # /Qspectre switch specified.
-       /wd5105  # Macro expansion producing 'defined' has undefined behavior 
-       /wd5214  # Applying '...' to an operand with a volatile qualified type 
+       /wd5105  # Macro expansion producing 'defined' has undefined behavior
+       /wd5214  # Applying '...' to an operand with a volatile qualified type
                 # is deprecated in C++20.
        /wd5246  # The initialization of a subobject should be wrapped in braces
        /wd5262  # Implicit fall-through occurs here.
        /wd5264) # 'const' variable is not used.
   # TODO: to be removed!
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
        /wd4100  # Unused parameter.
        /wd5219) # Implicit conversion from '..' to '..', possible loss of data.
 endif()
@@ -176,10 +176,10 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
   # Release: debug information, full optimizations.
   list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
   # Coverage: coverage, debug information, no optimizations, no inlining.
-  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS 
+  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS
        --coverage -g -O0 -fno-inline -fno-default-inline
        -fno-inline-small-functions -fno-elide-constructors)
-  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
+  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
 elseif(Storm_CXX_COMPILER_MSVC_LIKE)
   # TODO: https://gitlab.kitware.com/cmake/cmake/-/issues/20812
@@ -194,10 +194,10 @@ endif()
 
 # Apply the options (for all build types).
 target_compile_options(
-    StormRuler_BASE INTERFACE 
+    StormRuler_BASE INTERFACE
     ${StormRuler_CXX_COMPILE_OPTIONS})
 target_link_options(
-    StormRuler_BASE INTERFACE 
+    StormRuler_BASE INTERFACE
     ${StormRuler_CXX_LINK_OPTIONS})
 
 # Apply the options (for Debug build type).
@@ -261,8 +261,8 @@ function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
   configure_file(${INPUT_FILE} ${OUTPUT_FILE})
   add_custom_command(
     OUTPUT ${DEFAULTS_OUTPUT_FILE}
-    COMMAND ${Python3_EXECUTABLE} 
-      ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py 
+    COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
       ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
     MAIN_DEPENDENCY ${INPUT_FILE}
     VERBATIM)
@@ -328,7 +328,7 @@ else()
     message(STATUS "| MKL enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
   endif()
-endif() 
+endif()
 
 # Find BLAS.
 if(StormRuler_NO_BLAS)

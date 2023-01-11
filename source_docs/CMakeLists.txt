@@ -20,13 +20,13 @@
 
 # ------------------------------------------------------------------------------
 
-# This may be a standalone source directory. Because of this, consider using 
+# This may be a standalone source directory. Because of this, consider using
 # paths relative to `CMAKE_CURRENT_SOURCE_DIR` instead of `CMAKE_SOURCE_DIR`.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   cmake_minimum_required(VERSION 3.20..3.26)
   project(StormRuler
           VERSION 0.1
-          DESCRIPTION "A very high order FVM framework" 
+          DESCRIPTION "A very high order FVM framework"
           LANGUAGES NONE)
 endif()
 
@@ -112,7 +112,7 @@ set(DOXYGEN_HTML_EXTRA_FILES
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js)
-set(DOXYGEN_HTML_EXTRA_STYLESHEET 
+set(DOXYGEN_HTML_EXTRA_STYLESHEET
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome.css
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-sidebar-only.css
     ${doxygen_awesome_css_SOURCE_DIR}/doxygen-awesome-sidebar-only-darkmode-toggle.css)

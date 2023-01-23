@@ -21,7 +21,7 @@
 # ------------------------------------------------------------------------------
 
 # Ignore the generated configuration file.
-# Default configuration file should be in the repository, 
+# Default configuration file should be in the repository,
 # it is used for non-CMake builds.
 Storm/Config.hpp
 !Storm/ConfigDefault.hpp

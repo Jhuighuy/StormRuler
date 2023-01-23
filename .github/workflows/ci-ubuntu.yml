@@ -40,7 +40,8 @@ jobs:
     strategy:
       matrix:
         compiler: [g++-12]
-        config: [Debug, Release]
+        standard: [c++20]
+        configuration: [Debug, Release]
       fail-fast: false
 
     steps:
@@ -62,9 +63,10 @@ jobs:
 
       - name: Build
         run: |
-          export CXX=${{ matrix.compiler }}
-          ./scripts/configure.sh ${{ matrix.config }}
-          ./scripts/build.sh
+          ./scripts/configure.py \
+              -cxx=${{ matrix.compiler }} -std=${{ matrix.standard }} \
+              -cfg=${{ matrix.configuration }}
+          ./scripts/build.py -j
 
       # ------------------------------------------------------------------------
 

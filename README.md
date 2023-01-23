@@ -1,11 +1,8 @@
-<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
-# StormRuler🦜 — A very high order FVM framework
-<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
-
-[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
+# <p align="center">![Storm Ruler](./source_docs/Images/Logo.svg)</p>
 
 [![Ubuntu](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml)
 [![macOS](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml)
+[![Windows](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml)
 [![Pages](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml)
 [![SonarCloud](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
@@ -13,19 +10,21 @@
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)
 [![codecov](https://codecov.io/github/Jhuighuy/StormRuler/branch/main/graph/badge.svg?token=GUSIUDW3G0)](https://codecov.io/github/Jhuighuy/StormRuler)
 [![CodeQL](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-codeql.yml)
+[![Coverity](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-coverity.yml)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/27159/badge.svg)](https://scan.coverity.com/projects/jhuighuy-stormruler)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e7a26478673f403aa32f41a7c2a86d8d)](https://www.codacy.com/gh/Jhuighuy/StormRuler/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Jhuighuy/StormRuler&amp;utm_campaign=Badge_Grade)
 [![CodeFactor](https://www.codefactor.io/repository/github/jhuighuy/stormruler/badge)](https://www.codefactor.io/repository/github/jhuighuy/stormruler)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6812/badge)](https://bestpractices.coreinfrastructure.org/projects/6812)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**StormRuler** is a FVM-based multidimensional partial 
+**StormRuler** is a FVM-based multidimensional partial
 differential equations solving framework, written in C++23.
 
 <!----------------------------------------------------------------------------->
 ## 🌀 Equations solved
 <!----------------------------------------------------------------------------->
 
-**StormRuler** can be used to solve various partial differential equations, 
+**StormRuler** can be used to solve various partial differential equations,
 including:
 * 🌊 Incompressible Navier-Stokes equations,
 * 🌪 _(planned)_ Сompressible Navier-Stokes/Euler equations,

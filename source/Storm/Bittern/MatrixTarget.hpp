@@ -48,7 +48,7 @@ concept target_matrix =
 
 /// @brief CRTP interface to a target matrix.
 template<crtp_derived TargetMatrix>
-class TargetMatrixInterface : public NonAssignable
+class TargetMatrixInterface
 {
 private:
 

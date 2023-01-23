@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
 # Copyright (C) 2020-2023 Oleg Butakov
 #
@@ -22,6 +22,28 @@
 
 # ------------------------------------------------------------------------------
 
-time cmake --build ./build -- -j
+import argparse
+import re
+
+# ------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generate the default values for the CMake configuration file."
+    )
+    parser.add_argument("input_file_path", help="Input CMake configuration file path.")
+    parser.add_argument("output_file_path", help="Generated output file path")
+    args = parser.parse_args()
+
+    FIND_REGEXP = r"#cmakedefine01\s*(\w+)$"
+    REPLACE_REGEXP = r"#ifndef \1\n#  define \1 0\n#endif"
+
+    with open(args.input_file_path, "r") as input_file:
+        contents = input_file.read()
+        generated = re.sub(FIND_REGEXP, REPLACE_REGEXP, contents, flags=re.M)
+
+    with open(args.output_file_path, "w") as output_file:
+        output_file.write(generated)
+
 
 # ------------------------------------------------------------------------------

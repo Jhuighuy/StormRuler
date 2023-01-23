@@ -47,7 +47,7 @@ namespace Storm::Benchmarks
 
 #if STORM_BENCH_ARMADILLO_ENABLED
 
-#include <armadillo>
+#  include <armadillo>
 
 namespace Storm::Benchmarks
 {
@@ -105,7 +105,7 @@ public:
 
 #if STORM_BENCH_BLAZE_ENABLED
 
-#include <blaze/Blaze.h>
+#  include <blaze/Blaze.h>
 
 namespace Storm::Benchmarks
 {
@@ -155,8 +155,8 @@ public:
 
 #if STORM_BENCH_EIGEN_ENABLED
 
-#define EIGEN_STACK_ALLOCATION_LIMIT (1ull << 32ull)
-#include <eigen3/Eigen/Core>
+#  define EIGEN_STACK_ALLOCATION_LIMIT (1ull << 32ull)
+#  include <eigen3/Eigen/Core>
 
 namespace Storm::Benchmarks
 {
@@ -207,9 +207,9 @@ public:
 
 #if STORM_BENCH_XTENSOR_ENABLED
 
-#include <xtensor/xfixed.hpp>
-#include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
+#  include <xtensor/xfixed.hpp>
+#  include <xtensor/xtensor.hpp>
+#  include <xtensor/xview.hpp>
 
 namespace Storm::Benchmarks
 {

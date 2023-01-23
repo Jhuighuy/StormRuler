@@ -20,15 +20,10 @@
 
 # ------------------------------------------------------------------------------
 
-# CSS files.
-!*.css
-!*.css.in
-
-# HTML files.
-!*.html
-!*.html.in
-
-# Images.
-!*.svg
+# VSCode configuration files.
+!c_cpp_properties.json
+!settings.json
+#!tasks.json
+#!launch.json
 
 # ------------------------------------------------------------------------------

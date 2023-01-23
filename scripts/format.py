@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
 # Copyright (C) 2020-2023 Oleg Butakov
 #
@@ -22,18 +22,42 @@
 
 # ------------------------------------------------------------------------------
 
-if [ $# -ne 0 ]; then
-    echo "Usage: $0"
-    echo ""
-    echo "Count lines of code of the repository files."
-    echo ""
-    echo "Options:"
-    echo "  -h Print this help."
-    exit 1
-fi
+import argparse
+import os
+import subprocess
 
 # ------------------------------------------------------------------------------
 
-git ls-files | xargs cloc
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Count lines of code of the repository files."
+    )
+    parser.add_argument(
+        "directory",
+        metavar="DIR",
+        action="store",
+        nargs="?",
+        default=None,
+        help="Directory to format files in",
+    )
+    args = parser.parse_args()
+
+    # Get the indexed files.
+    git_ls_files_args = ["git", "ls-files"]
+    if args.directory is not None:
+        git_ls_files_args.append(args.directory)
+    indexed_files = subprocess.check_output(git_ls_files_args).decode().splitlines()
+
+    # Format the files!
+    for indexed_file in indexed_files:
+        _, extension = os.path.splitext(indexed_file)
+        if extension == ".py":
+            print(f"Format Python file {indexed_file} with Black..")
+            black_args = ["black", "-q", indexed_file]
+            results = subprocess.check_call(black_args)
+        elif extension in [".h", ".c", ".hpp", ".cpp"]:
+            print(f"Format C++ file {indexed_file} wih clang-format..")
+            clang_format_args = ["clang-format", "-i", indexed_file]
+            results = subprocess.check_call(clang_format_args)
 
 # ------------------------------------------------------------------------------

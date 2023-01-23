@@ -30,20 +30,10 @@ target_include_directories(StormRuler_BASE INTERFACE ".")
 # ------------------------------------------------------------------------------
 
 # Configuration file.
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp.in" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp")
-
-# "Default" configuration file. 
-# (It should be in the repository, used for non-CMake builds.)
-add_custom_command(
-    OUTPUT "./Storm/ConfigDefault.hpp"
-    COMMAND ${Python3_EXECUTABLE} 
-        "../scripts/MakeConfigDefault.py" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp.in" 
-        "${CMAKE_CURRENT_SOURCE_DIR}/Storm/ConfigDefault.hpp"
-    MAIN_DEPENDENCY "./Storm/Config.hpp.in"
-    VERBATIM)
+storm_configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/ConfigDefault.hpp")
 
 # ------------------------------------------------------------------------------
 

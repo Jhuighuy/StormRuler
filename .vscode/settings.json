@@ -1,0 +1,150 @@
+// Copyright (C) 2020-2023 Oleg Butakov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
+{
+  // ---------------------------------------------------------------------------
+  // Editor settings.
+  "editor.rulers": [
+    80
+  ],
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "bin": true,
+    "docs": true,
+    "build": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/docs/**": true,
+    "**/build/**": true
+  },
+  // ---------------------------------------------------------------------------
+  // C++ settings.
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  // ---------------------------------------------------------------------------
+  // Python settings.
+  "python.formatting.provider": "black",
+  // ---------------------------------------------------------------------------
+  "files.associations": {
+    "*.tcc": "cpp",
+    "__bit_reference": "cpp",
+    "__bits": "cpp",
+    "__config": "cpp",
+    "__debug": "cpp",
+    "__errc": "cpp",
+    "__hash_table": "cpp",
+    "__locale": "cpp",
+    "__mutex_base": "cpp",
+    "__node_handle": "cpp",
+    "__nullptr": "cpp",
+    "__split_buffer": "cpp",
+    "__std_stream": "cpp",
+    "__string": "cpp",
+    "__threading_support": "cpp",
+    "__tree": "cpp",
+    "__tuple": "cpp",
+    "__verbose_abort": "cpp",
+    "algorithm": "cpp",
+    "any": "cpp",
+    "array": "cpp",
+    "atomic": "cpp",
+    "bit": "cpp",
+    "bitset": "cpp",
+    "cctype": "cpp",
+    "cfenv": "cpp",
+    "charconv": "cpp",
+    "chrono": "cpp",
+    "cinttypes": "cpp",
+    "clocale": "cpp",
+    "cmath": "cpp",
+    "codecvt": "cpp",
+    "compare": "cpp",
+    "complex": "cpp",
+    "concepts": "cpp",
+    "condition_variable": "cpp",
+    "csignal": "cpp",
+    "cstdarg": "cpp",
+    "cstddef": "cpp",
+    "cstdint": "cpp",
+    "cstdio": "cpp",
+    "cstdlib": "cpp",
+    "cstring": "cpp",
+    "ctime": "cpp",
+    "cwchar": "cpp",
+    "cwctype": "cpp",
+    "deque": "cpp",
+    "exception": "cpp",
+    "filesystem": "cpp",
+    "format": "cpp",
+    "fstream": "cpp",
+    "functional": "cpp",
+    "initializer_list": "cpp",
+    "iomanip": "cpp",
+    "ios": "cpp",
+    "iosfwd": "cpp",
+    "iostream": "cpp",
+    "istream": "cpp",
+    "iterator": "cpp",
+    "limits": "cpp",
+    "list": "cpp",
+    "locale": "cpp",
+    "map": "cpp",
+    "memory": "cpp",
+    "memory_resource": "cpp",
+    "mutex": "cpp",
+    "new": "cpp",
+    "numbers": "cpp",
+    "numeric": "cpp",
+    "optional": "cpp",
+    "ostream": "cpp",
+    "queue": "cpp",
+    "random": "cpp",
+    "ranges": "cpp",
+    "ratio": "cpp",
+    "semaphore": "cpp",
+    "set": "cpp",
+    "shared_mutex": "cpp",
+    "span": "cpp",
+    "sstream": "cpp",
+    "stack": "cpp",
+    "stdexcept": "cpp",
+    "stop_token": "cpp",
+    "streambuf": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "system_error": "cpp",
+    "thread": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "typeinfo": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "utility": "cpp",
+    "variant": "cpp",
+    "vector": "cpp"
+  }
+  // ---------------------------------------------------------------------------
+}

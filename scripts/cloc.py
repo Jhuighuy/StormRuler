@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
 # Copyright (C) 2020-2023 Oleg Butakov
 #
@@ -22,39 +22,23 @@
 
 # ------------------------------------------------------------------------------
 
-# Setup C++ compiler and standard.
-CXX=${CXX:-g++-12}
-CXX_STD=${CXX_STD:-20}
-echo "C++$CXX_STD compiler: $CXX"
-
-# Setup the configuration.
-CONFIG=${1:-Release}
-echo "Configuration: $CONFIG"
-
-# Setup vcpck root directory.
-VCPKG_ROOT=${VCPKG_ROOT:-${VCPKG_INSTALLATION_ROOT:-$HOME/vcpkg}}
-echo "vcpkg root directory: $VCPKG_ROOT"
-VCPKG_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
-if [ ! -f "$VCPKG_TOOLCHAIN_FILE" ]; then
-    echo "Broken vcpkg installation!"
-    exit 1
-fi
+import argparse
+import subprocess
 
 # ------------------------------------------------------------------------------
 
-# Remove old build directory.
-rm -rf ./bin
-rm -rf ./docs
-rm -rf ./build
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Count lines of code of the repository files."
+    )
+    parser.parse_args()
 
-# ------------------------------------------------------------------------------
+    # Get the indexed files.
+    git_ls_files_args = ["git", "ls-files"]
+    indexed_files = subprocess.check_output(git_ls_files_args).splitlines()
 
-# Configure CMake.
-export CXX
-cmake -S . \
-      -B build \
-      -DCMAKE_BUILD_TYPE="$CONFIG" \
-      -DCMAKE_CXX_STANDARD="$CXX_STD" \
-      -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE"
+    # Count the lines of code!
+    cloc_args = ["cloc"] + indexed_files
+    subprocess.check_call(cloc_args)
 
 # ------------------------------------------------------------------------------

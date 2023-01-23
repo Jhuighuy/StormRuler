@@ -81,10 +81,9 @@ jobs:
 
       - name: Run build-wrapper
         run: |
-          export CXX=${{ env.GXX_EXE }}
-          ./scripts/configure.sh Coverage
+          ./scripts/configure.py -cxx=${{ env.GXX_EXE }} -std=c++20 -cfg=Coverage
           build-wrapper-linux-x86-64 \
-              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./scripts/build.sh
+              --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} ./scripts/build.py -j
 
       # ------------------------------------------------------------------------
 

@@ -20,49 +20,77 @@
 
 # ------------------------------------------------------------------------------
 
-name: Pages
+name: Windows
 
 # ------------------------------------------------------------------------------
 
 on:
   push:
     branches:
-      -  main
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 # ------------------------------------------------------------------------------
 
 jobs:
-  build_pages:
-    name: Build pages
-    runs-on: macos-latest
+  build:
+    name: Build
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [cl, g++]
+        standard: [c++20]
+        configuration: [Debug, Release]
+      fail-fast: false
 
     steps:
 
       # ------------------------------------------------------------------------
 
-      - name: Checkout (main)
+      - name: Checkout
         uses: actions/checkout@v3
 
       # ------------------------------------------------------------------------
 
-      - name: Install Doxygen & Graphviz
-        run:
-          brew install doxygen graphviz
-
-      # ------------------------------------------------------------------------
-
-      - name: Run Doxygen
-        run: |
-          # No fancy scripts in here :)
-          cmake -S source_docs -B build
-          cmake --build build
-          touch docs/.nojekyll
-
-      # ------------------------------------------------------------------------
-
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Setup MSYS2 (MinGW)
+        if: matrix.compiler == 'g++'
+        uses: msys2/setup-msys2@v2
         with:
-          folder: docs
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+
+      # ------------------------------------------------------------------------
+
+      - name: Build (MSVC)
+        if: matrix.compiler == 'cl'
+        shell: bash
+        run: |
+          ./scripts/configure.py -std=${{ matrix.standard }}
+          ./scripts/build.py -cfg=${{ matrix.configuration }}
+
+      # ------------------------------------------------------------------------
+
+      - name: Build (MinGW)
+        if: matrix.compiler == 'g++'
+        shell: msys2 {0}
+        run: |
+          ./scripts/configure.py \
+              -cxx=${{ matrix.compiler }} -std=${{ matrix.standard }} \
+              -args -G "Ninja Multi-Config"
+          ./scripts/build.py -cfg=${{ matrix.configuration }} -j
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests
+        shell: bash
+        run: |
+          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
+          ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
 
 # ------------------------------------------------------------------------------

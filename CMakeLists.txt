@@ -68,9 +68,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-# Set the CMake modules directory.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-
 # ------------------------------------------------------------------------------
 
 # Check C/C++ compiler.
@@ -84,14 +81,21 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0.0")
     message(FATAL_ERROR "Clang version 16.0 or more recent is required!")
   endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(Storm_CXX_COMPILER_MSVC_LIKE YES)
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.34.0")
+    message(FATAL_ERROR "MSVC version 19.34.0 or more recent is required!")
+  endif()
 else()
   message(FATAL_ERROR "Unsupported C++ compiler!")
 endif()
 
-# Require C++23 and disable extensions.
+# Require C++20 and disable extensions.
 # (Set globally, since these properties are not inherited by targets.)
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 23)
+  set(CMAKE_CXX_STANDARD 20)
+elseif(CMAKE_CXX_STANDARD LESS 20)
+  message(FATAL_ERROR "C++20 or more recent is required!")
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
@@ -113,15 +117,56 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
   # Extended concepts diagnostics.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # Enable new preprocessor.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS /Zc:preprocessor)
 endif()
 
 # Set the warnings and diagnostics options.
 if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
   # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS 
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
        -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
   # TODO: to be removed!
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # Enable maaany warnings, treated as errors.
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+       /WX /Wall
+       /wd4061  # Enumerator '...' in switch of enum '...' is not explicitly
+                # handled by a case label.
+       /wd4365  # Signed/unsigned mismatch.
+       /wd4458  # Declaration of '...' hides class member.
+       /wd4459  # Declaration of '...' hides global declaration.
+       /wd4464  # Relative include path contains '...'.
+       /wd4514  # Unreferenced inline function has been removed.
+       /wd4557  # '__assume' contains effect '...'.
+       /wd4582  # Constructor is not implicitly called.
+       /wd4623  # Default constructor was implicitly defined as deleted.
+       /wd4625  # Copy constructor was implicitly defined as deleted.
+       /wd4626  # Assignment operator was implicitly defined as deleted.
+       /wd4710  # '...': function not inlined.
+       /wd4711  # Function '...' selected for automatic inline expansion.
+       /wd4820  # '...' bytes padding added after data member '...'.
+       /wd4868  # Compiler may not enforce left-to-right evaluation order in
+                # braced initializer list.
+       /wd5026  # Move constructor was implicitly defined as deleted.
+       /wd5027  # Move assignment operator was implicitly defined as deleted.
+       /wd5039  # Pointer or reference to potentially throwing function passed
+                # to extern C function under -EHc. Undefined behavior may occur
+                # if this function throws an exception.
+       /wd5045  # Compiler will insert Spectre mitigation for memory load if
+                # /Qspectre switch specified.
+       /wd5105  # Macro expansion producing 'defined' has undefined behavior
+       /wd5214  # Applying '...' to an operand with a volatile qualified type
+                # is deprecated in C++20.
+       /wd5246  # The initialization of a subobject should be wrapped in braces
+       /wd5262  # Implicit fall-through occurs here.
+       /wd5264) # 'const' variable is not used.
+  # TODO: to be removed!
+  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+       /wd4100  # Unused parameter.
+       /wd5219) # Implicit conversion from '..' to '..', possible loss of data.
 endif()
 
 # Set the optimization options.
@@ -131,19 +176,28 @@ if(Storm_CXX_COMPILER_GNU_LIKE)
   # Release: debug information, full optimizations.
   list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
   # Coverage: coverage, debug information, no optimizations, no inlining.
-  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS 
+  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS
        --coverage -g -O0 -fno-inline -fno-default-inline
        -fno-inline-small-functions -fno-elide-constructors)
-  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage) 
+  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
+elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  # TODO: https://gitlab.kitware.com/cmake/cmake/-/issues/20812
+  # Debug: no optimizations.
+  # TODO: debug information?
+  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS /Od)
+  # Release: full optimizations.
+  # TODO: AVX512?
+  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS /O2 /arch:AVX2)
+  # TODO: Coverage options.
 endif()
 
 # Apply the options (for all build types).
 target_compile_options(
-    StormRuler_BASE INTERFACE 
+    StormRuler_BASE INTERFACE
     ${StormRuler_CXX_COMPILE_OPTIONS})
 target_link_options(
-    StormRuler_BASE INTERFACE 
+    StormRuler_BASE INTERFACE
     ${StormRuler_CXX_LINK_OPTIONS})
 
 # Apply the options (for Debug build type).
@@ -172,7 +226,12 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
-# Setup the mold linker.
+# Setup the CMake modules directory.
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+# ------------------------------------------------------------------------------
+
+# Find the mold linker.
 if(StormRuler_NO_MOLD)
   message(STATUS "| mold was disabled by user.")
 else()
@@ -195,7 +254,21 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Find Python interpreter.
-find_package(Python3 REQUIRED COMPONENTS Interpreter QUIET)
+find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter QUIET)
+
+# Custom configuration function.
+function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
+  configure_file(${INPUT_FILE} ${OUTPUT_FILE})
+  add_custom_command(
+    OUTPUT ${DEFAULTS_OUTPUT_FILE}
+    COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
+      ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
+    MAIN_DEPENDENCY ${INPUT_FILE}
+    VERBATIM)
+endfunction()
+
+# ------------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED QUIET)
@@ -255,7 +328,7 @@ else()
     message(STATUS "| MKL enabled.")
     target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
   endif()
-endif() 
+endif()
 
 # Find BLAS.
 if(StormRuler_NO_BLAS)

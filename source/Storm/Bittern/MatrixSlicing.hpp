@@ -114,7 +114,7 @@ private:
   STORM_NO_UNIQUE_ADDRESS_ ColIndices col_indices_;
 
   // clang-format off
-  constexpr auto num_rows_() const noexcept 
+  constexpr auto num_rows_() const noexcept
       requires requires { row_indices_.size(); } {
     // clang-format on
     return row_indices_.size();

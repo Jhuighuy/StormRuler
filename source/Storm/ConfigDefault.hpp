@@ -24,45 +24,45 @@
 
 // Threading libraries configutation.
 #ifndef STORM_OpenMP_ENABLED
-#define STORM_OpenMP_ENABLED 0
+#  define STORM_OpenMP_ENABLED 0
 #endif
 #ifndef STORM_TBB_ENABLED
-#define STORM_TBB_ENABLED 0
+#  define STORM_TBB_ENABLED 0
 #endif
 
 // Algebra libraries configutation.
 #ifndef STORM_MKL_ENABLED
-#define STORM_MKL_ENABLED 0
+#  define STORM_MKL_ENABLED 0
 #endif
 #ifndef STORM_BLAS_ENABLED
-#define STORM_BLAS_ENABLED 0
+#  define STORM_BLAS_ENABLED 0
 #endif
 #ifndef STORM_LAPACK_ENABLED
-#define STORM_LAPACK_ENABLED 0
+#  define STORM_LAPACK_ENABLED 0
 #endif
 
 // Metis configutation.
 #ifndef STORM_METIS_ENABLED
-#define STORM_METIS_ENABLED 0
+#  define STORM_METIS_ENABLED 0
 #endif
 
 // Zlib configutation.
 #ifndef STORM_ZLIB_ENABLED
-#define STORM_ZLIB_ENABLED 0
+#  define STORM_ZLIB_ENABLED 0
 #endif
 
 // OpenGL configutation.
 #ifndef STORM_OpenGL_ENABLED
-#define STORM_OpenGL_ENABLED 0
+#  define STORM_OpenGL_ENABLED 0
 #endif
 #ifndef STORM_GLEW_ENABLED
-#define STORM_GLEW_ENABLED 0
+#  define STORM_GLEW_ENABLED 0
 #endif
 #ifndef STORM_GLFW_ENABLED
-#define STORM_GLFW_ENABLED 0
+#  define STORM_GLFW_ENABLED 0
 #endif
 #ifndef STORM_GLM_ENABLED
-#define STORM_GLM_ENABLED 0
+#  define STORM_GLM_ENABLED 0
 #endif
 
 // -----------------------------------------------------------------------------

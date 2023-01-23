@@ -7,7 +7,7 @@
 ##    Control the search through METIS_DIR or setting environment variable
 ##    METIS_ROOT to the METIS installation prefix.
 ##
-##    This module does not search default paths! 
+##    This module does not search default paths!
 ##
 ##    Following variables are set:
 ##    METIS_FOUND        (BOOL) Flag indicating if METIS was found
@@ -25,17 +25,17 @@ if(METIS_LIBRARIES AND METIS_INCLUDE_DIRS)
 else()
 
   if(METIS_DIR)
-    set(METIS_DIR "${METIS_DIR}" 
+    set(METIS_DIR "${METIS_DIR}"
       CACHE PATH "Path to search for METIS include and library files")
   endif()
 
   if(METIS_INCLUDE_DIR)
-    set(METIS_INCLUDE_DIR 
+    set(METIS_INCLUDE_DIR
       "${METIS_INCLUDE_DIR}" CACHE PATH "Path to search for METIS include files")
   endif()
 
   if(METIS_LIBRARY_DIR)
-    set(METIS_LIBRARY_DIR 
+    set(METIS_LIBRARY_DIR
       "${METIS_LIBRARY_DIR}" CACHE PATH "Path to search for METIS library files")
   endif()
 
@@ -55,7 +55,7 @@ else()
     else()
       set(METIS_INCLUDE_DIR "METIS_INCLUDE_DIR-NOTFOUND")
     endif()
-   else() 
+   else()
     set(metis_inc_suffixes "include" "Lib" "include/metis")
     if(METIS_DIR)
       if (EXISTS "${METIS_DIR}" )
@@ -66,7 +66,7 @@ else()
                     NO_DEFAULT_PATH)
       else()
           set(METIS_INCLUDE_DIR "METIS_INCLUDE_DIR-NOTFOUND")
-      endif()    
+      endif()
     else()
       find_path(METIS_INCLUDE_DIR
                 NAMES ${metis_inc_names}
@@ -89,7 +89,7 @@ else()
     else()
       set(METIS_LIBRARY "METIS_LIBRARY-NOTFOUND")
     endif()
-  else() 
+  else()
     list(APPEND metis_lib_suffixes "lib" "Lib")
     if(METIS_DIR)
       if (EXISTS "${METIS_DIR}" )
@@ -100,19 +100,19 @@ else()
                      NO_DEFAULT_PATH)
       else()
         set(METISLIBRARY "METIS_LIBRARY-NOTFOUND")
-      endif()    
+      endif()
     else()
       find_library(METIS_LIBRARY
                    NAMES ${metis_lib_names}
                    PATH_SUFFIXES ${metis_lib_suffixes})
     endif()
   endif()
-   
+
   # Define prerequisite packages.
   set(METIS_INCLUDE_DIRS ${METIS_INCLUDE_DIR})
   set(METIS_LIBRARIES    ${METIS_LIBRARY})
 
-endif()    
+endif()
 
 # Send useful message if everything is found.
 find_package_handle_standard_args(METIS DEFAULT_MSG
@@ -127,7 +127,7 @@ mark_as_advanced(
   METIS_LIBRARIES
   METIS_LIBRARY_DIR
 )
-find_package_handle_standard_args(METIS 
+find_package_handle_standard_args(METIS
   DEFAULT_MSG METIS_INCLUDE_DIR METIS_LIBRARY)
 
 # Create the target.

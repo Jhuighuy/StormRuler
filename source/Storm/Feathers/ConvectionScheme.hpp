@@ -47,6 +47,8 @@ public:
 
   std::map<Label, std::shared_ptr<MhdFvBcPT<tGasPhysics>>>* bcs_;
 
+  virtual ~iConvectionScheme() = default;
+
   /** Compute the nonlinear convection. */
   virtual void
   get_cell_convection(CellField<Mesh, real_t, 5>& div_f,

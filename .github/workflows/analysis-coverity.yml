@@ -20,49 +20,71 @@
 
 # ------------------------------------------------------------------------------
 
-name: Pages
+name: Coverity
 
 # ------------------------------------------------------------------------------
 
+# Temporarily, later -- on schedule.
 on:
   push:
     branches:
-      -  main
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 # ------------------------------------------------------------------------------
 
 jobs:
-  build_pages:
-    name: Build pages
-    runs-on: macos-latest
+  coverity:
+    name: Build
+    runs-on: windows-latest
+    env:
+      # Directory where cov-build output will be placed.
+      CONV_BUILD_OUT_DIR: cov_build_out_dir
 
     steps:
 
       # ------------------------------------------------------------------------
 
-      - name: Checkout (main)
+      - name: Checkout
         uses: actions/checkout@v3
 
       # ------------------------------------------------------------------------
 
-      - name: Install Doxygen & Graphviz
-        run:
-          brew install doxygen graphviz
-
-      # ------------------------------------------------------------------------
-
-      - name: Run Doxygen
+      - name: Install coverity-build-tool
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+        shell: bash
         run: |
-          # No fancy scripts in here :)
-          cmake -S source_docs -B build
-          cmake --build build
-          touch docs/.nojekyll
+          # Download the archieve.
+          curl \
+              "https://scan.coverity.com/download/win64" \
+              --data "token=${{ env.COVERITY_TOKEN }}&project=Jhuighuy%2FStormRuler" \
+              --output ../cov-analysis-win64.zip
+          # Unzip it.
+          7z x \
+              "../cov-analysis-win64.zip" \
+              "-o../cov-analysis-win64"
 
       # ------------------------------------------------------------------------
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Run coverity-build-tool
+        shell: bash
+        run: |
+          export PATH="../cov-analysis-win64/cov-analysis-win64-2022.6.0/bin:$PATH"
+          ./scripts/configure.py -std=c++20 -cfg=Debug
+          cov-configure --msvc
+          cov-build \
+              --dir ${{ env.CONV_BUILD_OUT_DIR }} \
+              python3 ./scripts/build.py -j
+
+      # ------------------------------------------------------------------------
+
+      - name: Upload results
+        uses: actions/upload-artifact@v3
         with:
-          folder: docs
+          name: cov-build-out-dir
+          path: ${{ env.CONV_BUILD_OUT_DIR }}/
 
 # ------------------------------------------------------------------------------

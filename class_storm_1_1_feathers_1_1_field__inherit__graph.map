@@ -1,5 +1,4 @@
 <map id="Storm::Feathers::Field&lt; Mesh, Index, Value, NumVars &gt;" name="Storm::Feathers::Field&lt; Mesh, Index, Value, NumVars &gt;">
-<area shape="rect" id="node1" title="Generic mesh field." alt="" coords="23,167,175,221"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_interface.html" title="CRTP interface to a target matrix." alt="" coords="5,79,193,119"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_non_assignable.html" title="Non assignable object interface." alt="" coords="23,5,176,31"/>
+<area shape="rect" id="node1" title="Generic mesh field." alt="" coords="23,93,175,148"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_target_matrix_interface.html" title="CRTP interface to a target matrix." alt="" coords="5,5,193,45"/>
 </map>

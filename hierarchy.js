@@ -122,22 +122,7 @@ var hierarchy =
     [ "Storm::Feathers::MinmodSlopeLimiter", "class_storm_1_1_feathers_1_1_minmod_slope_limiter.html", null ],
     [ "Storm::Multiply", "class_storm_1_1_multiply.html", null ],
     [ "Storm::MultiplyAssign", "class_storm_1_1_multiply_assign.html", null ],
-    [ "Storm::NonAssignable", "class_storm_1_1_non_assignable.html", [
-      [ "Storm::TargetMatrixInterface< Field< Mesh, Index, real_t, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
-      [ "Storm::TargetMatrixInterface< StaticMatrix< Elem, NumRows, NumCols > >", "class_storm_1_1_target_matrix_interface.html", [
-        [ "Storm::StaticMatrix< Elem, NumRows, 1 >", "class_storm_1_1_static_matrix.html", null ],
-        [ "Storm::StaticMatrix< Elem, NumRows, NumCols >", "class_storm_1_1_static_matrix.html", null ]
-      ] ],
-      [ "Storm::TargetMatrixInterface< TargetMatrixView< Matrix > >", "class_storm_1_1_target_matrix_interface.html", [
-        [ "Storm::TargetMatrixView< Matrix >", "class_storm_1_1_target_matrix_view.html", null ]
-      ] ],
-      [ "Storm::TargetMatrixInterface< Field< Mesh, Index, 5, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
-      [ "Storm::TargetMatrixInterface< TargetMatrix >", "class_storm_1_1_target_matrix_interface.html", [
-        [ "Storm::Feathers::Field< Mesh, real_t >", "class_storm_1_1_feathers_1_1_field.html", null ],
-        [ "Storm::Feathers::Field< Storm::UnstructuredMesh, real_t, 5 >", "class_storm_1_1_feathers_1_1_field.html", null ],
-        [ "Storm::Feathers::Field< Mesh, Index, Value, NumVars >", "class_storm_1_1_feathers_1_1_field.html", null ]
-      ] ]
-    ] ],
+    [ "Storm::NonAssignable", "class_storm_1_1_non_assignable.html", null ],
     [ "Storm::NonCopyable", "class_storm_1_1_non_copyable.html", [
       [ "Storm::FilteringStreambuf< Char, BeginFilter, EndFilter >", "class_storm_1_1_filtering_streambuf.html", null ],
       [ "Storm::MatrixOwningView< Matrix >", "class_storm_1_1_matrix_owning_view.html", null ],
@@ -241,6 +226,20 @@ var hierarchy =
     [ "Storm::TableInterface< VovTable< RowIndex, void > >", "class_storm_1_1_table_interface.html", null ],
     [ "Storm::Tan", "class_storm_1_1_tan.html", null ],
     [ "Storm::Tanh", "class_storm_1_1_tanh.html", null ],
+    [ "Storm::TargetMatrixInterface< TargetMatrix >", "class_storm_1_1_target_matrix_interface.html", [
+      [ "Storm::Feathers::Field< Mesh, real_t >", "class_storm_1_1_feathers_1_1_field.html", null ],
+      [ "Storm::Feathers::Field< Storm::UnstructuredMesh, real_t, 5 >", "class_storm_1_1_feathers_1_1_field.html", null ],
+      [ "Storm::Feathers::Field< Mesh, Index, Value, NumVars >", "class_storm_1_1_feathers_1_1_field.html", null ]
+    ] ],
+    [ "Storm::TargetMatrixInterface< Field< Mesh, Index, 5, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
+    [ "Storm::TargetMatrixInterface< Field< Mesh, Index, real_t, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
+    [ "Storm::TargetMatrixInterface< StaticMatrix< Elem, NumRows, NumCols > >", "class_storm_1_1_target_matrix_interface.html", [
+      [ "Storm::StaticMatrix< Elem, NumRows, 1 >", "class_storm_1_1_static_matrix.html", null ],
+      [ "Storm::StaticMatrix< Elem, NumRows, NumCols >", "class_storm_1_1_static_matrix.html", null ]
+    ] ],
+    [ "Storm::TargetMatrixInterface< TargetMatrixView< Matrix > >", "class_storm_1_1_target_matrix_interface.html", [
+      [ "Storm::TargetMatrixView< Matrix >", "class_storm_1_1_target_matrix_view.html", null ]
+    ] ],
     [ "Storm::shapes::Tetrahedron", "class_storm_1_1shapes_1_1_tetrahedron.html", null ],
     [ "Storm::Feathers::tGasPhysics", "class_storm_1_1_feathers_1_1t_gas_physics.html", null ],
     [ "tObject", null, [

@@ -25,8 +25,11 @@
 var NAVTREE =
 [
   [ "StormRuler", "index.html", [
-    [ "Main Page", "index.html", [
-      [ "🏗 Under construction.", "index.html#autotoc_md0", null ]
+    [ "🦜 Main Page", "index.html", "index" ],
+    [ "🏗 Compiling", "md__pages__compiling.html", [
+      [ "Ubuntu", "md__pages__compiling.html#autotoc_md1", null ],
+      [ "macOS", "md__pages__compiling.html#autotoc_md2", null ],
+      [ "Windows", "md__pages__compiling.html#autotoc_md3", null ]
     ] ],
     [ "Todo List", "todo.html", null ],
     [ "Namespaces", "namespaces.html", [
@@ -64,8 +67,8 @@ var NAVTREEINDEX =
 "class_storm_1_1_matrix_product_view.html#a0b4c98a6b200529aa12cce68390325af",
 "class_storm_1_1_tfqmr_solver.html",
 "class_storm_1_1shapes_1_1_hexahedron.html#a390f29f233b8e64d23e17ae2c294ac47",
-"functions.html",
-"namespacemembers_type.html"
+"dir_a3c24bddb6ad69bbc91b40b040b85608.html",
+"namespace_storm_1_1shapes.html#a8be937eec7325b7f1f98ad1e659ec88c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

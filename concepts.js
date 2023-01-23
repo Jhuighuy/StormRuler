@@ -1,7 +1,17 @@
 var concepts =
 [
     [ "Storm", "namespace_storm.html", [
+      [ "detail_", "namespace_storm_1_1detail__.html", [
+        [ "different_from_", "concept_storm_1_1detail___1_1different__from__.html", null ],
+        [ "can_matrix_ref_view_", "concept_storm_1_1detail___1_1can__matrix__ref__view__.html", null ],
+        [ "can_matrix_owning_view_", "concept_storm_1_1detail___1_1can__matrix__owning__view__.html", null ]
+      ] ],
       [ "shapes", "namespace_storm_1_1shapes.html", [
+        [ "detail_", null, [
+          [ "can_volume_", "concept_storm_1_1shapes_1_1detail___1_1can__volume__.html", null ],
+          [ "can_barycenter_", "concept_storm_1_1shapes_1_1detail___1_1can__barycenter__.html", null ],
+          [ "can_normal_", "concept_storm_1_1shapes_1_1detail___1_1can__normal__.html", null ]
+        ] ],
         [ "shape", "concept_storm_1_1shapes_1_1shape.html", null ],
         [ "shape1D", "concept_storm_1_1shapes_1_1shape1_d.html", null ],
         [ "shape2D", "concept_storm_1_1shapes_1_1shape2_d.html", null ],

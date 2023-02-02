@@ -5,29 +5,11 @@
 --------------------------------------------------------------------------------
 
 <!----------------------------------------------------------------------------->
-## CI: `ci-ubuntu.yml`
+## CI: `ci-build.yml`
 <!----------------------------------------------------------------------------->
-Build and run tests on Ubuntu.
+Build and run tests on Ubuntu, macOS and Windows.
 
-[![Ubuntu](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml)
-
---------------------------------------------------------------------------------
-
-<!----------------------------------------------------------------------------->
-## CI: `ci-macos.yml`
-<!----------------------------------------------------------------------------->
-Build and run tests on macOS.
-
-[![macOS](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml)
-
---------------------------------------------------------------------------------
-
-<!----------------------------------------------------------------------------->
-## CI: `ci-windows.yml`
-<!----------------------------------------------------------------------------->
-Build and run tests on Windows.
-
-[![Windows](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml)
+[![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml)
 
 --------------------------------------------------------------------------------
 

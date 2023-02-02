@@ -1,8 +1,6 @@
 # <p align="center">![Storm Ruler](./source_docs/Images/Logo.svg)</p>
 
-[![Ubuntu](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-ubuntu.yml)
-[![macOS](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-macos.yml)
-[![Windows](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-windows.yml)
+[![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml)
 [![Pages](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml)
 [![SonarCloud](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/analysis-sonar.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Jhuighuy_StormRuler&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Jhuighuy_StormRuler)

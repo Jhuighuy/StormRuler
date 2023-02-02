@@ -20,7 +20,7 @@
 
 # ------------------------------------------------------------------------------
 
-name: Windows
+name: Build
 
 # ------------------------------------------------------------------------------
 
@@ -34,8 +34,89 @@ on:
 # ------------------------------------------------------------------------------
 
 jobs:
-  build:
-    name: Build
+
+  # ----------------------------------------------------------------------------
+
+  build_ubuntu:
+    name: Build (Ubuntu)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++-12]
+        standard: [c++20]
+        configuration: [Debug, Release]
+      fail-fast: false
+
+    steps:
+
+      # ------------------------------------------------------------------------
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # ------------------------------------------------------------------------
+
+      - name: Install mold
+        uses: rui314/setup-mold@v1
+        with:
+          make-default: false
+        continue-on-error: true # might fail for unknown reason.
+
+      # ------------------------------------------------------------------------
+
+      - name: Build
+        run: |
+          ./scripts/configure.py \
+              -cxx=${{ matrix.compiler }} -std=${{ matrix.standard }} \
+              -cfg=${{ matrix.configuration }}
+          ./scripts/build.py -j
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests
+        run: |
+          ./bin/StormRuler_UnitTests
+          ./bin/StormRuler_Benchmarks
+
+  # ----------------------------------------------------------------------------
+
+  build_macos:
+    name: Build (macOS)
+    runs-on: macos-11 # macos-latest fails because the bug in native linker.
+    strategy:
+      matrix:
+        compiler: [g++-12]
+        standard: [c++20]
+        configuration: [Debug, Release]
+      fail-fast: false
+
+    steps:
+
+      # ------------------------------------------------------------------------
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # ------------------------------------------------------------------------
+
+      - name: Build
+        run: |
+          ./scripts/configure.py \
+              -cxx=${{ matrix.compiler }} -std=${{ matrix.standard }} \
+              -cfg=${{ matrix.configuration }}
+          ./scripts/build.py -j
+
+      # ------------------------------------------------------------------------
+
+      - name: Run tests
+        run: |
+          ./bin/StormRuler_UnitTests
+          ./bin/StormRuler_Benchmarks
+
+  # ----------------------------------------------------------------------------
+
+  build_windows:
+    name: Build (Windows)
     runs-on: windows-latest
     strategy:
       matrix:
@@ -92,5 +173,7 @@ jobs:
         run: |
           ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
           ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
+
+  # ----------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------

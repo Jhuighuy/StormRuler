@@ -38,7 +38,7 @@ jobs:
   # ----------------------------------------------------------------------------
 
   build_ubuntu:
-    name: Build (Ubuntu)
+    name: Ubuntu
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -81,7 +81,7 @@ jobs:
   # ----------------------------------------------------------------------------
 
   build_macos:
-    name: Build (macOS)
+    name: macOS
     runs-on: macos-11 # macos-latest fails because the bug in native linker.
     strategy:
       matrix:
@@ -116,7 +116,7 @@ jobs:
   # ----------------------------------------------------------------------------
 
   build_windows:
-    name: Build (Windows)
+    name: Windows
     runs-on: windows-latest
     strategy:
       matrix:

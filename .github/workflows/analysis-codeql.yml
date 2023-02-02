@@ -36,7 +36,7 @@ on:
 jobs:
   code-ql:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
 
       # g++ executable.
@@ -63,7 +63,6 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: cpp, python
-          debug: true # Since C++20 does not work correctly.
 
       # ------------------------------------------------------------------------
 

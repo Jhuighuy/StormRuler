@@ -1,4 +1,6 @@
-# <p align="center">![Storm Ruler](./source_docs/Images/Logo.svg)</p>
+<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
+# <p align="center">[![Storm Ruler](./source_docs/Images/Logo.svg)](https://jhuighuy.github.io/StormRuler)</p>
+<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 
 [![Build](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-build.yml)
 [![Pages](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml/badge.svg)](https://github.com/Jhuighuy/StormRuler/actions/workflows/ci-pages.yml)

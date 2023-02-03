@@ -1,12 +1,12 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
-    "name": "storm-ruler",
-    "version-string": "0.1.0",
-    "dependencies": [
-        "fmt",
-        "spdlog",
-        "doctest",
-        "nanobench",
-        "glm"
-    ]
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "storm-ruler",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "doctest",
+    "fmt",
+    "glm",
+    "nanobench",
+    "spdlog"
+  ]
 }

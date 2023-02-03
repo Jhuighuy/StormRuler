@@ -47,7 +47,7 @@ _To be written..._
 
 ### Iterative solvers:
 | Name                    | Problem type                 | Flexible | Status   |
-|:------------------------|:-----------------------------|:--------:|:--------:|
+|:-----------------------:|:----------------------------:|:--------:|:--------:|
 | **Richardson**          | General Square Nonsingular   | Yes      | ✅       |
 | **Broyden**             | General Square Nonsingular   | No       | Planned  |
 | **Newton**              | General Square Nonsingular   | Yes      | ✅       |
@@ -70,7 +70,7 @@ _To be written..._
 
 ### Preconditioners:
 | Name                        | Problem type             | Flexible | Status   |
-|:----------------------------|:-------------------------|:--------:|:--------:|
+|:---------------------------:|:------------------------:|:--------:|:--------:|
 | **Block Diagonal**          | Square Nonsingular       | No       | Planned  |
 | **Symmetric Gauss-Seidel**  | Square Nonsingular       | No       | Planned  |
 | **Incomplete Cholesky**     | Definite Symmetric       | No       | Planned  |

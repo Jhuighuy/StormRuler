@@ -447,7 +447,8 @@ public:
   /// @brief Construct a triangle strip.
   constexpr TriangleStrip() = default;
   /// @brief Construct a triangle strip with nodes.
-  constexpr TriangleStrip(std::initializer_list<NodeIndex> i) : n{i}
+  template<class... NodeIndices>
+  constexpr TriangleStrip(NodeIndices... i) : n{i...}
   {
     STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
   }
@@ -523,7 +524,8 @@ public:
   /// @brief Construct a polygon.
   constexpr Polygon() = default;
   /// @brief Construct a polygon with nodes.
-  constexpr Polygon(std::initializer_list<NodeIndex> i) : n{i}
+  template<class... NodeIndices>
+  constexpr Polygon(NodeIndices... i) : n{i...}
   {
     STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
   }

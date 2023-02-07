@@ -227,10 +227,10 @@
 
 // Check the expression, exit with fatal error if it fails.
 #if STORM_ENABLE_ASSERTS_
-#  define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
-#else
 #  define STORM_ASSERT_(expression, message, ...) \
     STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))
+#else
+#  define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)
 #endif
 
 // -----------------------------------------------------------------------------

@@ -100,6 +100,12 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
+# Lists of defines.
+set(StormRuler_CXX_DEFINES "")
+set(StormRuler_CXX_DEBUG_DEFINES "")
+set(StormRuler_CXX_RELEASE_DEFINES "")
+set(StormRuler_CXX_COVERAGE_DEFINES "")
+
 # Lists of compile options.
 set(StormRuler_CXX_COMPILE_OPTIONS "")
 set(StormRuler_CXX_DEBUG_COMPILE_OPTIONS "")
@@ -114,6 +120,9 @@ set(StormRuler_CXX_COVERAGE_LINK_OPTIONS "")
 
 # Set the general options.
 if(Storm_CXX_COMPILER_GNU_LIKE)
+  # Enable checks in STL.
+  list(APPEND StormRuler_CXX_DEBUG_DEFINES _GLIBCXX_DEBUG)
+  list(APPEND StormRuler_CXX_COVERAGE_DEFINES _GLIBCXX_DEBUG)
   # Extended concepts diagnostics.
   list(APPEND StormRuler_CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
 elseif(Storm_CXX_COMPILER_CLANG_LIKE)
@@ -193,6 +202,9 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
 endif()
 
 # Apply the options (for all build types).
+target_compile_definitions(
+    StormRuler_BASE INTERFACE
+    ${StormRuler_CXX_DEFINES})
 target_compile_options(
     StormRuler_BASE INTERFACE
     ${StormRuler_CXX_COMPILE_OPTIONS})
@@ -201,6 +213,9 @@ target_link_options(
     ${StormRuler_CXX_LINK_OPTIONS})
 
 # Apply the options (for Debug build type).
+target_compile_definitions(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_DEFINES}>)
 target_compile_options(
     StormRuler_BASE INTERFACE
     $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_COMPILE_OPTIONS}>)
@@ -209,6 +224,9 @@ target_link_options(
     $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_LINK_OPTIONS}>)
 
 # Apply the options (for Release build type).
+target_compile_definitions(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_DEFINES}>)
 target_compile_options(
     StormRuler_BASE INTERFACE
     $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_COMPILE_OPTIONS}>)
@@ -217,6 +235,9 @@ target_link_options(
     $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_LINK_OPTIONS}>)
 
 # Apply the options (for Coverage build type).
+target_compile_definitions(
+    StormRuler_BASE INTERFACE
+    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_DEFINES}>)
 target_compile_options(
     StormRuler_BASE INTERFACE
     $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_COMPILE_OPTIONS}>)

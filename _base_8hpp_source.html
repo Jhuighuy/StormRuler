@@ -381,10 +381,10 @@ $(document).ready(function(){initNavTree('_base_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span> </div>
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span><span class="comment">// Check the expression, exit with fatal error if it fails.</span></div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span><span class="preprocessor">#if STORM_ENABLE_ASSERTS_</span></div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="preprocessor">#  define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)</span></div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="preprocessor">#else</span></div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="preprocessor">#  define STORM_ASSERT_(expression, message, ...) \</span></div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="preprocessor">    STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))</span></div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span><span class="preprocessor">#  define STORM_ASSERT_(expression, message, ...) \</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span><span class="preprocessor">    STORM_ENSURE_(expression, message __VA_OPT__(, __VA_ARGS__))</span></div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="preprocessor">#else</span></div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span><span class="preprocessor">#  define STORM_ASSERT_(expression, message, ...) STORM_ASSUME_(expression)</span></div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span> </div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">// -----------------------------------------------------------------------------</span></div>

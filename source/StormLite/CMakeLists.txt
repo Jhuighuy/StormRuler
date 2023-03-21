@@ -20,14 +20,14 @@
 
 # ------------------------------------------------------------------------------
 
-# Add the unit tests.
-message(STATUS "| Adding StormRuler unit tests...")
-add_subdirectory(./unit)
+# Unit tests executable.
+file(GLOB C_SOURCES "./*.[ch]")
+file(GLOB CXX_SOURCES "./*.[ch]pp")
+add_library(StormRuler_Lite ${C_SOURCES} ${CXX_SOURCES})
 
 # ------------------------------------------------------------------------------
 
-# Add the benchmarks.
-message(STATUS "| Adding StormRuler benchmarks...")
-add_subdirectory(./benchmark)
+# Link with the core library.
+target_link_libraries(StormRuler_Lite StormRuler)
 
 # ------------------------------------------------------------------------------

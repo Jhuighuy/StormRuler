@@ -20,24 +20,14 @@
 
 # ------------------------------------------------------------------------------
 
-# Core header-only library.
-file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
-add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
-
-# Include directories.
-target_include_directories(StormRuler_BASE INTERFACE ".")
+# Add the core library.
+message(STATUS "| Adding Storm library...")
+add_subdirectory("./Storm")
 
 # ------------------------------------------------------------------------------
 
-# Configuration file.
-storm_configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/ConfigDefault.hpp")
-
-# ------------------------------------------------------------------------------
-
-# Link with the base target.
-target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
+# Add the lite library.
+message(STATUS "| Adding StormLite library...")
+add_subdirectory("./StormLite")
 
 # ------------------------------------------------------------------------------

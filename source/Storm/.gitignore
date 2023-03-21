@@ -20,14 +20,10 @@
 
 # ------------------------------------------------------------------------------
 
-# Add the unit tests.
-message(STATUS "| Adding StormRuler unit tests...")
-add_subdirectory(./unit)
-
-# ------------------------------------------------------------------------------
-
-# Add the benchmarks.
-message(STATUS "| Adding StormRuler benchmarks...")
-add_subdirectory(./benchmark)
+# Ignore the generated configuration file.
+# Default configuration file should be in the repository,
+# it is used for non-CMake builds.
+Config.hpp
+!ConfigDefault.hpp
 
 # ------------------------------------------------------------------------------

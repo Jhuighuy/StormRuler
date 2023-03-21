@@ -247,6 +247,12 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
+# Include directories.
+target_include_directories(
+    StormRuler_BASE INTERFACE ${CMAKE_SOURCE_DIR}/source)
+
+# ------------------------------------------------------------------------------
+
 # Setup the CMake modules directory.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -442,25 +448,25 @@ endif()
 # ------------------------------------------------------------------------------
 
 # Add the core library.
-message(STATUS "Adding StormRuler core library..")
+message(STATUS "Adding StormRuler core libraries...")
 add_subdirectory(./source)
 
 # ------------------------------------------------------------------------------
 
 # Add the applications.
-message(STATUS "Adding StormRuler applications..")
+message(STATUS "Adding StormRuler applications...")
 add_subdirectory(./source_apps)
 
 # ------------------------------------------------------------------------------
 
 # Add the tests.
-message(STATUS "Adding StormRuler tests..")
+message(STATUS "Adding StormRuler tests...")
 add_subdirectory(./tests)
 
 # ------------------------------------------------------------------------------
 
 # Add the documentation.
-message(STATUS "Adding StormRuler documentation..")
+message(STATUS "Adding StormRuler documentation...")
 add_subdirectory(./source_docs)
 
 # ------------------------------------------------------------------------------

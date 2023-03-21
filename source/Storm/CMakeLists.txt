@@ -14,16 +14,27 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Ignore the generated configuration file.
-# Default configuration file should be in the repository,
-# it is used for non-CMake builds.
-Storm/Config.hpp
-!Storm/ConfigDefault.hpp
+# Core header-only library.
+file(GLOB_RECURSE CXX_SOURCES "*.hpp")
+add_library(StormRuler INTERFACE ${CXX_SOURCES})
+
+# ------------------------------------------------------------------------------
+
+# Configuration file.
+storm_configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Config.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Config.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ConfigDefault.hpp")
+
+# ------------------------------------------------------------------------------
+
+# Link with the base target.
+target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
 
 # ------------------------------------------------------------------------------

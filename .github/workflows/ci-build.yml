@@ -85,7 +85,7 @@ jobs:
     runs-on: macos-11 # macos-latest fails because the bug in native linker.
     strategy:
       matrix:
-        compiler: [g++-12]
+        compiler: [g++-12, g++-13]
         standard: [c++20]
         configuration: [Debug, Release]
       fail-fast: false
@@ -135,7 +135,7 @@ jobs:
       # ------------------------------------------------------------------------
 
       - name: Setup MSYS2 (MinGW)
-        if: matrix.compiler == 'g++'
+        if: startsWith(matrix.compiler, 'g++')
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
@@ -158,7 +158,7 @@ jobs:
       # ------------------------------------------------------------------------
 
       - name: Build (MinGW)
-        if: matrix.compiler == 'g++'
+        if: startsWith(matrix.compiler, 'g++')
         shell: msys2 {0}
         run: |
           ./scripts/configure.py \

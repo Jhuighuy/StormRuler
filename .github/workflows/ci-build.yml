@@ -82,10 +82,10 @@ jobs:
 
   build_macos:
     name: macOS
-    runs-on: macos-11 # macos-latest fails because the bug in native linker.
+    runs-on: macos-latest
     strategy:
       matrix:
-        compiler: [g++-12]
+        compiler: [g++-12, g++-13]
         standard: [c++20]
         configuration: [Debug, Release]
       fail-fast: false
@@ -155,8 +155,6 @@ jobs:
           ./scripts/configure.py -std=${{ matrix.standard }}
           ./scripts/build.py -cfg=${{ matrix.configuration }}
 
-      # ------------------------------------------------------------------------
-
       - name: Build (MinGW)
         if: matrix.compiler == 'g++'
         shell: msys2 {0}
@@ -168,8 +166,16 @@ jobs:
 
       # ------------------------------------------------------------------------
 
-      - name: Run tests
+      - name: Run tests (MSVC)
+        if: matrix.compiler == 'cl'
         shell: bash
+        run: |
+          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
+          ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
+
+      - name: Run tests (MinGW)
+        if: matrix.compiler == 'g++'
+        shell: msys2 {0}
         run: |
           ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
           ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe

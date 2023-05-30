@@ -41,6 +41,17 @@
     },
     // -------------------------------------------------------------------------
     {
+      "name": "Linux (gcc-13-x64)",
+      "includePath": [
+        "${theVcpkgPackagesPath}/x64-linux/include",
+        "${theIncludePaths}"
+      ],
+      "compilerPath": "/usr/bin/g++-13",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "linux-gcc-x64"
+    },
+    // -------------------------------------------------------------------------
+    {
       "name": "Linux (clang-15-x64)",
       "includePath": [
         "${theVcpkgPackagesPath}/x64-linux/include",
@@ -62,6 +73,21 @@
         "${theMacFrameworkPaths}"
       ],
       "compilerPath": "/opt/homebrew/bin/g++-12",
+      "cppStandard": "c++23",
+      "intelliSenseMode": "macos-gcc-arm64"
+    },
+    // -------------------------------------------------------------------------
+    {
+      "name": "Mac (gcc-13-arm64)",
+      "includePath": [
+        "/opt/homebrew/include",
+        "${theVcpkgPackagesPath}/arm64-osx/include",
+        "${theIncludePaths}"
+      ],
+      "macFrameworkPath": [
+        "${theMacFrameworkPaths}"
+      ],
+      "compilerPath": "/opt/homebrew/bin/g++-13",
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-gcc-arm64"
     },

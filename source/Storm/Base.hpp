@@ -27,9 +27,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
-
 // -----------------------------------------------------------------------------
 
 // Detect the C++ compiler.
@@ -169,6 +166,20 @@
 #endif
 
 // -----------------------------------------------------------------------------
+
+// GCC-13 complains on array bounds in fmt.
+#if STORM_COMPILER_GCC_ && (__GNUC__ >= 13)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Warray-bounds"
+#  pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
+#if STORM_COMPILER_GCC_ && (__GNUC__ >= 13)
+#  pragma GCC diagnostic pop
+#endif
 
 // Report a trace message.
 #define STORM_TRACE_(message, ...) \

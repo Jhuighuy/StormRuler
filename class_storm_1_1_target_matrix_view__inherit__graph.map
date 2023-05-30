@@ -1,6 +1,6 @@
 <map id="Storm::TargetMatrixView&lt; Matrix &gt;" name="Storm::TargetMatrixView&lt; Matrix &gt;">
-<area shape="rect" id="node1" title="Output matrix as target wrapper." alt="" coords="260,69,427,109"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_matrix_view_interface.html" title=" " alt="" coords="5,5,212,45"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="5,69,212,109"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_non_movable.html" title="Non movable (and non copyable) object interface." alt="" coords="39,134,178,159"/>
+<area shape="rect" id="node1" title="Output matrix as target wrapper." alt="" coords="260,71,425,111"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_matrix_view_interface.html" title=" " alt="" coords="5,5,212,46"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_target_matrix_interface.html" title=" " alt="" coords="5,71,212,111"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_non_movable.html" title="Non movable (and non copyable) object interface." alt="" coords="40,136,177,161"/>
 </map>

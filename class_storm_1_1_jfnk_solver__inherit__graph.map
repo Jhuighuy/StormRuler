@@ -1,7 +1,7 @@
 <map id="Storm::JfnkSolver&lt; Vector &gt;" name="Storm::JfnkSolver&lt; Vector &gt;">
-<area shape="rect" id="node1" title="The first&#45;order JFNK (Jacobian free&#45;Newton&#45;Krylov) nonlinear operator equation solver." alt="" coords="21,328,156,368"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="14,240,163,280"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="5,152,172,192"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="37,79,140,104"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="15,5,163,31"/>
+<area shape="rect" id="node1" title="The first&#45;order JFNK (Jacobian free&#45;Newton&#45;Krylov) nonlinear operator equation solver." alt="" coords="21,330,155,371"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="14,241,162,282"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="5,153,171,193"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="37,79,139,105"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="14,5,162,31"/>
 </map>

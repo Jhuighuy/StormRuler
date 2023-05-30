@@ -1,7 +1,7 @@
 <map id="Storm::RichardsonSolver&lt; Vector &gt;" name="Storm::RichardsonSolver&lt; Vector &gt;">
-<area shape="rect" id="node1" title="The Richardson iteration linear operator equation solver." alt="" coords="5,328,173,368"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="15,240,164,280"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="6,152,173,192"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="38,79,141,104"/>
+<area shape="rect" id="node1" title="The Richardson iteration linear operator equation solver." alt="" coords="5,330,173,371"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="15,241,163,282"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="6,153,172,193"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="38,79,140,105"/>
 <area shape="rect" id="node5" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="15,5,163,31"/>
 </map>

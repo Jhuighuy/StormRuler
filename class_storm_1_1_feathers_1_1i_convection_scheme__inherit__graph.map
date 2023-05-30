@@ -1,6 +1,6 @@
 <map id="Storm::Feathers::iConvectionScheme" name="Storm::Feathers::iConvectionScheme">
-<area shape="rect" id="node1" title=" " alt="" coords="259,49,452,89"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html" title="Piecewise&#45;linear upwind convection scheme." alt="" coords="500,5,779,60"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_feathers_1_1_upwind_convection_scheme.html" title="Piecewise&#45;constant upwind convection scheme." alt="" coords="522,85,757,125"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,56,211,81"/>
+<area shape="rect" id="node1" title=" " alt="" coords="258,49,450,90"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html" title="Piecewise&#45;linear upwind convection scheme." alt="" coords="498,5,776,61"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_feathers_1_1_upwind_convection_scheme.html" title="Piecewise&#45;constant upwind convection scheme." alt="" coords="521,85,754,126"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,56,210,82"/>
 </map>

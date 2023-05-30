@@ -1,7 +1,7 @@
 <map id="Storm::Vulture::gl::Texture" name="Storm::Vulture::gl::Texture">
-<area shape="rect" id="node1" title="OpenGL texture." alt="" coords="201,85,325,125"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html" title="OpenGL multisampled 2D texture." alt="" coords="373,5,540,60"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html" title="OpenGL 2D texture." alt="" coords="385,85,528,125"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html" title="OpenGL texture buffer." alt="" coords="395,149,519,189"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,92,153,117"/>
+<area shape="rect" id="node1" title="OpenGL texture." alt="" coords="201,85,324,126"/>
+<area shape="rect" id="node3" href="$class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html" title="OpenGL multisampled 2D texture." alt="" coords="372,5,538,61"/>
+<area shape="rect" id="node4" href="$class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html" title="OpenGL 2D texture." alt="" coords="384,85,526,126"/>
+<area shape="rect" id="node5" href="$class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html" title="OpenGL texture buffer." alt="" coords="394,150,517,191"/>
+<area shape="rect" id="node2" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,92,153,118"/>
 </map>

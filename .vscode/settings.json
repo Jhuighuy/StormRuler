@@ -49,6 +49,8 @@
   "python.formatting.provider": "black",
   // ---------------------------------------------------------------------------
   "files.associations": {
+    "*.f90pp": "FortranFreeForm",
+    "*.ipp": "cpp",
     "*.tcc": "cpp",
     "__bit_reference": "cpp",
     "__bits": "cpp",
@@ -69,6 +71,7 @@
     "__verbose_abort": "cpp",
     "algorithm": "cpp",
     "any": "cpp",
+    "armadillo": "cpp",
     "array": "cpp",
     "atomic": "cpp",
     "bit": "cpp",
@@ -99,6 +102,7 @@
     "exception": "cpp",
     "filesystem": "cpp",
     "format": "cpp",
+    "forward_list": "cpp",
     "fstream": "cpp",
     "functional": "cpp",
     "initializer_list": "cpp",
@@ -135,16 +139,20 @@
     "streambuf": "cpp",
     "string": "cpp",
     "string_view": "cpp",
+    "strstream": "cpp",
     "system_error": "cpp",
     "thread": "cpp",
     "tuple": "cpp",
     "type_traits": "cpp",
+    "typeindex": "cpp",
     "typeinfo": "cpp",
     "unordered_map": "cpp",
     "unordered_set": "cpp",
     "utility": "cpp",
+    "valarray": "cpp",
     "variant": "cpp",
-    "vector": "cpp"
+    "vector": "cpp",
+    "version": "cpp",
   }
   // ---------------------------------------------------------------------------
 }

@@ -19,12 +19,17 @@
 // IN THE SOFTWARE.
 {
   "env": {
-    "theIncludePaths": [
+    "includePath": [
       "${workspaceFolder}/source"
     ],
-    "theVcpkgPackagesPath": "${workspaceFolder}/build/vcpkg_installed",
-    "theMacFrameworkPaths": [
-      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+    "vcpkgPackagesPath": "${workspaceFolder}/build/vcpkg_installed",
+    "brewIncludePath": [
+      "/opt/homebrew/include",
+      "/opt/homebrew/Frameworks/*.framework/Headers"
+    ],
+    // TODO: Looks like `macFrameworkPath` is broken.
+    "macFrameworkPaths": [
+      "/opt/homebrew/Frameworks"
     ]
   },
   "configurations": [
@@ -32,8 +37,8 @@
     {
       "name": "Linux (gcc-12-x64)",
       "includePath": [
-        "${theVcpkgPackagesPath}/x64-linux/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${vcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/g++-12",
       "cppStandard": "c++23",
@@ -43,8 +48,8 @@
     {
       "name": "Linux (gcc-13-x64)",
       "includePath": [
-        "${theVcpkgPackagesPath}/x64-linux/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${vcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/g++-13",
       "cppStandard": "c++23",
@@ -54,8 +59,8 @@
     {
       "name": "Linux (clang-15-x64)",
       "includePath": [
-        "${theVcpkgPackagesPath}/x64-linux/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${vcpkgPackagesPath}/x64-linux/include"
       ],
       "compilerPath": "/usr/bin/clang++-15",
       "cppStandard": "c++23",
@@ -65,12 +70,12 @@
     {
       "name": "Mac (gcc-12-arm64)",
       "includePath": [
-        "/opt/homebrew/include",
-        "${theVcpkgPackagesPath}/arm64-osx/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${brewIncludePath}",
+        "${vcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
-        "${theMacFrameworkPaths}"
+        "${macFrameworkPaths}"
       ],
       "compilerPath": "/opt/homebrew/bin/g++-12",
       "cppStandard": "c++23",
@@ -80,12 +85,12 @@
     {
       "name": "Mac (gcc-13-arm64)",
       "includePath": [
-        "/opt/homebrew/include",
-        "${theVcpkgPackagesPath}/arm64-osx/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${brewIncludePath}",
+        "${vcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
-        "${theMacFrameworkPaths}"
+        "${macFrameworkPaths}"
       ],
       "compilerPath": "/opt/homebrew/bin/g++-13",
       "cppStandard": "c++23",
@@ -93,40 +98,33 @@
     },
     // -------------------------------------------------------------------------
     {
-      "name": "Mac (clang-15-arm64)",
+      "name": "Mac (clang-16-arm64)",
       "includePath": [
-        "/opt/homebrew/include",
-        "${theVcpkgPackagesPath}/arm64-osx/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${brewIncludePath}",
+        "${vcpkgPackagesPath}/arm64-osx/include"
       ],
       "macFrameworkPath": [
-        "${theMacFrameworkPaths}"
+        "${macFrameworkPaths}"
       ],
-      "compilerPath": "/opt/homebrew/opt/llvm/bin/clang-15",
+      "compilerPath": "/opt/homebrew/opt/llvm/bin/clang-16",
       "cppStandard": "c++23",
       "intelliSenseMode": "macos-clang-arm64"
     },
+    // -------------------------------------------------------------------------
     // TODO: Add Mac (x64) configuratiuons.
     // -------------------------------------------------------------------------
     {
       "name": "Windows (msvc-x64)",
       "includePath": [
-        "${theVcpkgPackagesPath}/arm64-osx/include",
-        "${theIncludePaths}"
+        "${includePath}",
+        "${vcpkgPackagesPath}/msvc-x64/include"
       ],
       "cppStandard": "c++23",
       "intelliSenseMode": "windows-msvc-x64"
-    },
-    // -------------------------------------------------------------------------
-    {
-      "name": "Windows (msvc-x64)",
-      "includePath": [
-        "${theVcpkgPackagesPath}/arm64-osx/include",
-        "${theIncludePaths}"
-      ],
-      "cppStandard": "c++23",
-      "intelliSenseMode": "windows-clang-x64"
     }
+    // -------------------------------------------------------------------------
+    // TODO: Add Windows (gcc-x64) configuration.
     // -------------------------------------------------------------------------
   ],
   "version": 4

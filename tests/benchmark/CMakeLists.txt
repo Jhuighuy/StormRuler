@@ -27,51 +27,51 @@ add_executable(StormRuler_Benchmarks ${CXX_SOURCES})
 # ------------------------------------------------------------------------------
 
 # Link with the core library.
-target_link_libraries(StormRuler_Benchmarks StormRuler)
+target_link_libraries(StormRuler_Benchmarks PRIVATE StormRuler::StormRuler)
 
 # ------------------------------------------------------------------------------
 
 # Find doctest.
 find_package(doctest CONFIG REQUIRED)
-target_link_libraries(StormRuler_Benchmarks doctest::doctest)
+target_link_libraries(StormRuler_Benchmarks PRIVATE doctest::doctest)
 
 # Find nanobench.
 # TODO: Something is broken with nanobench + vcpkg + CMake.
 #find_package(nanobench CONFIG REQUIRED)
-#target_link_libraries(StormRuler_Benchmarks nanobench)
+#target_link_libraries(StormRuler_Benchmarks PRIVATE nanobench)
 
 # ------------------------------------------------------------------------------
 
 # Find Armadillo.
-find_package(Armadillo CONFIG QUIET)
+find_package(Armadillo QUIET)
 if(Armadillo_FOUND)
   set(STORM_BENCH_ARMADILLO_ENABLED 1)
-  message(STATUS "| Benchmarks: Armadillo enabled.")
-  target_link_libraries(StormRuler_Benchmarks ${ARMADILLO_LIBRARIES})
+  message(STATUS "| | Benchmarks: Armadillo enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE ${ARMADILLO_LIBRARIES})
 endif()
 
 # Find Blaze.
-find_package(blaze CONFIG QUIET)
+find_package(blaze QUIET)
 if(blaze_FOUND)
   set(STORM_BENCH_BLAZE_ENABLED 1)
-  message(STATUS "| Benchmarks: Blaze enabled.")
-  target_link_libraries(StormRuler_Benchmarks blaze::blaze)
+  message(STATUS "| | Benchmarks: Blaze enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE blaze::blaze)
 endif()
 
 # Find Eigen.
 find_package(Eigen3 3.4 NO_MODULE QUIET)
 if(Eigen3_FOUND)
   set(STORM_BENCH_EIGEN_ENABLED 1)
-  message(STATUS "| Benchmarks: Eigen enabled.")
-  target_link_libraries(StormRuler_Benchmarks Eigen3::Eigen)
+  message(STATUS "| | Benchmarks: Eigen enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE Eigen3::Eigen)
 endif()
 
 # Find XTensor.
 find_package(xtensor QUIET)
 if(xtensor_FOUND)
   set(STORM_BENCH_XTENSOR_ENABLED 1)
-  message(STATUS "| Benchmarks: XTensor enabled.")
-  target_link_libraries(StormRuler_Benchmarks xtensor)
+  message(STATUS "| | Benchmarks: XTensor enabled.")
+  target_link_libraries(StormRuler_Benchmarks PRIVATE xtensor)
 endif()
 
 # ------------------------------------------------------------------------------

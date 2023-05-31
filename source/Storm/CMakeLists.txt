@@ -20,19 +20,22 @@
 
 # ------------------------------------------------------------------------------
 
-# Unit tests executable.
-file(GLOB CXX_SOURCES "./*.cpp")
-add_executable(StormRuler_UnitTests ${CXX_SOURCES})
+# Core header-only library.
+file(GLOB_RECURSE CXX_SOURCES "./*.hpp")
+add_library(StormRuler INTERFACE ${CXX_SOURCES})
+add_library(StormRuler::StormRuler ALIAS StormRuler)
 
 # ------------------------------------------------------------------------------
 
-# Link with the core library.
-target_link_libraries(StormRuler_UnitTests PRIVATE StormRuler::StormRuler)
+# Configuration file.
+storm_configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Config.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Config.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ConfigDefault.hpp")
 
 # ------------------------------------------------------------------------------
 
-# Find doctest.
-find_package(doctest CONFIG REQUIRED)
-target_link_libraries(StormRuler_UnitTests PRIVATE doctest::doctest)
+# Link with the base target.
+target_link_libraries(StormRuler INTERFACE StormRuler::Base)
 
 # ------------------------------------------------------------------------------

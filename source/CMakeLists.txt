@@ -14,30 +14,14 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
-# Core header-only library.
-file(GLOB_RECURSE StormRuler_CXX_SOURCES "Storm/*.hpp")
-add_library(StormRuler INTERFACE ${StormRuler_CXX_SOURCES})
-
-# Include directories.
-target_include_directories(StormRuler_BASE INTERFACE ".")
-
-# ------------------------------------------------------------------------------
-
-# Configuration file.
-storm_configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/Config.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Storm/ConfigDefault.hpp")
-
-# ------------------------------------------------------------------------------
-
-# Link with the base target.
-target_link_libraries(StormRuler INTERFACE StormRuler_BASE)
+# Add the core library.
+message(STATUS "| Adding StormRuler core library..")
+add_subdirectory(./Storm)
 
 # ------------------------------------------------------------------------------

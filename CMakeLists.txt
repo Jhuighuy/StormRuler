@@ -25,9 +25,6 @@
 # • clang-tidy integration:
 #   Impossible now, since clang-tidy doesn't support C++23.
 #   (But now we support C++20.. again)
-# • User friendly compilation script:
-#   It is inconvenient to write `CXX=.. cmake . -DCMAKE_BUILD_TYPE=..`
-#   every time.
 # • Add sanitizers for the Coverage build.
 # • Share project description with `source_docs`.
 
@@ -48,6 +45,8 @@ message(STATUS "\n" [=[
 -- ╚═══════════════════════════════════════════════════════════════════╝
 --]=])
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 # ------------------------------------------------------------------------------
 
 # Setup the project.
@@ -57,7 +56,13 @@ project(StormRuler
         LANGUAGES CXX)
 
 # A container library that stores all the properties.
-add_library(StormRuler_BASE INTERFACE)
+add_library(StormRuler_Base INTERFACE)
+add_library(StormRuler::Base ALIAS StormRuler_Base)
+
+# ------------------------------------------------------------------------------
+
+# Include directories.
+target_include_directories(StormRuler_Base INTERFACE "./source")
 
 # ------------------------------------------------------------------------------
 
@@ -72,17 +77,17 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # Check C/C++ compiler.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  set(Storm_CXX_COMPILER_GNU_LIKE YES)
+  set(CXX_COMPILER_GNU_LIKE YES)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.1.0")
     message(FATAL_ERROR "GCC version 12.1 or more recent is required!")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  set(Storm_CXX_COMPILER_CLANG_LIKE YES)
+  set(CXX_COMPILER_CLANG_LIKE YES)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "16.0.0")
     message(FATAL_ERROR "Clang version 16.0 or more recent is required!")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  set(Storm_CXX_COMPILER_MSVC_LIKE YES)
+  set(CXX_COMPILER_MSVC_LIKE YES)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.34.0")
     message(FATAL_ERROR "MSVC version 19.34.0 or more recent is required!")
   endif()
@@ -101,46 +106,46 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
 # Lists of defines.
-set(StormRuler_CXX_DEFINES "")
-set(StormRuler_CXX_DEBUG_DEFINES "")
-set(StormRuler_CXX_RELEASE_DEFINES "")
-set(StormRuler_CXX_COVERAGE_DEFINES "")
+set(CXX_DEFINES "")
+set(CXX_DEBUG_DEFINES "")
+set(CXX_RELEASE_DEFINES "")
+set(CXX_COVERAGE_DEFINES "")
 
 # Lists of compile options.
-set(StormRuler_CXX_COMPILE_OPTIONS "")
-set(StormRuler_CXX_DEBUG_COMPILE_OPTIONS "")
-set(StormRuler_CXX_RELEASE_COMPILE_OPTIONS "")
-set(StormRuler_CXX_COVERAGE_COMPILE_OPTIONS "")
+set(CXX_COMPILE_OPTIONS "")
+set(CXX_DEBUG_COMPILE_OPTIONS "")
+set(CXX_RELEASE_COMPILE_OPTIONS "")
+set(CXX_COVERAGE_COMPILE_OPTIONS "")
 
 # Lists of link options.
-set(StormRuler_CXX_LINK_OPTIONS "")
-set(StormRuler_CXX_DEBUG_LINK_OPTIONS "")
-set(StormRuler_CXX_RELEASE_LINK_OPTIONS "")
-set(StormRuler_CXX_COVERAGE_LINK_OPTIONS "")
+set(CXX_LINK_OPTIONS "")
+set(CXX_DEBUG_LINK_OPTIONS "")
+set(CXX_RELEASE_LINK_OPTIONS "")
+set(CXX_COVERAGE_LINK_OPTIONS "")
 
 # Set the general options.
-if(Storm_CXX_COMPILER_GNU_LIKE)
+if(CXX_COMPILER_GNU_LIKE)
   # Enable checks in STL.
-  list(APPEND StormRuler_CXX_DEBUG_DEFINES _GLIBCXX_DEBUG)
-  list(APPEND StormRuler_CXX_COVERAGE_DEFINES _GLIBCXX_DEBUG)
+  list(APPEND CXX_DEBUG_DEFINES _GLIBCXX_DEBUG)
+  list(APPEND CXX_COVERAGE_DEFINES _GLIBCXX_DEBUG)
   # Extended concepts diagnostics.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
-elseif(Storm_CXX_COMPILER_CLANG_LIKE)
-elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  list(APPEND CXX_COMPILE_OPTIONS -fconcepts-diagnostics-depth=3)
+elseif(CXX_COMPILER_CLANG_LIKE)
+elseif(CXX_COMPILER_MSVC_LIKE)
   # Enable new preprocessor.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS /Zc:preprocessor)
+  list(APPEND CXX_COMPILE_OPTIONS /Zc:preprocessor)
 endif()
 
 # Set the warnings and diagnostics options.
-if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
+if(CXX_COMPILER_GNU_LIKE OR CXX_COMPILER_CLANG_LIKE)
   # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+  list(APPEND CXX_COMPILE_OPTIONS
        -Werror -Wall -Wextra -Wpedantic -Wno-unused-function -Wno-psabi)
   # TODO: to be removed!
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS -Wno-unused-parameter)
-elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  list(APPEND CXX_COMPILE_OPTIONS -Wno-unused-parameter)
+elseif(CXX_COMPILER_MSVC_LIKE)
   # Enable maaany warnings, treated as errors.
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+  list(APPEND CXX_COMPILE_OPTIONS
        /WX /Wall
        /wd4061  # Enumerator '...' in switch of enum '...' is not explicitly
                 # handled by a case label.
@@ -157,6 +162,8 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd4710  # '...': function not inlined.
        /wd4711  # Function '...' selected for automatic inline expansion.
        /wd4820  # '...' bytes padding added after data member '...'.
+       /wd4866  # Compiler may not enforce left-to-right evaluation order
+                # for call to '...'.
        /wd4868  # Compiler may not enforce left-to-right evaluation order in
                 # braced initializer list.
        /wd5026  # Move constructor was implicitly defined as deleted.
@@ -173,101 +180,73 @@ elseif(Storm_CXX_COMPILER_MSVC_LIKE)
        /wd5262  # Implicit fall-through occurs here.
        /wd5264) # 'const' variable is not used.
   # TODO: to be removed!
-  list(APPEND StormRuler_CXX_COMPILE_OPTIONS
+  list(APPEND CXX_COMPILE_OPTIONS
        /wd4100  # Unused parameter.
        /wd5219) # Implicit conversion from '..' to '..', possible loss of data.
 endif()
 
 # Set the optimization options.
-if(Storm_CXX_COMPILER_GNU_LIKE)
+if(CXX_COMPILER_GNU_LIKE)
   # Debug: debug information, no optimizations.
-  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS -g -O0)
+  list(APPEND CXX_DEBUG_COMPILE_OPTIONS -g -O0)
   # Release: debug information, full optimizations.
-  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS -g -Ofast -march=native)
+  list(APPEND CXX_RELEASE_COMPILE_OPTIONS -g -Ofast
+       -march=native -finline-limit=10000000 -ffp-contract=fast)
   # Coverage: coverage, debug information, no optimizations, no inlining.
-  list(APPEND StormRuler_CXX_COVERAGE_COMPILE_OPTIONS
+  list(APPEND CXX_COVERAGE_COMPILE_OPTIONS
        --coverage -g -O0 -fno-inline -fno-default-inline
        -fno-inline-small-functions -fno-elide-constructors)
-  list(APPEND StormRuler_CXX_COVERAGE_LINK_OPTIONS --coverage)
-elseif(Storm_CXX_COMPILER_CLANG_LIKE)
-elseif(Storm_CXX_COMPILER_MSVC_LIKE)
+  list(APPEND CXX_COVERAGE_LINK_OPTIONS --coverage)
+elseif(CXX_COMPILER_CLANG_LIKE)
+elseif(CXX_COMPILER_MSVC_LIKE)
   # TODO: https://gitlab.kitware.com/cmake/cmake/-/issues/20812
   # Debug: no optimizations.
   # TODO: debug information?
-  list(APPEND StormRuler_CXX_DEBUG_COMPILE_OPTIONS /Od)
+  list(APPEND CXX_DEBUG_COMPILE_OPTIONS /Od)
   # Release: full optimizations.
   # TODO: AVX512?
-  list(APPEND StormRuler_CXX_RELEASE_COMPILE_OPTIONS /O2 /arch:AVX2)
+  list(APPEND CXX_RELEASE_COMPILE_OPTIONS /O2 /arch:AVX2)
   # TODO: Coverage options.
 endif()
 
-# Apply the options (for all build types).
+# Apply the options.
 target_compile_definitions(
-    StormRuler_BASE INTERFACE
-    ${StormRuler_CXX_DEFINES})
+    StormRuler_Base INTERFACE
+    ${CXX_DEFINES}
+    $<$<CONFIG:Debug>:${CXX_DEBUG_DEFINES}>
+    $<$<CONFIG:Release>:${CXX_RELEASE_DEFINES}>
+    $<$<CONFIG:Coverage>:${CXX_COVERAGE_DEFINES}>)
 target_compile_options(
-    StormRuler_BASE INTERFACE
-    ${StormRuler_CXX_COMPILE_OPTIONS})
+    StormRuler_Base INTERFACE
+    ${CXX_COMPILE_OPTIONS}
+    $<$<CONFIG:Debug>:${CXX_DEBUG_COMPILE_OPTIONS}>
+    $<$<CONFIG:Release>:${CXX_RELEASE_COMPILE_OPTIONS}>
+    $<$<CONFIG:Coverage>:${CXX_COVERAGE_COMPILE_OPTIONS}>)
 target_link_options(
-    StormRuler_BASE INTERFACE
-    ${StormRuler_CXX_LINK_OPTIONS})
-
-# Apply the options (for Debug build type).
-target_compile_definitions(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_DEFINES}>)
-target_compile_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_COMPILE_OPTIONS}>)
-target_link_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Debug>:${StormRuler_CXX_DEBUG_LINK_OPTIONS}>)
-
-# Apply the options (for Release build type).
-target_compile_definitions(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_DEFINES}>)
-target_compile_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_COMPILE_OPTIONS}>)
-target_link_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Release>:${StormRuler_CXX_RELEASE_LINK_OPTIONS}>)
-
-# Apply the options (for Coverage build type).
-target_compile_definitions(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_DEFINES}>)
-target_compile_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_COMPILE_OPTIONS}>)
-target_link_options(
-    StormRuler_BASE INTERFACE
-    $<$<CONFIG:Coverage>:${StormRuler_CXX_COVERAGE_LINK_OPTIONS}>)
-
-# ------------------------------------------------------------------------------
-
-# Setup the CMake modules directory.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+    StormRuler_Base INTERFACE
+    ${CXX_LINK_OPTIONS}
+    $<$<CONFIG:Debug>:${CXX_DEBUG_LINK_OPTIONS}>
+    $<$<CONFIG:Release>:${CXX_RELEASE_LINK_OPTIONS}>
+    $<$<CONFIG:Coverage>:${CXX_COVERAGE_LINK_OPTIONS}>)
 
 # ------------------------------------------------------------------------------
 
 # Find the mold linker.
-if(StormRuler_NO_MOLD)
+if(STORM_NO_MOLD)
   message(STATUS "| mold was disabled by user.")
 else()
   # TODO: once `mold` has a CMake integration.
   # find_package(mold CONFIG QUIET)
   # if(mold_FOUND)
   #   message(STATUS "| mold enabled.")
-  #   target_use_mold(StormRuler_BASE)
+  #   target_use_mold(StormRuler_Base)
   # endif()
   # For now we have to use this:
-  if(Storm_CXX_COMPILER_GNU_LIKE OR Storm_CXX_COMPILER_CLANG_LIKE)
+  if(CXX_COMPILER_GNU_LIKE OR CXX_COMPILER_CLANG_LIKE)
     find_program(MOLD_EXECUTABLE NAMES mold)
     if(MOLD_EXECUTABLE)
       message(STATUS "| mold enabled.")
-      target_link_options(StormRuler_BASE INTERFACE -fuse-ld=mold)
+      target_link_options(StormRuler_Base INTERFACE -fuse-ld=mold)
     endif()
   endif()
 endif()
@@ -281,54 +260,54 @@ find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter QUIET)
 function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
   configure_file(${INPUT_FILE} ${OUTPUT_FILE})
   add_custom_command(
-    OUTPUT ${DEFAULTS_OUTPUT_FILE}
-    COMMAND ${Python3_EXECUTABLE}
-      ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
-      ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
-    MAIN_DEPENDENCY ${INPUT_FILE}
-    VERBATIM)
+      OUTPUT ${DEFAULTS_OUTPUT_FILE}
+      COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
+        ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
+      MAIN_DEPENDENCY ${INPUT_FILE}
+      VERBATIM)
 endfunction()
 
 # ------------------------------------------------------------------------------
 
 # Find {fmt}.
 find_package(fmt CONFIG REQUIRED QUIET)
-target_link_libraries(StormRuler_BASE INTERFACE fmt::fmt-header-only)
+target_link_libraries(StormRuler_Base INTERFACE fmt::fmt-header-only)
 
 # Find spdlog.
 find_package(spdlog CONFIG REQUIRED QUIET)
-target_link_libraries(StormRuler_BASE INTERFACE spdlog::spdlog_header_only)
+target_link_libraries(StormRuler_Base INTERFACE spdlog::spdlog_header_only)
 
 # ------------------------------------------------------------------------------
 
 # Find TBB.
-if(StormRuler_NO_TBB)
+if(STORM_NO_TBB)
   message(STATUS "| TBB was disabled by user.")
 else()
   find_package(TBB QUIET)
   if(TBB_FOUND)
     set(STORM_TBB_ENABLED 1)
     message(STATUS "| TBB enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE TBB::tbb)
+    target_link_libraries(StormRuler_Base INTERFACE TBB::tbb)
   endif()
 endif()
 
 # Find OpenMP.
-if(StormRuler_NO_OpenMP)
+if(STORM_NO_OpenMP)
   message(STATUS "| OpenMP was disabled by user.")
 else()
   find_package(OpenMP QUIET)
   if(OpenMP_FOUND)
     set(STORM_OpenMP_ENABLED 1)
     message(STATUS "| OpenMP enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE OpenMP::OpenMP_CXX)
+    target_link_libraries(StormRuler_Base INTERFACE OpenMP::OpenMP_CXX)
   endif()
 endif()
 
 # ------------------------------------------------------------------------------
 
 # Find MKL.
-if(StormRuler_NO_MKL)
+if(STORM_NO_MKL)
   message(STATUS "| MKL was disabled by user.")
 else()
   # Configure OpenMP library to the Fortran compiler native one.
@@ -347,12 +326,12 @@ else()
   if(MKL_FOUND)
     set(STORM_MKL_ENABLED 1)
     message(STATUS "| MKL enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE MKL::MKL)
+    target_link_libraries(StormRuler_Base INTERFACE MKL::MKL)
   endif()
 endif()
 
 # Find BLAS.
-if(StormRuler_NO_BLAS)
+if(STORM_NO_BLAS)
   message(STATUS "| BLAS was disabled by user.")
 elseif(STORM_MKL_ENABLED)
   # Separate BLAS is not needed in case MKL is used.
@@ -363,12 +342,12 @@ else()
   if(BLAS_FOUND)
     set(STORM_BLAS_ENABLED 1)
     message(STATUS "| BLAS enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE BLAS::BLAS)
+    target_link_libraries(StormRuler_Base INTERFACE BLAS::BLAS)
   endif()
 endif()
 
 # Find LAPACK.
-if(StormRuler_NO_LAPACK)
+if(STORM_NO_LAPACK)
   message(STATUS "| LAPACK was disabled by user.")
 elseif(STORM_MKL_ENABLED)
   # Separate LAPACK is not needed in case MKL is used.
@@ -379,70 +358,70 @@ else()
   if(LAPACK_FOUND)
     set(STORM_LAPACK_ENABLED 1)
     message(STATUS "| LAPACK enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE LAPACK::LAPACK)
+    target_link_libraries(StormRuler_Base INTERFACE LAPACK::LAPACK)
   endif()
 endif()
 
 # Find METIS.
-if(StormRuler_NO_METIS)
+if(STORM_NO_METIS)
   message(STATUS "| METIS was disabled by user.")
 else()
   find_package(METIS QUIET)
   if(METIS_FOUND)
     message(STATUS "| METIS enabled.")
     set(STORM_METIS_ENABLED 1)
-    target_link_libraries(StormRuler_BASE INTERFACE METIS)
+    target_link_libraries(StormRuler_Base INTERFACE METIS)
   endif()
 endif()
 
 # ------------------------------------------------------------------------------
 
 # Find ZLIB.
-if(StormRuler_NO_ZLIB)
+if(STORM_NO_ZLIB)
   message(STATUS "| ZLIB was disabled by user.")
 else()
   find_package(ZLIB QUIET)
   if(ZLIB_FOUND)
     message(STATUS "| ZLIB enabled.")
     set(STORM_ZLIB_ENABLED 1)
-    target_link_libraries(StormRuler_BASE INTERFACE ZLIB::ZLIB)
+    target_link_libraries(StormRuler_Base INTERFACE ZLIB::ZLIB)
   endif()
 endif()
 
 # Find OpenGL, GLEW, GLFW and GLM.
-if(StormRuler_NO_OpenGL)
+if(STORM_NO_OpenGL)
   message(STATUS "| OpenGL was disabled by user.")
 else()
   find_package(OpenGL QUIET)
   if(OpenGL_FOUND)
     message(STATUS "| OpenGL enabled.")
     set(STORM_OpenGL_ENABLED 1)
-    target_link_libraries(StormRuler_BASE INTERFACE OpenGL::GL)
+    target_link_libraries(StormRuler_Base INTERFACE OpenGL::GL)
   endif()
   find_package(GLEW QUIET)
   if(GLEW_FOUND)
     set(STORM_GLEW_ENABLED 1)
     message(STATUS "| GLEW enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE GLEW::GLEW)
+    target_link_libraries(StormRuler_Base INTERFACE GLEW::GLEW)
   endif()
   find_package(glfw3 3.3 QUIET)
   if(glfw3_FOUND)
     set(STORM_GLFW_ENABLED 1)
     message(STATUS "| GLFW enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE glfw)
+    target_link_libraries(StormRuler_Base INTERFACE glfw)
   endif()
   find_package(glm QUIET)
   if(glm_FOUND)
     set(STORM_GLM_ENABLED 1)
     message(STATUS "| GLM enabled.")
-    target_link_libraries(StormRuler_BASE INTERFACE glm::glm)
+    target_link_libraries(StormRuler_Base INTERFACE glm::glm)
   endif()
 endif()
 
 # ------------------------------------------------------------------------------
 
 # Add the core library.
-message(STATUS "Adding StormRuler core library..")
+message(STATUS "Adding StormRuler libraries..")
 add_subdirectory(./source)
 
 # ------------------------------------------------------------------------------

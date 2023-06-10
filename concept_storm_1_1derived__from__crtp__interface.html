@@ -159,15 +159,14 @@ $(document).ready(function(){initNavTree('concept_storm_1_1derived__from__crtp__
 <p><code>#include &lt;<a class="el" href="_crtp_8hpp_source.html">Storm/Utils/Crtp.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T, <span class="keyword">template</span>&lt; <span class="keyword">class</span> Derived &gt; <span class="keyword">class </span>CrtpInterface&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1derived__from__crtp__interface.html">Storm::derived_from_crtp_interface</a> = </div>
-<div class="line">    <span class="keyword">requires</span>(T x) { </div>
-<div class="line">      detail_::DerivedFromCrtpInterfaceImpl_&lt;CrtpInterface&gt;{x, x};</div>
-<div class="line">    }</div>
-<div class="ttc" id="aconcept_storm_1_1derived__from__crtp__interface_html"><div class="ttname"><a href="concept_storm_1_1derived__from__crtp__interface.html">Storm::derived_from_crtp_interface</a></div><div class="ttdoc">Checks if and only if T has exactly one public base class CrtpInterface&lt;U&gt; for some type U,...</div><div class="ttdef"><b>Definition:</b> <a href="_crtp_8hpp_source.html#l00053">Crtp.hpp:53</a></div></div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1derived__from__crtp__interface.html">Storm::derived_from_crtp_interface</a> =  <span class="keyword">requires</span>(T x) { </div>
+<div class="line">  detail_::DerivedFromCrtpInterfaceImpl_&lt;CrtpInterface&gt;{x, x};</div>
+<div class="line">}</div>
+<div class="ttc" id="aconcept_storm_1_1derived__from__crtp__interface_html"><div class="ttname"><a href="concept_storm_1_1derived__from__crtp__interface.html">Storm::derived_from_crtp_interface</a></div><div class="ttdoc">Checks if and only if T has exactly one public base class CrtpInterface&lt;U&gt; for some type U,...</div><div class="ttdef"><b>Definition:</b> <a href="_crtp_8hpp_source.html#l00051">Crtp.hpp:51</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Checks if and only if <code>T</code> has exactly one public base class <code>CrtpInterface&lt;U&gt;</code> for some type <code>U</code>, and <code>T</code> has no base classes of type <code>CrtpInterface&lt;V&gt;</code> for any other type <code>V</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="_crtp_8hpp_source.html#l00053">53</a> of file <a class="el" href="_crtp_8hpp_source.html">Crtp.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_crtp_8hpp_source.html#l00051">51</a> of file <a class="el" href="_crtp_8hpp_source.html">Crtp.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

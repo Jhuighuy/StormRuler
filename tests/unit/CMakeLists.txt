@@ -29,6 +29,10 @@ add_executable(StormRuler_UnitTests ${CXX_SOURCES})
 # Link with the core library.
 target_link_libraries(StormRuler_UnitTests PRIVATE StormRuler::StormRuler)
 
+# Force enable asserts.
+target_compile_definitions(
+    StormRuler_UnitTests PRIVATE "STORM_ENABLE_ASSERTS_=1")
+
 # ------------------------------------------------------------------------------
 
 # Find doctest.

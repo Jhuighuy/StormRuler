@@ -31,8 +31,7 @@
 #include <concepts>
 #include <ranges>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 

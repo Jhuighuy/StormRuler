@@ -24,14 +24,12 @@
 
 #include <cstdio>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
 /// @brief Print the epic banner.
-static void print_banner()
-{
+static void print_banner() {
   // clang-format off
   std::puts("\n");
   std::puts(R"(  ╔═══════════════════════════════════════════════════════════════════╗  )");

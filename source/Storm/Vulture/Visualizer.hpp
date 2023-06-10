@@ -46,12 +46,10 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-namespace Storm::Vulture
-{
+namespace Storm::Vulture {
 
 template<mesh Mesh>
-void visualize_mesh(const Mesh& mesh)
-{
+void visualize_mesh(const Mesh& mesh) {
   IndexedVector<CellIndex<Mesh>, GLfloat> cell_data{};
   std::ranges::copy(mesh.cells() |
                         std::views::transform([](CellView<Mesh> cell) {

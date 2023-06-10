@@ -30,14 +30,12 @@
 
 #include "./Field.hpp"
 
-namespace Storm::Feathers
-{
+namespace Storm::Feathers {
 
 /// @brief Least Squares gradient estimation scheme, cell-based:
 /// computes cell-centered gradients based on the cell-centered values.
 template<mesh Mesh>
-class LeastSquaresGradientScheme final
-{
+class LeastSquaresGradientScheme final {
 private:
 
   const Mesh* p_mesh_;
@@ -47,8 +45,7 @@ public:
 
   /// @brief Construct the gradient scheme.
   constexpr explicit LeastSquaresGradientScheme(const Mesh& mesh)
-      : p_mesh_{&mesh}, g_mats_(p_mesh_->num_cells())
-  {
+      : p_mesh_{&mesh}, g_mats_(p_mesh_->num_cells()) {
     // Compute the inverse least squares matrices.
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the direct least squares matrices.
@@ -67,8 +64,7 @@ public:
   /// @brief Compute cell-centered gradients.
   template<class Real, size_t NumVars>
   void operator()(CellVectorField<Mesh, Real, NumVars>& grad_u,
-                  const CellField<Mesh, Real, NumVars>& u) const noexcept
-  {
+                  const CellField<Mesh, Real, NumVars>& u) const noexcept {
     std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the least squares RHS.
       grad_u[cell].fill({});

@@ -31,16 +31,14 @@
 #include <type_traits>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
 /// @brief Matrix transpose view.
 template<matrix_view Matrix>
 class TransposeMatrixView final :
-    public MatrixViewInterface<TransposeMatrixView<Matrix>>
-{
+    public MatrixViewInterface<TransposeMatrixView<Matrix>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -51,23 +49,20 @@ public:
   constexpr explicit TransposeMatrixView(Matrix mat) : mat_{std::move(mat)} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return std::array{num_cols(mat_), num_rows(mat_)};
   }
 
   /// @brief Get the matrix element at @p indices.
   /// @{
   constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) noexcept
-  {
+                                      size_t col_index) noexcept {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return mat_(col_index, row_index);
   }
   constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept
-  {
+                                      size_t col_index) const noexcept {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return mat_(col_index, row_index);
@@ -81,8 +76,7 @@ TransposeMatrixView(Matrix&&) -> TransposeMatrixView<matrix_view_t<Matrix>>;
 
 /// @brief Transpose the matrix @p mat.
 template<viewable_matrix Matrix>
-constexpr auto transpose(Matrix&& mat)
-{
+constexpr auto transpose(Matrix&& mat) {
   return TransposeMatrixView(std::forward<Matrix>(mat));
 }
 

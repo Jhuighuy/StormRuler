@@ -40,8 +40,7 @@
 #include <ranges>
 #include <string>
 
-namespace Storm::Feathers
-{
+namespace Storm::Feathers {
 
 using vec2_t = glm::dvec2;
 using vec3_t = glm::dvec3;
@@ -60,8 +59,7 @@ using Subfield = std::conditional_t<NumVars == 1, Value, Vec<Value, NumVars>>;
 /// @brief Generic mesh field.
 template<mesh Mesh, index Index, class Value = real_t, size_t NumVars = 1>
 class Field final :
-    public TargetMatrixInterface<Field<Mesh, Index, Value, NumVars>>
-{
+    public TargetMatrixInterface<Field<Mesh, Index, Value, NumVars>> {
 private:
 
   std::string name_;
@@ -73,32 +71,26 @@ public:
   constexpr Field() = default;
 
   constexpr explicit Field(const Mesh& mesh)
-      : p_mesh_{&mesh}, data_(p_mesh_->num_entities(meta::type_v<Index>))
-  {
-  }
+      : p_mesh_{&mesh}, data_(p_mesh_->num_entities(meta::type_v<Index>)) {}
 
   /// @brief Field shape.
-  [[nodiscard]] constexpr auto shape() const noexcept
-  {
+  [[nodiscard]] constexpr auto shape() const noexcept {
     return std::array{p_mesh_->num_entities(meta::type_v<Index>), NumVars};
   }
 
   /// @todo Document me!
-  constexpr void assign(const Field& other, bool copy = true)
-  {
+  constexpr void assign(const Field& other, bool copy = true) {
     *this = Field{*other.p_mesh_};
   }
 
   /// @brief Element at @p index.
   /// @{
-  [[nodiscard]] constexpr auto& operator[](Index index) noexcept
-  {
+  [[nodiscard]] constexpr auto& operator[](Index index) noexcept {
     STORM_ASSERT_(index < p_mesh_->num_entities(meta::type_v<Index>),
                   "Index is out of range!");
     return data_[index];
   }
-  [[nodiscard]] constexpr const auto& operator[](Index index) const noexcept
-  {
+  [[nodiscard]] constexpr const auto& operator[](Index index) const noexcept {
     STORM_ASSERT_(index < p_mesh_->num_entities(meta::type_v<Index>),
                   "Index is out of range!");
     return data_[index];
@@ -110,13 +102,11 @@ public:
   /// @brief Element at @p row_index and @p col_index.
   /// @{
   [[nodiscard]] constexpr Value& //
-  operator()(size_t row_index, size_t col_index = 0) noexcept
-  {
+  operator()(size_t row_index, size_t col_index = 0) noexcept {
     return data_[Index{row_index}]; //[col_index];
   }
   [[nodiscard]] constexpr const Value&
-  operator()(size_t row_index, size_t col_index = 0) const noexcept
-  {
+  operator()(size_t row_index, size_t col_index = 0) const noexcept {
     return data_[Index{row_index}]; //[col_index];
   }
   /// @}

@@ -29,15 +29,13 @@
 
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
 /// @brief Parametrized TFQMR solver.
 template<legacy_vector_like Vector, bool L1>
-class BaseTfqmrSolver : public IterativeSolver<Vector>
-{
+class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
 
   real_t rho_, tau_;
@@ -45,8 +43,7 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override
-  {
+              const Preconditioner<Vector>* pre_op) override {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
@@ -93,8 +90,7 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override
-  {
+                 const Preconditioner<Vector>* pre_op) override {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
     const bool right_pre =
@@ -244,9 +240,8 @@ protected:
 ///      Systems.” (1994).
 /// @endverbatim
 template<legacy_vector_like Vector>
-class TfqmrSolver final : public BaseTfqmrSolver<Vector, false>
-{
-}; // class TfqmrSolver
+class TfqmrSolver final :
+    public BaseTfqmrSolver<Vector, false> {}; // class TfqmrSolver
 
 /// @brief The TFQMR1 (Transpose-Free 1-norm Quasi-Minimal Residual) linear
 /// operator equation solver.
@@ -266,9 +261,8 @@ class TfqmrSolver final : public BaseTfqmrSolver<Vector, false>
 ///      for Non-Hermitian Linear Systems.“, FZJ-ZAM-IB-9706.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class Tfqmr1Solver final : public BaseTfqmrSolver<Vector, true>
-{
-}; // class Tfqmr1Solver
+class Tfqmr1Solver final :
+    public BaseTfqmrSolver<Vector, true> {}; // class Tfqmr1Solver
 
 // -----------------------------------------------------------------------------
 

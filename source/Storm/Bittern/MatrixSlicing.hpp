@@ -22,21 +22,18 @@
 #include <concepts>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 /// @name Slicing views.
 /// @{
 
 /// @brief All indices range.
-class AllIndices
-{
+class AllIndices {
 public:
 
   constexpr auto size() const = delete;
 
-  constexpr size_t operator[](size_t index) const noexcept
-  {
+  constexpr size_t operator[](size_t index) const noexcept {
     return index;
   }
 
@@ -44,8 +41,7 @@ public:
 
 /// @brief Selected indices range.
 template<size_t Size>
-class SelectedIndices
-{
+class SelectedIndices {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ std::array<size_t, Size> selected_indices_;
@@ -54,17 +50,13 @@ public:
 
   constexpr explicit SelectedIndices(
       const std::array<size_t, Size>& selected_indices) noexcept
-      : selected_indices_(selected_indices)
-  {
-  }
+      : selected_indices_(selected_indices) {}
 
-  constexpr auto size() const noexcept
-  {
+  constexpr auto size() const noexcept {
     return Size;
   }
 
-  constexpr size_t operator[](size_t index) const noexcept
-  {
+  constexpr size_t operator[](size_t index) const noexcept {
     STORM_ASSERT_(index < Size, "Index is out of range.");
     return selected_indices_[index];
   }
@@ -75,8 +67,7 @@ template<size_t Size>
 SelectedIndices(std::array<size_t, Size>) -> SelectedIndices<Size>;
 
 /// @brief Sliced indices range.
-class SlicedIndices
-{
+class SlicedIndices {
 private:
 
   size_t from_, to_, stride_;
@@ -84,17 +75,13 @@ private:
 public:
 
   constexpr SlicedIndices(size_t from, size_t to, size_t stride) noexcept
-      : from_{from}, to_{to}, stride_{stride}
-  {
-  }
+      : from_{from}, to_{to}, stride_{stride} {}
 
-  constexpr auto size() const noexcept
-  {
+  constexpr auto size() const noexcept {
     return (from_ - to_) / stride_;
   }
 
-  constexpr size_t operator[](size_t index) const noexcept
-  {
+  constexpr size_t operator[](size_t index) const noexcept {
     STORM_ASSERT_(index < size(), "Index is out of range.");
     return from_ + stride_ * index;
   }
@@ -105,8 +92,7 @@ public:
 template<matrix_view Matrix, class RowIndices, class ColIndices>
   requires std::is_object_v<RowIndices> && std::is_object_v<ColIndices>
 class SubmatrixView :
-    public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>>
-{
+    public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -119,8 +105,7 @@ private:
     // clang-format on
     return row_indices_.size();
   }
-  constexpr auto num_rows_() const noexcept
-  {
+  constexpr auto num_rows_() const noexcept {
     return num_rows(mat_);
   }
 
@@ -129,8 +114,7 @@ private:
   {
     return col_indices_.size();
   }
-  constexpr auto num_cols_() const noexcept
-  {
+  constexpr auto num_cols_() const noexcept {
     return num_cols(mat_);
   }
 
@@ -142,26 +126,21 @@ public:
                           ColIndices col_indices) noexcept
       : mat_{std::move(mat)},                 //
         row_indices_{std::move(row_indices)}, //
-        col_indices_{std::move(col_indices)}
-  {
-  }
+        col_indices_{std::move(col_indices)} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return MatrixShape{num_rows_(), num_cols_()};
   }
 
   /// @brief Get the matrix element at @p indices.
   /// @{
   constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) noexcept
-  {
+                                      size_t col_index) noexcept {
     return mat_(row_indices_[row_index], col_indices_[col_index]);
   }
   constexpr decltype(auto) operator()(size_t row_index,
-                                      size_t col_index) const noexcept
-  {
+                                      size_t col_index) const noexcept {
     return mat_(row_indices_[row_index], col_indices_[col_index]);
   }
   /// @}
@@ -176,8 +155,7 @@ SubmatrixView(Matrix&&, RowIndices, ColIndices)
 template<viewable_matrix Matrix, //
          std::convertible_to<size_t>... RowIndices>
 [[nodiscard]] constexpr auto select_rows(Matrix&& mat,
-                                         RowIndices&&... row_indices)
-{
+                                         RowIndices&&... row_indices) {
   return SubmatrixView(std::forward<Matrix>(mat),
                        SelectedIndices(std::array{static_cast<size_t>(
                            std::forward<RowIndices>(row_indices))...}),
@@ -188,8 +166,7 @@ template<viewable_matrix Matrix, //
 template<viewable_matrix Matrix, //
          std::convertible_to<size_t>... ColIndices>
 [[nodiscard]] constexpr auto select_cols(Matrix&& mat,
-                                         ColIndices&&... col_indices)
-{
+                                         ColIndices&&... col_indices) {
   return SubmatrixView(std::forward<Matrix>(mat), //
                        AllIndices{},
                        SelectedIndices(std::array{static_cast<size_t>(
@@ -201,8 +178,7 @@ template<viewable_matrix Matrix, //
 template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto slice_rows(Matrix&& mat, //
                                         size_t rows_from, size_t rows_to,
-                                        size_t row_stride = 1)
-{
+                                        size_t row_stride = 1) {
   return SubmatrixView(std::forward<Matrix>(mat),
                        SlicedIndices(rows_from, rows_to, row_stride),
                        AllIndices{});
@@ -213,8 +189,7 @@ template<viewable_matrix Matrix>
 template<viewable_matrix Matrix>
 [[nodiscard]] constexpr auto slice_cols(Matrix&& mat, //
                                         size_t cols_from, size_t cols_to,
-                                        size_t col_stride = 1)
-{
+                                        size_t col_stride = 1) {
   return SubmatrixView(std::forward<Matrix>(mat), //
                        AllIndices{},
                        SlicedIndices(cols_from, cols_to, col_stride));

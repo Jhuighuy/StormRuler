@@ -29,15 +29,13 @@
 #include <type_traits>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 /// @brief Matrix making view.
 template<std::copy_constructible Func>
   requires std::is_object_v<Func> &&
            std::regular_invocable<Func, size_t, size_t>
-class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>>
-{
+class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
 private:
 
   MatrixShape shape_;
@@ -47,19 +45,15 @@ public:
 
   /// @brief Construct a making view.
   constexpr MakeMatrixView(MatrixShape shape, Func func)
-      : shape_{shape}, func_{std::move(func)}
-  {
-  }
+      : shape_{shape}, func_{std::move(func)} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return shape_;
   }
 
   /// @brief Get the matrix element at @p indices.
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept
-  {
+  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
     STORM_ASSERT_(shape_.in_range(row_index, col_index),
                   "Indices are out of range.");
     return func_(row_index, col_index);
@@ -72,8 +66,7 @@ public:
 /// @brief Make a constant matrix of @p shape.
 /// @param value Matrix element value.
 template<std::copyable Element>
-constexpr auto make_constant_matrix(MatrixShape shape, Element value)
-{
+constexpr auto make_constant_matrix(MatrixShape shape, Element value) {
   return MakeMatrixView( //
       shape,
       [value = std::move(value)]( //
@@ -88,8 +81,7 @@ constexpr auto make_constant_matrix(MatrixShape shape, Element value)
 /// @param off_diagonal Matrix off-diagonal element value.
 template<std::copyable Element>
 constexpr auto make_diagonal_matrix(MatrixShape shape, Element diagonal,
-                                    Element off_diagonal = Element{})
-{
+                                    Element off_diagonal = Element{}) {
   return MakeMatrixView(
       shape,
       [diagonal = std::move(diagonal), //
@@ -100,8 +92,7 @@ constexpr auto make_diagonal_matrix(MatrixShape shape, Element diagonal,
 }
 
 /// @todo Find a better place (and a better name) for me.
-constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept
-{
+constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept {
   return mat <<= make_diagonal_matrix(mat.shape(), scal);
 }
 

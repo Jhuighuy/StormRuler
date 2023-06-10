@@ -186,19 +186,19 @@ static void cahn_hilliard_solve(const Mesh& mesh) {
   double total_time = 0.0;
   for (int time = 0; time <= 200000; ++time) {
     for (int frac = 0; time != 0 && frac < 1; ++frac) {
-#if !STORM_COMPILER_MSVC_
+#  if !STORM_COMPILER_MSVC_
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
-#endif
+#  endif
 
       cahn_hilliard_step(mesh, c, c_hat, w_hat);
 
-#if !STORM_COMPILER_MSVC_
+#  if !STORM_COMPILER_MSVC_
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
       elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
       total_time += elapsed;
-#endif
+#  endif
 
       std::swap(c, c_hat);
     }

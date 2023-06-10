@@ -27,8 +27,7 @@
 #include <istream>
 #include <streambuf>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -38,8 +37,7 @@ namespace Storm
 template<class Char, Char BeginFilter, Char EndFilter>
 class FilteringStreambuf final :
     public std::basic_streambuf<Char>,
-    public NonCopyable
-{
+    public NonCopyable {
 private:
 
   std::istream* p_stream_;
@@ -56,21 +54,18 @@ public:
 
   /// @brief Construct a filtering stream buffer.
   explicit FilteringStreambuf(std::basic_istream<Char>& stream)
-      : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()}
-  {
+      : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()} {
     p_stream_->rdbuf(this);
   }
 
   /// @brief Destroy a filtering stream buffer.
-  ~FilteringStreambuf() override
-  {
+  ~FilteringStreambuf() override {
     p_stream_->rdbuf(p_streambuf_);
   }
 
 protected:
 
-  typename std::basic_streambuf<Char>::int_type underflow() override
-  {
+  typename std::basic_streambuf<Char>::int_type underflow() override {
     auto bumped = p_streambuf_->sbumpc();
     if (bumped == begin_filter_) {
       while (bumped != eof_ && bumped != end_filter_) {

@@ -262,25 +262,18 @@
 
 // -----------------------------------------------------------------------------
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
 /// A small metaprogramming library.
-namespace meta
-{
-}
+namespace meta {}
 
 /// Shapes collection.
-namespace shapes
-{
-}
+namespace shapes {}
 
 /// @brief Contains the internal implementation details.
-namespace detail_
-{
-}
+namespace detail_ {}
 
 // -----------------------------------------------------------------------------
 
@@ -307,16 +300,14 @@ template<size_t Arg>
 using size_t_constant = std::integral_constant<size_t, Arg>;
 
 /// @brief real_t literal.
-constexpr real_t operator""_dp(long double arg) noexcept
-{
+constexpr real_t operator""_dp(long double arg) noexcept {
   return static_cast<real_t>(arg);
 }
 
 // -----------------------------------------------------------------------------
 
 /// @brief Non movable (and non copyable) object interface.
-class NonMovable
-{
+class NonMovable {
 protected:
 
   /// @brief Non movable object is default initializible.
@@ -340,8 +331,7 @@ protected:
 }; // class NonMovable
 
 /// @brief Non copyable object interface.
-class NonCopyable
-{
+class NonCopyable {
 protected:
 
   /// @brief Non copyable object is default initializible.
@@ -365,8 +355,7 @@ protected:
 }; // class NonCopyable
 
 /// @brief Non assignable object interface.
-class NonAssignable
-{
+class NonAssignable {
 protected:
 
   /// @brief Non assignable object is default initializible.
@@ -391,18 +380,15 @@ protected:
 
 // -----------------------------------------------------------------------------
 
-namespace detail_
-{
+namespace detail_ {
 
   using noncopyable_ = NonCopyable;
 
-  constexpr bool in_range_(auto t, auto min, auto max)
-  {
+  constexpr bool in_range_(auto t, auto min, auto max) {
     return min <= t && t <= max;
   }
 
-  constexpr bool one_of_(auto x, auto... vals)
-  {
+  constexpr bool one_of_(auto x, auto... vals) {
     return ((x == vals) || ...);
   }
 

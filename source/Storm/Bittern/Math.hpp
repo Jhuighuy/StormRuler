@@ -28,8 +28,7 @@
 #include <numbers>
 #include <type_traits>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -92,8 +91,7 @@ concept numeric_type = integer_type<Type> || real_or_complex_type<Type>;
 /// @brief If @p y is zero, return zero,
 /// else return value of @p x divided by @p y.
 template<real_or_complex_type Value>
-constexpr auto safe_divide(Value x, Value y)
-{
+constexpr auto safe_divide(Value x, Value y) {
   constexpr Value zero{0.0};
   return y == zero ? zero : (x / y);
 }
@@ -105,15 +103,13 @@ inline constexpr real_t pi = std::numbers::pi_v<real_t>;
 
 /// @brief Convert degrees to radians.
 template<real_type Real>
-constexpr auto deg2rad(Real&& degrees) noexcept
-{
+constexpr auto deg2rad(Real&& degrees) noexcept {
   return (pi / 180.0) * std::forward<Real>(degrees);
 }
 
 /// @brief Convert radians to degrees.
 template<real_type Real>
-constexpr auto rad2deg(Real&& radians) noexcept
-{
+constexpr auto rad2deg(Real&& radians) noexcept {
   return (180.0 / pi) * std::forward<Real>(radians);
 }
 
@@ -129,14 +125,12 @@ using std::imag;
 /// @brief Conjugate of real number argument @p arg (noop).
 /// @note Unlike standard function, this function preserves real type.
 template<real_type Arg>
-constexpr auto conj(Arg&& arg) noexcept
-{
+constexpr auto conj(Arg&& arg) noexcept {
   return std::forward<Arg>(arg);
 }
 /// @brief Conjugate of complex number argument @p arg.
 template<real_type Type>
-constexpr auto conj(const std::complex<Type>& arg) noexcept
-{
+constexpr auto conj(const std::complex<Type>& arg) noexcept {
   return std::conj(arg);
 }
 
@@ -144,8 +138,7 @@ constexpr auto conj(const std::complex<Type>& arg) noexcept
 
 template<class Arg>
   requires real_type<Arg> || integer_type<Arg>
-constexpr int sign(const Arg& arg) noexcept
-{
+constexpr int sign(const Arg& arg) noexcept {
   return (Arg{0} < arg) - (arg < Arg{0});
 }
 
@@ -221,8 +214,7 @@ using std::atanh;
 /// @brief Generate the Givens rotation.
 /// @todo Move me somewhere else!
 template<real_or_complex_type Value>
-auto sym_ortho(Value a, Value b)
-{
+auto sym_ortho(Value a, Value b) {
   // Compute:
   // ----------------------
   // 𝑟𝑟 ← (𝑎² + 𝑏²)¹ᐟ²,

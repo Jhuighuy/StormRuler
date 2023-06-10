@@ -30,8 +30,7 @@
 #include <concepts>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -48,18 +47,15 @@ concept target_matrix =
 
 /// @brief CRTP interface to a target matrix.
 template<crtp_derived TargetMatrix>
-class TargetMatrixInterface
-{
+class TargetMatrixInterface {
 private:
 
-  constexpr TargetMatrix& self_() noexcept
-  {
+  constexpr TargetMatrix& self_() noexcept {
     static_assert(std::derived_from<TargetMatrix, TargetMatrixInterface>);
     static_assert(target_matrix<TargetMatrix>);
     return static_cast<TargetMatrix&>(*this);
   }
-  constexpr const TargetMatrix& self_() const noexcept
-  {
+  constexpr const TargetMatrix& self_() const noexcept {
     return const_cast<TargetMatrixInterface&>(*this).self_();
   }
 
@@ -69,24 +65,21 @@ public:
   template<matrix Matrix>
     requires std::assignable_from< //
         matrix_element_ref_t<TargetMatrix>, matrix_element_t<Matrix>>
-  constexpr decltype(auto) operator=(Matrix&& mat) noexcept
-  {
+  constexpr decltype(auto) operator=(Matrix&& mat) noexcept {
     return assign(self_(), std::forward<Matrix>(mat));
   }
 
   /// @brief Multiply-assign the current matrix by a scalar @p scal.
   template<std::copyable Scalar>
     requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
-  constexpr decltype(auto) operator*=(Scalar scal)
-  {
+  constexpr decltype(auto) operator*=(Scalar scal) {
     return assign(BindLast{MultiplyAssign{}, std::move(scal)}, *this);
   }
 
   /// @brief Divide-assign the current matrix by a scalar @p scal.
   template<std::copyable Scalar>
     requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
-  constexpr decltype(auto) operator/=(Scalar scal)
-  {
+  constexpr decltype(auto) operator/=(Scalar scal) {
     return assign(BindLast{DivideAssign{}, std::move(scal)}, *this);
   }
 
@@ -94,8 +87,7 @@ public:
   template<matrix Matrix>
     requires compatible_matrices_v<TargetMatrix, Matrix> && //
              numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr decltype(auto) operator+=(Matrix&& mat)
-  {
+  constexpr decltype(auto) operator+=(Matrix&& mat) {
     return assign(AddAssign{}, self_(), std::forward<Matrix>(mat));
   }
 
@@ -103,8 +95,7 @@ public:
   template<matrix Matrix>
     requires compatible_matrices_v<TargetMatrix, Matrix> && //
              numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr decltype(auto) operator-=(Matrix&& mat)
-  {
+  constexpr decltype(auto) operator-=(Matrix&& mat) {
     return assign(SubtractAssign{}, self_(), std::forward<Matrix>(mat));
   }
 
@@ -113,8 +104,7 @@ public:
   template<matrix Matrix>
     requires compatible_matrices_v<TargetMatrix, Matrix> && //
              numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr decltype(auto) operator*=(Matrix&& mat)
-  {
+  constexpr decltype(auto) operator*=(Matrix&& mat) {
     return assign(MultiplyAssign{}, self_(), std::forward<Matrix>(mat));
   }
 
@@ -122,8 +112,7 @@ public:
   template<matrix Matrix>
     requires compatible_matrices_v<TargetMatrix, Matrix> && //
              numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
-  constexpr decltype(auto) operator/=(Matrix&& mat)
-  {
+  constexpr decltype(auto) operator/=(Matrix&& mat) {
     return assign(DivideAssign{}, self_(), std::forward<Matrix>(mat));
   }
 
@@ -137,8 +126,7 @@ template<matrix_view Matrix>
 class TargetMatrixView final :
     public MatrixViewInterface<TargetMatrixView<Matrix>>,
     public TargetMatrixInterface<TargetMatrixView<Matrix>>,
-    public NonMovable
-{
+    public NonMovable {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -149,16 +137,14 @@ public:
   constexpr explicit TargetMatrixView(Matrix mat) : mat_{std::move(mat)} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return mat_.shape();
   }
 
   /// @brief Get the matrix element at @p indices.
   template<class... Indices>
     requires compatible_matrix_indices_v<TargetMatrixView, Indices...>
-  constexpr auto operator()(Indices... indices) const noexcept
-  {
+  constexpr auto operator()(Indices... indices) const noexcept {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return mat_(indices...);
   }
@@ -173,8 +159,7 @@ TargetMatrixView(Matrix) -> TargetMatrixView<matrix_view_t<Matrix>>;
 /// @brief Wrap the output matrix @p mat as a target.
 template<viewable_matrix Matrix>
   requires output_matrix<Matrix>
-constexpr auto as_target(Matrix&& mat)
-{
+constexpr auto as_target(Matrix&& mat) {
   return TargetMatrixView{std::forward<Matrix>(mat)};
 }
 

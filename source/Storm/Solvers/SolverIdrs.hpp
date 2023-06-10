@@ -31,8 +31,7 @@
 #include <utility>
 #include <vector>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -51,8 +50,7 @@ namespace Storm
 ///      ACM Trans. Math. Softw. 38 (2011): 5:1-5:19.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class IdrsSolver final : public InnerOuterIterativeSolver<Vector>
-{
+class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
   real_t omega_;
@@ -63,8 +61,7 @@ private:
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
-                    const Preconditioner<Vector>* pre_op) override
-  {
+                    const Preconditioner<Vector>* pre_op) override {
     const size_t s = this->num_inner_iterations;
 
     const bool left_pre =
@@ -106,8 +103,7 @@ private:
 
   void inner_init(const Vector& x_vec, const Vector& b_vec,
                   const Operator<Vector>& lin_op,
-                  const Preconditioner<Vector>* pre_op) override
-  {
+                  const Preconditioner<Vector>* pre_op) override {
     const size_t s = this->num_inner_iterations;
 
     // Build shadow space and initialize 𝜑:
@@ -152,8 +148,7 @@ private:
 
   real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
                        const Operator<Vector>& lin_op,
-                       const Preconditioner<Vector>* pre_op) override
-  {
+                       const Preconditioner<Vector>* pre_op) override {
     const size_t s = this->num_inner_iterations;
     const size_t k = this->inner_iteration;
 
@@ -289,8 +284,7 @@ private:
 
 public:
 
-  IdrsSolver()
-  {
+  IdrsSolver() {
     this->num_inner_iterations = 4;
   }
 

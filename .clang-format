@@ -18,6 +18,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+# ------------------------------------------------------------------------------
+
 BasedOnStyle: LLVM
 AccessModifierOffset: -2
 AlignEscapedNewlines: Left
@@ -37,7 +39,7 @@ AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: Yes
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Attach
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: BeforeColon
@@ -77,3 +79,5 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 TabWidth: 2
 UseTab: Never
+
+# ------------------------------------------------------------------------------

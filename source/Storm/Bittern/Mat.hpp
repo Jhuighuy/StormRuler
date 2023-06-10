@@ -29,14 +29,12 @@
 #include <concepts>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 /// @brief Statically-sized matrix.
 template<class Elem, size_t NumRows, size_t NumCols>
 class StaticMatrix final :
-    public TargetMatrixInterface<StaticMatrix<Elem, NumRows, NumCols>>
-{
+    public TargetMatrixInterface<StaticMatrix<Elem, NumRows, NumCols>> {
 private:
 
   std::array<Elem, NumRows * NumCols> elems_{};
@@ -44,8 +42,7 @@ private:
 public:
 
   /// @brief Construct a matrix.
-  constexpr StaticMatrix(const Elem& init = {}) noexcept
-  {
+  constexpr StaticMatrix(const Elem& init = {}) noexcept {
     fill(init);
   }
 
@@ -55,23 +52,19 @@ public:
              (sizeof...(RestElems) + 1 == NumRows * NumCols)
   constexpr explicit StaticMatrix(const Elem& first_elem,
                                   const RestElems&... rest_elems) noexcept
-      : elems_{first_elem, static_cast<Elem>(rest_elems)...}
-  {
-  }
+      : elems_{first_elem, static_cast<Elem>(rest_elems)...} {}
 
   /// @brief Construct a matrix with another matrix.
   template<matrix Matrix>
     requires (!std::same_as<StaticMatrix, std::remove_cvref_t<Matrix>>)
-  constexpr StaticMatrix(Matrix&& other) noexcept
-  {
+  constexpr StaticMatrix(Matrix&& other) noexcept {
     assign(*this, std::forward<Matrix>(other));
   }
 
   using TargetMatrixInterface<StaticMatrix<Elem, NumRows, NumCols>>::operator=;
 
   /// @brief Fill the matrix with @p value.
-  constexpr void fill(const Elem& value) noexcept
-  {
+  constexpr void fill(const Elem& value) noexcept {
     for (size_t row_index = 0; row_index < NumRows; ++row_index) {
       for (size_t col_index = 0; col_index < NumCols; ++col_index) {
         (*this)(row_index, col_index) = value;
@@ -80,23 +73,20 @@ public:
   }
 
   /// @brief Matrix shape.
-  static constexpr auto shape() noexcept
-  {
+  static constexpr auto shape() noexcept {
     return std::array{NumRows, NumCols};
   }
 
   /// @brief Get the matrix coefficient at @p row_index and @p col_index.
   /// @{
   constexpr Elem& operator()(size_t row_index, //
-                             size_t col_index = 0) noexcept
-  {
+                             size_t col_index = 0) noexcept {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return elems_[row_index * NumCols + col_index];
   }
   constexpr const Elem& operator()(size_t row_index,
-                                   size_t col_index = 0) const noexcept
-  {
+                                   size_t col_index = 0) const noexcept {
     STORM_ASSERT_(in_range(shape(), row_index, col_index),
                   "Indices are out of range!");
     return elems_[row_index * NumCols + col_index];
@@ -105,12 +95,10 @@ public:
 
   /// @todo Transition code! Remove me!
   /// @{
-  constexpr Elem& operator[](size_t row_index) noexcept
-  {
+  constexpr Elem& operator[](size_t row_index) noexcept {
     return (*this)(row_index);
   }
-  constexpr const Elem& operator[](size_t row_index) const noexcept
-  {
+  constexpr const Elem& operator[](size_t row_index) const noexcept {
     return (*this)(row_index);
   }
   /// @}

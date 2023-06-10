@@ -24,15 +24,12 @@
 
 #include <doctest/doctest.h>
 
-namespace Storm::UnitTests
-{
+namespace Storm::UnitTests {
 
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Bittern/BoolMatrixReductions")
-{
-  SUBCASE("true-mat")
-  {
+TEST_CASE("Bittern/BoolMatrixReductions") {
+  SUBCASE("true-mat") {
     Mat2x2<bool> true_mat{true, true, //
                           true, true};
 
@@ -40,8 +37,7 @@ TEST_CASE("Bittern/BoolMatrixReductions")
     CHECK(any(true_mat));
   }
 
-  SUBCASE("false-mat")
-  {
+  SUBCASE("false-mat") {
     Mat2x2<bool> false_mat{false, false, //
                            false, false};
 
@@ -49,8 +45,7 @@ TEST_CASE("Bittern/BoolMatrixReductions")
     CHECK_FALSE(any(false_mat));
   }
 
-  SUBCASE("mixed-mat")
-  {
+  SUBCASE("mixed-mat") {
     Mat2x2<bool> mixed_mat{true, false, //
                            false, true};
 
@@ -61,20 +56,17 @@ TEST_CASE("Bittern/BoolMatrixReductions")
 
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Bittern/RealMatrixReductions")
-{
+TEST_CASE("Bittern/RealMatrixReductions") {
   Mat2x2<real_t> mat{+1.0_dp, -2.0_dp, //
                      +3.0_dp, -4.0_dp};
 
-  SUBCASE("simple-reductions")
-  {
+  SUBCASE("simple-reductions") {
     CHECK_EQ(sum(mat), -2.0_dp);
     CHECK_EQ(min_element(mat), -4.0_dp);
     CHECK_EQ(max_element(mat), +3.0_dp);
   }
 
-  SUBCASE("norms")
-  {
+  SUBCASE("norms") {
     const real_t eps = 1.0e-5_dp;
     CHECK_EQ(norm_1(mat), 10.0_dp);
     CHECK_NEAR(norm_2(mat), 5.47723_dp, eps);
@@ -85,18 +77,15 @@ TEST_CASE("Bittern/RealMatrixReductions")
 
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Bittern/ComplexMatrixReductions")
-{
+TEST_CASE("Bittern/ComplexMatrixReductions") {
   Mat2x2<complex_t> mat{+1.0_dp - i * 2.0_dp, -2.0_dp + i * 3.0_dp, //
                         +3.0_dp - i * 4.0_dp, -4.0_dp + i * 5.0_dp};
 
-  SUBCASE("simple-reductions")
-  {
+  SUBCASE("simple-reductions") {
     CHECK_EQ(sum(mat), -2.0_dp + i * 2.0_dp);
   }
 
-  SUBCASE("norms")
-  {
+  SUBCASE("norms") {
     const real_t eps = 1.0e-5_dp;
     CHECK_NEAR(norm_1(mat), 17.24474_dp, eps);
     CHECK_NEAR(norm_2(mat), 9.16515_dp, eps);
@@ -107,8 +96,7 @@ TEST_CASE("Bittern/ComplexMatrixReductions")
 
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Bittern/DotProductReductions")
-{
+TEST_CASE("Bittern/DotProductReductions") {
   Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
                       +3.0_dp, -4.0_dp};
   Mat2x2<real_t> mat2{+5.0_dp, -6.0_dp, //
@@ -129,8 +117,7 @@ TEST_CASE("Bittern/DotProductReductions")
 // -----------------------------------------------------------------------------
 
 // Assuming the expressions are working.
-TEST_CASE("Bittern/MatrixExpressionReductions")
-{
+TEST_CASE("Bittern/MatrixExpressionReductions") {
   Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
                       +3.0_dp, -4.0_dp};
   Mat2x2<complex_t> mat2{+1.0_dp - i * 2.0_dp, -2.0_dp + i * 3.0_dp, //

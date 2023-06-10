@@ -29,8 +29,7 @@
 
 #include <limits>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -54,21 +53,18 @@ namespace Storm
 /// [1] ???
 /// @endverbatim
 template<legacy_vector_like Vector>
-class NewtonSolver : public IterativeSolver<Vector>
-{
+class NewtonSolver : public IterativeSolver<Vector> {
 private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
-              const Preconditioner<Vector>* pre_op) final
-  {
+              const Preconditioner<Vector>* pre_op) final {
     STORM_TERMINATE_("Newton solver is not implemented yet!");
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
-                 const Preconditioner<Vector>* pre_op) final
-  {
+                 const Preconditioner<Vector>* pre_op) final {
     STORM_TERMINATE_("Newton solver is not implemented yet!");
   } // NewtonSolver::iterate
 
@@ -103,16 +99,14 @@ private:
 ///     Procedia Engineering 61 (2013): 9-15.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class JfnkSolver final : public IterativeSolver<Vector>
-{
+class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
   Vector s_vec_, t_vec_, r_vec_, w_vec_;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
-              const Preconditioner<Vector>* pre_op) override
-  {
+              const Preconditioner<Vector>* pre_op) override {
     s_vec_.assign(x_vec, false);
     t_vec_.assign(x_vec, false);
     r_vec_.assign(x_vec, false);
@@ -131,8 +125,7 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
-                 const Preconditioner<Vector>* pre_op) override
-  {
+                 const Preconditioner<Vector>* pre_op) override {
     // Solve the Jacobian equation:
     // ----------------------
     // 𝜇 ← (𝜀ₘ)¹ᐟ²⋅(1 + ‖𝒙‖)]¹ᐟ²,

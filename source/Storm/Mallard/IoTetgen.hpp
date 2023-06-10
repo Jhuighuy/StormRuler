@@ -33,8 +33,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -44,8 +43,7 @@ namespace Storm
 /// @warning Unstable API!
 template<mesh Mesh>
   requires (detail_::in_range_(mesh_dim_v<Mesh>, size_t{2}, size_t{3}))
-void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path)
-{
+void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
   constexpr bool mesh3D = mesh_dim_v<Mesh> == 3;
 
   STORM_INFO_("Loading the TetGen/Triangle mesh from path '{}'...",

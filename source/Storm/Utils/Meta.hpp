@@ -30,8 +30,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Storm::meta
-{
+namespace Storm::meta {
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                 Base types                                 //
@@ -40,8 +39,7 @@ namespace Storm::meta
 ///////////////////////////////////
 // Empty type
 
-struct empty_t {
-};
+struct empty_t {};
 
 inline constexpr empty_t empty_v{};
 
@@ -52,8 +50,7 @@ inline constexpr empty_t empty_v{};
 // Type wrapper
 
 template<class T>
-struct type {
-};
+struct type {};
 
 template<class T>
 struct raw {
@@ -80,8 +77,7 @@ inline constexpr type_t<T> type_v{};
 // Type list
 
 template<class... Ts>
-struct list {
-};
+struct list {};
 
 template<class... Ts>
 using list_t = list<raw_t<Ts>...>;
@@ -100,8 +96,7 @@ inline constexpr list_t<Ts...> list_v{};
 // Sequence generator.
 
 template<template<size_t> class Type, size_t First, size_t Last>
-consteval auto make_seq()
-{
+consteval auto make_seq() {
   if constexpr (First >= Last) {
     return list_v<>;
   } else {
@@ -124,15 +119,13 @@ using make_seq_t = decltype(make_seq<Type, First, Last>());
 ////////////////////////////////////////////////////////////////////////////////
 
 template<class Fn>
-struct query_fn {
-};
+struct query_fn {};
 
 ///////////////////////////////////
 // Size query
 
 template<class... Ts>
-consteval size_t size(list<Ts...>)
-{
+consteval size_t size(list<Ts...>) {
   return sizeof...(Ts);
 }
 template<class List>
@@ -145,8 +138,7 @@ inline constexpr size_t size_v = size(List{});
 // List item queries
 
 template<class T, class... Ts>
-consteval auto first(list<T, Ts...>)
-{
+consteval auto first(list<T, Ts...>) {
   return type_v<T>;
 }
 
@@ -154,8 +146,7 @@ template<class List>
 using first_t = decltype(first(List{}));
 
 template<class T1, class T2, class... Ts>
-consteval auto second(list<T1, T2, Ts...>)
-{
+consteval auto second(list<T1, T2, Ts...>) {
   return type_v<T2>;
 }
 
@@ -169,8 +160,7 @@ using second_t = decltype(second(List{}));
 // Sublist queries
 
 template<class T, class... Ts>
-consteval auto drop_first(list<T, Ts...>)
-{
+consteval auto drop_first(list<T, Ts...>) {
   return list_v<Ts...>;
 }
 
@@ -184,8 +174,7 @@ using drop_first_t = decltype(drop_first(List{}));
 // Contains query.
 
 template<class X, class... Ts>
-consteval bool contains(list<Ts...>)
-{
+consteval bool contains(list<Ts...>) {
   using R = raw_t<X>;
   return (std::is_same_v<R, Ts> || ...);
 }
@@ -199,13 +188,11 @@ inline constexpr bool contains_v = contains<X>(List{});
 ///////////////////////////////////
 // All unique query
 
-consteval auto all_unique(list<>)
-{
+consteval auto all_unique(list<>) {
   return true;
 }
 template<class T, class... Ts>
-consteval auto all_unique(list<T, Ts...>)
-{
+consteval auto all_unique(list<T, Ts...>) {
   const auto rest = list_v<Ts...>;
   if constexpr (!contains<T>(rest)) {
     return all_unique(rest);
@@ -228,13 +215,11 @@ inline constexpr bool all_unique_v = all_unique(List{});
 // For each item in list
 
 template<class... Ts, class Fn>
-constexpr void for_each(list<Ts...>, [[maybe_unused]] Fn fn)
-{
+constexpr void for_each(list<Ts...>, [[maybe_unused]] Fn fn) {
   (fn(type_v<Ts>), ...);
 }
 template<class List, class Fn>
-constexpr void for_each(Fn fn)
-{
+constexpr void for_each(Fn fn) {
   for_each(List{}, fn);
 }
 
@@ -245,12 +230,10 @@ constexpr void for_each(Fn fn)
 // Transform the type list
 
 template<class Fn>
-struct transform_fn {
-};
+struct transform_fn {};
 
 template<class Fn, class... Ts>
-consteval auto transform(transform_fn<Fn>, list<Ts...>)
-{
+consteval auto transform(transform_fn<Fn>, list<Ts...>) {
   return list_v<decltype(Fn{}(std::declval<Ts>()))...>;
 }
 
@@ -266,8 +249,7 @@ using transform_t = decltype(transform(Func{}, List{}));
 template<class X>
 struct append_fn : transform_fn<append_fn<X>> {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     return list_v<Ts..., raw_t<X>>;
   }
 }; // struct append_fn
@@ -287,8 +269,7 @@ using append_t = decltype(append<X>(List{}));
 template<class X>
 struct prepend_fn : transform_fn<prepend_fn<X>> {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     return list_v<raw_t<X>, Ts...>;
   }
 }; // struct prepend_fn
@@ -306,13 +287,11 @@ using prepend_t = decltype(prepend<X>(List{}));
 // Reverse the type list
 
 struct reverse_fn : transform_fn<reverse_fn> {
-  consteval auto operator()(list<>) const
-  {
+  consteval auto operator()(list<>) const {
     return list_v<>;
   }
   template<class T, class... Ts>
-  consteval auto operator()(list<T, Ts...>) const
-  {
+  consteval auto operator()(list<T, Ts...>) const {
     return append<T>((*this)(list_v<Ts...>) );
   }
 }; // struct reverse_fn
@@ -329,13 +308,11 @@ using reverse_t = decltype(reverse(List{}));
 // Unique types list
 
 struct unique_fn : transform_fn<unique_fn> {
-  consteval auto operator()(list<>) const
-  {
+  consteval auto operator()(list<>) const {
     return list_v<>;
   }
   template<class T, class... Ts>
-  consteval auto operator()(list<T, Ts...>) const
-  {
+  consteval auto operator()(list<T, Ts...>) const {
     const auto rest_unique = unique(list_v<Ts...>);
     if constexpr (contains<T>(rest_unique)) {
       return rest_unique;
@@ -359,8 +336,7 @@ using unique_t = decltype(unique(List{}));
 template<class X>
 struct l_pair_list_fn {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     using R = raw_t<X>;
     return list_v<list_t<R, Ts>...>;
   }
@@ -369,8 +345,7 @@ struct l_pair_list_fn {
 template<class X>
 struct r_pair_list_fn {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     using R = raw_t<X>;
     return list_v<list_t<Ts, R>...>;
   }
@@ -412,8 +387,7 @@ inline constexpr pair_list_t<X, Y> pair_list_v{};
 template<template<class...> class ToPair>
 struct pair_cast_fn : transform_fn<pair_cast_fn<ToPair>> {
   template<class T, class U>
-  consteval auto operator()(list<T, U>) const
-  {
+  consteval auto operator()(list<T, U>) const {
     return type_v<ToPair<T, U>>;
   }
 }; // struct pair_cast_fn
@@ -436,8 +410,7 @@ using as_std_pair_t = raw_t<pair_cast_t<std::pair, Pair>>;
 template<template<class...> class ToList>
 struct list_cast_fn : transform_fn<list_cast_fn<ToList>> {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     return type_v<ToList<Ts...>>;
   }
 }; // struct list_cast_fn
@@ -459,21 +432,18 @@ using as_std_tuple_t = raw_t<list_cast_t<std::tuple, List>>;
 ////////////////////////////////////////////////////////////////////////////////
 
 template<class Fn>
-struct reduce_fn {
-};
+struct reduce_fn {};
 
 ///////////////////////////////////
 // Concatenate the type lists.
 
 struct concat_fn : reduce_fn<concat_fn> {
   template<class... Ts>
-  consteval auto operator()(list<Ts...>) const
-  {
+  consteval auto operator()(list<Ts...>) const {
     return list_v<Ts...>;
   }
   template<class... Ts, class... Us>
-  consteval auto operator()(list<Ts...>, list<Us...>, auto... rest) const
-  {
+  consteval auto operator()(list<Ts...>, list<Us...>, auto... rest) const {
     return (*this)(list_v<Ts..., Us...>, rest...);
   }
 }; // struct concat_fn
@@ -491,8 +461,7 @@ using concat_t = decltype(concat(Lists{}...));
 
 struct cartesian_product_fn : reduce_fn<cartesian_product_fn> {
   template<class... Ts, class... Us>
-  consteval auto operator()(list<Ts...>, list<Us...>) const
-  {
+  consteval auto operator()(list<Ts...>, list<Us...>) const {
     return concat(l_pair_list<Ts>(list_v<Us...>)...);
   }
 }; // struct cartesian_product_fn
@@ -515,8 +484,7 @@ inline constexpr bool always_false = false;
 /// @brief Get the template parameter name as a string.
 /// @tparam T Template parameter.
 template<class T>
-consteval auto type_name()
-{
+consteval auto type_name() {
   std::string_view name, prefix, suffix;
 #if STORM_COMPILER_GCC_
   name = __PRETTY_FUNCTION__;
@@ -539,8 +507,7 @@ consteval auto type_name()
 }
 
 template<class T>
-constexpr auto type_name(T&&)
-{
+constexpr auto type_name(T&&) {
   return type_name<T>();
 }
 

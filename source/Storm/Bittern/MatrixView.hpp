@@ -30,8 +30,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -56,18 +55,15 @@ concept viewable_matrix =
 
 /// @brief CRTP interface to a matrix views.
 template<crtp_derived MatrixView>
-class MatrixViewInterface
-{
+class MatrixViewInterface {
 private:
 
-  constexpr MatrixView& self_() noexcept
-  {
+  constexpr MatrixView& self_() noexcept {
     static_assert(std::derived_from<MatrixView, MatrixViewInterface>);
     static_assert(matrix_view<MatrixView>);
     return static_cast<MatrixView&>(*this);
   }
-  constexpr const MatrixView& self_() const noexcept
-  {
+  constexpr const MatrixView& self_() const noexcept {
     return const_cast<MatrixViewInterface&>(*this).self_();
   }
 
@@ -81,8 +77,7 @@ public:
 
 /// @brief Matrix reference view.
 template<matrix Matrix>
-class MatrixRefView final : public MatrixViewInterface<MatrixRefView<Matrix>>
-{
+class MatrixRefView final : public MatrixViewInterface<MatrixRefView<Matrix>> {
 private:
 
   Matrix* p_mat_;
@@ -98,13 +93,10 @@ public:
               requires { rvalue_shall_not_pass_(std::declval<OtherMatrix>()); })
   constexpr MatrixRefView(OtherMatrix&& mat) noexcept // NOLINT
       : p_mat_{std::addressof(
-            static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))}
-  {
-  }
+            static_cast<Matrix&>(std::forward<OtherMatrix>(mat)))} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return p_mat_->shape();
   }
 
@@ -112,15 +104,13 @@ public:
   /// @{
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixRefView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) noexcept
-  {
+  constexpr decltype(auto) operator()(Indices... indices) noexcept {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return (*p_mat_)(indices...);
   }
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixRefView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) const noexcept
-  {
+  constexpr decltype(auto) operator()(Indices... indices) const noexcept {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return std::as_const(*p_mat_)(indices...);
   }
@@ -139,8 +129,7 @@ template<matrix Matrix>
   requires std::move_constructible<Matrix>
 class MatrixOwningView final :
     public MatrixViewInterface<MatrixOwningView<Matrix>>,
-    public NonCopyable
-{
+    public NonCopyable {
 private:
 
   STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
@@ -149,13 +138,10 @@ public:
 
   /// @brief Construct an owning view.
   constexpr MatrixOwningView(Matrix&& mat) noexcept // NOLINT
-      : mat_{std::move(mat)}
-  {
-  }
+      : mat_{std::move(mat)} {}
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept
-  {
+  constexpr auto shape() const noexcept {
     return mat_.shape();
   }
 
@@ -163,15 +149,13 @@ public:
   /// @{
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixOwningView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) noexcept
-  {
+  constexpr decltype(auto) operator()(Indices... indices) noexcept {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return mat_(indices...);
   }
   template<class... Indices>
     requires compatible_matrix_indices_v<MatrixOwningView, Indices...>
-  constexpr decltype(auto) operator()(Indices... indices) const noexcept
-  {
+  constexpr decltype(auto) operator()(Indices... indices) const noexcept {
     STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
     return mat_(indices...);
   }
@@ -181,8 +165,7 @@ public:
 
 // -----------------------------------------------------------------------------
 
-namespace detail_
-{
+namespace detail_ {
   template<class Matrix>
   concept can_matrix_ref_view_ =
       requires { MatrixRefView{std::declval<Matrix>()}; };
@@ -196,8 +179,7 @@ template<viewable_matrix Matrix>
   requires matrix_view<std::decay_t<Matrix>> ||
            detail_::can_matrix_ref_view_<Matrix> ||
            detail_::can_matrix_owning_view_<Matrix>
-constexpr auto make_matrix_view(Matrix&& mat) noexcept
-{
+constexpr auto make_matrix_view(Matrix&& mat) noexcept {
   if constexpr (matrix_view<std::decay_t<Matrix>>) {
     return std::forward<Matrix>(mat);
   } else if constexpr (detail_::can_matrix_ref_view_<Matrix>) {

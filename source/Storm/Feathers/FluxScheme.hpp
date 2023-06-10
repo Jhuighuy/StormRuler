@@ -33,8 +33,7 @@
 #include "./Field.hpp"
 #include "./SkunkHydro.hpp"
 
-namespace Storm::Feathers
-{
+namespace Storm::Feathers {
 
 /// @brief Local Lax-Friedrichs (Rusanov) numerical flux.
 /// Use this numerical flux if all other fails. It should always work.
@@ -42,16 +41,14 @@ template<class Physics>
 class LaxFriedrichsFluxScheme;
 
 template<>
-class LaxFriedrichsFluxScheme<tGasPhysics> final
-{
+class LaxFriedrichsFluxScheme<tGasPhysics> final {
 public:
 
   template<class Real, size_t NumVars>
   Subfield<Real, NumVars>
   operator()(const vec2_t& n, //
              const Subfield<Real, NumVars>& cons_r,
-             const Subfield<Real, NumVars>& cons_l) const noexcept
-  {
+             const Subfield<Real, NumVars>& cons_l) const noexcept {
     return (*this)(vec3_t(n, 0.0), cons_r, cons_l);
   }
 
@@ -60,8 +57,7 @@ public:
   Subfield<Real, NumVars>
   operator()(const vec3_t& n, //
              const Subfield<Real, NumVars>& cons_r,
-             const Subfield<Real, NumVars>& cons_l) const noexcept
-  {
+             const Subfield<Real, NumVars>& cons_l) const noexcept {
     const tGasPhysics::tFluidState ur(n, cons_r.data());
     const tGasPhysics::tFluidState ul(n, cons_l.data());
 

@@ -28,8 +28,7 @@
 
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -40,8 +39,7 @@ namespace Storm
 /// [1] ???
 /// @endverbatim
 template<legacy_vector_like Vector>
-class RichardsonSolver final : public IterativeSolver<Vector>
-{
+class RichardsonSolver final : public IterativeSolver<Vector> {
 public:
 
   real_t relaxation_factor = 1.0e-4;
@@ -52,8 +50,7 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override
-  {
+              const Preconditioner<Vector>* pre_op) override {
     r_vec_.assign(x_vec, false);
     if (pre_op != nullptr) z_vec_.assign(x_vec, false);
 
@@ -76,8 +73,7 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override
-  {
+                 const Preconditioner<Vector>* pre_op) override {
     const real_t& omega = relaxation_factor;
 
     // Update the solution and the residual:

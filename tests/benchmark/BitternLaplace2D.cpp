@@ -36,8 +36,7 @@
 // Based on:
 // https://github.com/romeric/expression_templates_benchmark
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 /// @todo Our implementation!
 
@@ -49,8 +48,7 @@ namespace Storm::Benchmarks
 
 #  include <armadillo>
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 template<class T, size_t N>
 using arma_vec = typename arma::Col<T>::template fixed<N>;
@@ -58,12 +56,10 @@ template<class T, size_t N>
 using arma_mat = typename arma::Mat<T>::template fixed<N, N>;
 
 template<class T, size_t N, size_t NumIterations>
-class Laplace2D_Armadillo
-{
+class Laplace2D_Armadillo {
 public:
 
-  T operator()() const
-  {
+  T operator()() const {
     static constexpr T pi = std::numbers::pi_v<T>;
 
     const arma_vec<T, N> x = arma::linspace(T{0.0}, pi, N);
@@ -107,16 +103,13 @@ public:
 
 #  include <blaze/Blaze.h>
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 template<class T, size_t N, size_t NumIterations>
-class Laplace2D_Blaze
-{
+class Laplace2D_Blaze {
 public:
 
-  T operator()() const
-  {
+  T operator()() const {
     static constexpr T pi = std::numbers::pi_v<T>;
 
     const blaze::StaticVector<T, N> x = blaze::linspace(N, T{0.0}, pi);
@@ -158,16 +151,13 @@ public:
 #  define EIGEN_STACK_ALLOCATION_LIMIT (1ull << 32ull)
 #  include <eigen3/Eigen/Core>
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 template<class T, size_t N, size_t NumIterations>
-class Laplace2D_Eigen
-{
+class Laplace2D_Eigen {
 public:
 
-  T operator()() const
-  {
+  T operator()() const {
     static constexpr T pi = std::numbers::pi_v<T>;
 
     const auto x = Eigen::Matrix<T, N, 1>::LinSpaced(N, T{0.0}, pi);
@@ -211,16 +201,13 @@ public:
 #  include <xtensor/xtensor.hpp>
 #  include <xtensor/xview.hpp>
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 template<class T, size_t N, size_t NumIterations>
-class Laplace2D_XTensor
-{
+class Laplace2D_XTensor {
 public:
 
-  T operator()() const
-  {
+  T operator()() const {
     static constexpr T pi = std::numbers::pi_v<T>;
 
     const xt::xtensor_fixed<T, xt::xshape<N>> x = xt::linspace(T{0.0}, pi, N);
@@ -260,13 +247,11 @@ public:
 
 // -----------------------------------------------------------------------------
 
-namespace Storm::Benchmarks
-{
+namespace Storm::Benchmarks {
 
 template<class T, size_t N, size_t NumIterations, //
          template<class, size_t, size_t> class Laplace2D>
-T run_laplace_2D(const char* library_name)
-{
+T run_laplace_2D(const char* library_name) {
   const auto benchmark_name =
       fmt::format("Bittern/Laplace2D({}, T={}, N={}, I={})", //
                   library_name, meta::type_name_v<T>, N, NumIterations);
@@ -282,20 +267,17 @@ T run_laplace_2D(const char* library_name)
   return error;
 }
 
-TEST_CASE("Bittern/Laplace2D")
-{
+TEST_CASE("Bittern/Laplace2D") {
   auto run_subcase = [&]<class T, size_t N, size_t NumIterations>(
                          meta::type<T>, size_t_constant<N>,
                          size_t_constant<NumIterations>, //
                          T expected_error, T eps) {
-    SUBCASE("Bittern")
-    {
+    SUBCASE("Bittern") {
       /// @todo Our implementation!
     }
 
 #if STORM_BENCH_BLAZE_ENABLED
-    SUBCASE("Armadillo")
-    {
+    SUBCASE("Armadillo") {
       const double error =
           run_laplace_2D<T, N, NumIterations, Laplace2D_Armadillo>("Armadillo");
       CHECK_NEAR(error, expected_error, eps);
@@ -303,8 +285,7 @@ TEST_CASE("Bittern/Laplace2D")
 #endif
 
 #if STORM_BENCH_BLAZE_ENABLED
-    SUBCASE("Blaze")
-    {
+    SUBCASE("Blaze") {
       const double error =
           run_laplace_2D<T, N, NumIterations, Laplace2D_Blaze>("Blaze");
       CHECK_NEAR(error, expected_error, eps);
@@ -312,8 +293,7 @@ TEST_CASE("Bittern/Laplace2D")
 #endif
 
 #if STORM_BENCH_EIGEN_ENABLED
-    SUBCASE("Eigen")
-    {
+    SUBCASE("Eigen") {
       const double error =
           run_laplace_2D<T, N, NumIterations, Laplace2D_Eigen>("Eigen");
       CHECK_NEAR(error, expected_error, eps);
@@ -321,8 +301,7 @@ TEST_CASE("Bittern/Laplace2D")
 #endif
 
 #if STORM_BENCH_XTENSOR_ENABLED
-    SUBCASE("XTensor")
-    {
+    SUBCASE("XTensor") {
       const double error =
           run_laplace_2D<T, N, NumIterations, Laplace2D_XTensor>("XTensor");
       CHECK_NEAR(error, expected_error, eps);
@@ -332,29 +311,25 @@ TEST_CASE("Bittern/Laplace2D")
 
   static constexpr size_t NumIterations = 1000;
 
-  SUBCASE("T=double")
-  {
+  SUBCASE("T=double") {
     using T = double;
     static constexpr T eps = 1.0e-6;
 
-    SUBCASE("N=100")
-    {
+    SUBCASE("N=100") {
       static constexpr size_t N = 100;
       static constexpr T expected_error = 0.0069143;
       run_subcase(meta::type_v<T>, size_t_constant<N>{},
                   size_t_constant<NumIterations>{}, expected_error, eps);
     }
 
-    SUBCASE("N=150")
-    {
+    SUBCASE("N=150") {
       static constexpr size_t N = 150;
       static constexpr T expected_error = 0.00994008;
       run_subcase(meta::type_v<T>, size_t_constant<N>{},
                   size_t_constant<NumIterations>{}, expected_error, eps);
     }
 
-    SUBCASE("N=200")
-    {
+    SUBCASE("N=200") {
       static constexpr size_t N = 200;
       static constexpr T expected_error = 0.0121789;
       run_subcase(meta::type_v<T>, size_t_constant<N>{},

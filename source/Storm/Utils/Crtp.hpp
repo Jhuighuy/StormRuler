@@ -25,8 +25,7 @@
 #include <concepts>
 #include <type_traits>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -36,8 +35,7 @@ concept crtp_derived = std::is_class_v<Derived> &&
                        std::same_as<Derived, std::remove_cv_t<Derived>>;
 
 // Based on /*is-derived-from-view-interface*/<T> implementation.
-namespace detail_
-{
+namespace detail_ {
   template<template<crtp_derived Derived> class CrtpInterface>
   struct DerivedFromCrtpInterfaceImpl_ {
     template<class T, class U>
@@ -50,10 +48,9 @@ namespace detail_
 /// @c CrtpInterface&lt;U&gt; for some type @c U, and @c T has no base classes
 /// of type @c CrtpInterface&lt;V&gt; for any other type @c V.
 template<class T, template<class Derived> class CrtpInterface>
-concept derived_from_crtp_interface =
-    requires(T x) { //
-      detail_::DerivedFromCrtpInterfaceImpl_<CrtpInterface>{x, x};
-    };
+concept derived_from_crtp_interface = requires(T x) { //
+  detail_::DerivedFromCrtpInterfaceImpl_<CrtpInterface>{x, x};
+};
 
 // -----------------------------------------------------------------------------
 

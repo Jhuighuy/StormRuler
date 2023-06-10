@@ -31,8 +31,7 @@
 #include <utility>
 #include <vector>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -51,8 +50,7 @@ namespace Storm
 ///     SIAM J. Sci. Comput. 13 (1992): 631-644.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class BiCgStabSolver final : public IterativeSolver<Vector>
-{
+class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
 
   real_t alpha_, rho_, omega_;
@@ -60,8 +58,7 @@ private:
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
-              const Preconditioner<Vector>* pre_op) override
-  {
+              const Preconditioner<Vector>* pre_op) override {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
@@ -95,8 +92,7 @@ private:
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& lin_op,
-                 const Preconditioner<Vector>* pre_op) override
-  {
+                 const Preconditioner<Vector>* pre_op) override {
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
     const bool right_pre =
@@ -186,8 +182,7 @@ private:
 ///     Electronic Transactions on Numerical Analysis 1 (1993): 11-32.
 /// @endverbatim
 template<legacy_vector_like Vector>
-class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector>
-{
+class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
   real_t alpha_, rho_, omega_;
@@ -198,8 +193,7 @@ private:
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
-                    const Preconditioner<Vector>* pre_op) override
-  {
+                    const Preconditioner<Vector>* pre_op) override {
     const size_t l = this->num_inner_iterations;
 
     gamma_.assign(l + 1);
@@ -241,8 +235,7 @@ private:
 
   real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
                        const Operator<Vector>& lin_op,
-                       const Preconditioner<Vector>* pre_op) override
-  {
+                       const Preconditioner<Vector>* pre_op) override {
     const size_t l = this->num_inner_iterations;
     const size_t j = this->inner_iteration;
 
@@ -383,8 +376,7 @@ private:
 
 public:
 
-  BiCgStabLSolver()
-  {
+  BiCgStabLSolver() {
     this->num_inner_iterations = 2;
   }
 

@@ -31,8 +31,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Storm
-{
+namespace Storm {
 
 // -----------------------------------------------------------------------------
 
@@ -74,16 +73,14 @@ concept matrix_r = matrix<Matrix> && (matrix_rank_v<Matrix> == Rank);
 
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
-constexpr size_t num_rows(Matrix&& mat) noexcept
-{
+constexpr size_t num_rows(Matrix&& mat) noexcept {
   return mat.shape()[0];
 }
 
 /// @brief Number of the matrix columns.
 template<matrix Matrix>
   requires (matrix_rank_v<Matrix> >= 2)
-constexpr size_t num_cols(Matrix&& mat) noexcept
-{
+constexpr size_t num_cols(Matrix&& mat) noexcept {
   return mat.shape()[1];
 }
 
@@ -100,8 +97,7 @@ inline constexpr bool compatible_matrix_indices_v =
 /// @brief Check if all indices are in range.
 template<size_t Rank, index... Indices>
   requires (Rank == sizeof...(Indices))
-constexpr bool in_range(const shape_t<Rank>&, Indices...)
-{
+constexpr bool in_range(const shape_t<Rank>&, Indices...) {
   return true; // to be implemented.
 }
 

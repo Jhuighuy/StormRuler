@@ -44,8 +44,7 @@
 ///   permuted_values[inverse_permutation[i]] = values[i];
 /// }
 /// @endcode
-namespace Storm::permutations
-{
+namespace Storm::permutations {
 
 // -----------------------------------------------------------------------------
 
@@ -59,8 +58,7 @@ template<std::input_iterator PermutationIterator,
                                     InversePermutationIterator>
 constexpr void invert_permutation(PermutationIterator perm_iterator,
                                   PermutationSentinel perm_sentinel,
-                                  InversePermutationIterator iperm_iterator)
-{
+                                  InversePermutationIterator iperm_iterator) {
   using Index = std::iter_value_t<PermutationIterator>;
   Index index{};
   for (; perm_iterator != perm_sentinel; ++perm_iterator, ++index) {
@@ -74,8 +72,7 @@ template<std::ranges::input_range PermutationRange,
   requires std::indirectly_copyable<std::ranges::iterator_t<PermutationRange>,
                                     InversePermutationIterator>
 constexpr void invert_permutation(PermutationRange&& perm_range,
-                                  InversePermutationIterator iperm_iterator)
-{
+                                  InversePermutationIterator iperm_iterator) {
   invert_permutation(std::ranges::begin(perm_range),
                      std::ranges::end(perm_range), std::move(iperm_iterator));
 }
@@ -91,8 +88,7 @@ template<std::random_access_iterator PermutationIterator,
   requires std::permutable<PermutationIterator>
 constexpr void permute_inplace(PermutationIterator perm_iterator,
                                PermutationSentinel perm_sentinel,
-                               SwapFunc swap_func)
-{
+                               SwapFunc swap_func) {
   // For implementation details see:
   // https://devblogs.microsoft.com/oldnewthing/20170102-00/?p=95095
   using Index = std::iter_value_t<PermutationIterator>;
@@ -120,8 +116,7 @@ template<std::ranges::random_access_range PermutationRange,
              SwapFunc>
   requires std::permutable<std::ranges::iterator_t<PermutationRange>>
 constexpr void permute_inplace(PermutationRange&& perm_range,
-                               SwapFunc swap_func)
-{
+                               SwapFunc swap_func) {
   permute_inplace(std::ranges::begin(perm_range), //
                   std::ranges::end(perm_range), std::move(swap_func));
 }

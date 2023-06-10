@@ -100,11 +100,9 @@ consteval auto make_seq() {
   if constexpr (First >= Last) {
     return list_v<>;
   } else {
-    // clang-format off
-    return []<size_t... I>(std::integer_sequence<size_t, I...>) {
+    return ([]<size_t... I>(std::integer_sequence<size_t, I...>) {
       return list_v<Type<First + I>...>;
-    }(std::make_integer_sequence<size_t, Last - First>{});
-    // clang-format on
+    }(std::make_integer_sequence<size_t, Last - First>{}));
   }
 }
 

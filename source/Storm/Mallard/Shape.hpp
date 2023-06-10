@@ -54,10 +54,8 @@ enum class Type : std::uint8_t {
 template<class Shape>
 concept shape =
     requires(Shape shape) {
-      // clang-format off
       { shape.type() } -> std::same_as<Type>;
       { shape.nodes() } -> std::ranges::forward_range;
-      // clang-format off
     } &&
     std::same_as<
         std::ranges::range_value_t<decltype(std::declval<Shape>().nodes())>,
@@ -100,8 +98,7 @@ template<size_t Index, shape Shape>
   requires ((Index == 0) ||
             (Index == 1 && (shape2D<Shape> || shape3D<Shape>) ) ||
             (Index == 2 && shape3D<Shape>) )
-constexpr auto parts(const Shape& shape) noexcept
-{
+constexpr auto parts(const Shape& shape) noexcept {
   if constexpr (Index == 0) {
     return shape.nodes();
   } else if constexpr (Index == 1) {
@@ -118,9 +115,7 @@ template<class Shape, class Mesh>
 concept complex_shape =
     shape<Shape> && mesh<Mesh> &&
     requires(Shape shape, const Mesh& mesh) {
-      // clang-format off
       { shape.pieces(mesh) } -> std::ranges::forward_range;
-      // clang-format on
     } &&
     shape<std::ranges::range_value_t<decltype( //
         std::declval<Shape>().pieces(std::declval<Mesh>()))>>;

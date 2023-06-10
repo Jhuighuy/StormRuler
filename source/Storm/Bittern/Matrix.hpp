@@ -50,10 +50,8 @@ concept matrix_shape =
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
-      // clang-format off
       { mat.shape() } -> matrix_shape;
       { std::apply(mat, mat.shape()) } /*-> referenceable */;
-      // clang-format on
     };
 
 // -----------------------------------------------------------------------------

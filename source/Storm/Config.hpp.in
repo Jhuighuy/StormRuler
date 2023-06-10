@@ -43,4 +43,7 @@
 #cmakedefine01 STORM_GLFW_ENABLED
 #cmakedefine01 STORM_GLM_ENABLED
 
+// Python configuration (pybind11).
+#cmakedefine01 STORM_PYTHON_ENABLED
+
 // -----------------------------------------------------------------------------

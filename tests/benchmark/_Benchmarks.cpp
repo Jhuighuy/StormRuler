@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "./_BenchmarksConfig.hpp"
+
 // -----------------------------------------------------------------------------
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -27,5 +29,12 @@
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
+
+// -----------------------------------------------------------------------------
+
+#if STORM_BENCH_NUMPY_ENABLED
+#  include <pybind11/embed.h>
+pybind11::scoped_interpreter interpreter{};
+#endif
 
 // -----------------------------------------------------------------------------

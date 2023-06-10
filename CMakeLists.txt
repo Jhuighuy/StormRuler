@@ -232,6 +232,30 @@ target_link_options(
 
 # ------------------------------------------------------------------------------
 
+# Find Python interpreter.
+# (Here we wrap `find_package` into a separate function
+#  to avoid any problems when pybind11 would look for Python itself later.)
+function(_find_python_interpreter)
+  find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter QUIET)
+  set(Python3_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE)
+endfunction()
+_find_python_interpreter()
+unset(_find_python_interpreter)
+
+# Custom configuration function.
+function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
+  configure_file(${INPUT_FILE} ${OUTPUT_FILE})
+  add_custom_command(
+      OUTPUT ${DEFAULTS_OUTPUT_FILE}
+      COMMAND ${Python3_EXECUTABLE}
+              ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
+              ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
+      MAIN_DEPENDENCY ${INPUT_FILE}
+      VERBATIM)
+endfunction()
+
+# ------------------------------------------------------------------------------
+
 # Find the mold linker.
 if(STORM_NO_MOLD)
   message(STATUS "| mold was disabled by user.")
@@ -251,23 +275,6 @@ else()
     endif()
   endif()
 endif()
-
-# ------------------------------------------------------------------------------
-
-# Find Python interpreter.
-find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter QUIET)
-
-# Custom configuration function.
-function(storm_configure_file INPUT_FILE OUTPUT_FILE DEFAULTS_OUTPUT_FILE)
-  configure_file(${INPUT_FILE} ${OUTPUT_FILE})
-  add_custom_command(
-      OUTPUT ${DEFAULTS_OUTPUT_FILE}
-      COMMAND ${Python3_EXECUTABLE}
-        ${CMAKE_SOURCE_DIR}/scripts/make_config_defaults.py
-        ${INPUT_FILE} ${DEFAULTS_OUTPUT_FILE}
-      MAIN_DEPENDENCY ${INPUT_FILE}
-      VERBATIM)
-endfunction()
 
 # ------------------------------------------------------------------------------
 
@@ -388,6 +395,22 @@ else()
     target_link_libraries(StormRuler_Base INTERFACE ZLIB::ZLIB)
   endif()
 endif()
+
+# ------------------------------------------------------------------------------
+
+# Find pybind11.
+if(STORM_NO_PYTHON)
+  message(STATUS "| Python was disabled by user.")
+else()
+  find_package(pybind11 QUIET)
+  if(pybind11_FOUND)
+    set(STORM_PYTHON_ENABLED 1)
+    message(STATUS "| Python enabled.")
+    target_link_libraries(StormRuler_Base INTERFACE pybind11::pybind11)
+  endif()
+endif()
+
+# ------------------------------------------------------------------------------
 
 # Find OpenGL, GLEW, GLFW and GLM.
 if(STORM_NO_OpenGL)

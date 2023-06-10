@@ -74,6 +74,20 @@ if(xtensor_FOUND)
   target_link_libraries(StormRuler_Benchmarks PRIVATE xtensor)
 endif()
 
+# Find NumPy.
+if(STORM_PYTHON_ENABLED)
+  # TODO: looks like NumPy has a built-in thing to do this.
+  execute_process(
+      COMMAND ${Python3_EXECUTABLE} -c "import numpy"
+      RESULT_VARIABLE IMPORT_NUMPY_RESULT
+      OUTPUT_QUIET ERROR_QUIET)
+  if(IMPORT_NUMPY_RESULT EQUAL 0)
+    set(STORM_BENCH_NUMPY_ENABLED 1)
+    message(STATUS "| | Benchmarks: NumPy enabled.")
+    target_link_libraries(StormRuler_Benchmarks PRIVATE pybind11::embed)
+  endif()
+endif()
+
 # ------------------------------------------------------------------------------
 
 # Configuration file.

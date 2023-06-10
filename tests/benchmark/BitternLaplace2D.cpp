@@ -252,6 +252,70 @@ public:
 
 // -----------------------------------------------------------------------------
 
+#if STORM_BENCH_NUMPY_ENABLED
+#  include <pybind11/embed.h>
+#  if STORM_COMPILER_GCC_
+#    pragma GCC visibility push(hidden)
+#  endif
+
+namespace Storm::Benchmarks {
+
+/// @todo Move this line to a better place.
+namespace py = pybind11;
+
+// Laplace2D benchmark implementation (NumPy).
+template<class T, size_t N, size_t NumIterations>
+class Laplace2D_NumPy final {
+private:
+
+  py::object laplace2D_;
+
+public:
+
+  Laplace2D_NumPy() {
+    py::dict globals = py::globals();
+    globals["N"] = N, globals["NumIterations"] = NumIterations;
+    py::exec(R"""(
+      from math import pi, sqrt
+      import numpy
+
+      def laplace2D():
+        x = numpy.linspace(0.0, pi, N)
+        u = numpy.zeros((N, N))
+        u[:, 0] = numpy.sin(x)
+        u[:, N - 1] = numpy.sin(x) * numpy.exp(-pi)
+
+        for _ in range(NumIterations):
+          u_old = numpy.copy(u)
+          u[1:-1, 1:-1] = (
+              4.0 * (u_old[0:-2, 1:-1] + u_old[2:  , 1:-1]  +
+                     u_old[1:-1, 0:-2] + u_old[1:-1, 2:  ]) +
+              1.0 * (u_old[0:-2, 0:-2] + u_old[0:-2, 2:  ]  +
+                     u_old[2:  , 0:-2] + u_old[2:  , 2:  ])
+          ) / 20.0
+
+          error = sqrt(numpy.sum((u - u_old) ** 2))
+
+        return error)""",
+             /*globals=*/globals, /*locals=*/globals);
+    laplace2D_ = globals["laplace2D"];
+  }
+
+  [[nodiscard]] T operator()() const {
+    return laplace2D_().cast<T>();
+  }
+
+}; // class Laplace2D_NumPy
+
+} // namespace Storm::Benchmarks
+
+#  if STORM_COMPILER_GCC_
+#    pragma GCC visibility pop
+#  endif
+#endif // if STORM_BENCH_NUMPY_ENABLED
+
+// -----------------------------------------------------------------------------
+
 namespace Storm::Benchmarks {
 
 TEST_CASE("Bittern/Laplace2D") {
@@ -286,6 +350,10 @@ TEST_CASE("Bittern/Laplace2D") {
 
 #if STORM_BENCH_XTENSOR_ENABLED
     run_impl(Laplace2D_XTensor<T, N, NumIterations>{}, "XTensor");
+#endif
+
+#if STORM_BENCH_NUMPY_ENABLED
+    run_impl(Laplace2D_NumPy<T, N, NumIterations>{}, "NumPy");
 #endif
   };
 

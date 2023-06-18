@@ -30,7 +30,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include "./Field.hpp"
 

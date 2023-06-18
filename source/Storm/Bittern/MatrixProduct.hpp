@@ -22,9 +22,9 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <utility>
 
@@ -34,7 +34,6 @@ namespace Storm {
 
 /// @brief Matrix product view.
 template<matrix_view Matrix1, matrix_view Matrix2>
-  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 class MatrixProductView final :
     public MatrixViewInterface<MatrixProductView<Matrix1, Matrix2>> {
 private:
@@ -77,7 +76,6 @@ MatrixProductView(Matrix1&&, Matrix2&&)
 
 /// @brief Multiply the matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
   return MatrixProductView(std::forward<Matrix1>(mat1),
                            std::forward<Matrix2>(mat2));
@@ -87,7 +85,6 @@ constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
 
 /// @brief Cross product of the 3x1 matrices view.
 template<matrix_view Matrix1, matrix_view Matrix2>
-  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 class CrossProductView :
     MatrixViewInterface<CrossProductView<Matrix1, Matrix2>> {
 private:
@@ -129,7 +126,6 @@ CrossProductView(Matrix1&&, Matrix2&&)
 
 /// @brief Cross product of the 3x1 matrices @p mat1 and @p mat2.
 template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-  requires numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2) {
   return CrossProductView(std::forward<Matrix1>(mat1),
                           std::forward<Matrix2>(mat2));

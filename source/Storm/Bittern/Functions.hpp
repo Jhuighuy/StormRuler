@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <algorithm>
 #include <concepts>
@@ -642,7 +642,7 @@ public:
 
   template<class Arg1, class Arg2>
   constexpr auto operator()(Arg1&& arg1, Arg2&& arg2) const noexcept {
-    return std::forward<Arg1>(arg1) * conj(std::forward<Arg2>(arg2));
+    return dot_product(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
   }
 
 }; // class DotProduct

@@ -24,7 +24,7 @@
 
 #include <Storm/Utils/Index.hpp>
 
-#include <Storm/Bittern/Math.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <concepts>
 #include <tuple>
@@ -53,6 +53,9 @@ concept matrix = //
       { mat.shape() } -> matrix_shape;
       { std::apply(mat, mat.shape()) } /*-> referenceable */;
     };
+
+template<class Scalar>
+concept scalar = !matrix<Scalar>;
 
 // -----------------------------------------------------------------------------
 
@@ -119,35 +122,6 @@ concept output_matrix =
 /// @brief Matrix element reference type.
 template<output_matrix Matrix>
 using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
-
-/// @brief Matrix with boolean elements.
-template<class Matrix>
-concept bool_matrix = matrix<Matrix> && bool_type<matrix_element_t<Matrix>>;
-
-/// @brief Matrix with integral elements.
-/// We do not have any special integer matrix operations,
-/// integer matrices are defined for completeness.
-template<class Matrix>
-concept integer_matrix =
-    matrix<Matrix> && integer_type<matrix_element_t<Matrix>>;
-
-/// @brief Matrix with real (floating-point) elements.
-template<class Matrix>
-concept real_matrix = matrix<Matrix> && real_type<matrix_element_t<Matrix>>;
-
-/// @brief Matrix with complex (floating-point) elements.
-template<class Matrix>
-concept complex_matrix =
-    matrix<Matrix> && complex_type<matrix_element_t<Matrix>>;
-
-/// @brief Matrix with real or complex (floating-point) elements.
-template<class Matrix>
-concept real_or_complex_matrix = real_matrix<Matrix> || complex_matrix<Matrix>;
-
-/// @brief Matrix with numerical elements.
-template<class Matrix>
-concept numeric_matrix =
-    integer_matrix<Matrix> || real_or_complex_matrix<Matrix>;
 
 // -----------------------------------------------------------------------------
 

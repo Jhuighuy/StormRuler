@@ -53,6 +53,9 @@ concept viewable_matrix =
       (std::is_lvalue_reference_v<Matrix> ||
        std::movable<std::remove_reference_t<Matrix>>) ));
 
+template<class Scalar>
+concept viewable_scalar = scalar<Scalar> && std::movable<Scalar>;
+
 /// @brief CRTP interface to a matrix views.
 template<crtp_derived MatrixView>
 class MatrixViewInterface {

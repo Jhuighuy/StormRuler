@@ -71,30 +71,26 @@ public:
 
   /// @brief Multiply-assign the current matrix by a scalar @p scal.
   template<std::copyable Scalar>
-    requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
   constexpr decltype(auto) operator*=(Scalar scal) {
     return assign(BindLast{MultiplyAssign{}, std::move(scal)}, *this);
   }
 
   /// @brief Divide-assign the current matrix by a scalar @p scal.
   template<std::copyable Scalar>
-    requires numeric_matrix<TargetMatrix> && numeric_type<Scalar>
   constexpr decltype(auto) operator/=(Scalar scal) {
     return assign(BindLast{DivideAssign{}, std::move(scal)}, *this);
   }
 
   /// @brief Add-assign the matrix @p mat to the current matrix.
   template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
+    requires compatible_matrices_v<TargetMatrix, Matrix>
   constexpr decltype(auto) operator+=(Matrix&& mat) {
     return assign(AddAssign{}, _self(), std::forward<Matrix>(mat));
   }
 
   /// @brief Subtract-assign the matrix @p mat from the current matrix.
   template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
+    requires compatible_matrices_v<TargetMatrix, Matrix>
   constexpr decltype(auto) operator-=(Matrix&& mat) {
     return assign(SubtractAssign{}, _self(), std::forward<Matrix>(mat));
   }
@@ -102,16 +98,14 @@ public:
   /// @brief Element-wise multiply-assign the current matrix by
   /// the matrix @p mat.
   template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
+    requires compatible_matrices_v<TargetMatrix, Matrix>
   constexpr decltype(auto) operator*=(Matrix&& mat) {
     return assign(MultiplyAssign{}, _self(), std::forward<Matrix>(mat));
   }
 
   /// @brief Element-wise divide-assign the current matrix by the matrix @p mat.
   template<matrix Matrix>
-    requires compatible_matrices_v<TargetMatrix, Matrix> && //
-             numeric_matrix<TargetMatrix> && numeric_matrix<Matrix>
+    requires compatible_matrices_v<TargetMatrix, Matrix>
   constexpr decltype(auto) operator/=(Matrix&& mat) {
     return assign(DivideAssign{}, _self(), std::forward<Matrix>(mat));
   }

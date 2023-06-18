@@ -47,36 +47,36 @@ private:
 
   static_assert(std::copyable<Func>, "Boxing is not implemented yet!");
 
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ std::tuple<Matrices...> mats_;
+  STORM_NO_UNIQUE_ADDRESS Func _func;
+  STORM_NO_UNIQUE_ADDRESS std::tuple<Matrices...> _mats;
 
 public:
 
   /// @brief Construct a map view.
   constexpr explicit MapMatrixView(Func func, Matrices... mats)
-      : func_{std::move(func)}, mats_{std::move(mats)...} {
+      : _func{std::move(func)}, _mats{std::move(mats)...} {
     std::apply(
         [](const auto& first_mat, const auto&... rest_mats) {
-          STORM_ASSERT_((first_mat.shape() == rest_mats.shape()) && ...,
-                        "Shapes of the matrix arguments are mismatched.");
+          STORM_ASSERT((first_mat.shape() == rest_mats.shape()) && ...,
+                       "Shapes of the matrix arguments are mismatched.");
         },
-        mats_);
+        _mats);
   }
 
   /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept {
-    return std::get<0>(mats_).shape();
+    return std::get<0>(_mats).shape();
   }
 
   /// @brief Get the matrix element at @p indices.
   template<class... Indices>
     requires compatible_matrix_indices_v<MapMatrixView, Indices...>
   constexpr auto operator()(Indices... indices) const noexcept {
-    STORM_ASSERT_(in_range(shape(), indices...), "Indices are out of range!");
+    STORM_ASSERT(in_range(shape(), indices...), "Indices are out of range!");
     auto compute_element = [this, &indices...](const Matrices&... mats) {
-      return func_(mats(indices...)...);
+      return _func(mats(indices...)...);
     };
-    return std::apply(compute_element, mats_);
+    return std::apply(compute_element, _mats);
   }
 
 }; // class MapMatrixView
@@ -200,7 +200,7 @@ template<viewable_matrix Matrix1, viewable_matrix Matrix2>
            numeric_matrix<Matrix1> && numeric_matrix<Matrix2>
 constexpr auto approx_equal(Matrix1&& mat1, Matrix2&& mat2,
                             long double tolerance) {
-  STORM_ASSERT_(tolerance > 0.0l, "Negative tolerance!");
+  STORM_ASSERT(tolerance > 0.0l, "Negative tolerance!");
   return map(ApproxEqual{tolerance}, //
              std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }

@@ -195,9 +195,9 @@ template<mesh Mesh, class SlopeLimiter, class SecondLimiter>
 class GradientLimiterScheme final {
 private:
 
-  const Mesh* p_mesh_;
-  STORM_NO_UNIQUE_ADDRESS_ SlopeLimiter slope_limiter_;
-  STORM_NO_UNIQUE_ADDRESS_ SecondLimiter second_limiter_;
+  const Mesh* _p_mesh;
+  STORM_NO_UNIQUE_ADDRESS SlopeLimiter _slope_limiter;
+  STORM_NO_UNIQUE_ADDRESS SecondLimiter _second_limiter;
 
 public:
 
@@ -205,8 +205,8 @@ public:
   constexpr explicit GradientLimiterScheme(
       const Mesh& mesh, SlopeLimiter slope_limiter = {},
       SecondLimiter second_limiter = {}) noexcept
-      : p_mesh_{&mesh}, slope_limiter_{std::move(slope_limiter)},
-        second_limiter_{std::move(second_limiter)} {}
+      : _p_mesh{&mesh}, _slope_limiter{std::move(slope_limiter)},
+        _second_limiter{std::move(second_limiter)} {}
 
   /// @brief Compute cell-centered gradient limiter coefficients.
   template<class Real, size_t NumVars>
@@ -214,7 +214,7 @@ public:
       CellField<Mesh, Real, NumVars>& lim_u,
       const CellField<Mesh, Real, NumVars>& u,
       const CellVectorField<Mesh, Real, NumVars>& grad_u) const noexcept {
-    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+    std::ranges::for_each(_p_mesh->interior_cells(), [&](CellView<Mesh> cell) {
       // Find the largest negative and positive differences
       // between values of the current cell and the adjacent cells.
       auto du_min = u[cell], du_max = u[cell];
@@ -235,7 +235,7 @@ public:
         for (size_t i = 0; i < NumVars; ++i) {
           const Real du_face = glm::dot(grad_u[cell][i], dr);
           const Real limiter =
-              slope_limiter_(du_min[i], du_max[i], du_face, eps_sqr);
+              _slope_limiter(du_min[i], du_max[i], du_face, eps_sqr);
           lim_u[cell][i] = std::min(lim_u[cell][i], limiter);
         }
       });
@@ -244,7 +244,7 @@ public:
       // limiting near the smooth regions.
       for (size_t i = 0; i < NumVars; ++i) {
         const Real limiter =
-            second_limiter_(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
+            _second_limiter(lim_u[cell][i], du_min[i], du_max[i], eps_sqr);
         lim_u[cell][i] = limiter;
       }
     });

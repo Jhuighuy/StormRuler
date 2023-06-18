@@ -38,8 +38,8 @@ template<legacy_vector_like Vector, bool L1>
 class BaseTfqmrSolver : public IterativeSolver<Vector> {
 private:
 
-  real_t rho_, tau_;
-  Vector d_vec_, r_tilde_vec_, u_vec_, v_vec_, y_vec_, s_vec_, z_vec_;
+  real_t _rho, _tau;
+  Vector _d_vec, _r_tilde_vec, _u_vec, _v_vec, _y_vec, _s_vec, _z_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
@@ -47,13 +47,13 @@ private:
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
-    d_vec_.assign(x_vec, false);
-    r_tilde_vec_.assign(x_vec, false);
-    u_vec_.assign(x_vec, false);
-    v_vec_.assign(x_vec, false);
-    y_vec_.assign(x_vec, false);
-    s_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
+    _d_vec.assign(x_vec, false);
+    _r_tilde_vec.assign(x_vec, false);
+    _u_vec.assign(x_vec, false);
+    _v_vec.assign(x_vec, false);
+    _y_vec.assign(x_vec, false);
+    _s_vec.assign(x_vec, false);
+    if (pre_op != nullptr) _z_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -72,20 +72,20 @@ private:
     // 𝜌 ← <𝒓̃⋅𝒓>, 𝜏 ← 𝜌¹ᐟ².
     // ----------------------
     if constexpr (L1) {
-      d_vec_ <<= x_vec;
+      _d_vec <<= x_vec;
     } else {
-      fill_with(d_vec_, 0.0);
+      fill_with(_d_vec, 0.0);
     }
-    lin_op.Residual(y_vec_, b_vec, x_vec);
+    lin_op.Residual(_y_vec, b_vec, x_vec);
     if (left_pre) {
-      std::swap(z_vec_, y_vec_);
-      pre_op->mul(y_vec_, z_vec_);
+      std::swap(_z_vec, _y_vec);
+      pre_op->mul(_y_vec, _z_vec);
     }
-    u_vec_ <<= y_vec_;
-    r_tilde_vec_ <<= u_vec_;
-    rho_ = dot_product(r_tilde_vec_, u_vec_), tau_ = sqrt(rho_);
+    _u_vec <<= _y_vec;
+    _r_tilde_vec <<= _u_vec;
+    _rho = dot_product(_r_tilde_vec, _u_vec), _tau = sqrt(_rho);
 
-    return tau_;
+    return _tau;
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -125,20 +125,20 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-      else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-      else lin_op.mul(s_vec_, y_vec_);
-      v_vec_ <<= s_vec_;
+      if (left_pre) pre_op->mul(_s_vec, _z_vec, lin_op, _y_vec);
+      else if (right_pre) lin_op.mul(_s_vec, _z_vec, *pre_op, _y_vec);
+      else lin_op.mul(_s_vec, _y_vec);
+      _v_vec <<= _s_vec;
     } else {
       const real_t rho_bar =
-          std::exchange(rho_, dot_product(r_tilde_vec_, u_vec_));
-      const real_t beta = safe_divide(rho_, rho_bar);
-      v_vec_ <<= s_vec_ + beta * v_vec_;
-      y_vec_ <<= u_vec_ + beta * y_vec_;
-      if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-      else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-      else lin_op.mul(s_vec_, y_vec_);
-      v_vec_ <<= s_vec_ + beta * v_vec_;
+          std::exchange(_rho, dot_product(_r_tilde_vec, _u_vec));
+      const real_t beta = safe_divide(_rho, rho_bar);
+      _v_vec <<= _s_vec + beta * _v_vec;
+      _y_vec <<= _u_vec + beta * _y_vec;
+      if (left_pre) pre_op->mul(_s_vec, _z_vec, lin_op, _y_vec);
+      else if (right_pre) lin_op.mul(_s_vec, _z_vec, *pre_op, _y_vec);
+      else lin_op.mul(_s_vec, _y_vec);
+      _v_vec <<= _s_vec + beta * _v_vec;
     }
 
     // Update the solution:
@@ -170,24 +170,24 @@ private:
     //   𝗲𝗻𝗱 𝗶𝗳
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
-    const real_t alpha = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
+    const real_t alpha = safe_divide(_rho, dot_product(_r_tilde_vec, _v_vec));
     for (size_t m = 0; m <= 1; ++m) {
-      u_vec_ -= alpha * s_vec_;
-      d_vec_ += alpha * (right_pre ? z_vec_ : y_vec_);
-      const real_t omega = norm_2(u_vec_);
+      _u_vec -= alpha * _s_vec;
+      _d_vec += alpha * (right_pre ? _z_vec : _y_vec);
+      const real_t omega = norm_2(_u_vec);
       if constexpr (L1) {
-        if (omega < tau_) tau_ = omega, x_vec <<= d_vec_;
+        if (omega < _tau) _tau = omega, x_vec <<= _d_vec;
       } else {
-        const auto [cs, sn, rr] = sym_ortho(tau_, omega);
-        tau_ = omega * cs;
-        x_vec += std::pow(cs, 2) * d_vec_;
-        d_vec_ *= std::pow(sn, 2);
+        const auto [cs, sn, rr] = sym_ortho(_tau, omega);
+        _tau = omega * cs;
+        x_vec += std::pow(cs, 2) * _d_vec;
+        _d_vec *= std::pow(sn, 2);
       }
       if (m == 0) {
-        y_vec_ -= alpha * v_vec_;
-        if (left_pre) pre_op->mul(s_vec_, z_vec_, lin_op, y_vec_);
-        else if (right_pre) lin_op.mul(s_vec_, z_vec_, *pre_op, y_vec_);
-        else lin_op.mul(s_vec_, y_vec_);
+        _y_vec -= alpha * _v_vec;
+        if (left_pre) pre_op->mul(_s_vec, _z_vec, lin_op, _y_vec);
+        else if (right_pre) lin_op.mul(_s_vec, _z_vec, *pre_op, _y_vec);
+        else lin_op.mul(_s_vec, _y_vec);
       }
     }
 
@@ -199,7 +199,7 @@ private:
     //   𝜏̃ ← 𝜏⋅(𝟤𝑘 + 𝟥)¹ᐟ².
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    real_t tau_tilde = tau_;
+    real_t tau_tilde = _tau;
     if constexpr (!L1) {
       const size_t k{this->iteration};
       tau_tilde *= std::sqrt(2.0 * k + 3.0);

@@ -140,7 +140,7 @@ public:
       return;
     }
 
-    STORM_THROW_("Broken signal velocities, sl = {}, sr = {}!", sl, sr);
+    STORM_THROW("Broken signal velocities, sl = {}, sr = {}!", sl, sr);
   }
 }; // class tHllFluxScheme<tGasPhysics>
 /** @} */
@@ -239,7 +239,7 @@ public:
       return;
     }
 
-    STORM_THROW_( //
+    STORM_THROW( //
         "Broken signal velocities, sl = {}, ss = {}, sr = {}!", sl, ss, sr);
   }
 }; // class tHllcFluxScheme<tGasPhysics>

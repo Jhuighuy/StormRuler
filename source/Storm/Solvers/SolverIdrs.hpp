@@ -53,11 +53,11 @@ template<legacy_vector_like Vector>
 class IdrsSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
-  real_t omega_;
-  DenseVector<real_t> phi_, gamma_;
-  DenseMatrix<real_t> mu_;
-  Vector r_vec_, v_vec_, z_vec_;
-  std::vector<Vector> p_vecs_, u_vecs_, g_vecs_;
+  real_t _omega;
+  DenseVector<real_t> _phi, _gamma;
+  DenseMatrix<real_t> _mu;
+  Vector _r_vec, _v_vec, _z_vec;
+  std::vector<Vector> _p_vecs, _u_vecs, _g_vecs;
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
@@ -67,20 +67,20 @@ private:
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
-    phi_.assign(s);
-    gamma_.assign(s);
-    mu_.assign(s, s);
+    _phi.assign(s);
+    _gamma.assign(s);
+    _mu.assign(s, s);
 
-    r_vec_.assign(x_vec, false);
-    v_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    _v_vec.assign(x_vec, false);
+    if (pre_op != nullptr) _z_vec.assign(x_vec, false);
 
-    p_vecs_.resize(s);
-    u_vecs_.resize(s);
-    g_vecs_.resize(s);
-    for (Vector& p_vec : p_vecs_) p_vec.assign(x_vec, false);
-    for (Vector& u_vec : u_vecs_) u_vec.assign(x_vec, false);
-    for (Vector& g_vec : g_vecs_) g_vec.assign(x_vec, false);
+    _p_vecs.resize(s);
+    _u_vecs.resize(s);
+    _g_vecs.resize(s);
+    for (Vector& p_vec : _p_vecs) p_vec.assign(x_vec, false);
+    for (Vector& u_vec : _u_vecs) u_vec.assign(x_vec, false);
+    for (Vector& g_vec : _g_vecs) g_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -91,14 +91,14 @@ private:
     // 𝗲𝗻𝗱 𝗶𝗳
     // 𝜑₀ ← ‖𝒓‖.
     // ----------------------
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (left_pre) {
-      std::swap(z_vec_, r_vec_);
-      pre_op->mul(r_vec_, z_vec_);
+      std::swap(_z_vec, _r_vec);
+      pre_op->mul(_r_vec, _z_vec);
     }
-    phi_(0) = norm_2(r_vec_);
+    _phi(0) = norm_2(_r_vec);
 
-    return phi_(0);
+    return _phi(0);
   }
 
   void inner_init(const Vector& x_vec, const Vector& b_vec,
@@ -128,20 +128,20 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      omega_ = mu_(0, 0) = 1.0;
-      p_vecs_[0] <<= r_vec_ / phi_(0);
+      _omega = _mu(0, 0) = 1.0;
+      _p_vecs[0] <<= _r_vec / _phi(0);
       for (size_t i = 1; i < s; ++i) {
-        mu_(i, i) = 1.0, phi_(i) = 0.0;
-        fill_randomly(p_vecs_[i]);
+        _mu(i, i) = 1.0, _phi(i) = 0.0;
+        fill_randomly(_p_vecs[i]);
         for (size_t j = 0; j < i; ++j) {
-          mu_(i, j) = 0.0;
-          p_vecs_[i] -= dot_product(p_vecs_[i], p_vecs_[j]) * p_vecs_[j];
+          _mu(i, j) = 0.0;
+          _p_vecs[i] -= dot_product(_p_vecs[i], _p_vecs[j]) * _p_vecs[j];
         }
-        p_vecs_[i] /= norm_2(p_vecs_[i]);
+        _p_vecs[i] /= norm_2(_p_vecs[i]);
       }
     } else {
       for (size_t i = 0; i < s; ++i) {
-        phi_(i) = dot_product(p_vecs_[i], r_vec_);
+        _phi(i) = dot_product(_p_vecs[i], _r_vec);
       }
     }
   }
@@ -162,14 +162,14 @@ private:
     // 𝛾ₖ:ₛ₋₁ ← (𝜇ₖ:ₛ₋₁,ₖ:ₛ₋₁)⁻¹⋅𝜑ₖ:ₛ₋₁.
     // ----------------------
     /// @todo:
-    /// slice(gamma_, {k, s}) =
-    ///    solve(slice(mu_, {k, s}, {k, s}), slice(phi_, {k, s}));
+    /// slice(_gamma, {k, s}) =
+    ///    solve(slice(_mu, {k, s}, {k, s}), slice(_phi, {k, s}));
     for (size_t i = k; i < s; ++i) {
-      gamma_(i) = phi_(i);
+      _gamma(i) = _phi(i);
       for (size_t j = k; j < i; ++j) {
-        gamma_(i) -= mu_(i, j) * gamma_(j);
+        _gamma(i) -= _mu(i, j) * _gamma(j);
       }
-      gamma_(i) /= mu_(i, i);
+      _gamma(i) /= _mu(i, i);
     }
 
     // Compute the new 𝒈ₖ and 𝒖ₖ vectors:
@@ -192,22 +192,22 @@ private:
     //   𝒈ₖ ← 𝓐𝒖ₖ.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    v_vec_ <<= r_vec_ - gamma_(k) * g_vecs_[k];
+    _v_vec <<= _r_vec - _gamma(k) * _g_vecs[k];
     for (size_t i = k + 1; i < s; ++i) {
-      v_vec_ -= gamma_(i) * g_vecs_[i];
+      _v_vec -= _gamma(i) * _g_vecs[i];
     }
     if (right_pre) {
-      std::swap(z_vec_, v_vec_);
-      pre_op->mul(v_vec_, z_vec_);
+      std::swap(_z_vec, _v_vec);
+      pre_op->mul(_v_vec, _z_vec);
     }
-    u_vecs_[k] <<= omega_ * v_vec_ + gamma_(k) * u_vecs_[k];
+    _u_vecs[k] <<= _omega * _v_vec + _gamma(k) * _u_vecs[k];
     for (size_t i = k + 1; i < s; ++i) {
-      u_vecs_[k] += gamma_(i) * u_vecs_[i];
+      _u_vecs[k] += _gamma(i) * _u_vecs[i];
     }
     if (left_pre) {
-      pre_op->mul(g_vecs_[k], z_vec_, lin_op, u_vecs_[k]);
+      pre_op->mul(_g_vecs[k], _z_vec, lin_op, _u_vecs[k]);
     } else {
-      lin_op.mul(g_vecs_[k], u_vecs_[k]);
+      lin_op.mul(_g_vecs[k], _u_vecs[k]);
     }
 
     // Biorthogonalize the new vectors 𝒈ₖ and 𝒖ₖ:
@@ -220,9 +220,9 @@ private:
     // ----------------------
     for (size_t i = 0; i < k; ++i) {
       const real_t alpha =
-          safe_divide(dot_product(p_vecs_[i], g_vecs_[k]), mu_(i, i));
-      u_vecs_[k] -= alpha * u_vecs_[i];
-      g_vecs_[k] -= alpha * g_vecs_[i];
+          safe_divide(dot_product(_p_vecs[i], _g_vecs[k]), _mu(i, i));
+      _u_vecs[k] -= alpha * _u_vecs[i];
+      _g_vecs[k] -= alpha * _g_vecs[i];
     }
 
     // Compute the new column of 𝜇:
@@ -232,7 +232,7 @@ private:
     // 𝗲𝗻𝗱 𝗳𝗼𝗿
     // ----------------------
     for (size_t i = k; i < s; ++i) {
-      mu_(i, k) = dot_product(p_vecs_[i], g_vecs_[k]);
+      _mu(i, k) = dot_product(_p_vecs[i], _g_vecs[k]);
     }
 
     // Update the solution and the residual:
@@ -241,18 +241,18 @@ private:
     // 𝒙 ← 𝒙 + 𝛽⋅𝒖ₖ,
     // 𝒓 ← 𝒓 - 𝛽⋅𝒈ₖ.
     // ----------------------
-    const real_t beta = safe_divide(phi_(k), mu_(k, k));
-    x_vec += beta * u_vecs_[k];
-    r_vec_ -= beta * g_vecs_[k];
+    const real_t beta = safe_divide(_phi(k), _mu(k, k));
+    x_vec += beta * _u_vecs[k];
+    _r_vec -= beta * _g_vecs[k];
 
     // Update 𝜑:
     // ----------------------
     // 𝜑ₖ₊₁:ₛ₋₁ ← 𝜑ₖ₊₁:ₛ₋₁ - 𝛽⋅𝜇ₖ₊₁:ₛ₋₁,ₖ.
     // ----------------------
     /// @todo:
-    /// slice(phi_, {k + 1, s}) -= beta * slice(mu_, {k + 1, s}, k);
+    /// slice(_phi, {k + 1, s}) -= beta * slice(_mu, {k + 1, s}, k);
     for (size_t i = k + 1; i < s; ++i) {
-      phi_(i) -= beta * mu_(i, k);
+      _phi(i) -= beta * _mu(i, k);
     }
 
     if (k == s - 1) {
@@ -269,17 +269,17 @@ private:
       // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
       // 𝒓 ← 𝒓 - 𝜔⋅𝒗.
       // ----------------------
-      if (left_pre) pre_op->mul(v_vec_, z_vec_, lin_op, r_vec_);
-      else if (right_pre) lin_op.mul(v_vec_, z_vec_, *pre_op, r_vec_);
-      else lin_op.mul(v_vec_, r_vec_);
+      if (left_pre) pre_op->mul(_v_vec, _z_vec, lin_op, _r_vec);
+      else if (right_pre) lin_op.mul(_v_vec, _z_vec, *pre_op, _r_vec);
+      else lin_op.mul(_v_vec, _r_vec);
 
-      omega_ =
-          safe_divide(dot_product(v_vec_, r_vec_), dot_product(v_vec_, v_vec_));
-      x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
-      r_vec_ -= omega_ * v_vec_;
+      _omega =
+          safe_divide(dot_product(_v_vec, _r_vec), dot_product(_v_vec, _v_vec));
+      x_vec += _omega * (right_pre ? _z_vec : _r_vec);
+      _r_vec -= _omega * _v_vec;
     }
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
 public:

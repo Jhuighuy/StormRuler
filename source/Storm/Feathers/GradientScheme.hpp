@@ -38,26 +38,26 @@ template<mesh Mesh>
 class LeastSquaresGradientScheme final {
 private:
 
-  const Mesh* p_mesh_;
-  CellMatrixField<Mesh, real_t> g_mats_;
+  const Mesh* _p_mesh;
+  CellMatrixField<Mesh, real_t> _g_mats;
 
 public:
 
   /// @brief Construct the gradient scheme.
   constexpr explicit LeastSquaresGradientScheme(const Mesh& mesh)
-      : p_mesh_{&mesh}, g_mats_(p_mesh_->num_cells()) {
+      : _p_mesh{&mesh}, _g_mats(_p_mesh->num_cells()) {
     // Compute the inverse least squares matrices.
-    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+    std::ranges::for_each(_p_mesh->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the direct least squares matrices.
-      g_mats_[cell][0] = {};
+      _g_mats[cell][0] = {};
       cell.for_each_cell([&](CellView<Mesh> adj_cell) {
         const auto dr = adj_cell.center() - cell.center();
-        g_mats_[cell][0] += glm::outerProduct(dr, dr);
+        _g_mats[cell][0] += glm::outerProduct(dr, dr);
       });
 
       // Compute the inverse.
       static const mat2_t eps(1e-14);
-      g_mats_[cell][0] = glm::inverse(eps + g_mats_[cell][0]);
+      _g_mats[cell][0] = glm::inverse(eps + _g_mats[cell][0]);
     });
   }
 
@@ -65,7 +65,7 @@ public:
   template<class Real, size_t NumVars>
   void operator()(CellVectorField<Mesh, Real, NumVars>& grad_u,
                   const CellField<Mesh, Real, NumVars>& u) const noexcept {
-    std::ranges::for_each(p_mesh_->interior_cells(), [&](CellView<Mesh> cell) {
+    std::ranges::for_each(_p_mesh->interior_cells(), [&](CellView<Mesh> cell) {
       // Compute the least squares RHS.
       grad_u[cell].fill({});
       cell.for_each_cell([&](CellView<Mesh> adj_cell) {
@@ -77,7 +77,7 @@ public:
 
       // Compute the least squares gradients.
       for (size_t i = 0; i < NumVars; ++i) {
-        grad_u[cell][i] = g_mats_[cell][0] * grad_u[cell][i];
+        grad_u[cell][i] = _g_mats[cell][0] * grad_u[cell][i];
       }
     });
   }

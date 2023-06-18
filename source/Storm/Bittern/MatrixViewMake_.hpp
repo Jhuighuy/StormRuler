@@ -38,25 +38,25 @@ template<std::copy_constructible Func>
 class MakeMatrixView final : public MatrixViewInterface<MakeMatrixView<Func>> {
 private:
 
-  MatrixShape shape_;
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
+  MatrixShape _shape;
+  STORM_NO_UNIQUE_ADDRESS Func _func;
 
 public:
 
   /// @brief Construct a making view.
   constexpr MakeMatrixView(MatrixShape shape, Func func)
-      : shape_{shape}, func_{std::move(func)} {}
+      : _shape{shape}, _func{std::move(func)} {}
 
   /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept {
-    return shape_;
+    return _shape;
   }
 
   /// @brief Get the matrix element at @p indices.
   constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT_(shape_.in_range(row_index, col_index),
-                  "Indices are out of range.");
-    return func_(row_index, col_index);
+    STORM_ASSERT(_shape.in_range(row_index, col_index),
+                 "Indices are out of range.");
+    return _func(row_index, col_index);
   }
 
 }; // class MakeMatrixView

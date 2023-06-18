@@ -186,14 +186,14 @@ static void cahn_hilliard_solve(const Mesh& mesh) {
   double total_time = 0.0;
   for (int time = 0; time <= 200000; ++time) {
     for (int frac = 0; time != 0 && frac < 1; ++frac) {
-#  if !STORM_COMPILER_MSVC_
+#  if !STORM_COMPILER_MSVC
       struct timespec start, finish;
       clock_gettime(CLOCK_MONOTONIC, &start);
 #  endif
 
       cahn_hilliard_step(mesh, c, c_hat, w_hat);
 
-#  if !STORM_COMPILER_MSVC_
+#  if !STORM_COMPILER_MSVC
       clock_gettime(CLOCK_MONOTONIC, &finish);
       double elapsed = (finish.tv_sec - start.tv_sec);
       elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
@@ -254,10 +254,10 @@ int main(int argc, char** argv) {
   auto mesh = std::make_shared<UnstructuredMesh<2, 2, CsrTable>>();
   mesh->assign(std::move(mesh1));
 
-  STORM_INFO_("mesh has {} edges", mesh->num_edges());
-  STORM_INFO_("mesh has {} faces", mesh->num_faces());
-  STORM_INFO_("mesh has {} cells", mesh->num_cells());
-  STORM_INFO_("mesh loaded");
+  STORM_INFO("mesh has {} edges", mesh->num_edges());
+  STORM_INFO("mesh has {} faces", mesh->num_faces());
+  STORM_INFO("mesh has {} cells", mesh->num_cells());
+  STORM_INFO("mesh loaded");
 
 #if 1
   cahn_hilliard_solve(*mesh);

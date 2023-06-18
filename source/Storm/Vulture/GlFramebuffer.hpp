@@ -32,16 +32,16 @@
 namespace Storm::Vulture::gl {
 
 /// @brief OpenGL framebuffer.
-class Framebuffer : detail_::noncopyable_ {
+class Framebuffer : NonCopyable {
 private:
 
-  GLuint framebuffer_id_;
+  GLuint _framebuffer_id;
 
 public:
 
   /// @brief Construct a framebuffer.
   Framebuffer() {
-    glGenFramebuffers(1, &framebuffer_id_);
+    glGenFramebuffers(1, &_framebuffer_id);
   }
 
   /// @brief Construct a framebuffer with @p textures.
@@ -57,18 +57,18 @@ public:
 
   /// @brief Destruct the framebuffer.
   ~Framebuffer() {
-    glDeleteFramebuffers(1, &framebuffer_id_);
+    glDeleteFramebuffers(1, &_framebuffer_id);
   }
 
   /// @brief Cast to framebuffer ID.
   constexpr operator GLuint() const noexcept {
-    return framebuffer_id_;
+    return _framebuffer_id;
   }
 
   /// @brief Draw to framebuffer.
   template<std::invocable DrawFunc>
   void draw_into(DrawFunc draw_func) {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
+    glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
     draw_func();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
@@ -76,12 +76,12 @@ public:
   /// @brief Build the framebuffer with @p textures.
   // template<pixel... Pixels>
   void assign(const auto&... textures) {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id_);
-    const auto attachments = attach_textures_(textures...);
+    glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
+    const auto attachments = _attach_textures(textures...);
     glDrawBuffers(static_cast<GLsizei>(attachments.size()), attachments.data());
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-      STORM_THROW_GL_( //
+      STORM_THROW_GL( //
           "Failed to initialize framebuffer, status = {:#x}!", status);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -89,14 +89,14 @@ public:
 
 private:
 
-  static auto attach_textures_(const auto&... textures) {
+  static auto _attach_textures(const auto&... textures) {
     GLenum index = 0;
-    std::array attachments{attach_single_texture_(index++, textures)...};
+    std::array attachments{_attach_single_texture(index++, textures)...};
     return attachments;
   }
 
   template<pixel Pixel>
-  static GLenum attach_single_texture_(GLenum index,
+  static GLenum _attach_single_texture(GLenum index,
                                        const Texture2D<Pixel>& texture) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
                            GL_TEXTURE_2D, texture, /*level*/ 0);
@@ -104,7 +104,7 @@ private:
   }
   template<pixel Pixel>
   static GLenum
-  attach_single_texture_(GLenum index,
+  _attach_single_texture(GLenum index,
                          const MultisampledTexture2D<Pixel>& texture) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index,
                            GL_TEXTURE_2D_MULTISAMPLE, texture, /*level*/ 0);

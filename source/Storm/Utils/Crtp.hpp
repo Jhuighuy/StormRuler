@@ -35,21 +35,21 @@ concept crtp_derived = std::is_class_v<Derived> &&
                        std::same_as<Derived, std::remove_cv_t<Derived>>;
 
 // Based on /*is-derived-from-view-interface*/<T> implementation.
-namespace detail_ {
+namespace _detail {
   template<template<crtp_derived Derived> class CrtpInterface>
-  struct DerivedFromCrtpInterfaceImpl_ {
+  struct _DerivedFromCrtpInterfaceImpl {
     template<class T, class U>
-    DerivedFromCrtpInterfaceImpl_(const T&,
+    _DerivedFromCrtpInterfaceImpl(const T&,
                                   const CrtpInterface<U>&); // not defined
   };
-} // namespace detail_
+} // namespace _detail
 
 /// @brief Checks if and only if @c T has exactly one public base class
 /// @c CrtpInterface&lt;U&gt; for some type @c U, and @c T has no base classes
 /// of type @c CrtpInterface&lt;V&gt; for any other type @c V.
 template<class T, template<class Derived> class CrtpInterface>
 concept derived_from_crtp_interface = requires(T x) { //
-  detail_::DerivedFromCrtpInterfaceImpl_<CrtpInterface>{x, x};
+  _detail::_DerivedFromCrtpInterfaceImpl<CrtpInterface>{x, x};
 };
 
 // -----------------------------------------------------------------------------

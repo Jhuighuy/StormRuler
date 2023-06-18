@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
 /// @{
 template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
+  STORM_ASSERT(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
       out_mat(row_index, col_index) = mat(row_index, col_index);
@@ -68,8 +68,8 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
 template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
 constexpr OutMatrix& assign(AssignFunc assign_func, //
                             OutMatrix&& out_mat, Matrices&&... mats) noexcept {
-  STORM_ASSERT_((out_mat.shape() == mats.shape()) && ...,
-                "Matrix shapes do not match!");
+  STORM_ASSERT((out_mat.shape() == mats.shape()) && ...,
+               "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
       assign_func(out_mat(row_index, col_index), mats(row_index, col_index)...);
@@ -102,7 +102,7 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 /// @note This is a sequential operation!
 template<output_matrix Matrix>
   requires real_matrix<Matrix>
-STORM_CPP23_CONSTEXPR_ Matrix&
+STORM_CPP23_CONSTEXPR Matrix&
 fill_randomly(Matrix&& out_mat, //
               matrix_element_t<Matrix> min = 0,
               matrix_element_t<Matrix> max = 1) noexcept {
@@ -137,8 +137,8 @@ template<class Value, class ReduceFunc, class Func, //
   requires compatible_matrices_v<Matrix, RestMatrices...>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
                       Matrix&& mat, RestMatrices&&... mats) noexcept {
-  STORM_ASSERT_((mat.shape() == mats.shape()) && ...,
-                "Matrix shapes doesn't match!");
+  STORM_ASSERT((mat.shape() == mats.shape()) && ...,
+               "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
       init = reduce_func(
@@ -222,7 +222,7 @@ constexpr auto norm_2(Matrix&& mat) {
 /// @{
 template<numeric_matrix Matrix, numeric_type Number>
 constexpr auto norm_p_p(Matrix&& mat, Number p) {
-  STORM_ASSERT_(p > 0, "Invalid p-norm parameter!");
+  STORM_ASSERT(p > 0, "Invalid p-norm parameter!");
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   static_assert(real_type<Result>,
                 "Absolute value of the matrix element should be of real type!");

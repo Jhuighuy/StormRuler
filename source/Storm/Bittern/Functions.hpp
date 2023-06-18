@@ -44,21 +44,21 @@ template<class Func, class... FirstArgs>
 class BindFirst final {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ std::tuple<FirstArgs...> first_args_;
+  STORM_NO_UNIQUE_ADDRESS Func _func;
+  STORM_NO_UNIQUE_ADDRESS std::tuple<FirstArgs...> _first_args;
 
 public:
 
   constexpr explicit BindFirst(Func func, FirstArgs... first_args)
-      : func_{std::move(func)}, first_args_{std::move(first_args)...} {}
+      : _func{std::move(func)}, _first_args{std::move(first_args)...} {}
 
   template<class... RestArgs>
     requires std::regular_invocable<Func, FirstArgs..., RestArgs...>
   constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept {
     auto call = [this, &rest_args...](const FirstArgs&... first_args) {
-      return func_(first_args..., std::forward<RestArgs>(rest_args)...);
+      return _func(first_args..., std::forward<RestArgs>(rest_args)...);
     };
-    return std::apply(call, first_args_);
+    return std::apply(call, _first_args);
   }
 
 }; // class BindFirst
@@ -69,21 +69,21 @@ template<class Func, class... LastArgs>
 class BindLast final {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ std::tuple<LastArgs...> last_args_;
+  STORM_NO_UNIQUE_ADDRESS Func _func;
+  STORM_NO_UNIQUE_ADDRESS std::tuple<LastArgs...> _last_args;
 
 public:
 
   constexpr explicit BindLast(Func func, LastArgs... last_args)
-      : func_{std::move(func)}, last_args_{std::move(last_args)...} {}
+      : _func{std::move(func)}, _last_args{std::move(last_args)...} {}
 
   template<class... RestArgs>
     requires std::regular_invocable<Func, RestArgs..., LastArgs...>
   constexpr decltype(auto) operator()(RestArgs&&... rest_args) const noexcept {
     auto call = [this, &rest_args...](const LastArgs&... last_args) {
-      return func_(std::forward<RestArgs>(rest_args)..., last_args...);
+      return _func(std::forward<RestArgs>(rest_args)..., last_args...);
     };
-    return std::apply(call, last_args_);
+    return std::apply(call, _last_args);
   }
 
 }; // class BindLast
@@ -94,20 +94,20 @@ template<class Func, class... RestFuncs>
 class Compose final {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Func func_;
-  STORM_NO_UNIQUE_ADDRESS_ Compose<RestFuncs...> rest_funcs_;
+  STORM_NO_UNIQUE_ADDRESS Func _func;
+  STORM_NO_UNIQUE_ADDRESS Compose<RestFuncs...> _rest_funcs;
 
 public:
 
   constexpr Compose(Func func, RestFuncs... rest_funcs)
-      : func_{std::move(func)}, rest_funcs_{std::move(rest_funcs)...} {}
+      : _func{std::move(func)}, _rest_funcs{std::move(rest_funcs)...} {}
 
   template<class... Args>
     requires std::regular_invocable<Compose<RestFuncs...>, Args...> &&
              std::regular_invocable<
                  Func, std::invoke_result_t<Compose<RestFuncs...>, Args...>>
   constexpr decltype(auto) operator()(Args&&... args) const noexcept {
-    return func_(rest_funcs_(std::forward<Args>(args)...));
+    return _func(_rest_funcs(std::forward<Args>(args)...));
   }
 
 }; // class Compose
@@ -118,8 +118,8 @@ template<class Func1, class Func2>
 class Compose<Func1, Func2> final {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Func1 func1_;
-  STORM_NO_UNIQUE_ADDRESS_ Func2 func2_;
+  STORM_NO_UNIQUE_ADDRESS Func1 func1_;
+  STORM_NO_UNIQUE_ADDRESS Func2 func2_;
 
 public:
 
@@ -205,21 +205,21 @@ using GreaterEqual = std::greater_equal<>;
 class ApproxEqual final {
 private:
 
-  long double tolerance_;
+  long double _tolerance;
 
 public:
 
   constexpr explicit ApproxEqual(
       long double tolerance = sqrt(std::numeric_limits<long double>::epsilon()))
-      : tolerance_{tolerance} {
-    STORM_ASSERT_(tolerance > 0.0l, "Negative tolerance!");
+      : _tolerance{tolerance} {
+    STORM_ASSERT(tolerance > 0.0l, "Negative tolerance!");
   }
 
   template<class Arg1, class Arg2>
   constexpr bool operator()(Arg1&& arg1, Arg2&& arg2) const noexcept {
     decltype(auto) delta =
         abs(std::forward<Arg1>(arg1) - std::forward<Arg2>(arg2));
-    return static_cast<long double>(delta) <= tolerance_;
+    return static_cast<long double>(delta) <= _tolerance;
   }
 
 }; // class ApproxEqual

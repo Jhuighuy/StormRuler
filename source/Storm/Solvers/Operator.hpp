@@ -52,7 +52,7 @@ concept legacy_operator_like =
 
 /// @brief A base object.
 /// @todo To be removed!
-class Object : public detail_::noncopyable_ {
+class Object : public NonCopyableInterface {
 public:
 
   /// @brief Object destructor
@@ -126,8 +126,8 @@ template<legacy_vector_like InVector, legacy_vector_like OutVector = InVector>
 class FunctionalOperator final : public Operator<InVector, OutVector> {
 private:
 
-  std::function<void(OutVector&, const InVector&)> MatVecFunc_;
-  std::function<void(InVector&, const OutVector&)> ConjMatVecFunc_;
+  std::function<void(OutVector&, const InVector&)> _MatVecFunc;
+  std::function<void(InVector&, const OutVector&)> _ConjMatVecFunc;
 
 public:
 
@@ -138,31 +138,31 @@ public:
   /// @{
   template<legacy_operator_like<InVector, OutVector> MatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc)
-      : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)} {
-    STORM_ASSERT_(MatVecFunc_, "");
+      : _MatVecFunc{std::forward<MatVecFunc>(matVecFunc)} {
+    STORM_ASSERT(_MatVecFunc, "");
   }
   template<legacy_operator_like<InVector, OutVector> MatVecFunc,
            legacy_operator_like<OutVector, InVector> ConjMatVecFunc>
   explicit FunctionalOperator(MatVecFunc&& matVecFunc,
                               ConjMatVecFunc&& conjMatVecFunc)
-      : MatVecFunc_{std::forward<MatVecFunc>(matVecFunc)},
-        ConjMatVecFunc_{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
-    STORM_ASSERT_(MatVecFunc_ && ConjMatVecFunc_, "");
+      : _MatVecFunc{std::forward<MatVecFunc>(matVecFunc)},
+        _ConjMatVecFunc{std::forward<ConjMatVecFunc>(conjMatVecFunc)} {
+    STORM_ASSERT(_MatVecFunc && _ConjMatVecFunc, "");
   }
   /// @}
 
 private:
 
   void mul(OutVector& y_vec, const InVector& x_vec) const override {
-    MatVecFunc_(y_vec, x_vec);
+    _MatVecFunc(y_vec, x_vec);
   }
 
   void conj_mul(InVector& x_vec, const OutVector& y_vec) const override {
-    if (!ConjMatVecFunc_) {
+    if (!_ConjMatVecFunc) {
       throw std::runtime_error("`FunctionalOperator::conj_mul`"
                                " conjugate product function was not set.");
     }
-    ConjMatVecFunc_(x_vec, y_vec);
+    _ConjMatVecFunc(x_vec, y_vec);
   }
 
 }; // class FunctionalOperator

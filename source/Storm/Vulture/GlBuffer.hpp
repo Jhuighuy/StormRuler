@@ -57,17 +57,17 @@ enum class BufferTarget : GLenum {
 
 /// @brief OpenGL buffer.
 template<class Type>
-class Buffer : detail_::noncopyable_ {
+class Buffer : NonCopyable {
 private:
 
-  GLuint buffer_id_;
-  GLsizei buffer_size_ = 0;
+  GLuint _buffer_id;
+  GLsizei _buffer_size = 0;
 
 public:
 
   /// @brief Construct a buffer.
   Buffer() {
-    glGenBuffers(1, &buffer_id_);
+    glGenBuffers(1, &_buffer_id);
   }
 
   /// @brief Construct a buffer with a size.
@@ -101,29 +101,29 @@ public:
 
   /// @brief Destruct the buffer.
   ~Buffer() {
-    glDeleteBuffers(1, &buffer_id_);
+    glDeleteBuffers(1, &_buffer_id);
   }
 
   /// @brief Cast to buffer ID.
   constexpr operator GLuint() const noexcept {
-    return buffer_id_;
+    return _buffer_id;
   }
 
   /// @brief Buffer size.
   constexpr GLsizei size() const noexcept {
-    return buffer_size_;
+    return _buffer_size;
   }
 
   /// @brief Bind the buffer to @p target.
   void bind(BufferTarget target) const {
-    glBindBuffer(static_cast<GLenum>(target), buffer_id_);
+    glBindBuffer(static_cast<GLenum>(target), _buffer_id);
   }
 
   /// @brief Assign the buffer @p size.
   /// @param usage Intended buffer usage.
   void assign(GLsizei size, BufferUsage usage = BufferUsage::static_draw) {
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
-    buffer_size_ = size;
+    glBindBuffer(GL_ARRAY_BUFFER, _buffer_id);
+    _buffer_size = size;
     const auto num_bytes = static_cast<GLsizeiptr>(size * sizeof(Type));
     glBufferData(GL_ARRAY_BUFFER, num_bytes, /*data*/ nullptr,
                  static_cast<GLenum>(usage));
@@ -143,21 +143,21 @@ public:
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, Type>
   void assign(Range&& values, BufferUsage usage = BufferUsage::static_draw) {
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
+    glBindBuffer(GL_ARRAY_BUFFER, _buffer_id);
     if constexpr (std::ranges::sized_range<Range>) {
       assign(static_cast<GLsizei>(values.size()));
       const auto pointer = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-      if (pointer == nullptr) STORM_THROW_GL_("Failed to map the buffer!");
+      if (pointer == nullptr) STORM_THROW_GL("Failed to map the buffer!");
       std::ranges::copy(values, static_cast<Type*>(pointer));
       if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
-        STORM_THROW_GL_("Failed to unmap the buffer!");
+        STORM_THROW_GL("Failed to unmap the buffer!");
       }
     } else {
       std::vector<Type> temp{};
       std::ranges::copy(values, std::back_inserter(temp));
-      buffer_size_ = static_cast<GLsizei>(temp.size());
+      _buffer_size = static_cast<GLsizei>(temp.size());
       const auto num_bytes =
-          static_cast<GLsizeiptr>(buffer_size_ * sizeof(Type));
+          static_cast<GLsizeiptr>(_buffer_size * sizeof(Type));
       glBufferData(GL_ARRAY_BUFFER, num_bytes, temp.data(),
                    static_cast<GLenum>(usage));
     }
@@ -166,25 +166,25 @@ public:
   /// @todo Refactor as `operator[]`.
   /// @brief Get the buffer value at @p index.
   Type get(size_t index) const {
-    STORM_ASSERT_(index < static_cast<size_t>(buffer_size_),
-                  "Index is out of range!");
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
+    STORM_ASSERT(index < static_cast<size_t>(_buffer_size),
+                 "Index is out of range!");
+    glBindBuffer(GL_ARRAY_BUFFER, _buffer_id);
     const auto pointer = glMapBufferRange(
         GL_ARRAY_BUFFER, static_cast<GLintptr>(index * sizeof(Type)),
         static_cast<GLsizeiptr>(sizeof(Type)), GL_MAP_READ_BIT);
-    if (pointer == nullptr) STORM_THROW_GL_("Failed to map the buffer!");
+    if (pointer == nullptr) STORM_THROW_GL("Failed to map the buffer!");
     Type value = *static_cast<const Type*>(pointer);
     if (glUnmapBuffer(GL_ARRAY_BUFFER) != GL_TRUE) {
-      STORM_THROW_GL_("Failed to unmap the buffer!");
+      STORM_THROW_GL("Failed to unmap the buffer!");
     }
     return value;
   }
 
   /// @brief Set the buffer @p value at @p index.
   void set(size_t index, const Type& value) {
-    STORM_ASSERT_(index < static_cast<size_t>(buffer_size_),
-                  "Index is out of range!");
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id_);
+    STORM_ASSERT(index < static_cast<size_t>(_buffer_size),
+                 "Index is out of range!");
+    glBindBuffer(GL_ARRAY_BUFFER, _buffer_id);
     const auto offset = static_cast<GLintptr>(index * sizeof(Type));
     glBufferSubData(GL_ARRAY_BUFFER, offset, sizeof(Type), &value);
   }

@@ -23,7 +23,7 @@
 # Ignore the generated configuration file.
 # Default configuration file should be in the repository,
 # it is used for non-CMake builds.
-Config.hpp
-!ConfigDefault.hpp
+/Config.hpp
+!/ConfigDefault.hpp
 
 # ------------------------------------------------------------------------------

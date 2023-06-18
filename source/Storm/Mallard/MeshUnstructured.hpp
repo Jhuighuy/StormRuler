@@ -76,55 +76,55 @@ public:
 
 private:
 
-  using EntityIndices_ = meta::make_seq_t<EntityIndex, 0, TopologicalDim + 1>;
+  using _EntityIndices = meta::make_seq_t<EntityIndex, 0, TopologicalDim + 1>;
 
   // clang-format off
 
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<Label, EntityIndices_>
+      meta::pair_list_t<Label, _EntityIndices>
     >
-  > entity_ranges_tuple_{};
+  > _entity_ranges_tuple{};
 
   meta::as_std_tuple_t<
     meta::prepend_t<
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
-        meta::pair_list_t<meta::drop_first_t<EntityIndices_>, shapes::Type>
+        meta::pair_list_t<meta::drop_first_t<_EntityIndices>, shapes::Type>
       >
     >
-  > entity_shape_types_tuple_{};
+  > _entity_shape_types_tuple{};
 
   meta::as_std_tuple_t<
     meta::prepend_t<
       meta::empty_t,
       meta::transform_t<
         meta::pair_cast_fn<IndexedVector>,
-        meta::pair_list_t<meta::drop_first_t<EntityIndices_>, real_t>
+        meta::pair_list_t<meta::drop_first_t<_EntityIndices>, real_t>
       >
     >
-  > entity_volumes_tuple_{};
+  > _entity_volumes_tuple{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<IndexedVector>,
-      meta::pair_list_t<EntityIndices_, Vec>
+      meta::pair_list_t<_EntityIndices, Vec>
     >
-  > entity_positions_tuple_{};
+  > _entity_positions_tuple{};
 
   // You don't belong here, huh?
-  IndexedVector<FaceIndex, Vec> face_normals_{};
+  IndexedVector<FaceIndex, Vec> _face_normals{};
 
-  AABB<Vec> aabb_{};
+  AABB<Vec> _aabb{};
 
   meta::as_std_tuple_t<
     meta::transform_t<
       meta::pair_cast_fn<Table>,
-      meta::cartesian_product_t<EntityIndices_, EntityIndices_>
+      meta::cartesian_product_t<_EntityIndices, _EntityIndices>
     >
-  > connectivity_tuple_{};
+  > _connectivity_tuple{};
 
   // clang-format on
 
@@ -133,20 +133,20 @@ public:
   /// @brief Construct the mesh.
   constexpr UnstructuredMesh() {
     // Initialize the default label.
-    meta::for_each<EntityIndices_>(
+    meta::for_each<_EntityIndices>(
         [&]<size_t I>(meta::type<EntityIndex<I>>) { insert_label<I>(); });
   }
 
   /// @brief Number of entity labels.
   template<size_t I>
   constexpr size_t num_labels(meta::type<EntityIndex<I>> = {}) const noexcept {
-    return std::get<I>(entity_ranges_tuple_).size() - 1;
+    return std::get<I>(_entity_ranges_tuple).size() - 1;
   }
 
   /// @brief Label range.
   template<size_t I>
   constexpr auto labels(meta::type<EntityIndex<I>> = {}) const noexcept {
-    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    const auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     return std::views::iota(Label{0}, Label{entity_ranges.size() - 1});
   }
 
@@ -154,38 +154,38 @@ public:
   template<size_t I>
   constexpr size_t
   num_entities(meta::type<EntityIndex<I>> = {}) const noexcept {
-    return static_cast<size_t>(std::get<I>(entity_ranges_tuple_).back());
+    return static_cast<size_t>(std::get<I>(_entity_ranges_tuple).back());
   }
   /// @brief Number of entities with label @p label.
   template<size_t I>
   constexpr size_t
   num_entities(Label label, meta::type<EntityIndex<I>> = {}) const noexcept {
-    STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
-    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    STORM_ASSERT(label < num_labels<I>(), "Label is out of range!");
+    const auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     return entity_ranges[label + 1] - entity_ranges[label];
   }
 
   /// @brief Index range of the entitites.
   template<size_t I>
   constexpr auto entities(meta::type<EntityIndex<I>> = {}) const noexcept {
-    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    const auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     return std::views::iota(entity_ranges.front(), entity_ranges.back());
   }
   /// @brief Index range of the entitites with label @p label.
   template<size_t I>
   constexpr auto entities(Label label,
                           meta::type<EntityIndex<I>> = {}) const noexcept {
-    STORM_ASSERT_(label < num_labels<I>(), "Label is out of range!");
-    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    STORM_ASSERT(label < num_labels<I>(), "Label is out of range!");
+    const auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     return std::views::iota(entity_ranges[label], entity_ranges[label + 1]);
   }
 
   /// @brief Label of the entitity at @p index.
   template<size_t I>
   constexpr Label label(EntityIndex<I> index) const noexcept {
-    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
+    STORM_ASSERT(index < num_entities<I>(), "Entity index is out of range!");
     // Binary search for entity in the label ranges.
-    const auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    const auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     const auto lower_bound = std::ranges::lower_bound(entity_ranges, index);
     return Label{lower_bound - entity_ranges.begin() - 1};
   }
@@ -193,43 +193,43 @@ public:
   /// @brief Shape type of the entitity at @p index.
   template<size_t I>
   constexpr shapes::Type shape_type(EntityIndex<I> index) const noexcept {
-    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
-    return std::get<I>(entity_shape_types_tuple_)[index];
+    STORM_ASSERT(index < num_entities<I>(), "Entity index is out of range!");
+    return std::get<I>(_entity_shape_types_tuple)[index];
   }
 
   /// @brief "Volume" of the entitity at @p index.
   template<size_t I>
   constexpr real_t volume(EntityIndex<I> index) const noexcept {
-    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
-    return std::get<I>(entity_volumes_tuple_)[index];
+    STORM_ASSERT(index < num_entities<I>(), "Entity index is out of range!");
+    return std::get<I>(_entity_volumes_tuple)[index];
   }
 
   /// @brief Position of the entitity at @p index.
   template<size_t I>
   constexpr Vec position(EntityIndex<I> index) const noexcept {
-    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
-    return std::get<I>(entity_positions_tuple_)[index];
+    STORM_ASSERT(index < num_entities<I>(), "Entity index is out of range!");
+    return std::get<I>(_entity_positions_tuple)[index];
   }
 
   /// @brief Normal to the face at @p face_index.
   constexpr Vec normal(FaceIndex face_index) const noexcept {
-    STORM_ASSERT_(face_index < num_entities(meta::type_v<FaceIndex>),
-                  "Face index is out of range!");
-    return face_normals_[face_index];
+    STORM_ASSERT(face_index < num_entities(meta::type_v<FaceIndex>),
+                 "Face index is out of range!");
+    return _face_normals[face_index];
   }
 
   /// @brief Mesh AABB.
   constexpr const auto& aabb() const noexcept {
-    return aabb_;
+    return _aabb;
   }
 
   /// @brief Range of adjacent entity indices of dim J of an entity at @p index.
   template<size_t J, size_t I>
   constexpr auto adjacent(EntityIndex<I> index,
                           meta::type<EntityIndex<J>> = {}) const noexcept {
-    STORM_ASSERT_(index < num_entities<I>(), "Entity index is out of range!");
+    STORM_ASSERT(index < num_entities<I>(), "Entity index is out of range!");
     using T = Table<EntityIndex<I>, EntityIndex<J>>;
-    return std::get<T>(connectivity_tuple_)[index];
+    return std::get<T>(_connectivity_tuple)[index];
   }
 
   /// @brief Find an entity by it's @p node_indices. Complexity is constant.
@@ -240,13 +240,13 @@ public:
   find(Range&& node_indices, meta::type<EntityIndex<I>> = {}) const {
     // Select the entities that are adjacent to the first node in the list.
     auto adj = adjacent<I>(node_indices.front());
-    STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> found{};
+    STORM_CPP23_THREAD_LOCAL std::vector<EntityIndex<I>> found{};
     found.assign(adj.begin(), adj.end());
     std::ranges::sort(found);
 
     // For the other node indices, select the adjacent enitites,
     // and intersect with the recently found.
-    STORM_CPP23_THREAD_LOCAL_ std::vector<EntityIndex<I>> temp{}, update{};
+    STORM_CPP23_THREAD_LOCAL std::vector<EntityIndex<I>> temp{}, update{};
     for (NodeIndex node_index : node_indices | std::views::drop(1)) {
       if (found.empty()) break;
       adj = adjacent<I>(node_index);
@@ -261,7 +261,7 @@ public:
       case 0: return std::nullopt;
       case 1: return found.front();
     }
-    STORM_THROW_("For the specified node list more than one entity found!");
+    STORM_THROW("For the specified node list more than one entity found!");
   }
 
   /// @brief Copy-assign the unstructured @p mesh with different table type.
@@ -269,20 +269,20 @@ public:
   constexpr void
   assign(const UnstructuredMesh<Dim, TopologicalDim, OtherTable>& mesh) {
     // Copy the ranges and shape properties.
-    entity_ranges_tuple_ = mesh.entity_ranges_tuple_;
-    entity_shape_types_tuple_ = mesh.entity_shape_types_tuple_;
-    entity_volumes_tuple_ = mesh.entity_volumes_tuple_;
-    entity_positions_tuple_ = mesh.entity_positions_tuple_;
-    face_normals_ = mesh.face_normals_;
-    aabb_ = mesh.aabb_;
+    _entity_ranges_tuple = mesh._entity_ranges_tuple;
+    _entity_shape_types_tuple = mesh._entity_shape_types_tuple;
+    _entity_volumes_tuple = mesh._entity_volumes_tuple;
+    _entity_positions_tuple = mesh._entity_positions_tuple;
+    _face_normals = mesh._face_normals;
+    _aabb = mesh._aabb;
 
     // Copy the connectivity tables.
-    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+    meta::for_each<_EntityIndices>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         using T = Table<EntityIndex<I>, EntityIndex<J>>;
         using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        std::get<T>(connectivity_tuple_)
-            .assign(std::get<U>(mesh.connectivity_tuple_));
+        std::get<T>(_connectivity_tuple)
+            .assign(std::get<U>(mesh._connectivity_tuple));
       });
     });
   }
@@ -293,20 +293,20 @@ public:
   assign(UnstructuredMesh<Dim, TopologicalDim, OtherTable>&& mesh) {
     // Move the ranges and shape properties.
     /// @todo Ranges of the source mesh would be invalid.
-    entity_ranges_tuple_ = std::move(mesh.entity_ranges_tuple_);
-    entity_shape_types_tuple_ = std::move(mesh.entity_shape_types_tuple_);
-    entity_volumes_tuple_ = std::move(mesh.entity_volumes_tuple_);
-    entity_positions_tuple_ = std::move(mesh.entity_positions_tuple_);
-    face_normals_ = std::move(mesh.face_normals_);
-    aabb_ = std::move(mesh.aabb_);
+    _entity_ranges_tuple = std::move(mesh._entity_ranges_tuple);
+    _entity_shape_types_tuple = std::move(mesh._entity_shape_types_tuple);
+    _entity_volumes_tuple = std::move(mesh._entity_volumes_tuple);
+    _entity_positions_tuple = std::move(mesh._entity_positions_tuple);
+    _face_normals = std::move(mesh._face_normals);
+    _aabb = std::move(mesh._aabb);
 
     // Move the connectivity tables.
-    meta::for_each<EntityIndices_>([&]<size_t I>(meta::type<EntityIndex<I>>) {
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+    meta::for_each<_EntityIndices>([&]<size_t I>(meta::type<EntityIndex<I>>) {
+      meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         using T = Table<EntityIndex<I>, EntityIndex<J>>;
         using U = OtherTable<EntityIndex<I>, EntityIndex<J>>;
-        std::get<T>(connectivity_tuple_)
-            .assign(std::move(std::get<U>(mesh.connectivity_tuple_)));
+        std::get<T>(_connectivity_tuple)
+            .assign(std::move(std::get<U>(mesh._connectivity_tuple)));
       });
     });
   }
@@ -318,24 +318,24 @@ public:
   /// @brief Reverve memory for the entities.
   template<size_t I>
   constexpr void reserve(size_t capacity, meta::type<EntityIndex<I>> = {}) {
-    std::get<I>(entity_positions_tuple_).reserve(capacity);
+    std::get<I>(_entity_positions_tuple).reserve(capacity);
     if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
-      std::get<I>(entity_shape_types_tuple_).reserve(capacity);
-      std::get<I>(entity_volumes_tuple_).reserve(capacity);
+      std::get<I>(_entity_shape_types_tuple).reserve(capacity);
+      std::get<I>(_entity_volumes_tuple).reserve(capacity);
     }
     if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
-      face_normals_.reserve(capacity);
+      _face_normals.reserve(capacity);
     }
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+    meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
-      std::get<T>(connectivity_tuple_).reserve(capacity);
+      std::get<T>(_connectivity_tuple).reserve(capacity);
     });
   }
 
   /// @brief Insert a new entity label.
   template<size_t I>
   constexpr void insert_label(meta::type<EntityIndex<I>> = {}) {
-    auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     if (entity_ranges.empty()) {
       entity_ranges.reserve(2);
       entity_ranges.emplace_back(0), entity_ranges.emplace_back(0);
@@ -354,48 +354,48 @@ public:
                                   meta::type<EntityIndex<I>> = {}) {
     // Allocate the entity index,
     // implicitly assigning the last existing label label.
-    const EntityIndex<I> index{std::get<I>(entity_ranges_tuple_).back()++};
+    const EntityIndex<I> index{std::get<I>(_entity_ranges_tuple).back()++};
 
     // Assign the geometrical properties.
     if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
       // Assign the node position and update the AABB.
-      auto& node_positions = std::get<I>(entity_positions_tuple_);
+      auto& node_positions = std::get<I>(_entity_positions_tuple);
       const Vec& position = node_positions.emplace_back(shape);
       if (node_positions.size() == 1) {
-        aabb_ = AABB{position};
+        _aabb = AABB{position};
       } else {
-        aabb_.extend(position);
+        _aabb.extend(position);
       }
     } else {
       // Assign the entity shape type, volume, center position (and normal).
-      std::get<I>(entity_shape_types_tuple_).emplace_back(shape.type());
-      std::get<I>(entity_volumes_tuple_)
+      std::get<I>(_entity_shape_types_tuple).emplace_back(shape.type());
+      std::get<I>(_entity_volumes_tuple)
           .emplace_back(shapes::volume(shape, *this));
-      std::get<I>(entity_positions_tuple_)
+      std::get<I>(_entity_positions_tuple)
           .emplace_back(shapes::barycenter(shape, *this));
       if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
         if constexpr (Dim == TopologicalDim) {
-          face_normals_.emplace_back(shapes::normal(shape, *this));
+          _face_normals.emplace_back(shapes::normal(shape, *this));
         } else {
           /// @todo What are the face normals for surface meshes?
-          face_normals_.emplace_back({});
+          _face_normals.emplace_back({});
         }
       }
     }
 
     // Assign the connectivity properties.
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+    meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       // Allocate the empty rows.
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
-      std::get<T>(connectivity_tuple_).push_back();
+      std::get<T>(_connectivity_tuple).push_back();
     });
     if constexpr (!std::is_same_v<EntityIndex<I>, NodeIndex>) {
       // Connnect the entity with it's nodes.
       using T = Table<EntityIndex<I>, NodeIndex>;
       using U = Table<NodeIndex, EntityIndex<I>>;
       for (NodeIndex node_index : shape.nodes()) {
-        std::get<T>(connectivity_tuple_).insert(index, node_index);
-        std::get<U>(connectivity_tuple_).insert(node_index, index);
+        std::get<T>(_connectivity_tuple).insert(index, node_index);
+        std::get<U>(_connectivity_tuple).insert(node_index, index);
       }
     }
     meta::for_each<meta::make_seq_t<EntityIndex, 1, I>>(
@@ -405,11 +405,11 @@ public:
           using U = Table<EntityIndex<J>, EntityIndex<I>>;
           const auto process_part = [&](const auto& part) {
             const EntityIndex<J> part_index = find_or_insert<J>(part);
-            std::get<T>(connectivity_tuple_).insert(index, part_index);
-            std::get<U>(connectivity_tuple_).insert(part_index, index);
+            std::get<T>(_connectivity_tuple).insert(index, part_index);
+            std::get<U>(_connectivity_tuple).insert(part_index, index);
             // Fix the face orientation (if needed).
             if constexpr (std::is_same_v<EntityIndex<J>, FaceIndex>) {
-              update_face_orientation_(part_index, part.nodes());
+              _update_face_orientation(part_index, part.nodes());
             }
           };
           std::apply([&](const auto&... parts) { (process_part(parts), ...); },
@@ -419,7 +419,7 @@ public:
     // Connect the entity with it's siblings.
     /// @todo Implement me!
     using T = Table<EntityIndex<I>, EntityIndex<I>>;
-    std::get<T>(connectivity_tuple_).insert(index, index);
+    std::get<T>(_connectivity_tuple).insert(index, index);
 
     return index;
   }
@@ -445,8 +445,8 @@ public:
              std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
   constexpr void permute(Range&& perm, meta::type<EntityIndex<I>> = {}) {
-    STORM_ASSERT_(std::ranges::size(perm) == num_entities<I>(),
-                  "Invalid permutation size!");
+    STORM_ASSERT(std::ranges::size(perm) == num_entities<I>(),
+                 "Invalid permutation size!");
 
     // Stable-sort the permutation in order to keep the label ranges correct.
     std::ranges::stable_sort(
@@ -455,7 +455,7 @@ public:
         });
 
     // Permute the entities.
-    permute_base_(perm);
+    _permute_base(perm);
   }
 
   /// @brief Assign the entity labels. Complexity is log²-linear.
@@ -466,8 +466,8 @@ public:
              std::same_as<std::ranges::range_value_t<Range>, Label>
   constexpr void assign_labels(Range&& labels,
                                meta::type<EntityIndex<I>> = {}) {
-    STORM_ASSERT_(std::ranges::size(labels) <= num_entities<I>(),
-                  "Invalid labels range size!");
+    STORM_ASSERT(std::ranges::size(labels) <= num_entities<I>(),
+                 "Invalid labels range size!");
 
     // Permute the entities according to labels.
     std::vector<EntityIndex<I>> perm(num_entities<I>());
@@ -480,11 +480,11 @@ public:
           };
           return new_label(index_1) < new_label(index_2);
         });
-    permute_base_<I>(perm);
+    _permute_base<I>(perm);
 
     // Generate the new label ranges.
     const size_t delta = this->num_entities<I>() - std::ranges::size(labels);
-    auto& entity_ranges = std::get<I>(entity_ranges_tuple_);
+    auto& entity_ranges = std::get<I>(_entity_ranges_tuple);
     entity_ranges.clear();
     for (Label label : labels) {
       entity_ranges.resize(std::max(entity_ranges.size(), //
@@ -506,20 +506,20 @@ private:
   template<std::ranges::forward_range Range>
     requires std::ranges::sized_range<Range> &&
              std::same_as<std::ranges::range_value_t<Range>, NodeIndex>
-  constexpr void update_face_orientation_(FaceIndex face_index,
+  constexpr void _update_face_orientation(FaceIndex face_index,
                                           Range&& cell_face_nodes) {
     // Detect the face orientation.
     const auto face_nodes = adjacent<0>(face_index);
     bool cell_is_inner, cell_is_outer;
     const size_t num_cell_faces = std::ranges::size(cell_face_nodes);
-    STORM_ASSERT_(num_cell_faces >= 2, "This function should be called in 1D!");
+    STORM_ASSERT(num_cell_faces >= 2, "This function should be called in 1D!");
     if (num_cell_faces == 2) {
       cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);
       cell_is_outer =
           std::ranges::equal(cell_face_nodes, face_nodes | std::views::reverse);
     } else {
       // Need to take into the account possible rotations.
-      STORM_CPP23_THREAD_LOCAL_ std::vector<NodeIndex> temp{};
+      STORM_CPP23_THREAD_LOCAL std::vector<NodeIndex> temp{};
       temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());
       std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));
       cell_is_inner = std::ranges::equal(temp, face_nodes);
@@ -531,25 +531,25 @@ private:
     // Check and update the orientation (if needed).
     const auto cell_faces = adjacent<TopologicalDim>(face_index);
     if (cell_faces.size() == 1) {
-      STORM_ENSURE_(cell_is_inner || cell_is_outer,
-                    "Face has a single adjacent cell, "
-                    "but it can be neither inner nor outer!");
+      STORM_ENSURE(cell_is_inner || cell_is_outer,
+                   "Face has a single adjacent cell, "
+                   "but it can be neither inner nor outer!");
       // Flip the face if the cell is outer.
       if (cell_is_outer) {
-        face_normals_[face_index] = -face_normals_[face_index];
+        _face_normals[face_index] = -_face_normals[face_index];
         meta::for_each<meta::make_seq_t<EntityIndex, 0, TopologicalDim - 1>>(
             [&]<size_t I>(meta::type<EntityIndex<I>>) {
               using T = Table<FaceIndex, EntityIndex<I>>;
               std::ranges::reverse(
-                  std::get<T>(connectivity_tuple_)[face_index]);
+                  std::get<T>(_connectivity_tuple)[face_index]);
             });
       }
     } else if (cell_faces.size() == 2) {
-      STORM_ENSURE_(cell_is_outer,
-                    "Face has two adjacent cells, "
-                    "but the second cell cannot be the outer one!");
+      STORM_ENSURE(cell_is_outer,
+                   "Face has two adjacent cells, "
+                   "but the second cell cannot be the outer one!");
     } else {
-      STORM_TERMINATE_("Invalid number of the face cells!");
+      STORM_ABORT("Invalid number of the face cells!");
     }
   }
 
@@ -557,14 +557,14 @@ private:
   template<size_t I, std::ranges::random_access_range Range>
     requires std::permutable<std::ranges::iterator_t<Range>> &&
              std::same_as<std::ranges::range_value_t<Range>, EntityIndex<I>>
-  constexpr void permute_base_(Range&& perm, meta::type<EntityIndex<I>> = {}) {
+  constexpr void _permute_base(Range&& perm, meta::type<EntityIndex<I>> = {}) {
     { // Update the connectivity with inverse permutations.
       IndexedVector<EntityIndex<I>, EntityIndex<I>> iperm(num_entities<I>());
       permutations::invert_permutation(perm, iperm.begin());
-      meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+      meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
         for (EntityIndex<J> index : entities<J>()) {
           using T = Table<EntityIndex<J>, EntityIndex<I>>;
-          decltype(auto) adj = std::get<T>(connectivity_tuple_)[index];
+          decltype(auto) adj = std::get<T>(_connectivity_tuple)[index];
           for (EntityIndex<I>& adjacent_index : adj) {
             adjacent_index = iperm[adjacent_index];
           }
@@ -573,9 +573,9 @@ private:
     }
 
     // Permute the entity-* connectivity.
-    meta::for_each<EntityIndices_>([&]<size_t J>(meta::type<EntityIndex<J>>) {
+    meta::for_each<_EntityIndices>([&]<size_t J>(meta::type<EntityIndex<J>>) {
       using T = Table<EntityIndex<I>, EntityIndex<J>>;
-      auto& table = std::get<T>(connectivity_tuple_);
+      auto& table = std::get<T>(_connectivity_tuple);
       T permuted_table{};
       permuted_table.reserve(num_entities<I>());
       for (EntityIndex<I> index : entities<I>()) {
@@ -590,15 +590,15 @@ private:
     permutations::permute_inplace(
         perm, [&](EntityIndex<I> index_1, EntityIndex<I> index_2) {
           const auto gather_shape_properties = [&](EntityIndex<I> index) {
-            auto& positions = std::get<I>(entity_positions_tuple_);
+            auto& positions = std::get<I>(_entity_positions_tuple);
             if constexpr (std::is_same_v<EntityIndex<I>, NodeIndex>) {
               return std::tie(positions[index]);
             } else {
-              auto& shape_types = std::get<I>(entity_shape_types_tuple_);
-              auto& volumes = std::get<I>(entity_volumes_tuple_);
+              auto& shape_types = std::get<I>(_entity_shape_types_tuple);
+              auto& volumes = std::get<I>(_entity_volumes_tuple);
               if constexpr (std::is_same_v<EntityIndex<I>, FaceIndex>) {
                 return std::tie(shape_types[index], volumes[index],
-                                positions[index], face_normals_[index]);
+                                positions[index], _face_normals[index]);
               } else {
                 return std::tie(shape_types[index], volumes[index],
                                 positions[index]);

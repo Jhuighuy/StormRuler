@@ -59,13 +59,13 @@ private:
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
               const Preconditioner<Vector>* pre_op) final {
-    STORM_TERMINATE_("Newton solver is not implemented yet!");
+    STORM_ABORT("Newton solver is not implemented yet!");
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
                  const Operator<Vector>& any_op,
                  const Preconditioner<Vector>* pre_op) final {
-    STORM_TERMINATE_("Newton solver is not implemented yet!");
+    STORM_ABORT("Newton solver is not implemented yet!");
   } // NewtonSolver::iterate
 
 }; // class NewtonSolver
@@ -102,25 +102,25 @@ template<legacy_vector_like Vector>
 class JfnkSolver final : public IterativeSolver<Vector> {
 private:
 
-  Vector s_vec_, t_vec_, r_vec_, w_vec_;
+  Vector _s_vec, _t_vec, _r_vec, _w_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& any_op,
               const Preconditioner<Vector>* pre_op) override {
-    s_vec_.assign(x_vec, false);
-    t_vec_.assign(x_vec, false);
-    r_vec_.assign(x_vec, false);
-    w_vec_.assign(x_vec, false);
+    _s_vec.assign(x_vec, false);
+    _t_vec.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    _w_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
     // 𝒘 ← 𝓐(𝒙),
     // 𝒓 ← 𝒃 - 𝒘.
     // ----------------------
-    any_op.mul(w_vec_, x_vec);
-    r_vec_ <<= b_vec - w_vec_;
+    any_op.mul(_w_vec, x_vec);
+    _r_vec <<= b_vec - _w_vec;
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -135,7 +135,7 @@ private:
     static const real_t sqrt_of_epsilon =
         std::sqrt(std::numeric_limits<real_t>::epsilon());
     const real_t mu = sqrt_of_epsilon * sqrt(1.0 + norm_2(x_vec));
-    t_vec_ <<= r_vec_;
+    _t_vec <<= _r_vec;
     {
       BiCgStabSolver<Vector> solver{};
       solver.absolute_error_tolerance = 1.0e-8;
@@ -149,12 +149,12 @@ private:
         // 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.
         // ----------------------
         const real_t delta = safe_divide(mu, norm_2(y_vec));
-        s_vec_ <<= x_vec + delta * y_vec;
-        any_op.mul(z_vec, s_vec_);
+        _s_vec <<= x_vec + delta * y_vec;
+        any_op.mul(z_vec, _s_vec);
         const real_t delta_inverse = safe_divide(1.0, delta);
-        z_vec <<= delta_inverse * (z_vec - w_vec_);
+        z_vec <<= delta_inverse * (z_vec - _w_vec);
       });
-      solver.solve(t_vec_, r_vec_, *op);
+      solver.solve(_t_vec, _r_vec, *op);
     }
 
     // Update the solution and the residual:
@@ -163,11 +163,11 @@ private:
     // 𝒘 ← 𝓐(𝒙),
     // 𝒓 ← 𝒃 - 𝒘.
     // ----------------------
-    x_vec += t_vec_;
-    any_op.mul(w_vec_, x_vec);
-    r_vec_ <<= b_vec - w_vec_;
+    x_vec += _t_vec;
+    any_op.mul(_w_vec, x_vec);
+    _r_vec <<= b_vec - _w_vec;
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
 }; // class JfnkSolver

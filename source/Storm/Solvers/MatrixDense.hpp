@@ -46,20 +46,20 @@ template<class Value, //
 class DenseMatrix {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_
+  STORM_NO_UNIQUE_ADDRESS
   std::conditional_t<NumRows == std::dynamic_extent, size_t,
                      std::integral_constant<size_t, NumRows>>
-      num_rows_{};
-  STORM_NO_UNIQUE_ADDRESS_
+      _num_rows{};
+  STORM_NO_UNIQUE_ADDRESS
   std::conditional_t<NumCols == std::dynamic_extent, size_t,
                      std::integral_constant<size_t, NumCols>>
-      num_cols_{};
-  STORM_NO_UNIQUE_ADDRESS_
+      _num_cols{};
+  STORM_NO_UNIQUE_ADDRESS
   std::conditional_t<NumRows == std::dynamic_extent || //
                          NumCols == std::dynamic_extent,
                      std::unique_ptr<Value[]>,
                      std::array<Value, NumRows * NumCols>>
-      coeffs_{};
+      _coeffs{};
 
 public:
 
@@ -72,18 +72,18 @@ public:
   constexpr explicit DenseMatrix(size_t num_rows) //
     requires (NumRows == std::dynamic_extent &&   //
               NumCols != std::dynamic_extent)
-      : num_rows_{num_rows}, //
-        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+      : _num_rows{num_rows}, //
+        _coeffs{std::make_unique<Value[]>(_num_rows * _num_cols)} {}
   constexpr explicit DenseMatrix(size_t num_cols) //
     requires (NumRows != std::dynamic_extent &&   //
               NumCols == std::dynamic_extent)
-      : num_cols_{num_cols}, //
-        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+      : _num_cols{num_cols}, //
+        _coeffs{std::make_unique<Value[]>(_num_rows * _num_cols)} {}
   constexpr DenseMatrix(size_t num_rows, size_t num_cols) //
     requires (NumRows == std::dynamic_extent &&           //
               NumCols == std::dynamic_extent)
-      : num_rows_{num_rows}, num_cols_{num_cols}, //
-        coeffs_{std::make_unique<Value[]>(num_rows_ * num_cols_)} {}
+      : _num_rows{num_rows}, _num_cols{num_cols}, //
+        _coeffs{std::make_unique<Value[]>(_num_rows * _num_cols)} {}
   /// @}
 
   /// @brief Construct a dense matrix with coefficients.
@@ -92,22 +92,22 @@ public:
       noexcept(NumRows != std::dynamic_extent &&
                NumCols != std::dynamic_extent) {
     if constexpr (NumRows == std::dynamic_extent) {
-      num_rows_ = coeffs.size();
+      _num_rows = coeffs.size();
     } else {
-      STORM_ASSERT_(num_rows_ == coeffs.size(), "Invalid number of rows.");
+      STORM_ASSERT(_num_rows == coeffs.size(), "Invalid number of rows.");
     }
     if constexpr (NumCols == std::dynamic_extent) {
-      num_cols_ = coeffs.begin()->size();
+      _num_cols = coeffs.begin()->size();
     } else {
-      STORM_ASSERT_(num_rows_ == coeffs.begin()->size(),
-                    "Invalid number of columns.");
+      STORM_ASSERT(_num_rows == coeffs.begin()->size(),
+                   "Invalid number of columns.");
     }
     if constexpr (NumRows == std::dynamic_extent ||
                   NumCols == std::dynamic_extent) {
-      coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+      _coeffs = std::make_unique<Value[]>(_num_rows * _num_cols);
     }
-    for (size_t i{0}; i < num_rows_; ++i) {
-      for (size_t j{0}; j < num_cols_; ++j) {
+    for (size_t i{0}; i < _num_rows; ++i) {
+      for (size_t j{0}; j < _num_cols; ++j) {
         (*this)(i, j) = (coeffs.begin()[i]).begin()[j];
       }
     }
@@ -117,33 +117,33 @@ public:
     requires (NumRows == std::dynamic_extent && //
               NumCols != std::dynamic_extent)
   {
-    num_rows_ = num_rows;
-    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+    _num_rows = num_rows;
+    _coeffs = std::make_unique<Value[]>(_num_rows * _num_cols);
   }
   constexpr void assign(size_t num_cols)        //
     requires (NumRows != std::dynamic_extent && //
               NumCols == std::dynamic_extent)
   {
-    num_cols_ = num_cols;
-    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+    _num_cols = num_cols;
+    _coeffs = std::make_unique<Value[]>(_num_rows * _num_cols);
   }
   constexpr void assign(size_t num_rows,
                         size_t num_cols)        //
     requires (NumRows == std::dynamic_extent && //
               NumCols == std::dynamic_extent)
   {
-    num_rows_ = num_rows, num_cols_ = num_cols;
-    coeffs_ = std::make_unique<Value[]>(num_rows_ * num_cols_);
+    _num_rows = num_rows, _num_cols = num_cols;
+    _coeffs = std::make_unique<Value[]>(_num_rows * _num_cols);
   }
 
   /// @brief Number of the matrix rows.
   constexpr auto num_rows() const noexcept {
-    return num_rows_;
+    return _num_rows;
   }
 
   /// @brief Number of the matrix columns.
   constexpr auto num_cols() const noexcept {
-    return num_cols_;
+    return _num_cols;
   }
 
   constexpr auto shape() const noexcept {
@@ -154,9 +154,9 @@ public:
   /// @{
   constexpr auto& operator()(size_t row_index, //
                              size_t col_index = 0) noexcept {
-    STORM_ASSERT_(row_index < num_rows_ && col_index < num_cols_,
-                  "Matrix index out range.");
-    return coeffs_[row_index * num_cols_ + col_index];
+    STORM_ASSERT(row_index < _num_rows && col_index < _num_cols,
+                 "Matrix index out range.");
+    return _coeffs[row_index * _num_cols + col_index];
   }
   constexpr const auto& operator()(size_t row_index,
                                    size_t col_index = 0) const noexcept {

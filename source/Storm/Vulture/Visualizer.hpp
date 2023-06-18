@@ -339,8 +339,8 @@ void visualize_mesh(const Mesh& mesh) {
         last_selected_node.emplace(entity_index);
         select_node(*last_selected_node, 1);
         if (debug_labels) {
-          STORM_INFO_("node label = {}",
-                      (size_t) mesh.label(*last_selected_node));
+          STORM_INFO("node label = {}",
+                     (size_t) mesh.label(*last_selected_node));
         }
         break;
       }
@@ -348,8 +348,8 @@ void visualize_mesh(const Mesh& mesh) {
         last_selected_edge.emplace(entity_index);
         select_edge(*last_selected_edge, 1);
         if (debug_labels) {
-          STORM_INFO_("edge label = {}",
-                      (size_t) mesh.label(*last_selected_edge));
+          STORM_INFO("edge label = {}",
+                     (size_t) mesh.label(*last_selected_edge));
         }
         break;
       }

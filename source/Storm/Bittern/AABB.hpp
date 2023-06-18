@@ -33,7 +33,7 @@ template<matrix Vec>
 class AABB {
 private:
 
-  Vec min_{}, max_{};
+  Vec _min{}, _max{};
 
 public:
 
@@ -41,29 +41,29 @@ public:
   constexpr AABB() = default;
 
   /// @brief Construct an AABB with a vector @p vec.
-  constexpr explicit AABB(const Vec& vec) noexcept : min_{vec}, max_{vec} {}
+  constexpr explicit AABB(const Vec& vec) noexcept : _min{vec}, _max{vec} {}
 
   /// @brief AABB min vector.
   constexpr const Vec& min() const noexcept {
-    return min_;
+    return _min;
   }
   /// @brief AABB max vector.
   constexpr const Vec& max() const noexcept {
-    return max_;
+    return _max;
   }
 
   /// @brief AABB center.
   constexpr Vec center() const noexcept {
-    return 0.5 * (max_ + min_);
+    return 0.5 * (_max + _min);
   }
   /// @brief AABB extents.
   constexpr Vec extents() const noexcept {
-    return max_ - min_;
+    return _max - _min;
   }
 
   /// @brief Extend the AABB.
   void extend(const Vec& vec) noexcept {
-    min_ = Storm::min(min_, vec), max_ = Storm::max(max_, vec);
+    _min = Storm::min(_min, vec), _max = Storm::max(_max, vec);
   }
 
 }; // class AABB

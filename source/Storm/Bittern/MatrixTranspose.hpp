@@ -41,31 +41,31 @@ class TransposeMatrixView final :
     public MatrixViewInterface<TransposeMatrixView<Matrix>> {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
+  STORM_NO_UNIQUE_ADDRESS Matrix _mat;
 
 public:
 
   /// @brief Construct a matrix transpose view.
-  constexpr explicit TransposeMatrixView(Matrix mat) : mat_{std::move(mat)} {}
+  constexpr explicit TransposeMatrixView(Matrix mat) : _mat{std::move(mat)} {}
 
   /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept {
-    return std::array{num_cols(mat_), num_rows(mat_)};
+    return std::array{num_cols(_mat), num_rows(_mat)};
   }
 
   /// @brief Get the matrix element at @p indices.
   /// @{
   constexpr decltype(auto) operator()(size_t row_index,
                                       size_t col_index) noexcept {
-    STORM_ASSERT_(in_range(shape(), row_index, col_index),
-                  "Indices are out of range!");
-    return mat_(col_index, row_index);
+    STORM_ASSERT(in_range(shape(), row_index, col_index),
+                 "Indices are out of range!");
+    return _mat(col_index, row_index);
   }
   constexpr decltype(auto) operator()(size_t row_index,
                                       size_t col_index) const noexcept {
-    STORM_ASSERT_(in_range(shape(), row_index, col_index),
-                  "Indices are out of range!");
-    return mat_(col_index, row_index);
+    STORM_ASSERT(in_range(shape(), row_index, col_index),
+                 "Indices are out of range!");
+    return _mat(col_index, row_index);
   }
   /// @}
 

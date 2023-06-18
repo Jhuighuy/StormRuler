@@ -20,15 +20,37 @@
 
 #pragma once
 
-#define STORM_ENABLE_ASSERTS 1
-#include <Storm/Base.hpp>
-
-#include <doctest/doctest.h>
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 // -----------------------------------------------------------------------------
 
-// Convenience macro for the floating-point checks.
-#define CHECK_NEAR(actual, expected, eps) \
-  CHECK(actual == doctest::Approx(expected).epsilon(eps))
+// Format a string.
+#define STORM_FORMAT(message, ...) \
+  (fmt::format(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report a trace message.
+#define STORM_TRACE(message, ...) \
+  (spdlog::trace(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report a debug message.
+#define STORM_DEBUG(message, ...) \
+  (spdlog::debug(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report an info message.
+#define STORM_INFO(message, ...) \
+  (spdlog::info(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report a warning.
+#define STORM_WARNING(message, ...) \
+  (spdlog::warn(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report an error.
+#define STORM_ERROR(message, ...) \
+  (spdlog::error(message __VA_OPT__(, __VA_ARGS__)))
+
+// Report a critical error.
+#define STORM_CRITICAL(message, ...) \
+  (spdlog::critical(message __VA_OPT__(, __VA_ARGS__)))
 
 // -----------------------------------------------------------------------------

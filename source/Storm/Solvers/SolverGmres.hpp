@@ -42,26 +42,26 @@ template<legacy_vector_like Vector, bool Flexible, bool Loose = false>
 class BaseGmresSolver : public InnerOuterIterativeSolver<Vector> {
 private:
 
-  DenseVector<real_t> beta_, cs_, sn_;
+  DenseVector<real_t> _beta, _cs, _sn;
   DenseMatrix<real_t> H_;
-  std::vector<Vector> q_vecs_;
+  std::vector<Vector> _q_vecs;
   std::conditional_t<Flexible, std::vector<Vector>, std::array<Vector, 1>>
-      z_vecs_;
+      _z_vecs;
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
                     const Preconditioner<Vector>* pre_op) override {
     const size_t m = this->num_inner_iterations;
 
-    beta_.assign(m + 1);
-    cs_.assign(m), sn_.assign(m);
+    _beta.assign(m + 1);
+    _cs.assign(m), _sn.assign(m);
     H_.assign(m + 1, m);
 
-    q_vecs_.resize(m + 1);
-    for (Vector& q_vec : q_vecs_) q_vec.assign(x_vec, false);
+    _q_vecs.resize(m + 1);
+    for (Vector& q_vec : _q_vecs) q_vec.assign(x_vec, false);
     if (pre_op != nullptr) {
-      if constexpr (Flexible) z_vecs_.resize(m);
-      for (Vector& z_vec : z_vecs_) z_vec.assign(x_vec, false);
+      if constexpr (Flexible) _z_vecs.resize(m);
+      for (Vector& z_vec : _z_vecs) z_vec.assign(x_vec, false);
     }
 
     /// @todo Refactor without duplication a code from
@@ -79,15 +79,15 @@ private:
     // 𝛽₀ ← ‖𝒒₀‖,
     // 𝒒₀ ← 𝒒₀/𝛽₀.
     // ----------------------
-    lin_op.Residual(q_vecs_[0], b_vec, x_vec);
+    lin_op.Residual(_q_vecs[0], b_vec, x_vec);
     if (left_pre) {
-      std::swap(z_vecs_[0], q_vecs_[0]);
-      pre_op->mul(q_vecs_[0], z_vecs_[0]);
+      std::swap(_z_vecs[0], _q_vecs[0]);
+      pre_op->mul(_q_vecs[0], _z_vecs[0]);
     }
-    beta_(0) = norm_2(q_vecs_[0]);
-    q_vecs_[0] /= beta_(0);
+    _beta(0) = norm_2(_q_vecs[0]);
+    _q_vecs[0] /= _beta(0);
 
-    return beta_(0);
+    return _beta(0);
   }
 
   void inner_init(const Vector& x_vec, const Vector& b_vec,
@@ -107,13 +107,13 @@ private:
     // 𝛽₀ ← ‖𝒒₀‖,
     // 𝒒₀ ← 𝒒₀/𝛽₀.
     // ----------------------
-    lin_op.Residual(q_vecs_[0], b_vec, x_vec);
+    lin_op.Residual(_q_vecs[0], b_vec, x_vec);
     if (left_pre) {
-      std::swap(z_vecs_[0], q_vecs_[0]);
-      pre_op->mul(q_vecs_[0], z_vecs_[0]);
+      std::swap(_z_vecs[0], _q_vecs[0]);
+      pre_op->mul(_q_vecs[0], _z_vecs[0]);
     }
-    beta_(0) = norm_2(q_vecs_[0]);
-    q_vecs_[0] /= beta_(0);
+    _beta(0) = norm_2(_q_vecs[0]);
+    _q_vecs[0] /= _beta(0);
   }
 
   real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
@@ -147,19 +147,19 @@ private:
     // 𝒒ₖ₊₁ ← 𝒒ₖ₊₁/𝐻ₖ₊₁,ₖ.
     // ----------------------
     if (left_pre) {
-      pre_op->mul(q_vecs_[k + 1], z_vecs_[0], lin_op, q_vecs_[k]);
+      pre_op->mul(_q_vecs[k + 1], _z_vecs[0], lin_op, _q_vecs[k]);
     } else if (right_pre) {
       const size_t j{Flexible ? k : 0};
-      lin_op.mul(q_vecs_[k + 1], z_vecs_[j], *pre_op, q_vecs_[k]);
+      lin_op.mul(_q_vecs[k + 1], _z_vecs[j], *pre_op, _q_vecs[k]);
     } else {
-      lin_op.mul(q_vecs_[k + 1], q_vecs_[k]);
+      lin_op.mul(_q_vecs[k + 1], _q_vecs[k]);
     }
     for (size_t i = 0; i <= k; ++i) {
-      H_(i, k) = dot_product(q_vecs_[k + 1], q_vecs_[i]);
-      q_vecs_[k + 1] -= H_(i, k) * q_vecs_[i];
+      H_(i, k) = dot_product(_q_vecs[k + 1], _q_vecs[i]);
+      _q_vecs[k + 1] -= H_(i, k) * _q_vecs[i];
     }
-    H_(k + 1, k) = norm_2(q_vecs_[k + 1]);
-    q_vecs_[k + 1] /= H_(k + 1, k);
+    H_(k + 1, k) = norm_2(_q_vecs[k + 1]);
+    _q_vecs[k + 1] /= H_(k + 1, k);
 
     // Eliminate the last element in 𝐻
     // and and update the rotation matrix:
@@ -174,21 +174,21 @@ private:
     // 𝐻ₖ₊₁,ₖ ← 𝟢.
     // ----------------------
     for (size_t i = 0; i < k; ++i) {
-      const real_t chi = cs_(i) * H_(i, k) + sn_(i) * H_(i + 1, k);
-      H_(i + 1, k) = -sn_(i) * H_(i, k) + cs_(i) * H_(i + 1, k);
+      const real_t chi = _cs(i) * H_(i, k) + _sn(i) * H_(i + 1, k);
+      H_(i + 1, k) = -_sn(i) * H_(i, k) + _cs(i) * H_(i + 1, k);
       H_(i, k) = chi;
     }
-    std::tie(cs_(k), sn_(k), std::ignore) = sym_ortho(H_(k, k), H_(k + 1, k));
-    H_(k, k) = cs_(k) * H_(k, k) + sn_(k) * H_(k + 1, k);
+    std::tie(_cs(k), _sn(k), std::ignore) = sym_ortho(H_(k, k), H_(k + 1, k));
+    H_(k, k) = _cs(k) * H_(k, k) + _sn(k) * H_(k + 1, k);
     H_(k + 1, k) = 0.0;
 
     // Update the 𝛽-solution and the residual norm:
     // ----------------------
     // 𝛽ₖ₊₁ ← -𝑠𝑛ₖ⋅𝛽ₖ, 𝛽ₖ ← 𝑐𝑠ₖ⋅𝛽ₖ.
     // ----------------------
-    beta_(k + 1) = -sn_(k) * beta_(k), beta_(k) *= cs_(k);
+    _beta(k + 1) = -_sn(k) * _beta(k), _beta(k) *= _cs(k);
 
-    return std::abs(beta_(k + 1));
+    return std::abs(_beta(k + 1));
   }
 
   void inner_finalize(Vector& x_vec, const Vector& b_vec,
@@ -206,9 +206,9 @@ private:
     // ----------------------
     for (size_t i = k; i != SIZE_MAX; --i) {
       for (size_t j{i + 1}; j <= k; ++j) {
-        beta_(i) -= H_(i, j) * beta_(j);
+        _beta(i) -= H_(i, j) * _beta(j);
       }
-      beta_(i) /= H_(i, i);
+      _beta(i) /= H_(i, i);
     }
 
     // Compute the 𝒙-solution:
@@ -232,19 +232,19 @@ private:
     // ----------------------
     if (!right_pre) {
       for (size_t i = 0; i <= k; ++i) {
-        x_vec += beta_(i) * q_vecs_[i];
+        x_vec += _beta(i) * _q_vecs[i];
       }
     } else if constexpr (Flexible) {
       for (size_t i = 0; i <= k; ++i) {
-        x_vec += beta_(i) * z_vecs_[i];
+        x_vec += _beta(i) * _z_vecs[i];
       }
     } else {
-      q_vecs_[0] *= beta_(0);
+      _q_vecs[0] *= _beta(0);
       for (size_t i = 1; i <= k; ++i) {
-        q_vecs_[0] += beta_(i) * q_vecs_[i];
+        _q_vecs[0] += _beta(i) * _q_vecs[i];
       }
-      pre_op->mul(z_vecs_[0], q_vecs_[0]);
-      x_vec += z_vecs_[0];
+      pre_op->mul(_z_vecs[0], _q_vecs[0]);
+      x_vec += _z_vecs[0];
     }
   }
 

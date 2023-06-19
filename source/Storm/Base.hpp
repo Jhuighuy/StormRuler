@@ -43,10 +43,6 @@ namespace _detail {
     return ((x == vals) || ...);
   }
 
-  template<class T1, class T2>
-  concept _different_from =
-      (!std::same_as<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>);
-
 } // namespace _detail
 
 // -----------------------------------------------------------------------------

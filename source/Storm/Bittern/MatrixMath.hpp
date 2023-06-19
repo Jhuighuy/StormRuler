@@ -22,15 +22,17 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Matrix.hpp>
-#include <Storm/Bittern/MatrixAlgorithms.hpp>
-#include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Crow/ConceptUtils.hpp>
 #include <Storm/Crow/FunctionalUtils.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/MatrixAlgorithms.hpp>
+#include <Storm/Bittern/MatrixView.hpp>
+
 #include <concepts>
+#include <functional>
 #include <tuple>
-#include <type_traits>
 #include <utility>
 
 namespace Storm {
@@ -39,8 +41,10 @@ namespace Storm {
 
 /// @brief Element-wise apply function to the matrices.
 template<std::copy_constructible Func, matrix_view... Matrices>
-  requires std::is_object_v<Func> && (sizeof...(Matrices) >= 1) &&
-           std::regular_invocable<Func, matrix_element_t<Matrices>...>
+  requires compatible_matrices_v<Matrices...> &&
+           std::regular_invocable<Func, matrix_element_t<Matrices>...> &&
+           can_reference<
+               std::invoke_result_t<Func, matrix_element_t<Matrices>...>>
 class MapMatrixView final :
     public MatrixViewInterface<MapMatrixView<Func, Matrices...>> {
 private:
@@ -55,25 +59,25 @@ public:
   /// @brief Construct a map view.
   constexpr explicit MapMatrixView(Func func, Matrices... mats)
       : _func{std::move(func)}, _mats{std::move(mats)...} {
-    std::apply(
-        [](const auto& first_mat, const auto&... rest_mats) {
-          STORM_ASSERT((first_mat.shape() == rest_mats.shape()) && ...,
-                       "Shapes of the matrix arguments are mismatched.");
-        },
-        _mats);
+    const auto check_mats = [](const auto& first_mat,
+                               const auto&... rest_mats) {
+      STORM_ASSERT((first_mat.shape() == rest_mats.shape()) && ...,
+                   "Shapes of the matrix arguments are mismatched!");
+    };
+    std::apply(check_mats, _mats);
   }
 
   /// @brief Get the matrix shape.
-  constexpr auto shape() const noexcept {
+  constexpr auto shape() const {
     return std::get<0>(_mats).shape();
   }
 
   /// @brief Get the matrix element at @p indices.
   template<class... Indices>
     requires compatible_matrix_indices_v<MapMatrixView, Indices...>
-  constexpr auto operator()(Indices... indices) const noexcept {
+  constexpr auto operator()(Indices... indices) const {
     STORM_ASSERT(in_range(shape(), indices...), "Indices are out of range!");
-    auto compute_element = [this, &indices...](const Matrices&... mats) {
+    const auto compute_element = [&](const Matrices&... mats) {
       return _func(mats(indices...)...);
     };
     return std::apply(compute_element, _mats);
@@ -85,13 +89,18 @@ template<class Func, class... Matrices>
 MapMatrixView(Func, Matrices&&...)
     -> MapMatrixView<Func, matrix_view_t<Matrices>...>;
 
+namespace detail {
+  template<class Func, class... Matrices>
+  concept can_map_matrix_view = requires {
+    MapMatrixView{std::declval<Func>(), std::declval<Matrices>()...};
+  };
+} // namespace detail
+
 /// @brief Element-wise apply function @p func to the matrices @p mats.
 template<class Func, viewable_matrix... Matrices>
-  requires compatible_matrices_v<Matrices...> &&
-           std::regular_invocable<Func, matrix_element_t<Matrices>...>
-constexpr auto map(Func&& func, Matrices&&... mats) {
-  return MapMatrixView{std::forward<Func>(func),
-                       std::forward<Matrices>(mats)...};
+  requires detail::can_map_matrix_view<Func, Matrices...>
+constexpr auto map(Func func, Matrices&&... mats) {
+  return MapMatrixView{std::move(func), std::forward<Matrices>(mats)...};
 }
 
 // -----------------------------------------------------------------------------
@@ -293,9 +302,9 @@ constexpr auto operator/(Matrix1&& mat1, Matrix2&& mat2) {
 /// @brief Normalize the matrix @p mat (divide by it's norm).
 template<viewable_matrix Matrix>
 constexpr auto normalize(Matrix&& mat) {
-  auto mat_view = make_matrix_view(std::forward<Matrix>(mat));
+  auto mat_view = to_matrix_view(std::forward<Matrix>(mat));
   const auto mat_norm = norm_2(mat_view);
-  return safe_divide(1.0_dp, mat_norm) * std::move(mat_view);
+  return safe_inverse(mat_norm) * std::move(mat_view);
 }
 
 // -----------------------------------------------------------------------------

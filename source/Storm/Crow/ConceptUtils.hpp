@@ -29,28 +29,45 @@ namespace Storm {
 
 // -----------------------------------------------------------------------------
 
+/// @brief Check that two types are definitely different.
+template<class Type1, class Type2>
+concept different_from =
+    (!std::same_as<std::remove_cvref_t<Type1>, std::remove_cvref_t<Type2>>);
+
+namespace detail {
+  template<class Type>
+  using with_ref_t = Type&;
+} // namespace detail
+
+/// @brief Check that a reference to type can be constructed.
+template<class Type>
+concept can_reference = requires { typename detail::with_ref_t<Type>; };
+
+// -----------------------------------------------------------------------------
+
 /// @brief A semi-valid argument for the CRTP classes.
 template<class Derived>
 concept crtp_derived = std::is_class_v<Derived> &&
                        std::same_as<Derived, std::remove_cv_t<Derived>>;
 
-// Based on /*is-derived-from-view-interface*/<T> implementation.
-namespace _detail {
+namespace detail {
+  // Based on /*is-derived-from-view-interface*/<T> implementation.
   template<template<crtp_derived Derived> class CrtpInterface>
-  struct _DerivedFromCrtpInterfaceImpl {
+  struct DerivedFromCrtpInterfaceImpl {
     template<class T, class U>
-    _DerivedFromCrtpInterfaceImpl(const T&,
-                                  const CrtpInterface<U>&); // not defined
+    DerivedFromCrtpInterfaceImpl(const T&,
+                                 const CrtpInterface<U>&); // not defined
   };
-} // namespace _detail
+} // namespace detail
 
 /// @brief Checks if and only if @c T has exactly one public base class
 /// @c CrtpInterface&lt;U&gt; for some type @c U, and @c T has no base classes
 /// of type @c CrtpInterface&lt;V&gt; for any other type @c V.
 template<class T, template<class Derived> class CrtpInterface>
-concept derived_from_crtp_interface = requires(T x) { //
-  _detail::_DerivedFromCrtpInterfaceImpl<CrtpInterface>{x, x};
-};
+concept derived_from_crtp_interface = //
+    requires(T x) {
+      detail::DerivedFromCrtpInterfaceImpl<CrtpInterface>{x, x};
+    };
 
 // -----------------------------------------------------------------------------
 

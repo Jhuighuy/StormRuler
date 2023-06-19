@@ -22,9 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Crtp.hpp>
-
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/ConceptUtils.hpp>
 #include <Storm/Crow/FunctionalUtils.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 

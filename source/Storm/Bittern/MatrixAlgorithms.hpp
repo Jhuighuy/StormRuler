@@ -24,8 +24,8 @@
 
 #include <Storm/Utils/Crtp.hpp>
 
-#include <Storm/Bittern/Functions.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/FunctionalUtils.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 
 #include <limits>
@@ -153,7 +153,7 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
 /// @brief Sum the matrix @p mat elements.
 template<matrix Matrix>
 constexpr auto sum(Matrix&& mat) {
-  return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
+  return reduce(matrix_element_t<Matrix>{0.0}, Add{},
                 std::forward<Matrix>(mat));
 }
 
@@ -162,13 +162,13 @@ constexpr auto sum(Matrix&& mat) {
 /// @brief Check if all the boolean matrix @p mat elements are true.
 template<matrix Matrix>
 constexpr auto all(Matrix&& mat) {
-  return reduce(true, And{}, std::forward<Matrix>(mat));
+  return reduce(true, LogicalAnd{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Check if any of the boolean matrix @p mat elements is true.
 template<matrix Matrix>
 constexpr auto any(Matrix&& mat) {
-  return reduce(false, Or{}, std::forward<Matrix>(mat));
+  return reduce(false, LogicalOr{}, std::forward<Matrix>(mat));
 }
 
 // -----------------------------------------------------------------------------

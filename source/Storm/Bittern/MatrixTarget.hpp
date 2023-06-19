@@ -22,10 +22,10 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Functions.hpp>
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Crow/FunctionalUtils.hpp>
 
 #include <concepts>
 #include <utility>

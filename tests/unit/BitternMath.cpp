@@ -58,7 +58,26 @@ TEST_CASE("Bittern/CompareMatrixExpressions") {
   }
 }
 
-/// @todo Min/Max!
+TEST_CASE("Bittern/MinMaxMatrixExpressions") {
+  const Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                            +3.0_dp, -7.0_dp};
+  const Mat2x2<real_t> mat2{+1.0_dp, -3.0_dp, //
+                            +6.0_dp, -5.0_dp};
+
+  SUBCASE("minimum") {
+    const Mat2x2<real_t> minimum_mat{+1.0_dp, -3.0_dp, //
+                                     +3.0_dp, -7.0_dp};
+
+    CHECK(all(minimum(mat1, mat2) == minimum_mat));
+  }
+
+  SUBCASE("maximum") {
+    const Mat2x2<real_t> maximum_mat{+1.0_dp, -2.0_dp, //
+                                     +6.0_dp, -5.0_dp};
+
+    CHECK(all(maximum(mat1, mat2) == maximum_mat));
+  }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -76,14 +95,12 @@ TEST_CASE("Bittern/LogicalMatrixExpressions") {
   }
 
   SUBCASE("logical-and") {
-    CHECK_FALSE(any(matrix_and(mat1, mat2)));
-    CHECK(any(matrix_and(mat1, mat3)));
-    /// @todo Check the multiargument versions.
+    CHECK_FALSE(any(mat1 && mat2));
+    CHECK(any(mat1 && mat3));
   }
 
   SUBCASE("logical-or") {
-    CHECK(all(matrix_or(mat1, mat2)));
-    /// @todo Check the multiargument versions.
+    CHECK(all(mat1 || mat2));
   }
 }
 

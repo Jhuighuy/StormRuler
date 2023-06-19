@@ -22,10 +22,10 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Functions.hpp>
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Crow/FunctionalUtils.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 
 #include <concepts>
@@ -109,21 +109,23 @@ constexpr auto cast_matrix(Matrix&& mat) {
 /// @brief Logically negate the boolean matrix @p mat.
 template<viewable_matrix Matrix>
 constexpr auto operator!(Matrix&& mat) {
-  return map(Not{}, std::forward<Matrix>(mat));
+  return map(LogicalNot{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Element-wise logically AND the boolean matrices @p mats.
-template<viewable_matrix... Matrices>
-  requires compatible_matrices_v<Matrices...>
-constexpr auto matrix_and(Matrices&&... mats) {
-  return map(And{}, std::forward<Matrices>(mats)...);
+template<viewable_matrix Matrix1, viewable_matrix Matrix2>
+  requires compatible_matrices_v<Matrix1, Matrix2>
+constexpr auto operator&&(Matrix1&& mat1, Matrix2&& mat2) { // NOSONAR
+  return map(LogicalAnd{},                                  //
+             std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 /// @brief Element-wise logically OR the boolean matrices @p mats.
-template<viewable_matrix... Matrices>
-  requires compatible_matrices_v<Matrices...>
-constexpr auto matrix_or(Matrices&&... mats) {
-  return map(Or{}, std::forward<Matrices>(mats)...);
+template<viewable_matrix Matrix1, viewable_matrix Matrix2>
+  requires compatible_matrices_v<Matrix1, Matrix2>
+constexpr auto operator||(Matrix1&& mat1, Matrix2&& mat2) { // NOSONAR
+  return map(LogicalOr{},                                   //
+             std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
 }
 
 /// @brief Element-wise merge the matrices @p then_mat and @p else_mat
@@ -202,18 +204,18 @@ constexpr auto approx_equal(Matrix1&& mat1, Matrix2&& mat2,
 }
 /// @}
 
-/// @brief Element-wise minimum of the matrices.
+/// @brief Element-wise minimum of the matrices @p mats.
 template<viewable_matrix... Matrices>
   requires compatible_matrices_v<Matrices...>
-constexpr auto min(Matrices&&... matrices) {
-  return map(Min{}, std::forward<Matrices>(matrices)...);
+constexpr auto minimum(Matrices&&... mats) {
+  return map(Min{}, std::forward<Matrices>(mats)...);
 }
 
-/// @brief Element-wise maximum of the matrices.
+/// @brief Element-wise maximum of the matrices @p mats.
 template<viewable_matrix... Matrices>
   requires compatible_matrices_v<Matrices...>
-constexpr auto max(Matrices&&... matrices) {
-  return map(Max{}, std::forward<Matrices>(matrices)...);
+constexpr auto maximum(Matrices&&... mats) {
+  return map(Max{}, std::forward<Matrices>(mats)...);
 }
 
 // -----------------------------------------------------------------------------
@@ -344,18 +346,25 @@ constexpr auto cbrt(Matrix&& mat) {
   return map(Cbrt{}, std::forward<Matrix>(mat));
 }
 
+/// @brief Make a matrix with elements equal to value @p base_scal
+/// raised to the power of elements of matrix @p exp_mat.
 template<viewable_scalar Scalar, viewable_matrix Matrix>
-constexpr auto pow(Scalar scal, Matrix&& mat) {
-  return map(BindFirst{Pow{}, scal}, std::forward<Matrix>(mat));
+constexpr auto pow(Scalar base_scal, Matrix&& exp_mat) {
+  return map(BindFirst{Pow{}, std::move(base_scal)},
+             std::forward<Matrix>(exp_mat));
 }
-/// @brief Element-wise raise matrix @p to the power @p power.
+/// @brief Element-wise raise matrix @p base_mat to the power @p exp.
 template<viewable_matrix Matrix, viewable_scalar Scalar>
-constexpr auto pow(Matrix&& mat, Scalar power) {
-  return map(BindLast{Pow{}, power}, std::forward<Matrix>(mat));
+constexpr auto pow(Matrix&& base_mat, Scalar exp) {
+  return map(BindLast{Pow{}, std::move(exp)}, std::forward<Matrix>(base_mat));
 }
-template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-constexpr auto pow(Matrix1&& mat1, Matrix2&& mat2) {
-  return map(Pow{}, std::forward<Matrix1>(mat1), std::forward<Matrix2>(mat2));
+/// @brief Element-wise raise matrix @p base_mat
+/// to the power of elements of matrix @p exp_mat.
+template<viewable_matrix BaseMatrix, viewable_matrix ExpMatrix>
+constexpr auto pow(BaseMatrix&& base_mat, ExpMatrix&& exp_mat) {
+  return map(Pow{}, //
+             std::forward<BaseMatrix>(base_mat),
+             std::forward<ExpMatrix>(exp_mat));
 }
 
 // -----------------------------------------------------------------------------

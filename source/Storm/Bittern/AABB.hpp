@@ -63,7 +63,7 @@ public:
 
   /// @brief Extend the AABB.
   void extend(const Vec& vec) noexcept {
-    _min = Storm::min(_min, vec), _max = Storm::max(_max, vec);
+    _min = minimum(_min, vec), _max = maximum(_max, vec);
   }
 
 }; // class AABB

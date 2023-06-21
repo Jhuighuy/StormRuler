@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/FilteringStreambuf.hpp>
+#include <Storm/Crow/StreamUtils.hpp>
 #include <Storm/Utils/Meta.hpp>
 
 #include <Storm/Mallard/Mesh.hpp>

@@ -22,8 +22,10 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Crow/ConceptUtils.hpp>
+
+#include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/Shape.hpp>
 
 #include <concepts>
 #include <memory>
@@ -43,6 +45,10 @@ concept matrix_view =
     matrix<MatrixView> && std::movable<MatrixView> &&
     derived_from_crtp_interface<MatrixView, MatrixViewInterface>;
 
+/// @brief Matrix view of a specified rank.
+template<class Matrix, size_t Rank>
+concept matrix_view_r = matrix_view<Matrix> && matrix_r<Matrix, Rank>;
+
 /// @brief Matrix that can be safely casted into a matrix view.
 template<class Matrix>
 concept viewable_matrix =
@@ -55,6 +61,10 @@ concept viewable_matrix =
 
 template<class Scalar>
 concept viewable_scalar = scalar<Scalar> && std::movable<Scalar>;
+
+/// @brief Viewable matrix of a specified rank.
+template<class Matrix, size_t Rank>
+concept viewable_matrix_r = viewable_matrix<Matrix> && matrix_r<Matrix, Rank>;
 
 /// @brief CRTP interface to a matrix views.
 template<crtp_derived MatrixView>
@@ -72,7 +82,7 @@ private:
 
 public:
 
-  // Something to be added.
+  // Something to be added...
 
 }; // class MatrixViewInterface
 
@@ -129,7 +139,6 @@ MatrixRefView(Matrix&) -> MatrixRefView<Matrix>;
 // -----------------------------------------------------------------------------
 
 /// @brief Matrix owning view.
-/// Matrix should be noexcept-movable.
 template<matrix Matrix>
   requires std::movable<Matrix>
 class MatrixOwningView final :
@@ -180,11 +189,11 @@ namespace detail {
 
 /// @brief Wrap the viewable matrix @p mat into a matrix view.
 template<viewable_matrix Matrix>
-  requires matrix_view<std::decay_t<Matrix>> ||
+  requires matrix_view<std::remove_cvref_t<Matrix>> ||
            detail::can_matrix_ref_view<Matrix> ||
            detail::can_matrix_owning_view<Matrix>
 constexpr auto to_matrix_view(Matrix&& mat) {
-  if constexpr (matrix_view<std::decay_t<Matrix>>) {
+  if constexpr (matrix_view<std::remove_cvref_t<Matrix>>) {
     return std::forward<Matrix>(mat);
   } else if constexpr (detail::can_matrix_ref_view<Matrix>) {
     return MatrixRefView{std::forward<Matrix>(mat)};

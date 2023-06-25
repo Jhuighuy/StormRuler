@@ -18,46 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
-
-#include <Storm/Base.hpp>
+#include "./_UnitTests.hpp"
 
 #include <Storm/Bittern/MatrixDense.hpp>
 
-namespace Storm {
+#include <doctest/doctest.h>
+
+namespace Storm::UnitTests {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Fixed-sized (small) matrix.
-template<class Elem, size_t NumRows, size_t NumCols>
-using Mat = FixedMatrix<Elem, NumRows, NumCols>;
+TEST_CASE("Bittern/Target") {
+  DenseMatrix mat1{{1_sz, 2_sz}, //
+                   {3_sz, 4_sz}};
+  DenseMatrix mat2{{5_sz, 6_sz}, //
+                   {7_sz, 8_sz}};
 
-/// @brief 2x2 matrix.
-template<class Elem>
-using Mat2x2 = Mat<Elem, 2, 2>;
+  auto mat1_view = to_matrix_view(mat1);
+  const auto mat2_view = to_matrix_view(mat2);
 
-/// @brief 3x3 matrix.
-template<class Elem>
-using Mat3x3 = Mat<Elem, 3, 3>;
+  SUBCASE("assign-to-view") {
+    const auto mat1_copy{mat1};
+    mat1_view = mat2_view;
+    CHECK(all(mat1 == mat1_copy));
+  }
 
-/// @brief 4x4 matrix.
-template<class Elem>
-using Mat4x4 = Mat<Elem, 4, 4>;
+  SUBCASE("assign-to-target") {
+    auto mat1_target = to_target(mat1_view);
+    mat1_target = mat2_view;
+    CHECK(all(mat1_target == mat2));
+    CHECK(all(mat1_view == mat2));
+    CHECK(all(mat1 == mat2));
+  }
+}
 
-/// @brief Fixed-sized (small) vector.
-template<class Elem, size_t NumRows>
-using Vec = FixedVector<Elem, NumRows>;
+// -----------------------------------------------------------------------------
 
-/// @brief 2D vector.
-template<class Elem>
-using Vec2D = Vec<Elem, 2>;
-
-/// @brief 3D vector.
-template<class Elem>
-using Vec3D = Vec<Elem, 3>;
-
-/// @brief 4D vector.
-template<class Elem>
-using Vec4D = Vec<Elem, 4>;
-
-} // namespace Storm
+} // namespace Storm::UnitTests

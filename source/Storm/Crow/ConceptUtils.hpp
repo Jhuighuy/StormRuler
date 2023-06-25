@@ -22,8 +22,11 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Crow/FunctionalUtils.hpp>
+
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 namespace Storm {
 
@@ -42,6 +45,16 @@ namespace detail {
 /// @brief Check that a reference to type can be constructed.
 template<class Type>
 concept can_reference = requires { typename detail::with_ref_t<Type>; };
+
+/// @brief Check that type is boolean-testable.
+template<class Bool>
+concept boolean_testable =
+    std::convertible_to<Bool, bool> &&
+    std::convertible_to<decltype(!std::declval<Bool>()), bool>;
+
+/// @brief Copy-constructible object.
+template<class Object>
+concept boxable = std::is_object_v<Object> && std::copy_constructible<Object>;
 
 // -----------------------------------------------------------------------------
 

@@ -18,8 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#pragma once
+
 #include <Storm/Base.hpp>
 
+#include <array>
 #include <concepts>
 #include <iterator>
 #include <utility>
@@ -45,6 +48,21 @@
 /// }
 /// @endcode
 namespace Storm::permutations {
+
+// -----------------------------------------------------------------------------
+
+/// @brief Check is specified range is a permutation.
+template<class PermutationRange>
+constexpr bool is_permutation(PermutationRange&& perm_range) noexcept {
+  if (perm_range.size() == 1) {
+    return perm_range[0] == 0;
+  }
+  if (perm_range.size() == 2) {
+    return (perm_range[0] == 0 && perm_range[1] == 1) ||
+           (perm_range[0] == 1 && perm_range[1] == 0);
+  }
+  STORM_ABORT("`is_permutation` is not completely implemented yet!");
+}
 
 // -----------------------------------------------------------------------------
 
@@ -75,6 +93,13 @@ constexpr void invert_permutation(PermutationRange&& perm_range,
                                   InversePermutationIterator iperm_iterator) {
   invert_permutation(std::ranges::begin(perm_range),
                      std::ranges::end(perm_range), std::move(iperm_iterator));
+}
+template<class Index, size_t Size>
+constexpr auto
+invert_permutation(const std::array<Index, Size>& perm) noexcept {
+  std::array<Index, Size> iperm{};
+  invert_permutation(perm, iperm.begin());
+  return iperm;
 }
 /// @}
 

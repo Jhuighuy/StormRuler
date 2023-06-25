@@ -169,6 +169,11 @@ public:
 template<class Value, size_t NumRows = std::dynamic_extent>
 using DenseVector = DenseMatrix<Value, NumRows, 1>;
 
+/// @todo Find a better place (and a better name) for me.
+constexpr auto& fill_diag_with(matrix auto&& mat, auto scal) noexcept {
+  return mat <<= make_diagonal_matrix(mat.shape(), scal);
+}
+
 /// @brief Perform a LU decomposition of a square matrix @p mat.
 constexpr void decompose_lu(matrix auto&& mat, //
                             matrix auto&& l_mat, matrix auto&& u_mat) noexcept {

@@ -29,6 +29,7 @@
 #include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
 #include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Bittern/Shape.hpp>
 
 #include <concepts>
 #include <functional>
@@ -40,7 +41,7 @@ namespace Storm {
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise apply function to the matrices.
-template<std::copy_constructible Func, matrix_view... Matrices>
+template<boxable Func, matrix_view... Matrices>
   requires compatible_matrices_v<Matrices...> &&
            std::regular_invocable<Func, matrix_element_t<Matrices>...> &&
            can_reference<

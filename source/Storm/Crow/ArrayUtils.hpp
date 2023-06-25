@@ -22,42 +22,46 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/MatrixDense.hpp>
+#include <Storm/Crow/ConceptUtils.hpp>
+#include <Storm/Crow/TupleUtils.hpp>
+
+#include <array>
+#include <utility>
 
 namespace Storm {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Fixed-sized (small) matrix.
-template<class Elem, size_t NumRows, size_t NumCols>
-using Mat = FixedMatrix<Elem, NumRows, NumCols>;
+/// @brief Check if type is array-like.
+template<class Array>
+concept array_like = (!std::is_reference_v<Array>) && //
+                     has_tuple_size<Array> &&
+                     requires(Array& array, size_t index) {
+                       { array[index] } -> can_reference;
+                     };
 
-/// @brief 2x2 matrix.
-template<class Elem>
-using Mat2x2 = Mat<Elem, 2, 2>;
+namespace detail {
 
-/// @brief 3x3 matrix.
-template<class Elem>
-using Mat3x3 = Mat<Elem, 3, 3>;
+  // Convert index sequence to an array of indices.
+  /// @todo This function should be rethinked.
+  template<class Index, Index... Indices>
+  consteval auto _to_array(std::integer_sequence<Index, Indices...>) {
+    return std::array{Indices...};
+  }
 
-/// @brief 4x4 matrix.
-template<class Elem>
-using Mat4x4 = Mat<Elem, 4, 4>;
+  // Convert tuple of indices to an index sequence.
+  /// @todo This function should be rethinked.
+  template<tuple_like auto IndexTuple>
+  consteval auto _to_index_sequence() {
+    using Tuple = decltype(IndexTuple);
+    return ([]<size_t... Indices>(std::index_sequence<Indices...>) {
+      return std::index_sequence< //
+          static_cast<size_t>(std::get<Indices>(IndexTuple))...>{};
+    }(std::make_index_sequence<std::tuple_size_v<Tuple>>{}));
+  }
 
-/// @brief Fixed-sized (small) vector.
-template<class Elem, size_t NumRows>
-using Vec = FixedVector<Elem, NumRows>;
+} // namespace detail
 
-/// @brief 2D vector.
-template<class Elem>
-using Vec2D = Vec<Elem, 2>;
-
-/// @brief 3D vector.
-template<class Elem>
-using Vec3D = Vec<Elem, 3>;
-
-/// @brief 4D vector.
-template<class Elem>
-using Vec4D = Vec<Elem, 4>;
+// -----------------------------------------------------------------------------
 
 } // namespace Storm

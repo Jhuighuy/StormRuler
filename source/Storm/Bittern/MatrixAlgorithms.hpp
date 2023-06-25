@@ -22,15 +22,18 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Matrix.hpp>
 #include <Storm/Crow/ConceptUtils.hpp>
 #include <Storm/Crow/FunctionalUtils.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 
+#include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Bittern/Shape.hpp>
+
+#include <concepts>
+#include <functional>
 #include <limits>
 #include <ostream>
 #include <random>
-#include <type_traits>
 #include <utility>
 
 namespace Storm {
@@ -52,46 +55,81 @@ std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Assign the matrices.
-/// @{
-template<output_matrix OutMatrix, matrix Matrix>
-constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  STORM_ASSERT(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
-  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      out_mat(row_index, col_index) = mat(row_index, col_index);
-    }
-  }
-  return out_mat;
-}
-template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
-constexpr OutMatrix& assign(AssignFunc assign_func, //
-                            OutMatrix&& out_mat, Matrices&&... mats) noexcept {
-  STORM_ASSERT((out_mat.shape() == mats.shape()) && ...,
+template<class Func, matrix Matrix, matrix... RestMatrices>
+  requires compatible_matrices_v<Matrix, RestMatrices...> &&
+           std::invocable<Func, //
+                          matrix_element_ref_t<Matrix>,
+                          matrix_element_ref_t<RestMatrices>...>
+constexpr void matrix_for_each(Func func, //
+                               Matrix&& mat,
+                               RestMatrices&&... rest_mats) noexcept {
+  STORM_ASSERT((mat.shape() == rest_mats.shape()) && ...,
                "Matrix shapes do not match!");
-  for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
-    for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
-      assign_func(out_mat(row_index, col_index), mats(row_index, col_index)...);
+  if constexpr (matrix_r<Matrix, 1>) {
+    for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
+      func(mat(row_index), rest_mats(row_index)...);
+    }
+  } else {
+    /// @todo Below:
+    static_assert(matrix_r<Matrix, 2>, "General rank is not implemented yet!");
+    for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
+      for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
+        func(mat(row_index, col_index), rest_mats(row_index, col_index)...);
+      }
     }
   }
-  return out_mat;
 }
-/// @}
+
+// -----------------------------------------------------------------------------
+
+/// @brief Move the matrix @p mat elements into the matrix @p out_mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires assignable_matrix<OutMatrix, Matrix>
+constexpr OutMatrix&& move_elements(OutMatrix&& out_mat,
+                                    Matrix&& mat) noexcept {
+  matrix_for_each(MoveAssign{}, out_mat, std::forward<Matrix>(mat));
+  return std::forward<OutMatrix>(out_mat);
+}
+
+/// @brief Copy the matrix @p mat elements to the matrix @p out_mat.
+template<output_matrix OutMatrix, matrix Matrix>
+  requires assignable_matrix<OutMatrix, Matrix>
+constexpr OutMatrix&& copy_elements(OutMatrix&& out_mat,
+                                    Matrix&& mat) noexcept {
+  matrix_for_each(CopyAssign{}, out_mat, std::forward<Matrix>(mat));
+  return std::forward<OutMatrix>(out_mat);
+}
+
+/// @brief Evaluate the matrix @p out_mat elements with
+/// action function @p action_func and arguments @p mats.
+template<class ActionFunc, output_matrix OutMatrix, matrix... Matrices>
+  requires compatible_matrices_v<OutMatrix, Matrices...> &&
+           std::regular_invocable<ActionFunc, //
+                                  matrix_element_ref_t<OutMatrix>,
+                                  matrix_element_ref_t<Matrices>...>
+constexpr OutMatrix&& eval_elements(ActionFunc action_func, //
+                                    OutMatrix&& out_mat,
+                                    Matrices&&... mats) noexcept {
+  matrix_for_each(std::move(action_func), //
+                  out_mat, std::forward<Matrices>(mats)...);
+  return std::forward<OutMatrix>(out_mat);
+}
 
 /// @brief Assign the matrices.
 /// @todo To be removed!
 template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& operator<<=(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  return assign(std::forward<OutMatrix>(out_mat), std::forward<Matrix>(mat));
+  return copy_elements(std::forward<OutMatrix>(out_mat),
+                       std::forward<Matrix>(mat));
 }
 
 // -----------------------------------------------------------------------------
 
 /// @brief Fill the matrix @p out_mat with a scalar @p scal.
 template<matrix OutMatrix, std::copyable Scalar>
-  requires (!matrix<Scalar>)
+  requires std::assignable_from<matrix_element_ref_t<OutMatrix>, Scalar>
 constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
-  return assign(
+  return eval_elements(
       [scal = std::move(scal)](auto& out_elem) noexcept { out_elem = scal; },
       out_mat);
 }
@@ -121,7 +159,14 @@ fill_randomly(Matrix&& out_mat, //
 /// @param reduce_func Reduction function.
 /// @todo Restrictions!
 /// @{
-template<class Value, class ReduceFunc, matrix Matrix>
+template<class Value, class ReduceFunc, matrix_r<1> Matrix>
+constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
+  for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
+    init = reduce_func(init, mat(row_index));
+  }
+  return init;
+}
+template<class Value, class ReduceFunc, matrix_r<2> Matrix>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
@@ -130,8 +175,21 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Matrix&& mat) {
   }
   return init;
 }
+
 template<class Value, class ReduceFunc, class Func, //
-         matrix Matrix, matrix... RestMatrices>
+         matrix_r<1> Matrix, matrix... RestMatrices>
+  requires compatible_matrices_v<Matrix, RestMatrices...>
+constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
+                      Matrix&& mat, RestMatrices&&... mats) noexcept {
+  STORM_ASSERT((mat.shape() == mats.shape()) && ...,
+               "Matrix shapes doesn't match!");
+  for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
+    init = reduce_func(init, func(mat(row_index), mats(row_index)...));
+  }
+  return init;
+}
+template<class Value, class ReduceFunc, class Func, //
+         matrix_r<2> Matrix, matrix... RestMatrices>
   requires compatible_matrices_v<Matrix, RestMatrices...>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
                       Matrix&& mat, RestMatrices&&... mats) noexcept {
@@ -214,15 +272,16 @@ constexpr auto norm_2(Matrix&& mat) {
 
 /// @brief Element-wise matrix @p mat @f$ L_{p} @f$-norm.
 /// @{
-template<matrix Matrix, class Number>
+template<matrix Matrix, scalar Number>
 constexpr auto norm_p_p(Matrix&& mat, Number p) {
   STORM_ASSERT(p > 0, "Invalid p-norm parameter!");
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
   return reduce(Result{}, Add{}, Compose{Abs{}, BindLast{Pow{}, std::move(p)}},
                 std::forward<Matrix>(mat));
 }
-template<matrix Matrix, class Number>
+template<matrix Matrix, scalar Number>
 constexpr auto norm_p(Matrix&& mat, Number p) {
+  /// @todo We should have something better than `1.0 / p`.
   return pow(norm_p_p(std::forward<Matrix>(mat), p), 1.0 / p);
 }
 /// @}

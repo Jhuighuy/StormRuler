@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['mat_0',['Mat',['../class_storm_1_1_unstructured_mesh.html#a93316c028ae1173ae60cc1690986f05a',1,'Storm::UnstructuredMesh::Mat()'],['../namespace_storm.html#a1b345e9fbacd277b993bc7700fc514d3',1,'Storm::Mat()']]],
+  ['mat_0',['mat',['../class_storm_1_1_unstructured_mesh.html#a93316c028ae1173ae60cc1690986f05a',1,'Storm::UnstructuredMesh::Mat'],['../namespace_storm.html#a1b345e9fbacd277b993bc7700fc514d3',1,'Storm::Mat']]],
   ['mat2x2_1',['Mat2x2',['../namespace_storm.html#adf48146d79eacfcc60b62e76a42f5df4',1,'Storm']]],
   ['mat3x3_2',['Mat3x3',['../namespace_storm.html#ad52f02644fbf1532e701da0e4340f312',1,'Storm']]],
   ['mat4x4_3',['Mat4x4',['../namespace_storm.html#ae1169a98e19f818def4a2374d79271b6',1,'Storm']]],

@@ -26,10 +26,10 @@ var NAVTREE =
 [
   [ "StormRuler", "index.html", [
     [ "🦜 Main Page", "index.html", "index" ],
-    [ "🏗 Compiling", "md__pages__compiling.html", [
-      [ "Ubuntu", "md__pages__compiling.html#autotoc_md1", null ],
-      [ "macOS", "md__pages__compiling.html#autotoc_md2", null ],
-      [ "Windows", "md__pages__compiling.html#autotoc_md3", null ]
+    [ "🏗 Compiling", "md__pages_2_compiling.html", [
+      [ "Ubuntu", "md__pages_2_compiling.html#autotoc_md1", null ],
+      [ "macOS", "md__pages_2_compiling.html#autotoc_md2", null ],
+      [ "Windows", "md__pages_2_compiling.html#autotoc_md3", null ]
     ] ],
     [ "Todo List", "todo.html", null ],
     [ "Namespaces", "namespaces.html", [
@@ -51,7 +51,7 @@ var NAVTREE =
         [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ],
-        [ "Related Functions", "functions_rela.html", null ]
+        [ "Related Symbols", "functions_rela.html", null ]
       ] ]
     ] ],
     [ "Files", "files.html", [

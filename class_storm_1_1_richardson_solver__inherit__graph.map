@@ -1,7 +1,11 @@
 <map id="Storm::RichardsonSolver&lt; Vector &gt;" name="Storm::RichardsonSolver&lt; Vector &gt;">
-<area shape="rect" id="node1" title="The Richardson iteration linear operator equation solver." alt="" coords="5,330,173,371"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="15,241,163,282"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="6,153,172,193"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="38,79,140,105"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="15,5,163,31"/>
+<area shape="rect" id="Node000001" title="The Richardson iteration linear operator equation solver." alt="" coords="5,330,173,371"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="15,241,163,282"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,297,92,330,86,330,86,297"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="6,153,172,193"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="92,208,92,241,86,241,86,208"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="38,79,140,105"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="92,120,92,152,86,152,86,120"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="15,5,163,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="92,46,92,79,86,79,86,46"/>
 </map>

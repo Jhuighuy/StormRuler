@@ -1,4 +1,5 @@
 <map id="Storm::CsrTable&lt; RowIndex, ColValue &gt;" name="Storm::CsrTable&lt; RowIndex, ColValue &gt;">
-<area shape="rect" id="node1" title="Compressed sparse row table." alt="" coords="5,109,197,150"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_table_interface.html" title=" " alt="" coords="21,5,181,61"/>
+<area shape="rect" id="Node000001" title="Compressed sparse row table." alt="" coords="5,109,197,150"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_table_interface.html" title=" " alt="" coords="21,5,181,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,76,104,109,98,109,98,76"/>
 </map>

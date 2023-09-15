@@ -1,4 +1,5 @@
 <map id="Storm::NodeView&lt; Mesh &gt;" name="Storm::NodeView&lt; Mesh &gt;">
-<area shape="rect" id="node1" title="Mesh node view." alt="" coords="5,94,186,120"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_entity_view.html" title=" " alt="" coords="25,5,166,46"/>
+<area shape="rect" id="Node000001" title="Mesh node view." alt="" coords="5,94,186,120"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_entity_view.html" title=" " alt="" coords="25,5,166,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,61,98,93,93,93,93,61"/>
 </map>

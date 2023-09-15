@@ -1,6 +1,9 @@
 <map id="Storm::TargetMatrixInterface&lt; TargetMatrix &gt;" name="Storm::TargetMatrixInterface&lt; TargetMatrix &gt;">
-<area shape="rect" id="node1" title="CRTP interface to a target matrix." alt="" coords="5,77,193,118"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="259,5,410,46"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="241,70,428,126"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_feathers_1_1_field.html" title="Generic mesh field." alt="" coords="259,150,410,206"/>
+<area shape="rect" id="Node000001" title="CRTP interface to a target matrix." alt="" coords="5,77,193,118"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="259,5,410,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,70,265,44,266,49,182,75"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_feathers_1_1_field.html" title=" " alt="" coords="241,70,428,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,95,240,95,240,100,208,100"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_feathers_1_1_field.html" title="Generic mesh field." alt="" coords="259,150,410,206"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,121,259,149,257,154,174,126"/>
 </map>

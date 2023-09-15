@@ -1,4 +1,5 @@
 <map id="Storm::Vulture::gl::Framebuffer" name="Storm::Vulture::gl::Framebuffer">
-<area shape="rect" id="node1" title="OpenGL framebuffer." alt="" coords="17,79,141,120"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,5,153,31"/>
+<area shape="rect" id="Node000001" title="OpenGL framebuffer." alt="" coords="17,79,141,120"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,5,153,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="82,46,82,79,76,79,76,46"/>
 </map>

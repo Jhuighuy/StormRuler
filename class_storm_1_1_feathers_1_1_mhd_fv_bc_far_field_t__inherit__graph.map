@@ -1,5 +1,7 @@
 <map id="Storm::Feathers::MhdFvBcFarFieldT&lt; MhdPhysicsT &gt;" name="Storm::Feathers::MhdFvBcFarFieldT&lt; MhdPhysicsT &gt;">
-<area shape="rect" id="node1" title="Far field boundary condition. Sets ghost state values to infinity state." alt="" coords="5,198,186,238"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_p_t.html" title="Abstract boundary condition." alt="" coords="6,109,185,150"/>
-<area shape="rect" id="node3" title=" " alt="" coords="12,5,179,61"/>
+<area shape="rect" id="Node000001" title="Far field boundary condition. Sets ghost state values to infinity state." alt="" coords="5,198,186,238"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_p_t.html" title="Abstract boundary condition." alt="" coords="6,109,185,150"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,164,98,197,93,197,93,164"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="12,5,179,61"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="98,76,98,109,93,109,93,76"/>
 </map>

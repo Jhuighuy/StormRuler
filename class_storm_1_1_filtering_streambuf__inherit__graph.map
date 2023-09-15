@@ -1,5 +1,7 @@
 <map id="Storm::FilteringStreambuf&lt; Char, BeginFilter, EndFilter &gt;" name="Storm::FilteringStreambuf&lt; Char, BeginFilter, EndFilter &gt;">
-<area shape="rect" id="node1" title="Filtering stream buffer." alt="" coords="60,94,262,135"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,5,149,46"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="173,13,317,39"/>
+<area shape="rect" id="Node000001" title="Filtering stream buffer." alt="" coords="60,94,262,135"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,149,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,55,144,92,140,95,104,59"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="173,13,317,39"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,51,182,96,178,92,222,47"/>
 </map>

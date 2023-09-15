@@ -1,4 +1,5 @@
 <map id="Storm::MapMatrixView&lt; Func, Matrices &gt;" name="Storm::MapMatrixView&lt; Func, Matrices &gt;">
-<area shape="rect" id="node1" title="Element&#45;wise apply function to the matrices." alt="" coords="57,94,212,135"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_matrix_view_interface.html" title=" " alt="" coords="5,5,264,46"/>
+<area shape="rect" id="Node000001" title="Element&#45;wise apply function to the matrices." alt="" coords="57,94,212,135"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_matrix_view_interface.html" title=" " alt="" coords="5,5,264,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,61,137,94,132,94,132,61"/>
 </map>

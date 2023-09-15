@@ -1,4 +1,5 @@
 <map id="Storm::IndexedArray&lt; Index, Value, Size &gt;" name="Storm::IndexedArray&lt; Index, Value, Size &gt;">
-<area shape="rect" id="node1" title="Wrapper for std::array with strict indexing." alt="" coords="5,94,157,135"/>
-<area shape="rect" id="node2" title=" " alt="" coords="19,5,143,46"/>
+<area shape="rect" id="Node000001" title="Wrapper for std::array with strict indexing." alt="" coords="5,94,157,135"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="19,5,143,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="84,61,84,94,78,94,78,61"/>
 </map>

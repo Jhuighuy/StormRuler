@@ -1,5 +1,7 @@
 <map id="Storm::Feathers::LinearUpwindConvectionScheme&lt; Mesh, FluxScheme, GradientScheme, GradientLimiterScheme &gt;" name="Storm::Feathers::LinearUpwindConvectionScheme&lt; Mesh, FluxScheme, GradientScheme, GradientLimiterScheme &gt;">
-<area shape="rect" id="node1" title="Piecewise&#45;linear upwind convection scheme." alt="" coords="5,168,284,223"/>
-<area shape="rect" id="node2" href="$class_storm_1_1_feathers_1_1i_convection_scheme.html" title=" " alt="" coords="48,79,241,120"/>
-<area shape="rect" id="node3" title=" " alt="" coords="42,5,247,31"/>
+<area shape="rect" id="Node000001" title="Piecewise&#45;linear upwind convection scheme." alt="" coords="5,168,284,223"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_feathers_1_1i_convection_scheme.html" title=" " alt="" coords="48,79,241,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="147,135,147,167,142,167,142,135"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="42,5,247,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="147,46,147,79,142,79,142,46"/>
 </map>

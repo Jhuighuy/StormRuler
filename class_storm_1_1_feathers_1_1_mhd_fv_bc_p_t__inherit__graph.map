@@ -1,7 +1,11 @@
 <map id="Storm::Feathers::MhdFvBcPT&lt; MhdPhysicsT &gt;" name="Storm::Feathers::MhdFvBcPT&lt; MhdPhysicsT &gt;">
-<area shape="rect" id="node1" title="Abstract boundary condition." alt="" coords="221,71,400,111"/>
-<area shape="rect" id="node3" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_far_field_t.html" title="Far field boundary condition. Sets ghost state values to infinity state." alt="" coords="448,5,628,46"/>
-<area shape="rect" id="node4" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_no_slip_t.html" title="No&#45;slip wall boundary condition." alt="" coords="449,71,628,111"/>
-<area shape="rect" id="node5" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_slip_t.html" title="Slip wall boundary condition." alt="" coords="449,136,628,177"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,63,173,119"/>
+<area shape="rect" id="Node000001" title="Abstract boundary condition." alt="" coords="221,71,400,111"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_far_field_t.html" title="Far field boundary condition. Sets ghost state values to infinity state." alt="" coords="448,5,628,46"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="396,64,464,44,465,49,398,69"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_no_slip_t.html" title="No&#45;slip wall boundary condition." alt="" coords="449,71,628,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="415,88,448,88,448,94,415,94"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_feathers_1_1_mhd_fv_bc_slip_t.html" title="Slip wall boundary condition." alt="" coords="449,136,628,177"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="398,113,465,133,464,138,396,118"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,63,173,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,88,220,88,220,94,188,94"/>
 </map>

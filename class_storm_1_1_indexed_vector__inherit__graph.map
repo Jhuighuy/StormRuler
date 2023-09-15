@@ -1,4 +1,5 @@
 <map id="Storm::IndexedVector&lt; Index, Value, Allocator &gt;" name="Storm::IndexedVector&lt; Index, Value, Allocator &gt;">
-<area shape="rect" id="node1" title="Wrapper for std::vector with strict indexing." alt="" coords="5,94,181,135"/>
-<area shape="rect" id="node2" title=" " alt="" coords="9,5,177,46"/>
+<area shape="rect" id="Node000001" title="Wrapper for std::vector with strict indexing." alt="" coords="5,94,181,135"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="9,5,177,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="96,61,96,94,90,94,90,61"/>
 </map>

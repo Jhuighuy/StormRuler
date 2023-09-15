@@ -2,7 +2,7 @@
 <area shape="rect" id="Node000001" title="Non copyable object interface." alt="" coords="5,104,200,129"/>
 <area shape="rect" id="Node000002" href="$class_storm_1_1_filtering_streambuf.html" title="Filtering stream buffer." alt="" coords="248,31,449,71"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="167,97,268,69,270,75,168,102"/>
-<area shape="rect" id="Node000003" href="$class_storm_1_1_matrix_owning_view.html" title="Matrix owning view. Matrix should be noexcept&#45;movable." alt="" coords="262,96,435,137"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_matrix_owning_view.html" title="Matrix owning view." alt="" coords="262,96,435,137"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="215,114,261,114,261,119,215,119"/>
 <area shape="rect" id="Node000004" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="297,161,400,187"/>
 <area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,130,297,159,296,164,174,136"/>

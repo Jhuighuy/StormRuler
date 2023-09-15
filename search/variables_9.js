@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['type_0',['type',['../struct_storm_1_1_vulture_1_1gl_1_1pixel__desc__t.html#ac0d053edc3027d51697160cf4aa5a0ad',1,'Storm::Vulture::gl::pixel_desc_t']]]
+  ['shape_5frank_5fv_0',['shape_rank_v',['../namespace_storm.html#a84929168d64c0f6a57c0d3ae7112af69',1,'Storm']]],
+  ['sqrt2_1',['sqrt2',['../namespace_storm.html#ac8bb3e30eeb7f328e0aecd08ed53894c',1,'Storm']]],
+  ['sqrt3_2',['sqrt3',['../namespace_storm.html#a653fb3914b6b6e9d323c67097f8b2a4f',1,'Storm']]]
 ];

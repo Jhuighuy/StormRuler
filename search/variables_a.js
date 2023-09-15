@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['vel_0',['vel',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html#a2e81d40545fe032c9eb9681cbe74fa13',1,'Storm::Feathers::MhdHydroVars']]],
-  ['vel_5fn_1',['vel_n',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html#a45ccaf274a522414518818d95145f4b3',1,'Storm::Feathers::MhdHydroVars']]]
+  ['type_0',['type',['../struct_storm_1_1_vulture_1_1gl_1_1pixel__desc__t.html#ac0d053edc3027d51697160cf4aa5a0ad',1,'Storm::Vulture::gl::pixel_desc_t']]]
 ];

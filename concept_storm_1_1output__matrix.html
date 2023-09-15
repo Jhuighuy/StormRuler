@@ -160,14 +160,15 @@ $(document).ready(function(){initNavTree('concept_storm_1_1output__matrix.html',
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Matrix&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1output__matrix.html">Storm::output_matrix</a> = </div>
-<div class="line">    <a class="code hl_concept" href="concept_storm_1_1matrix.html">matrix&lt;Matrix&gt;</a> &amp;&amp; </div>
-<div class="line">    std::is_lvalue_reference_v&lt;matrix_element_decltype_t&lt;Matrix&gt;&gt;</div>
-<div class="ttc" id="aconcept_storm_1_1matrix_html"><div class="ttname"><a href="concept_storm_1_1matrix.html">Storm::matrix</a></div><div class="ttdoc">Matrix: has shape and subscripts.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00051">Matrix.hpp:51</a></div></div>
-<div class="ttc" id="aconcept_storm_1_1output__matrix_html"><div class="ttname"><a href="concept_storm_1_1output__matrix.html">Storm::output_matrix</a></div><div class="ttdoc">Matrix with assignable elements.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00118">Matrix.hpp:118</a></div></div>
+<div class="line">    <a class="code hl_concept" href="concept_storm_1_1matrix.html">matrix&lt;Matrix&gt;</a> &amp;&amp;</div>
+<div class="line">    std::same_as&lt;matrix_element_ref_t&lt;Matrix&gt;,</div>
+<div class="line">                 std::add_lvalue_reference_t&lt;matrix_element_t&lt;Matrix&gt;&gt;&gt;</div>
+<div class="ttc" id="aconcept_storm_1_1matrix_html"><div class="ttname"><a href="concept_storm_1_1matrix.html">Storm::matrix</a></div><div class="ttdoc">Matrix: has shape and subscripts.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00041">Matrix.hpp:41</a></div></div>
+<div class="ttc" id="aconcept_storm_1_1output__matrix_html"><div class="ttname"><a href="concept_storm_1_1output__matrix.html">Storm::output_matrix</a></div><div class="ttdoc">Matrix with assignable elements.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00107">Matrix.hpp:107</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Matrix with assignable elements. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_8hpp_source.html#l00118">118</a> of file <a class="el" href="_matrix_8hpp_source.html">Matrix.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_8hpp_source.html#l00107">107</a> of file <a class="el" href="_matrix_8hpp_source.html">Matrix.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

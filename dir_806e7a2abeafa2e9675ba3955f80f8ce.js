@@ -1,6 +1,6 @@
 var dir_806e7a2abeafa2e9675ba3955f80f8ce =
 [
-    [ "MatrixDense.hpp", "_matrix_dense_8hpp_source.html", null ],
+    [ "MatrixDense.hpp", "_solvers_2_matrix_dense_8hpp_source.html", null ],
     [ "Operator.hpp", "_operator_8hpp_source.html", null ],
     [ "Preconditioner.hpp", "_preconditioner_8hpp_source.html", null ],
     [ "Solver.hpp", "_solver_8hpp_source.html", null ],

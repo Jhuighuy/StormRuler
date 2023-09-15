@@ -11,7 +11,7 @@
 <!-- Node1 -->
 <g id="Node000001" class="node">
 <title>Node1</title>
-<g id="a_Node000001"><a xlink:title="Matrix owning view. Matrix should be noexcept&#45;movable.">
+<g id="a_Node000001"><a xlink:title="Matrix owning view.">
 <polygon fill="#999999" stroke="#666666" points="326.75,-45.88 196.75,-45.88 196.75,-15.37 326.75,-15.37 326.75,-45.88"/>
 <text text-anchor="start" x="204.75" y="-32.38" font-family="Helvetica,sans-Serif" font-size="10.00">Storm::MatrixOwningView</text>
 <text text-anchor="middle" x="261.75" y="-21.12" font-family="Helvetica,sans-Serif" font-size="10.00">&lt; Matrix &gt;</text>

@@ -1,14 +1,13 @@
 var hierarchy =
 [
     [ "Storm::AABB< Vec >", "class_storm_1_1_a_a_b_b.html", null ],
-    [ "Storm::AABB< Storm::StaticMatrix >", "class_storm_1_1_a_a_b_b.html", null ],
+    [ "Storm::AABB< Storm::DenseMatrix >", "class_storm_1_1_a_a_b_b.html", null ],
     [ "Storm::Abs", "class_storm_1_1_abs.html", null ],
     [ "Storm::AbsSquared", "class_storm_1_1_abs_squared.html", null ],
     [ "Storm::Acos", "class_storm_1_1_acos.html", null ],
     [ "Storm::Acosh", "class_storm_1_1_acosh.html", null ],
     [ "Storm::Add", "class_storm_1_1_add.html", null ],
     [ "Storm::AddAssign", "class_storm_1_1_add_assign.html", null ],
-    [ "Storm::AllIndices", "class_storm_1_1_all_indices.html", null ],
     [ "Storm::ApproxEqual", "class_storm_1_1_approx_equal.html", null ],
     [ "std::array", null, [
       [ "Storm::IndexedArray< Index, Value, Size >", "class_storm_1_1_indexed_array.html", null ]
@@ -39,6 +38,7 @@ var hierarchy =
     [ "Storm::Feathers::CubicSlopeLimiter", "class_storm_1_1_feathers_1_1_cubic_slope_limiter.html", null ],
     [ "Storm::Vulture::gl::DebugOutput", "class_storm_1_1_vulture_1_1gl_1_1_debug_output.html", null ],
     [ "Storm::DenseMatrix< Value, NumRows, NumCols >", "class_storm_1_1_dense_matrix.html", null ],
+    [ "Storm::DenseMatrix< Elem, NumRows >", "class_storm_1_1_dense_matrix.html", null ],
     [ "Storm::DenseMatrix< real_t >", "class_storm_1_1_dense_matrix.html", null ],
     [ "Storm::detail::DerivedFromCrtpInterfaceImpl< CrtpInterface >", "struct_storm_1_1detail_1_1_derived_from_crtp_interface_impl.html", null ],
     [ "Storm::DivideAssign", "class_storm_1_1_divide_assign.html", null ],
@@ -87,32 +87,38 @@ var hierarchy =
     [ "Storm::LogicalAnd", "class_storm_1_1_logical_and.html", null ],
     [ "Storm::LogicalOr", "class_storm_1_1_logical_or.html", null ],
     [ "Storm::MatrixViewInterface< MatrixView >", "class_storm_1_1_matrix_view_interface.html", null ],
-    [ "Storm::MatrixViewInterface< CrossProductView< Matrix1, Matrix2 > >", "class_storm_1_1_matrix_view_interface.html", [
-      [ "Storm::CrossProductView< Matrix1, Matrix2 >", "class_storm_1_1_cross_product_view.html", null ]
-    ] ],
-    [ "Storm::MatrixViewInterface< MakeMatrixView< Func > >", "class_storm_1_1_matrix_view_interface.html", [
-      [ "Storm::MakeMatrixView< Func >", "class_storm_1_1_make_matrix_view.html", null ]
+    [ "Storm::MatrixViewInterface< CrossProductView< Vector1, Vector2 > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::CrossProductView< Vector1, Vector2 >", "class_storm_1_1_cross_product_view.html", null ]
     ] ],
     [ "Storm::MatrixViewInterface< MapMatrixView< Func, Matrices... > >", "class_storm_1_1_matrix_view_interface.html", [
       [ "Storm::MapMatrixView< Func, Matrices >", "class_storm_1_1_map_matrix_view.html", null ]
     ] ],
+    [ "Storm::MatrixViewInterface< MaskMatrixView< Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::MaskMatrixView< Matrix >", "class_storm_1_1_mask_matrix_view.html", null ]
+    ] ],
+    [ "Storm::MatrixViewInterface< MatrixBuilderView< Shape, Func > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::MatrixBuilderView< Shape, Func >", "class_storm_1_1_matrix_builder_view.html", null ]
+    ] ],
     [ "Storm::MatrixViewInterface< MatrixOwningView< Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
       [ "Storm::MatrixOwningView< Matrix >", "class_storm_1_1_matrix_owning_view.html", null ]
     ] ],
-    [ "Storm::MatrixViewInterface< MatrixProductView< Matrix1, Matrix2 > >", "class_storm_1_1_matrix_view_interface.html", [
-      [ "Storm::MatrixProductView< Matrix1, Matrix2 >", "class_storm_1_1_matrix_product_view.html", null ]
+    [ "Storm::MatrixViewInterface< MatrixPartView< Matrix, Coords... > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::MatrixPartView< Matrix, Coords >", "class_storm_1_1_matrix_part_view.html", null ]
     ] ],
     [ "Storm::MatrixViewInterface< MatrixRefView< Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
       [ "Storm::MatrixRefView< Matrix >", "class_storm_1_1_matrix_ref_view.html", null ]
     ] ],
-    [ "Storm::MatrixViewInterface< SubmatrixView< Matrix, RowIndices, ColIndices > >", "class_storm_1_1_matrix_view_interface.html", [
-      [ "Storm::SubmatrixView< Matrix, RowIndices, ColIndices >", "class_storm_1_1_submatrix_view.html", null ]
+    [ "Storm::MatrixViewInterface< MatrixRollView< AxesArray, Matrix, Shifts > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::MatrixRollView< AxesArray, Matrix, Shifts >", "class_storm_1_1_matrix_roll_view.html", null ]
+    ] ],
+    [ "Storm::MatrixViewInterface< MatrixTransposeView< AxesArray, Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::MatrixTransposeView< AxesArray, Matrix >", "class_storm_1_1_matrix_transpose_view.html", null ]
     ] ],
     [ "Storm::MatrixViewInterface< TargetMatrixView< Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
       [ "Storm::TargetMatrixView< Matrix >", "class_storm_1_1_target_matrix_view.html", null ]
     ] ],
-    [ "Storm::MatrixViewInterface< TransposeMatrixView< Matrix > >", "class_storm_1_1_matrix_view_interface.html", [
-      [ "Storm::TransposeMatrixView< Matrix >", "class_storm_1_1_transpose_matrix_view.html", null ]
+    [ "Storm::MatrixViewInterface< VectorTransposeView< Vector > >", "class_storm_1_1_matrix_view_interface.html", [
+      [ "Storm::VectorTransposeView< Vector >", "class_storm_1_1_vector_transpose_view.html", null ]
     ] ],
     [ "Storm::Max", "class_storm_1_1_max.html", null ],
     [ "Storm::Merge", "class_storm_1_1_merge.html", null ],
@@ -127,6 +133,7 @@ var hierarchy =
     [ "Storm::MoveAssign", "class_storm_1_1_move_assign.html", null ],
     [ "Storm::Multiply", "class_storm_1_1_multiply.html", null ],
     [ "Storm::MultiplyAssign", "class_storm_1_1_multiply_assign.html", null ],
+    [ "Storm::NewAxis", "class_storm_1_1_new_axis.html", null ],
     [ "Storm::NonAssignableInterface", "class_storm_1_1_non_assignable_interface.html", null ],
     [ "NonCopyable", null, [
       [ "Storm::Vulture::gl::Buffer< Type >", "class_storm_1_1_vulture_1_1gl_1_1_buffer.html", null ],
@@ -215,12 +222,10 @@ var hierarchy =
       [ "Storm::meta::concat_fn", "struct_storm_1_1meta_1_1concat__fn.html", null ]
     ] ],
     [ "Storm::shapes::Seg", "class_storm_1_1shapes_1_1_seg.html", null ],
-    [ "Storm::SelectedIndices< Size >", "class_storm_1_1_selected_indices.html", null ],
     [ "Storm::Feathers::sFieldDesc< N >", "struct_storm_1_1_feathers_1_1s_field_desc.html", null ],
     [ "Storm::Sign", "class_storm_1_1_sign.html", null ],
     [ "Storm::Sin", "class_storm_1_1_sin.html", null ],
     [ "Storm::Sinh", "class_storm_1_1_sinh.html", null ],
-    [ "Storm::SlicedIndices", "class_storm_1_1_sliced_indices.html", null ],
     [ "Storm::Sqrt", "class_storm_1_1_sqrt.html", null ],
     [ "Storm::SubtractAssign", "class_storm_1_1_subtract_assign.html", null ],
     [ "Storm::TableInterface< Derived >", "class_storm_1_1_table_interface.html", [
@@ -237,12 +242,11 @@ var hierarchy =
       [ "Storm::Feathers::Field< Storm::UnstructuredMesh, real_t, 5 >", "class_storm_1_1_feathers_1_1_field.html", null ],
       [ "Storm::Feathers::Field< Mesh, Index, Value, NumVars >", "class_storm_1_1_feathers_1_1_field.html", null ]
     ] ],
+    [ "Storm::TargetMatrixInterface< DenseMatrix< Elem, Shape > >", "class_storm_1_1_target_matrix_interface.html", [
+      [ "Storm::DenseMatrix< Elem, Shape >", "class_storm_1_1_dense_matrix_3_01_elem_00_01_shape_01_4.html", null ]
+    ] ],
     [ "Storm::TargetMatrixInterface< Field< Mesh, Index, 5, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
     [ "Storm::TargetMatrixInterface< Field< Mesh, Index, real_t, 1 > >", "class_storm_1_1_target_matrix_interface.html", null ],
-    [ "Storm::TargetMatrixInterface< StaticMatrix< Elem, NumRows, NumCols > >", "class_storm_1_1_target_matrix_interface.html", [
-      [ "Storm::StaticMatrix< Elem, NumRows, 1 >", "class_storm_1_1_static_matrix.html", null ],
-      [ "Storm::StaticMatrix< Elem, NumRows, NumCols >", "class_storm_1_1_static_matrix.html", null ]
-    ] ],
     [ "Storm::TargetMatrixInterface< TargetMatrixView< Matrix > >", "class_storm_1_1_target_matrix_interface.html", [
       [ "Storm::TargetMatrixView< Matrix >", "class_storm_1_1_target_matrix_view.html", null ]
     ] ],
@@ -255,6 +259,8 @@ var hierarchy =
       ] ]
     ] ],
     [ "Storm::TopologicalIndexTag< I >", "struct_storm_1_1_topological_index_tag.html", null ],
+    [ "Storm::ToTuple", "class_storm_1_1_to_tuple.html", null ],
+    [ "Storm::ToVoid", "class_storm_1_1_to_void.html", null ],
     [ "Storm::Vulture::scene::Transform", "class_storm_1_1_vulture_1_1scene_1_1_transform.html", null ],
     [ "Storm::meta::transform_fn< Fn >", "struct_storm_1_1meta_1_1transform__fn.html", null ],
     [ "Storm::meta::transform_fn< append_fn< X > >", "struct_storm_1_1meta_1_1transform__fn.html", [
@@ -278,12 +284,13 @@ var hierarchy =
     [ "Storm::shapes::Triangle", "class_storm_1_1shapes_1_1_triangle.html", null ],
     [ "Storm::shapes::TriangleStrip", "class_storm_1_1shapes_1_1_triangle_strip.html", null ],
     [ "Storm::meta::type< T >", "struct_storm_1_1meta_1_1type.html", null ],
+    [ "Storm::Underscore", "class_storm_1_1_underscore.html", null ],
     [ "std::vector", null, [
       [ "Storm::IndexedVector< RowIndex, Storm::Index >", "class_storm_1_1_indexed_vector.html", null ],
       [ "Storm::IndexedVector< Storm::Index, ColValue >", "class_storm_1_1_indexed_vector.html", null ],
       [ "Storm::IndexedVector< Index, Subfield< real_t, 1 > >", "class_storm_1_1_indexed_vector.html", null ],
       [ "Storm::IndexedVector< Index, Subfield< 5, 1 > >", "class_storm_1_1_indexed_vector.html", null ],
-      [ "Storm::IndexedVector< Storm::Index, Storm::StaticMatrix >", "class_storm_1_1_indexed_vector.html", null ],
+      [ "Storm::IndexedVector< Storm::Index, Storm::DenseMatrix >", "class_storm_1_1_indexed_vector.html", null ],
       [ "Storm::IndexedVector< RowIndex, Storm::IndexedVector< Storm::Index, void > >", "class_storm_1_1_indexed_vector.html", null ],
       [ "Storm::IndexedVector< Index, Value, Allocator >", "class_storm_1_1_indexed_vector.html", null ]
     ] ],

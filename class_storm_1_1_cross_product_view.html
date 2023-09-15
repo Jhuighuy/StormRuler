@@ -25,7 +25,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=11" />
   <meta name="generator" content="Doxygen 1.9.8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>StormRuler: Storm::CrossProductView&lt; Matrix1, Matrix2 &gt; Class Template Reference</title>
+  <title>StormRuler: Storm::CrossProductView&lt; Vector1, Vector2 &gt; Class Template Reference</title>
   <link href="tabs.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="jquery.js">
   </script>
@@ -153,65 +153,67 @@ $(document).ready(function(){initNavTree('class_storm_1_1_cross_product_view.htm
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="class_storm_1_1_cross_product_view-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Storm::CrossProductView&lt; Matrix1, Matrix2 &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">Storm::CrossProductView&lt; Vector1, Vector2 &gt; Class Template Reference<span class="mlabels"><span class="mlabel">final</span></span></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Cross product of the 3x1 matrices view.  
+<p>3D Vector cross product view.  
  <a href="class_storm_1_1_cross_product_view.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_matrix_product_8hpp_source.html">Storm/Bittern/MatrixProduct.hpp</a>&gt;</code></p>
 <div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
-  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> Inheritance diagram for Storm::CrossProductView&lt; Matrix1, Matrix2 &gt;:</div>
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> Inheritance diagram for Storm::CrossProductView&lt; Vector1, Vector2 &gt;:</div>
 <div id="dynsection-0-summary" class="dynsummary" style="display:block;">
 </div>
 <div id="dynsection-0-content" class="dyncontent" style="display:none;">
-<div class="center"><iframe scrolling="no" frameborder="0" src="class_storm_1_1_cross_product_view__inherit__graph.svg" width="212" height="155"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="class_storm_1_1_cross_product_view__inherit__graph.svg" width="215" height="155"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab0a68a24aa1b0c8f7bc410d08dcea128" id="r_ab0a68a24aa1b0c8f7bc410d08dcea128"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#ab0a68a24aa1b0c8f7bc410d08dcea128">CrossProductView</a> (Matrix1 mat1, Matrix2 mat2)</td></tr>
-<tr class="memdesc:ab0a68a24aa1b0c8f7bc410d08dcea128"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a matrix product view.  <br /></td></tr>
-<tr class="separator:ab0a68a24aa1b0c8f7bc410d08dcea128"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af827cc08191a627c422baf0fcac74189" id="r_af827cc08191a627c422baf0fcac74189"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#af827cc08191a627c422baf0fcac74189">operator()</a> (<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> row_index, <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> col_index) const noexcept</td></tr>
-<tr class="memdesc:af827cc08191a627c422baf0fcac74189"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
-<tr class="separator:af827cc08191a627c422baf0fcac74189"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a226fe35c10cdf98ad557b1a4dc0750b1" id="r_a226fe35c10cdf98ad557b1a4dc0750b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#a226fe35c10cdf98ad557b1a4dc0750b1">CrossProductView</a> (Vector1 <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">vec1</a>, Vector2 <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">vec2</a>)</td></tr>
+<tr class="memdesc:a226fe35c10cdf98ad557b1a4dc0750b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a cross product view.  <br /></td></tr>
+<tr class="separator:a226fe35c10cdf98ad557b1a4dc0750b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa47abb1314363b9d8734c7af39ece8e8" id="r_aa47abb1314363b9d8734c7af39ece8e8"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="class_storm_1_1_index.html">Index</a> &gt; <br />
+requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_cross_product_view.html">CrossProductView</a>, <a class="el" href="class_storm_1_1_index.html">Index</a>&gt; &amp;&amp; std::convertible_to&lt;<a class="el" href="class_storm_1_1_index.html">Index</a>, <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a>&gt;</td></tr>
+<tr class="memitem:aa47abb1314363b9d8734c7af39ece8e8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#aa47abb1314363b9d8734c7af39ece8e8">operator()</a> (<a class="el" href="class_storm_1_1_index.html">Index</a> index) <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">const</a></td></tr>
+<tr class="memdesc:aa47abb1314363b9d8734c7af39ece8e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vector element at <code>index</code>.  <br /></td></tr>
+<tr class="separator:aa47abb1314363b9d8734c7af39ece8e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9ef749cf20d81530441b63f740c45f27" id="r_a9ef749cf20d81530441b63f740c45f27"><td class="memItemLeft" align="right" valign="top">static constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#a9ef749cf20d81530441b63f740c45f27">shape</a> () noexcept</td></tr>
-<tr class="memdesc:a9ef749cf20d81530441b63f740c45f27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix shape.  <br /></td></tr>
-<tr class="separator:a9ef749cf20d81530441b63f740c45f27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87213a81ea2759f3002c3412719a417e" id="r_a87213a81ea2759f3002c3412719a417e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">static</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_cross_product_view.html#a87213a81ea2759f3002c3412719a417e">shape</a> ()</td></tr>
+<tr class="memdesc:a87213a81ea2759f3002c3412719a417e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vector shape.  <br /></td></tr>
+<tr class="separator:a87213a81ea2759f3002c3412719a417e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;matrix_view Matrix1, matrix_view Matrix2&gt;<br />
-class Storm::CrossProductView&lt; Matrix1, Matrix2 &gt;</div><p>Cross product of the 3x1 matrices view. </p>
+<div class="textblock"><div class="compoundTemplParams">template&lt;matrix_view_r&lt; 1 &gt; Vector1, matrix_view_r&lt; 1 &gt; Vector2&gt;<br />
+class Storm::CrossProductView&lt; Vector1, Vector2 &gt;</div><p>3D Vector cross product view. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00088">88</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00092">92</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ab0a68a24aa1b0c8f7bc410d08dcea128" name="ab0a68a24aa1b0c8f7bc410d08dcea128"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab0a68a24aa1b0c8f7bc410d08dcea128">&#9670;&#160;</a></span>CrossProductView()</h2>
+<a id="a226fe35c10cdf98ad557b1a4dc0750b1" name="a226fe35c10cdf98ad557b1a4dc0750b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a226fe35c10cdf98ad557b1a4dc0750b1">&#9670;&#160;</a></span>CrossProductView()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;matrix_view Matrix1, matrix_view Matrix2&gt; </div>
+template&lt;matrix_view_r&lt; 1 &gt; Vector1, matrix_view_r&lt; 1 &gt; Vector2&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Matrix1, Matrix2 &gt;::CrossProductView </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Vector1, Vector2 &gt;::CrossProductView </td>
           <td>(</td>
-          <td class="paramtype">Matrix1&#160;</td>
-          <td class="paramname"><em>mat1</em>, </td>
+          <td class="paramtype">Vector1&#160;</td>
+          <td class="paramname"><em>vec1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Matrix2&#160;</td>
-          <td class="paramname"><em>mat2</em>&#160;</td>
+          <td class="paramtype">Vector2&#160;</td>
+          <td class="paramname"><em>vec2</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -226,68 +228,61 @@ template&lt;matrix_view Matrix1, matrix_view Matrix2&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a matrix product view. </p>
+<p>Construct a cross product view. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00098">98</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00102">102</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="af827cc08191a627c422baf0fcac74189" name="af827cc08191a627c422baf0fcac74189"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af827cc08191a627c422baf0fcac74189">&#9670;&#160;</a></span>operator()()</h2>
+<a id="aa47abb1314363b9d8734c7af39ece8e8" name="aa47abb1314363b9d8734c7af39ece8e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa47abb1314363b9d8734c7af39ece8e8">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;matrix_view Matrix1, matrix_view Matrix2&gt; </div>
+template&lt;matrix_view_r&lt; 1 &gt; Vector1, matrix_view_r&lt; 1 &gt; Vector2&gt; </div>
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="class_storm_1_1_index.html">Index</a> &gt; <br />
+requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_cross_product_view.html">CrossProductView</a>, <a class="el" href="class_storm_1_1_index.html">Index</a>&gt; &amp;&amp; std::convertible_to&lt;<a class="el" href="class_storm_1_1_index.html">Index</a>, <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a>&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr auto <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Matrix1, Matrix2 &gt;::operator() </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a> <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Vector1, Vector2 &gt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">::operator</a>() </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a>&#160;</td>
-          <td class="paramname"><em>row_index</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a>&#160;</td>
-          <td class="paramname"><em>col_index</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
+          <td class="paramtype"><a class="el" href="class_storm_1_1_index.html">Index</a>&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the matrix element at <code>indices</code>. </p>
+<p>Get the vector element at <code>index</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00110">110</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00117">117</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a9ef749cf20d81530441b63f740c45f27" name="a9ef749cf20d81530441b63f740c45f27"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9ef749cf20d81530441b63f740c45f27">&#9670;&#160;</a></span>shape()</h2>
+<a id="a87213a81ea2759f3002c3412719a417e" name="a87213a81ea2759f3002c3412719a417e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87213a81ea2759f3002c3412719a417e">&#9670;&#160;</a></span>shape()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;matrix_view Matrix1, matrix_view Matrix2&gt; </div>
+template&lt;matrix_view_r&lt; 1 &gt; Vector1, matrix_view_r&lt; 1 &gt; Vector2&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static constexpr auto <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Matrix1, Matrix2 &gt;::shape </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">static</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a> <a class="el" href="class_storm_1_1_cross_product_view.html">Storm::CrossProductView</a>&lt; Vector1, Vector2 &gt;::shape </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -295,14 +290,14 @@ template&lt;matrix_view Matrix1, matrix_view Matrix2&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the matrix shape. </p>
+<p>Get the vector shape. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00105">105</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_product_8hpp_source.html#l00109">109</a> of file <a class="el" href="_matrix_product_8hpp_source.html">MatrixProduct.hpp</a>.</p>
 
 </div>
 </div>

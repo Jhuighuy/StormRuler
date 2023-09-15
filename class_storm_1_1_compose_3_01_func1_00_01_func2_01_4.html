@@ -163,16 +163,16 @@ $(document).ready(function(){initNavTree('class_storm_1_1_compose_3_01_func1_00_
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a4d657e95a3aeed86ba924511e8b5f1db" id="r_a4d657e95a3aeed86ba924511e8b5f1db"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a4d657e95a3aeed86ba924511e8b5f1db">Compose</a> (Func1 func1, Func2 func2)</td></tr>
+<tr class="memitem:a4d657e95a3aeed86ba924511e8b5f1db" id="r_a4d657e95a3aeed86ba924511e8b5f1db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a4d657e95a3aeed86ba924511e8b5f1db">Compose</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">func1</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">func2</a>)</td></tr>
 <tr class="separator:a4d657e95a3aeed86ba924511e8b5f1db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62e5e67c29089cbc7d62fc4969afcfa4" id="r_a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; <br />
-requires std::invocable&lt;Func2, Args...&gt; &amp;&amp; std::invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</td></tr>
-<tr class="memitem:a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a62e5e67c29089cbc7d62fc4969afcfa4">operator()</a> (Args &amp;&amp;... args) const</td></tr>
+requires std::invocable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>, Args...&gt; &amp;&amp; std::invocable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>, std::invoke_result_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>, Args...&gt;&gt;</td></tr>
+<tr class="memitem:a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">decltype</a>(<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a>)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a62e5e67c29089cbc7d62fc4969afcfa4">operator()</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Args</a> &amp;&amp;... <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">args</a>) <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">const</a></td></tr>
 <tr class="separator:a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class Func1, class Func2&gt;<br />
-requires std::is_object_v&lt;Func1&gt; &amp;&amp; std::is_object_v&lt;Func2&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>&gt;<br />
+requires std::is_object_v&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>&gt; &amp;&amp; std::is_object_v&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>&gt;<br />
 class Storm::Compose&lt; Func1, Func2 &gt;</div><p><a class="el" href="class_storm_1_1_compose.html" title="Compose multiple functions: .">Compose</a> two functions: \( f_{1} \circ f_{2} \). </p>
 
 <p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00118">118</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
@@ -183,21 +183,21 @@ class Storm::Compose&lt; Func1, Func2 &gt;</div><p><a class="el" href="class_sto
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Func1 , class Func2 &gt; </div>
+template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a> , <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a> &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="class_storm_1_1_compose.html">Storm::Compose</a>&lt; Func1, Func2 &gt;::Compose </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="class_storm_1_1_compose.html">Storm::Compose</a>&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a> &gt;::Compose </td>
           <td>(</td>
-          <td class="paramtype">Func1&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>&#160;</td>
           <td class="paramname"><em>func1</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Func2&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>&#160;</td>
           <td class="paramname"><em>func2</em>&#160;</td>
         </tr>
         <tr>
@@ -224,18 +224,18 @@ template&lt;class Func1 , class Func2 &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class Func1 , class Func2 &gt; </div>
+template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a> , <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a> &gt; </div>
 <div class="memtemplate">
 template&lt;class... Args&gt; <br />
-requires std::invocable&lt;Func2, Args...&gt; &amp;&amp; std::invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</div>
+requires std::invocable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>, Args...&gt; &amp;&amp; std::invocable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>, std::invoke_result_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a>, Args...&gt;&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr decltype(auto) <a class="el" href="class_storm_1_1_compose.html">Storm::Compose</a>&lt; Func1, Func2 &gt;::operator() </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">decltype</a>(<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a>) <a class="el" href="class_storm_1_1_compose.html">Storm::Compose</a>&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func1</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Func2</a> &gt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">::operator</a>() </td>
           <td>(</td>
-          <td class="paramtype">Args &amp;&amp;...&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Args</a> &amp;&amp;...&#160;</td>
           <td class="paramname"><em>args</em></td><td>)</td>
           <td> const</td>
         </tr>

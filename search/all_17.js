@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['🏗_20compiling_0',['🏗 Compiling',['../md__pages_2_compiling.html',1,'']]],
-  ['🏗_20under_20construction_1',['🏗 Under construction.',['../index.html#autotoc_md4',1,'']]]
+  ['zeroes_0',['zeroes',['../namespace_storm.html#a5f580edb59e0c7048dd4881a98976377',1,'Storm::zeroes(Shape shape) noexcept'],['../namespace_storm.html#aa591ec3f4683b280844db731d9815686',1,'Storm::zeroes(Extents... extents) noexcept']]]
 ];

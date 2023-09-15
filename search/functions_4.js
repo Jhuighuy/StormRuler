@@ -4,8 +4,10 @@ var searchData=
   ['edgeview_1',['EdgeView',['../class_storm_1_1_edge_view.html#a7d16eb89762f97cda0076b1ccfebc9ff',1,'Storm::EdgeView']]],
   ['entities_2',['entities',['../class_storm_1_1_unstructured_mesh.html#ad9ba3115c3f901d09bb2d68bdc28c523',1,'Storm::UnstructuredMesh::entities(meta::type&lt; EntityIndex&lt; I &gt; &gt;={}) const noexcept'],['../class_storm_1_1_unstructured_mesh.html#aa55b955132ce5089beda5f453501bba2',1,'Storm::UnstructuredMesh::entities(Label label, meta::type&lt; EntityIndex&lt; I &gt; &gt;={}) const noexcept']]],
   ['entityview_3',['EntityView',['../class_storm_1_1_entity_view.html#aaef6189573ddcdb9919a468b648533da',1,'Storm::EntityView']]],
-  ['exp_4',['exp',['../namespace_storm.html#a79cc41be38e18099f61ee46861294d80',1,'Storm']]],
-  ['exp2_5',['exp2',['../namespace_storm.html#a523389a8d9a29d5276035e50034b8fe9',1,'Storm']]],
-  ['extend_6',['extend',['../class_storm_1_1_a_a_b_b.html#a0f6b962cb79890d5608769160f3873bd',1,'Storm::AABB']]],
-  ['extents_7',['extents',['../class_storm_1_1_a_a_b_b.html#af0c08c6c1e3d405f47bdd0a7f1b5299e',1,'Storm::AABB']]]
+  ['eval_5felements_4',['eval_elements',['../namespace_storm.html#a3b4260f0cb63a8f42703e0c9a4ec881e',1,'Storm']]],
+  ['exp_5',['exp',['../namespace_storm.html#a79cc41be38e18099f61ee46861294d80',1,'Storm']]],
+  ['exp2_6',['exp2',['../namespace_storm.html#a523389a8d9a29d5276035e50034b8fe9',1,'Storm']]],
+  ['extend_7',['extend',['../class_storm_1_1_a_a_b_b.html#a0f6b962cb79890d5608769160f3873bd',1,'Storm::AABB']]],
+  ['extents_8',['extents',['../class_storm_1_1_a_a_b_b.html#af0c08c6c1e3d405f47bdd0a7f1b5299e',1,'Storm::AABB']]],
+  ['eye_9',['eye',['../namespace_storm.html#a78209823a0503e30d0638f90bc352713',1,'Storm::eye(Shape shape, Elem diagonal=Elem{1}, Elem off_diagonal=Elem{0}) noexcept'],['../namespace_storm.html#a153844c5f6e4c7827fa985096d199c8b',1,'Storm::eye(Extents... extents) noexcept']]]
 ];

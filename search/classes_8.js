@@ -14,7 +14,7 @@ var searchData=
   ['indexedvector_3c_20rowindex_2c_20storm_3a_3aindex_20_3e_11',['IndexedVector&lt; RowIndex, Storm::Index &gt;',['../class_storm_1_1_indexed_vector.html',1,'Storm']]],
   ['indexedvector_3c_20rowindex_2c_20storm_3a_3aindexedvector_3c_20storm_3a_3aindex_2c_20void_20_3e_20_3e_12',['IndexedVector&lt; RowIndex, Storm::IndexedVector&lt; Storm::Index, void &gt; &gt;',['../class_storm_1_1_indexed_vector.html',1,'Storm']]],
   ['indexedvector_3c_20storm_3a_3aindex_2c_20colvalue_20_3e_13',['IndexedVector&lt; Storm::Index, ColValue &gt;',['../class_storm_1_1_indexed_vector.html',1,'Storm']]],
-  ['indexedvector_3c_20storm_3a_3aindex_2c_20storm_3a_3astaticmatrix_20_3e_14',['IndexedVector&lt; Storm::Index, Storm::StaticMatrix &gt;',['../class_storm_1_1_indexed_vector.html',1,'Storm']]],
+  ['indexedvector_3c_20storm_3a_3aindex_2c_20storm_3a_3adensematrix_20_3e_14',['IndexedVector&lt; Storm::Index, Storm::DenseMatrix &gt;',['../class_storm_1_1_indexed_vector.html',1,'Storm']]],
   ['innerouteriterativesolver_15',['InnerOuterIterativeSolver',['../class_storm_1_1_inner_outer_iterative_solver.html',1,'Storm']]],
   ['innerouteriterativesolver_3c_20vector_20_3e_16',['InnerOuterIterativeSolver&lt; Vector &gt;',['../class_storm_1_1_inner_outer_iterative_solver.html',1,'Storm']]],
   ['iterativesolver_17',['IterativeSolver',['../class_storm_1_1_iterative_solver.html',1,'Storm']]],

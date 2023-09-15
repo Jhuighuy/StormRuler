@@ -1,30 +1,5 @@
 var searchData=
 [
-  ['r_5fpair_5flist_5ffn_0',['r_pair_list_fn',['../struct_storm_1_1meta_1_1r__pair__list__fn.html',1,'Storm::meta']]],
-  ['rad2deg_1',['rad2deg',['../namespace_storm.html#ae46a4f0a18cb93ffbbbb80e71ccd4b2b',1,'Storm']]],
-  ['raw_2',['raw',['../struct_storm_1_1meta_1_1raw.html',1,'Storm::meta']]],
-  ['raw_3c_20type_3c_20t_20_3e_20_3e_3',['raw&lt; type&lt; T &gt; &gt;',['../struct_storm_1_1meta_1_1raw_3_01type_3_01_t_01_4_01_4.html',1,'Storm::meta']]],
-  ['read_5fmesh_5ffrom_5ftetgen_4',['read_mesh_from_tetgen',['../namespace_storm.html#aed1a5d8b2f9710b63371f46b4fd569a3',1,'Storm']]],
-  ['read_5fpixels_5',['read_pixels',['../class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a831a23b5f4676fe32c8b5b38698cd1de',1,'Storm::Vulture::gl::Texture2D']]],
-  ['real_6',['real',['../class_storm_1_1_real.html',1,'Storm::Real'],['../namespace_storm.html#a7624ec6dd290e8cad0bf4a31399e3bae',1,'Storm::real(Matrix &amp;&amp;mat)']]],
-  ['real_5ft_7',['real_t',['../namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e',1,'Storm']]],
-  ['reduce_8',['reduce',['../namespace_storm.html#ac3b77fcc816ebcf9c253ebdff4569917',1,'Storm::reduce(Value init, ReduceFunc reduce_func, Func func, Matrix &amp;&amp;mat, RestMatrices &amp;&amp;... mats) noexcept'],['../namespace_storm.html#ab5f9774c79d5a7832fd0e85313bf2f3f',1,'Storm::reduce(Value init, ReduceFunc reduce_func, Matrix &amp;&amp;mat)']]],
-  ['reduce_5ffn_9',['reduce_fn',['../struct_storm_1_1meta_1_1reduce__fn.html',1,'Storm::meta']]],
-  ['reduce_5ffn_3c_20cartesian_5fproduct_5ffn_20_3e_10',['reduce_fn&lt; cartesian_product_fn &gt;',['../struct_storm_1_1meta_1_1reduce__fn.html',1,'Storm::meta']]],
-  ['reduce_5ffn_3c_20concat_5ffn_20_3e_11',['reduce_fn&lt; concat_fn &gt;',['../struct_storm_1_1meta_1_1reduce__fn.html',1,'Storm::meta']]],
-  ['rescale_12',['rescale',['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#a55b4537f304003850c315f63ac6dd691',1,'Storm::Vulture::scene::Transform::rescale(const glm::vec3 &amp;factor) noexcept'],['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#af75cf87bfd59852364e7b17d723b05c1',1,'Storm::Vulture::scene::Transform::rescale(float factor) noexcept']]],
-  ['reserve_13',['reserve',['../class_storm_1_1_csr_table.html#ad8b9d20e0fe4e16e166faee82c308e58',1,'Storm::CsrTable::reserve()'],['../class_storm_1_1_unstructured_mesh.html#aac75209e2d50ee3e4826b18b30d03c4e',1,'Storm::UnstructuredMesh::reserve()'],['../class_storm_1_1_vov_table.html#acc27dff8508a71e15cd16ac4abb1c049',1,'Storm::VovTable::reserve()']]],
-  ['residual_14',['Residual',['../class_storm_1_1_operator.html#a2a4be925bc700066ecae292aae981338',1,'Storm::Operator']]],
-  ['residualnorm_15',['ResidualNorm',['../class_storm_1_1_operator.html#add64ddde36cdc3d5a69de195ccd3ea35',1,'Storm::Operator']]],
-  ['rest_5fcons_16',['rest_cons',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html#a262d40c4a4ff25661cbfb632f1a2b7c4',1,'Storm::Feathers::MhdHydroVars']]],
-  ['rest_5fprim_17',['rest_prim',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html#a6dfcd320de658021437339e5c3d29474',1,'Storm::Feathers::MhdHydroVars']]],
-  ['reverse_5ffn_18',['reverse_fn',['../struct_storm_1_1meta_1_1reverse__fn.html',1,'Storm::meta']]],
-  ['rho_19',['rho',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html#adee382d26ded53b67a9dd7c0592908c0',1,'Storm::Feathers::MhdHydroVars']]],
-  ['richardsonsolver_20',['RichardsonSolver',['../class_storm_1_1_richardson_solver.html',1,'Storm']]],
-  ['right_21',['Right',['../namespace_storm.html#a9d656f944a0b8589f1f9f9a85942993ea92b09c7c48c520c3c55e497875da437c',1,'Storm']]],
-  ['rotate_22',['rotate',['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#a0242df991ba9b460aa10a6133532e41f',1,'Storm::Vulture::scene::Transform']]],
-  ['rotate_5fdegrees_23',['rotate_degrees',['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#a1327c067bdc5e2b32e2be7ff4915ff9c',1,'Storm::Vulture::scene::Transform']]],
-  ['rotation_24',['rotation',['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#aef58f016c1212a54f1178f6e596c6f9f',1,'Storm::Vulture::scene::Transform']]],
-  ['rotation_5fdegrees_25',['rotation_degrees',['../class_storm_1_1_vulture_1_1scene_1_1_transform.html#aa020fd9ceb01de6eda48508cf0da8c6e',1,'Storm::Vulture::scene::Transform']]],
-  ['rows_26',['rows',['../class_storm_1_1_vov_table.html#a1518a5a8ce60519a91fdf3ac7bdef1ca',1,'Storm::VovTable::rows()'],['../class_storm_1_1_csr_table.html#a47fb2d19f07d2a78d85fdab1b9898fe0',1,'Storm::CsrTable::rows()']]]
+  ['quadrangle_0',['quadrangle',['../class_storm_1_1shapes_1_1_quadrangle.html',1,'Storm::shapes::Quadrangle'],['../class_storm_1_1shapes_1_1_quadrangle.html#ab34749967f091f5255354024e3b3abbe',1,'Storm::shapes::Quadrangle::Quadrangle()=default'],['../class_storm_1_1shapes_1_1_quadrangle.html#a0665dc621bec24d15e7617ece207c94e',1,'Storm::shapes::Quadrangle::Quadrangle(NodeIndex i1, NodeIndex i2, NodeIndex i3, NodeIndex i4) noexcept']]],
+  ['query_5ffn_1',['query_fn',['../struct_storm_1_1meta_1_1query__fn.html',1,'Storm::meta']]]
 ];

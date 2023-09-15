@@ -152,14 +152,21 @@ $(document).ready(function(){initNavTree('concept_storm_1_1scalar.html',''); ini
   <div class="headertitle"><div class="title">Storm::scalar Concept Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Scalar: copyable object that is not a matrix.  
+<a href="concept_storm_1_1scalar.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="_matrix_8hpp_source.html">Storm/Bittern/Matrix.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Scalar&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1scalar.html">Storm::scalar</a> =  !<a class="code hl_concept" href="concept_storm_1_1matrix.html">matrix&lt;Scalar&gt;</a></div>
-<div class="ttc" id="aconcept_storm_1_1matrix_html"><div class="ttname"><a href="concept_storm_1_1matrix.html">Storm::matrix</a></div><div class="ttdoc">Matrix: has shape and subscripts.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00051">Matrix.hpp:51</a></div></div>
-<div class="ttc" id="aconcept_storm_1_1scalar_html"><div class="ttname"><a href="concept_storm_1_1scalar.html">Storm::scalar</a></div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00058">Matrix.hpp:58</a></div></div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1scalar.html">Storm::scalar</a> = </div>
+<div class="line">    std::is_object_v&lt;Scalar&gt; &amp;&amp; std::copyable&lt;Scalar&gt; &amp;&amp; (!<a class="code hl_concept" href="concept_storm_1_1matrix.html">matrix&lt;Scalar&gt;</a>)</div>
+<div class="ttc" id="aconcept_storm_1_1matrix_html"><div class="ttname"><a href="concept_storm_1_1matrix.html">Storm::matrix</a></div><div class="ttdoc">Matrix: has shape and subscripts.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00041">Matrix.hpp:41</a></div></div>
+<div class="ttc" id="aconcept_storm_1_1scalar_html"><div class="ttname"><a href="concept_storm_1_1scalar.html">Storm::scalar</a></div><div class="ttdoc">Scalar: copyable object that is not a matrix.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_8hpp_source.html#l00049">Matrix.hpp:49</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock">
-<p class="definition">Definition at line <a class="el" href="_matrix_8hpp_source.html#l00058">58</a> of file <a class="el" href="_matrix_8hpp_source.html">Matrix.hpp</a>.</p>
+<div class="textblock"><p>Scalar: copyable object that is not a matrix. </p>
+
+<p class="definition">Definition at line <a class="el" href="_matrix_8hpp_source.html#l00049">49</a> of file <a class="el" href="_matrix_8hpp_source.html">Matrix.hpp</a>.</p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

@@ -149,6 +149,8 @@ $(document).ready(function(){initNavTree('namespace_storm_1_1permutations.html',
 </div>
 
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">Storm::permutations Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -158,71 +160,113 @@ $(document).ready(function(){initNavTree('namespace_storm_1_1permutations.html',
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a17dbd574bb06fad7b8a6e5f568925e71" id="r_a17dbd574bb06fad7b8a6e5f568925e71"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt; </td></tr>
+<tr class="memitem:a17dbd574bb06fad7b8a6e5f568925e71"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">bool</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a17dbd574bb06fad7b8a6e5f568925e71">is_permutation</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_range</a>) <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">noexcept</a></td></tr>
+<tr class="memdesc:a17dbd574bb06fad7b8a6e5f568925e71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check is specified range is a permutation.  <br /></td></tr>
+<tr class="separator:a17dbd574bb06fad7b8a6e5f568925e71"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a60c3a577325a95338196165f499b2593" id="r_a60c3a577325a95338196165f499b2593"><td class="memTemplParams" colspan="2">template&lt;std::input_iterator PermutationIterator, std::sentinel_for&lt; PermutationIterator &gt; PermutationSentinel, std::random_access_iterator InversePermutationIterator&gt; <br />
-requires std::indirectly_copyable&lt;PermutationIterator, InversePermutationIterator&gt;</td></tr>
-<tr class="memitem:a60c3a577325a95338196165f499b2593"><td class="memTemplItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a60c3a577325a95338196165f499b2593">invert_permutation</a> (PermutationIterator perm_iterator, PermutationSentinel perm_sentinel, InversePermutationIterator iperm_iterator)</td></tr>
+<tr class="memitem:a60c3a577325a95338196165f499b2593" id="r_a60c3a577325a95338196165f499b2593"><td class="memTemplParams" colspan="2">template&lt;std::input_iterator PermutationIterator, std::sentinel_for&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; PermutationSentinel, std::random_access_iterator InversePermutationIterator&gt; <br />
+requires std::indirectly_copyable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&gt;</td></tr>
+<tr class="memitem:a60c3a577325a95338196165f499b2593"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a60c3a577325a95338196165f499b2593">invert_permutation</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_iterator</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationSentinel</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_sentinel</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">iperm_iterator</a>)</td></tr>
 <tr class="memdesc:a60c3a577325a95338196165f499b2593"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invert the permutation. Complexity is linear.  <br /></td></tr>
 <tr class="separator:a60c3a577325a95338196165f499b2593"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4090ec9a88fdfece8f215ddd11aba70" id="r_ac4090ec9a88fdfece8f215ddd11aba70"><td class="memTemplParams" colspan="2">template&lt;std::ranges::input_range PermutationRange, std::random_access_iterator InversePermutationIterator&gt; <br />
-requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;PermutationRange&gt;, InversePermutationIterator&gt;</td></tr>
-<tr class="memitem:ac4090ec9a88fdfece8f215ddd11aba70"><td class="memTemplItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#ac4090ec9a88fdfece8f215ddd11aba70">invert_permutation</a> (PermutationRange &amp;&amp;perm_range, InversePermutationIterator iperm_iterator)</td></tr>
+requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a>&gt;, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&gt;</td></tr>
+<tr class="memitem:ac4090ec9a88fdfece8f215ddd11aba70"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#ac4090ec9a88fdfece8f215ddd11aba70">invert_permutation</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_range</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">iperm_iterator</a>)</td></tr>
 <tr class="memdesc:ac4090ec9a88fdfece8f215ddd11aba70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invert the permutation. Complexity is linear.  <br /></td></tr>
 <tr class="separator:ac4090ec9a88fdfece8f215ddd11aba70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0a9bdb78bfce7466b5b673fbf9edaa3" id="r_af0a9bdb78bfce7466b5b673fbf9edaa3"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="class_storm_1_1_index.html">Index</a> , <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> Size&gt; </td></tr>
+<tr class="memitem:af0a9bdb78bfce7466b5b673fbf9edaa3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#af0a9bdb78bfce7466b5b673fbf9edaa3">invert_permutation</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">const</a> std::array&lt; <a class="el" href="class_storm_1_1_index.html">Index</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Size</a> &gt; &amp;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm</a>) <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">noexcept</a></td></tr>
+<tr class="memdesc:af0a9bdb78bfce7466b5b673fbf9edaa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invert the permutation. Complexity is linear.  <br /></td></tr>
+<tr class="separator:af0a9bdb78bfce7466b5b673fbf9edaa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a048aaac87f02dfd5c198f62a67c2e61f" id="r_a048aaac87f02dfd5c198f62a67c2e61f"><td class="memTemplParams" colspan="2">template&lt;std::random_access_iterator PermutationIterator, std::sentinel_for&lt; PermutationIterator &gt; PermutationSentinel, std::invocable&lt; std::iter_value_t&lt; PermutationIterator &gt;, std::iter_value_t&lt; PermutationIterator &gt; &gt; SwapFunc&gt; <br />
-requires std::permutable&lt;PermutationIterator&gt;</td></tr>
-<tr class="memitem:a048aaac87f02dfd5c198f62a67c2e61f"><td class="memTemplItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a048aaac87f02dfd5c198f62a67c2e61f">permute_inplace</a> (PermutationIterator perm_iterator, PermutationSentinel perm_sentinel, SwapFunc swap_func)</td></tr>
+<tr class="memitem:a048aaac87f02dfd5c198f62a67c2e61f" id="r_a048aaac87f02dfd5c198f62a67c2e61f"><td class="memTemplParams" colspan="2">template&lt;std::random_access_iterator PermutationIterator, std::sentinel_for&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; PermutationSentinel, std::invocable&lt; std::iter_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt;, std::iter_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; &gt; SwapFunc&gt; <br />
+requires std::permutable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>&gt;</td></tr>
+<tr class="memitem:a048aaac87f02dfd5c198f62a67c2e61f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a048aaac87f02dfd5c198f62a67c2e61f">permute_inplace</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_iterator</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationSentinel</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_sentinel</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">SwapFunc</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">swap_func</a>)</td></tr>
 <tr class="memdesc:a048aaac87f02dfd5c198f62a67c2e61f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply the permutation inplace. Complexity is linear.  <br /></td></tr>
 <tr class="separator:a048aaac87f02dfd5c198f62a67c2e61f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14dc6779b28c9c15eda81322bc3d61dc" id="r_a14dc6779b28c9c15eda81322bc3d61dc"><td class="memTemplParams" colspan="2">template&lt;std::ranges::random_access_range PermutationRange, std::invocable&lt; std::ranges::range_value_t&lt; PermutationRange &gt;, std::ranges::range_value_t&lt; PermutationRange &gt; &gt; SwapFunc&gt; <br />
-requires std::permutable&lt;std::ranges::iterator_t&lt;PermutationRange&gt;&gt;</td></tr>
-<tr class="memitem:a14dc6779b28c9c15eda81322bc3d61dc"><td class="memTemplItemLeft" align="right" valign="top">constexpr void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a14dc6779b28c9c15eda81322bc3d61dc">permute_inplace</a> (PermutationRange &amp;&amp;perm_range, SwapFunc swap_func)</td></tr>
+<tr class="memitem:a14dc6779b28c9c15eda81322bc3d61dc" id="r_a14dc6779b28c9c15eda81322bc3d61dc"><td class="memTemplParams" colspan="2">template&lt;std::ranges::random_access_range PermutationRange, std::invocable&lt; std::ranges::range_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt;, std::ranges::range_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt; &gt; SwapFunc&gt; <br />
+requires std::permutable&lt;std::ranges::iterator_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a>&gt;&gt;</td></tr>
+<tr class="memitem:a14dc6779b28c9c15eda81322bc3d61dc"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_storm_1_1permutations.html#a14dc6779b28c9c15eda81322bc3d61dc">permute_inplace</a> (<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">perm_range</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">SwapFunc</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">swap_func</a>)</td></tr>
 <tr class="memdesc:a14dc6779b28c9c15eda81322bc3d61dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Apply the permutation inplace. Complexity is linear.  <br /></td></tr>
 <tr class="separator:a14dc6779b28c9c15eda81322bc3d61dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Permutation utilities. </p>
-<p>Permutation can be used as a mapping from the permuted to the unpermuted indices of a collection. Common usage pattern: </p><div class="fragment"><div class="line">std::vector&lt;T&gt; values = {...};</div>
-<div class="line">std::vector&lt;T&gt; permuted_values(values.size());</div>
-<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a> = 0; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a> &lt; permuted_values.size(); ++<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) {</div>
-<div class="line">  permuted_values[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>] = values[permutation[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>]];</div>
+<p>Permutation can be used as a mapping from the permuted to the unpermuted indices of a collection. Common usage pattern: </p><div class="fragment"><div class="line">std::vector&lt;T&gt; <a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a> = {...};</div>
+<div class="line">std::vector&lt;T&gt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permuted_values</a>(<a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a>.size());</div>
+<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a> = 0; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a> &lt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permuted_values</a>.size(); ++<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) {</div>
+<div class="line">  <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permuted_values</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>] = <a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permutation</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>]];</div>
 <div class="line">}</div>
+<div class="ttc" id="anamespace_storm_html_a8e28667e5fc11374be9acc98bafe05b2"><div class="ttname"><a href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">Storm::values</a></div><div class="ttdeci">constexpr auto values(Shape shape, Elem elem) noexcept</div><div class="ttdoc">Build a constant matrix with shape shape filled with elements equal to elem.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_builder_8hpp_source.html#l00096">MatrixBuilder.hpp:96</a></div></div>
 <div class="ttc" id="anamespace_storm_html_ace2929c1a67d57e4fbb0188bb14c6dc7"><div class="ttname"><a href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Storm::i</a></div><div class="ttdeci">constexpr complex_t i</div><div class="ttdoc">.</div><div class="ttdef"><b>Definition</b> <a href="_math_utils_8hpp_source.html#l00086">MathUtils.hpp:86</a></div></div>
-</div><!-- fragment --><p>While the common usage pattern for the inverse permutations: </p><div class="fragment"><div class="line">std::vector&lt;T&gt; values = {...};</div>
-<div class="line">std::vector&lt;T&gt; permuted_values(values.size());</div>
-<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> j = 0; j &lt; values.size(); ++j) {</div>
-<div class="line">  permuted_values[inverse_permutation[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>]] = values[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>];</div>
+</div><!-- fragment --><p>While the common usage pattern for the inverse permutations: </p><div class="fragment"><div class="line">std::vector&lt;T&gt; <a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a> = {...};</div>
+<div class="line">std::vector&lt;T&gt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permuted_values</a>(<a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a>.size());</div>
+<div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> j = 0; j &lt; <a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a>.size(); ++j) {</div>
+<div class="line">  <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">permuted_values</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">inverse_permutation</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>]] = <a class="code hl_function" href="namespace_storm.html#a8e28667e5fc11374be9acc98bafe05b2">values</a>[<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>];</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a60c3a577325a95338196165f499b2593" name="a60c3a577325a95338196165f499b2593"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a60c3a577325a95338196165f499b2593">&#9670;&#160;</a></span>invert_permutation() <span class="overload">[1/2]</span></h2>
+<a id="af0a9bdb78bfce7466b5b673fbf9edaa3" name="af0a9bdb78bfce7466b5b673fbf9edaa3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0a9bdb78bfce7466b5b673fbf9edaa3">&#9670;&#160;</a></span>invert_permutation() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::input_iterator PermutationIterator, std::sentinel_for&lt; PermutationIterator &gt; PermutationSentinel, std::random_access_iterator InversePermutationIterator&gt; <br />
-requires std::indirectly_copyable&lt;PermutationIterator, InversePermutationIterator&gt;</div>
+template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="class_storm_1_1_index.html">Index</a> , <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> Size&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr void Storm::permutations::invert_permutation </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">auto</a> Storm::permutations::invert_permutation </td>
           <td>(</td>
-          <td class="paramtype">PermutationIterator&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">const</a> std::array&lt; <a class="el" href="class_storm_1_1_index.html">Index</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Size</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>perm</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Invert the permutation. Complexity is linear. </p>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000038">Todo:</a></b></dt><dd><a class="el" href="class_storm_1_1_add.html" title="Add function.">Add</a> contrains!</dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00099">99</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a60c3a577325a95338196165f499b2593" name="a60c3a577325a95338196165f499b2593"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60c3a577325a95338196165f499b2593">&#9670;&#160;</a></span>invert_permutation() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;std::input_iterator PermutationIterator, std::sentinel_for&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; PermutationSentinel, std::random_access_iterator InversePermutationIterator&gt; <br />
+requires std::indirectly_copyable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&gt;</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a> Storm::permutations::invert_permutation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>&#160;</td>
           <td class="paramname"><em>perm_iterator</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PermutationSentinel&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationSentinel</a>&#160;</td>
           <td class="paramname"><em>perm_sentinel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InversePermutationIterator&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&#160;</td>
           <td class="paramname"><em>iperm_iterator</em>&#160;</td>
         </tr>
         <tr>
@@ -239,34 +283,34 @@ requires std::indirectly_copyable&lt;PermutationIterator, InversePermutationIter
 </div><div class="memdoc">
 
 <p>Invert the permutation. Complexity is linear. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000032">Todo:</a></b></dt><dd><a class="el" href="class_storm_1_1_add.html" title="Add function.">Add</a> contrains!</dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000038">Todo:</a></b></dt><dd><a class="el" href="class_storm_1_1_add.html" title="Add function.">Add</a> contrains!</dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00059">59</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00077">77</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
 
 </div>
 </div>
 <a id="ac4090ec9a88fdfece8f215ddd11aba70" name="ac4090ec9a88fdfece8f215ddd11aba70"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac4090ec9a88fdfece8f215ddd11aba70">&#9670;&#160;</a></span>invert_permutation() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4090ec9a88fdfece8f215ddd11aba70">&#9670;&#160;</a></span>invert_permutation() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;std::ranges::input_range PermutationRange, std::random_access_iterator InversePermutationIterator&gt; <br />
-requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;PermutationRange&gt;, InversePermutationIterator&gt;</div>
+requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a>&gt;, <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr void Storm::permutations::invert_permutation </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a> Storm::permutations::invert_permutation </td>
           <td>(</td>
-          <td class="paramtype">PermutationRange &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;&#160;</td>
           <td class="paramname"><em>perm_range</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">InversePermutationIterator&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">InversePermutationIterator</a>&#160;</td>
           <td class="paramname"><em>iperm_iterator</em>&#160;</td>
         </tr>
         <tr>
@@ -283,9 +327,41 @@ requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;PermutationRange
 </div><div class="memdoc">
 
 <p>Invert the permutation. Complexity is linear. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000032">Todo:</a></b></dt><dd><a class="el" href="class_storm_1_1_add.html" title="Add function.">Add</a> contrains!</dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000038">Todo:</a></b></dt><dd><a class="el" href="class_storm_1_1_add.html" title="Add function.">Add</a> contrains!</dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00074">74</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00092">92</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a17dbd574bb06fad7b8a6e5f568925e71" name="a17dbd574bb06fad7b8a6e5f568925e71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17dbd574bb06fad7b8a6e5f568925e71">&#9670;&#160;</a></span>is_permutation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">class</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">bool</a> Storm::permutations::is_permutation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>perm_range</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check is specified range is a permutation. </p>
+
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00056">56</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
 
 </div>
 </div>
@@ -295,28 +371,28 @@ requires std::indirectly_copyable&lt;std::ranges::iterator_t&lt;PermutationRange
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::random_access_iterator PermutationIterator, std::sentinel_for&lt; PermutationIterator &gt; PermutationSentinel, std::invocable&lt; std::iter_value_t&lt; PermutationIterator &gt;, std::iter_value_t&lt; PermutationIterator &gt; &gt; SwapFunc&gt; <br />
-requires std::permutable&lt;PermutationIterator&gt;</div>
+template&lt;std::random_access_iterator PermutationIterator, std::sentinel_for&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; PermutationSentinel, std::invocable&lt; std::iter_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt;, std::iter_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a> &gt; &gt; SwapFunc&gt; <br />
+requires std::permutable&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr void Storm::permutations::permute_inplace </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a> Storm::permutations::permute_inplace </td>
           <td>(</td>
-          <td class="paramtype">PermutationIterator&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationIterator</a>&#160;</td>
           <td class="paramname"><em>perm_iterator</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">PermutationSentinel&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationSentinel</a>&#160;</td>
           <td class="paramname"><em>perm_sentinel</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">SwapFunc&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">SwapFunc</a>&#160;</td>
           <td class="paramname"><em>swap_func</em>&#160;</td>
         </tr>
         <tr>
@@ -334,7 +410,7 @@ requires std::permutable&lt;PermutationIterator&gt;</div>
 
 <p>Apply the permutation inplace. Complexity is linear. </p>
 
-<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00089">89</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00114">114</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
 
 </div>
 </div>
@@ -344,22 +420,22 @@ requires std::permutable&lt;PermutationIterator&gt;</div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::ranges::random_access_range PermutationRange, std::invocable&lt; std::ranges::range_value_t&lt; PermutationRange &gt;, std::ranges::range_value_t&lt; PermutationRange &gt; &gt; SwapFunc&gt; <br />
-requires std::permutable&lt;std::ranges::iterator_t&lt;PermutationRange&gt;&gt;</div>
+template&lt;std::ranges::random_access_range PermutationRange, std::invocable&lt; std::ranges::range_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt;, std::ranges::range_value_t&lt; <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &gt; &gt; SwapFunc&gt; <br />
+requires std::permutable&lt;std::ranges::iterator_t&lt;<a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a>&gt;&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr void Storm::permutations::permute_inplace </td>
+          <td class="memname"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">constexpr</a> <a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">void</a> Storm::permutations::permute_inplace </td>
           <td>(</td>
-          <td class="paramtype">PermutationRange &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">PermutationRange</a> &amp;&amp;&#160;</td>
           <td class="paramname"><em>perm_range</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">SwapFunc&#160;</td>
+          <td class="paramtype"><a class="el" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">SwapFunc</a>&#160;</td>
           <td class="paramname"><em>swap_func</em>&#160;</td>
         </tr>
         <tr>
@@ -377,7 +453,7 @@ requires std::permutable&lt;std::ranges::iterator_t&lt;PermutationRange&gt;&gt;<
 
 <p>Apply the permutation inplace. Complexity is linear. </p>
 
-<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00118">118</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_permutations_8hpp_source.html#l00143">143</a> of file <a class="el" href="_permutations_8hpp_source.html">Permutations.hpp</a>.</p>
 
 </div>
 </div>

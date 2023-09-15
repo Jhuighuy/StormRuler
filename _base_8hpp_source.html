@@ -193,23 +193,54 @@ $(document).ready(function(){initNavTree('_base_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment">// -----------------------------------------------------------------------------</span></div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">namespace </span>_detail {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">namespace </span>detail {</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> _in_range(<span class="keyword">auto</span> t, <span class="keyword">auto</span> min, <span class="keyword">auto</span> max) {</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">return</span> min &lt;= t &amp;&amp; t &lt;= max;</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  }</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> _one_of(<span class="keyword">auto</span> x, <span class="keyword">auto</span>... vals) {</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordflow">return</span> ((x == vals) || ...);</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  }</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="comment">// ---------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="comment">// To be used inside `static_asserts`.</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> always_false = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <span class="comment">// ---------------------------------------------------------------------------</span></div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>} <span class="comment">// namespace _detail</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="comment">// -----------------------------------------------------------------------------</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>} <span class="comment">// namespace Storm</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>  <span class="comment">// Index-like object.</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>  <span class="keyword">template</span>&lt;<span class="keyword">class</span> Index&gt;</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="concept_storm_1_1detail_1_1index__like.html">   48</a></span>  <span class="keyword">concept </span><a class="code hl_concept" href="concept_storm_1_1detail_1_1index__like.html">index_like</a> = (!std::is_reference_v&lt;Index&gt;) &amp;&amp;(</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>      std::convertible_to&lt;Index, size_t&gt; &amp;&amp;</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>      !std::floating_point&lt;Index&gt;) &amp;&amp;std::copyable&lt;Index&gt;;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="comment">// Multidimensional `for` statement.</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  <span class="keyword">template</span>&lt;<span class="keyword">class </span>Func, <a class="code hl_concept" href="concept_storm_1_1detail_1_1index__like.html">index_like</a> FirstExtent, <a class="code hl_concept" href="concept_storm_1_1detail_1_1index__like.html">index_like</a>... RestExtents&gt;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keyword">requires</span> std::regular_invocable&lt;Func, FirstExtent, RestExtents...&gt;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> mdfor(Func&amp;&amp; func, FirstExtent first_extent,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                       RestExtents... rest_extents) {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a> = 0; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i &lt; static_cast&lt;size_t&gt;</a>(<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">first_extent</a>); ++<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>      <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (<span class="keyword">sizeof</span>...(RestExtents) == 0) <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">func</a>(<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>      <span class="keywordflow">else</span> mdfor([&amp;](<span class="keyword">auto</span>... <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">rest</a>) { <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">func</a>(<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>, <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">rest</a>...); }, <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">rest_extents</a>...);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    }</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  <span class="comment">// ---------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>} <span class="comment">// namespace detail</span></div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment">// -----------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="keyword">namespace </span>_detail {</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  <span class="keyword">constexpr</span> <span class="keywordtype">bool</span> _in_range(<span class="keyword">auto</span> t, <span class="keyword">auto</span> min, <span class="keyword">auto</span> max) {</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">return</span> min &lt;= t &amp;&amp; t &lt;= max;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>} <span class="comment">// namespace _detail</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment">// -----------------------------------------------------------------------------</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>} <span class="comment">// namespace Storm</span></div>
 </div>
+<div class="ttc" id="aconcept_storm_1_1detail_1_1index__like_html"><div class="ttname"><a href="concept_storm_1_1detail_1_1index__like.html">Storm::detail::index_like</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00048">Base.hpp:48</a></div></div>
 <div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00032">Base.hpp:32</a></div></div>
+<div class="ttc" id="anamespace_storm_html_ace2929c1a67d57e4fbb0188bb14c6dc7"><div class="ttname"><a href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Storm::i</a></div><div class="ttdeci">constexpr complex_t i</div><div class="ttdoc">.</div><div class="ttdef"><b>Definition</b> <a href="_math_utils_8hpp_source.html#l00086">MathUtils.hpp:86</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

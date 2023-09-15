@@ -27,6 +27,8 @@
 - [ ] `mold` with `find_package`.
 - [ ] `make_config_defaults.cmake` in `CMake`.
 - [ ] `scripts/test.py` script and `CTest` integration.
+- [ ] Configure `nanobench` with `vcpkg` and `CMake`.
+- [ ] `scripts/benchmark.py` script.
 - [x] `scripts/cloc.py` in Python.
 
 ### Linting

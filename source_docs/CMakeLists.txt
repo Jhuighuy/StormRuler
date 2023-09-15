@@ -120,15 +120,12 @@ set(DOXYGEN_HTML_EXTRA_STYLESHEET
 # ------------------------------------------------------------------------------
 
 # Add the C++ sources and Markdown pages.
-file(GLOB_RECURSE MD_SOURCES ./*.md)
-list(APPEND StormRuler_Doxygen_INPUTS ${MD_SOURCES})
-file(GLOB_RECURSE CXX_SOURCES ../source/*.hpp)
-list(APPEND StormRuler_Doxygen_INPUTS ${CXX_SOURCES})
+file(GLOB_RECURSE SOURCES "./*.md" "../source/*.hpp" "../source/*.cpp")
 
 # Add the Doxygen target.
 message(STATUS "| Adding the Doxygen documentation..")
 doxygen_add_docs(StormRuler_Doxygen ALL
-                 USE_STAMP_FILE ${StormRuler_Doxygen_INPUTS}
+                 USE_STAMP_FILE ${SOURCES}
                  COMMENT "Generate Doxygen documentation")
 
 # ------------------------------------------------------------------------------

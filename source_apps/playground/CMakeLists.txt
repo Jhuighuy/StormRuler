@@ -14,9 +14,9 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 # ------------------------------------------------------------------------------
 
@@ -24,7 +24,13 @@
 file(GLOB CXX_SOURCES "./*.cpp")
 add_executable(StormRuler_Playground ${CXX_SOURCES})
 
+# ------------------------------------------------------------------------------
+
 # Link with the main library.
-target_link_libraries(StormRuler_Playground StormRuler)
+target_link_libraries(StormRuler_Playground PRIVATE StormRuler::StormRuler)
+
+# Something for Visual Studio.
 set_target_properties(StormRuler_Playground PROPERTIES
                       VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+# ------------------------------------------------------------------------------

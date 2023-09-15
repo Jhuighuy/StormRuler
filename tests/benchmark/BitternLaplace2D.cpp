@@ -292,7 +292,7 @@ public:
 
 #if STORM_BENCH_NUMPY_ENABLED
 #  include <pybind11/embed.h>
-#  if STORM_COMPILER_GCC_
+#  if STORM_COMPILER_GCC
 #    pragma GCC visibility push(hidden)
 #  endif
 
@@ -347,7 +347,7 @@ public:
 
 } // namespace Storm::Benchmarks
 
-#  if STORM_COMPILER_GCC_
+#  if STORM_COMPILER_GCC
 #    pragma GCC visibility pop
 #  endif
 #endif // if STORM_BENCH_NUMPY_ENABLED

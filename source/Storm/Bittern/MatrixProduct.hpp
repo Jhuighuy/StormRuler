@@ -22,16 +22,19 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Matrix.hpp>
-#include <Storm/Bittern/MatrixView.hpp>
 #include <Storm/Crow/MathUtils.hpp>
 
+#include <Storm/Bittern/MatrixView.hpp>
+#include <Storm/Bittern/Shape.hpp>
+
+#include <concepts>
 #include <utility>
 
 namespace Storm {
 
 // -----------------------------------------------------------------------------
 
+#if 0
 /// @brief Matrix product view.
 template<matrix_view Matrix1, matrix_view Matrix2>
 class MatrixProductView final :
@@ -80,55 +83,58 @@ constexpr auto matmul(Matrix1&& mat1, Matrix2&& mat2) {
   return MatrixProductView(std::forward<Matrix1>(mat1),
                            std::forward<Matrix2>(mat2));
 }
+#endif
 
 // -----------------------------------------------------------------------------
 
-/// @brief Cross product of the 3x1 matrices view.
-template<matrix_view Matrix1, matrix_view Matrix2>
-class CrossProductView :
-    MatrixViewInterface<CrossProductView<Matrix1, Matrix2>> {
+/// @brief 3D Vector cross product view.
+template<matrix_view_r<1> Vector1, matrix_view_r<1> Vector2>
+class CrossProductView final :
+    public MatrixViewInterface<CrossProductView<Vector1, Vector2>> {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS Matrix1 mat1_;
-  STORM_NO_UNIQUE_ADDRESS Matrix2 mat2_;
+  STORM_NO_UNIQUE_ADDRESS Vector1 vec1_;
+  STORM_NO_UNIQUE_ADDRESS Vector2 vec2_;
 
 public:
 
-  /// @brief Construct a matrix product view.
-  constexpr explicit CrossProductView(Matrix1 mat1, Matrix2 mat2)
-      : mat1_{std::move(mat1)}, mat2_{std::move(mat2)} {
-    STORM_ASSERT((mat1_.shape() == shape() && mat2_.shape() == shape()),
-                 "Matrices of shape 3x1 are expected!");
+  /// @brief Construct a cross product view.
+  constexpr explicit CrossProductView(Vector1 vec1, Vector2 vec2)
+      : vec1_{std::move(vec1)}, vec2_{std::move(vec2)} {
+    STORM_ASSERT(vec1_.shape() == shape() && vec2_.shape() == shape(),
+                 "3D vectors are expected!");
   }
 
-  /// @brief Get the matrix shape.
-  constexpr static auto shape() noexcept {
-    return std::array{3_sz, 1_sz};
+  /// @brief Get the vector shape.
+  constexpr static auto shape() {
+    return fixed_shape_t<3>{};
   }
 
-  /// @brief Get the matrix element at @p indices.
-  constexpr auto operator()(size_t row_index, size_t col_index) const noexcept {
-    STORM_ASSERT(in_range(shape(), row_index, col_index),
-                 "Indices are out of range!");
-    switch (row_index) {
-      case 0: return mat1_(1, 0) * mat2_(2, 0) - mat1_(2, 0) * mat2_(1, 0);
-      case 1: return mat1_(2, 0) * mat2_(0, 0) - mat1_(0, 0) * mat2_(2, 0);
-      case 2: return mat1_(0, 0) * mat2_(1, 0) - mat1_(1, 0) * mat2_(0, 0);
+  /// @brief Get the vector element at @p index.
+  template<class Index>
+    requires compatible_matrix_indices_v<CrossProductView, Index> &&
+             std::convertible_to<Index, size_t>
+  constexpr auto operator()(Index index) const {
+    STORM_ASSERT(in_range(shape(), index), "Index is out of range!");
+    switch (static_cast<size_t>(index)) {
+      case 0: return vec1_(1_sz) * vec2_(2_sz) - vec1_(2_sz) * vec2_(1_sz);
+      case 1: return vec1_(2_sz) * vec2_(0_sz) - vec1_(0_sz) * vec2_(2_sz);
+      case 2: return vec1_(0_sz) * vec2_(1_sz) - vec1_(1_sz) * vec2_(0_sz);
       default: STORM_UNREACHABLE();
     }
   }
 
 }; // class CrossProductView
 
-template<class Matrix1, class Matrix2>
-CrossProductView(Matrix1&&, Matrix2&&)
-    -> CrossProductView<matrix_view_t<Matrix1>, matrix_view_t<Matrix2>>;
+template<class Vector1, class Vector2>
+CrossProductView(Vector1&&, Vector2&&)
+    -> CrossProductView<matrix_view_t<Vector1>, matrix_view_t<Vector2>>;
 
-/// @brief Cross product of the 3x1 matrices @p mat1 and @p mat2.
-template<viewable_matrix Matrix1, viewable_matrix Matrix2>
-constexpr auto cross_product(Matrix1&& mat1, Matrix2&& mat2) {
-  return CrossProductView(std::forward<Matrix1>(mat1),
-                          std::forward<Matrix2>(mat2));
+/// @brief Cross product of the 3D vectors @p vec1 and @p vec2.
+template<viewable_matrix_r<1> Vector1, viewable_matrix_r<1> Vector2>
+constexpr auto cross_product(Vector1&& vec1, Vector2&& vec2) noexcept {
+  return CrossProductView(std::forward<Vector1>(vec1),
+                          std::forward<Vector2>(vec2));
 }
 
 // -----------------------------------------------------------------------------

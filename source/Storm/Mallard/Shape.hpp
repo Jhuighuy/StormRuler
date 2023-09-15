@@ -254,7 +254,7 @@ constexpr mesh_vec_t<Mesh> normal(const Seg& seg, const Mesh& mesh) noexcept {
   const auto d = normalize(v2 - v1);
   /// @todo Is sign here correct?
   /// @todo This looks incomplete:
-  return -mesh_vec_t<Mesh>{-d(1, 0), d(0, 0)};
+  return -mesh_vec_t<Mesh>{-d(1), d(0)};
 }
 
 // -----------------------------------------------------------------------------
@@ -317,7 +317,7 @@ constexpr real_t volume(const Triangle& tri, const Mesh& mesh) noexcept {
     // return glm::abs(glm::determinant(d)) / 2.0;
     /// @todo This looks incomplete:
     auto d0 = v2 - v1, d1 = v3 - v1;
-    return 0.5 * abs(d0(0, 0) * d1(1, 0) - d0(1, 0) * d1(0, 0));
+    return 0.5 * abs(d0(0) * d1(1) - d0(1) * d1(0));
   } else {
     return length(cross_product(v2 - v1, v3 - v1)) / 2.0;
   }

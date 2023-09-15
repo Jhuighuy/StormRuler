@@ -135,6 +135,21 @@ public:
 
 }; // class Compose
 
+// -----------------------------------------------------------------------------
+
+/// @brief Function that voids it's arguments.
+class ToVoid {
+public:
+
+  constexpr void operator()(auto&&...) const noexcept {
+    // Empty.
+  }
+
+}; // class ToVoid
+
+// Voids the arguments.
+inline constexpr ToVoid to_void{};
+
 /// @brief Constant function.
 template<class Value>
   requires std::is_object_v<Value>

@@ -22,9 +22,10 @@
 
 #include <Storm/Base.hpp>
 
+#include <Storm/Crow/ConceptUtils.hpp>
 #include <Storm/Utils/Index.hpp>
 
-#include <Storm/Crow/MathUtils.hpp>
+#include <Storm/Bittern/Shape.hpp>
 
 #include <concepts>
 #include <tuple>
@@ -35,27 +36,18 @@ namespace Storm {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Shape.
-template<size_t Rank>
-using shape_t = std::array<size_t, Rank>;
-
-/// @brief Matrix shape: instantiation of shape_t.
-template<class MatrixShape>
-concept matrix_shape =
-    requires { std::tuple_size_v<MatrixShape>; } &&
-    (std::tuple_size_v<MatrixShape> != 0) &&
-    std::same_as<MatrixShape, shape_t<std::tuple_size_v<MatrixShape>>>;
-
 /// @brief Matrix: has shape and subscripts.
 template<class Matrix>
 concept matrix = //
     requires(Matrix& mat) {
-      { mat.shape() } -> matrix_shape;
-      { std::apply(mat, mat.shape()) } /*-> referenceable */;
+      { mat.shape() } -> shape;
+      { std::apply(mat, mat.shape()) } -> can_reference;
     };
 
+/// @brief Scalar: copyable object that is not a matrix.
 template<class Scalar>
-concept scalar = !matrix<Scalar>;
+concept scalar =
+    std::is_object_v<Scalar> && std::copyable<Scalar> && (!matrix<Scalar>);
 
 // -----------------------------------------------------------------------------
 
@@ -65,63 +57,65 @@ using matrix_shape_t = decltype(std::declval<Matrix>().shape());
 
 /// @brief Matrix rank value.
 template<class Matrix>
-inline constexpr size_t matrix_rank_v =
-    std::tuple_size_v<matrix_shape_t<Matrix>>;
+inline constexpr size_t matrix_rank_v = shape_rank_v<matrix_shape_t<Matrix>>;
 
 /// @brief Matrix of a specified rank.
 template<class Matrix, size_t Rank>
 concept matrix_r = matrix<Matrix> && (matrix_rank_v<Matrix> == Rank);
 
+/// @brief Check for matrices to be of the same ranks.
+template<matrix Matrix, matrix... RestMatrices>
+inline constexpr bool compatible_matrices_v =
+    ((matrix_rank_v<Matrix> == matrix_rank_v<RestMatrices>) &&...);
+
+template<class Matrix, index... Indices>
+inline constexpr bool compatible_matrix_indices_v =
+    (matrix_rank_v<Matrix> == sizeof...(Indices)) &&
+    (detail::index_like<Indices> && ...);
+
+template<matrix Matrix, size_t... Axes>
+inline constexpr bool compatible_matrix_axes_v =
+    ((matrix_rank_v<Matrix> > Axes) && ...);
+
 /// @brief Number of the matrix rows.
 template<matrix Matrix>
-constexpr size_t num_rows(Matrix&& mat) noexcept {
-  return mat.shape()[0];
+  requires (matrix_rank_v<Matrix> >= 1)
+constexpr size_t num_rows(Matrix&& mat) {
+  return std::get<0>(mat.shape());
 }
 
 /// @brief Number of the matrix columns.
 template<matrix Matrix>
   requires (matrix_rank_v<Matrix> >= 2)
-constexpr size_t num_cols(Matrix&& mat) noexcept {
-  return mat.shape()[1];
+constexpr size_t num_cols(Matrix&& mat) {
+  return std::get<1>(mat.shape());
 }
 
 // -----------------------------------------------------------------------------
 
-template<matrix Matrix, matrix... RestMatrices>
-inline constexpr bool compatible_matrices_v =
-    ((matrix_rank_v<Matrix> == matrix_rank_v<RestMatrices>) &&...);
-
-template<class Matrix, class... Indices>
-inline constexpr bool compatible_matrix_indices_v =
-    matrix_rank_v<Matrix> == sizeof...(Indices);
-
-/// @brief Check if all indices are in range.
-template<size_t Rank, index... Indices>
-  requires (Rank == sizeof...(Indices))
-constexpr bool in_range(const shape_t<Rank>&, Indices...) {
-  return true; // to be implemented.
-}
-
-// -----------------------------------------------------------------------------
-
-/// @brief Matrix element type, as is.
+/// @brief Matrix element reference type.
 template<matrix Matrix>
-using matrix_element_decltype_t =
-    decltype(std::declval<Matrix>()(size_t{}, size_t{}));
+using matrix_element_ref_t = decltype( //
+    std::apply(std::declval<Matrix&>(), std::declval<Matrix>().shape()));
 
 /// @brief Matrix element type.
 template<matrix Matrix>
-using matrix_element_t = std::remove_cvref_t<matrix_element_decltype_t<Matrix>>;
+using matrix_element_t = std::remove_cvref_t<matrix_element_ref_t<Matrix>>;
 
 /// @brief Matrix with assignable elements.
 template<class Matrix>
 concept output_matrix =
-    matrix<Matrix> && /// @todo Check if reference is not const!
-    std::is_lvalue_reference_v<matrix_element_decltype_t<Matrix>>;
+    matrix<Matrix> &&
+    std::same_as<matrix_element_ref_t<Matrix>,
+                 std::add_lvalue_reference_t<matrix_element_t<Matrix>>>;
 
-/// @brief Matrix element reference type.
-template<output_matrix Matrix>
-using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
+/// @brief Matrix elements are assignable from the elements of another matrix.
+template<class OutMatrix, class Matrix>
+concept assignable_matrix =
+    output_matrix<OutMatrix> && matrix<Matrix> &&
+    compatible_matrices_v<OutMatrix, Matrix> &&
+    std::assignable_from<matrix_element_ref_t<OutMatrix>,
+                         matrix_element_t<Matrix>>;
 
 // -----------------------------------------------------------------------------
 
@@ -130,8 +124,9 @@ using matrix_element_ref_t = matrix_element_decltype_t<Matrix>;
 #include <Storm/Bittern/MatrixAlgorithms.hpp>
 #include <Storm/Bittern/MatrixTarget.hpp>
 
-// #include <Storm/Bittern/MatrixGenerator.hpp>
+#include <Storm/Bittern/MatrixBuilder.hpp>
+#include <Storm/Bittern/MatrixDense.hpp>
+#include <Storm/Bittern/MatrixManipulation.hpp>
 #include <Storm/Bittern/MatrixMath.hpp>
+#include <Storm/Bittern/MatrixPart.hpp>
 #include <Storm/Bittern/MatrixProduct.hpp>
-#include <Storm/Bittern/MatrixTranspose.hpp>
-// #include <Storm/Bittern/MatrixSlicing.hpp>

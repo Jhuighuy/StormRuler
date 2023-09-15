@@ -47,12 +47,26 @@ constexpr size_t operator""_sz(unsigned long long arg) noexcept { // NOLINT
 
 /// @brief size_t constant.
 template<size_t Arg>
-using size_t_constant = std::integral_constant<size_t, Arg>;
+using fixed_size_t = std::integral_constant<size_t, Arg>;
 
 /// @brief real_t literal.
 constexpr real_t operator""_dp(long double arg) noexcept {
   return static_cast<real_t>(arg);
 }
+
+// -----------------------------------------------------------------------------
+
+/// @brief Universal placeholder type.
+class Underscore final {
+public:
+
+  /// @brief Construct the placeholder.
+  explicit Underscore() = default;
+
+}; // class Underscore
+
+/// @brief Universal placeholder.
+inline constexpr Underscore _{};
 
 // -----------------------------------------------------------------------------
 

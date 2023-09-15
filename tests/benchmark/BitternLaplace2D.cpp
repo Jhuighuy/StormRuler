@@ -21,7 +21,7 @@
 #include "../unit/_UnitTests.hpp"
 #include "./_Benchmarks.hpp"
 
-#include <Storm/Base.hpp> /// @todo some more relevent include file
+#include <Storm/Bittern/MatrixDense.hpp>
 #include <Storm/Utils/Meta.hpp>
 
 #include <doctest/doctest.h>
@@ -29,6 +29,7 @@
 
 #include <cmath>
 #include <numbers>
+#include <ranges>
 #include <type_traits>
 
 // Based on:
@@ -39,7 +40,44 @@
 
 namespace Storm::Benchmarks {
 
-/// @todo Our implementation!
+// Laplace2D benchmark implementation (Bittern).
+template<class T, size_t N, size_t NumIterations>
+class Laplace2D_Bittern final {
+public:
+
+  [[nodiscard]] T operator()() const noexcept {
+    using std::views::iota;
+    static constexpr T pi = std::numbers::pi_v<T>;
+
+    const FixedMatrix<T, N> x = linspace(T{0.0}, pi, N);
+    FixedMatrix<T, N, N> u = zeroes<T>(N, N);
+    copy_elements(at(u, _, 0), sin(x));
+    copy_elements(at(u, _, N - 1), sin(x) * exp(-pi));
+
+    T error;
+    for (size_t iteration = 0; iteration < NumIterations; iteration++) {
+      const FixedMatrix<T, N, N> u_old = u;
+      copy_elements( //
+          at(u, iota(1_sz, N - 1_sz), iota(1_sz, N - 1_sz)),
+          (T{4.0} * (at(u_old, iota(0_sz, N - 2_sz), iota(1_sz, N - 1_sz)) +
+                     at(u_old, iota(2_sz, N - 0_sz), iota(1_sz, N - 1_sz)) +
+                     at(u_old, iota(1_sz, N - 1_sz), iota(0_sz, N - 2_sz)) +
+                     at(u_old, iota(1_sz, N - 1_sz), iota(2_sz, N - 0_sz))) +
+           T{1.0} * (at(u_old, iota(0_sz, N - 2_sz), iota(0_sz, N - 2_sz)) +
+                     at(u_old, iota(0_sz, N - 2_sz), iota(2_sz, N - 0_sz)) +
+                     at(u_old, iota(2_sz, N - 0_sz), iota(0_sz, N - 2_sz)) +
+                     at(u_old, iota(2_sz, N - 0_sz), iota(2_sz, N - 0_sz)))) /
+              T{20.0} //
+      );
+
+      error = norm_2(u - u_old);
+      nanobench::doNotOptimizeAway(error);
+    }
+
+    return error;
+  }
+
+}; // class Laplace2D_Bittern
 
 } // namespace Storm::Benchmarks
 
@@ -333,8 +371,7 @@ TEST_CASE("Bittern/Laplace2D") {
       }
     };
 
-    /// @todo Our implementation!
-    static_cast<void>(run_impl);
+    run_impl(Laplace2D_Bittern<T, N, NumIterations>{}, "Bittern");
 
 #if STORM_BENCH_ARMADILLO_ENABLED
     run_impl(Laplace2D_Armadillo<T, N, NumIterations>{}, "Armadillo");

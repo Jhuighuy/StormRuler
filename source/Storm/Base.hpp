@@ -33,14 +33,43 @@ namespace Storm {
 
 // -----------------------------------------------------------------------------
 
+namespace detail {
+
+  // ---------------------------------------------------------------------------
+
+  // To be used inside `static_asserts`.
+  template<class>
+  inline constexpr bool always_false = false;
+
+  // ---------------------------------------------------------------------------
+
+  // Index-like object.
+  template<class Index>
+  concept index_like = (!std::is_reference_v<Index>) &&(
+      std::convertible_to<Index, size_t> &&
+      !std::floating_point<Index>) &&std::copyable<Index>;
+
+  // Multidimensional `for` statement.
+  template<class Func, index_like FirstExtent, index_like... RestExtents>
+    requires std::regular_invocable<Func, FirstExtent, RestExtents...>
+  constexpr void mdfor(Func&& func, FirstExtent first_extent,
+                       RestExtents... rest_extents) {
+    for (size_t i = 0; i < static_cast<size_t>(first_extent); ++i) {
+      if constexpr (sizeof...(RestExtents) == 0) func(i);
+      else mdfor([&](auto... rest) { func(i, rest...); }, rest_extents...);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+
+} // namespace detail
+
+// -----------------------------------------------------------------------------
+
 namespace _detail {
 
   constexpr bool _in_range(auto t, auto min, auto max) {
     return min <= t && t <= max;
-  }
-
-  constexpr bool _one_of(auto x, auto... vals) {
-    return ((x == vals) || ...);
   }
 
 } // namespace _detail

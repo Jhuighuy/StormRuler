@@ -18,46 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
-
-#include <Storm/Base.hpp>
+#include "./_UnitTests.hpp"
 
 #include <Storm/Bittern/MatrixDense.hpp>
 
-namespace Storm {
+#include <doctest/doctest.h>
+
+namespace Storm::UnitTests {
 
 // -----------------------------------------------------------------------------
 
-/// @brief Fixed-sized (small) matrix.
-template<class Elem, size_t NumRows, size_t NumCols>
-using Mat = FixedMatrix<Elem, NumRows, NumCols>;
+TEST_CASE("Bittern/CrossProduct") {
+  const DenseMatrix vec1{1.0_dp, 0.0_dp, 0.0_dp};
 
-/// @brief 2x2 matrix.
-template<class Elem>
-using Mat2x2 = Mat<Elem, 2, 2>;
+  SUBCASE("cross") {
+    const DenseMatrix vec2{0.0_dp, 1.0_dp, 0.0_dp};
+    const DenseMatrix vec3{0.0_dp, 0.0_dp, 1.0_dp};
 
-/// @brief 3x3 matrix.
-template<class Elem>
-using Mat3x3 = Mat<Elem, 3, 3>;
+    CHECK(all(cross_product(vec1, vec2) == vec3));
+    CHECK(all(cross_product(vec2, vec1) == -vec3));
+  }
 
-/// @brief 4x4 matrix.
-template<class Elem>
-using Mat4x4 = Mat<Elem, 4, 4>;
+  SUBCASE("cross-linear-dependent") {
+    CHECK(all(cross_product(2.0_dp * vec1, 3.0_dp * vec1) == zeroes(3_sz)));
+  }
+}
 
-/// @brief Fixed-sized (small) vector.
-template<class Elem, size_t NumRows>
-using Vec = FixedVector<Elem, NumRows>;
+// -----------------------------------------------------------------------------
 
-/// @brief 2D vector.
-template<class Elem>
-using Vec2D = Vec<Elem, 2>;
-
-/// @brief 3D vector.
-template<class Elem>
-using Vec3D = Vec<Elem, 3>;
-
-/// @brief 4D vector.
-template<class Elem>
-using Vec4D = Vec<Elem, 4>;
-
-} // namespace Storm
+} // namespace Storm::UnitTests

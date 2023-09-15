@@ -22,11 +22,10 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Crtp.hpp>
-
-#include <Storm/Bittern/Functions.hpp>
-#include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/ConceptUtils.hpp>
+#include <Storm/Crow/FunctionalUtils.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <limits>
 #include <ostream>
@@ -57,7 +56,7 @@ std::ostream& operator<<(std::ostream& out, const matrix auto& mat) {
 /// @{
 template<output_matrix OutMatrix, matrix Matrix>
 constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
-  STORM_ASSERT_(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
+  STORM_ASSERT(out_mat.shape() == mat.shape(), "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
       out_mat(row_index, col_index) = mat(row_index, col_index);
@@ -68,8 +67,8 @@ constexpr OutMatrix& assign(OutMatrix&& out_mat, Matrix&& mat) noexcept {
 template<output_matrix OutMatrix, class AssignFunc, matrix... Matrices>
 constexpr OutMatrix& assign(AssignFunc assign_func, //
                             OutMatrix&& out_mat, Matrices&&... mats) noexcept {
-  STORM_ASSERT_((out_mat.shape() == mats.shape()) && ...,
-                "Matrix shapes do not match!");
+  STORM_ASSERT((out_mat.shape() == mats.shape()) && ...,
+               "Matrix shapes do not match!");
   for (size_t row_index = 0; row_index < num_rows(out_mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(out_mat); ++col_index) {
       assign_func(out_mat(row_index, col_index), mats(row_index, col_index)...);
@@ -101,8 +100,7 @@ constexpr OutMatrix& fill(OutMatrix& out_mat, Scalar scal) {
 /// the uniformly-distributed random numbers.
 /// @note This is a sequential operation!
 template<output_matrix Matrix>
-  requires real_matrix<Matrix>
-STORM_CPP23_CONSTEXPR_ Matrix&
+STORM_CPP23_CONSTEXPR Matrix&
 fill_randomly(Matrix&& out_mat, //
               matrix_element_t<Matrix> min = 0,
               matrix_element_t<Matrix> max = 1) noexcept {
@@ -137,8 +135,8 @@ template<class Value, class ReduceFunc, class Func, //
   requires compatible_matrices_v<Matrix, RestMatrices...>
 constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
                       Matrix&& mat, RestMatrices&&... mats) noexcept {
-  STORM_ASSERT_((mat.shape() == mats.shape()) && ...,
-                "Matrix shapes doesn't match!");
+  STORM_ASSERT((mat.shape() == mats.shape()) && ...,
+               "Matrix shapes doesn't match!");
   for (size_t row_index = 0; row_index < num_rows(mat); ++row_index) {
     for (size_t col_index = 0; col_index < num_cols(mat); ++col_index) {
       init = reduce_func(
@@ -152,24 +150,24 @@ constexpr auto reduce(Value init, ReduceFunc reduce_func, Func func,
 // -----------------------------------------------------------------------------
 
 /// @brief Sum the matrix @p mat elements.
-template<real_or_complex_matrix Matrix>
+template<matrix Matrix>
 constexpr auto sum(Matrix&& mat) {
-  return reduce(matrix_element_t<Matrix>{0.0}, std::plus{},
+  return reduce(matrix_element_t<Matrix>{0.0}, Add{},
                 std::forward<Matrix>(mat));
 }
 
 // -----------------------------------------------------------------------------
 
 /// @brief Check if all the boolean matrix @p mat elements are true.
-template<bool_matrix Matrix>
+template<matrix Matrix>
 constexpr auto all(Matrix&& mat) {
-  return reduce(true, And{}, std::forward<Matrix>(mat));
+  return reduce(true, LogicalAnd{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Check if any of the boolean matrix @p mat elements is true.
-template<bool_matrix Matrix>
+template<matrix Matrix>
 constexpr auto any(Matrix&& mat) {
-  return reduce(false, Or{}, std::forward<Matrix>(mat));
+  return reduce(false, LogicalOr{}, std::forward<Matrix>(mat));
 }
 
 // -----------------------------------------------------------------------------
@@ -195,24 +193,20 @@ constexpr auto max_element(Matrix&& mat) {
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise matrix @p mat @f$ L_{1} @f$-norm.
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto norm_1(Matrix&& mat) {
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
-  static_assert(real_type<Result>,
-                "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, Abs{}, std::forward<Matrix>(mat));
 }
 
 /// @brief Element-wise matrix @p mat @f$ L_{2} @f$-norm.
 /// @{
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto norm_2_2(Matrix&& mat) {
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
-  static_assert(real_type<Result>,
-                "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, AbsSquared{}, std::forward<Matrix>(mat));
 }
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto norm_2(Matrix&& mat) {
   return sqrt(norm_2_2(std::forward<Matrix>(mat)));
 }
@@ -220,37 +214,33 @@ constexpr auto norm_2(Matrix&& mat) {
 
 /// @brief Element-wise matrix @p mat @f$ L_{p} @f$-norm.
 /// @{
-template<numeric_matrix Matrix, numeric_type Number>
+template<matrix Matrix, class Number>
 constexpr auto norm_p_p(Matrix&& mat, Number p) {
-  STORM_ASSERT_(p > 0, "Invalid p-norm parameter!");
+  STORM_ASSERT(p > 0, "Invalid p-norm parameter!");
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
-  static_assert(real_type<Result>,
-                "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Add{}, Compose{Abs{}, BindLast{Pow{}, std::move(p)}},
                 std::forward<Matrix>(mat));
 }
-template<numeric_matrix Matrix, numeric_type Number>
+template<matrix Matrix, class Number>
 constexpr auto norm_p(Matrix&& mat, Number p) {
   return pow(norm_p_p(std::forward<Matrix>(mat), p), 1.0 / p);
 }
 /// @}
 
 /// @brief Element-wise matrix @p mat @f$ L_{\infty} @f$-norm.
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto norm_inf(Matrix&& mat) {
   using Result = std::invoke_result_t<Abs, matrix_element_t<Matrix>>;
-  static_assert(real_type<Result>,
-                "Absolute value of the matrix element should be of real type!");
   return reduce(Result{}, Max{}, Abs{}, std::forward<Matrix>(mat));
 }
 
 /// @copydoc norm_2_2
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto length_2(Matrix&& mat) {
   return norm_2_2(std::forward<Matrix>(mat));
 }
 /// @copydoc norm_2
-template<numeric_matrix Matrix>
+template<matrix Matrix>
 constexpr auto length(Matrix&& mat) {
   return norm_2(std::forward<Matrix>(mat));
 }
@@ -258,7 +248,7 @@ constexpr auto length(Matrix&& mat) {
 // -----------------------------------------------------------------------------
 
 /// @brief Element-wise dot product of the matrices @p mat1 and @p mat2.
-template<numeric_matrix Matrix1, numeric_matrix Matrix2>
+template<matrix Matrix1, matrix Matrix2>
   requires compatible_matrices_v<Matrix1, Matrix2>
 constexpr auto dot_product(Matrix1&& mat1, Matrix2&& mat2) noexcept {
   using Result = std::invoke_result_t< //

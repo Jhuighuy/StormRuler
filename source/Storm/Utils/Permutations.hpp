@@ -62,8 +62,8 @@ constexpr void invert_permutation(PermutationIterator perm_iterator,
   using Index = std::iter_value_t<PermutationIterator>;
   Index index{};
   for (; perm_iterator != perm_sentinel; ++perm_iterator, ++index) {
-    STORM_ASSERT_(*perm_iterator != Index{SIZE_MAX},
-                  "Invalid permutation iterator value!");
+    STORM_ASSERT(*perm_iterator != Index{SIZE_MAX},
+                 "Invalid permutation iterator value!");
     iperm_iterator[static_cast<size_t>(*perm_iterator)] = index;
   }
 }
@@ -97,8 +97,8 @@ constexpr void permute_inplace(PermutationIterator perm_iterator,
     Index current_index = index;
     PermutationIterator current_perm_iterator = perm_iterator;
     while (*current_perm_iterator != index) {
-      STORM_ASSERT_(*current_perm_iterator != Index{SIZE_MAX},
-                    "Invalid permutation iterator value!");
+      STORM_ASSERT(*current_perm_iterator != Index{SIZE_MAX},
+                   "Invalid permutation iterator value!");
       const Index new_index = *current_perm_iterator;
       swap_func(current_index, new_index);
       *current_perm_iterator = current_index, current_index = new_index;
@@ -106,7 +106,7 @@ constexpr void permute_inplace(PermutationIterator perm_iterator,
     }
     *current_perm_iterator = current_index;
   }
-#ifndef NDEBUG
+#if !STORM_NDEBUG
   std::ranges::fill(perm_iterator, perm_sentinel, Index{SIZE_MAX});
 #endif
 }

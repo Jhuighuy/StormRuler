@@ -54,14 +54,14 @@ public:
   void get_ghost_state(const vec3_t& n, const vec3_t& r, //
                        const real_t* u, real_t* u_ghost) const {
     MhdFluidStateT u_state(n, u), u_ghost_state;
-    get_ghost_state_(n, r, u_state, u_ghost_state);
+    _get_ghost_state(n, r, u_state, u_ghost_state);
     u_ghost_state.make_cons(5, u_ghost);
   }
 
 private:
 
   /** @brief Compute the ghost state. */
-  virtual void get_ghost_state_(const vec3_t& n, const vec3_t& r,
+  virtual void _get_ghost_state(const vec3_t& n, const vec3_t& r,
                                 const MhdFluidStateT& u,
                                 MhdFluidStateT& u_ghost) const = 0;
 }; // MhdFvBcT
@@ -80,7 +80,7 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
+  void _get_ghost_state(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;
@@ -105,7 +105,7 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
+  void _get_ghost_state(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;
@@ -131,7 +131,7 @@ public:
 private:
 
   /** @brief Compute the ghost state. */
-  void get_ghost_state_(const vec3_t& n, const vec3_t& r,
+  void _get_ghost_state(const vec3_t& n, const vec3_t& r,
                         const MhdFluidStateT& u,
                         MhdFluidStateT& u_ghost) const override {
     u_ghost = u;

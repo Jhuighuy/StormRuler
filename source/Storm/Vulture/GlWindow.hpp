@@ -197,8 +197,8 @@ class Framework final {
 private:
 
   friend class Window;
-  bool loaded_ = false;
-  bool glew_loaded_ = false;
+  bool _loaded = false;
+  bool _glew_loaded = false;
 
 public:
 
@@ -220,22 +220,22 @@ public:
 
   /// @brief Load the framework.
   void load() {
-    if (loaded_) return;
-    glfwSetErrorCallback(&on_error_);
+    if (_loaded) return;
+    glfwSetErrorCallback(&_on_error);
     glfwInit();
-    STORM_INFO_("GLFW initialized, version '{}'!", glfwGetVersionString());
-    loaded_ = true;
+    STORM_INFO("GLFW initialized, version '{}'!", glfwGetVersionString());
+    _loaded = true;
   }
 
   /// @brief Unload the framework.
   void unload() {
-    if (!loaded_) return;
+    if (!_loaded) return;
   }
 
 private:
 
-  static void on_error_(int error, const char* description) {
-    STORM_THROW_GL_("GLFW: Error {:#x}: {}", error, description);
+  static void _on_error(int error, const char* description) {
+    STORM_THROW_GL("GLFW: Error {:#x}: {}", error, description);
   }
 
 }; // class Framework
@@ -246,20 +246,20 @@ private:
 class Window final {
 private:
 
-  GLFWwindow* underlying_{};
+  GLFWwindow* _underlying{};
   // clang-format off
-  std::vector<std::function<void()>> on_close_funcs_{};
-  std::vector<std::function<void(size_t, size_t)>> on_resize_funcs_{};
+  std::vector<std::function<void()>> _on_close_funcs{};
+  std::vector<std::function<void(size_t, size_t)>> _on_resize_funcs{};
   std::multimap<
-    std::pair<Key, Modifiers>, 
+    std::pair<Key, Modifiers>,
     std::function<void()>
-  > on_key_down_funcs_{}, on_key_up_funcs_{};
+  > _on_key_down_funcs{}, _on_key_up_funcs{};
   std::multimap<
-    std::pair<MouseButton, Modifiers>, 
+    std::pair<MouseButton, Modifiers>,
     std::function<void()>
-  > on_mouse_button_down_funcs_{}, on_mouse_button_up_funcs_{};
-  std::vector<std::function<void(glm::dvec2)>> on_scroll_funcs_{};
-  std::vector<std::function<void(size_t, size_t)>> on_set_cursor_pos_funcs_{};
+  > _on_mouse_button_down_funcs{}, _on_mouse_button_up_funcs{};
+  std::vector<std::function<void(glm::dvec2)>> _on_scroll_funcs{};
+  std::vector<std::function<void(size_t, size_t)>> _on_set_cursor_pos_funcs{};
   // clang-format on
 
 public:
@@ -277,45 +277,45 @@ public:
 
   /// @brief Destroy the window.
   ~Window() {
-    glfwDestroyWindow(underlying_);
+    glfwDestroyWindow(_underlying);
   }
 
   /// @brief Underlying window pointer.
   constexpr GLFWwindow* underlying() const noexcept {
-    return underlying_;
+    return _underlying;
   }
   /// @brief Cast to underlying window pointer.
   constexpr operator GLFWwindow*() const noexcept {
-    return underlying_;
+    return _underlying;
   }
 
   /// @brief Get window width.
   size_t width() const {
-    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    STORM_ASSERT(_underlying != nullptr, "Window is not loaded!");
     int width;
-    glfwGetWindowSize(underlying_, &width, nullptr);
+    glfwGetWindowSize(_underlying, &width, nullptr);
     return static_cast<size_t>(width);
   }
   /// @brief Get window height.
   size_t height() const {
-    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    STORM_ASSERT(_underlying != nullptr, "Window is not loaded!");
     int height;
-    glfwGetWindowSize(underlying_, nullptr, &height);
+    glfwGetWindowSize(_underlying, nullptr, &height);
     return static_cast<size_t>(height);
   }
 
   /// @brief Get cursor position's x.
   size_t cursor_pos_x() const {
-    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    STORM_ASSERT(_underlying != nullptr, "Window is not loaded!");
     double pos_xd;
-    glfwGetCursorPos(underlying_, &pos_xd, nullptr);
+    glfwGetCursorPos(_underlying, &pos_xd, nullptr);
     return make_cursor_pos_x_(pos_xd);
   }
   /// @brief Get cursor position's y.
   size_t cursor_pos_y() const {
-    STORM_ASSERT_(underlying_ != nullptr, "Window is not loaded!");
+    STORM_ASSERT(_underlying != nullptr, "Window is not loaded!");
     double pos_yd;
-    glfwGetCursorPos(underlying_, nullptr, &pos_yd);
+    glfwGetCursorPos(_underlying, nullptr, &pos_yd);
     return make_cursor_pos_y_(pos_yd);
   }
 
@@ -333,42 +333,42 @@ public:
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     // Create the window.
-    STORM_ASSERT_(title != nullptr, "Invalid window title!");
-    STORM_ASSERT_(width > 0 && height > 0, "Invalid window size!");
-    underlying_ =
+    STORM_ASSERT(title != nullptr, "Invalid window title!");
+    STORM_ASSERT(width > 0 && height > 0, "Invalid window size!");
+    _underlying =
         glfwCreateWindow(static_cast<int>(width), static_cast<int>(height),
                          title, /*monitor*/ nullptr, /*share*/ nullptr);
 
     // Load GLEW.
-    if (!framework.glew_loaded_) {
-      glfwMakeContextCurrent(underlying_);
+    if (!framework._glew_loaded) {
+      glfwMakeContextCurrent(_underlying);
       glewExperimental = GL_TRUE;
       if (GLenum status = glewInit(); status == GLEW_OK) {
-        STORM_INFO_("GLEW initialized!");
+        STORM_INFO("GLEW initialized!");
       } else {
-        STORM_THROW_GL_("GLEW: failed to initialize, {:#x}: {}!", //
-                        status, glewGetErrorString(status));
+        STORM_THROW_GL("GLEW: failed to initialize, {:#x}: {}!", //
+                       status, glewGetErrorString(status));
       }
-      framework.glew_loaded_ = true;
+      framework._glew_loaded = true;
       glfwMakeContextCurrent(nullptr);
     }
 
     // Set the callbacks.
-    glfwSetWindowUserPointer(underlying_, this);
-    glfwSetWindowCloseCallback(underlying_, &on_close_);
-    glfwSetWindowSizeCallback(underlying_, &on_resize_);
-    glfwSetKeyCallback(underlying_, &on_key_);
-    glfwSetMouseButtonCallback(underlying_, &on_mouse_button_);
-    glfwSetScrollCallback(underlying_, &on_scroll_);
-    glfwSetCursorPosCallback(underlying_, &on_set_cursor_pos_);
+    glfwSetWindowUserPointer(_underlying, this);
+    glfwSetWindowCloseCallback(_underlying, &_on_close);
+    glfwSetWindowSizeCallback(_underlying, &_on_resize);
+    glfwSetKeyCallback(_underlying, &_on_key);
+    glfwSetMouseButtonCallback(_underlying, &_on_mouse_button);
+    glfwSetScrollCallback(_underlying, &_on_scroll);
+    glfwSetCursorPosCallback(_underlying, &_on_set_cursor_pos);
   }
 
   /// @brief Run the window main loop.
   template<std::invocable RenderFunc>
   void main_loop(RenderFunc render_func) {
-    while (!glfwWindowShouldClose(underlying_)) {
+    while (!glfwWindowShouldClose(_underlying)) {
       render_func();
-      glfwSwapBuffers(underlying_);
+      glfwSwapBuffers(_underlying);
       glfwPollEvents();
     }
   }
@@ -376,13 +376,13 @@ public:
   /// @brief Set handler for the window close event.
   template<std::invocable OnCloseFunc>
   void on_close(OnCloseFunc on_close_func) {
-    on_close_funcs_.push_back(std::move(on_close_func));
+    _on_close_funcs.push_back(std::move(on_close_func));
   }
 
   /// @brief Set handler for the window resize event.
   template<std::invocable<size_t, size_t> OnResizeFunc>
   void on_resize(OnResizeFunc on_resize_func) {
-    on_resize_funcs_.push_back(std::move(on_resize_func));
+    _on_resize_funcs.push_back(std::move(on_resize_func));
   }
 
   /// @brief Set handler for the key pressed event.
@@ -393,7 +393,7 @@ public:
   }
   template<std::invocable OnKeyDownFunc>
   void on_key_down(Key key, Modifiers mods, OnKeyDownFunc on_key_down_func) {
-    on_key_down_funcs_.emplace(std::pair{key, mods},
+    _on_key_down_funcs.emplace(std::pair{key, mods},
                                std::move(on_key_down_func));
   }
   /// @}
@@ -406,7 +406,7 @@ public:
   }
   template<std::invocable OnKeyUpFunc>
   void on_key_up(Key key, Modifiers mods, OnKeyUpFunc on_key_up_func) {
-    on_key_up_funcs_.emplace(std::pair{key, mods}, std::move(on_key_up_func));
+    _on_key_up_funcs.emplace(std::pair{key, mods}, std::move(on_key_up_func));
   }
   /// @}
 
@@ -421,7 +421,7 @@ public:
   template<std::invocable OnMouseButtonDownFunc>
   void on_mouse_button_down(MouseButton mouse_button, Modifiers mods,
                             OnMouseButtonDownFunc on_mouse_button_down_func) {
-    on_mouse_button_down_funcs_.emplace(std::pair{mouse_button, mods},
+    _on_mouse_button_down_funcs.emplace(std::pair{mouse_button, mods},
                                         std::move(on_mouse_button_down_func));
   }
   /// @}
@@ -437,99 +437,99 @@ public:
   template<std::invocable OnMouseButtonUpFunc>
   void on_mouse_button_up(MouseButton mouse_button, Modifiers mods,
                           OnMouseButtonUpFunc on_mouse_button_up_func) {
-    on_mouse_button_up_funcs_.emplace(std::pair{mouse_button, mods},
+    _on_mouse_button_up_funcs.emplace(std::pair{mouse_button, mods},
                                       std::move(on_mouse_button_up_func));
   }
 
   /// @brief Set handler for the scroll event.
   template<std::invocable<glm::dvec2> OnScrollFunc>
   void on_scroll(OnScrollFunc on_scroll_func) {
-    on_scroll_funcs_.push_back(std::move(on_scroll_func));
+    _on_scroll_funcs.push_back(std::move(on_scroll_func));
   }
 
   /// @brief Set handler for the set cursor position event.
   template<std::invocable<size_t, size_t> OnSetCursorPosFunc>
   void on_set_cursor_pos(OnSetCursorPosFunc on_set_cursor_pos_func) {
-    on_set_cursor_pos_funcs_.push_back(std::move(on_set_cursor_pos_func));
+    _on_set_cursor_pos_funcs.push_back(std::move(on_set_cursor_pos_func));
   }
 
 private:
 
-  static const Window* get_self_(GLFWwindow* window) noexcept {
+  static const Window* _get_self(GLFWwindow* window) noexcept {
     const auto self =
         static_cast<const Window*>(glfwGetWindowUserPointer(window));
-    STORM_ASSERT_(self != nullptr, "Pointer to self was not set!");
+    STORM_ASSERT(self != nullptr, "Pointer to self was not set!");
     return self;
   }
 
-  static void on_close_(GLFWwindow* window) noexcept {
-    const auto self = get_self_(window);
-    for (const auto& close_func : self->on_close_funcs_) {
+  static void _on_close(GLFWwindow* window) noexcept {
+    const auto self = _get_self(window);
+    for (const auto& close_func : self->_on_close_funcs) {
       close_func();
     }
   }
 
-  static void on_resize_(GLFWwindow* window, int width, int height) noexcept {
-    const auto self = get_self_(window);
-    for (const auto& on_resize_func : self->on_resize_funcs_) {
+  static void _on_resize(GLFWwindow* window, int width, int height) noexcept {
+    const auto self = _get_self(window);
+    for (const auto& on_resize_func : self->_on_resize_funcs) {
       on_resize_func(static_cast<size_t>(width), static_cast<size_t>(height));
     }
   }
 
-  static void on_key_(GLFWwindow* window, int key,
+  static void _on_key(GLFWwindow* window, int key,
                       [[maybe_unused]] int scancode, int action,
                       int mods) noexcept {
-    const auto self = get_self_(window);
+    const auto self = _get_self(window);
     switch (action) {
       case GLFW_PRESS:
       case GLFW_REPEAT: {
-        const auto [first, last] = self->on_key_down_funcs_.equal_range(
+        const auto [first, last] = self->_on_key_down_funcs.equal_range(
             {static_cast<Key>(key), static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       case GLFW_RELEASE: {
-        const auto [first, last] = self->on_key_up_funcs_.equal_range(
+        const auto [first, last] = self->_on_key_up_funcs.equal_range(
             {static_cast<Key>(key), static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       default: //
-        STORM_WARNING_("GLFW: unsupported key action {:#x}!", action);
+        STORM_WARNING("GLFW: unsupported key action {:#x}!", action);
         break;
     }
   }
 
-  static void on_mouse_button_(GLFWwindow* window, int mouse_button, int action,
+  static void _on_mouse_button(GLFWwindow* window, int mouse_button, int action,
                                int mods) noexcept {
-    const auto self = get_self_(window);
+    const auto self = _get_self(window);
     switch (action) {
       case GLFW_PRESS:
       case GLFW_REPEAT: {
         const auto [first, last] =
-            self->on_mouse_button_down_funcs_.equal_range(
+            self->_on_mouse_button_down_funcs.equal_range(
                 {static_cast<MouseButton>(mouse_button),
                  static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       case GLFW_RELEASE: {
-        const auto [first, last] = self->on_mouse_button_up_funcs_.equal_range(
+        const auto [first, last] = self->_on_mouse_button_up_funcs.equal_range(
             {static_cast<MouseButton>(mouse_button),
              static_cast<Modifiers>(mods)});
         std::for_each(first, last, [](const auto& pair) { pair.second(); });
         break;
       }
       default: //
-        STORM_WARNING_("GLFW: unsupported mouse button action {:#x}!", action);
+        STORM_WARNING("GLFW: unsupported mouse button action {:#x}!", action);
         break;
     }
   }
 
-  static void on_scroll_(GLFWwindow* window, //
+  static void _on_scroll(GLFWwindow* window, //
                          double x_offset, double y_offset) noexcept {
-    const auto self = get_self_(window);
-    for (const auto& on_scroll_func : self->on_scroll_funcs_) {
+    const auto self = _get_self(window);
+    for (const auto& on_scroll_func : self->_on_scroll_funcs) {
       on_scroll_func({x_offset, y_offset});
     }
   }
@@ -546,12 +546,12 @@ private:
     return height - 1 - pos_y;
   }
 
-  static void on_set_cursor_pos_(GLFWwindow* window, //
+  static void _on_set_cursor_pos(GLFWwindow* window, //
                                  double pos_xd, double pos_yd) noexcept {
-    const auto self = get_self_(window);
+    const auto self = _get_self(window);
     const auto pos_x = self->make_cursor_pos_x_(pos_xd),
                pos_y = self->make_cursor_pos_y_(pos_yd);
-    for (const auto& on_set_cursor_pos_func : self->on_set_cursor_pos_funcs_) {
+    for (const auto& on_set_cursor_pos_func : self->_on_set_cursor_pos_funcs) {
       on_set_cursor_pos_func(pos_x, pos_y);
     }
   }

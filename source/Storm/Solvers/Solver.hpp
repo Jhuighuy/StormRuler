@@ -141,8 +141,8 @@ public:
 
     // Exit the solver.
     finalize(x_vec, b_vec, any_op, pre_op.get());
-    STORM_INFO_("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
-                iteration, absolute_error, relative_error);
+    STORM_INFO("n_iter: {:>4d}, abs_err: {:>-12e}, rel_err: {:>-12e}", //
+               iteration, absolute_error, relative_error);
     return converged;
   }
 

@@ -46,13 +46,13 @@ public:
 
 private:
 
-  Vector r_vec_, z_vec_;
+  Vector _r_vec, _z_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
               const Preconditioner<Vector>* pre_op) override {
-    r_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    if (pre_op != nullptr) _z_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -62,13 +62,13 @@ private:
     //   𝒓 ← 𝓟𝒛.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (pre_op != nullptr) {
-      std::swap(z_vec_, r_vec_);
-      pre_op->mul(r_vec_, z_vec_);
+      std::swap(_z_vec, _r_vec);
+      pre_op->mul(_r_vec, _z_vec);
     }
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -85,14 +85,14 @@ private:
     //   𝒓 ← 𝓟𝒛.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    x_vec += omega * r_vec_;
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    x_vec += omega * _r_vec;
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (pre_op != nullptr) {
-      std::swap(z_vec_, r_vec_);
-      pre_op->mul(r_vec_, z_vec_);
+      std::swap(_z_vec, _r_vec);
+      pre_op->mul(_r_vec, _z_vec);
     }
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
 }; // class RichardsonSolver

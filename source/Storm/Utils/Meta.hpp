@@ -484,15 +484,15 @@ inline constexpr bool always_false = false;
 template<class T>
 consteval auto type_name() {
   std::string_view name, prefix, suffix;
-#if STORM_COMPILER_GCC_
+#if STORM_COMPILER_GCC
   name = __PRETTY_FUNCTION__;
   prefix = "consteval auto Storm::meta::type_name() [with T = ";
   suffix = "]";
-#elif STORM_COMPILER_CLANG_
+#elif STORM_COMPILER_CLANG
   name = __PRETTY_FUNCTION__;
   prefix = "auto Storm::meta::type_name() [T = ";
   suffix = "]";
-#elif STORM_COMPILER_MSVC_
+#elif STORM_COMPILER_MSVC
   name = __FUNCSIG__;
   prefix = "auto __cdecl Storm::meta::type_name<";
   suffix = ">(void)";

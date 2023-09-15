@@ -38,7 +38,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // A macro, used to spawn shaders in '.glsl' files.
-#define STORM_VULTURE_SHADER_(type, source)              \
+#define STORM_VULTURE_SHADER(type, source)               \
   []() {                                                 \
     return ::Storm::Vulture::gl::Shader{                 \
         ::Storm::Vulture::gl::ShaderType::type, source}; \
@@ -54,16 +54,16 @@ enum class ShaderType : GLenum {
 }; // enum class ShaderType
 
 /// @brief OpenGL shader.
-class Shader final : detail_::noncopyable_ {
+class Shader final : NonCopyable {
 private:
 
-  GLuint shader_id_;
+  GLuint _shader_id;
 
 public:
 
   /// @brief Construct a shader.
   explicit Shader(ShaderType type) {
-    shader_id_ = glCreateShader(static_cast<GLenum>(type));
+    _shader_id = glCreateShader(static_cast<GLenum>(type));
   }
   /// @brief Construct a shader with @p source.
   Shader(ShaderType type, std::string_view source) : Shader{type} {
@@ -77,12 +77,12 @@ public:
 
   /// @brief Destruct the shader.
   ~Shader() {
-    glDeleteShader(shader_id_);
+    glDeleteShader(_shader_id);
   }
 
   /// @brief Cast to shader ID.
   constexpr operator GLuint() const noexcept {
-    return shader_id_;
+    return _shader_id;
   }
 
   /// @brief Load the shader of type @p type from @p source.
@@ -90,21 +90,21 @@ public:
     // Upload the shader source code.
     const auto source_data = source.data();
     const auto source_size = static_cast<GLint>(source.size());
-    glShaderSource(shader_id_, 1, &source_data, &source_size);
+    glShaderSource(_shader_id, 1, &source_data, &source_size);
 
     // Try to compile the shader and check result.
-    glCompileShader(shader_id_);
+    glCompileShader(_shader_id);
     GLint status;
-    glGetShaderiv(shader_id_, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(_shader_id, GL_COMPILE_STATUS, &status);
     std::string info_log(1024, '\0');
     GLsizei info_log_length;
-    glGetShaderInfoLog(shader_id_, static_cast<GLsizei>(info_log.size()),
+    glGetShaderInfoLog(_shader_id, static_cast<GLsizei>(info_log.size()),
                        &info_log_length, info_log.data());
     if (status != GL_TRUE) {
-      STORM_THROW_GL_("Failed to compile shader: {}", info_log.c_str());
+      STORM_THROW_GL("Failed to compile shader: {}", info_log.c_str());
     }
     if (info_log_length != 0) {
-      STORM_WARNING_("Shader compilation message: {}", info_log.c_str());
+      STORM_WARNING("Shader compilation message: {}", info_log.c_str());
     }
   }
 
@@ -113,16 +113,16 @@ public:
 // -----------------------------------------------------------------------------
 
 /// @brief OpenGL shader program.
-class Program final : detail_::noncopyable_ {
+class Program final : NonCopyable {
 private:
 
-  GLuint program_id_ = 0;
+  GLuint _program_id = 0;
 
 public:
 
   /// @brief Construct a program.
   Program() {
-    program_id_ = glCreateProgram();
+    _program_id = glCreateProgram();
   }
   /// @brief Construct a program with @p shaders.
   template<std::same_as<Shader>... Shader>
@@ -137,33 +137,33 @@ public:
 
   /// @brief Destruct the program.
   ~Program() noexcept {
-    glDeleteProgram(program_id_);
+    glDeleteProgram(_program_id);
   }
 
   /// @brief Cast to shader ID.
   constexpr operator GLuint() const noexcept {
-    return program_id_;
+    return _program_id;
   }
 
   /// @brief Load the program with @p shaders.
   template<std::same_as<Shader>... Shader>
   void assign(const Shader&... shaders) {
     // Attach the shaders.
-    (glAttachShader(program_id_, shaders), ...);
+    (glAttachShader(_program_id, shaders), ...);
 
     // Try to link the program and check result.
-    glLinkProgram(program_id_);
+    glLinkProgram(_program_id);
     GLint status;
-    glGetProgramiv(program_id_, GL_LINK_STATUS, &status);
+    glGetProgramiv(_program_id, GL_LINK_STATUS, &status);
     std::string info_log(1024, '\0');
     GLsizei info_log_length;
-    glGetProgramInfoLog(program_id_, static_cast<GLsizei>(info_log.size()),
+    glGetProgramInfoLog(_program_id, static_cast<GLsizei>(info_log.size()),
                         &info_log_length, info_log.data());
     if (status != GL_TRUE) {
-      STORM_THROW_GL_("Failed to link program: {}", info_log.c_str());
+      STORM_THROW_GL("Failed to link program: {}", info_log.c_str());
     }
     if (info_log_length != 0) {
-      STORM_WARNING_("Program linking message: {}", info_log.c_str());
+      STORM_WARNING("Program linking message: {}", info_log.c_str());
     }
   }
 
@@ -173,8 +173,8 @@ public:
     return (*this)[name.c_str()];
   }
   GLint operator[](const char* name) const {
-    STORM_ASSERT_(name != nullptr, "Invalid uniform name!");
-    return glGetUniformLocation(program_id_, name);
+    STORM_ASSERT(name != nullptr, "Invalid uniform name!");
+    return glGetUniformLocation(_program_id, name);
   }
   /// @}
 
@@ -186,22 +186,22 @@ public:
 
   /// @brief Bind the @p program.
   explicit BindProgram(const Program& program) {
-    STORM_ASSERT_(program != 0, "Invalid program!");
+    STORM_ASSERT(program != 0, "Invalid program!");
     glUseProgram(program);
   }
 
   /// @brief Set the scalar uniform value.
   /// @{
   void set_uniform(GLint location, GLfloat value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1f(location, value);
   }
   void set_uniform(GLint location, GLint value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1i(location, value);
   }
   void set_uniform(GLint location, GLuint value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1ui(location, value);
   }
   /// @}
@@ -211,7 +211,7 @@ public:
   template<glm::length_t Length, glm::qualifier Qualifier>
   void set_uniform(GLint location,
                    const glm::vec<Length, GLfloat, Qualifier>& value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     if constexpr (Length == 2) {
       glUniform2f(location, value.x, value.y);
     } else if constexpr (Length == 3) {
@@ -226,7 +226,7 @@ public:
   template<glm::length_t Length, glm::qualifier Qualifier>
   void set_uniform(GLint location,
                    const glm::vec<Length, GLint, Qualifier>& value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     if constexpr (Length == 2) {
       glUniform2i(location, value.x, value.y);
     } else if constexpr (Length == 3) {
@@ -241,7 +241,7 @@ public:
   template<glm::length_t Length, glm::qualifier Qualifier>
   void set_uniform(GLint location,
                    const glm::vec<Length, GLuint, Qualifier>& value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     if constexpr (Length == 2) {
       glUniform2ui(location, value.x, value.y);
     } else if constexpr (Length == 3) {
@@ -259,7 +259,7 @@ public:
   template<glm::length_t Rows, glm::length_t Cols, glm::qualifier Qualifier>
   void set_uniform(GLint location,
                    const glm::mat<Rows, Cols, GLfloat, Qualifier>& value) {
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     const auto packed_value =
         static_cast<glm::mat<Rows, Cols, GLfloat, glm::packed>>(value);
     if constexpr (Rows == Cols) {
@@ -292,26 +292,26 @@ public:
   /// @{
   // clang-format off
   template<std::ranges::contiguous_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, GLfloat> 
+    requires std::same_as<std::ranges::range_value_t<Range>, GLfloat>
   void set_uniform_array(GLint location, Range&& values) {
     // clang-format on
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1fv(location, static_cast<GLsizei>(values.size()), values.data());
   }
   // clang-format off
   template<std::ranges::contiguous_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, GLint> 
+    requires std::same_as<std::ranges::range_value_t<Range>, GLint>
   void set_uniform_array(GLint location, Range&& values) {
     // clang-format on
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1iv(location, static_cast<GLsizei>(values.size()), values.data());
   }
   // clang-format off
   template<std::ranges::contiguous_range Range>
-    requires std::same_as<std::ranges::range_value_t<Range>, GLuint> 
+    requires std::same_as<std::ranges::range_value_t<Range>, GLuint>
   void set_uniform_array(GLint location, Range&& values) {
     // clang-format on
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     glUniform1uiv(location, static_cast<GLsizei>(values.size()), values.data());
   }
   /// @}
@@ -319,20 +319,20 @@ public:
   /// @brief Set the matrix uniform array value.
   // clang-format off
   template<std::ranges::sized_range Range>
-    requires requires { 
+    requires requires {
       []<glm::length_t Rows, glm::length_t Cols, glm::qualifier Qualifier>(
           meta::type<glm::mat<Rows, Cols, GLfloat, Qualifier>>) {
       }(meta::type_v<std::ranges::range_value_t<Range>>);
-    } 
+    }
   void set_uniform_array(GLint location, Range&& values) {
     // clang-format on
-    STORM_ASSERT_(location >= 0, "Invalid location!");
+    STORM_ASSERT(location >= 0, "Invalid location!");
     const auto size = static_cast<GLsizei>(values.size());
     [&]<glm::length_t Rows, glm::length_t Cols, glm::qualifier Qualifier>(
         meta::type<glm::mat<Rows, Cols, GLfloat, Qualifier>>) {
       decltype(auto) packed_values = [&]() -> decltype(auto) {
         if constexpr (std::ranges::contiguous_range<Range> &&
-                      detail_::one_of_(Qualifier, glm::packed_lowp,
+                      _detail::_one_of(Qualifier, glm::packed_lowp,
                                        glm::packed_mediump,
                                        glm::packed_highp)) {
           return std::forward<Range>(values);

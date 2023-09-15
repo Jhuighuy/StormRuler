@@ -20,15 +20,32 @@
 
 #pragma once
 
-#define STORM_ENABLE_ASSERTS 1
-#include <Storm/Base.hpp>
+#include <stdexcept>
 
-#include <doctest/doctest.h>
+namespace Storm {
+
+// -----------------------------------------------------------------------------
+
+using Error = std::runtime_error;
+using IoError = std::runtime_error;
+using GlError = std::runtime_error;
 
 // -----------------------------------------------------------------------------
 
-// Convenience macro for the floating-point checks.
-#define CHECK_NEAR(actual, expected, eps) \
-  CHECK(actual == doctest::Approx(expected).epsilon(eps))
+#define STORM_THROW_BASE(error, message, ...)                    \
+  do {                                                           \
+    throw error(fmt::format(message __VA_OPT__(, __VA_ARGS__))); \
+  } while (false)
+
+#define STORM_THROW(message, ...) \
+  STORM_THROW_BASE(Storm::Error, message __VA_OPT__(, __VA_ARGS__))
+
+#define STORM_THROW_IO(message, ...) \
+  STORM_THROW_BASE(Storm::IoError, message __VA_OPT__(, __VA_ARGS__))
+
+#define STORM_THROW_GL(message, ...) \
+  STORM_THROW_BASE(Storm::GlError, message __VA_OPT__(, __VA_ARGS__))
 
 // -----------------------------------------------------------------------------
+
+} // namespace Storm

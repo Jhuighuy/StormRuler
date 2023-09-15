@@ -20,7 +20,7 @@
 
 // -----------------------------------------------------------------------------
 
-STORM_VULTURE_SHADER_(vertex, R"(
+STORM_VULTURE_SHADER(vertex, R"(
 #version 330 core
 
 layout(location = 0) in vec4 position_world_space;
@@ -38,7 +38,7 @@ void main() {
 
 // -----------------------------------------------------------------------------
 
-STORM_VULTURE_SHADER_(fragment, R"(
+STORM_VULTURE_SHADER(fragment, R"(
 #version 330 core
 
 in float node_value;

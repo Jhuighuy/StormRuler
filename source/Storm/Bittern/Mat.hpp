@@ -37,7 +37,7 @@ class StaticMatrix final :
     public TargetMatrixInterface<StaticMatrix<Elem, NumRows, NumCols>> {
 private:
 
-  std::array<Elem, NumRows * NumCols> elems_{};
+  std::array<Elem, NumRows * NumCols> _elems{};
 
 public:
 
@@ -52,7 +52,7 @@ public:
              (sizeof...(RestElems) + 1 == NumRows * NumCols)
   constexpr explicit StaticMatrix(const Elem& first_elem,
                                   const RestElems&... rest_elems) noexcept
-      : elems_{first_elem, static_cast<Elem>(rest_elems)...} {}
+      : _elems{first_elem, static_cast<Elem>(rest_elems)...} {}
 
   /// @brief Construct a matrix with another matrix.
   template<matrix Matrix>
@@ -81,15 +81,15 @@ public:
   /// @{
   constexpr Elem& operator()(size_t row_index, //
                              size_t col_index = 0) noexcept {
-    STORM_ASSERT_(in_range(shape(), row_index, col_index),
-                  "Indices are out of range!");
-    return elems_[row_index * NumCols + col_index];
+    STORM_ASSERT(in_range(shape(), row_index, col_index),
+                 "Indices are out of range!");
+    return _elems[row_index * NumCols + col_index];
   }
   constexpr const Elem& operator()(size_t row_index,
                                    size_t col_index = 0) const noexcept {
-    STORM_ASSERT_(in_range(shape(), row_index, col_index),
-                  "Indices are out of range!");
-    return elems_[row_index * NumCols + col_index];
+    STORM_ASSERT(in_range(shape(), row_index, col_index),
+                 "Indices are out of range!");
+    return _elems[row_index * NumCols + col_index];
   }
   /// @}
 

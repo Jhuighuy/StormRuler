@@ -135,8 +135,7 @@ elseif(CXX_COMPILER_MSVC_LIKE)
   # Enable new preprocessor.
   list(APPEND CXX_COMPILE_OPTIONS /Zc:preprocessor)
 endif()
-# TODO: detect this option inside C++ code.
-list(APPEND CXX_COVERAGE_DEFINITIONS STORM_COVERAGE_=1)
+list(APPEND CXX_COVERAGE_DEFINITIONS STORM_COVERAGE=1)
 
 # Set the warnings and diagnostics options.
 if(CXX_COMPILER_GNU_LIKE OR CXX_COMPILER_CLANG_LIKE)

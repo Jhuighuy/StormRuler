@@ -38,8 +38,8 @@ public:
       return;
     }
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    glDebugMessageCallbackARB(&on_message_, nullptr);
-    STORM_INFO_("OpenGL debug output enabled.");
+    glDebugMessageCallbackARB(&_on_message, nullptr);
+    STORM_INFO("OpenGL debug output enabled.");
   }
 
   /// @brief Disable OpenGL debug output.
@@ -48,12 +48,12 @@ public:
       return;
     }
     glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    STORM_INFO_("OpenGL debug output disabled.");
+    STORM_INFO("OpenGL debug output disabled.");
   }
 
 private:
 
-  static void on_message_(GLenum source, GLenum type, GLuint id,
+  static void _on_message(GLenum source, GLenum type, GLuint id,
                           GLenum severity, [[maybe_unused]] GLsizei length,
                           const GLchar* message,
                           [[maybe_unused]] const void* user_param) {
@@ -107,20 +107,20 @@ private:
 
     switch (severity) {
       default:
-        STORM_DEBUG_("OpenGL: {} {} {:#x}: {}", //
-                     error_source, debug_type, id, message);
-        break;
-      case GL_DEBUG_SEVERITY_LOW_ARB:
-        STORM_INFO_("OpenGL: {} {} {:#x}: {}", //
+        STORM_DEBUG("OpenGL: {} {} {:#x}: {}", //
                     error_source, debug_type, id, message);
         break;
+      case GL_DEBUG_SEVERITY_LOW_ARB:
+        STORM_INFO("OpenGL: {} {} {:#x}: {}", //
+                   error_source, debug_type, id, message);
+        break;
       case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-        STORM_WARNING_("OpenGL: {} {} {:#x}: {}", //
-                       error_source, debug_type, id, message);
+        STORM_WARNING("OpenGL: {} {} {:#x}: {}", //
+                      error_source, debug_type, id, message);
         break;
       case GL_DEBUG_SEVERITY_HIGH_ARB:
-        STORM_ERROR_("OpenGL: {} {} {:#x}: {}", //
-                     error_source, debug_type, id, message);
+        STORM_ERROR("OpenGL: {} {} {:#x}: {}", //
+                    error_source, debug_type, id, message);
         break;
     }
   }

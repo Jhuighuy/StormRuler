@@ -76,6 +76,7 @@
     "atomic": "cpp",
     "bit": "cpp",
     "bitset": "cpp",
+    "cassert": "cpp",
     "cctype": "cpp",
     "cfenv": "cpp",
     "charconv": "cpp",
@@ -131,6 +132,7 @@
     "semaphore": "cpp",
     "set": "cpp",
     "shared_mutex": "cpp",
+    "source_location": "cpp",
     "span": "cpp",
     "sstream": "cpp",
     "stack": "cpp",
@@ -152,7 +154,7 @@
     "valarray": "cpp",
     "variant": "cpp",
     "vector": "cpp",
-    "version": "cpp",
+    "version": "cpp"
   }
   // ---------------------------------------------------------------------------
 }

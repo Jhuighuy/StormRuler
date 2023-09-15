@@ -22,8 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -48,15 +48,15 @@ template<legacy_vector_like Vector>
 class CgSolver final : public IterativeSolver<Vector> {
 private:
 
-  real_t gamma_;
-  Vector p_vec_, r_vec_, z_vec_;
+  real_t _gamma;
+  Vector _p_vec, _r_vec, _z_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
               const Preconditioner<Vector>* pre_op) override {
-    p_vec_.assign(x_vec, false);
-    r_vec_.assign(x_vec, false);
-    z_vec_.assign(x_vec, false);
+    _p_vec.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    _z_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -70,17 +70,17 @@ private:
     //   𝛾 ← <𝒓⋅𝒓>.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (pre_op != nullptr) {
-      pre_op->mul(z_vec_, r_vec_);
-      p_vec_ <<= z_vec_;
-      gamma_ = dot_product(r_vec_, z_vec_);
+      pre_op->mul(_z_vec, _r_vec);
+      _p_vec <<= _z_vec;
+      _gamma = dot_product(_r_vec, _z_vec);
     } else {
-      p_vec_ <<= r_vec_;
-      gamma_ = dot_product(r_vec_, r_vec_);
+      _p_vec <<= _r_vec;
+      _gamma = dot_product(_r_vec, _r_vec);
     }
 
-    return (pre_op != nullptr) ? norm_2(r_vec_) : std::sqrt(gamma_);
+    return (pre_op != nullptr) ? norm_2(_r_vec) : std::sqrt(_gamma);
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -93,10 +93,10 @@ private:
     // 𝒙 ← 𝒙 + 𝛼⋅𝒑,
     // 𝒓 ← 𝒓 - 𝛼⋅𝒛.
     // ----------------------
-    lin_op.mul(z_vec_, p_vec_);
-    const real_t alpha = safe_divide(gamma_, dot_product(p_vec_, z_vec_));
-    x_vec += alpha * p_vec_;
-    r_vec_ -= alpha * z_vec_;
+    lin_op.mul(_z_vec, _p_vec);
+    const real_t alpha = safe_divide(_gamma, dot_product(_p_vec, _z_vec));
+    x_vec += alpha * _p_vec;
+    _r_vec -= alpha * _z_vec;
 
     // ----------------------
     // 𝛾̅ ← 𝛾,
@@ -107,22 +107,22 @@ private:
     //   𝛾 ← <𝒓⋅𝒓>.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    const real_t gamma_bar = gamma_;
+    const real_t gamma_bar = _gamma;
     if (pre_op != nullptr) {
-      pre_op->mul(z_vec_, r_vec_);
-      gamma_ = dot_product(r_vec_, z_vec_);
+      pre_op->mul(_z_vec, _r_vec);
+      _gamma = dot_product(_r_vec, _z_vec);
     } else {
-      gamma_ = dot_product(r_vec_, r_vec_);
+      _gamma = dot_product(_r_vec, _r_vec);
     }
 
     // ----------------------
     // 𝛽 ← 𝛾/𝛾̅,
     // 𝒑 ← (𝓟 ≠ 𝗻𝗼𝗻𝗲 ? 𝒛 : 𝒓) + 𝛽⋅𝒑.
     // ----------------------
-    const real_t beta = safe_divide(gamma_, gamma_bar);
-    p_vec_ <<= (pre_op != nullptr ? z_vec_ : r_vec_) + beta * p_vec_;
+    const real_t beta = safe_divide(_gamma, gamma_bar);
+    _p_vec <<= (pre_op != nullptr ? _z_vec : _r_vec) + beta * _p_vec;
 
-    return (pre_op != nullptr) ? norm_2(r_vec_) : sqrt(gamma_);
+    return (pre_op != nullptr) ? norm_2(_r_vec) : sqrt(_gamma);
   }
 
 }; // class CgSolver

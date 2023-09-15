@@ -75,16 +75,16 @@ struct indexed_t {};
 inline constexpr indexed_t indexed_v{};
 
 /// @brief OpenGL vertex array.
-class VertexArray final : detail_::noncopyable_ {
+class VertexArray final : NonCopyable {
 private:
 
-  GLuint vertex_array_id_;
+  GLuint _vertex_array_id;
 
 public:
 
   /// @brief Construct a vertex array.
   VertexArray() {
-    glGenVertexArrays(1, &vertex_array_id_);
+    glGenVertexArrays(1, &_vertex_array_id);
   }
 
   /// @brief Construct a vertex array with buffers.
@@ -109,38 +109,38 @@ public:
 
   /// @brief Destruct the vertex array.
   ~VertexArray() {
-    glDeleteVertexArrays(1, &vertex_array_id_);
+    glDeleteVertexArrays(1, &_vertex_array_id);
   }
 
   /// @brief Cast to vertex array ID.
   constexpr operator GLuint() const noexcept {
-    return vertex_array_id_;
+    return _vertex_array_id;
   }
 
   /// @brief Build the vertex array buffer.
   /// @{
   template<vertex_attrib... Types>
   void assign(const Buffer<Types>&... vertex_buffers) {
-    glBindVertexArray(vertex_array_id_);
-    attach_vertex_attribs_(vertex_buffers...);
+    glBindVertexArray(_vertex_array_id);
+    _attach_vertex_attribs(vertex_buffers...);
   }
   template<vertex_attrib... Types>
   void assign_indexed(const Buffer<GLuint>& index_buffer,
                       const Buffer<Types>&... vertex_buffers) {
-    glBindVertexArray(vertex_array_id_);
+    glBindVertexArray(_vertex_array_id);
     index_buffer.bind(BufferTarget::element_array_buffer);
-    attach_vertex_attribs_(vertex_buffers...);
+    _attach_vertex_attribs(vertex_buffers...);
   }
   /// @}
 
   /// @brief Draw the vertex array.
   /// @{
   void draw(DrawMode mode, GLsizei count) const {
-    glBindVertexArray(vertex_array_id_);
+    glBindVertexArray(_vertex_array_id);
     glDrawArrays(static_cast<GLenum>(mode), /*first*/ 0, count);
   }
   void draw_indexed(DrawMode mode, GLsizei count) const {
-    glBindVertexArray(vertex_array_id_);
+    glBindVertexArray(_vertex_array_id);
     glDrawElements(static_cast<GLenum>(mode), count, GL_UNSIGNED_INT,
                    /*indices*/ nullptr);
   }
@@ -149,13 +149,13 @@ public:
 private:
 
   template<vertex_attrib... Types>
-  static void attach_vertex_attribs_(const Buffer<Types>&... vertex_buffers) {
+  static void _attach_vertex_attribs(const Buffer<Types>&... vertex_buffers) {
     GLuint index = 0;
-    (attach_single_vertex_attrib_(index++, vertex_buffers), ...);
+    (_attach_single_vertex_attrib(index++, vertex_buffers), ...);
   }
 
   template<vertex_attrib Type>
-  static void attach_single_vertex_attrib_(GLuint index,
+  static void _attach_single_vertex_attrib(GLuint index,
                                            const Buffer<Type>& vertex_buffer) {
     vertex_buffer.bind(BufferTarget::array_buffer);
     glEnableVertexAttribArray(index);

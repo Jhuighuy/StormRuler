@@ -22,8 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <Storm/Solvers/MatrixDense.hpp>
 #include <Storm/Solvers/Solver.hpp>
@@ -53,8 +53,8 @@ template<legacy_vector_like Vector>
 class BiCgStabSolver final : public IterativeSolver<Vector> {
 private:
 
-  real_t alpha_, rho_, omega_;
-  Vector p_vec_, r_vec_, r_tilde_vec_, t_vec_, v_vec_, z_vec_;
+  real_t _alpha, _rho, _omega;
+  Vector _p_vec, _r_vec, _r_tilde_vec, _t_vec, _v_vec, _z_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
@@ -62,12 +62,12 @@ private:
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
-    p_vec_.assign(x_vec, false);
-    r_vec_.assign(x_vec, false);
-    r_tilde_vec_.assign(x_vec, false);
-    t_vec_.assign(x_vec, false);
-    v_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
+    _p_vec.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    _r_tilde_vec.assign(x_vec, false);
+    _t_vec.assign(x_vec, false);
+    _v_vec.assign(x_vec, false);
+    if (pre_op != nullptr) _z_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -79,15 +79,15 @@ private:
     // 𝒓̃ ← 𝒓,
     // 𝜌 ← <𝒓̃⋅𝒓>.
     // ----------------------
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (left_pre) {
-      std::swap(z_vec_, r_vec_);
-      pre_op->mul(r_vec_, z_vec_);
+      std::swap(_z_vec, _r_vec);
+      pre_op->mul(_r_vec, _z_vec);
     }
-    r_tilde_vec_ <<= r_vec_;
-    rho_ = dot_product(r_tilde_vec_, r_vec_);
+    _r_tilde_vec <<= _r_vec;
+    _rho = dot_product(_r_tilde_vec, _r_vec);
 
-    return sqrt(rho_);
+    return sqrt(_rho);
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -111,12 +111,12 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      p_vec_ <<= r_vec_;
+      _p_vec <<= _r_vec;
     } else {
       const real_t rho_bar =
-          std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_));
-      const real_t beta{safe_divide(alpha_ * rho_, omega_ * rho_bar)};
-      p_vec_ <<= r_vec_ + beta * (p_vec_ - omega_ * v_vec_);
+          std::exchange(_rho, dot_product(_r_tilde_vec, _r_vec));
+      const real_t beta{safe_divide(_alpha * _rho, _omega * rho_bar)};
+      _p_vec <<= _r_vec + beta * (_p_vec - _omega * _v_vec);
     }
 
     // Update the solution and the residual:
@@ -132,13 +132,13 @@ private:
     // 𝒙 ← 𝒙 + 𝛼⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒑),
     // 𝒓 ← 𝒓 - 𝛼⋅𝒗.
     // ----------------------
-    if (left_pre) pre_op->mul(v_vec_, z_vec_, lin_op, p_vec_);
-    else if (right_pre) lin_op.mul(v_vec_, z_vec_, *pre_op, p_vec_);
-    else lin_op.mul(v_vec_, p_vec_);
+    if (left_pre) pre_op->mul(_v_vec, _z_vec, lin_op, _p_vec);
+    else if (right_pre) lin_op.mul(_v_vec, _z_vec, *pre_op, _p_vec);
+    else lin_op.mul(_v_vec, _p_vec);
 
-    alpha_ = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
-    x_vec += alpha_ * (right_pre ? z_vec_ : p_vec_);
-    r_vec_ -= alpha_ * v_vec_;
+    _alpha = safe_divide(_rho, dot_product(_r_tilde_vec, _v_vec));
+    x_vec += _alpha * (right_pre ? _z_vec : _p_vec);
+    _r_vec -= _alpha * _v_vec;
 
     // Update the solution and the residual again:
     // ----------------------
@@ -153,15 +153,15 @@ private:
     // 𝒙 ← 𝒙 + 𝜔⋅(𝘙𝘪𝘨𝘩𝘵𝘗𝘳𝘦 ? 𝒛 : 𝒓),
     // 𝒓 ← 𝒓 - 𝜔⋅𝒕.
     // ----------------------
-    if (left_pre) pre_op->mul(t_vec_, z_vec_, lin_op, r_vec_);
-    else if (right_pre) lin_op.mul(t_vec_, z_vec_, *pre_op, r_vec_);
-    else lin_op.mul(t_vec_, r_vec_);
-    omega_ =
-        safe_divide(dot_product(t_vec_, r_vec_), dot_product(t_vec_, t_vec_));
-    x_vec += omega_ * (right_pre ? z_vec_ : r_vec_);
-    r_vec_ -= omega_ * t_vec_;
+    if (left_pre) pre_op->mul(_t_vec, _z_vec, lin_op, _r_vec);
+    else if (right_pre) lin_op.mul(_t_vec, _z_vec, *pre_op, _r_vec);
+    else lin_op.mul(_t_vec, _r_vec);
+    _omega =
+        safe_divide(dot_product(_t_vec, _r_vec), dot_product(_t_vec, _t_vec));
+    x_vec += _omega * (right_pre ? _z_vec : _r_vec);
+    _r_vec -= _omega * _t_vec;
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
 }; // class BiCgStabSolver
@@ -185,30 +185,30 @@ template<legacy_vector_like Vector>
 class BiCgStabLSolver final : public InnerOuterIterativeSolver<Vector> {
 private:
 
-  real_t alpha_, rho_, omega_;
-  DenseVector<real_t> gamma_, gamma_bar_, gamma_bbar_, sigma_;
-  DenseMatrix<real_t> tau_;
-  Vector r_tilde_vec_, z_vec_;
-  std::vector<Vector> r_vecs_, u_vecs_;
+  real_t _alpha, _rho, _omega;
+  DenseVector<real_t> _gamma, _gamma_bar, _gamma_bbar, _sigma;
+  DenseMatrix<real_t> _tau;
+  Vector _r_tilde_vec, _z_vec;
+  std::vector<Vector> _r_vecs, _u_vecs;
 
   real_t outer_init(const Vector& x_vec, const Vector& b_vec,
                     const Operator<Vector>& lin_op,
                     const Preconditioner<Vector>* pre_op) override {
     const size_t l = this->num_inner_iterations;
 
-    gamma_.assign(l + 1);
-    gamma_bar_.assign(l + 1);
-    gamma_bbar_.assign(l + 1);
-    sigma_.assign(l + 1);
-    tau_.assign(l + 1, l + 1);
+    _gamma.assign(l + 1);
+    _gamma_bar.assign(l + 1);
+    _gamma_bbar.assign(l + 1);
+    _sigma.assign(l + 1);
+    _tau.assign(l + 1, l + 1);
 
-    r_tilde_vec_.assign(x_vec, false);
-    if (pre_op != nullptr) z_vec_.assign(x_vec, false);
+    _r_tilde_vec.assign(x_vec, false);
+    if (pre_op != nullptr) _z_vec.assign(x_vec, false);
 
-    r_vecs_.resize(l + 1);
-    u_vecs_.resize(l + 1);
-    for (Vector& r_vec : r_vecs_) r_vec.assign(x_vec, false);
-    for (Vector& u_vec : u_vecs_) u_vec.assign(x_vec, false);
+    _r_vecs.resize(l + 1);
+    _u_vecs.resize(l + 1);
+    for (Vector& r_vec : _r_vecs) r_vec.assign(x_vec, false);
+    for (Vector& u_vec : _u_vecs) u_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -221,16 +221,16 @@ private:
     // 𝒓̃ ← 𝒓₀,
     // 𝜌 ← <𝒓̃⋅𝒓₀>.
     // ----------------------
-    fill_with(u_vecs_[0], 0.0);
-    lin_op.Residual(r_vecs_[0], b_vec, x_vec);
+    fill_with(_u_vecs[0], 0.0);
+    lin_op.Residual(_r_vecs[0], b_vec, x_vec);
     if (pre_op != nullptr) {
-      std::swap(z_vec_, r_vecs_[0]);
-      pre_op->mul(r_vecs_[0], z_vec_);
+      std::swap(_z_vec, _r_vecs[0]);
+      pre_op->mul(_r_vecs[0], _z_vec);
     }
-    r_tilde_vec_ <<= r_vecs_[0];
-    rho_ = dot_product(r_tilde_vec_, r_vecs_[0]);
+    _r_tilde_vec <<= _r_vecs[0];
+    _rho = dot_product(_r_tilde_vec, _r_vecs[0]);
 
-    return sqrt(rho_);
+    return sqrt(_rho);
   }
 
   real_t inner_iterate(Vector& x_vec, const Vector& b_vec,
@@ -263,23 +263,23 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      u_vecs_[0] <<= r_vecs_[0];
+      _u_vecs[0] <<= _r_vecs[0];
     } else {
       const real_t rho_bar =
-          std::exchange(rho_, dot_product(r_tilde_vec_, r_vecs_[j]));
-      const real_t beta = safe_divide(alpha_ * rho_, rho_bar);
+          std::exchange(_rho, dot_product(_r_tilde_vec, _r_vecs[j]));
+      const real_t beta = safe_divide(_alpha * _rho, rho_bar);
       for (size_t i = 0; i <= j; ++i) {
-        u_vecs_[i] <<= r_vecs_[i] - beta * u_vecs_[i];
+        _u_vecs[i] <<= _r_vecs[i] - beta * _u_vecs[i];
       }
     }
     if (pre_op != nullptr) {
-      pre_op->mul(u_vecs_[j + 1], z_vec_, lin_op, u_vecs_[j]);
+      pre_op->mul(_u_vecs[j + 1], _z_vec, lin_op, _u_vecs[j]);
     } else {
-      lin_op.mul(u_vecs_[j + 1], u_vecs_[j]);
+      lin_op.mul(_u_vecs[j + 1], _u_vecs[j]);
     }
-    alpha_ = safe_divide(rho_, dot_product(r_tilde_vec_, u_vecs_[j + 1]));
+    _alpha = safe_divide(_rho, dot_product(_r_tilde_vec, _u_vecs[j + 1]));
     for (size_t i = 0; i <= j; ++i) {
-      r_vecs_[i] -= alpha_ * u_vecs_[i + 1];
+      _r_vecs[i] -= _alpha * _u_vecs[i + 1];
     }
 
     // Update the solution and the residual:
@@ -291,11 +291,11 @@ private:
     //   𝒓ⱼ₊₁ ← 𝓐𝒓ⱼ.
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
-    x_vec += alpha_ * u_vecs_[0];
+    x_vec += _alpha * _u_vecs[0];
     if (pre_op != nullptr) {
-      pre_op->mul(r_vecs_[j + 1], z_vec_, lin_op, r_vecs_[j]);
+      pre_op->mul(_r_vecs[j + 1], _z_vec, lin_op, _r_vecs[j]);
     } else {
-      lin_op.mul(r_vecs_[j + 1], r_vecs_[j]);
+      lin_op.mul(_r_vecs[j + 1], _r_vecs[j]);
     }
 
     if (j == l - 1) {
@@ -312,13 +312,13 @@ private:
       // ----------------------
       for (size_t j = 1; j <= l; ++j) {
         for (size_t i = 1; i < j; ++i) {
-          tau_(i, j) =
-              safe_divide(dot_product(r_vecs_[i], r_vecs_[j]), sigma_(i));
-          r_vecs_[j] -= tau_(i, j) * r_vecs_[i];
+          _tau(i, j) =
+              safe_divide(dot_product(_r_vecs[i], _r_vecs[j]), _sigma(i));
+          _r_vecs[j] -= _tau(i, j) * _r_vecs[i];
         }
-        sigma_(j) = dot_product(r_vecs_[j], r_vecs_[j]);
-        gamma_bar_(j) =
-            safe_divide(dot_product(r_vecs_[0], r_vecs_[j]), sigma_(j));
+        _sigma(j) = dot_product(_r_vecs[j], _r_vecs[j]);
+        _gamma_bar(j) =
+            safe_divide(dot_product(_r_vecs[0], _r_vecs[j]), _sigma(j));
       }
 
       // ----------------------
@@ -336,17 +336,17 @@ private:
       //   𝗲𝗻𝗱 𝗳𝗼𝗿
       // 𝗲𝗻𝗱 𝗳𝗼𝗿
       // ----------------------
-      omega_ = gamma_(l) = gamma_bar_(l), rho_ *= -omega_;
+      _omega = _gamma(l) = _gamma_bar(l), _rho *= -_omega;
       for (size_t j = l - 1; j != 0; --j) {
-        gamma_(j) = gamma_bar_(j);
+        _gamma(j) = _gamma_bar(j);
         for (size_t i = j + 1; i <= l; ++i) {
-          gamma_(j) -= tau_(j, i) * gamma_(i);
+          _gamma(j) -= _tau(j, i) * _gamma(i);
         }
       }
       for (size_t j = 1; j < l; ++j) {
-        gamma_bbar_(j) = gamma_(j + 1);
+        _gamma_bbar(j) = _gamma(j + 1);
         for (size_t i = j + 1; i < l; ++i) {
-          gamma_bbar_(j) += tau_(j, i) * gamma_(i + 1);
+          _gamma_bbar(j) += _tau(j, i) * _gamma(i + 1);
         }
       }
 
@@ -361,17 +361,17 @@ private:
       //   𝒖₀ ← 𝒖₀ - 𝛾ⱼ⋅𝒖ⱼ.
       // 𝗲𝗻𝗱 𝗳𝗼𝗿
       // ----------------------
-      x_vec += gamma_(1) * r_vecs_[0];
-      r_vecs_[0] -= gamma_bar_(l) * r_vecs_[l];
-      u_vecs_[0] -= gamma_(l) * u_vecs_[l];
+      x_vec += _gamma(1) * _r_vecs[0];
+      _r_vecs[0] -= _gamma_bar(l) * _r_vecs[l];
+      _u_vecs[0] -= _gamma(l) * _u_vecs[l];
       for (size_t j = 1; j < l; ++j) {
-        x_vec += gamma_bbar_(j) * r_vecs_[j];
-        r_vecs_[0] -= gamma_bar_(j) * r_vecs_[j];
-        u_vecs_[0] -= gamma_(j) * u_vecs_[j];
+        x_vec += _gamma_bbar(j) * _r_vecs[j];
+        _r_vecs[0] -= _gamma_bar(j) * _r_vecs[j];
+        _u_vecs[0] -= _gamma(j) * _u_vecs[j];
       }
     }
 
-    return norm_2(r_vecs_[0]);
+    return norm_2(_r_vecs[0]);
   }
 
 public:

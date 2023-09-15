@@ -72,7 +72,7 @@ public:
   {
     m_bcs[Label{1}] = std::make_shared<MhdFvBcFarFieldT<MhdPhysicsT>>();
     m_bcs[Label{2}] = std::make_shared<MhdFvBcSlipT<MhdPhysicsT>>();
-    m_conv->bcs_ = &m_bcs;
+    m_conv->_bcs = &m_bcs;
   }
 
   /**

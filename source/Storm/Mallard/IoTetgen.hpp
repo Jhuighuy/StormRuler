@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/FilteringStreambuf.hpp>
+#include <Storm/Crow/StreamUtils.hpp>
 #include <Storm/Utils/Meta.hpp>
 
 #include <Storm/Mallard/Mesh.hpp>
@@ -42,18 +42,18 @@ namespace Storm {
 /// @see https://wias-berlin.de/software/tetgen/1.5/doc/manual/manual.pdf
 /// @warning Unstable API!
 template<mesh Mesh>
-  requires (detail_::in_range_(mesh_dim_v<Mesh>, size_t{2}, size_t{3}))
+  requires (_detail::_in_range(mesh_dim_v<Mesh>, size_t{2}, size_t{3}))
 void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
   constexpr bool mesh3D = mesh_dim_v<Mesh> == 3;
 
-  STORM_INFO_("Loading the TetGen/Triangle mesh from path '{}'...",
-              path.replace_extension("*").string());
+  STORM_INFO("Loading the TetGen/Triangle mesh from path '{}'...",
+             path.replace_extension("*").string());
 
   { // Read the nodes.
     path.replace_extension(".node");
     std::ifstream node_stream(path);
     if (!node_stream.is_open()) {
-      STORM_THROW_IO_("Cannot open the node file '{}'!", path.string());
+      STORM_THROW_IO("Cannot open the node file '{}'!", path.string());
     }
     FilteringStreambuf<char, '#', '\n'> filter_comments(node_stream);
 
@@ -62,17 +62,17 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     bool nodes_have_labels;
     node_stream >> num_nodes >> dim >> num_node_attribs >> nodes_have_labels;
     if (node_stream.bad()) {
-      STORM_THROW_IO_("Cannot read the node file '{}' header!", path.string());
+      STORM_THROW_IO("Cannot read the node file '{}' header!", path.string());
     }
     if (dim != mesh_dim_v<Mesh>) {
-      STORM_THROW_IO_("Unexpected number of the dimensions in node file '{}' "
-                      "header! Expected {}, got {}.",
-                      path.string(), mesh_dim_v<Mesh>, dim);
+      STORM_THROW_IO("Unexpected number of the dimensions in node file '{}' "
+                     "header! Expected {}, got {}.",
+                     path.string(), mesh_dim_v<Mesh>, dim);
     }
     if (num_node_attribs != 0) {
-      STORM_WARNING_("Header of the node file '{}' specifies {} attributes per "
-                     "node, which are ignored!",
-                     path.string(), num_node_attribs);
+      STORM_WARNING("Header of the node file '{}' specifies {} attributes per "
+                    "node, which are ignored!",
+                    path.string(), num_node_attribs);
     }
 
     // Read the nodes.
@@ -86,14 +86,14 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       for (real_t& node_attrib : node_attribs) node_stream >> node_attrib;
       if (nodes_have_labels) node_stream >> node_label;
       if (node_stream.bad()) {
-        STORM_THROW_IO_("Cannot read the node # {} from file '{}'!", //
-                        node_entry, path.string());
+        STORM_THROW_IO("Cannot read the node # {} from file '{}'!", //
+                       node_entry, path.string());
       }
       mesh.insert(node_pos, meta::type_v<NodeIndex>);
       /// @todo node_label, node_attribs!
     }
 
-    STORM_INFO_( //
+    STORM_INFO( //
         "Done reading {} nodes from file '{}'.", num_nodes, path.string());
   }
 
@@ -102,7 +102,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     path.replace_extension(".edge");
     std::ifstream edge_stream(path);
     if (!edge_stream.is_open()) {
-      STORM_THROW_IO_("Cannot open the edge file '{}'!", path.string());
+      STORM_THROW_IO("Cannot open the edge file '{}'!", path.string());
     }
     FilteringStreambuf<char, '#', '\n'> filter_comments(edge_stream);
 
@@ -111,7 +111,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     bool edges_have_labels;
     edge_stream >> num_edges >> edges_have_labels;
     if (edge_stream.bad()) {
-      STORM_THROW_IO_("Cannot read the edge file '{}' header!", path.string());
+      STORM_THROW_IO("Cannot read the edge file '{}' header!", path.string());
     }
 
     // Read the edges.
@@ -124,14 +124,14 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       edge_stream >> edge_index >> edge.n1 >> edge.n2;
       if (edges_have_labels) edge_stream >> edge_label;
       if (edge_stream.bad()) {
-        STORM_THROW_IO_("Cannot read the edge # {} from file '{}'!", //
-                        edge_entry, path.string());
+        STORM_THROW_IO("Cannot read the edge # {} from file '{}'!", //
+                       edge_entry, path.string());
       }
       mesh.insert(edge, meta::type_v<EdgeIndex>);
       if (edges_have_labels) edge_labels.push_back(edge_label);
     }
 
-    STORM_INFO_( //
+    STORM_INFO( //
         "Done reading {} edges from file '{}'.", num_edges, path.string());
   }
 
@@ -141,7 +141,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     path.replace_extension(".face");
     std::ifstream face_stream(path);
     if (!face_stream.is_open()) {
-      STORM_THROW_IO_("Cannot open the face file '{}'!", path.string());
+      STORM_THROW_IO("Cannot open the face file '{}'!", path.string());
     }
     FilteringStreambuf<char, '#', '\n'> filter_comments(face_stream);
 
@@ -150,7 +150,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     bool faces_have_labels;
     face_stream >> num_faces >> faces_have_labels;
     if (face_stream.bad()) {
-      STORM_THROW_IO_("Cannot read the face file '{}' header!", path.string());
+      STORM_THROW_IO("Cannot read the face file '{}' header!", path.string());
     }
 
     // Read the faces.
@@ -163,14 +163,14 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       face_stream >> face_index >> face.n1 >> face.n2 >> face.n3;
       if (faces_have_labels) face_stream >> face_label;
       if (face_stream.bad()) {
-        STORM_THROW_IO_("Cannot read the face # {} from file '{}'!", //
-                        face_entry, path.string());
+        STORM_THROW_IO("Cannot read the face # {} from file '{}'!", //
+                       face_entry, path.string());
       }
       mesh.insert(face, meta::type_v<FaceIndex<Mesh>>);
       if (faces_have_labels) face_labels.push_back(face_label);
     }
 
-    STORM_INFO_( //
+    STORM_INFO( //
         "Done reading {} faces from file '{}'.", num_faces, path.string());
   }
 
@@ -178,7 +178,7 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     path.replace_extension(".ele");
     std::ifstream cell_stream(path);
     if (!cell_stream.is_open()) {
-      STORM_THROW_IO_("Cannot open the cell file '{}'!", path.string());
+      STORM_THROW_IO("Cannot open the cell file '{}'!", path.string());
     }
     FilteringStreambuf<char, '#', '\n'> filter_comments(cell_stream);
 
@@ -187,17 +187,17 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
     bool cells_have_attribs;
     cell_stream >> num_cells >> num_cell_nodes >> cells_have_attribs;
     if (cell_stream.bad()) {
-      STORM_THROW_IO_("Cannot read the cell file '{}' header!", path.string());
+      STORM_THROW_IO("Cannot read the cell file '{}' header!", path.string());
     }
     if (num_cell_nodes != mesh_dim_v<Mesh> + 1) {
-      STORM_THROW_IO_("Unexpected number of the nodes per cell in the cell "
-                      "file '{}' header! Expected {}, got {}.",
-                      path.string(), mesh_dim_v<Mesh> + 1, num_cell_nodes);
+      STORM_THROW_IO("Unexpected number of the nodes per cell in the cell "
+                     "file '{}' header! Expected {}, got {}.",
+                     path.string(), mesh_dim_v<Mesh> + 1, num_cell_nodes);
     }
     if (cells_have_attribs) {
-      STORM_WARNING_("Header of the cell file '{}' specifies a regional "
-                     "attribute per cell, which is ignored!",
-                     path.string());
+      STORM_WARNING("Header of the cell file '{}' specifies a regional "
+                    "attribute per cell, which is ignored!",
+                    path.string());
     }
 
     // Read the cells.
@@ -209,13 +209,13 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
       if constexpr (mesh3D) cell_stream >> cell.n4;
       if (cells_have_attribs) cell_stream >> cell_attrib;
       if (cell_stream.bad()) {
-        STORM_THROW_IO_("Cannot read the cell # {} from file '{}'!", //
-                        cell_entry, path.string());
+        STORM_THROW_IO("Cannot read the cell # {} from file '{}'!", //
+                       cell_entry, path.string());
       }
       mesh.insert(cell, meta::type_v<CellIndex<Mesh>>); /// @todo cell_attrib!
     }
 
-    STORM_INFO_( //
+    STORM_INFO( //
         "Done reading {} cells from file '{}'.", num_cells, path.string());
   }
 
@@ -224,12 +224,12 @@ void read_mesh_from_tetgen(Mesh& mesh, std::filesystem::path path) {
   //  TetGen may not generate all the edges/faces.)
   if (!edge_labels.empty()) {
     mesh.assign_labels(edge_labels, meta::type_v<EdgeIndex>);
-    STORM_INFO_("Done assigning edge labels.");
+    STORM_INFO("Done assigning edge labels.");
   }
   if constexpr (mesh3D) {
     if (!face_labels.empty()) {
       mesh.assign_labels(face_labels, meta::type_v<FaceIndex<Mesh>>);
-      STORM_INFO_("Done assigning face labels.");
+      STORM_INFO("Done assigning face labels.");
     }
   }
 }

@@ -44,26 +44,26 @@ class FaceView;
 template<mesh Mesh>
 class CellView;
 
-namespace detail_ {
-  constexpr auto to_node_view_(const auto& mesh) noexcept {
+namespace _detail {
+  constexpr auto _to_node_view(const auto& mesh) noexcept {
     return std::views::transform(
         [&](NodeIndex node_index) { return NodeView(mesh, node_index); });
   }
-  constexpr auto to_edge_view_(const auto& mesh) noexcept {
+  constexpr auto _to_edge_view(const auto& mesh) noexcept {
     return std::views::transform(
         [&](EdgeIndex edge_index) { return EdgeView(mesh, edge_index); });
   }
   template<class Mesh>
-  constexpr auto to_face_view_(const Mesh& mesh) noexcept {
+  constexpr auto _to_face_view(const Mesh& mesh) noexcept {
     return std::views::transform(
         [&](FaceIndex<Mesh> face_index) { return FaceView(mesh, face_index); });
   }
   template<class Mesh>
-  constexpr auto to_cell_view_(const Mesh& mesh) noexcept {
+  constexpr auto _to_cell_view(const Mesh& mesh) noexcept {
     return std::views::transform(
         [&](CellIndex<Mesh> cell_index) { return CellView(mesh, cell_index); });
   }
-} // namespace detail_
+} // namespace _detail
 
 /// @brief Mesh entity view.
 template<mesh Mesh, index Index>
@@ -73,14 +73,14 @@ private:
   template<mesh, index>
   friend class EntityView;
 
-  const Mesh* p_mesh_;
-  Index index_;
+  const Mesh* _p_mesh;
+  Index _index;
 
 protected:
 
   /// @brief Construct an entity view with a @p mesh and @p index.
   constexpr EntityView(const Mesh& mesh, Index index) noexcept
-      : p_mesh_{&mesh}, index_{index} {}
+      : _p_mesh{&mesh}, _index{index} {}
 
   /// @brief Destroy the entity view.
   constexpr ~EntityView() = default;
@@ -90,62 +90,62 @@ public:
   /// @brief Entity mesh.
   /// @{
   constexpr Mesh& mesh() noexcept {
-    return *p_mesh_;
+    return *_p_mesh;
   }
   constexpr const Mesh& mesh() const noexcept {
-    return *p_mesh_;
+    return *_p_mesh;
   }
   /// @}
 
   /// @brief Entity index.
   /// @{
   constexpr Index index() const noexcept {
-    return index_;
+    return _index;
   }
   constexpr size_t index_sz() const noexcept {
-    return static_cast<size_t>(index_);
+    return static_cast<size_t>(_index);
   }
   /// @}
 
   /// @brief Cast to entity index operator.
   constexpr operator Index() const noexcept {
-    return index_;
+    return _index;
   }
 
   /// @brief Comparison operator.
   constexpr auto operator<=>(const EntityView& other) const noexcept {
-    STORM_ASSERT_(p_mesh_ == other.p_mesh_,
-                  "Entities correspond to the different meshes!");
-    return index_ <=> other.index_;
+    STORM_ASSERT(_p_mesh == other._p_mesh,
+                 "Entities correspond to the different meshes!");
+    return _index <=> other._index;
   }
 
   /// @brief Entity label.
   constexpr auto label() const noexcept {
-    return mesh().label(index_);
+    return mesh().label(_index);
   }
 
   /// @brief Range of the adjacent nodes.
   constexpr auto nodes() const noexcept {
-    return mesh().adjacent(index_, meta::type_v<NodeIndex>) |
-           detail_::to_node_view_(*p_mesh_);
+    return mesh().adjacent(_index, meta::type_v<NodeIndex>) |
+           _detail::_to_node_view(*_p_mesh);
   }
 
   /// @brief Range of the adjacent edges.
   constexpr auto edges() const noexcept {
-    return mesh().adjacent(index_, meta::type_v<EdgeIndex>) |
-           detail_::to_edge_view_(*p_mesh_);
+    return mesh().adjacent(_index, meta::type_v<EdgeIndex>) |
+           _detail::_to_edge_view(*_p_mesh);
   }
 
   /// @brief Range of the adjacent faces.
   constexpr auto faces() const noexcept {
-    return mesh().adjacent(index_, meta::type_v<FaceIndex<Mesh>>) |
-           detail_::to_face_view_(*p_mesh_);
+    return mesh().adjacent(_index, meta::type_v<FaceIndex<Mesh>>) |
+           _detail::_to_face_view(*_p_mesh);
   }
 
   /// @brief Range of the adjacent cells.
   constexpr auto cells() const noexcept {
-    return mesh().adjacent(index_, meta::type_v<CellIndex<Mesh>>) |
-           detail_::to_cell_view_(*p_mesh_);
+    return mesh().adjacent(_index, meta::type_v<CellIndex<Mesh>>) |
+           _detail::_to_cell_view(*_p_mesh);
   }
 
   /// @brief Iterate all the adjacent nodes.
@@ -267,15 +267,15 @@ public:
 
   /// @brief Get the adjacent inner cell.
   constexpr CellView<Mesh> inner_cell() const noexcept {
-    STORM_ASSERT_(!this->cells().empty(),
-                  "The face does not have an adjacent inner cell!");
+    STORM_ASSERT(!this->cells().empty(),
+                 "The face does not have an adjacent inner cell!");
     return this->cells().front();
   }
 
   /// @brief Get the adjacent outer cell.
   constexpr CellView<Mesh> outer_cell() const noexcept {
-    STORM_ASSERT_(this->cells().size() == 2,
-                  "The face does not have an adjacent outer cell!");
+    STORM_ASSERT(this->cells().size() == 2,
+                 "The face does not have an adjacent outer cell!");
     return this->cells().back();
   }
 
@@ -332,111 +332,111 @@ template<crtp_derived Derived>
 class MeshInterface {
 private:
 
-  constexpr Derived& self_() noexcept {
+  constexpr Derived& _self() noexcept {
     static_assert(std::derived_from<Derived, MeshInterface>);
     return static_cast<Derived&>(*this);
   }
-  constexpr const Derived& self_() const noexcept {
-    return const_cast<MeshInterface&>(*this).self_();
+  constexpr const Derived& _self() const noexcept {
+    return const_cast<MeshInterface&>(*this)._self();
   }
 
 public:
 
   /// @brief Number of the node labels.
   constexpr size_t num_node_labels() const noexcept {
-    return self_().num_labels(meta::type_v<NodeIndex>);
+    return _self().num_labels(meta::type_v<NodeIndex>);
   }
   /// @brief Number of the edge labels.
   constexpr size_t num_edge_labels() const noexcept {
-    return self_().num_labels(meta::type_v<EdgeIndex>);
+    return _self().num_labels(meta::type_v<EdgeIndex>);
   }
   /// @brief Number of the face labels.
   constexpr size_t num_face_labels() const noexcept {
-    return self_().num_labels(meta::type_v<FaceIndex<Derived>>);
+    return _self().num_labels(meta::type_v<FaceIndex<Derived>>);
   }
   /// @brief Number of the cell labels.
   constexpr size_t num_cell_labels() const noexcept {
-    return self_().num_labels(meta::type_v<CellIndex<Derived>>);
+    return _self().num_labels(meta::type_v<CellIndex<Derived>>);
   }
 
   /// @brief Number of the nodes.
   constexpr size_t num_nodes() const noexcept {
-    return self_().num_entities(meta::type_v<NodeIndex>);
+    return _self().num_entities(meta::type_v<NodeIndex>);
   }
   /// @brief Number of the nodes with a @p label.
   constexpr size_t num_nodes(Label label) const noexcept {
-    return self_().num_entities(label, meta::type_v<NodeIndex>);
+    return _self().num_entities(label, meta::type_v<NodeIndex>);
   }
 
   /// @brief Number of the edges.
   constexpr size_t num_edges() const noexcept {
-    return self_().num_entities(meta::type_v<EdgeIndex>);
+    return _self().num_entities(meta::type_v<EdgeIndex>);
   }
   /// @brief Number of the edges with a @p label.
   constexpr size_t num_edges(Label label) const noexcept {
-    return self_().num_entities(label, meta::type_v<EdgeIndex>);
+    return _self().num_entities(label, meta::type_v<EdgeIndex>);
   }
 
   /// @brief Number of the faces.
   constexpr size_t num_faces() const noexcept {
-    return self_().num_entities(meta::type_v<FaceIndex<Derived>>);
+    return _self().num_entities(meta::type_v<FaceIndex<Derived>>);
   }
   /// @brief Number of the faces with a @p label.
   constexpr size_t num_faces(Label label) const noexcept {
-    return self_().num_entities(label, meta::type_v<FaceIndex<Derived>>);
+    return _self().num_entities(label, meta::type_v<FaceIndex<Derived>>);
   }
 
   /// @brief Number of the cells.
   constexpr size_t num_cells() const noexcept {
-    return self_().num_entities(meta::type_v<CellIndex<Derived>>);
+    return _self().num_entities(meta::type_v<CellIndex<Derived>>);
   }
   /// @brief Number of the cells with a @p label.
   constexpr size_t num_cells(Label label) const noexcept {
-    return self_().num_entities(label, meta::type_v<CellIndex<Derived>>);
+    return _self().num_entities(label, meta::type_v<CellIndex<Derived>>);
   }
 
   /// @brief Range of the nodes.
   constexpr auto nodes() const noexcept {
-    return self_().entities(meta::type_v<NodeIndex>) |
-           detail_::to_node_view_(self_());
+    return _self().entities(meta::type_v<NodeIndex>) |
+           _detail::_to_node_view(_self());
   }
   /// @brief Range of the nodes with a @p label.
   constexpr auto nodes(Label label) const noexcept {
-    return self_().entities(label, meta::type_v<NodeIndex>) |
-           detail_::to_node_view_(self_());
+    return _self().entities(label, meta::type_v<NodeIndex>) |
+           _detail::_to_node_view(_self());
   }
 
   /// @brief Range of the edges.
   constexpr auto edges() const noexcept {
-    return self_().entities(meta::type_v<EdgeIndex>) |
-           detail_::to_edge_view_(self_());
+    return _self().entities(meta::type_v<EdgeIndex>) |
+           _detail::_to_edge_view(_self());
   }
   /// @brief Range of the edges with @p label.
   constexpr auto edges(Label label) const noexcept {
-    return self_().entities(label, meta::type_v<EdgeIndex>) |
-           detail_::to_edge_view_(self_());
+    return _self().entities(label, meta::type_v<EdgeIndex>) |
+           _detail::_to_edge_view(_self());
   }
 
   /// @brief Range of the faces.
   constexpr auto faces() const noexcept {
-    return self_().entities(meta::type_v<FaceIndex<Derived>>) |
-           detail_::to_face_view_(self_());
+    return _self().entities(meta::type_v<FaceIndex<Derived>>) |
+           _detail::_to_face_view(_self());
   }
   /// @brief Range of the faces with @p label.
   constexpr auto faces(Label label) const noexcept {
-    return self_().entities(label, meta::type_v<FaceIndex<Derived>>) |
-           detail_::to_face_view_(self_());
+    return _self().entities(label, meta::type_v<FaceIndex<Derived>>) |
+           _detail::_to_face_view(_self());
   }
 
   /// @brief Range of the cells.
   constexpr auto cells() const noexcept {
-    return self_().entities(meta::type_v<CellIndex<Derived>>) |
-           detail_::to_cell_view_(self_());
+    return _self().entities(meta::type_v<CellIndex<Derived>>) |
+           _detail::_to_cell_view(_self());
   }
   /// @brief Range of the cells with @p label.
   constexpr auto cells(Label label) const noexcept {
-    return self_().entities(label, meta::type_v<CellIndex<Derived>>) |
-           detail_::to_cell_view_(self_());
+    return _self().entities(label, meta::type_v<CellIndex<Derived>>) |
+           _detail::_to_cell_view(_self());
   }
 
   /// @brief Range of the interior nodes.

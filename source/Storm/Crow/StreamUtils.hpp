@@ -37,44 +37,44 @@ namespace Storm {
 template<class Char, Char BeginFilter, Char EndFilter>
 class FilteringStreambuf final :
     public std::basic_streambuf<Char>,
-    public NonCopyable {
+    public NonCopyableInterface {
 private:
 
-  std::istream* p_stream_;
-  std::streambuf* p_streambuf_;
-  Char buffer_;
+  std::istream* _p_stream;
+  std::streambuf* _p_streambuf;
+  Char _buffer;
 
-  static constexpr auto begin_filter_ =
+  static constexpr auto _begin_filter =
       std::basic_streambuf<Char>::traits_type::to_int_type(BeginFilter);
-  static constexpr auto end_filter_ =
+  static constexpr auto _end_filter =
       std::basic_streambuf<Char>::traits_type::to_int_type(EndFilter);
-  static constexpr auto eof_ = std::basic_streambuf<Char>::traits_type::eof();
+  static constexpr auto _eof = std::basic_streambuf<Char>::traits_type::eof();
 
 public:
 
   /// @brief Construct a filtering stream buffer.
   explicit FilteringStreambuf(std::basic_istream<Char>& stream)
-      : p_stream_{&stream}, p_streambuf_{p_stream_->rdbuf()} {
-    p_stream_->rdbuf(this);
+      : _p_stream{&stream}, _p_streambuf{_p_stream->rdbuf()} {
+    _p_stream->rdbuf(this);
   }
 
   /// @brief Destroy a filtering stream buffer.
   ~FilteringStreambuf() override {
-    p_stream_->rdbuf(p_streambuf_);
+    _p_stream->rdbuf(_p_streambuf);
   }
 
 protected:
 
   typename std::basic_streambuf<Char>::int_type underflow() override {
-    auto bumped = p_streambuf_->sbumpc();
-    if (bumped == begin_filter_) {
-      while (bumped != eof_ && bumped != end_filter_) {
-        bumped = p_streambuf_->sbumpc();
+    auto bumped = _p_streambuf->sbumpc();
+    if (bumped == _begin_filter) {
+      while (bumped != _eof && bumped != _end_filter) {
+        bumped = _p_streambuf->sbumpc();
       }
     }
-    if (bumped != eof_) {
-      buffer_ = static_cast<Char>(bumped);
-      this->setg(&buffer_, &buffer_, &buffer_ + 1);
+    if (bumped != _eof) {
+      _buffer = static_cast<Char>(bumped);
+      this->setg(&_buffer, &_buffer, &_buffer + 1);
     }
     return bumped;
   }

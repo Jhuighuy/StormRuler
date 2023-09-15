@@ -58,7 +58,26 @@ TEST_CASE("Bittern/CompareMatrixExpressions") {
   }
 }
 
-/// @todo Min/Max!
+TEST_CASE("Bittern/MinMaxMatrixExpressions") {
+  const Mat2x2<real_t> mat1{+1.0_dp, -2.0_dp, //
+                            +3.0_dp, -7.0_dp};
+  const Mat2x2<real_t> mat2{+1.0_dp, -3.0_dp, //
+                            +6.0_dp, -5.0_dp};
+
+  SUBCASE("minimum") {
+    const Mat2x2<real_t> minimum_mat{+1.0_dp, -3.0_dp, //
+                                     +3.0_dp, -7.0_dp};
+
+    CHECK(all(minimum(mat1, mat2) == minimum_mat));
+  }
+
+  SUBCASE("maximum") {
+    const Mat2x2<real_t> maximum_mat{+1.0_dp, -2.0_dp, //
+                                     +6.0_dp, -5.0_dp};
+
+    CHECK(all(maximum(mat1, mat2) == maximum_mat));
+  }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -76,14 +95,12 @@ TEST_CASE("Bittern/LogicalMatrixExpressions") {
   }
 
   SUBCASE("logical-and") {
-    CHECK_FALSE(any(matrix_and(mat1, mat2)));
-    CHECK(any(matrix_and(mat1, mat3)));
-    /// @todo Check the multiargument versions.
+    CHECK_FALSE(any(mat1 && mat2));
+    CHECK(any(mat1 && mat3));
   }
 
   SUBCASE("logical-or") {
-    CHECK(all(matrix_or(mat1, mat2)));
-    /// @todo Check the multiargument versions.
+    CHECK(all(mat1 || mat2));
   }
 }
 
@@ -318,7 +335,9 @@ TEST_CASE("Bittern/TrigonometricMatrixExpressions") {
 // -----------------------------------------------------------------------------
 
 /// @todo What is wrong with you, GCC?
-#if STORM_COMPILER_GCC_ && STORM_X64_ && defined(NDEBUG)
+#define GCC_COSH_BUG \
+  STORM_ARCH_X64&& STORM_COMPILER_GCC && (__GNUC__ == 12) && STORM_NDEBUG
+#if GCC_COSH_BUG
 #  pragma GCC push_options
 #  pragma GCC optimize("O2")
 #endif
@@ -352,9 +371,10 @@ TEST_CASE("Bittern/HyperbolicMatrixExpressions") {
   }
 }
 
-#if STORM_COMPILER_GCC_ && STORM_X64_ && defined(NDEBUG)
+#if GCC_COSH_BUG
 #  pragma GCC pop_options
 #endif
+#undef GCC_COSH_BUG
 
 // -----------------------------------------------------------------------------
 

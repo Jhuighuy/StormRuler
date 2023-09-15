@@ -44,21 +44,21 @@ template<size_t Size>
 class SelectedIndices {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ std::array<size_t, Size> selected_indices_;
+  STORM_NO_UNIQUE_ADDRESS std::array<size_t, Size> _selected_indices;
 
 public:
 
   constexpr explicit SelectedIndices(
       const std::array<size_t, Size>& selected_indices) noexcept
-      : selected_indices_(selected_indices) {}
+      : _selected_indices(selected_indices) {}
 
   constexpr auto size() const noexcept {
     return Size;
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
-    STORM_ASSERT_(index < Size, "Index is out of range.");
-    return selected_indices_[index];
+    STORM_ASSERT(index < Size, "Index is out of range.");
+    return _selected_indices[index];
   }
 
 }; // class SelectedIndices
@@ -70,20 +70,20 @@ SelectedIndices(std::array<size_t, Size>) -> SelectedIndices<Size>;
 class SlicedIndices {
 private:
 
-  size_t from_, to_, stride_;
+  size_t _from, _to, _stride;
 
 public:
 
   constexpr SlicedIndices(size_t from, size_t to, size_t stride) noexcept
-      : from_{from}, to_{to}, stride_{stride} {}
+      : _from{from}, _to{to}, _stride{stride} {}
 
   constexpr auto size() const noexcept {
-    return (from_ - to_) / stride_;
+    return (_from - _to) / _stride;
   }
 
   constexpr size_t operator[](size_t index) const noexcept {
-    STORM_ASSERT_(index < size(), "Index is out of range.");
-    return from_ + stride_ * index;
+    STORM_ASSERT(index < size(), "Index is out of range.");
+    return _from + _stride * index;
   }
 
 }; // class SlicedIndices
@@ -95,27 +95,27 @@ class SubmatrixView :
     public MatrixViewInterface<SubmatrixView<Matrix, RowIndices, ColIndices>> {
 private:
 
-  STORM_NO_UNIQUE_ADDRESS_ Matrix mat_;
-  STORM_NO_UNIQUE_ADDRESS_ RowIndices row_indices_;
-  STORM_NO_UNIQUE_ADDRESS_ ColIndices col_indices_;
+  STORM_NO_UNIQUE_ADDRESS Matrix _mat;
+  STORM_NO_UNIQUE_ADDRESS RowIndices _row_indices;
+  STORM_NO_UNIQUE_ADDRESS ColIndices _col_indices;
 
   // clang-format off
-  constexpr auto num_rows_() const noexcept
-      requires requires { row_indices_.size(); } {
+  constexpr auto _num_rows() const noexcept
+      requires requires { _row_indices.size(); } {
     // clang-format on
-    return row_indices_.size();
+    return _row_indices.size();
   }
-  constexpr auto num_rows_() const noexcept {
-    return num_rows(mat_);
+  constexpr auto _num_rows() const noexcept {
+    return num_rows(_mat);
   }
 
-  constexpr auto num_cols_() const noexcept
-    requires requires { col_indices_.size(); }
+  constexpr auto _num_cols() const noexcept
+    requires requires { _col_indices.size(); }
   {
-    return col_indices_.size();
+    return _col_indices.size();
   }
-  constexpr auto num_cols_() const noexcept {
-    return num_cols(mat_);
+  constexpr auto _num_cols() const noexcept {
+    return num_cols(_mat);
   }
 
 public:
@@ -124,24 +124,24 @@ public:
   constexpr SubmatrixView(Matrix mat, //
                           RowIndices row_indices,
                           ColIndices col_indices) noexcept
-      : mat_{std::move(mat)},                 //
-        row_indices_{std::move(row_indices)}, //
-        col_indices_{std::move(col_indices)} {}
+      : _mat{std::move(mat)},                 //
+        _row_indices{std::move(row_indices)}, //
+        _col_indices{std::move(col_indices)} {}
 
   /// @brief Get the matrix shape.
   constexpr auto shape() const noexcept {
-    return MatrixShape{num_rows_(), num_cols_()};
+    return MatrixShape{_num_rows(), _num_cols()};
   }
 
   /// @brief Get the matrix element at @p indices.
   /// @{
   constexpr decltype(auto) operator()(size_t row_index,
                                       size_t col_index) noexcept {
-    return mat_(row_indices_[row_index], col_indices_[col_index]);
+    return _mat(_row_indices[row_index], _col_indices[col_index]);
   }
   constexpr decltype(auto) operator()(size_t row_index,
                                       size_t col_index) const noexcept {
-    return mat_(row_indices_[row_index], col_indices_[col_index]);
+    return _mat(_row_indices[row_index], _col_indices[col_index]);
   }
   /// @}
 

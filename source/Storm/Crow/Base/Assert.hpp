@@ -20,38 +20,44 @@
 
 #pragma once
 
-#include <Storm/Base.hpp>
+#include <Storm/Crow/Base/Config.hpp>
 
-#include <concepts>
-#include <type_traits>
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
-namespace Storm {
-
-// -----------------------------------------------------------------------------
-
-/// @brief A semi-valid argument for the CRTP classes.
-template<class Derived>
-concept crtp_derived = std::is_class_v<Derived> &&
-                       std::same_as<Derived, std::remove_cv_t<Derived>>;
-
-// Based on /*is-derived-from-view-interface*/<T> implementation.
-namespace detail_ {
-  template<template<crtp_derived Derived> class CrtpInterface>
-  struct DerivedFromCrtpInterfaceImpl_ {
-    template<class T, class U>
-    DerivedFromCrtpInterfaceImpl_(const T&,
-                                  const CrtpInterface<U>&); // not defined
-  };
-} // namespace detail_
-
-/// @brief Checks if and only if @c T has exactly one public base class
-/// @c CrtpInterface&lt;U&gt; for some type @c U, and @c T has no base classes
-/// of type @c CrtpInterface&lt;V&gt; for any other type @c V.
-template<class T, template<class Derived> class CrtpInterface>
-concept derived_from_crtp_interface = requires(T x) { //
-  detail_::DerivedFromCrtpInterfaceImpl_<CrtpInterface>{x, x};
-};
+#include <cstdlib>
+#include <utility>
 
 // -----------------------------------------------------------------------------
 
-} // namespace Storm
+// Report a fatal error and exit the application.
+#define STORM_ABORT(message, ...)                                           \
+  (STORM_CRITICAL("{}:{} {}: Critical error! " message, __FILE__, __LINE__, \
+                  STORM_CURRENT_FUNCTION_STRING __VA_OPT__(, __VA_ARGS__)), \
+   std::abort())
+
+// Check the expression, exit with fatal error if it fails.
+#define STORM_ENSURE(expression, message, ...)              \
+  (STORM_LIKELY(static_cast<bool>((expression))) ?          \
+       void(0) :                                            \
+       STORM_ABORT("Condition `{}` was violated! " message, \
+                   #expression __VA_OPT__(, __VA_ARGS__)))
+
+// Enable or disable asserts.
+#ifndef STORM_ENABLE_ASSERTS
+#  if STORM_NDEBUG
+#    define STORM_ENABLE_ASSERTS 0
+#  else
+#    define STORM_ENABLE_ASSERTS 1
+#  endif
+#endif
+
+// If enabled, check the expression, exit with fatal error if it fails.
+#if STORM_ENABLE_ASSERTS
+#  define STORM_ASSERT(expression, message, ...) \
+    STORM_ENSURE(expression, message __VA_OPT__(, __VA_ARGS__))
+#else
+#  define STORM_ASSERT(expression, message, ...) STORM_ASSUME(expression)
+#endif
+
+// -----------------------------------------------------------------------------

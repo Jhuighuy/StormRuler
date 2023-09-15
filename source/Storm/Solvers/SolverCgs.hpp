@@ -22,8 +22,8 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Bittern/Math.hpp>
 #include <Storm/Bittern/Matrix.hpp>
+#include <Storm/Crow/MathUtils.hpp>
 
 #include <Storm/Solvers/Solver.hpp>
 
@@ -51,8 +51,8 @@ template<legacy_vector_like Vector>
 class CgsSolver final : public IterativeSolver<Vector> {
 private:
 
-  real_t rho_;
-  Vector p_vec_, q_vec_, r_vec_, r_tilde_vec_, u_vec_, v_vec_;
+  real_t _rho;
+  Vector _p_vec, _q_vec, _r_vec, _r_tilde_vec, _u_vec, _v_vec;
 
   real_t init(const Vector& x_vec, const Vector& b_vec,
               const Operator<Vector>& lin_op,
@@ -60,12 +60,12 @@ private:
     const bool left_pre =
         (pre_op != nullptr) && (this->pre_side == PreconditionerSide::Left);
 
-    p_vec_.assign(x_vec, false);
-    q_vec_.assign(x_vec, false);
-    r_vec_.assign(x_vec, false);
-    r_tilde_vec_.assign(x_vec, false);
-    u_vec_.assign(x_vec, false);
-    v_vec_.assign(x_vec, false);
+    _p_vec.assign(x_vec, false);
+    _q_vec.assign(x_vec, false);
+    _r_vec.assign(x_vec, false);
+    _r_tilde_vec.assign(x_vec, false);
+    _u_vec.assign(x_vec, false);
+    _v_vec.assign(x_vec, false);
 
     // Initialize:
     // ----------------------
@@ -77,15 +77,15 @@ private:
     // 𝒓̃ ← 𝒓,
     // 𝜌 ← <𝒓̃⋅𝒓>.
     // ----------------------
-    lin_op.Residual(r_vec_, b_vec, x_vec);
+    lin_op.Residual(_r_vec, b_vec, x_vec);
     if (left_pre) {
-      std::swap(u_vec_, r_vec_);
-      pre_op->mul(r_vec_, u_vec_);
+      std::swap(_u_vec, _r_vec);
+      pre_op->mul(_r_vec, _u_vec);
     }
-    r_tilde_vec_ <<= r_vec_;
-    rho_ = dot_product(r_tilde_vec_, r_vec_);
+    _r_tilde_vec <<= _r_vec;
+    _rho = dot_product(_r_tilde_vec, _r_vec);
 
-    return sqrt(rho_);
+    return sqrt(_rho);
   }
 
   real_t iterate(Vector& x_vec, const Vector& b_vec,
@@ -111,14 +111,14 @@ private:
     // ----------------------
     const bool first_iteration = this->iteration == 0;
     if (first_iteration) {
-      u_vec_ <<= r_vec_;
-      p_vec_ <<= u_vec_;
+      _u_vec <<= _r_vec;
+      _p_vec <<= _u_vec;
     } else {
       const real_t rho_bar =
-          std::exchange(rho_, dot_product(r_tilde_vec_, r_vec_));
-      const real_t beta = safe_divide(rho_, rho_bar);
-      u_vec_ <<= r_vec_ + beta * q_vec_;
-      p_vec_ <<= u_vec_ + beta * (q_vec_ + beta * p_vec_);
+          std::exchange(_rho, dot_product(_r_tilde_vec, _r_vec));
+      const real_t beta = safe_divide(_rho, rho_bar);
+      _u_vec <<= _r_vec + beta * _q_vec;
+      _p_vec <<= _u_vec + beta * (_q_vec + beta * _p_vec);
     }
 
     // ----------------------
@@ -133,12 +133,12 @@ private:
     // 𝒒 ← 𝒖 - 𝛼⋅𝒗,
     // 𝒗 ← 𝒖 + 𝒒.
     // ----------------------
-    if (left_pre) pre_op->mul(v_vec_, q_vec_, lin_op, p_vec_);
-    else if (right_pre) lin_op.mul(v_vec_, q_vec_, *pre_op, p_vec_);
-    else lin_op.mul(v_vec_, p_vec_);
-    const real_t alpha = safe_divide(rho_, dot_product(r_tilde_vec_, v_vec_));
-    q_vec_ <<= u_vec_ - alpha * v_vec_;
-    v_vec_ <<= u_vec_ + q_vec_;
+    if (left_pre) pre_op->mul(_v_vec, _q_vec, lin_op, _p_vec);
+    else if (right_pre) lin_op.mul(_v_vec, _q_vec, *pre_op, _p_vec);
+    else lin_op.mul(_v_vec, _p_vec);
+    const real_t alpha = safe_divide(_rho, dot_product(_r_tilde_vec, _v_vec));
+    _q_vec <<= _u_vec - alpha * _v_vec;
+    _v_vec <<= _u_vec + _q_vec;
 
     // Update the solution and the residual:
     // ----------------------
@@ -157,20 +157,20 @@ private:
     // 𝗲𝗻𝗱 𝗶𝗳
     // ----------------------
     if (left_pre) {
-      x_vec += alpha * v_vec_;
-      pre_op->mul(v_vec_, u_vec_, lin_op, v_vec_);
-      r_vec_ -= alpha * v_vec_;
+      x_vec += alpha * _v_vec;
+      pre_op->mul(_v_vec, _u_vec, lin_op, _v_vec);
+      _r_vec -= alpha * _v_vec;
     } else if (right_pre) {
-      lin_op.mul(v_vec_, u_vec_, *pre_op, v_vec_);
-      x_vec += alpha * u_vec_;
-      r_vec_ -= alpha * v_vec_;
+      lin_op.mul(_v_vec, _u_vec, *pre_op, _v_vec);
+      x_vec += alpha * _u_vec;
+      _r_vec -= alpha * _v_vec;
     } else {
-      lin_op.mul(u_vec_, v_vec_);
-      x_vec += alpha * v_vec_;
-      r_vec_ -= alpha * u_vec_;
+      lin_op.mul(_u_vec, _v_vec);
+      x_vec += alpha * _v_vec;
+      _r_vec -= alpha * _u_vec;
     }
 
-    return norm_2(r_vec_);
+    return norm_2(_r_vec);
   }
 
 }; // class CgsSolver

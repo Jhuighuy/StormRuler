@@ -22,7 +22,7 @@
 
 #include <Storm/Base.hpp>
 
-#include <Storm/Utils/Crtp.hpp>
+#include <Storm/Crow/ConceptUtils.hpp>
 #include <Storm/Utils/Index.hpp>
 #include <Storm/Utils/IndexedContainers.hpp>
 #include <Storm/Utils/Meta.hpp>
@@ -84,36 +84,36 @@ template<crtp_derived Derived>
 class TableInterface {
 private:
 
-  constexpr Derived& self_() noexcept {
+  constexpr Derived& _self() noexcept {
     static_assert(std::derived_from<Derived, TableInterface>);
     return static_cast<Derived&>(*this);
   }
-  constexpr const Derived& self_() const noexcept {
-    return const_cast<TableInterface&>(*this).self_();
+  constexpr const Derived& _self() const noexcept {
+    return const_cast<TableInterface&>(*this)._self();
   }
 
 public:
 
   /// @brief Number of the table rows.
   constexpr size_t size() const noexcept {
-    return std::ranges::size(self_().rows());
+    return std::ranges::size(_self().rows());
   }
 
   /// @brief Assign the @p table.
   /// @todo Refactor this in some point of time.
   /// @{
   void assign(Derived&& table) {
-    self_() = std::move(table);
+    _self() = std::move(table);
   }
   void assign(const Derived& table) {
-    self_() = table;
+    _self() = table;
   }
   template<table Table>
   void assign(const Table& table) {
-    self_().clear();
-    self_().reserve(table.size());
+    _self().clear();
+    _self().reserve(table.size());
     for (auto row_index : table.rows()) {
-      self_().push_back(table[row_index]);
+      _self().push_back(table[row_index]);
     }
   }
   /// @}
@@ -128,63 +128,63 @@ template<index RowIndex, class ColValue>
 class CsrTable final : public TableInterface<CsrTable<RowIndex, ColValue>> {
 private:
 
-  IndexedVector<RowIndex, OffsetIndex> row_offsets_{OffsetIndex{0}};
-  IndexedVector<OffsetIndex, ColValue> col_values_;
+  IndexedVector<RowIndex, OffsetIndex> _row_offsets{OffsetIndex{0}};
+  IndexedVector<OffsetIndex, ColValue> _col_values;
 
 public:
 
   /// @brief Index range of the rows.
   constexpr auto rows() const noexcept {
-    return std::views::iota(RowIndex{0}, RowIndex{row_offsets_.size() - 1});
+    return std::views::iota(RowIndex{0}, RowIndex{_row_offsets.size() - 1});
   }
 
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   constexpr auto operator[](RowIndex row_index) noexcept {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    // Here we do `{col_values_[begin - 1], &col_values_[end - 1] + 1}`,
-    // since `col_values_[end - 1]` may be outsize of the vector.
-    return std::span{&col_values_[row_offsets_[row_index]],
-                     &col_values_[row_offsets_[row_index + 1] - 1] + 1};
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    // Here we do `{_col_values[begin - 1], &_col_values[end - 1] + 1}`,
+    // since `_col_values[end - 1]` may be outsize of the vector.
+    return std::span{&_col_values[_row_offsets[row_index]],
+                     &_col_values[_row_offsets[row_index + 1] - 1] + 1};
   }
   constexpr auto operator[](RowIndex row_index) const noexcept {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    return std::span{&col_values_[row_offsets_[row_index]],
-                     &col_values_[row_offsets_[row_index + 1] - 1] + 1};
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    return std::span{&_col_values[_row_offsets[row_index]],
+                     &_col_values[_row_offsets[row_index + 1] - 1] + 1};
   }
   /// @}
 
   /// @brief Clear the table.
   constexpr void clear() {
-    row_offsets_.clear(), row_offsets_.emplace_back(0);
-    col_values_.clear();
+    _row_offsets.clear(), _row_offsets.emplace_back(0);
+    _col_values.clear();
   }
 
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {
-    row_offsets_.reserve(capacity + 1);
+    _row_offsets.reserve(capacity + 1);
   }
 
   /// @brief Push back an empty row.
   constexpr void push_back() {
-    row_offsets_.emplace_back(col_values_.size());
+    _row_offsets.emplace_back(_col_values.size());
   }
   /// @brief Push back a row with @p row_values.
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColValue>
   constexpr void push_back(Range&& row_values) {
-    col_values_.insert(col_values_.end(), row_values.begin(), row_values.end());
-    row_offsets_.emplace_back(col_values_.size());
+    _col_values.insert(_col_values.end(), row_values.begin(), row_values.end());
+    _row_offsets.emplace_back(_col_values.size());
   }
 
   /// @brief Insert a connection at @p row_index, @p col_value.
   /// @warning Complexity is linear!
   void insert(RowIndex row_index, ColValue col_value) {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    const auto offset = static_cast<size_t>(row_offsets_[row_index + 1]);
-    col_values_.insert(col_values_.begin() + offset, col_value);
-    std::for_each(row_offsets_.begin() + static_cast<size_t>(row_index) + 1,
-                  row_offsets_.end(), [](auto& offset) { offset += 1; });
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    const auto offset = static_cast<size_t>(_row_offsets[row_index + 1]);
+    _col_values.insert(_col_values.begin() + offset, col_value);
+    std::for_each(_row_offsets.begin() + static_cast<size_t>(row_index) + 1,
+                  _row_offsets.end(), [](auto& offset) { offset += 1; });
   }
 
 }; // class CsrTable
@@ -197,58 +197,58 @@ template<index RowIndex, class ColValue = void>
 class VovTable final : public TableInterface<VovTable<RowIndex, ColValue>> {
 private:
 
-  IndexedVector<RowIndex, IndexedVector<OffsetIndex, ColValue>> rows_;
+  IndexedVector<RowIndex, IndexedVector<OffsetIndex, ColValue>> _rows;
 
 public:
 
   /// @brief Index range of the rows.
   constexpr auto rows() const noexcept {
-    return std::views::iota(RowIndex{0}, RowIndex{rows_.size()});
+    return std::views::iota(RowIndex{0}, RowIndex{_rows.size()});
   }
 
   /// @brief Get the column indices range of a row @p row_index.
   /// @{
   constexpr auto& operator[](RowIndex row_index) noexcept {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    return rows_[row_index];
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    return _rows[row_index];
   }
   constexpr const auto& operator[](RowIndex row_index) const noexcept {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    return rows_[row_index];
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    return _rows[row_index];
   }
   /// @}
 
   /// @brief Clear the table.
   constexpr void clear() {
-    rows_.clear();
+    _rows.clear();
   }
 
   /// @brief Reserve the row storage.
   constexpr void reserve(size_t capacity) {
-    rows_.reserve(capacity);
+    _rows.reserve(capacity);
   }
 
   /// @brief Push back an empty row.
   constexpr void push_back() {
-    rows_.emplace_back();
+    _rows.emplace_back();
   }
   /// @brief Push back a row with @p row_col_indices.
   /// @{
   template<std::ranges::input_range Range>
     requires std::same_as<std::ranges::range_value_t<Range>, ColValue>
   constexpr void push_back(Range&& row_values) {
-    rows_.emplace_back();
-    std::ranges::copy(row_values, std::back_inserter(rows_.back()));
+    _rows.emplace_back();
+    std::ranges::copy(row_values, std::back_inserter(_rows.back()));
   }
   constexpr void push_back(IndexedVector<OffsetIndex, ColValue>&& row_values) {
-    rows_.emplace_back(std::move(row_values));
+    _rows.emplace_back(std::move(row_values));
   }
   /// @}
 
   /// @brief Insert a connection at @p row_index, @p col_value.
   void insert(RowIndex row_index, ColValue col_value) {
-    STORM_ASSERT_(row_index < this->size(), "Row index is out of range!");
-    rows_[row_index].push_back(col_value);
+    STORM_ASSERT(row_index < this->size(), "Row index is out of range!");
+    _rows[row_index].push_back(col_value);
   }
 
 }; // class VovTable

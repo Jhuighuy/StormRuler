@@ -123,16 +123,16 @@ concept pixel = (pixel_desc_v<Pixel>.internal_format != 0);
 // -----------------------------------------------------------------------------
 
 /// @brief OpenGL texture.
-class Texture : detail_::noncopyable_ {
+class Texture : NonCopyable {
 private:
 
-  GLuint texture_id_;
+  GLuint _texture_id;
 
 public:
 
   /// @brief Construct a texture.
   Texture() {
-    glGenTextures(1, &texture_id_);
+    glGenTextures(1, &_texture_id);
   }
 
   /// @brief Move-construct a texture.
@@ -142,22 +142,22 @@ public:
 
   /// @brief Destruct the texture.
   ~Texture() {
-    glDeleteTextures(1, &texture_id_);
+    glDeleteTextures(1, &_texture_id);
   }
 
   /// @brief Cast to texture ID.
   constexpr operator GLuint() const noexcept {
-    return texture_id_;
+    return _texture_id;
   }
 
 protected:
 
-  void bind_(TextureTarget target) const {
-    glBindTexture(static_cast<GLenum>(target), texture_id_);
+  void _bind(TextureTarget target) const {
+    glBindTexture(static_cast<GLenum>(target), _texture_id);
   }
-  void bind_(TextureTarget target, size_t slot) const {
+  void _bind(TextureTarget target, size_t slot) const {
     glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + slot));
-    bind_(target);
+    _bind(target);
   }
 
 }; // class Texture
@@ -179,12 +179,12 @@ public:
 
   /// @brief Bind the 2D texture buffer to @p slot.
   void bind(size_t slot) const {
-    bind_(TextureTarget::texture2D, slot);
+    _bind(TextureTarget::texture2D, slot);
   }
 
   /// @brief Assign the 2D texture @p width, @p height and @p data.
   void assign(GLsizei width, GLsizei height, const Pixel* data = nullptr) {
-    bind_(TextureTarget::texture2D);
+    _bind(TextureTarget::texture2D);
     glTexImage2D(GL_TEXTURE_2D,
                  /*level*/ 0, pixel_desc_v<Pixel>.internal_format, //
                  width, height,
@@ -201,7 +201,7 @@ public:
   /// @see https://riptutorial.com/opengl/example/28872/using-pbos
   void read_pixels(Buffer<Pixel>& buffer) {
     buffer.bind(BufferTarget::pixel_pack_buffer);
-    bind_(TextureTarget::texture2D);
+    _bind(TextureTarget::texture2D);
     glGetTexImage(GL_TEXTURE_2D, /*level*/ 0, pixel_desc_v<Pixel>.format,
                   pixel_desc_v<Pixel>.type, /*data*/ nullptr);
   }
@@ -227,13 +227,13 @@ public:
 
   /// @brief Bind the multisampled 2D texture buffer to @p slot.
   void bind(size_t slot) const {
-    bind_(TextureTarget::multisample_texture2D, slot);
+    _bind(TextureTarget::multisample_texture2D, slot);
   }
 
   /// @brief Assign the multisampled 2D texture @p width, @p height and @p
   /// num_samples.
   void assign(GLsizei width, GLsizei height, GLsizei num_samples = 4) {
-    bind_(TextureTarget::multisample_texture2D);
+    _bind(TextureTarget::multisample_texture2D);
     glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, num_samples,
                             pixel_desc_v<Pixel>.internal_format, width, height,
                             /*fixed_sample_locations*/ GL_TRUE);
@@ -255,13 +255,13 @@ public:
 
   /// @brief Bind the texture buffer to @p slot.
   void bind(size_t slot) const {
-    bind_(TextureTarget::texture_buffer, slot);
+    _bind(TextureTarget::texture_buffer, slot);
   }
 
   /// @brief Assign the texture buffer underlying @p buffer.
   template<pixel Pixel>
   void assign(const Buffer<Pixel>& buffer) {
-    bind_(TextureTarget::texture_buffer);
+    _bind(TextureTarget::texture_buffer);
     glTexBuffer(GL_TEXTURE_BUFFER, pixel_desc_v<Pixel>.internal_format, buffer);
   }
 

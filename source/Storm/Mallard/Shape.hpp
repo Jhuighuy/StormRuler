@@ -47,7 +47,7 @@ enum class Type : std::uint8_t {
   pyramid,        ///< Pyramid shape type.
   pentahedron,    ///< Pentahedron shape type.
   hexahedron,     ///< Hexahedron shape type.
-  count_,
+  _count,
 }; // enum class shape_type
 
 /// @brief Shape concept.
@@ -126,23 +126,23 @@ template<class Shape, class Mesh>
 using piece_t = std::ranges::range_value_t<decltype( //
     std::declval<Shape>().pieces(std::declval<Mesh>()))>;
 
-namespace detail_ {
+namespace _detail {
   template<class Shape, class Mesh>
-  concept can_volume_ =
+  concept _can_volume =
       requires(Shape shape, const Mesh& mesh) { volume(shape, mesh); };
   template<class Shape, class Mesh>
-  concept can_barycenter_ =
+  concept _can_barycenter =
       requires(Shape shape, const Mesh& mesh) { barycenter(shape, mesh); };
   template<class Shape, class Mesh>
-  concept can_normal_ =
+  concept _can_normal =
       requires(Shape shape, const Mesh& mesh) { normal(shape, mesh); };
-} // namespace detail_
+} // namespace _detail
 
 /// @brief Compute the complex @p shape "volume"
 /// (length in 1D, area in 2D, volume in 3D).
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
-            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh>)
+            _detail::_can_volume<piece_t<Shape, Mesh>, Mesh>)
 constexpr real_t volume(const Shape& shape, const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
   auto vol = volume(pieces.front(), mesh);
@@ -169,8 +169,8 @@ constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
 /// @brief Compute the complex @p shape barycenter.
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
-            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-            detail_::can_barycenter_<piece_t<Shape, Mesh>, Mesh>)
+            _detail::_can_volume<piece_t<Shape, Mesh>, Mesh> &&
+            _detail::_can_barycenter<piece_t<Shape, Mesh>, Mesh>)
 constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
                                       const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
@@ -186,8 +186,8 @@ constexpr mesh_vec_t<Mesh> barycenter(const Shape& shape,
 /// @brief Compute the complex @p shape normal.
 template<shape Shape, mesh Mesh>
   requires (complex_shape<Shape, Mesh> &&
-            detail_::can_volume_<piece_t<Shape, Mesh>, Mesh> &&
-            detail_::can_normal_<piece_t<Shape, Mesh>, Mesh>)
+            _detail::_can_volume<piece_t<Shape, Mesh>, Mesh> &&
+            _detail::_can_normal<piece_t<Shape, Mesh>, Mesh>)
 constexpr mesh_vec_t<Mesh> normal(const Shape& shape,
                                   const Mesh& mesh) noexcept {
   const auto pieces = shape.pieces(mesh);
@@ -418,13 +418,13 @@ public:
   /// @brief Construct a triangle strip with nodes.
   template<class... NodeIndices>
   constexpr TriangleStrip(NodeIndices... i) : n{i...} {
-    STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
+    STORM_ASSERT(n.size() >= 3, "Triangle strip must have least 3 nodes!");
   }
 
   /// @brief Triangle strip type.
   /// May fallback to triangle or quadrangle types.
   constexpr auto type() const noexcept {
-    STORM_ASSERT_(n.size() >= 3, "Triangle strip must have least 3 nodes!");
+    STORM_ASSERT(n.size() >= 3, "Triangle strip must have least 3 nodes!");
     switch (n.size()) {
       case 3: return Type::triangle;
       case 4: return Type::quadrangle;
@@ -489,13 +489,13 @@ public:
   /// @brief Construct a polygon with nodes.
   template<class... NodeIndices>
   constexpr Polygon(NodeIndices... i) : n{i...} {
-    STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
+    STORM_ASSERT(n.size() >= 3, "Polygon must have least 3 nodes!");
   }
 
   /// @brief Polygon type.
   /// May fallback to triangle or quadrangle types.
   constexpr auto type() const noexcept {
-    STORM_ASSERT_(n.size() >= 3, "Polygon must have least 3 nodes!");
+    STORM_ASSERT(n.size() >= 3, "Polygon must have least 3 nodes!");
     switch (n.size()) {
       case 3: return Type::triangle;
       case 4: return Type::quadrangle;

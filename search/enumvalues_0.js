@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hexahedron_0',['hexahedron',['../namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010ba3fac1e211e9f7ae4e6d1bbcddbf44f07',1,'Storm::shapes']]]
+  ['left_0',['Left',['../namespace_storm.html#a9d656f944a0b8589f1f9f9a85942993ea945d5e233cf7d6240f6b783b36a374ff',1,'Storm']]]
 ];

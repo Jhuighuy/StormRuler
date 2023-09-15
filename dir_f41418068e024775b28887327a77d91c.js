@@ -1,9 +1,7 @@
 var dir_f41418068e024775b28887327a77d91c =
 [
     [ "AABB.hpp", "_a_a_b_b_8hpp_source.html", null ],
-    [ "Functions.hpp", "_functions_8hpp_source.html", null ],
     [ "Mat.hpp", "_mat_8hpp_source.html", null ],
-    [ "Math.hpp", "_math_8hpp_source.html", null ],
     [ "Matrix.hpp", "_matrix_8hpp_source.html", null ],
     [ "MatrixAlgorithms.hpp", "_matrix_algorithms_8hpp_source.html", null ],
     [ "MatrixMath.hpp", "_matrix_math_8hpp_source.html", null ],

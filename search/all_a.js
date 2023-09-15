@@ -9,12 +9,15 @@ var searchData=
   ['left_6',['Left',['../namespace_storm.html#a9d656f944a0b8589f1f9f9a85942993ea945d5e233cf7d6240f6b783b36a374ff',1,'Storm']]],
   ['length_7',['length',['../namespace_storm.html#ae90e69aa72b8cc901315f1c9bcd281b3',1,'Storm::length()'],['../class_storm_1_1_edge_view.html#a04d271aaf249c8c6b08dd5cd045bdc82',1,'Storm::EdgeView::length()']]],
   ['length_5f2_8',['length_2',['../namespace_storm.html#a2e6fa50724cac535b7b426b407a53b0e',1,'Storm']]],
-  ['linearupwindconvectionscheme_9',['linearupwindconvectionscheme',['../class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html',1,'Storm::Feathers::LinearUpwindConvectionScheme&lt; Mesh, FluxScheme, GradientScheme, GradientLimiterScheme &gt;'],['../class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html#a1218644b65bd67e0db4facf6abff30b7',1,'Storm::Feathers::LinearUpwindConvectionScheme::LinearUpwindConvectionScheme()']]],
+  ['linearupwindconvectionscheme_9',['linearupwindconvectionscheme',['../class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html#a1218644b65bd67e0db4facf6abff30b7',1,'Storm::Feathers::LinearUpwindConvectionScheme::LinearUpwindConvectionScheme()'],['../class_storm_1_1_feathers_1_1_linear_upwind_convection_scheme.html',1,'Storm::Feathers::LinearUpwindConvectionScheme&lt; Mesh, FluxScheme, GradientScheme, GradientLimiterScheme &gt;']]],
   ['list_10',['list',['../struct_storm_1_1meta_1_1list.html',1,'Storm::meta::list&lt; Ts &gt;'],['../todo.html',1,'Todo List']]],
   ['list_5fcast_5ffn_11',['list_cast_fn',['../struct_storm_1_1meta_1_1list__cast__fn.html',1,'Storm::meta']]],
-  ['load_12',['load',['../class_storm_1_1_vulture_1_1gl_1_1_window.html#a82d4962e1d18d0491f56291dcdffc971',1,'Storm::Vulture::gl::Window::load()'],['../class_storm_1_1_vulture_1_1gl_1_1_framework.html#a2f364adc1d824740b8abd479baf13271',1,'Storm::Vulture::gl::Framework::load()']]],
-  ['log_13',['log',['../class_storm_1_1_log.html',1,'Storm::Log'],['../namespace_storm.html#a58746a174a47db0c630b1c8bc4f6e638',1,'Storm::log(Matrix &amp;&amp;mat)']]],
-  ['log10_14',['log10',['../namespace_storm.html#a9e481207c9cf338cf2dd1daac187d1b9',1,'Storm::log10(Matrix &amp;&amp;mat)'],['../class_storm_1_1_log10.html',1,'Storm::Log10']]],
-  ['log2_15',['log2',['../class_storm_1_1_log2.html',1,'Storm::Log2'],['../namespace_storm.html#ab4e5b7485e12c0638fc99494de5d7de5',1,'Storm::log2(Matrix &amp;&amp;mat)']]],
-  ['lower_5ftriangle_16',['lower_triangle',['../namespace_storm.html#a40101fa91117fa62002fcf6f96388f03',1,'Storm']]]
+  ['load_12',['load',['../class_storm_1_1_vulture_1_1gl_1_1_framework.html#a2f364adc1d824740b8abd479baf13271',1,'Storm::Vulture::gl::Framework::load()'],['../class_storm_1_1_vulture_1_1gl_1_1_window.html#a82d4962e1d18d0491f56291dcdffc971',1,'Storm::Vulture::gl::Window::load()']]],
+  ['log_13',['log',['../class_storm_1_1_log.html',1,'Storm::Log'],['../namespace_storm.html#a2ae8b1eefe2d7a0896f87ba7cb2e2c83',1,'Storm::log(Matrix &amp;&amp;mat)']]],
+  ['log10_14',['log10',['../namespace_storm.html#a6c9bd76ad1e8eaea75954e6e95db7da8',1,'Storm::log10(Matrix &amp;&amp;mat)'],['../class_storm_1_1_log10.html',1,'Storm::Log10']]],
+  ['log2_15',['log2',['../class_storm_1_1_log2.html',1,'Storm::Log2'],['../namespace_storm.html#aefd9c226843385e21ce480faabab8c32',1,'Storm::log2(Matrix &amp;&amp;mat)']]],
+  ['logicaland_16',['LogicalAnd',['../class_storm_1_1_logical_and.html',1,'Storm']]],
+  ['logicalnot_17',['LogicalNot',['../namespace_storm.html#af989e04a15a533fe3135916db61b37c3',1,'Storm']]],
+  ['logicalor_18',['LogicalOr',['../class_storm_1_1_logical_or.html',1,'Storm']]],
+  ['lower_5ftriangle_19',['lower_triangle',['../namespace_storm.html#a40101fa91117fa62002fcf6f96388f03',1,'Storm']]]
 ];

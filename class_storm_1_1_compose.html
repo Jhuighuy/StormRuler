@@ -159,23 +159,23 @@ $(document).ready(function(){initNavTree('class_storm_1_1_compose.html',''); ini
 <p><a class="el" href="class_storm_1_1_compose.html" title="Compose multiple functions: .">Compose</a> multiple functions: \( f_{1} \circ f_{2} \circ \ldots \).  
  <a href="class_storm_1_1_compose.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="_functions_8hpp_source.html">Storm/Bittern/Functions.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="_functional_utils_8hpp_source.html">Storm/Crow/FunctionalUtils.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a98964212644782ab81e6191167f483ce" id="r_a98964212644782ab81e6191167f483ce"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose.html#a98964212644782ab81e6191167f483ce">Compose</a> (Func func, RestFuncs... rest_funcs)</td></tr>
 <tr class="separator:a98964212644782ab81e6191167f483ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ccb633a0a770e3ae3129037b10b9685" id="r_a6ccb633a0a770e3ae3129037b10b9685"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; <br />
-requires std::regular_invocable&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt; &amp;&amp; std::regular_invocable&lt; Func, std::invoke_result_t&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt;&gt;</td></tr>
-<tr class="memitem:a6ccb633a0a770e3ae3129037b10b9685"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose.html#a6ccb633a0a770e3ae3129037b10b9685">operator()</a> (Args &amp;&amp;... args) const noexcept</td></tr>
-<tr class="separator:a6ccb633a0a770e3ae3129037b10b9685"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa527d961f79342f15e95e94cd5878d37" id="r_aa527d961f79342f15e95e94cd5878d37"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; <br />
+requires std::invocable&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt; &amp;&amp; std::invocable&lt; Func, std::invoke_result_t&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt;&gt;</td></tr>
+<tr class="memitem:aa527d961f79342f15e95e94cd5878d37"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose.html#aa527d961f79342f15e95e94cd5878d37">operator()</a> (Args &amp;&amp;... args) const</td></tr>
+<tr class="separator:aa527d961f79342f15e95e94cd5878d37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Func, class... RestFuncs&gt;<br />
 requires std::is_object_v&lt;Func&gt; &amp;&amp; (... &amp;&amp; std::is_object_v&lt;RestFuncs&gt;)<br />
 class Storm::Compose&lt; Func, RestFuncs &gt;</div><p><a class="el" href="class_storm_1_1_compose.html" title="Compose multiple functions: .">Compose</a> multiple functions: \( f_{1} \circ f_{2} \circ \ldots \). </p>
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00094">94</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00094">94</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a98964212644782ab81e6191167f483ce" name="a98964212644782ab81e6191167f483ce"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a98964212644782ab81e6191167f483ce">&#9670;&#160;</a></span>Compose()</h2>
@@ -208,18 +208,18 @@ template&lt;class Func , class... RestFuncs&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">explicit</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00102">102</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00102">102</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a6ccb633a0a770e3ae3129037b10b9685" name="a6ccb633a0a770e3ae3129037b10b9685"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ccb633a0a770e3ae3129037b10b9685">&#9670;&#160;</a></span>operator()()</h2>
+<a id="aa527d961f79342f15e95e94cd5878d37" name="aa527d961f79342f15e95e94cd5878d37"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa527d961f79342f15e95e94cd5878d37">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -227,7 +227,7 @@ template&lt;class Func , class... RestFuncs&gt; </div>
 template&lt;class Func , class... RestFuncs&gt; </div>
 <div class="memtemplate">
 template&lt;class... Args&gt; <br />
-requires std::regular_invocable&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt; &amp;&amp; std::regular_invocable&lt; Func, std::invoke_result_t&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt;&gt;</div>
+requires std::invocable&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt; &amp;&amp; std::invocable&lt; Func, std::invoke_result_t&lt;<a class="el" href="class_storm_1_1_compose.html">Compose</a>&lt;RestFuncs...&gt;, Args...&gt;&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -242,12 +242,12 @@ requires std::regular_invocable&lt;<a class="el" href="class_storm_1_1_compose.h
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00109">109</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00109">109</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>

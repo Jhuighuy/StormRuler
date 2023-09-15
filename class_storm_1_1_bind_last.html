@@ -159,23 +159,23 @@ $(document).ready(function(){initNavTree('class_storm_1_1_bind_last.html',''); i
 <p>Bind the last arguments of the function to values.  
  <a href="class_storm_1_1_bind_last.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="_functions_8hpp_source.html">Storm/Bittern/Functions.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="_functional_utils_8hpp_source.html">Storm/Crow/FunctionalUtils.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a641f740dcc42bf52bbb32293b00066f6" id="r_a641f740dcc42bf52bbb32293b00066f6"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_bind_last.html#a641f740dcc42bf52bbb32293b00066f6">BindLast</a> (Func func, LastArgs... last_args)</td></tr>
 <tr class="separator:a641f740dcc42bf52bbb32293b00066f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a19ce080da4b48f43fb239cbfdf7483b4" id="r_a19ce080da4b48f43fb239cbfdf7483b4"><td class="memTemplParams" colspan="2">template&lt;class... RestArgs&gt; <br />
+<tr class="memitem:abe378c2981a9c644521be2ddf4affab1" id="r_abe378c2981a9c644521be2ddf4affab1"><td class="memTemplParams" colspan="2">template&lt;class... RestArgs&gt; <br />
 requires std::regular_invocable&lt;Func, RestArgs..., LastArgs...&gt;</td></tr>
-<tr class="memitem:a19ce080da4b48f43fb239cbfdf7483b4"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_bind_last.html#a19ce080da4b48f43fb239cbfdf7483b4">operator()</a> (RestArgs &amp;&amp;... rest_args) const noexcept</td></tr>
-<tr class="separator:a19ce080da4b48f43fb239cbfdf7483b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe378c2981a9c644521be2ddf4affab1"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_bind_last.html#abe378c2981a9c644521be2ddf4affab1">operator()</a> (RestArgs &amp;&amp;... rest_args) const</td></tr>
+<tr class="separator:abe378c2981a9c644521be2ddf4affab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Func, class... LastArgs&gt;<br />
 requires std::is_object_v&lt;Func&gt;<br />
 class Storm::BindLast&lt; Func, LastArgs &gt;</div><p>Bind the last arguments of the function to values. </p>
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00069">69</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00069">69</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a641f740dcc42bf52bbb32293b00066f6" name="a641f740dcc42bf52bbb32293b00066f6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a641f740dcc42bf52bbb32293b00066f6">&#9670;&#160;</a></span>BindLast()</h2>
@@ -213,13 +213,13 @@ template&lt;class Func , class... LastArgs&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00077">77</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00077">77</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a19ce080da4b48f43fb239cbfdf7483b4" name="a19ce080da4b48f43fb239cbfdf7483b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a19ce080da4b48f43fb239cbfdf7483b4">&#9670;&#160;</a></span>operator()()</h2>
+<a id="abe378c2981a9c644521be2ddf4affab1" name="abe378c2981a9c644521be2ddf4affab1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe378c2981a9c644521be2ddf4affab1">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -242,12 +242,12 @@ requires std::regular_invocable&lt;Func, RestArgs..., LastArgs...&gt;</div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00082">82</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00082">82</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>

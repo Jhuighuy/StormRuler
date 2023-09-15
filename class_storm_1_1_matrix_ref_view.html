@@ -170,42 +170,43 @@ $(document).ready(function(){initNavTree('class_storm_1_1_matrix_ref_view.html',
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a54f4b1854f1094293a2fed6e0fbbc78f" id="r_a54f4b1854f1094293a2fed6e0fbbc78f"><td class="memTemplParams" colspan="2">template&lt;detail_::different_from_&lt; <a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a> &gt; OtherMatrix&gt; <br />
-requires (std::convertible_to&lt;OtherMatrix, Matrix&amp;&gt; &amp;&amp; requires { rvalue_shall_not_pass_(std::declval&lt;OtherMatrix&gt;()); })</td></tr>
-<tr class="memitem:a54f4b1854f1094293a2fed6e0fbbc78f"><td class="memTemplItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a54f4b1854f1094293a2fed6e0fbbc78f">MatrixRefView</a> (OtherMatrix &amp;&amp;mat) noexcept</td></tr>
-<tr class="memdesc:a54f4b1854f1094293a2fed6e0fbbc78f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a matrix reference view.  <br /></td></tr>
-<tr class="separator:a54f4b1854f1094293a2fed6e0fbbc78f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a427da108346680d75fe31de927f632a1" id="r_a427da108346680d75fe31de927f632a1"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a427da108346680d75fe31de927f632a1">shape</a> () const noexcept</td></tr>
-<tr class="memdesc:a427da108346680d75fe31de927f632a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix shape.  <br /></td></tr>
-<tr class="separator:a427da108346680d75fe31de927f632a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3f6c3aff93991d7a7a6b4aed170eff8" id="r_ab3f6c3aff93991d7a7a6b4aed170eff8"><td class="memTemplParams" colspan="2">template&lt;matrix OtherMatrix&gt; <br />
+requires different_from&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, OtherMatrix&gt; &amp;&amp; std::convertible_to&lt;OtherMatrix, Matrix&amp;&gt; &amp;&amp; requires { _rvalue_shall_not_pass(std::declval&lt;OtherMatrix&gt;()); }</td></tr>
+<tr class="memitem:ab3f6c3aff93991d7a7a6b4aed170eff8"><td class="memTemplItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#ab3f6c3aff93991d7a7a6b4aed170eff8">MatrixRefView</a> (OtherMatrix &amp;&amp;mat) noexcept</td></tr>
+<tr class="memdesc:ab3f6c3aff93991d7a7a6b4aed170eff8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a matrix reference view.  <br /></td></tr>
+<tr class="separator:ab3f6c3aff93991d7a7a6b4aed170eff8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab071d5eca1730bdbab037494bdb1c1cd" id="r_ab071d5eca1730bdbab037494bdb1c1cd"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#ab071d5eca1730bdbab037494bdb1c1cd">shape</a> () const</td></tr>
+<tr class="memdesc:ab071d5eca1730bdbab037494bdb1c1cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix shape.  <br /></td></tr>
+<tr class="separator:ab071d5eca1730bdbab037494bdb1c1cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a53c988df6b811baf438d1bd87217af67" id="r_a53c988df6b811baf438d1bd87217af67"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
+<tr class="memitem:a1ebb2a0c0086db1bfc2aab35c83ebefa" id="r_a1ebb2a0c0086db1bfc2aab35c83ebefa"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
 requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, Indices...&gt;</td></tr>
-<tr class="memitem:a53c988df6b811baf438d1bd87217af67"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a53c988df6b811baf438d1bd87217af67">operator()</a> (Indices... indices) noexcept</td></tr>
-<tr class="memdesc:a53c988df6b811baf438d1bd87217af67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
-<tr class="separator:a53c988df6b811baf438d1bd87217af67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ca54d7134505c6ed096f9f0ce19923a" id="r_a0ca54d7134505c6ed096f9f0ce19923a"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
+<tr class="memitem:a1ebb2a0c0086db1bfc2aab35c83ebefa"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a1ebb2a0c0086db1bfc2aab35c83ebefa">operator()</a> (Indices... indices)</td></tr>
+<tr class="memdesc:a1ebb2a0c0086db1bfc2aab35c83ebefa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
+<tr class="separator:a1ebb2a0c0086db1bfc2aab35c83ebefa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14be0a197ef629cf630b3236dc1542d6" id="r_a14be0a197ef629cf630b3236dc1542d6"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
 requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, Indices...&gt;</td></tr>
-<tr class="memitem:a0ca54d7134505c6ed096f9f0ce19923a"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a0ca54d7134505c6ed096f9f0ce19923a">operator()</a> (Indices... indices) const noexcept</td></tr>
-<tr class="memdesc:a0ca54d7134505c6ed096f9f0ce19923a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
-<tr class="separator:a0ca54d7134505c6ed096f9f0ce19923a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14be0a197ef629cf630b3236dc1542d6"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_matrix_ref_view.html#a14be0a197ef629cf630b3236dc1542d6">operator()</a> (Indices... indices) const</td></tr>
+<tr class="memdesc:a14be0a197ef629cf630b3236dc1542d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
+<tr class="separator:a14be0a197ef629cf630b3236dc1542d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;matrix Matrix&gt;<br />
+requires std::is_object_v&lt;Matrix&gt;<br />
 class Storm::MatrixRefView&lt; Matrix &gt;</div><p>Matrix reference view. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00080">80</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00084">84</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a54f4b1854f1094293a2fed6e0fbbc78f" name="a54f4b1854f1094293a2fed6e0fbbc78f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a54f4b1854f1094293a2fed6e0fbbc78f">&#9670;&#160;</a></span>MatrixRefView()</h2>
+<a id="ab3f6c3aff93991d7a7a6b4aed170eff8" name="ab3f6c3aff93991d7a7a6b4aed170eff8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3f6c3aff93991d7a7a6b4aed170eff8">&#9670;&#160;</a></span>MatrixRefView()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;matrix Matrix&gt; </div>
 <div class="memtemplate">
-template&lt;detail_::different_from_&lt; <a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a> &gt; OtherMatrix&gt; <br />
-requires (std::convertible_to&lt;OtherMatrix, Matrix&amp;&gt; &amp;&amp; requires { rvalue_shall_not_pass_(std::declval&lt;OtherMatrix&gt;()); })</div>
+template&lt;matrix OtherMatrix&gt; <br />
+requires different_from&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, OtherMatrix&gt; &amp;&amp; std::convertible_to&lt;OtherMatrix, Matrix&amp;&gt; &amp;&amp; requires { _rvalue_shall_not_pass(std::declval&lt;OtherMatrix&gt;()); }</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -227,48 +228,13 @@ requires (std::convertible_to&lt;OtherMatrix, Matrix&amp;&gt; &amp;&amp; require
 
 <p>Construct a matrix reference view. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00094">94</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00099">99</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a0ca54d7134505c6ed096f9f0ce19923a" name="a0ca54d7134505c6ed096f9f0ce19923a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ca54d7134505c6ed096f9f0ce19923a">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;matrix Matrix&gt; </div>
-<div class="memtemplate">
-template&lt;class... Indices&gt; <br />
-requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, Indices...&gt;</div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr decltype(auto) <a class="el" href="class_storm_1_1_matrix_ref_view.html">Storm::MatrixRefView</a>&lt; Matrix &gt;::operator() </td>
-          <td>(</td>
-          <td class="paramtype">Indices...&#160;</td>
-          <td class="paramname"><em>indices</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the matrix element at <code>indices</code>. </p>
-
-<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00113">113</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
-
-</div>
-</div>
-<a id="a53c988df6b811baf438d1bd87217af67" name="a53c988df6b811baf438d1bd87217af67"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a53c988df6b811baf438d1bd87217af67">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+<a id="a1ebb2a0c0086db1bfc2aab35c83ebefa" name="a1ebb2a0c0086db1bfc2aab35c83ebefa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ebb2a0c0086db1bfc2aab35c83ebefa">&#9670;&#160;</a></span>operator()() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -291,19 +257,54 @@ requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_matr
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Get the matrix element at <code>indices</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00107">107</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00112">112</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a427da108346680d75fe31de927f632a1" name="a427da108346680d75fe31de927f632a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a427da108346680d75fe31de927f632a1">&#9670;&#160;</a></span>shape()</h2>
+<a id="a14be0a197ef629cf630b3236dc1542d6" name="a14be0a197ef629cf630b3236dc1542d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14be0a197ef629cf630b3236dc1542d6">&#9670;&#160;</a></span>operator()() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;matrix Matrix&gt; </div>
+<div class="memtemplate">
+template&lt;class... Indices&gt; <br />
+requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_matrix_ref_view.html">MatrixRefView</a>, Indices...&gt;</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr decltype(auto) <a class="el" href="class_storm_1_1_matrix_ref_view.html">Storm::MatrixRefView</a>&lt; Matrix &gt;::operator() </td>
+          <td>(</td>
+          <td class="paramtype">Indices...&#160;</td>
+          <td class="paramname"><em>indices</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the matrix element at <code>indices</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00118">118</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab071d5eca1730bdbab037494bdb1c1cd" name="ab071d5eca1730bdbab037494bdb1c1cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab071d5eca1730bdbab037494bdb1c1cd">&#9670;&#160;</a></span>shape()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -322,14 +323,14 @@ template&lt;matrix Matrix&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Get the matrix shape. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00099">99</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_view_8hpp_source.html#l00104">104</a> of file <a class="el" href="_matrix_view_8hpp_source.html">MatrixView.hpp</a>.</p>
 
 </div>
 </div>

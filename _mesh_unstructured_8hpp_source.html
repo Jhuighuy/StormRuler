@@ -236,55 +236,55 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  <span class="keyword">using </span>EntityIndices_ = meta::make_seq_t&lt;EntityIndex, 0, TopologicalDim + 1&gt;;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  <span class="keyword">using </span>_EntityIndices = meta::make_seq_t&lt;EntityIndex, 0, TopologicalDim + 1&gt;;</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  <span class="comment">// clang-format off</span></div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  meta::as_std_tuple_t&lt;</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    meta::transform_t&lt;</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>      <a class="code hl_struct" href="struct_storm_1_1meta_1_1pair__cast__fn.html">meta::pair_cast_fn&lt;IndexedVector&gt;</a>,</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>      meta::pair_list_t&lt;Label, EntityIndices_&gt;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>      meta::pair_list_t&lt;Label, _EntityIndices&gt;</div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    &gt;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>  &gt; entity_ranges_tuple_{};</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>  &gt; _entity_ranges_tuple{};</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  meta::as_std_tuple_t&lt;</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    meta::prepend_t&lt;</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>      <a class="code hl_struct" href="struct_storm_1_1meta_1_1empty__t.html">meta::empty_t</a>,</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>      meta::transform_t&lt;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        <a class="code hl_struct" href="struct_storm_1_1meta_1_1pair__cast__fn.html">meta::pair_cast_fn&lt;IndexedVector&gt;</a>,</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        meta::pair_list_t&lt;meta::drop_first_t&lt;EntityIndices_&gt;, <a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a>&gt;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>        meta::pair_list_t&lt;meta::drop_first_t&lt;_EntityIndices&gt;, shapes::Type&gt;</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>      &gt;</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    &gt;</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  &gt; entity_shape_types_tuple_{};</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  &gt; _entity_shape_types_tuple{};</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  meta::as_std_tuple_t&lt;</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    meta::prepend_t&lt;</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>      meta::empty_t,</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>      meta::transform_t&lt;</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        meta::pair_cast_fn&lt;IndexedVector&gt;,</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        meta::pair_list_t&lt;meta::drop_first_t&lt;EntityIndices_&gt;, <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a>&gt;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        meta::pair_list_t&lt;meta::drop_first_t&lt;_EntityIndices&gt;, <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a>&gt;</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>      &gt;</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    &gt;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  &gt; entity_volumes_tuple_{};</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  &gt; _entity_volumes_tuple{};</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  meta::as_std_tuple_t&lt;</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    meta::transform_t&lt;</div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>      meta::pair_cast_fn&lt;IndexedVector&gt;,</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>      meta::pair_list_t&lt;EntityIndices_, Vec&gt;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>      meta::pair_list_t&lt;_EntityIndices, Vec&gt;</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    &gt;</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>  &gt; entity_positions_tuple_{};</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>  &gt; _entity_positions_tuple{};</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>  <span class="comment">// You don&#39;t belong here, huh?</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>  IndexedVector&lt;FaceIndex, Vec&gt; face_normals_{};</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>  IndexedVector&lt;FaceIndex, Vec&gt; _face_normals{};</div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  AABB&lt;Vec&gt; aabb_{};</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  AABB&lt;Vec&gt; _aabb{};</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>  meta::as_std_tuple_t&lt;</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    meta::transform_t&lt;</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>      meta::pair_cast_fn&lt;Table&gt;,</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>      meta::cartesian_product_t&lt;EntityIndices_, EntityIndices_&gt;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>      meta::cartesian_product_t&lt;_EntityIndices, _EntityIndices&gt;</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    &gt;</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  &gt; connectivity_tuple_{};</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  &gt; _connectivity_tuple{};</div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  <span class="comment">// clang-format on</span></div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
@@ -294,7 +294,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="foldopen" id="foldopen00134" data-start="{" data-end="}">
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a81ca8fe0ab06571431bd688addd7744b">  134</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a81ca8fe0ab06571431bd688addd7744b">UnstructuredMesh</a>() {</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="comment">// Initialize the default label.</span></div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    meta::for_each&lt;EntityIndices_&gt;(</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    meta::for_each&lt;_EntityIndices&gt;(</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>        [&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt;) { insert_label&lt;I&gt;(); });</div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>  }</div>
 </div>
@@ -303,7 +303,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00142" data-start="{" data-end="}">
 <div class="line"><a id="l00142" name="l00142"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a31ba3bd460113cdc1fd3590d0bcc1d6d">  142</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a31ba3bd460113cdc1fd3590d0bcc1d6d">num_labels</a>(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(entity_ranges_tuple_).size() - 1;</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(_entity_ranges_tuple).size() - 1;</div>
 <div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>  }</div>
 </div>
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span><span class="comment"></span> </div>
@@ -311,7 +311,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00148" data-start="{" data-end="}">
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">  148</a></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> std::views::iota(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a>{0}, <a class="code hl_typedef" href="namespace_storm.html#acac0ee8f13dae2b90feb721b7778d75e">Label</a>{entity_ranges.size() - 1});</div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>  }</div>
 </div>
@@ -321,7 +321,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span></div>
 <div class="foldopen" id="foldopen00156" data-start="{" data-end="}">
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a12a009f19be4178621eba712a33bbee5">  156</a></span>  <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a12a009f19be4178621eba712a33bbee5">num_entities</a>(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(std::get&lt;I&gt;(entity_ranges_tuple_).back());</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(std::get&lt;I&gt;(_entity_ranges_tuple).back());</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="comment">  /// @brief Number of entities with label @p label.</span></div>
@@ -329,8 +329,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span></div>
 <div class="foldopen" id="foldopen00162" data-start="{" data-end="}">
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a5d7a3eb0f524ef5bb7c469fc164d9d0d">  162</a></span>  <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a5d7a3eb0f524ef5bb7c469fc164d9d0d">num_entities</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a>, <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    STORM_ASSERT_(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> &lt; num_labels&lt;I&gt;(), <span class="stringliteral">&quot;Label is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    STORM_ASSERT(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> &lt; num_labels&lt;I&gt;(), <span class="stringliteral">&quot;Label is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keywordflow">return</span> entity_ranges[<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> + 1] - entity_ranges[<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a>];</div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>  }</div>
 </div>
@@ -339,7 +339,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00170" data-start="{" data-end="}">
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#ad9ba3115c3f901d09bb2d68bdc28c523">  170</a></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ad9ba3115c3f901d09bb2d68bdc28c523">entities</a>(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>    <span class="keywordflow">return</span> std::views::iota(entity_ranges.front(), entity_ranges.back());</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>  }<span class="comment"></span></div>
 </div>
@@ -348,8 +348,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="foldopen" id="foldopen00176" data-start="{" data-end="}">
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#aa55b955132ce5089beda5f453501bba2">  176</a></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#aa55b955132ce5089beda5f453501bba2">entities</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a>,</div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>                          <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    STORM_ASSERT_(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> &lt; num_labels&lt;I&gt;(), <span class="stringliteral">&quot;Label is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    STORM_ASSERT(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> &lt; num_labels&lt;I&gt;(), <span class="stringliteral">&quot;Label is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keywordflow">return</span> std::views::iota(entity_ranges[<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a>], entity_ranges[<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> + 1]);</div>
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>  }</div>
 </div>
@@ -358,9 +358,9 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00185" data-start="{" data-end="}">
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">  185</a></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Label</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    STORM_ASSERT_(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    STORM_ASSERT(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="comment">// Binary search for entity in the label ranges.</span></div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keyword">const</span> <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="keyword">const</span> <span class="keyword">auto</span> lower_bound = std::ranges::lower_bound(entity_ranges, <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>);</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Label</a>{lower_bound - entity_ranges.begin() - 1};</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>  }</div>
@@ -369,9 +369,9 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span><span class="comment">  /// @brief Shape type of the entitity at @p index.</span></div>
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00195" data-start="{" data-end="}">
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">  195</a></span>  <span class="keyword">constexpr</span> <a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">shape_type</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    STORM_ASSERT_(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(entity_shape_types_tuple_)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">  195</a></span>  <span class="keyword">constexpr</span> shapes::Type <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">shape_type</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    STORM_ASSERT(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(_entity_shape_types_tuple)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>  }</div>
 </div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span><span class="comment"></span> </div>
@@ -379,8 +379,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00202" data-start="{" data-end="}">
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a8ad626736a2fa99984eedb9c11c9d634">  202</a></span>  <span class="keyword">constexpr</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a8ad626736a2fa99984eedb9c11c9d634">volume</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    STORM_ASSERT_(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(entity_volumes_tuple_)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    STORM_ASSERT(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(_entity_volumes_tuple)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>  }</div>
 </div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="comment"></span> </div>
@@ -388,24 +388,24 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00209" data-start="{" data-end="}">
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">  209</a></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_static_matrix.html">Vec</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    STORM_ASSERT_(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(entity_positions_tuple_)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    STORM_ASSERT(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordflow">return</span> std::get&lt;I&gt;(_entity_positions_tuple)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>  }</div>
 </div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span><span class="comment"></span> </div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span><span class="comment">  /// @brief Normal to the face at @p face_index.</span></div>
 <div class="foldopen" id="foldopen00215" data-start="{" data-end="}">
 <div class="line"><a id="l00215" name="l00215"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a12439951781a8bf39027e52da12a8a1b">  215</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_static_matrix.html">Vec</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a12439951781a8bf39027e52da12a8a1b">normal</a>(<a class="code hl_class" href="class_storm_1_1_index.html">FaceIndex</a> face_index) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    STORM_ASSERT_(face_index &lt; <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a12a009f19be4178621eba712a33bbee5">num_entities</a>(meta::type_v&lt;FaceIndex&gt;),</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                  <span class="stringliteral">&quot;Face index is out of range!&quot;</span>);</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="keywordflow">return</span> face_normals_[face_index];</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    STORM_ASSERT(face_index &lt; <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a12a009f19be4178621eba712a33bbee5">num_entities</a>(meta::type_v&lt;FaceIndex&gt;),</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                 <span class="stringliteral">&quot;Face index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="keywordflow">return</span> _face_normals[face_index];</div>
 <div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>  }</div>
 </div>
 <div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span><span class="comment"></span> </div>
 <div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span><span class="comment">  /// @brief Mesh AABB.</span></div>
 <div class="foldopen" id="foldopen00222" data-start="{" data-end="}">
 <div class="line"><a id="l00222" name="l00222"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a9b1db6be1032c9cc30f12850fc2a8903">  222</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a9b1db6be1032c9cc30f12850fc2a8903">aabb</a>() const noexcept {</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="keywordflow">return</span> aabb_;</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="keywordflow">return</span> _aabb;</div>
 <div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>  }</div>
 </div>
 <div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span><span class="comment"></span> </div>
@@ -414,9 +414,9 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="foldopen" id="foldopen00228" data-start="{" data-end="}">
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a8caddd75dbfecfe8d1c1f52c2db82f02">  228</a></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a8caddd75dbfecfe8d1c1f52c2db82f02">adjacent</a>(<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>,</div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                          <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt; = {}) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    STORM_ASSERT_(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    STORM_ASSERT(<a class="code hl_concept" href="concept_storm_1_1index.html">index</a> &lt; num_entities&lt;I&gt;(), <span class="stringliteral">&quot;Entity index is out of range!&quot;</span>);</div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;;</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordflow">return</span> std::get&lt;T&gt;(connectivity_tuple_)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    <span class="keywordflow">return</span> std::get&lt;T&gt;(_connectivity_tuple)[<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>];</div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>  }</div>
 </div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="comment"></span> </div>
@@ -429,13 +429,13 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00240" name="l00240"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a19bc3c03be4537aa85c689538c4bad4b">  240</a></span>  <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a19bc3c03be4537aa85c689538c4bad4b">find</a>(Range&amp;&amp; node_indices, <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) <span class="keyword">const</span> {</div>
 <div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="comment">// Select the entities that are adjacent to the first node in the list.</span></div>
 <div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keyword">auto</span> adj = adjacent&lt;I&gt;(node_indices.front());</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    STORM_CPP23_THREAD_LOCAL_ std::vector&lt;EntityIndex&lt;I&gt;&gt; found{};</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    STORM_CPP23_THREAD_LOCAL std::vector&lt;EntityIndex&lt;I&gt;&gt; found{};</div>
 <div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    found.assign(adj.begin(), adj.end());</div>
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    std::ranges::sort(found);</div>
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span> </div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="comment">// For the other node indices, select the adjacent enitites,</span></div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    <span class="comment">// and intersect with the recently found.</span></div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    STORM_CPP23_THREAD_LOCAL_ std::vector&lt;EntityIndex&lt;I&gt;&gt; temp{}, update{};</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    STORM_CPP23_THREAD_LOCAL std::vector&lt;EntityIndex&lt;I&gt;&gt; temp{}, update{};</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordflow">for</span> (<a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a> node_index : node_indices | std::views::drop(1)) {</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>      <span class="keywordflow">if</span> (found.empty()) <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>      adj = adjacent&lt;I&gt;(node_index);</div>
@@ -450,7 +450,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>      <span class="keywordflow">case</span> 0: <span class="keywordflow">return</span> std::nullopt;</div>
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>      <span class="keywordflow">case</span> 1: <span class="keywordflow">return</span> found.front();</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    }</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    STORM_THROW_(<span class="stringliteral">&quot;For the specified node list more than one entity found!&quot;</span>);</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    STORM_THROW(<span class="stringliteral">&quot;For the specified node list more than one entity found!&quot;</span>);</div>
 <div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  }</div>
 </div>
 <div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span><span class="comment"></span> </div>
@@ -460,20 +460,20 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="foldopen" id="foldopen00270" data-start="{" data-end="}">
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#adb942b9db28d0ceb7efe9f6d89d2a6c3">  270</a></span>  <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#adb942b9db28d0ceb7efe9f6d89d2a6c3">assign</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_unstructured_mesh.html">UnstructuredMesh&lt;Dim, TopologicalDim, OtherTable&gt;</a>&amp; <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>) {</div>
 <div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    <span class="comment">// Copy the ranges and shape properties.</span></div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    entity_ranges_tuple_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_ranges_tuple_;</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    entity_shape_types_tuple_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_shape_types_tuple_;</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    entity_volumes_tuple_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_volumes_tuple_;</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    entity_positions_tuple_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_positions_tuple_;</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    face_normals_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.face_normals_;</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    aabb_ = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.aabb_;</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    _entity_ranges_tuple = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_ranges_tuple;</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    _entity_shape_types_tuple = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_shape_types_tuple;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    _entity_volumes_tuple = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_volumes_tuple;</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    _entity_positions_tuple = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_positions_tuple;</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>    _face_normals = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._face_normals;</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    _aabb = <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._aabb;</div>
 <div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="comment">// Copy the connectivity tables.</span></div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt;) {</div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>      meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;) {</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt;) {</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>      meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;) {</div>
 <div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>        <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;;</div>
 <div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>        <span class="keyword">using </span>U = OtherTable&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;;</div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>        std::get&lt;T&gt;(connectivity_tuple_)</div>
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>            .assign(std::get&lt;U&gt;(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.connectivity_tuple_));</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>        std::get&lt;T&gt;(_connectivity_tuple)</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>            .assign(std::get&lt;U&gt;(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._connectivity_tuple));</div>
 <div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>      });</div>
 <div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>    });</div>
 <div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>  }</div>
@@ -486,20 +486,20 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a8328cd7a2789e9bbcdf60875bad2fbf2">  293</a></span>  <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a8328cd7a2789e9bbcdf60875bad2fbf2">assign</a>(<a class="code hl_class" href="class_storm_1_1_unstructured_mesh.html">UnstructuredMesh&lt;Dim, TopologicalDim, OtherTable&gt;</a>&amp;&amp; <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>) {</div>
 <div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>    <span class="comment">// Move the ranges and shape properties.</span><span class="comment"></span></div>
 <div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span><span class="comment">    /// @todo Ranges of the source mesh would be invalid.</span></div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment"></span>    entity_ranges_tuple_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_ranges_tuple_);</div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    entity_shape_types_tuple_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_shape_types_tuple_);</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    entity_volumes_tuple_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_volumes_tuple_);</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    entity_positions_tuple_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.entity_positions_tuple_);</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    face_normals_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.face_normals_);</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    aabb_ = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.aabb_);</div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span><span class="comment"></span>    _entity_ranges_tuple = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_ranges_tuple);</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>    _entity_shape_types_tuple = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_shape_types_tuple);</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>    _entity_volumes_tuple = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_volumes_tuple);</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>    _entity_positions_tuple = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._entity_positions_tuple);</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    _face_normals = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._face_normals);</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>    _aabb = std::move(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._aabb);</div>
 <div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
 <div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    <span class="comment">// Move the connectivity tables.</span></div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt;) {</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>      meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;) {</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt;) {</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>      meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;) {</div>
 <div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>        <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;;</div>
 <div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>        <span class="keyword">using </span>U = OtherTable&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;J&gt;</a>&gt;;</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>        std::get&lt;T&gt;(connectivity_tuple_)</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>            .assign(std::move(std::get&lt;U&gt;(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>.connectivity_tuple_)));</div>
+<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>        std::get&lt;T&gt;(_connectivity_tuple)</div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>            .assign(std::move(std::get&lt;U&gt;(<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>._connectivity_tuple)));</div>
 <div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>      });</div>
 <div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>    });</div>
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>  }</div>
@@ -513,17 +513,17 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00320" data-start="{" data-end="}">
 <div class="line"><a id="l00320" name="l00320"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#aac75209e2d50ee3e4826b18b30d03c4e">  320</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#aac75209e2d50ee3e4826b18b30d03c4e">reserve</a>(<span class="keywordtype">size_t</span> capacity, <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) {</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    std::get&lt;I&gt;(entity_positions_tuple_).reserve(capacity);</div>
+<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>    std::get&lt;I&gt;(_entity_positions_tuple).reserve(capacity);</div>
 <div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (!std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_class" href="class_storm_1_1_index.html">NodeIndex</a>&gt;) {</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>      std::get&lt;I&gt;(entity_shape_types_tuple_).reserve(capacity);</div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>      std::get&lt;I&gt;(entity_volumes_tuple_).reserve(capacity);</div>
+<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>      std::get&lt;I&gt;(_entity_shape_types_tuple).reserve(capacity);</div>
+<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>      std::get&lt;I&gt;(_entity_volumes_tuple).reserve(capacity);</div>
 <div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>    }</div>
 <div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a>&gt;) {</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>      face_normals_.reserve(capacity);</div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span>      _face_normals.reserve(capacity);</div>
 <div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>    }</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
 <div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>      <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, EntityIndex&lt;J&gt;&gt;;</div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>      std::get&lt;T&gt;(connectivity_tuple_).reserve(capacity);</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>      std::get&lt;T&gt;(_connectivity_tuple).reserve(capacity);</div>
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>    });</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>  }</div>
 </div>
@@ -532,7 +532,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I&gt;</div>
 <div class="foldopen" id="foldopen00337" data-start="{" data-end="}">
 <div class="line"><a id="l00337" name="l00337"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a07fee517ed93bbc17ac586f37e6695da">  337</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a07fee517ed93bbc17ac586f37e6695da">insert_label</a>(<a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) {</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>    <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>    <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>    <span class="keywordflow">if</span> (entity_ranges.empty()) {</div>
 <div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>      entity_ranges.reserve(2);</div>
 <div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>      entity_ranges.emplace_back(0), entity_ranges.emplace_back(0);</div>
@@ -553,48 +553,48 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>                                  <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) {</div>
 <div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    <span class="comment">// Allocate the entity index,</span></div>
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <span class="comment">// implicitly assigning the last existing label label.</span></div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>{std::get&lt;I&gt;(entity_ranges_tuple_).back()++};</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>{std::get&lt;I&gt;(_entity_ranges_tuple).back()++};</div>
 <div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span> </div>
 <div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="comment">// Assign the geometrical properties.</span></div>
 <div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a>&gt;) {</div>
 <div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>      <span class="comment">// Assign the node position and update the AABB.</span></div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>      <span class="keyword">auto</span>&amp; node_positions = std::get&lt;I&gt;(entity_positions_tuple_);</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>      <span class="keyword">auto</span>&amp; node_positions = std::get&lt;I&gt;(_entity_positions_tuple);</div>
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>      <span class="keyword">const</span> <a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#a76d6cdb25c16bd50d3366b04272abf7e">Vec</a>&amp; <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a> = node_positions.emplace_back(shape);</div>
 <div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>      <span class="keywordflow">if</span> (node_positions.size() == 1) {</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        aabb_ = AABB{<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a>};</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        _aabb = AABB{<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a>};</div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>      } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>        aabb_.extend(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a>);</div>
+<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>        _aabb.extend(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a028956f69857b26a9202bc9a710ed6f4">position</a>);</div>
 <div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>      }</div>
 <div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span>      <span class="comment">// Assign the entity shape type, volume, center position (and normal).</span></div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>      std::get&lt;I&gt;(entity_shape_types_tuple_).emplace_back(shape.type());</div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>      std::get&lt;I&gt;(entity_volumes_tuple_)</div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>          .emplace_back(<a class="code hl_function" href="namespace_storm_1_1shapes.html#a1cf9374ad8e58399fec19ea9dc2bdff5">shapes::volume</a>(shape, *<span class="keyword">this</span>));</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>      std::get&lt;I&gt;(entity_positions_tuple_)</div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>          .emplace_back(<a class="code hl_function" href="namespace_storm_1_1shapes.html#a0d5361d713d3d7fb583044ad3f714268">shapes::barycenter</a>(shape, *<span class="keyword">this</span>));</div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>      std::get&lt;I&gt;(_entity_shape_types_tuple).emplace_back(shape.type());</div>
+<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>      std::get&lt;I&gt;(_entity_volumes_tuple)</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>          .emplace_back(shapes::volume(shape, *<span class="keyword">this</span>));</div>
+<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>      std::get&lt;I&gt;(_entity_positions_tuple)</div>
+<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>          .emplace_back(shapes::barycenter(shape, *<span class="keyword">this</span>));</div>
 <div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>      <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a>&gt;) {</div>
 <div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (Dim == TopologicalDim) {</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>          face_normals_.emplace_back(<a class="code hl_function" href="namespace_storm_1_1shapes.html#ab9e6d573ccd26025347e4a423614ddad">shapes::normal</a>(shape, *<span class="keyword">this</span>));</div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>          _face_normals.emplace_back(shapes::normal(shape, *<span class="keyword">this</span>));</div>
 <div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>        } <span class="keywordflow">else</span> {<span class="comment"></span></div>
 <div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span><span class="comment">          /// @todo What are the face normals for surface meshes?</span></div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span><span class="comment"></span>          face_normals_.emplace_back({});</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span><span class="comment"></span>          _face_normals.emplace_back({});</div>
 <div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>        }</div>
 <div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>      }</div>
 <div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>    }</div>
 <div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span> </div>
 <div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>    <span class="comment">// Assign the connectivity properties.</span></div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>    meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>    meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
 <div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span>      <span class="comment">// Allocate the empty rows.</span></div>
 <div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span>      <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, EntityIndex&lt;J&gt;&gt;;</div>
-<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>      std::get&lt;T&gt;(connectivity_tuple_).push_back();</div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span>      std::get&lt;T&gt;(_connectivity_tuple).push_back();</div>
 <div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    });</div>
 <div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (!std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a>&gt;) {</div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>      <span class="comment">// Connnect the entity with it&#39;s nodes.</span></div>
 <div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span>      <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a>&gt;;</div>
 <div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>      <span class="keyword">using </span>U = Table&lt;NodeIndex, EntityIndex&lt;I&gt;&gt;;</div>
 <div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>      <span class="keywordflow">for</span> (<a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a> node_index : shape.<a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a1f8049b90e3cbee04e5fadda184d5725">nodes</a>()) {</div>
-<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>        std::get&lt;T&gt;(connectivity_tuple_).insert(index, node_index);</div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>        std::get&lt;U&gt;(connectivity_tuple_).insert(node_index, index);</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span>        std::get&lt;T&gt;(_connectivity_tuple).insert(index, node_index);</div>
+<div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span>        std::get&lt;U&gt;(_connectivity_tuple).insert(node_index, index);</div>
 <div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span>      }</div>
 <div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    }</div>
 <div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>    meta::for_each&lt;meta::make_seq_t&lt;EntityIndex, 1, I&gt;&gt;(</div>
@@ -604,11 +604,11 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>          <span class="keyword">using </span>U = Table&lt;EntityIndex&lt;J&gt;, EntityIndex&lt;I&gt;&gt;;</div>
 <div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>          <span class="keyword">const</span> <span class="keyword">auto</span> process_part = [&amp;](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; part) {</div>
 <div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>            <span class="keyword">const</span> EntityIndex&lt;J&gt; part_index = find_or_insert&lt;J&gt;(part);</div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>            std::get&lt;T&gt;(connectivity_tuple_).insert(index, part_index);</div>
-<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>            std::get&lt;U&gt;(connectivity_tuple_).insert(part_index, index);</div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span>            std::get&lt;T&gt;(_connectivity_tuple).insert(index, part_index);</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span>            std::get&lt;U&gt;(_connectivity_tuple).insert(part_index, index);</div>
 <div class="line"><a id="l00410" name="l00410"></a><span class="lineno">  410</span>            <span class="comment">// Fix the face orientation (if needed).</span></div>
 <div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;J&gt;, <a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a>&gt;) {</div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>              update_face_orientation_(part_index, part.nodes());</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>              _update_face_orientation(part_index, part.nodes());</div>
 <div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>            }</div>
 <div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span>          };</div>
 <div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span>          std::apply([&amp;](<span class="keyword">const</span> <span class="keyword">auto</span>&amp;... parts) { (process_part(parts), ...); },</div>
@@ -618,7 +618,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span>    <span class="comment">// Connect the entity with it&#39;s siblings.</span><span class="comment"></span></div>
 <div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span><span class="comment">    /// @todo Implement me!</span></div>
 <div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span><span class="comment"></span>    <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, EntityIndex&lt;I&gt;&gt;;</div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    std::get&lt;T&gt;(connectivity_tuple_).insert(index, index);</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    std::get&lt;T&gt;(_connectivity_tuple).insert(index, index);</div>
 <div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span> </div>
 <div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>    <span class="keywordflow">return</span> index;</div>
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span>  }</div>
@@ -648,8 +648,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00446" name="l00446"></a><span class="lineno">  446</span>             std::same_as&lt;std::ranges::range_value_t&lt;Range&gt;, EntityIndex&lt;I&gt;&gt;</div>
 <div class="foldopen" id="foldopen00447" data-start="{" data-end="}">
 <div class="line"><a id="l00447" name="l00447"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a72cee4a811edee03637b868cb0332cf4">  447</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a72cee4a811edee03637b868cb0332cf4">permute</a>(Range&amp;&amp; perm, <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) {</div>
-<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>    STORM_ASSERT_(std::ranges::size(perm) == num_entities&lt;I&gt;(),</div>
-<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>                  <span class="stringliteral">&quot;Invalid permutation size!&quot;</span>);</div>
+<div class="line"><a id="l00448" name="l00448"></a><span class="lineno">  448</span>    STORM_ASSERT(std::ranges::size(perm) == num_entities&lt;I&gt;(),</div>
+<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>                 <span class="stringliteral">&quot;Invalid permutation size!&quot;</span>);</div>
 <div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span> </div>
 <div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span>    <span class="comment">// Stable-sort the permutation in order to keep the label ranges correct.</span></div>
 <div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span>    std::ranges::stable_sort(</div>
@@ -658,7 +658,7 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span>        });</div>
 <div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span> </div>
 <div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span>    <span class="comment">// Permute the entities.</span></div>
-<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span>    permute_base_(perm);</div>
+<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span>    _permute_base(perm);</div>
 <div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span>  }</div>
 </div>
 <div class="line"><a id="l00460" name="l00460"></a><span class="lineno">  460</span><span class="comment"></span> </div>
@@ -671,8 +671,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="foldopen" id="foldopen00467" data-start="{" data-end="}">
 <div class="line"><a id="l00467" name="l00467"></a><span class="lineno"><a class="line" href="class_storm_1_1_unstructured_mesh.html#a05c6134f51dd0e61ef9a367004cfaacc">  467</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a05c6134f51dd0e61ef9a367004cfaacc">assign_labels</a>(Range&amp;&amp; <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>,</div>
 <div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>                               <a class="code hl_struct" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt;<a class="code hl_class" href="class_storm_1_1_index.html">EntityIndex&lt;I&gt;</a>&gt; = {}) {</div>
-<div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>    STORM_ASSERT_(std::ranges::size(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>) &lt;= num_entities&lt;I&gt;(),</div>
-<div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>                  <span class="stringliteral">&quot;Invalid labels range size!&quot;</span>);</div>
+<div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>    STORM_ASSERT(std::ranges::size(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>) &lt;= num_entities&lt;I&gt;(),</div>
+<div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>                 <span class="stringliteral">&quot;Invalid labels range size!&quot;</span>);</div>
 <div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span> </div>
 <div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>    <span class="comment">// Permute the entities according to labels.</span></div>
 <div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>    std::vector&lt;EntityIndex&lt;I&gt;&gt; perm(num_entities&lt;I&gt;());</div>
@@ -685,11 +685,11 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00480" name="l00480"></a><span class="lineno">  480</span>          };</div>
 <div class="line"><a id="l00481" name="l00481"></a><span class="lineno">  481</span>          <span class="keywordflow">return</span> new_label(index_1) &lt; new_label(index_2);</div>
 <div class="line"><a id="l00482" name="l00482"></a><span class="lineno">  482</span>        });</div>
-<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>    permute_base_&lt;I&gt;(perm);</div>
+<div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span>    _permute_base&lt;I&gt;(perm);</div>
 <div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span> </div>
 <div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span>    <span class="comment">// Generate the new label ranges.</span></div>
 <div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>    <span class="keyword">const</span> <span class="keywordtype">size_t</span> delta = this-&gt;num_entities&lt;I&gt;() - std::ranges::size(<a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>);</div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>    <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(entity_ranges_tuple_);</div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>    <span class="keyword">auto</span>&amp; entity_ranges = std::get&lt;I&gt;(_entity_ranges_tuple);</div>
 <div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>    entity_ranges.clear();</div>
 <div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>    <span class="keywordflow">for</span> (<a class="code hl_typedef" href="namespace_storm.html#acac0ee8f13dae2b90feb721b7778d75e">Label</a> <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ab2efb7745a36b9a393e8125b8964d751">label</a> : <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#a2b7a3c5f38dbc8581aa65f99ac6b7d81">labels</a>) {</div>
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>      entity_ranges.resize(std::max(entity_ranges.size(), <span class="comment">//</span></div>
@@ -712,20 +712,20 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span>  <span class="keyword">template</span>&lt;std::ranges::forward_range Range&gt;</div>
 <div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span>    <span class="keyword">requires</span> std::ranges::sized_range&lt;Range&gt; &amp;&amp;</div>
 <div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span>             std::same_as&lt;std::ranges::range_value_t&lt;Range&gt;, <a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a>&gt;</div>
-<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> update_face_orientation_(<a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a> face_index,</div>
+<div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> _update_face_orientation(<a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a> face_index,</div>
 <div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>                                          Range&amp;&amp; cell_face_nodes) {</div>
 <div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span>    <span class="comment">// Detect the face orientation.</span></div>
 <div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span>    <span class="keyword">const</span> <span class="keyword">auto</span> face_nodes = adjacent&lt;0&gt;(face_index);</div>
 <div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span>    <span class="keywordtype">bool</span> cell_is_inner, cell_is_outer;</div>
 <div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>    <span class="keyword">const</span> <span class="keywordtype">size_t</span> num_cell_faces = std::ranges::size(cell_face_nodes);</div>
-<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>    STORM_ASSERT_(num_cell_faces &gt;= 2, <span class="stringliteral">&quot;This function should be called in 1D!&quot;</span>);</div>
+<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>    STORM_ASSERT(num_cell_faces &gt;= 2, <span class="stringliteral">&quot;This function should be called in 1D!&quot;</span>);</div>
 <div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span>    <span class="keywordflow">if</span> (num_cell_faces == 2) {</div>
 <div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span>      cell_is_inner = std::ranges::equal(cell_face_nodes, face_nodes);</div>
 <div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span>      cell_is_outer =</div>
 <div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span>          std::ranges::equal(cell_face_nodes, face_nodes | std::views::reverse);</div>
 <div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00521" name="l00521"></a><span class="lineno">  521</span>      <span class="comment">// Need to take into the account possible rotations.</span></div>
-<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>      STORM_CPP23_THREAD_LOCAL_ std::vector&lt;NodeIndex&gt; temp{};</div>
+<div class="line"><a id="l00522" name="l00522"></a><span class="lineno">  522</span>      STORM_CPP23_THREAD_LOCAL std::vector&lt;NodeIndex&gt; temp{};</div>
 <div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span>      temp.assign(cell_face_nodes.begin(), cell_face_nodes.end());</div>
 <div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span>      std::ranges::rotate(temp, std::ranges::find(temp, face_nodes.front()));</div>
 <div class="line"><a id="l00525" name="l00525"></a><span class="lineno">  525</span>      cell_is_inner = std::ranges::equal(temp, face_nodes);</div>
@@ -737,25 +737,25 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00531" name="l00531"></a><span class="lineno">  531</span>    <span class="comment">// Check and update the orientation (if needed).</span></div>
 <div class="line"><a id="l00532" name="l00532"></a><span class="lineno">  532</span>    <span class="keyword">const</span> <span class="keyword">auto</span> cell_faces = adjacent&lt;TopologicalDim&gt;(face_index);</div>
 <div class="line"><a id="l00533" name="l00533"></a><span class="lineno">  533</span>    <span class="keywordflow">if</span> (cell_faces.size() == 1) {</div>
-<div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span>      STORM_ENSURE_(cell_is_inner || cell_is_outer,</div>
-<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>                    <span class="stringliteral">&quot;Face has a single adjacent cell, &quot;</span></div>
-<div class="line"><a id="l00536" name="l00536"></a><span class="lineno">  536</span>                    <span class="stringliteral">&quot;but it can be neither inner nor outer!&quot;</span>);</div>
+<div class="line"><a id="l00534" name="l00534"></a><span class="lineno">  534</span>      STORM_ENSURE(cell_is_inner || cell_is_outer,</div>
+<div class="line"><a id="l00535" name="l00535"></a><span class="lineno">  535</span>                   <span class="stringliteral">&quot;Face has a single adjacent cell, &quot;</span></div>
+<div class="line"><a id="l00536" name="l00536"></a><span class="lineno">  536</span>                   <span class="stringliteral">&quot;but it can be neither inner nor outer!&quot;</span>);</div>
 <div class="line"><a id="l00537" name="l00537"></a><span class="lineno">  537</span>      <span class="comment">// Flip the face if the cell is outer.</span></div>
 <div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span>      <span class="keywordflow">if</span> (cell_is_outer) {</div>
-<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span>        face_normals_[face_index] = -face_normals_[face_index];</div>
+<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span>        _face_normals[face_index] = -_face_normals[face_index];</div>
 <div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span>        meta::for_each&lt;meta::make_seq_t&lt;<a class="code hl_typedef" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>, 0, TopologicalDim - 1&gt;&gt;(</div>
 <div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span>            [&amp;]&lt;<span class="keywordtype">size_t</span> I&gt;(meta::type&lt;EntityIndex&lt;I&gt;&gt;) {</div>
 <div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span>              <span class="keyword">using </span>T = Table&lt;FaceIndex, EntityIndex&lt;I&gt;&gt;;</div>
 <div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span>              std::ranges::reverse(</div>
-<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>                  std::get&lt;T&gt;(connectivity_tuple_)[face_index]);</div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span>                  std::get&lt;T&gt;(_connectivity_tuple)[face_index]);</div>
 <div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span>            });</div>
 <div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span>      }</div>
 <div class="line"><a id="l00547" name="l00547"></a><span class="lineno">  547</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (cell_faces.size() == 2) {</div>
-<div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span>      STORM_ENSURE_(cell_is_outer,</div>
-<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>                    <span class="stringliteral">&quot;Face has two adjacent cells, &quot;</span></div>
-<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>                    <span class="stringliteral">&quot;but the second cell cannot be the outer one!&quot;</span>);</div>
+<div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span>      STORM_ENSURE(cell_is_outer,</div>
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span>                   <span class="stringliteral">&quot;Face has two adjacent cells, &quot;</span></div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>                   <span class="stringliteral">&quot;but the second cell cannot be the outer one!&quot;</span>);</div>
 <div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>      STORM_TERMINATE_(<span class="stringliteral">&quot;Invalid number of the face cells!&quot;</span>);</div>
+<div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>      STORM_ABORT(<span class="stringliteral">&quot;Invalid number of the face cells!&quot;</span>);</div>
 <div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span>    }</div>
 <div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>  }</div>
 <div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span> </div>
@@ -763,14 +763,14 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>  <span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span> I, std::ranges::random_access_range Range&gt;</div>
 <div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>    <span class="keyword">requires</span> std::permutable&lt;std::ranges::iterator_t&lt;Range&gt;&gt; &amp;&amp;</div>
 <div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>             std::same_as&lt;std::ranges::range_value_t&lt;Range&gt;, EntityIndex&lt;I&gt;&gt;</div>
-<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> permute_base_(Range&amp;&amp; perm, meta::type&lt;EntityIndex&lt;I&gt;&gt; = {}) {</div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>  <span class="keyword">constexpr</span> <span class="keywordtype">void</span> _permute_base(Range&amp;&amp; perm, meta::type&lt;EntityIndex&lt;I&gt;&gt; = {}) {</div>
 <div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>    { <span class="comment">// Update the connectivity with inverse permutations.</span></div>
 <div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>      IndexedVector&lt;EntityIndex&lt;I&gt;, EntityIndex&lt;I&gt;&gt; iperm(num_entities&lt;I&gt;());</div>
 <div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span>      <a class="code hl_function" href="namespace_storm_1_1permutations.html#a60c3a577325a95338196165f499b2593">permutations::invert_permutation</a>(perm, iperm.begin());</div>
-<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span>      meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
+<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span>      meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
 <div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span>        <span class="keywordflow">for</span> (EntityIndex&lt;J&gt; index : <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ad9ba3115c3f901d09bb2d68bdc28c523">entities</a>&lt;J&gt;()) {</div>
 <div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span>          <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;J&gt;, EntityIndex&lt;I&gt;&gt;;</div>
-<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span>          <span class="keyword">decltype</span>(<span class="keyword">auto</span>) adj = std::get&lt;T&gt;(connectivity_tuple_)[index];</div>
+<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span>          <span class="keyword">decltype</span>(<span class="keyword">auto</span>) adj = std::get&lt;T&gt;(_connectivity_tuple)[index];</div>
 <div class="line"><a id="l00568" name="l00568"></a><span class="lineno">  568</span>          <span class="keywordflow">for</span> (EntityIndex&lt;I&gt;&amp; adjacent_index : adj) {</div>
 <div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span>            adjacent_index = iperm[adjacent_index];</div>
 <div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span>          }</div>
@@ -779,9 +779,9 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00573" name="l00573"></a><span class="lineno">  573</span>    }</div>
 <div class="line"><a id="l00574" name="l00574"></a><span class="lineno">  574</span> </div>
 <div class="line"><a id="l00575" name="l00575"></a><span class="lineno">  575</span>    <span class="comment">// Permute the entity-* connectivity.</span></div>
-<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>    meta::for_each&lt;EntityIndices_&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
+<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span>    meta::for_each&lt;_EntityIndices&gt;([&amp;]&lt;<span class="keywordtype">size_t</span> J&gt;(meta::type&lt;EntityIndex&lt;J&gt;&gt;) {</div>
 <div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span>      <span class="keyword">using </span>T = Table&lt;EntityIndex&lt;I&gt;, EntityIndex&lt;J&gt;&gt;;</div>
-<div class="line"><a id="l00578" name="l00578"></a><span class="lineno">  578</span>      <span class="keyword">auto</span>&amp; table = std::get&lt;T&gt;(connectivity_tuple_);</div>
+<div class="line"><a id="l00578" name="l00578"></a><span class="lineno">  578</span>      <span class="keyword">auto</span>&amp; table = std::get&lt;T&gt;(_connectivity_tuple);</div>
 <div class="line"><a id="l00579" name="l00579"></a><span class="lineno">  579</span>      T permuted_table{};</div>
 <div class="line"><a id="l00580" name="l00580"></a><span class="lineno">  580</span>      permuted_table.reserve(num_entities&lt;I&gt;());</div>
 <div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span>      <span class="keywordflow">for</span> (EntityIndex&lt;I&gt; index : <a class="code hl_function" href="class_storm_1_1_unstructured_mesh.html#ad9ba3115c3f901d09bb2d68bdc28c523">entities</a>&lt;I&gt;()) {</div>
@@ -796,15 +796,15 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>    <a class="code hl_function" href="namespace_storm_1_1permutations.html#a048aaac87f02dfd5c198f62a67c2e61f">permutations::permute_inplace</a>(</div>
 <div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>        perm, [&amp;](EntityIndex&lt;I&gt; index_1, EntityIndex&lt;I&gt; index_2) {</div>
 <div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span>          <span class="keyword">const</span> <span class="keyword">auto</span> gather_shape_properties = [&amp;](EntityIndex&lt;I&gt; index) {</div>
-<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>            <span class="keyword">auto</span>&amp; positions = std::get&lt;I&gt;(entity_positions_tuple_);</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>            <span class="keyword">auto</span>&amp; positions = std::get&lt;I&gt;(_entity_positions_tuple);</div>
 <div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a>&gt;) {</div>
 <div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>              <span class="keywordflow">return</span> std::tie(positions[index]);</div>
 <div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span>            } <span class="keywordflow">else</span> {</div>
-<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>              <span class="keyword">auto</span>&amp; shape_types = std::get&lt;I&gt;(entity_shape_types_tuple_);</div>
-<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>              <span class="keyword">auto</span>&amp; volumes = std::get&lt;I&gt;(entity_volumes_tuple_);</div>
+<div class="line"><a id="l00597" name="l00597"></a><span class="lineno">  597</span>              <span class="keyword">auto</span>&amp; shape_types = std::get&lt;I&gt;(_entity_shape_types_tuple);</div>
+<div class="line"><a id="l00598" name="l00598"></a><span class="lineno">  598</span>              <span class="keyword">auto</span>&amp; volumes = std::get&lt;I&gt;(_entity_volumes_tuple);</div>
 <div class="line"><a id="l00599" name="l00599"></a><span class="lineno">  599</span>              <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;EntityIndex&lt;I&gt;, <a class="code hl_typedef" href="class_storm_1_1_unstructured_mesh.html#ac60a99a9dd6663377c0d3ea591408ee0">FaceIndex</a>&gt;) {</div>
 <div class="line"><a id="l00600" name="l00600"></a><span class="lineno">  600</span>                <span class="keywordflow">return</span> std::tie(shape_types[index], volumes[index],</div>
-<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>                                positions[index], face_normals_[index]);</div>
+<div class="line"><a id="l00601" name="l00601"></a><span class="lineno">  601</span>                                positions[index], _face_normals[index]);</div>
 <div class="line"><a id="l00602" name="l00602"></a><span class="lineno">  602</span>              } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00603" name="l00603"></a><span class="lineno">  603</span>                <span class="keywordflow">return</span> std::tie(shape_types[index], volumes[index],</div>
 <div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span>                                positions[index]);</div>
@@ -858,12 +858,8 @@ $(document).ready(function(){initNavTree('_mesh_unstructured_8hpp_source.html','
 <div class="ttc" id="aconcept_storm_1_1mesh_html"><div class="ttname"><a href="concept_storm_1_1mesh.html">Storm::mesh</a></div><div class="ttdoc">Mesh concept.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00048">Fwd.hpp:48</a></div></div>
 <div class="ttc" id="anamespace_storm_1_1permutations_html_a048aaac87f02dfd5c198f62a67c2e61f"><div class="ttname"><a href="namespace_storm_1_1permutations.html#a048aaac87f02dfd5c198f62a67c2e61f">Storm::permutations::permute_inplace</a></div><div class="ttdeci">constexpr void permute_inplace(PermutationIterator perm_iterator, PermutationSentinel perm_sentinel, SwapFunc swap_func)</div><div class="ttdoc">Apply the permutation inplace. Complexity is linear.</div><div class="ttdef"><b>Definition</b> <a href="_permutations_8hpp_source.html#l00089">Permutations.hpp:89</a></div></div>
 <div class="ttc" id="anamespace_storm_1_1permutations_html_a60c3a577325a95338196165f499b2593"><div class="ttname"><a href="namespace_storm_1_1permutations.html#a60c3a577325a95338196165f499b2593">Storm::permutations::invert_permutation</a></div><div class="ttdeci">constexpr void invert_permutation(PermutationIterator perm_iterator, PermutationSentinel perm_sentinel, InversePermutationIterator iperm_iterator)</div><div class="ttdoc">Invert the permutation. Complexity is linear.</div><div class="ttdef"><b>Definition</b> <a href="_permutations_8hpp_source.html#l00059">Permutations.hpp:59</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_a0a256751f828dfa575913265c0f4010b"><div class="ttname"><a href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">Storm::shapes::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Shape type.</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00040">Shape.hpp:40</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_a0d5361d713d3d7fb583044ad3f714268"><div class="ttname"><a href="namespace_storm_1_1shapes.html#a0d5361d713d3d7fb583044ad3f714268">Storm::shapes::barycenter</a></div><div class="ttdeci">constexpr mesh_vec_t&lt; Mesh &gt; barycenter(const Shape &amp;shape, const Mesh &amp;mesh) noexcept</div><div class="ttdoc">Compute the simplex shape barycenter.</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00159">Shape.hpp:159</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_a1cf9374ad8e58399fec19ea9dc2bdff5"><div class="ttname"><a href="namespace_storm_1_1shapes.html#a1cf9374ad8e58399fec19ea9dc2bdff5">Storm::shapes::volume</a></div><div class="ttdeci">constexpr real_t volume(const Shape &amp;shape, const Mesh &amp;mesh) noexcept</div><div class="ttdoc">Compute the complex shape &quot;volume&quot; (length in 1D, area in 2D, volume in 3D).</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00146">Shape.hpp:146</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_ab9e6d573ccd26025347e4a423614ddad"><div class="ttname"><a href="namespace_storm_1_1shapes.html#ab9e6d573ccd26025347e4a423614ddad">Storm::shapes::normal</a></div><div class="ttdeci">constexpr mesh_vec_t&lt; Mesh &gt; normal(const Shape &amp;shape, const Mesh &amp;mesh) noexcept</div><div class="ttdoc">Compute the complex shape normal.</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00191">Shape.hpp:191</a></div></div>
-<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00265">Base.hpp:265</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00287">Base.hpp:287</a></div></div>
+<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00032">Base.hpp:32</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00038">Types.hpp:38</a></div></div>
 <div class="ttc" id="anamespace_storm_html_a57306979ec22263c3d55c274a5d22218"><div class="ttname"><a href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">Storm::NodeIndex</a></div><div class="ttdeci">EntityIndex&lt; 0 &gt; NodeIndex</div><div class="ttdoc">Node index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00065">Fwd.hpp:65</a></div></div>
 <div class="ttc" id="anamespace_storm_html_aac04112f24f6bd48f7bb3586d93be3dd"><div class="ttname"><a href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">Storm::EntityIndex</a></div><div class="ttdeci">Index&lt; TopologicalIndexTag&lt; I &gt; &gt; EntityIndex</div><div class="ttdoc">Topological index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00062">Fwd.hpp:62</a></div></div>
 <div class="ttc" id="anamespace_storm_html_acac0ee8f13dae2b90feb721b7778d75e"><div class="ttname"><a href="namespace_storm.html#acac0ee8f13dae2b90feb721b7778d75e">Storm::Label</a></div><div class="ttdeci">Index&lt; LabelTag &gt; Label</div><div class="ttdoc">Label index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00055">Fwd.hpp:55</a></div></div>

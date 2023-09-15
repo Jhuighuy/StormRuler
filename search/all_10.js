@@ -1,12 +1,12 @@
 var searchData=
 [
   ['r_5fpair_5flist_5ffn_0',['r_pair_list_fn',['../struct_storm_1_1meta_1_1r__pair__list__fn.html',1,'Storm::meta']]],
-  ['rad2deg_1',['rad2deg',['../namespace_storm.html#a82005724fee1fbedf133acc88aab8eb2',1,'Storm']]],
+  ['rad2deg_1',['rad2deg',['../namespace_storm.html#ae46a4f0a18cb93ffbbbb80e71ccd4b2b',1,'Storm']]],
   ['raw_2',['raw',['../struct_storm_1_1meta_1_1raw.html',1,'Storm::meta']]],
   ['raw_3c_20type_3c_20t_20_3e_20_3e_3',['raw&lt; type&lt; T &gt; &gt;',['../struct_storm_1_1meta_1_1raw_3_01type_3_01_t_01_4_01_4.html',1,'Storm::meta']]],
-  ['read_5fmesh_5ffrom_5ftetgen_4',['read_mesh_from_tetgen',['../namespace_storm.html#ae5acdf9d1cd908b1e83ce0644cc5ad8d',1,'Storm']]],
+  ['read_5fmesh_5ffrom_5ftetgen_4',['read_mesh_from_tetgen',['../namespace_storm.html#aed1a5d8b2f9710b63371f46b4fd569a3',1,'Storm']]],
   ['read_5fpixels_5',['read_pixels',['../class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a831a23b5f4676fe32c8b5b38698cd1de',1,'Storm::Vulture::gl::Texture2D']]],
-  ['real_6',['real',['../class_storm_1_1_real.html',1,'Storm::Real'],['../namespace_storm.html#a1072b38aecb7eb834ff11f0ec45ea705',1,'Storm::real(Matrix &amp;&amp;mat)']]],
+  ['real_6',['real',['../class_storm_1_1_real.html',1,'Storm::Real'],['../namespace_storm.html#a7624ec6dd290e8cad0bf4a31399e3bae',1,'Storm::real(Matrix &amp;&amp;mat)']]],
   ['real_5ft_7',['real_t',['../namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e',1,'Storm']]],
   ['reduce_8',['reduce',['../namespace_storm.html#ac3b77fcc816ebcf9c253ebdff4569917',1,'Storm::reduce(Value init, ReduceFunc reduce_func, Func func, Matrix &amp;&amp;mat, RestMatrices &amp;&amp;... mats) noexcept'],['../namespace_storm.html#ab5f9774c79d5a7832fd0e85313bf2f3f',1,'Storm::reduce(Value init, ReduceFunc reduce_func, Matrix &amp;&amp;mat)']]],
   ['reduce_5ffn_9',['reduce_fn',['../struct_storm_1_1meta_1_1reduce__fn.html',1,'Storm::meta']]],

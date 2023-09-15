@@ -181,8 +181,8 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span> </div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="preprocessor">#include &lt;Storm/Base.hpp&gt;</span></div>
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &lt;Storm/Bittern/Math.hpp&gt;</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &lt;Storm/Bittern/Matrix.hpp&gt;</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &lt;Storm/Bittern/Matrix.hpp&gt;</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="preprocessor">#include &lt;Storm/Crow/MathUtils.hpp&gt;</span></div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="preprocessor">#include &lt;Storm/Solvers/Solver.hpp&gt;</span></div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
@@ -219,13 +219,13 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> init(<span class="keyword">const</span> Vector&amp; x_vec, <span class="keyword">const</span> Vector&amp; b_vec,</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>              <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_operator.html">Operator&lt;Vector&gt;</a>&amp; any_op,</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>              <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_preconditioner.html">Preconditioner&lt;Vector&gt;</a>* pre_op) <span class="keyword">final</span> {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    STORM_TERMINATE_(<span class="stringliteral">&quot;Newton solver is not implemented yet!&quot;</span>);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    STORM_ABORT(<span class="stringliteral">&quot;Newton solver is not implemented yet!&quot;</span>);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  }</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> iterate(Vector&amp; x_vec, <span class="keyword">const</span> Vector&amp; b_vec,</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                 <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_operator.html">Operator&lt;Vector&gt;</a>&amp; any_op,</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>                 <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_preconditioner.html">Preconditioner&lt;Vector&gt;</a>* pre_op) <span class="keyword">final</span> {</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    STORM_TERMINATE_(<span class="stringliteral">&quot;Newton solver is not implemented yet!&quot;</span>);</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    STORM_ABORT(<span class="stringliteral">&quot;Newton solver is not implemented yet!&quot;</span>);</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  } <span class="comment">// NewtonSolver::iterate</span></div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>}; <span class="comment">// class NewtonSolver</span></div>
@@ -264,25 +264,25 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="class_storm_1_1_jfnk_solver.html">  102</a></span><span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_jfnk_solver.html">JfnkSolver</a> final : <span class="keyword">public</span> <a class="code hl_class" href="class_storm_1_1_iterative_solver.html">IterativeSolver</a>&lt;Vector&gt; {</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  Vector s_vec_, t_vec_, r_vec_, w_vec_;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  Vector _s_vec, _t_vec, _r_vec, _w_vec;</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>  <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> init(<span class="keyword">const</span> Vector&amp; x_vec, <span class="keyword">const</span> Vector&amp; b_vec,</div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>              <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_operator.html">Operator&lt;Vector&gt;</a>&amp; any_op,</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>              <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_preconditioner.html">Preconditioner&lt;Vector&gt;</a>* pre_op)<span class="keyword"> override </span>{</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    s_vec_.assign(x_vec, <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    t_vec_.assign(x_vec, <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    r_vec_.assign(x_vec, <span class="keyword">false</span>);</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    w_vec_.assign(x_vec, <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    _s_vec.assign(x_vec, <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    _t_vec.assign(x_vec, <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    _r_vec.assign(x_vec, <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    _w_vec.assign(x_vec, <span class="keyword">false</span>);</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="comment">// Initialize:</span></div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    <span class="comment">// ----------------------</span></div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    <span class="comment">// 𝒘 ← 𝓐(𝒙),</span></div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="comment">// 𝒓 ← 𝒃 - 𝒘.</span></div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="comment">// ----------------------</span></div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(w_vec_, x_vec);</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    r_vec_ &lt;&lt;= b_vec - w_vec_;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(_w_vec, x_vec);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    _r_vec &lt;&lt;= b_vec - _w_vec;</div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(r_vec_);</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(_r_vec);</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>  }</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>  <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> iterate(Vector&amp; x_vec, <span class="keyword">const</span> Vector&amp; b_vec,</div>
@@ -296,8 +296,8 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="comment">// ----------------------</span></div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> sqrt_of_epsilon =</div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>        std::sqrt(std::numeric_limits&lt;real_t&gt;::epsilon());</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> mu = sqrt_of_epsilon * <a class="code hl_function" href="namespace_storm.html#ae51ae3de63b34ed4639090c8f8d083c4">sqrt</a>(1.0 + <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(x_vec));</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    t_vec_ &lt;&lt;= r_vec_;</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> mu = sqrt_of_epsilon * <a class="code hl_function" href="namespace_storm.html#ab4db4db1a56aac8cf053fbdbe65c44ee">sqrt</a>(1.0 + <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(x_vec));</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    _t_vec &lt;&lt;= _r_vec;</div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>    {</div>
 <div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>      <a class="code hl_class" href="class_storm_1_1_bi_cg_stab_solver.html">BiCgStabSolver&lt;Vector&gt;</a> solver{};</div>
 <div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>      solver.absolute_error_tolerance = 1.0e-8;</div>
@@ -310,13 +310,13 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        <span class="comment">// 𝒛 ← 𝓐(𝒔),</span></div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        <span class="comment">// 𝒛 ← 𝛿⁺⋅𝒛 - 𝛿⁺⋅𝒘.</span></div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        <span class="comment">// ----------------------</span></div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> delta = <a class="code hl_function" href="namespace_storm.html#a9b0f67b428d03a0cce3addf6df1e0378">safe_divide</a>(mu, <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(y_vec));</div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        s_vec_ &lt;&lt;= x_vec + delta * y_vec;</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(z_vec, s_vec_);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> delta_inverse = <a class="code hl_function" href="namespace_storm.html#a9b0f67b428d03a0cce3addf6df1e0378">safe_divide</a>(1.0, delta);</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        z_vec &lt;&lt;= delta_inverse * (z_vec - w_vec_);</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>        <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> delta = <a class="code hl_function" href="namespace_storm.html#a5db641bf47eb4d59a7af1741b6669e5a">safe_divide</a>(mu, <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(y_vec));</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        _s_vec &lt;&lt;= x_vec + delta * y_vec;</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(z_vec, _s_vec);</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a> delta_inverse = <a class="code hl_function" href="namespace_storm.html#a5db641bf47eb4d59a7af1741b6669e5a">safe_divide</a>(1.0, delta);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        z_vec &lt;&lt;= delta_inverse * (z_vec - _w_vec);</div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>      });</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>      solver.solve(t_vec_, r_vec_, *op);</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>      solver.solve(_t_vec, _r_vec, *op);</div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    }</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <span class="comment">// Update the solution and the residual:</span></div>
@@ -325,11 +325,11 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    <span class="comment">// 𝒘 ← 𝓐(𝒙),</span></div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>    <span class="comment">// 𝒓 ← 𝒃 - 𝒘.</span></div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="comment">// ----------------------</span></div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    x_vec += t_vec_;</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(w_vec_, x_vec);</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    r_vec_ &lt;&lt;= b_vec - w_vec_;</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>    x_vec += _t_vec;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    any_op.<a class="code hl_function" href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">mul</a>(_w_vec, x_vec);</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    _r_vec &lt;&lt;= b_vec - _w_vec;</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(r_vec_);</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">norm_2</a>(_r_vec);</div>
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>  }</div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>}; <span class="comment">// class JfnkSolver</span></div>
@@ -345,11 +345,11 @@ $(document).ready(function(){initNavTree('_solver_newton_8hpp_source.html',''); 
 <div class="ttc" id="aclass_storm_1_1_operator_html"><div class="ttname"><a href="class_storm_1_1_operator.html">Storm::Operator</a></div><div class="ttdoc">Abstract operator 𝒚 ← 𝓐(𝒙). -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- ///.</div><div class="ttdef"><b>Definition</b> <a href="_operator_8hpp_source.html#l00067">Operator.hpp:67</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_operator_html_a60a43693dd8aca3ed6a6a4a7fa959d88"><div class="ttname"><a href="class_storm_1_1_operator.html#a60a43693dd8aca3ed6a6a4a7fa959d88">Storm::Operator::mul</a></div><div class="ttdeci">virtual void mul(OutVector &amp;y_vec, const InVector &amp;x_vec) const =0</div><div class="ttdoc">Compute an operator-vector product, 𝒚 ← 𝓐(𝒙).</div></div>
 <div class="ttc" id="aclass_storm_1_1_preconditioner_html"><div class="ttname"><a href="class_storm_1_1_preconditioner.html">Storm::Preconditioner</a></div><div class="ttdoc">Abstract preconditioner operator. -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- /...</div><div class="ttdef"><b>Definition</b> <a href="_preconditioner_8hpp_source.html#l00064">Preconditioner.hpp:64</a></div></div>
-<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00265">Base.hpp:265</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00287">Base.hpp:287</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a43ea731847cd51cc831f8459f924da81"><div class="ttname"><a href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">Storm::norm_2</a></div><div class="ttdeci">constexpr auto norm_2(Matrix &amp;&amp;mat)</div><div class="ttdoc">Element-wise matrix mat -norm.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_algorithms_8hpp_source.html#l00216">MatrixAlgorithms.hpp:216</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a9b0f67b428d03a0cce3addf6df1e0378"><div class="ttname"><a href="namespace_storm.html#a9b0f67b428d03a0cce3addf6df1e0378">Storm::safe_divide</a></div><div class="ttdeci">constexpr auto safe_divide(Value x, Value y)</div><div class="ttdoc">If y is zero, return zero, else return value of x divided by y.</div><div class="ttdef"><b>Definition</b> <a href="_math_8hpp_source.html#l00094">Math.hpp:94</a></div></div>
-<div class="ttc" id="anamespace_storm_html_ae51ae3de63b34ed4639090c8f8d083c4"><div class="ttname"><a href="namespace_storm.html#ae51ae3de63b34ed4639090c8f8d083c4">Storm::sqrt</a></div><div class="ttdeci">constexpr auto sqrt(Matrix &amp;&amp;mat)</div><div class="ttdoc">Compute the element-wise square root of the matrix mat.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_math_8hpp_source.html#l00358">MatrixMath.hpp:358</a></div></div>
+<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00032">Base.hpp:32</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00038">Types.hpp:38</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a43ea731847cd51cc831f8459f924da81"><div class="ttname"><a href="namespace_storm.html#a43ea731847cd51cc831f8459f924da81">Storm::norm_2</a></div><div class="ttdeci">constexpr auto norm_2(Matrix &amp;&amp;mat)</div><div class="ttdoc">Element-wise matrix mat -norm.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_algorithms_8hpp_source.html#l00210">MatrixAlgorithms.hpp:210</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a5db641bf47eb4d59a7af1741b6669e5a"><div class="ttname"><a href="namespace_storm.html#a5db641bf47eb4d59a7af1741b6669e5a">Storm::safe_divide</a></div><div class="ttdeci">constexpr auto safe_divide(Arg x, Arg y) noexcept</div><div class="ttdoc">If y is zero, return zero, otherwise return value of x divided by y.</div><div class="ttdef"><b>Definition</b> <a href="_math_utils_8hpp_source.html#l00050">MathUtils.hpp:50</a></div></div>
+<div class="ttc" id="anamespace_storm_html_ab4db4db1a56aac8cf053fbdbe65c44ee"><div class="ttname"><a href="namespace_storm.html#ab4db4db1a56aac8cf053fbdbe65c44ee">Storm::sqrt</a></div><div class="ttdeci">constexpr auto sqrt(Matrix &amp;&amp;mat)</div><div class="ttdoc">Compute the element-wise square root of the matrix mat.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_math_8hpp_source.html#l00348">MatrixMath.hpp:348</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

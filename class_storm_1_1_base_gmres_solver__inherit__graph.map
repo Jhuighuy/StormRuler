@@ -1,13 +1,13 @@
 <map id="Storm::BaseGmresSolver&lt; Vector, Flexible, Loose &gt;" name="Storm::BaseGmresSolver&lt; Vector, Flexible, Loose &gt;">
-<area shape="rect" id="Node000001" title="Parmetrized GMRES solver." alt="" coords="5,419,184,459"/>
-<area shape="rect" id="Node000002" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="8,330,181,371"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,385,97,418,92,418,92,385"/>
-<area shape="rect" id="Node000003" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="14,241,175,282"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="97,297,97,330,92,330,92,297"/>
-<area shape="rect" id="Node000004" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="12,153,177,193"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="97,208,97,241,92,241,92,208"/>
-<area shape="rect" id="Node000005" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="43,79,146,105"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="97,120,97,152,92,152,92,120"/>
-<area shape="rect" id="Node000006" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="21,5,168,31"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="97,46,97,79,92,79,92,46"/>
+<area shape="rect" id="Node000001" title="Parmetrized GMRES solver." alt="" coords="13,419,192,459"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="16,330,189,371"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,385,105,418,100,418,100,385"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="22,241,183,282"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,297,105,330,100,330,100,297"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="20,153,185,193"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,208,105,241,100,241,100,208"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="51,79,154,105"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="105,120,105,152,100,152,100,120"/>
+<area shape="rect" id="Node000006" href="$class_storm_1_1_non_copyable_interface.html" title="Non copyable object interface." alt="" coords="5,5,200,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="105,46,105,79,100,79,100,46"/>
 </map>

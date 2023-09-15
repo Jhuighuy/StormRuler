@@ -1,8 +1,8 @@
 var annotated_dup =
 [
     [ "Storm", "namespace_storm.html", [
-      [ "detail_", "namespace_storm_1_1detail__.html", [
-        [ "DerivedFromCrtpInterfaceImpl_", "struct_storm_1_1detail___1_1_derived_from_crtp_interface_impl__.html", null ]
+      [ "detail", null, [
+        [ "DerivedFromCrtpInterfaceImpl", "struct_storm_1_1detail_1_1_derived_from_crtp_interface_impl.html", null ]
       ] ],
       [ "Feathers", null, [
         [ "CubicSecondLimiter", "class_storm_1_1_feathers_1_1_cubic_second_limiter.html", "class_storm_1_1_feathers_1_1_cubic_second_limiter" ],
@@ -27,7 +27,7 @@ var annotated_dup =
         [ "UpwindConvectionScheme", "class_storm_1_1_feathers_1_1_upwind_convection_scheme.html", "class_storm_1_1_feathers_1_1_upwind_convection_scheme" ],
         [ "VenkatakrishnanSlopeLimiter", "class_storm_1_1_feathers_1_1_venkatakrishnan_slope_limiter.html", "class_storm_1_1_feathers_1_1_venkatakrishnan_slope_limiter" ]
       ] ],
-      [ "meta", "namespace_storm_1_1meta.html", [
+      [ "meta", null, [
         [ "append_fn", "struct_storm_1_1meta_1_1append__fn.html", null ],
         [ "cartesian_product_fn", "struct_storm_1_1meta_1_1cartesian__product__fn.html", null ],
         [ "concat_fn", "struct_storm_1_1meta_1_1concat__fn.html", null ],
@@ -50,7 +50,7 @@ var annotated_dup =
         [ "type", "struct_storm_1_1meta_1_1type.html", null ],
         [ "unique_fn", "struct_storm_1_1meta_1_1unique__fn.html", null ]
       ] ],
-      [ "shapes", "namespace_storm_1_1shapes.html", [
+      [ "shapes", null, [
         [ "Hexahedron", "class_storm_1_1shapes_1_1_hexahedron.html", "class_storm_1_1shapes_1_1_hexahedron" ],
         [ "Pentahedron", "class_storm_1_1shapes_1_1_pentahedron.html", "class_storm_1_1shapes_1_1_pentahedron" ],
         [ "Polygon", "class_storm_1_1shapes_1_1_polygon.html", "class_storm_1_1shapes_1_1_polygon" ],
@@ -94,7 +94,6 @@ var annotated_dup =
       [ "Add", "class_storm_1_1_add.html", null ],
       [ "AddAssign", "class_storm_1_1_add_assign.html", null ],
       [ "AllIndices", "class_storm_1_1_all_indices.html", null ],
-      [ "And", "class_storm_1_1_and.html", null ],
       [ "ApproxEqual", "class_storm_1_1_approx_equal.html", null ],
       [ "Asin", "class_storm_1_1_asin.html", null ],
       [ "Asinh", "class_storm_1_1_asinh.html", null ],
@@ -115,6 +114,8 @@ var annotated_dup =
       [ "Compose", "class_storm_1_1_compose.html", null ],
       [ "Compose< Func1, Func2 >", "class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html", null ],
       [ "Conj", "class_storm_1_1_conj.html", null ],
+      [ "Constant", "class_storm_1_1_constant.html", null ],
+      [ "CopyAssign", "class_storm_1_1_copy_assign.html", null ],
       [ "Cos", "class_storm_1_1_cos.html", null ],
       [ "Cosh", "class_storm_1_1_cosh.html", null ],
       [ "CrossProductView", "class_storm_1_1_cross_product_view.html", "class_storm_1_1_cross_product_view" ],
@@ -126,6 +127,7 @@ var annotated_dup =
       [ "EntityView", "class_storm_1_1_entity_view.html", "class_storm_1_1_entity_view" ],
       [ "Exp", "class_storm_1_1_exp.html", null ],
       [ "Exp2", "class_storm_1_1_exp2.html", null ],
+      [ "Eye", "class_storm_1_1_eye.html", null ],
       [ "FaceView", "class_storm_1_1_face_view.html", "class_storm_1_1_face_view" ],
       [ "FgmresSolver", "class_storm_1_1_fgmres_solver.html", null ],
       [ "FilteringStreambuf", "class_storm_1_1_filtering_streambuf.html", "class_storm_1_1_filtering_streambuf" ],
@@ -143,6 +145,8 @@ var annotated_dup =
       [ "Log", "class_storm_1_1_log.html", null ],
       [ "Log10", "class_storm_1_1_log10.html", null ],
       [ "Log2", "class_storm_1_1_log2.html", null ],
+      [ "LogicalAnd", "class_storm_1_1_logical_and.html", null ],
+      [ "LogicalOr", "class_storm_1_1_logical_or.html", null ],
       [ "MakeMatrixView", "class_storm_1_1_make_matrix_view.html", "class_storm_1_1_make_matrix_view" ],
       [ "MapMatrixView", "class_storm_1_1_map_matrix_view.html", "class_storm_1_1_map_matrix_view" ],
       [ "MatrixOwningView", "class_storm_1_1_matrix_owning_view.html", "class_storm_1_1_matrix_owning_view" ],
@@ -153,16 +157,16 @@ var annotated_dup =
       [ "Merge", "class_storm_1_1_merge.html", null ],
       [ "MeshInterface", "class_storm_1_1_mesh_interface.html", "class_storm_1_1_mesh_interface" ],
       [ "Min", "class_storm_1_1_min.html", null ],
+      [ "MoveAssign", "class_storm_1_1_move_assign.html", null ],
       [ "Multiply", "class_storm_1_1_multiply.html", null ],
       [ "MultiplyAssign", "class_storm_1_1_multiply_assign.html", null ],
       [ "NewtonSolver", "class_storm_1_1_newton_solver.html", null ],
       [ "NodeView", "class_storm_1_1_node_view.html", "class_storm_1_1_node_view" ],
-      [ "NonAssignable", "class_storm_1_1_non_assignable.html", "class_storm_1_1_non_assignable" ],
-      [ "NonCopyable", "class_storm_1_1_non_copyable.html", "class_storm_1_1_non_copyable" ],
-      [ "NonMovable", "class_storm_1_1_non_movable.html", "class_storm_1_1_non_movable" ],
+      [ "NonAssignableInterface", "class_storm_1_1_non_assignable_interface.html", null ],
+      [ "NonCopyableInterface", "class_storm_1_1_non_copyable_interface.html", null ],
+      [ "NonMovableInterface", "class_storm_1_1_non_movable_interface.html", null ],
       [ "Object", "class_storm_1_1_object.html", "class_storm_1_1_object" ],
       [ "Operator", "class_storm_1_1_operator.html", "class_storm_1_1_operator" ],
-      [ "Or", "class_storm_1_1_or.html", null ],
       [ "Pow", "class_storm_1_1_pow.html", null ],
       [ "Preconditioner", "class_storm_1_1_preconditioner.html", "class_storm_1_1_preconditioner" ],
       [ "Real", "class_storm_1_1_real.html", null ],

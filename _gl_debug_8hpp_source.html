@@ -199,8 +199,8 @@ $(document).ready(function(){initNavTree('_gl_debug_8hpp_source.html',''); initR
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>      <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    }</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    glDebugMessageCallbackARB(&amp;on_message_, <span class="keyword">nullptr</span>);</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    STORM_INFO_(<span class="stringliteral">&quot;OpenGL debug output enabled.&quot;</span>);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    glDebugMessageCallbackARB(&amp;_on_message, <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    STORM_INFO(<span class="stringliteral">&quot;OpenGL debug output enabled.&quot;</span>);</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  }</div>
 </div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="comment"></span> </div>
@@ -211,13 +211,13 @@ $(document).ready(function(){initNavTree('_gl_debug_8hpp_source.html',''); initR
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>      <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    }</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    STORM_INFO_(<span class="stringliteral">&quot;OpenGL debug output disabled.&quot;</span>);</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    STORM_INFO(<span class="stringliteral">&quot;OpenGL debug output disabled.&quot;</span>);</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  }</div>
 </div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keyword">static</span> <span class="keywordtype">void</span> on_message_(GLenum source, GLenum type, GLuint <span class="keywordtype">id</span>,</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keyword">static</span> <span class="keywordtype">void</span> _on_message(GLenum source, GLenum type, GLuint <span class="keywordtype">id</span>,</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>                          GLenum severity, [[maybe_unused]] GLsizei <a class="code hl_function" href="namespace_storm.html#ae90e69aa72b8cc901315f1c9bcd281b3">length</a>,</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>                          <span class="keyword">const</span> GLchar* message,</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>                          [[maybe_unused]] <span class="keyword">const</span> <span class="keywordtype">void</span>* user_param) {</div>
@@ -271,20 +271,20 @@ $(document).ready(function(){initNavTree('_gl_debug_8hpp_source.html',''); initR
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordflow">switch</span> (severity) {</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>      <span class="keywordflow">default</span>:</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        STORM_DEBUG_(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                     error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        STORM_DEBUG(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                    error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>      <span class="keywordflow">case</span> GL_DEBUG_SEVERITY_LOW_ARB:</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        STORM_INFO_(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                    error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        STORM_INFO(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>                   error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>      <span class="keywordflow">case</span> GL_DEBUG_SEVERITY_MEDIUM_ARB:</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        STORM_WARNING_(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                       error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        STORM_WARNING(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>                      error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>        <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>      <span class="keywordflow">case</span> GL_DEBUG_SEVERITY_HIGH_ARB:</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        STORM_ERROR_(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                     error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        STORM_ERROR(<span class="stringliteral">&quot;OpenGL: {} {} {:#x}: {}&quot;</span>, <span class="comment">//</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                    error_source, debug_type, <span class="keywordtype">id</span>, message);</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    }</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>  }</div>
@@ -296,7 +296,7 @@ $(document).ready(function(){initNavTree('_gl_debug_8hpp_source.html',''); initR
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_debug_output_html"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_debug_output.html">Storm::Vulture::gl::DebugOutput</a></div><div class="ttdoc">RAII OpenGL debug output.</div><div class="ttdef"><b>Definition</b> <a href="_gl_debug_8hpp_source.html#l00030">GlDebug.hpp:30</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_debug_output_html_a1f5ccffba7ddc15d29f7fd3256e1724d"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_debug_output.html#a1f5ccffba7ddc15d29f7fd3256e1724d">Storm::Vulture::gl::DebugOutput::DebugOutput</a></div><div class="ttdeci">DebugOutput() noexcept</div><div class="ttdoc">Enable OpenGL debug output. Sticks to GL_ARB_debug_output extension since debug output is inside Open...</div><div class="ttdef"><b>Definition</b> <a href="_gl_debug_8hpp_source.html#l00036">GlDebug.hpp:36</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_debug_output_html_af0bd990df1b44f5aa8720962ea3199da"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_debug_output.html#af0bd990df1b44f5aa8720962ea3199da">Storm::Vulture::gl::DebugOutput::~DebugOutput</a></div><div class="ttdeci">~DebugOutput() noexcept</div><div class="ttdoc">Disable OpenGL debug output.</div><div class="ttdef"><b>Definition</b> <a href="_gl_debug_8hpp_source.html#l00046">GlDebug.hpp:46</a></div></div>
-<div class="ttc" id="anamespace_storm_html_ae90e69aa72b8cc901315f1c9bcd281b3"><div class="ttname"><a href="namespace_storm.html#ae90e69aa72b8cc901315f1c9bcd281b3">Storm::length</a></div><div class="ttdeci">constexpr auto length(Matrix &amp;&amp;mat)</div><div class="ttdoc">Element-wise matrix mat -norm.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_algorithms_8hpp_source.html#l00254">MatrixAlgorithms.hpp:254</a></div></div>
+<div class="ttc" id="anamespace_storm_html_ae90e69aa72b8cc901315f1c9bcd281b3"><div class="ttname"><a href="namespace_storm.html#ae90e69aa72b8cc901315f1c9bcd281b3">Storm::length</a></div><div class="ttdeci">constexpr auto length(Matrix &amp;&amp;mat)</div><div class="ttdoc">Element-wise matrix mat -norm.</div><div class="ttdef"><b>Definition</b> <a href="_matrix_algorithms_8hpp_source.html#l00244">MatrixAlgorithms.hpp:244</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

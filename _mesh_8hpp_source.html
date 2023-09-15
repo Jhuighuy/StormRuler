@@ -203,26 +203,26 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">template</span>&lt;mesh Mesh&gt;</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="keyword">class </span>CellView;</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">namespace </span>detail_ {</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> to_node_view_(<span class="keyword">const</span> <span class="keyword">auto</span>&amp; mesh) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">namespace </span>_detail {</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> _to_node_view(<span class="keyword">const</span> <span class="keyword">auto</span>&amp; mesh) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordflow">return</span> std::views::transform(</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        [&amp;](<a class="code hl_typedef" href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">NodeIndex</a> node_index) { <span class="keywordflow">return</span> NodeView(mesh, node_index); });</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  }</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> to_edge_view_(<span class="keyword">const</span> <span class="keyword">auto</span>&amp; mesh) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> _to_edge_view(<span class="keyword">const</span> <span class="keyword">auto</span>&amp; mesh) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordflow">return</span> std::views::transform(</div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        [&amp;](<a class="code hl_typedef" href="namespace_storm.html#ab2e85821eefc237f1dfa3bb53dd8c6c1">EdgeIndex</a> edge_index) { <span class="keywordflow">return</span> EdgeView(mesh, edge_index); });</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  }</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keyword">template</span>&lt;<span class="keyword">class</span> Mesh&gt;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> to_face_view_(<span class="keyword">const</span> Mesh&amp; mesh) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> _to_face_view(<span class="keyword">const</span> Mesh&amp; mesh) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordflow">return</span> std::views::transform(</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        [&amp;](FaceIndex&lt;Mesh&gt; face_index) { <span class="keywordflow">return</span> FaceView(mesh, face_index); });</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  }</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keyword">template</span>&lt;<span class="keyword">class</span> Mesh&gt;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> to_cell_view_(<span class="keyword">const</span> Mesh&amp; mesh) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> _to_cell_view(<span class="keyword">const</span> Mesh&amp; mesh) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordflow">return</span> std::views::transform(</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        [&amp;](CellIndex&lt;Mesh&gt; cell_index) { <span class="keywordflow">return</span> CellView(mesh, cell_index); });</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  }</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>} <span class="comment">// namespace detail_</span></div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>} <span class="comment">// namespace _detail</span></div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"></span> </div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment">/// @brief Mesh entity view.</span></div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment"></span><span class="keyword">template</span>&lt;mesh Mesh, index Index&gt;</div>
@@ -233,15 +233,15 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  <span class="keyword">template</span>&lt;mesh, index&gt;</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_entity_view.html">EntityView</a>;</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  <span class="keyword">const</span> Mesh* p_mesh_;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> index_;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  <span class="keyword">const</span> Mesh* _p_mesh;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> _index;</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="keyword">protected</span>:</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment"></span> </div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="comment">  /// @brief Construct an entity view with a @p mesh and @p index.</span></div>
 <div class="foldopen" id="foldopen00082" data-start="{" data-end="}">
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#aaef6189573ddcdb9919a468b648533da">   82</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#aaef6189573ddcdb9919a468b648533da">EntityView</a>(<span class="keyword">const</span> Mesh&amp; <a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) noexcept</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>      : p_mesh_{&amp;<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>}, index_{<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>} {}</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>      : _p_mesh{&amp;<a class="code hl_concept" href="concept_storm_1_1mesh.html">mesh</a>}, _index{<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>} {}</div>
 </div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment"></span> </div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment">  /// @brief Destroy the entity view.</span></div>
@@ -253,12 +253,12 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00092" data-start="{" data-end="}">
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">   92</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> Mesh&amp; <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>() noexcept {</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordflow">return</span> *p_mesh_;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordflow">return</span> *_p_mesh;</div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00095" data-start="{" data-end="}">
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a395481f1d7f53ec58979720d25317fc4">   95</a></span>  <span class="keyword">constexpr</span> <span class="keyword">const</span> Mesh&amp; <a class="code hl_function" href="class_storm_1_1_entity_view.html#a395481f1d7f53ec58979720d25317fc4">mesh</a>() const noexcept {</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">return</span> *p_mesh_;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">return</span> *_p_mesh;</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="comment">  /// @}</span></div>
@@ -267,12 +267,12 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#ae47157ce645a807166b654519c4dbd18">  102</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_function" href="class_storm_1_1_entity_view.html#ae47157ce645a807166b654519c4dbd18">index</a>() const noexcept {</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordflow">return</span> index_;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordflow">return</span> _index;</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00105" data-start="{" data-end="}">
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a5ecd5df0916d3398964814a8bf6dcdcf">  105</a></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a5ecd5df0916d3398964814a8bf6dcdcf">index_sz</a>() const noexcept {</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(index_);</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(_index);</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment">  /// @}</span></div>
@@ -280,55 +280,55 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="comment">  /// @brief Cast to entity index operator.</span></div>
 <div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a391e07345b4042adc84ffc8f8ea809bb">  111</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">operator</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>() const noexcept {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordflow">return</span> index_;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordflow">return</span> _index;</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  }</div>
 </div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="comment"></span> </div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="comment">  /// @brief Comparison operator.</span></div>
 <div class="foldopen" id="foldopen00116" data-start="{" data-end="}">
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#af85396d79aad076d6d8d2476bb8b613a">  116</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#af85396d79aad076d6d8d2476bb8b613a">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_entity_view.html">EntityView</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    STORM_ASSERT_(p_mesh_ == other.p_mesh_,</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                  <span class="stringliteral">&quot;Entities correspond to the different meshes!&quot;</span>);</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordflow">return</span> index_ &lt;=&gt; other.index_;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    STORM_ASSERT(_p_mesh == other._p_mesh,</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>                 <span class="stringliteral">&quot;Entities correspond to the different meshes!&quot;</span>);</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordflow">return</span> _index &lt;=&gt; other._index;</div>
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>  }</div>
 </div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="comment"></span> </div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="comment">  /// @brief Entity label.</span></div>
 <div class="foldopen" id="foldopen00123" data-start="{" data-end="}">
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a738da45f3ad969c073c0c423fd741185">  123</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a738da45f3ad969c073c0c423fd741185">label</a>() const noexcept {</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().label(index_);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().label(_index);</div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>  }</div>
 </div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="comment"></span> </div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="comment">  /// @brief Range of the adjacent nodes.</span></div>
 <div class="foldopen" id="foldopen00128" data-start="{" data-end="}">
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#ab278eac510045b1bc2dd09c82144803d">  128</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#ab278eac510045b1bc2dd09c82144803d">nodes</a>() const noexcept {</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(index_, meta::type_v&lt;NodeIndex&gt;) |</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>           detail_::to_node_view_(*p_mesh_);</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(_index, meta::type_v&lt;NodeIndex&gt;) |</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>           _detail::_to_node_view(*_p_mesh);</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>  }</div>
 </div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="comment"></span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">  /// @brief Range of the adjacent edges.</span></div>
 <div class="foldopen" id="foldopen00134" data-start="{" data-end="}">
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a85dec76ee4c295c380ebb14e4b66ddd1">  134</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a85dec76ee4c295c380ebb14e4b66ddd1">edges</a>() const noexcept {</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(index_, meta::type_v&lt;EdgeIndex&gt;) |</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>           detail_::to_edge_view_(*p_mesh_);</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(_index, meta::type_v&lt;EdgeIndex&gt;) |</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>           _detail::_to_edge_view(*_p_mesh);</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>  }</div>
 </div>
 <div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="comment"></span> </div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="comment">  /// @brief Range of the adjacent faces.</span></div>
 <div class="foldopen" id="foldopen00140" data-start="{" data-end="}">
 <div class="line"><a id="l00140" name="l00140"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#ab93d5ef315e9e7886e2bac0d3ba1cb8d">  140</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#ab93d5ef315e9e7886e2bac0d3ba1cb8d">faces</a>() const noexcept {</div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(index_, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Mesh&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>           detail_::to_face_view_(*p_mesh_);</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(_index, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Mesh&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>           _detail::_to_face_view(*_p_mesh);</div>
 <div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>  }</div>
 </div>
 <div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span><span class="comment"></span> </div>
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span><span class="comment">  /// @brief Range of the adjacent cells.</span></div>
 <div class="foldopen" id="foldopen00146" data-start="{" data-end="}">
 <div class="line"><a id="l00146" name="l00146"></a><span class="lineno"><a class="line" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">  146</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>() const noexcept {</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(index_, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Mesh&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>           detail_::to_cell_view_(*p_mesh_);</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().adjacent(_index, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Mesh&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>           _detail::_to_cell_view(*_p_mesh);</div>
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>  }</div>
 </div>
 <div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span><span class="comment"></span> </div>
@@ -420,7 +420,7 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span><span class="comment"></span> </div>
 <div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span><span class="comment">  /// @brief Edge shape type.</span></div>
 <div class="foldopen" id="foldopen00218" data-start="{" data-end="}">
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno"><a class="line" href="class_storm_1_1_edge_view.html#a092cbdf33458b31f529d97538c612058">  218</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a> <a class="code hl_function" href="class_storm_1_1_edge_view.html#a092cbdf33458b31f529d97538c612058">shape_type</a>() const noexcept {</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno"><a class="line" href="class_storm_1_1_edge_view.html#a092cbdf33458b31f529d97538c612058">  218</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> shapes::Type <a class="code hl_function" href="class_storm_1_1_edge_view.html#a092cbdf33458b31f529d97538c612058">shape_type</a>() const noexcept {</div>
 <div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    <span class="keywordflow">return</span> this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().shape_type(this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#ae47157ce645a807166b654519c4dbd18">index</a>());</div>
 <div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>  }</div>
 </div>
@@ -461,7 +461,7 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment"></span> </div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment">  /// @brief Face shape type.</span></div>
 <div class="foldopen" id="foldopen00249" data-start="{" data-end="}">
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno"><a class="line" href="class_storm_1_1_face_view.html#a5d7a4a906b875210bfc66f6ac3d49ec5">  249</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a> <a class="code hl_function" href="class_storm_1_1_face_view.html#a5d7a4a906b875210bfc66f6ac3d49ec5">shape_type</a>() const noexcept {</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno"><a class="line" href="class_storm_1_1_face_view.html#a5d7a4a906b875210bfc66f6ac3d49ec5">  249</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> shapes::Type <a class="code hl_function" href="class_storm_1_1_face_view.html#a5d7a4a906b875210bfc66f6ac3d49ec5">shape_type</a>() const noexcept {</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keywordflow">return</span> this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().shape_type(this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#ae47157ce645a807166b654519c4dbd18">index</a>());</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>  }</div>
 </div>
@@ -490,8 +490,8 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span><span class="comment">  /// @brief Get the adjacent inner cell.</span></div>
 <div class="foldopen" id="foldopen00269" data-start="{" data-end="}">
 <div class="line"><a id="l00269" name="l00269"></a><span class="lineno"><a class="line" href="class_storm_1_1_face_view.html#a630729ad7441ff061f9c533dedc57225">  269</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_cell_view.html">CellView&lt;Mesh&gt;</a> <a class="code hl_function" href="class_storm_1_1_face_view.html#a630729ad7441ff061f9c533dedc57225">inner_cell</a>() const noexcept {</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    STORM_ASSERT_(!this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().empty(),</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>                  <span class="stringliteral">&quot;The face does not have an adjacent inner cell!&quot;</span>);</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>    STORM_ASSERT(!this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().empty(),</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>                 <span class="stringliteral">&quot;The face does not have an adjacent inner cell!&quot;</span>);</div>
 <div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    <span class="keywordflow">return</span> this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().front();</div>
 <div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>  }</div>
 </div>
@@ -499,8 +499,8 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span><span class="comment">  /// @brief Get the adjacent outer cell.</span></div>
 <div class="foldopen" id="foldopen00276" data-start="{" data-end="}">
 <div class="line"><a id="l00276" name="l00276"></a><span class="lineno"><a class="line" href="class_storm_1_1_face_view.html#a8cb7bc6720f5a6ee95f1c4919a285fdb">  276</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_cell_view.html">CellView&lt;Mesh&gt;</a> <a class="code hl_function" href="class_storm_1_1_face_view.html#a8cb7bc6720f5a6ee95f1c4919a285fdb">outer_cell</a>() const noexcept {</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    STORM_ASSERT_(this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().size() == 2,</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>                  <span class="stringliteral">&quot;The face does not have an adjacent outer cell!&quot;</span>);</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>    STORM_ASSERT(this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().size() == 2,</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>                 <span class="stringliteral">&quot;The face does not have an adjacent outer cell!&quot;</span>);</div>
 <div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keywordflow">return</span> this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a148ad52e0971cbf274424f2e8c2e33f1">cells</a>().back();</div>
 <div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>  }</div>
 </div>
@@ -527,7 +527,7 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="comment"></span> </div>
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span><span class="comment">  /// @brief Cell shape type.</span></div>
 <div class="foldopen" id="foldopen00299" data-start="{" data-end="}">
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno"><a class="line" href="class_storm_1_1_cell_view.html#a702c4c508572d75ace21060b9f142ada">  299</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a> <a class="code hl_function" href="class_storm_1_1_cell_view.html#a702c4c508572d75ace21060b9f142ada">shape_type</a>() const noexcept {</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno"><a class="line" href="class_storm_1_1_cell_view.html#a702c4c508572d75ace21060b9f142ada">  299</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> shapes::Type <a class="code hl_function" href="class_storm_1_1_cell_view.html#a702c4c508572d75ace21060b9f142ada">shape_type</a>() const noexcept {</div>
 <div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>    <span class="keywordflow">return</span> this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#a86bf7647ca96be186645dd01885844c3">mesh</a>().shape_type(this-&gt;<a class="code hl_function" href="class_storm_1_1_entity_view.html#ae47157ce645a807166b654519c4dbd18">index</a>());</div>
 <div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>  }</div>
 </div>
@@ -572,12 +572,12 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00332" name="l00332"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html">  332</a></span><span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_mesh_interface.html">MeshInterface</a> {</div>
 <div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span> </div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>  <span class="keyword">constexpr</span> Derived&amp; self_() <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>  <span class="keyword">constexpr</span> Derived&amp; _self() <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>    <span class="keyword">static_assert</span>(std::derived_from&lt;Derived, MeshInterface&gt;);</div>
 <div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>Derived&amp;<span class="keyword">&gt;</span>(*this);</div>
 <div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>  }</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keyword">constexpr</span> <span class="keyword">const</span> Derived&amp; self_() <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>    <span class="keywordflow">return</span> <span class="keyword">const_cast&lt;</span><a class="code hl_class" href="class_storm_1_1_mesh_interface.html">MeshInterface</a>&amp;<span class="keyword">&gt;</span>(*this).self_();</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="keyword">constexpr</span> <span class="keyword">const</span> Derived&amp; _self() <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>    <span class="keywordflow">return</span> <span class="keyword">const_cast&lt;</span><a class="code hl_class" href="class_storm_1_1_mesh_interface.html">MeshInterface</a>&amp;<span class="keyword">&gt;</span>(*this)._self();</div>
 <div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>  }</div>
 <div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
 <div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span><span class="keyword">public</span>:</div>
@@ -585,137 +585,137 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span><span class="comment">  /// @brief Number of the node labels.</span></div>
 <div class="foldopen" id="foldopen00346" data-start="{" data-end="}">
 <div class="line"><a id="l00346" name="l00346"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a45ed21da2d873f6fb9cba75e098ac85e">  346</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a45ed21da2d873f6fb9cba75e098ac85e">num_node_labels</a>() const noexcept {</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>    <span class="keywordflow">return</span> self_().num_labels(meta::type_v&lt;NodeIndex&gt;);</div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>    <span class="keywordflow">return</span> _self().num_labels(meta::type_v&lt;NodeIndex&gt;);</div>
 <div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span><span class="comment">  /// @brief Number of the edge labels.</span></div>
 <div class="foldopen" id="foldopen00350" data-start="{" data-end="}">
 <div class="line"><a id="l00350" name="l00350"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a204f384bf245df2d82e9bee9eb00eddf">  350</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a204f384bf245df2d82e9bee9eb00eddf">num_edge_labels</a>() const noexcept {</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>    <span class="keywordflow">return</span> self_().num_labels(meta::type_v&lt;EdgeIndex&gt;);</div>
+<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>    <span class="keywordflow">return</span> _self().num_labels(meta::type_v&lt;EdgeIndex&gt;);</div>
 <div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span><span class="comment">  /// @brief Number of the face labels.</span></div>
 <div class="foldopen" id="foldopen00354" data-start="{" data-end="}">
 <div class="line"><a id="l00354" name="l00354"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a96771bd71346cdaf186a2f47483c259c">  354</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a96771bd71346cdaf186a2f47483c259c">num_face_labels</a>() const noexcept {</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    <span class="keywordflow">return</span> self_().num_labels(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    <span class="keywordflow">return</span> _self().num_labels(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span><span class="comment">  /// @brief Number of the cell labels.</span></div>
 <div class="foldopen" id="foldopen00358" data-start="{" data-end="}">
 <div class="line"><a id="l00358" name="l00358"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a1bf7371c096fd7af98f1c68b59d3cc09">  358</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a1bf7371c096fd7af98f1c68b59d3cc09">num_cell_labels</a>() const noexcept {</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="keywordflow">return</span> self_().num_labels(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="keywordflow">return</span> _self().num_labels(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>  }</div>
 </div>
 <div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span><span class="comment"></span> </div>
 <div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span><span class="comment">  /// @brief Number of the nodes.</span></div>
 <div class="foldopen" id="foldopen00363" data-start="{" data-end="}">
 <div class="line"><a id="l00363" name="l00363"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a170e2011f93c5160d1b403474b928751">  363</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a170e2011f93c5160d1b403474b928751">num_nodes</a>() const noexcept {</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keywordflow">return</span> self_().num_entities(meta::type_v&lt;NodeIndex&gt;);</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keywordflow">return</span> _self().num_entities(meta::type_v&lt;NodeIndex&gt;);</div>
 <div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span><span class="comment">  /// @brief Number of the nodes with a @p label.</span></div>
 <div class="foldopen" id="foldopen00367" data-start="{" data-end="}">
 <div class="line"><a id="l00367" name="l00367"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#add8fd5285d4de64bcd37ecefba207138">  367</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#add8fd5285d4de64bcd37ecefba207138">num_nodes</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    <span class="keywordflow">return</span> self_().num_entities(label, meta::type_v&lt;NodeIndex&gt;);</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>    <span class="keywordflow">return</span> _self().num_entities(label, meta::type_v&lt;NodeIndex&gt;);</div>
 <div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>  }</div>
 </div>
 <div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span><span class="comment"></span> </div>
 <div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span><span class="comment">  /// @brief Number of the edges.</span></div>
 <div class="foldopen" id="foldopen00372" data-start="{" data-end="}">
 <div class="line"><a id="l00372" name="l00372"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a09ec2bdeee02a81539f0c57cc4403b86">  372</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a09ec2bdeee02a81539f0c57cc4403b86">num_edges</a>() const noexcept {</div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>    <span class="keywordflow">return</span> self_().num_entities(meta::type_v&lt;EdgeIndex&gt;);</div>
+<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>    <span class="keywordflow">return</span> _self().num_entities(meta::type_v&lt;EdgeIndex&gt;);</div>
 <div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span><span class="comment">  /// @brief Number of the edges with a @p label.</span></div>
 <div class="foldopen" id="foldopen00376" data-start="{" data-end="}">
 <div class="line"><a id="l00376" name="l00376"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a0120d7f5113280c6b48c73f2ea1785e9">  376</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a0120d7f5113280c6b48c73f2ea1785e9">num_edges</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>    <span class="keywordflow">return</span> self_().num_entities(label, meta::type_v&lt;EdgeIndex&gt;);</div>
+<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>    <span class="keywordflow">return</span> _self().num_entities(label, meta::type_v&lt;EdgeIndex&gt;);</div>
 <div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>  }</div>
 </div>
 <div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span><span class="comment"></span> </div>
 <div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span><span class="comment">  /// @brief Number of the faces.</span></div>
 <div class="foldopen" id="foldopen00381" data-start="{" data-end="}">
 <div class="line"><a id="l00381" name="l00381"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#ab22ba026046870715bfe5d1a7e2ffe71">  381</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#ab22ba026046870715bfe5d1a7e2ffe71">num_faces</a>() const noexcept {</div>
-<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>    <span class="keywordflow">return</span> self_().num_entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00382" name="l00382"></a><span class="lineno">  382</span>    <span class="keywordflow">return</span> _self().num_entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span><span class="comment">  /// @brief Number of the faces with a @p label.</span></div>
 <div class="foldopen" id="foldopen00385" data-start="{" data-end="}">
 <div class="line"><a id="l00385" name="l00385"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a0dc037c0cea01703515ea44f126e71bb">  385</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a0dc037c0cea01703515ea44f126e71bb">num_faces</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>    <span class="keywordflow">return</span> self_().num_entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>    <span class="keywordflow">return</span> _self().num_entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span>  }</div>
 </div>
 <div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="comment"></span> </div>
 <div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="comment">  /// @brief Number of the cells.</span></div>
 <div class="foldopen" id="foldopen00390" data-start="{" data-end="}">
 <div class="line"><a id="l00390" name="l00390"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a38f50acfd85af5ad3ef5fe7b6ed74187">  390</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a38f50acfd85af5ad3ef5fe7b6ed74187">num_cells</a>() const noexcept {</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    <span class="keywordflow">return</span> self_().num_entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span>    <span class="keywordflow">return</span> _self().num_entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span><span class="comment">  /// @brief Number of the cells with a @p label.</span></div>
 <div class="foldopen" id="foldopen00394" data-start="{" data-end="}">
 <div class="line"><a id="l00394" name="l00394"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a17c9693c7861789eb2431eab32ca32e3">  394</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keywordtype">size_t</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a17c9693c7861789eb2431eab32ca32e3">num_cells</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>    <span class="keywordflow">return</span> self_().num_entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span>    <span class="keywordflow">return</span> _self().num_entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;);</div>
 <div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>  }</div>
 </div>
 <div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span><span class="comment"></span> </div>
 <div class="line"><a id="l00398" name="l00398"></a><span class="lineno">  398</span><span class="comment">  /// @brief Range of the nodes.</span></div>
 <div class="foldopen" id="foldopen00399" data-start="{" data-end="}">
 <div class="line"><a id="l00399" name="l00399"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a1f8049b90e3cbee04e5fadda184d5725">  399</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a1f8049b90e3cbee04e5fadda184d5725">nodes</a>() const noexcept {</div>
-<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keywordflow">return</span> self_().entities(meta::type_v&lt;NodeIndex&gt;) |</div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>           detail_::to_node_view_(self_());</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span>    <span class="keywordflow">return</span> _self().entities(meta::type_v&lt;NodeIndex&gt;) |</div>
+<div class="line"><a id="l00401" name="l00401"></a><span class="lineno">  401</span>           _detail::_to_node_view(_self());</div>
 <div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span><span class="comment">  /// @brief Range of the nodes with a @p label.</span></div>
 <div class="foldopen" id="foldopen00404" data-start="{" data-end="}">
 <div class="line"><a id="l00404" name="l00404"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#ab4f299a59149eb7f3309865de5382eb5">  404</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#ab4f299a59149eb7f3309865de5382eb5">nodes</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>    <span class="keywordflow">return</span> self_().entities(label, meta::type_v&lt;NodeIndex&gt;) |</div>
-<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>           detail_::to_node_view_(self_());</div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span>    <span class="keywordflow">return</span> _self().entities(label, meta::type_v&lt;NodeIndex&gt;) |</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span>           _detail::_to_node_view(_self());</div>
 <div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span>  }</div>
 </div>
 <div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="comment"></span> </div>
 <div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span><span class="comment">  /// @brief Range of the edges.</span></div>
 <div class="foldopen" id="foldopen00410" data-start="{" data-end="}">
 <div class="line"><a id="l00410" name="l00410"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#afc38a86151f30d434370254ba8ae60b3">  410</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#afc38a86151f30d434370254ba8ae60b3">edges</a>() const noexcept {</div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>    <span class="keywordflow">return</span> self_().entities(meta::type_v&lt;EdgeIndex&gt;) |</div>
-<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>           detail_::to_edge_view_(self_());</div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span>    <span class="keywordflow">return</span> _self().entities(meta::type_v&lt;EdgeIndex&gt;) |</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span>           _detail::_to_edge_view(_self());</div>
 <div class="line"><a id="l00413" name="l00413"></a><span class="lineno">  413</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span><span class="comment">  /// @brief Range of the edges with @p label.</span></div>
 <div class="foldopen" id="foldopen00415" data-start="{" data-end="}">
 <div class="line"><a id="l00415" name="l00415"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a2146e6ae9b2738436a2616695e03380a">  415</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a2146e6ae9b2738436a2616695e03380a">edges</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>    <span class="keywordflow">return</span> self_().entities(label, meta::type_v&lt;EdgeIndex&gt;) |</div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>           detail_::to_edge_view_(self_());</div>
+<div class="line"><a id="l00416" name="l00416"></a><span class="lineno">  416</span>    <span class="keywordflow">return</span> _self().entities(label, meta::type_v&lt;EdgeIndex&gt;) |</div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span>           _detail::_to_edge_view(_self());</div>
 <div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span>  }</div>
 </div>
 <div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span><span class="comment"></span> </div>
 <div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span><span class="comment">  /// @brief Range of the faces.</span></div>
 <div class="foldopen" id="foldopen00421" data-start="{" data-end="}">
 <div class="line"><a id="l00421" name="l00421"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#ac02fd302894d67764275aa1d95391102">  421</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#ac02fd302894d67764275aa1d95391102">faces</a>() const noexcept {</div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    <span class="keywordflow">return</span> self_().entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>           detail_::to_face_view_(self_());</div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>    <span class="keywordflow">return</span> _self().entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>           _detail::_to_face_view(_self());</div>
 <div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span><span class="comment">  /// @brief Range of the faces with @p label.</span></div>
 <div class="foldopen" id="foldopen00426" data-start="{" data-end="}">
 <div class="line"><a id="l00426" name="l00426"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#a52e7a6329705783fcbd6f1d99aab1a50">  426</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#a52e7a6329705783fcbd6f1d99aab1a50">faces</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span>    <span class="keywordflow">return</span> self_().entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>           detail_::to_face_view_(self_());</div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span>    <span class="keywordflow">return</span> _self().entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">FaceIndex&lt;Derived&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span>           _detail::_to_face_view(_self());</div>
 <div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span>  }</div>
 </div>
 <div class="line"><a id="l00430" name="l00430"></a><span class="lineno">  430</span><span class="comment"></span> </div>
 <div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span><span class="comment">  /// @brief Range of the cells.</span></div>
 <div class="foldopen" id="foldopen00432" data-start="{" data-end="}">
 <div class="line"><a id="l00432" name="l00432"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#ad24944e11bfbc0775bea06045b83de44">  432</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#ad24944e11bfbc0775bea06045b83de44">cells</a>() const noexcept {</div>
-<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    <span class="keywordflow">return</span> self_().entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>           detail_::to_cell_view_(self_());</div>
+<div class="line"><a id="l00433" name="l00433"></a><span class="lineno">  433</span>    <span class="keywordflow">return</span> _self().entities(meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00434" name="l00434"></a><span class="lineno">  434</span>           _detail::_to_cell_view(_self());</div>
 <div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span><span class="comment">  /// @brief Range of the cells with @p label.</span></div>
 <div class="foldopen" id="foldopen00437" data-start="{" data-end="}">
 <div class="line"><a id="l00437" name="l00437"></a><span class="lineno"><a class="line" href="class_storm_1_1_mesh_interface.html#ac91b6446fbdffe9fbff8ec4df20503ff">  437</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_mesh_interface.html#ac91b6446fbdffe9fbff8ec4df20503ff">cells</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Label</a> label) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>    <span class="keywordflow">return</span> self_().entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;) |</div>
-<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span>           detail_::to_cell_view_(self_());</div>
+<div class="line"><a id="l00438" name="l00438"></a><span class="lineno">  438</span>    <span class="keywordflow">return</span> _self().entities(label, meta::type_v&lt;<a class="code hl_typedef" href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">CellIndex&lt;Derived&gt;</a>&gt;) |</div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span>           _detail::_to_cell_view(_self());</div>
 <div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>  }</div>
 </div>
 <div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span><span class="comment"></span> </div>
@@ -853,9 +853,8 @@ $(document).ready(function(){initNavTree('_mesh_8hpp_source.html',''); initResiz
 <div class="ttc" id="aclass_storm_1_1_node_view_html_ac6af4bcfbef5884e4c3dc095009ff5c1"><div class="ttname"><a href="class_storm_1_1_node_view.html#ac6af4bcfbef5884e4c3dc095009ff5c1">Storm::NodeView::position</a></div><div class="ttdeci">constexpr auto position() const noexcept</div><div class="ttdoc">Node coordinates.</div><div class="ttdef"><b>Definition</b> <a href="_mesh_8hpp_source.html#l00197">Mesh.hpp:197</a></div></div>
 <div class="ttc" id="aconcept_storm_1_1index_html"><div class="ttname"><a href="concept_storm_1_1index.html">Storm::index</a></div><div class="ttdoc">Index type.</div><div class="ttdef"><b>Definition</b> <a href="_index_8hpp_source.html#l00145">Index.hpp:145</a></div></div>
 <div class="ttc" id="aconcept_storm_1_1mesh_html"><div class="ttname"><a href="concept_storm_1_1mesh.html">Storm::mesh</a></div><div class="ttdoc">Mesh concept.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00048">Fwd.hpp:48</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_a0a256751f828dfa575913265c0f4010b"><div class="ttname"><a href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">Storm::shapes::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Shape type.</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00040">Shape.hpp:40</a></div></div>
-<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00265">Base.hpp:265</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00287">Base.hpp:287</a></div></div>
+<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00032">Base.hpp:32</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00038">Types.hpp:38</a></div></div>
 <div class="ttc" id="anamespace_storm_html_a48d1f24b06283224e75da4b7467ab777"><div class="ttname"><a href="namespace_storm.html#a48d1f24b06283224e75da4b7467ab777">Storm::CellIndex</a></div><div class="ttdeci">typename Mesh::CellIndex CellIndex</div><div class="ttdoc">Cell index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00076">Fwd.hpp:76</a></div></div>
 <div class="ttc" id="anamespace_storm_html_a57306979ec22263c3d55c274a5d22218"><div class="ttname"><a href="namespace_storm.html#a57306979ec22263c3d55c274a5d22218">Storm::NodeIndex</a></div><div class="ttdeci">EntityIndex&lt; 0 &gt; NodeIndex</div><div class="ttdoc">Node index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00065">Fwd.hpp:65</a></div></div>
 <div class="ttc" id="anamespace_storm_html_aa1b798bdc45eac9eaecc38643ba9f238"><div class="ttname"><a href="namespace_storm.html#aa1b798bdc45eac9eaecc38643ba9f238">Storm::FaceIndex</a></div><div class="ttdeci">typename Mesh::FaceIndex FaceIndex</div><div class="ttdoc">Face index type.</div><div class="ttdef"><b>Definition</b> <a href="_fwd_8hpp_source.html#l00072">Fwd.hpp:72</a></div></div>

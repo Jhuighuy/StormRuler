@@ -28,7 +28,8 @@ var searchData=
   ['mhdhydrovars_25',['MhdHydroVars',['../class_storm_1_1_feathers_1_1_mhd_hydro_vars.html',1,'Storm::Feathers']]],
   ['min_26',['Min',['../class_storm_1_1_min.html',1,'Storm']]],
   ['minmodslopelimiter_27',['MinmodSlopeLimiter',['../class_storm_1_1_feathers_1_1_minmod_slope_limiter.html',1,'Storm::Feathers']]],
-  ['multiply_28',['Multiply',['../class_storm_1_1_multiply.html',1,'Storm']]],
-  ['multiplyassign_29',['MultiplyAssign',['../class_storm_1_1_multiply_assign.html',1,'Storm']]],
-  ['multisampledtexture2d_30',['MultisampledTexture2D',['../class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html',1,'Storm::Vulture::gl']]]
+  ['moveassign_28',['MoveAssign',['../class_storm_1_1_move_assign.html',1,'Storm']]],
+  ['multiply_29',['Multiply',['../class_storm_1_1_multiply.html',1,'Storm']]],
+  ['multiplyassign_30',['MultiplyAssign',['../class_storm_1_1_multiply_assign.html',1,'Storm']]],
+  ['multisampledtexture2d_31',['MultisampledTexture2D',['../class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html',1,'Storm::Vulture::gl']]]
 ];

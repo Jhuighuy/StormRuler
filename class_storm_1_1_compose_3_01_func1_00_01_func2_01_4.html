@@ -159,23 +159,23 @@ $(document).ready(function(){initNavTree('class_storm_1_1_compose_3_01_func1_00_
 <p><a class="el" href="class_storm_1_1_compose.html" title="Compose multiple functions: .">Compose</a> two functions: \( f_{1} \circ f_{2} \).  
  <a href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="_functions_8hpp_source.html">Storm/Bittern/Functions.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="_functional_utils_8hpp_source.html">Storm/Crow/FunctionalUtils.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a4d657e95a3aeed86ba924511e8b5f1db" id="r_a4d657e95a3aeed86ba924511e8b5f1db"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a4d657e95a3aeed86ba924511e8b5f1db">Compose</a> (Func1 func1, Func2 func2)</td></tr>
 <tr class="separator:a4d657e95a3aeed86ba924511e8b5f1db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7129c61e7a2c65c9234933e87d6ecef8" id="r_a7129c61e7a2c65c9234933e87d6ecef8"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; <br />
-requires std::regular_invocable&lt;Func2, Args...&gt; &amp;&amp; std::regular_invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</td></tr>
-<tr class="memitem:a7129c61e7a2c65c9234933e87d6ecef8"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a7129c61e7a2c65c9234933e87d6ecef8">operator()</a> (Args &amp;&amp;... args) const noexcept</td></tr>
-<tr class="separator:a7129c61e7a2c65c9234933e87d6ecef8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62e5e67c29089cbc7d62fc4969afcfa4" id="r_a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memTemplParams" colspan="2">template&lt;class... Args&gt; <br />
+requires std::invocable&lt;Func2, Args...&gt; &amp;&amp; std::invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</td></tr>
+<tr class="memitem:a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memTemplItemLeft" align="right" valign="top">constexpr decltype(auto)&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html#a62e5e67c29089cbc7d62fc4969afcfa4">operator()</a> (Args &amp;&amp;... args) const</td></tr>
+<tr class="separator:a62e5e67c29089cbc7d62fc4969afcfa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Func1, class Func2&gt;<br />
 requires std::is_object_v&lt;Func1&gt; &amp;&amp; std::is_object_v&lt;Func2&gt;<br />
 class Storm::Compose&lt; Func1, Func2 &gt;</div><p><a class="el" href="class_storm_1_1_compose.html" title="Compose multiple functions: .">Compose</a> two functions: \( f_{1} \circ f_{2} \). </p>
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00118">118</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00118">118</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a4d657e95a3aeed86ba924511e8b5f1db" name="a4d657e95a3aeed86ba924511e8b5f1db"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4d657e95a3aeed86ba924511e8b5f1db">&#9670;&#160;</a></span>Compose()</h2>
@@ -213,13 +213,13 @@ template&lt;class Func1 , class Func2 &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00126">126</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00126">126</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a7129c61e7a2c65c9234933e87d6ecef8" name="a7129c61e7a2c65c9234933e87d6ecef8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7129c61e7a2c65c9234933e87d6ecef8">&#9670;&#160;</a></span>operator()()</h2>
+<a id="a62e5e67c29089cbc7d62fc4969afcfa4" name="a62e5e67c29089cbc7d62fc4969afcfa4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62e5e67c29089cbc7d62fc4969afcfa4">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -227,7 +227,7 @@ template&lt;class Func1 , class Func2 &gt; </div>
 template&lt;class Func1 , class Func2 &gt; </div>
 <div class="memtemplate">
 template&lt;class... Args&gt; <br />
-requires std::regular_invocable&lt;Func2, Args...&gt; &amp;&amp; std::regular_invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</div>
+requires std::invocable&lt;Func2, Args...&gt; &amp;&amp; std::invocable&lt;Func1, std::invoke_result_t&lt;Func2, Args...&gt;&gt;</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -242,12 +242,12 @@ requires std::regular_invocable&lt;Func2, Args...&gt; &amp;&amp; std::regular_in
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="_functions_8hpp_source.html#l00132">132</a> of file <a class="el" href="_functions_8hpp_source.html">Functions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_functional_utils_8hpp_source.html#l00132">132</a> of file <a class="el" href="_functional_utils_8hpp_source.html">FunctionalUtils.hpp</a>.</p>
 
 </div>
 </div>

@@ -8,7 +8,7 @@ var searchData=
   ['matrix_5felement_5fref_5ft_5',['matrix_element_ref_t',['../namespace_storm.html#a3c9296c2284ec880a21e9690bc980af5',1,'Storm']]],
   ['matrix_5felement_5ft_6',['matrix_element_t',['../namespace_storm.html#a357cc9bd0dad664c57b59cde89d772dc',1,'Storm']]],
   ['matrix_5fshape_5ft_7',['matrix_shape_t',['../namespace_storm.html#a7708ece1e2bb64199dee7f3b91c29c3e',1,'Storm']]],
-  ['matrix_5fview_5ft_8',['matrix_view_t',['../namespace_storm.html#a96dce31a161291cd0665a16e505ad8ac',1,'Storm']]],
+  ['matrix_5fview_5ft_8',['matrix_view_t',['../namespace_storm.html#a04669aa2f13fa9d6e57eaa0b09eb98da',1,'Storm']]],
   ['mesh_5fmat_5ft_9',['mesh_mat_t',['../namespace_storm.html#a442a88736e9fa723ce30196ff20a6baf',1,'Storm']]],
   ['mesh_5fvec_5ft_10',['mesh_vec_t',['../namespace_storm.html#aa05b78a86e96fef7b1797bc59eb78793',1,'Storm']]]
 ];

@@ -1,69 +1,69 @@
 <map id="Storm::Object" name="Storm::Object">
-<area shape="rect" id="Node000001" title="A base object." alt="" coords="201,161,303,187"/>
-<area shape="rect" id="Node000003" href="$class_storm_1_1_operator.html" title=" " alt="" coords="351,5,529,46"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,146,301,101,324,76,349,55,369,44,372,49,353,60,328,80,305,104,271,150"/>
-<area shape="rect" id="Node000004" href="$class_storm_1_1_operator.html" title=" " alt="" coords="352,70,528,96"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="279,150,312,127,350,106,382,94,384,99,352,111,315,131,282,154"/>
-<area shape="rect" id="Node000007" href="$class_storm_1_1_solver.html" title=" " alt="" coords="358,120,523,161"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="317,160,357,152,358,158,318,165"/>
-<area shape="rect" id="Node000009" href="$class_storm_1_1_solver.html" title=" " alt="" coords="358,185,523,226"/>
-<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="318,182,358,189,357,194,317,187"/>
-<area shape="rect" id="Node000010" href="$class_storm_1_1_operator.html" title="Abstract operator 𝒚 ← 𝓐(𝒙). &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ///." alt="" coords="351,251,529,291"/>
-<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="284,193,352,235,380,248,377,253,350,240,281,197"/>
-<area shape="rect" id="Node000012" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="358,344,523,385"/>
-<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="271,197,306,248,353,301,405,341,402,345,349,305,302,251,267,200"/>
-<area shape="rect" id="Node000002" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,161,153,187"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,171,200,171,200,176,168,176"/>
-<area shape="rect" id="Node000005" href="$class_storm_1_1_preconditioner.html" title="Abstract preconditioner operator. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; /..." alt="" coords="591,40,738,81"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="543,70,590,65,591,70,543,75"/>
-<area shape="rect" id="Node000006" href="$class_storm_1_1_identity_preconditioner.html" title="Identity preconditioner, intended to be used for debugging only. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="803,25,994,66"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="752,52,803,49,803,54,753,57"/>
-<area shape="rect" id="Node000008" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="589,120,740,161"/>
-<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="538,138,589,138,589,143,538,143"/>
-<area shape="rect" id="Node000011" href="$class_storm_1_1_functional_operator.html" title="Operator implementation with external function pointers. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="577,251,752,291"/>
-<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="544,268,577,268,577,274,544,274"/>
-<area shape="rect" id="Node000013" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="590,344,739,385"/>
-<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="538,362,590,362,590,367,538,367"/>
-<area shape="rect" id="Node000025" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="584,647,745,687"/>
-<area shape="poly" id="edge24_Node000012_Node000025" title=" " alt="" coords="468,395,650,644,646,648,463,399"/>
-<area shape="rect" id="Node000014" href="$class_storm_1_1_base_tfqmr_solver.html" title=" " alt="" coords="816,91,981,131"/>
-<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="716,333,734,319,749,301,762,280,767,260,770,221,774,182,782,163,798,142,814,130,817,134,802,146,787,165,779,184,775,221,773,261,766,282,754,305,738,322,720,338"/>
-<area shape="rect" id="Node000016" href="$class_storm_1_1_base_tfqmr_solver.html" title=" " alt="" coords="816,156,981,197"/>
-<area shape="poly" id="edge15_Node000013_Node000016" title=" " alt="" coords="713,334,750,301,765,277,771,254,779,231,798,208,817,195,820,199,801,212,784,233,776,255,770,279,754,305,716,338"/>
-<area shape="rect" id="Node000018" href="$class_storm_1_1_base_tfqmr_solver.html" title="Parametrized TFQMR solver." alt="" coords="816,221,981,262"/>
-<area shape="poly" id="edge17_Node000013_Node000018" title=" " alt="" coords="705,333,798,273,827,260,830,265,801,277,708,338"/>
-<area shape="rect" id="Node000019" href="$class_storm_1_1_bi_cg_stab_solver.html" title="The BiCGStab (Biconjugate Gradients Stabilized) linear operator equation solver." alt="" coords="820,287,977,327"/>
-<area shape="poly" id="edge18_Node000013_Node000019" title=" " alt="" coords="752,340,818,324,820,329,754,345"/>
-<area shape="rect" id="Node000020" href="$class_storm_1_1_cg_solver.html" title="The CG (Conjugate Gradients) linear self&#45;adjoint definite operator equation solver." alt="" coords="808,352,989,377"/>
-<area shape="poly" id="edge19_Node000013_Node000020" title=" " alt="" coords="754,362,808,362,808,367,754,367"/>
-<area shape="rect" id="Node000021" href="$class_storm_1_1_cgs_solver.html" title="The CGS (Conjugate Gradients Squared) linear operator equation solver." alt="" coords="805,401,992,427"/>
-<area shape="poly" id="edge20_Node000013_Node000021" title=" " alt="" coords="754,380,835,398,834,403,753,386"/>
-<area shape="rect" id="Node000022" href="$class_storm_1_1_jfnk_solver.html" title="The first&#45;order JFNK (Jacobian free&#45;Newton&#45;Krylov) nonlinear operator equation solver." alt="" coords="831,451,966,491"/>
-<area shape="poly" id="edge21_Node000013_Node000022" title=" " alt="" coords="713,390,801,437,832,449,830,454,799,441,710,395"/>
-<area shape="rect" id="Node000023" href="$class_storm_1_1_newton_solver.html" title="The Newton method nonlinear operator equation solver." alt="" coords="825,516,972,557"/>
-<area shape="poly" id="edge22_Node000013_Node000023" title=" " alt="" coords="692,395,739,449,769,477,801,501,826,513,823,518,798,505,765,481,735,453,688,398"/>
-<area shape="rect" id="Node000024" href="$class_storm_1_1_richardson_solver.html" title="The Richardson iteration linear operator equation solver." alt="" coords="815,581,982,622"/>
-<area shape="poly" id="edge23_Node000013_Node000024" title=" " alt="" coords="682,397,701,436,727,482,761,527,801,566,821,579,819,583,798,570,757,531,723,485,696,439,677,399"/>
-<area shape="rect" id="Node000015" href="$class_storm_1_1_tfqmr1_solver.html" title="The TFQMR1 (Transpose&#45;Free 1&#45;norm Quasi&#45;Minimal Residual) linear operator equation solver." alt="" coords="1063,91,1205,131"/>
-<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="996,108,1063,108,1063,114,996,114"/>
-<area shape="rect" id="Node000017" href="$class_storm_1_1_tfqmr_solver.html" title="The TFQMR (Transpose&#45;Free Quasi&#45;Minimal Residual) linear operator equation solver." alt="" coords="1067,156,1202,197"/>
-<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="996,174,1066,174,1066,179,996,179"/>
-<area shape="rect" id="Node000026" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="812,647,985,687"/>
-<area shape="poly" id="edge25_Node000025_Node000026" title=" " alt="" coords="759,664,812,664,812,670,759,670"/>
-<area shape="rect" id="Node000034" href="$class_storm_1_1_inner_outer_iterative_solver.html" title="Abstract inner&#45;outer iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="800,712,997,753"/>
-<area shape="poly" id="edge33_Node000025_Node000034" title=" " alt="" coords="754,689,823,709,822,714,753,694"/>
-<area shape="rect" id="Node000027" href="$class_storm_1_1_base_gmres_solver.html" title=" " alt="" coords="1049,516,1219,557"/>
-<area shape="poly" id="edge26_Node000026_Node000027" title=" " alt="" coords="987,637,995,632,1010,616,1019,601,1027,584,1043,568,1064,555,1067,560,1047,572,1032,587,1023,603,1015,619,999,636,990,642"/>
-<area shape="rect" id="Node000029" href="$class_storm_1_1_base_gmres_solver.html" title=" " alt="" coords="1049,581,1219,622"/>
-<area shape="poly" id="edge28_Node000026_Node000029" title=" " alt="" coords="987,640,1057,620,1059,625,989,645"/>
-<area shape="rect" id="Node000031" href="$class_storm_1_1_base_gmres_solver.html" title="Parmetrized GMRES solver." alt="" coords="1045,647,1223,687"/>
-<area shape="poly" id="edge30_Node000026_Node000031" title=" " alt="" coords="999,664,1045,664,1045,670,999,670"/>
-<area shape="rect" id="Node000032" href="$class_storm_1_1_bi_cg_stab_l_solver.html" title="The BiCGStab(l) (Biconjugate Gradients Stabilized) linear operator equation solver." alt="" coords="1052,712,1216,753"/>
-<area shape="poly" id="edge31_Node000026_Node000032" title=" " alt="" coords="989,689,1059,709,1057,714,987,694"/>
-<area shape="rect" id="Node000033" href="$class_storm_1_1_idrs_solver.html" title="The IDR(s) (Induced Dimension Reduction) linear operator equation solver." alt="" coords="1069,777,1200,818"/>
-<area shape="poly" id="edge32_Node000026_Node000033" title=" " alt="" coords="990,692,999,698,1015,715,1023,731,1032,747,1047,762,1070,776,1067,780,1043,766,1027,750,1019,733,1010,718,995,702,987,697"/>
-<area shape="rect" id="Node000028" href="$class_storm_1_1_fgmres_solver.html" title="The FGMRES (Flexible Generalized Minimal Residual) linear operator equation solver." alt="" coords="1271,516,1417,557"/>
-<area shape="poly" id="edge27_Node000027_Node000028" title=" " alt="" coords="1234,534,1271,534,1271,539,1234,539"/>
-<area shape="rect" id="Node000030" href="$class_storm_1_1_gmres_solver.html" title="The GMRES (Generalized Minimal Residual) linear operator equation solver." alt="" coords="1274,581,1414,622"/>
-<area shape="poly" id="edge29_Node000029_Node000030" title=" " alt="" coords="1234,599,1274,599,1274,604,1234,604"/>
+<area shape="rect" id="Node000001" title="A base object." alt="" coords="248,161,350,187"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_operator.html" title=" " alt="" coords="398,5,576,46"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="314,146,348,101,371,76,396,55,416,44,419,49,400,60,375,80,352,104,318,150"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_operator.html" title=" " alt="" coords="399,70,575,96"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="326,150,359,127,397,106,429,94,431,99,399,111,362,131,329,154"/>
+<area shape="rect" id="Node000007" href="$class_storm_1_1_solver.html" title=" " alt="" coords="405,120,570,161"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="364,160,404,152,405,158,365,165"/>
+<area shape="rect" id="Node000009" href="$class_storm_1_1_solver.html" title=" " alt="" coords="405,185,570,226"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="365,182,405,189,404,194,364,187"/>
+<area shape="rect" id="Node000010" href="$class_storm_1_1_operator.html" title="Abstract operator 𝒚 ← 𝓐(𝒙). &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ///." alt="" coords="398,251,576,291"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="331,193,399,235,427,248,424,253,397,240,328,197"/>
+<area shape="rect" id="Node000012" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="405,344,570,385"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="318,197,353,248,400,301,452,341,449,345,396,305,349,251,314,200"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_non_copyable_interface.html" title="Non copyable object interface." alt="" coords="5,161,200,187"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,171,247,171,247,176,215,176"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_preconditioner.html" title="Abstract preconditioner operator. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; /..." alt="" coords="638,40,785,81"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="590,70,637,65,638,70,590,75"/>
+<area shape="rect" id="Node000006" href="$class_storm_1_1_identity_preconditioner.html" title="Identity preconditioner, intended to be used for debugging only. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="850,25,1041,66"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="799,52,850,49,850,54,800,57"/>
+<area shape="rect" id="Node000008" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="636,120,787,161"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="585,138,636,138,636,143,585,143"/>
+<area shape="rect" id="Node000011" href="$class_storm_1_1_functional_operator.html" title="Operator implementation with external function pointers. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="624,251,799,291"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="591,268,624,268,624,274,591,274"/>
+<area shape="rect" id="Node000013" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="637,344,786,385"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="585,362,637,362,637,367,585,367"/>
+<area shape="rect" id="Node000025" href="$class_storm_1_1_iterative_solver.html" title="Abstract operator equation iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="631,647,792,687"/>
+<area shape="poly" id="edge24_Node000012_Node000025" title=" " alt="" coords="515,395,697,644,693,648,510,399"/>
+<area shape="rect" id="Node000014" href="$class_storm_1_1_base_tfqmr_solver.html" title=" " alt="" coords="863,91,1028,131"/>
+<area shape="poly" id="edge13_Node000013_Node000014" title=" " alt="" coords="763,333,781,319,796,301,809,280,814,260,817,221,821,182,829,163,845,142,861,130,864,134,849,146,834,165,826,184,822,221,820,261,813,282,801,305,785,322,767,338"/>
+<area shape="rect" id="Node000016" href="$class_storm_1_1_base_tfqmr_solver.html" title=" " alt="" coords="863,156,1028,197"/>
+<area shape="poly" id="edge15_Node000013_Node000016" title=" " alt="" coords="760,334,797,301,812,277,818,254,826,231,845,208,864,195,867,199,848,212,831,233,823,255,817,279,801,305,763,338"/>
+<area shape="rect" id="Node000018" href="$class_storm_1_1_base_tfqmr_solver.html" title="Parametrized TFQMR solver." alt="" coords="863,221,1028,262"/>
+<area shape="poly" id="edge17_Node000013_Node000018" title=" " alt="" coords="752,333,845,273,874,260,877,265,848,277,755,338"/>
+<area shape="rect" id="Node000019" href="$class_storm_1_1_bi_cg_stab_solver.html" title="The BiCGStab (Biconjugate Gradients Stabilized) linear operator equation solver." alt="" coords="867,287,1024,327"/>
+<area shape="poly" id="edge18_Node000013_Node000019" title=" " alt="" coords="799,340,865,324,867,329,801,345"/>
+<area shape="rect" id="Node000020" href="$class_storm_1_1_cg_solver.html" title="The CG (Conjugate Gradients) linear self&#45;adjoint definite operator equation solver." alt="" coords="855,352,1036,377"/>
+<area shape="poly" id="edge19_Node000013_Node000020" title=" " alt="" coords="801,362,855,362,855,367,801,367"/>
+<area shape="rect" id="Node000021" href="$class_storm_1_1_cgs_solver.html" title="The CGS (Conjugate Gradients Squared) linear operator equation solver." alt="" coords="852,401,1039,427"/>
+<area shape="poly" id="edge20_Node000013_Node000021" title=" " alt="" coords="801,380,882,398,881,403,800,386"/>
+<area shape="rect" id="Node000022" href="$class_storm_1_1_jfnk_solver.html" title="The first&#45;order JFNK (Jacobian free&#45;Newton&#45;Krylov) nonlinear operator equation solver." alt="" coords="878,451,1013,491"/>
+<area shape="poly" id="edge21_Node000013_Node000022" title=" " alt="" coords="760,390,848,437,879,449,877,454,846,441,757,395"/>
+<area shape="rect" id="Node000023" href="$class_storm_1_1_newton_solver.html" title="The Newton method nonlinear operator equation solver." alt="" coords="872,516,1019,557"/>
+<area shape="poly" id="edge22_Node000013_Node000023" title=" " alt="" coords="739,395,786,449,816,477,848,501,873,513,870,518,845,505,812,481,782,453,735,398"/>
+<area shape="rect" id="Node000024" href="$class_storm_1_1_richardson_solver.html" title="The Richardson iteration linear operator equation solver." alt="" coords="862,581,1029,622"/>
+<area shape="poly" id="edge23_Node000013_Node000024" title=" " alt="" coords="729,397,748,436,774,482,808,527,848,566,868,579,866,583,845,570,804,531,770,485,743,439,724,399"/>
+<area shape="rect" id="Node000015" href="$class_storm_1_1_tfqmr1_solver.html" title="The TFQMR1 (Transpose&#45;Free 1&#45;norm Quasi&#45;Minimal Residual) linear operator equation solver." alt="" coords="1110,91,1252,131"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="1043,108,1110,108,1110,114,1043,114"/>
+<area shape="rect" id="Node000017" href="$class_storm_1_1_tfqmr_solver.html" title="The TFQMR (Transpose&#45;Free Quasi&#45;Minimal Residual) linear operator equation solver." alt="" coords="1114,156,1249,197"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="1043,174,1113,174,1113,179,1043,179"/>
+<area shape="rect" id="Node000026" href="$class_storm_1_1_inner_outer_iterative_solver.html" title=" " alt="" coords="859,647,1032,687"/>
+<area shape="poly" id="edge25_Node000025_Node000026" title=" " alt="" coords="806,664,859,664,859,670,806,670"/>
+<area shape="rect" id="Node000034" href="$class_storm_1_1_inner_outer_iterative_solver.html" title="Abstract inner&#45;outer iterative solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=..." alt="" coords="847,712,1044,753"/>
+<area shape="poly" id="edge33_Node000025_Node000034" title=" " alt="" coords="801,689,870,709,869,714,800,694"/>
+<area shape="rect" id="Node000027" href="$class_storm_1_1_base_gmres_solver.html" title=" " alt="" coords="1096,516,1266,557"/>
+<area shape="poly" id="edge26_Node000026_Node000027" title=" " alt="" coords="1034,637,1042,632,1057,616,1066,601,1074,584,1090,568,1111,555,1114,560,1094,572,1079,587,1070,603,1062,619,1046,636,1037,642"/>
+<area shape="rect" id="Node000029" href="$class_storm_1_1_base_gmres_solver.html" title=" " alt="" coords="1096,581,1266,622"/>
+<area shape="poly" id="edge28_Node000026_Node000029" title=" " alt="" coords="1034,640,1104,620,1106,625,1036,645"/>
+<area shape="rect" id="Node000031" href="$class_storm_1_1_base_gmres_solver.html" title="Parmetrized GMRES solver." alt="" coords="1092,647,1270,687"/>
+<area shape="poly" id="edge30_Node000026_Node000031" title=" " alt="" coords="1046,664,1092,664,1092,670,1046,670"/>
+<area shape="rect" id="Node000032" href="$class_storm_1_1_bi_cg_stab_l_solver.html" title="The BiCGStab(l) (Biconjugate Gradients Stabilized) linear operator equation solver." alt="" coords="1099,712,1263,753"/>
+<area shape="poly" id="edge31_Node000026_Node000032" title=" " alt="" coords="1036,689,1106,709,1104,714,1034,694"/>
+<area shape="rect" id="Node000033" href="$class_storm_1_1_idrs_solver.html" title="The IDR(s) (Induced Dimension Reduction) linear operator equation solver." alt="" coords="1116,777,1247,818"/>
+<area shape="poly" id="edge32_Node000026_Node000033" title=" " alt="" coords="1037,692,1046,698,1062,715,1070,731,1079,747,1094,762,1117,776,1114,780,1090,766,1074,750,1066,733,1057,718,1042,702,1034,697"/>
+<area shape="rect" id="Node000028" href="$class_storm_1_1_fgmres_solver.html" title="The FGMRES (Flexible Generalized Minimal Residual) linear operator equation solver." alt="" coords="1318,516,1464,557"/>
+<area shape="poly" id="edge27_Node000027_Node000028" title=" " alt="" coords="1281,534,1318,534,1318,539,1281,539"/>
+<area shape="rect" id="Node000030" href="$class_storm_1_1_gmres_solver.html" title="The GMRES (Generalized Minimal Residual) linear operator equation solver." alt="" coords="1321,581,1461,622"/>
+<area shape="poly" id="edge29_Node000029_Node000030" title=" " alt="" coords="1281,599,1321,599,1321,604,1281,604"/>
 </map>

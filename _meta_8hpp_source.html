@@ -189,7 +189,7 @@ $(document).ready(function(){initNavTree('_meta_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespace_storm_1_1meta.html">Storm::meta</a> {</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">namespace </span>Storm::meta {</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"></span> </div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment">////////////////////////////////////////////////////////////////////////////////</span></div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"></span><span class="comment">//                                 Base types                                 //</span><span class="comment"></span></div>
@@ -269,7 +269,7 @@ $(document).ready(function(){initNavTree('_meta_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  }</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>}</div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="keyword">template</span>&lt;<span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span>&gt; <span class="keyword">class </span><a class="code hl_enumeration" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">Type</a>, <span class="keywordtype">size_t</span> First, <span class="keywordtype">size_t</span> Last&gt;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="keyword">template</span>&lt;<span class="keyword">template</span>&lt;<span class="keywordtype">size_t</span>&gt; <span class="keyword">class </span>Type, <span class="keywordtype">size_t</span> First, <span class="keywordtype">size_t</span> Last&gt;</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="keyword">using </span>make_seq_t = <span class="keyword">decltype</span>(make_seq&lt;Type, First, Last&gt;());</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="comment">//</span><span class="comment"></span></div>
@@ -669,18 +669,17 @@ $(document).ready(function(){initNavTree('_meta_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00482" name="l00482"></a><span class="lineno">  482</span><span class="comment">/// @brief Get the template parameter name as a string.</span></div>
 <div class="line"><a id="l00483" name="l00483"></a><span class="lineno">  483</span><span class="comment">/// @tparam T Template parameter.</span></div>
 <div class="line"><a id="l00484" name="l00484"></a><span class="lineno">  484</span><span class="comment"></span><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="foldopen" id="foldopen00485" data-start="{" data-end="}">
-<div class="line"><a id="l00485" name="l00485"></a><span class="lineno"><a class="line" href="namespace_storm_1_1meta.html#ab4887c68262384f985067f70dea1fe50">  485</a></span><span class="keyword">consteval</span> <span class="keyword">auto</span> <a class="code hl_function" href="namespace_storm_1_1meta.html#ab4887c68262384f985067f70dea1fe50">type_name</a>() {</div>
+<div class="line"><a id="l00485" name="l00485"></a><span class="lineno">  485</span><span class="keyword">consteval</span> <span class="keyword">auto</span> type_name() {</div>
 <div class="line"><a id="l00486" name="l00486"></a><span class="lineno">  486</span>  std::string_view name, prefix, suffix;</div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span><span class="preprocessor">#if STORM_COMPILER_GCC_</span></div>
+<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span><span class="preprocessor">#if STORM_COMPILER_GCC</span></div>
 <div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>  name = __PRETTY_FUNCTION__;</div>
 <div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>  prefix = <span class="stringliteral">&quot;consteval auto Storm::meta::type_name() [with T = &quot;</span>;</div>
 <div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>  suffix = <span class="stringliteral">&quot;]&quot;</span>;</div>
-<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span><span class="preprocessor">#elif STORM_COMPILER_CLANG_</span></div>
+<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span><span class="preprocessor">#elif STORM_COMPILER_CLANG</span></div>
 <div class="line"><a id="l00492" name="l00492"></a><span class="lineno">  492</span>  name = __PRETTY_FUNCTION__;</div>
 <div class="line"><a id="l00493" name="l00493"></a><span class="lineno">  493</span>  prefix = <span class="stringliteral">&quot;auto Storm::meta::type_name() [T = &quot;</span>;</div>
 <div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span>  suffix = <span class="stringliteral">&quot;]&quot;</span>;</div>
-<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span><span class="preprocessor">#elif STORM_COMPILER_MSVC_</span></div>
+<div class="line"><a id="l00495" name="l00495"></a><span class="lineno">  495</span><span class="preprocessor">#elif STORM_COMPILER_MSVC</span></div>
 <div class="line"><a id="l00496" name="l00496"></a><span class="lineno">  496</span>  name = __FUNCSIG__;</div>
 <div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>  prefix = <span class="stringliteral">&quot;auto __cdecl Storm::meta::type_name&lt;&quot;</span>;</div>
 <div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>  suffix = <span class="stringliteral">&quot;&gt;(void)&quot;</span>;</div>
@@ -691,10 +690,9 @@ $(document).ready(function(){initNavTree('_meta_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00503" name="l00503"></a><span class="lineno">  503</span>  name.remove_suffix(suffix.size());</div>
 <div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>  <span class="keywordflow">return</span> name;</div>
 <div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span>}</div>
-</div>
 <div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span> </div>
 <div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</div>
-<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span><span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="namespace_storm_1_1meta.html#ab4887c68262384f985067f70dea1fe50">type_name</a>(T&amp;&amp;) {</div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span><span class="keyword">constexpr</span> <span class="keyword">auto</span> type_name(T&amp;&amp;) {</div>
 <div class="line"><a id="l00509" name="l00509"></a><span class="lineno">  509</span>  <span class="keywordflow">return</span> type_name&lt;T&gt;();</div>
 <div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span>}</div>
 <div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span> </div>
@@ -702,10 +700,7 @@ $(document).ready(function(){initNavTree('_meta_8hpp_source.html',''); initResiz
 <div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span><span class="keyword">inline</span> <span class="keyword">constexpr</span> std::string_view type_name_v = type_name&lt;T&gt;();</div>
 <div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span> </div>
 <div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>} <span class="comment">// namespace Storm::meta</span></div>
-<div class="ttc" id="anamespace_storm_1_1meta_html"><div class="ttname"><a href="namespace_storm_1_1meta.html">Storm::meta</a></div><div class="ttdoc">A small metaprogramming library.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00270">Base.hpp:270</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1meta_html_ab4887c68262384f985067f70dea1fe50"><div class="ttname"><a href="namespace_storm_1_1meta.html#ab4887c68262384f985067f70dea1fe50">Storm::meta::type_name</a></div><div class="ttdeci">consteval auto type_name()</div><div class="ttdoc">Get the template parameter name as a string.</div><div class="ttdef"><b>Definition</b> <a href="_meta_8hpp_source.html#l00485">Meta.hpp:485</a></div></div>
-<div class="ttc" id="anamespace_storm_1_1shapes_html_a0a256751f828dfa575913265c0f4010b"><div class="ttname"><a href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">Storm::shapes::Type</a></div><div class="ttdeci">Type</div><div class="ttdoc">Shape type.</div><div class="ttdef"><b>Definition</b> <a href="_shape_8hpp_source.html#l00040">Shape.hpp:40</a></div></div>
-<div class="ttc" id="anamespace_storm_html_aaa868bee5cccd43d768f9b813a496136"><div class="ttname"><a href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">Storm::size_t</a></div><div class="ttdeci">std::size_t size_t</div><div class="ttdoc">Size type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00281">Base.hpp:281</a></div></div>
+<div class="ttc" id="anamespace_storm_html_aaa868bee5cccd43d768f9b813a496136"><div class="ttname"><a href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">Storm::size_t</a></div><div class="ttdeci">std::size_t size_t</div><div class="ttdoc">Size type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00032">Types.hpp:32</a></div></div>
 <div class="ttc" id="astruct_storm_1_1meta_1_1append__fn_html"><div class="ttname"><a href="struct_storm_1_1meta_1_1append__fn.html">Storm::meta::append_fn</a></div><div class="ttdef"><b>Definition</b> <a href="_meta_8hpp_source.html#l00248">Meta.hpp:248</a></div></div>
 <div class="ttc" id="astruct_storm_1_1meta_1_1cartesian__product__fn_html"><div class="ttname"><a href="struct_storm_1_1meta_1_1cartesian__product__fn.html">Storm::meta::cartesian_product_fn</a></div><div class="ttdef"><b>Definition</b> <a href="_meta_8hpp_source.html#l00460">Meta.hpp:460</a></div></div>
 <div class="ttc" id="astruct_storm_1_1meta_1_1concat__fn_html"><div class="ttname"><a href="struct_storm_1_1meta_1_1concat__fn.html">Storm::meta::concat_fn</a></div><div class="ttdef"><b>Definition</b> <a href="_meta_8hpp_source.html#l00438">Meta.hpp:438</a></div></div>

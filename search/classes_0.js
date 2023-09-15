@@ -9,12 +9,11 @@ var searchData=
   ['add_6',['Add',['../class_storm_1_1_add.html',1,'Storm']]],
   ['addassign_7',['AddAssign',['../class_storm_1_1_add_assign.html',1,'Storm']]],
   ['allindices_8',['AllIndices',['../class_storm_1_1_all_indices.html',1,'Storm']]],
-  ['and_9',['And',['../class_storm_1_1_and.html',1,'Storm']]],
-  ['append_5ffn_10',['append_fn',['../struct_storm_1_1meta_1_1append__fn.html',1,'Storm::meta']]],
-  ['approxequal_11',['ApproxEqual',['../class_storm_1_1_approx_equal.html',1,'Storm']]],
-  ['asin_12',['Asin',['../class_storm_1_1_asin.html',1,'Storm']]],
-  ['asinh_13',['Asinh',['../class_storm_1_1_asinh.html',1,'Storm']]],
-  ['assign_14',['Assign',['../class_storm_1_1_assign.html',1,'Storm']]],
-  ['atan_15',['Atan',['../class_storm_1_1_atan.html',1,'Storm']]],
-  ['atanh_16',['Atanh',['../class_storm_1_1_atanh.html',1,'Storm']]]
+  ['append_5ffn_9',['append_fn',['../struct_storm_1_1meta_1_1append__fn.html',1,'Storm::meta']]],
+  ['approxequal_10',['ApproxEqual',['../class_storm_1_1_approx_equal.html',1,'Storm']]],
+  ['asin_11',['Asin',['../class_storm_1_1_asin.html',1,'Storm']]],
+  ['asinh_12',['Asinh',['../class_storm_1_1_asinh.html',1,'Storm']]],
+  ['assign_13',['Assign',['../class_storm_1_1_assign.html',1,'Storm']]],
+  ['atan_14',['Atan',['../class_storm_1_1_atan.html',1,'Storm']]],
+  ['atanh_15',['Atanh',['../class_storm_1_1_atanh.html',1,'Storm']]]
 ];

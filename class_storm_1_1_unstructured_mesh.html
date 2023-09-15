@@ -218,7 +218,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ab2efb7745a36b9a393e8125b8964d751"><td class="mdescLeft">&#160;</td><td class="mdescRight">Label of the entitity at <code>index</code>.  <br /></td></tr>
 <tr class="separator:ab2efb7745a36b9a393e8125b8964d751"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47f8c313f343fb54d19427d365d32b9d" id="r_a47f8c313f343fb54d19427d365d32b9d"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I&gt; </td></tr>
-<tr class="memitem:a47f8c313f343fb54d19427d365d32b9d"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">shape_type</a> (<a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt; index) const noexcept</td></tr>
+<tr class="memitem:a47f8c313f343fb54d19427d365d32b9d"><td class="memTemplItemLeft" align="right" valign="top">constexpr shapes::Type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_unstructured_mesh.html#a47f8c313f343fb54d19427d365d32b9d">shape_type</a> (<a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt; index) const noexcept</td></tr>
 <tr class="memdesc:a47f8c313f343fb54d19427d365d32b9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shape type of the entitity at <code>index</code>.  <br /></td></tr>
 <tr class="separator:a47f8c313f343fb54d19427d365d32b9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ad626736a2fa99984eedb9c11c9d634" id="r_a8ad626736a2fa99984eedb9c11c9d634"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I&gt; </td></tr>
@@ -266,12 +266,12 @@ template&lt;mesh Mesh&gt; </td></tr>
 <tr class="memdesc:a07fee517ed93bbc17ac586f37e6695da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a new entity label.  <br /></td></tr>
 <tr class="separator:a07fee517ed93bbc17ac586f37e6695da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86e3df17d63bbc90011d08816906a68a" id="r_a86e3df17d63bbc90011d08816906a68a"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I, class Shape &gt; <br />
-requires ((I == 0 &amp;&amp; std::constructible_from&lt;<a class="el" href="class_storm_1_1_unstructured_mesh.html#a76d6cdb25c16bd50d3366b04272abf7e">Vec</a>, Shape&gt;) || (shapes::shape&lt;Shape&gt; &amp;&amp; I == <a class="el" href="namespace_storm_1_1shapes.html#af3d86f006e9c208688c2550b97eea2d3">shapes::shape_dim_v</a>&lt;Shape&gt;) )</td></tr>
+requires ((I == 0 &amp;&amp; std::constructible_from&lt;<a class="el" href="class_storm_1_1_unstructured_mesh.html#a76d6cdb25c16bd50d3366b04272abf7e">Vec</a>, Shape&gt;) || (shapes::shape&lt;Shape&gt; &amp;&amp; I == shapes::shape_dim_v&lt;Shape&gt;) )</td></tr>
 <tr class="memitem:a86e3df17d63bbc90011d08816906a68a"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_unstructured_mesh.html#a86e3df17d63bbc90011d08816906a68a">insert</a> (Shape &amp;&amp;shape, <a class="el" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt; <a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt; &gt;={})</td></tr>
 <tr class="memdesc:a86e3df17d63bbc90011d08816906a68a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a new entity of shape <code>shape</code>. The last existing entity label will be assigned to it.  <br /></td></tr>
 <tr class="separator:a86e3df17d63bbc90011d08816906a68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a772d73d25a86c1bc30323c7983b8918b" id="r_a772d73d25a86c1bc30323c7983b8918b"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I, shapes::shape Shape&gt; <br />
-requires (I == <a class="el" href="namespace_storm_1_1shapes.html#af3d86f006e9c208688c2550b97eea2d3">shapes::shape_dim_v</a>&lt;Shape&gt;)</td></tr>
+requires (I == shapes::shape_dim_v&lt;Shape&gt;)</td></tr>
 <tr class="memitem:a772d73d25a86c1bc30323c7983b8918b"><td class="memTemplItemLeft" align="right" valign="top">constexpr <a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_unstructured_mesh.html#a772d73d25a86c1bc30323c7983b8918b">find_or_insert</a> (Shape &amp;&amp;shape, <a class="el" href="struct_storm_1_1meta_1_1type.html">meta::type</a>&lt; <a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt; &gt;={})</td></tr>
 <tr class="memdesc:a772d73d25a86c1bc30323c7983b8918b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find an existing entity of shape <code>shape</code> or insert a new one.  <br /></td></tr>
 <tr class="separator:a772d73d25a86c1bc30323c7983b8918b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -636,7 +636,7 @@ template&lt;template&lt; class, class &gt; class OtherTable&gt; </div>
 </div><div class="memdoc">
 
 <p>Move-assign the unstructured <code>mesh</code> with different table type. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000015">Todo:</a></b></dt><dd>Ranges of the source mesh would be invalid. </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000013">Todo:</a></b></dt><dd>Ranges of the source mesh would be invalid. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="_mesh_unstructured_8hpp_source.html#l00293">293</a> of file <a class="el" href="_mesh_unstructured_8hpp_source.html">MeshUnstructured.hpp</a>.</p>
 
@@ -825,7 +825,7 @@ requires (I != 0) &amp;&amp; std::same_as&lt;std::ranges::range_value_t&lt;Range
 template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> Dim, <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> TopologicalDim = Dim, template&lt; class, class &gt; class Table = CsrTable&gt; </div>
 <div class="memtemplate">
 template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I, shapes::shape Shape&gt; <br />
-requires (I == <a class="el" href="namespace_storm_1_1shapes.html#af3d86f006e9c208688c2550b97eea2d3">shapes::shape_dim_v</a>&lt;Shape&gt;)</div>
+requires (I == shapes::shape_dim_v&lt;Shape&gt;)</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -871,7 +871,7 @@ requires (I == <a class="el" href="namespace_storm_1_1shapes.html#af3d86f006e9c2
 template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> Dim, <a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> TopologicalDim = Dim, template&lt; class, class &gt; class Table = CsrTable&gt; </div>
 <div class="memtemplate">
 template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a496136">size_t</a> I, class Shape &gt; <br />
-requires ((I == 0 &amp;&amp; std::constructible_from&lt;<a class="el" href="class_storm_1_1_unstructured_mesh.html#a76d6cdb25c16bd50d3366b04272abf7e">Vec</a>, Shape&gt;) || (shapes::shape&lt;Shape&gt; &amp;&amp; I == <a class="el" href="namespace_storm_1_1shapes.html#af3d86f006e9c208688c2550b97eea2d3">shapes::shape_dim_v</a>&lt;Shape&gt;) )</div>
+requires ((I == 0 &amp;&amp; std::constructible_from&lt;<a class="el" href="class_storm_1_1_unstructured_mesh.html#a76d6cdb25c16bd50d3366b04272abf7e">Vec</a>, Shape&gt;) || (shapes::shape&lt;Shape&gt; &amp;&amp; I == shapes::shape_dim_v&lt;Shape&gt;) )</div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -903,8 +903,8 @@ requires ((I == 0 &amp;&amp; std::constructible_from&lt;<a class="el" href="clas
 
 <p>Insert a new entity of shape <code>shape</code>. The last existing entity label will be assigned to it. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_storm_1_1_index.html" title="Strictly-tagged index.">Index</a> of the entity. </dd></dl>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000016">Todo:</a></b></dt><dd>What are the face normals for surface meshes? </dd></dl>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000017">Todo:</a></b></dt><dd>Implement me! </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000014">Todo:</a></b></dt><dd>What are the face normals for surface meshes? </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000015">Todo:</a></b></dt><dd>Implement me! </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="_mesh_unstructured_8hpp_source.html#l00353">353</a> of file <a class="el" href="_mesh_unstructured_8hpp_source.html">MeshUnstructured.hpp</a>.</p>
 
@@ -1300,7 +1300,7 @@ template&lt;<a class="el" href="namespace_storm.html#aaa868bee5cccd43d768f9b813a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="namespace_storm_1_1shapes.html#a0a256751f828dfa575913265c0f4010b">shapes::Type</a> <a class="el" href="class_storm_1_1_unstructured_mesh.html">Storm::UnstructuredMesh</a>&lt; Dim, TopologicalDim, Table &gt;::shape_type </td>
+          <td class="memname">constexpr shapes::Type <a class="el" href="class_storm_1_1_unstructured_mesh.html">Storm::UnstructuredMesh</a>&lt; Dim, TopologicalDim, Table &gt;::shape_type </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespace_storm.html#aac04112f24f6bd48f7bb3586d93be3dd">EntityIndex</a>&lt; I &gt;&#160;</td>
           <td class="paramname"><em>index</em></td><td>)</td>

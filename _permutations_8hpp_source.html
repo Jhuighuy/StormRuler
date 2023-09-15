@@ -223,8 +223,8 @@ $(document).ready(function(){initNavTree('_permutations_8hpp_source.html',''); i
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keyword">using </span><a class="code hl_class" href="class_storm_1_1_index.html">Index</a> = std::iter_value_t&lt;PermutationIterator&gt;;</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>{};</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <span class="keywordflow">for</span> (; perm_iterator != perm_sentinel; ++perm_iterator, ++<a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) {</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    STORM_ASSERT_(*perm_iterator != <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{SIZE_MAX},</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                  <span class="stringliteral">&quot;Invalid permutation iterator value!&quot;</span>);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    STORM_ASSERT(*perm_iterator != <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{SIZE_MAX},</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                 <span class="stringliteral">&quot;Invalid permutation iterator value!&quot;</span>);</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    iperm_iterator[<span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(*perm_iterator)] = <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>;</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>  }</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>}</div>
@@ -262,8 +262,8 @@ $(document).ready(function(){initNavTree('_permutations_8hpp_source.html',''); i
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> current_index = <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>;</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    PermutationIterator current_perm_iterator = perm_iterator;</div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keywordflow">while</span> (*current_perm_iterator != <a class="code hl_concept" href="concept_storm_1_1index.html">index</a>) {</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>      STORM_ASSERT_(*current_perm_iterator != <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{SIZE_MAX},</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                    <span class="stringliteral">&quot;Invalid permutation iterator value!&quot;</span>);</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>      STORM_ASSERT(*current_perm_iterator != <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{SIZE_MAX},</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                   <span class="stringliteral">&quot;Invalid permutation iterator value!&quot;</span>);</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>      <span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> new_index = *current_perm_iterator;</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>      swap_func(current_index, new_index);</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>      *current_perm_iterator = current_index, current_index = new_index;</div>
@@ -271,7 +271,7 @@ $(document).ready(function(){initNavTree('_permutations_8hpp_source.html',''); i
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    }</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    *current_perm_iterator = current_index;</div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  }</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#ifndef NDEBUG</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="preprocessor">#if !STORM_NDEBUG</span></div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  std::ranges::fill(perm_iterator, perm_sentinel, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{SIZE_MAX});</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>}</div>

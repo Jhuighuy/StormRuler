@@ -285,17 +285,17 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="comment"></span> </div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="comment">/// @brief OpenGL texture.</span></div>
 <div class="foldopen" id="foldopen00126" data-start="{" data-end="};">
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html">  126</a></span><span class="comment"></span><span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html">Texture</a> : <a class="code hl_class" href="class_storm_1_1_non_copyable.html">detail_::noncopyable_</a> {</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html">  126</a></span><span class="comment"></span><span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html">Texture</a> : NonCopyable {</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  GLuint texture_id_;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  GLuint _texture_id;</div>
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="comment"></span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">  /// @brief Construct a texture.</span></div>
 <div class="foldopen" id="foldopen00134" data-start="{" data-end="}">
 <div class="line"><a id="l00134" name="l00134"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html#a3141a8a44b343fd64a8e43c9fd473933">  134</a></span><span class="comment"></span>  <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html#a3141a8a44b343fd64a8e43c9fd473933">Texture</a>() {</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    glGenTextures(1, &amp;texture_id_);</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    glGenTextures(1, &amp;_texture_id);</div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>  }</div>
 </div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="comment"></span> </div>
@@ -307,25 +307,25 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="comment">  /// @brief Destruct the texture.</span></div>
 <div class="foldopen" id="foldopen00144" data-start="{" data-end="}">
 <div class="line"><a id="l00144" name="l00144"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html#abe67dafdbdefb3df5117e7981ce684fe">  144</a></span><span class="comment"></span>  <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html#abe67dafdbdefb3df5117e7981ce684fe">~Texture</a>() {</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    glDeleteTextures(1, &amp;texture_id_);</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>    glDeleteTextures(1, &amp;_texture_id);</div>
 <div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>  }</div>
 </div>
 <div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span><span class="comment"></span> </div>
 <div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span><span class="comment">  /// @brief Cast to texture ID.</span></div>
 <div class="foldopen" id="foldopen00149" data-start="{" data-end="}">
 <div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture.html#a9403a409a2fdfc072071eeecb9413cc4">  149</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <span class="keyword">operator</span> GLuint() const noexcept {</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> texture_id_;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>    <span class="keywordflow">return</span> _texture_id;</div>
 <div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>  }</div>
 </div>
 <div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span> </div>
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span><span class="keyword">protected</span>:</div>
 <div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  <span class="keywordtype">void</span> bind_(TextureTarget target)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    glBindTexture(<span class="keyword">static_cast&lt;</span>GLenum<span class="keyword">&gt;</span>(target), texture_id_);</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>  <span class="keywordtype">void</span> _bind(TextureTarget target)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    glBindTexture(<span class="keyword">static_cast&lt;</span>GLenum<span class="keyword">&gt;</span>(target), _texture_id);</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>  }</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  <span class="keywordtype">void</span> bind_(TextureTarget target, <span class="keywordtype">size_t</span> slot)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>  <span class="keywordtype">void</span> _bind(TextureTarget target, <span class="keywordtype">size_t</span> slot)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>    glActiveTexture(<span class="keyword">static_cast&lt;</span>GLenum<span class="keyword">&gt;</span>(GL_TEXTURE0 + slot));</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    bind_(target);</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    _bind(target);</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>  }</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span> </div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>}; <span class="comment">// class Texture</span></div>
@@ -352,14 +352,14 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span><span class="comment">  /// @brief Bind the 2D texture buffer to @p slot.</span></div>
 <div class="foldopen" id="foldopen00181" data-start="{" data-end="}">
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#aceb136db4dbfb172611f873b071a50f5">  181</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#aceb136db4dbfb172611f873b071a50f5">bind</a>(<span class="keywordtype">size_t</span> slot)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    bind_(TextureTarget::texture2D, slot);</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    _bind(TextureTarget::texture2D, slot);</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>  }</div>
 </div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span><span class="comment"></span> </div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span><span class="comment">  /// @brief Assign the 2D texture @p width, @p height and @p data.</span></div>
 <div class="foldopen" id="foldopen00186" data-start="{" data-end="}">
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a2f41f7b6760883fda4809a614c7253af">  186</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a2f41f7b6760883fda4809a614c7253af">assign</a>(GLsizei width, GLsizei height, <span class="keyword">const</span> Pixel* data = <span class="keyword">nullptr</span>) {</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    bind_(TextureTarget::texture2D);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    _bind(TextureTarget::texture2D);</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    glTexImage2D(GL_TEXTURE_2D,</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>                 <span class="comment">/*level*/</span> 0, pixel_desc_v&lt;Pixel&gt;.internal_format, <span class="comment">//</span></div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                 width, height,</div>
@@ -378,7 +378,7 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="foldopen" id="foldopen00202" data-start="{" data-end="}">
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a831a23b5f4676fe32c8b5b38698cd1de">  202</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html#a831a23b5f4676fe32c8b5b38698cd1de">read_pixels</a>(<a class="code hl_class" href="class_storm_1_1_vulture_1_1gl_1_1_buffer.html">Buffer&lt;Pixel&gt;</a>&amp; buffer) {</div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    buffer.<a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_buffer.html#adc7460d6f42f7f4705345a6158358609">bind</a>(BufferTarget::pixel_pack_buffer);</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    bind_(TextureTarget::texture2D);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    _bind(TextureTarget::texture2D);</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    glGetTexImage(GL_TEXTURE_2D, <span class="comment">/*level*/</span> 0, pixel_desc_v&lt;Pixel&gt;.format,</div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>                  pixel_desc_v&lt;Pixel&gt;.type, <span class="comment">/*data*/</span> <span class="keyword">nullptr</span>);</div>
 <div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>  }</div>
@@ -410,7 +410,7 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span><span class="comment">  /// @brief Bind the multisampled 2D texture buffer to @p slot.</span></div>
 <div class="foldopen" id="foldopen00229" data-start="{" data-end="}">
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html#a655650d9b9461c21a8d7d00c821915fa">  229</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html#a655650d9b9461c21a8d7d00c821915fa">bind</a>(<span class="keywordtype">size_t</span> slot)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    bind_(TextureTarget::multisample_texture2D, slot);</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    _bind(TextureTarget::multisample_texture2D, slot);</div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>  }</div>
 </div>
 <div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span><span class="comment"></span> </div>
@@ -418,7 +418,7 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="comment">  /// num_samples.</span></div>
 <div class="foldopen" id="foldopen00235" data-start="{" data-end="}">
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html#a520e648827b04ab0455f08aa860eef6d">  235</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html#a520e648827b04ab0455f08aa860eef6d">assign</a>(GLsizei width, GLsizei height, GLsizei num_samples = 4) {</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    bind_(TextureTarget::multisample_texture2D);</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    _bind(TextureTarget::multisample_texture2D);</div>
 <div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, num_samples,</div>
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>                            pixel_desc_v&lt;Pixel&gt;.internal_format, width, height,</div>
 <div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>                            <span class="comment">/*fixed_sample_locations*/</span> GL_TRUE);</div>
@@ -446,7 +446,7 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="comment">  /// @brief Bind the texture buffer to @p slot.</span></div>
 <div class="foldopen" id="foldopen00257" data-start="{" data-end="}">
 <div class="line"><a id="l00257" name="l00257"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html#ab739a9974b2da5cf92a769b25443dd98">  257</a></span><span class="comment"></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html#ab739a9974b2da5cf92a769b25443dd98">bind</a>(<span class="keywordtype">size_t</span> slot)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    bind_(TextureTarget::texture_buffer, slot);</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    _bind(TextureTarget::texture_buffer, slot);</div>
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>  }</div>
 </div>
 <div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span><span class="comment"></span> </div>
@@ -454,7 +454,7 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span><span class="comment"></span>  <span class="keyword">template</span>&lt;pixel Pixel&gt;</div>
 <div class="foldopen" id="foldopen00263" data-start="{" data-end="}">
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno"><a class="line" href="class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html#a6c7956c9cc9a1f7babcad219a48cda67">  263</a></span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html#a6c7956c9cc9a1f7babcad219a48cda67">assign</a>(<span class="keyword">const</span> <a class="code hl_class" href="class_storm_1_1_vulture_1_1gl_1_1_buffer.html">Buffer&lt;Pixel&gt;</a>&amp; buffer) {</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    bind_(TextureTarget::texture_buffer);</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    _bind(TextureTarget::texture_buffer);</div>
 <div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    glTexBuffer(GL_TEXTURE_BUFFER, pixel_desc_v&lt;Pixel&gt;.internal_format, buffer);</div>
 <div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>  }</div>
 </div>
@@ -463,7 +463,6 @@ $(document).ready(function(){initNavTree('_gl_texture_8hpp_source.html',''); ini
 </div>
 <div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span> </div>
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>} <span class="comment">// namespace Storm::Vulture::gl</span></div>
-<div class="ttc" id="aclass_storm_1_1_non_copyable_html"><div class="ttname"><a href="class_storm_1_1_non_copyable.html">Storm::NonCopyable</a></div><div class="ttdoc">Non copyable object interface.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00334">Base.hpp:334</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_buffer_html"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_buffer.html">Storm::Vulture::gl::Buffer</a></div><div class="ttdoc">OpenGL buffer.</div><div class="ttdef"><b>Definition</b> <a href="_gl_buffer_8hpp_source.html#l00060">GlBuffer.hpp:60</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_buffer_html_adc7460d6f42f7f4705345a6158358609"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_buffer.html#adc7460d6f42f7f4705345a6158358609">Storm::Vulture::gl::Buffer::bind</a></div><div class="ttdeci">void bind(BufferTarget target) const</div><div class="ttdoc">Bind the buffer to target.</div><div class="ttdef"><b>Definition</b> <a href="_gl_buffer_8hpp_source.html#l00118">GlBuffer.hpp:118</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d_html"><div class="ttname"><a href="class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html">Storm::Vulture::gl::MultisampledTexture2D</a></div><div class="ttdoc">OpenGL multisampled 2D texture.</div><div class="ttdef"><b>Definition</b> <a href="_gl_texture_8hpp_source.html#l00215">GlTexture.hpp:215</a></div></div>

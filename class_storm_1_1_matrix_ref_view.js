@@ -1,7 +1,7 @@
 var class_storm_1_1_matrix_ref_view =
 [
-    [ "MatrixRefView", "class_storm_1_1_matrix_ref_view.html#a54f4b1854f1094293a2fed6e0fbbc78f", null ],
-    [ "operator()", "class_storm_1_1_matrix_ref_view.html#a0ca54d7134505c6ed096f9f0ce19923a", null ],
-    [ "operator()", "class_storm_1_1_matrix_ref_view.html#a53c988df6b811baf438d1bd87217af67", null ],
-    [ "shape", "class_storm_1_1_matrix_ref_view.html#a427da108346680d75fe31de927f632a1", null ]
+    [ "MatrixRefView", "class_storm_1_1_matrix_ref_view.html#ab3f6c3aff93991d7a7a6b4aed170eff8", null ],
+    [ "operator()", "class_storm_1_1_matrix_ref_view.html#a1ebb2a0c0086db1bfc2aab35c83ebefa", null ],
+    [ "operator()", "class_storm_1_1_matrix_ref_view.html#a14be0a197ef629cf630b3236dc1542d6", null ],
+    [ "shape", "class_storm_1_1_matrix_ref_view.html#ab071d5eca1730bdbab037494bdb1c1cd", null ]
 ];

@@ -1,11 +1,11 @@
 <map id="Storm::CgSolver&lt; Vector &gt;" name="Storm::CgSolver&lt; Vector &gt;">
-<area shape="rect" id="Node000001" title="The CG (Conjugate Gradients) linear self&#45;adjoint definite operator equation solver." alt="" coords="5,330,186,356"/>
-<area shape="rect" id="Node000002" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="21,241,170,282"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,297,98,329,93,329,93,297"/>
-<area shape="rect" id="Node000003" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="13,153,178,193"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="98,208,98,241,93,241,93,208"/>
-<area shape="rect" id="Node000004" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="44,79,147,105"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="98,120,98,152,93,152,93,120"/>
-<area shape="rect" id="Node000005" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="22,5,169,31"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="98,46,98,79,93,79,93,46"/>
+<area shape="rect" id="Node000001" title="The CG (Conjugate Gradients) linear self&#45;adjoint definite operator equation solver." alt="" coords="12,330,193,356"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_iterative_solver.html" title=" " alt="" coords="28,241,177,282"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,297,105,329,100,329,100,297"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_solver.html" title="Abstract operator equation solver. &#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45;=&#45; ..." alt="" coords="20,153,185,193"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,208,105,241,100,241,100,208"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_object.html" title="A base object." alt="" coords="51,79,154,105"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,120,105,152,100,152,100,120"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_non_copyable_interface.html" title="Non copyable object interface." alt="" coords="5,5,200,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="105,46,105,79,100,79,100,46"/>
 </map>

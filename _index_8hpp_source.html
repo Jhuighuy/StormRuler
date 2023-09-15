@@ -198,7 +198,7 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html">   38</a></span><span class="keyword">class </span><a class="code hl_class" href="class_storm_1_1_index.html">Index</a> final {</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keywordtype">size_t</span> value_;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keywordtype">size_t</span> _value;</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">public</span>:</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="comment"></span> </div>
@@ -209,14 +209,14 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment"></span>  <span class="keyword">template</span>&lt;std::<span class="keywordtype">int</span>egral Integral&gt;</div>
 <div class="foldopen" id="foldopen00050" data-start="{" data-end="}">
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#abbb1c83b68df79b1a0c8686cec853b59">   50</a></span>  <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <a class="code hl_function" href="class_storm_1_1_index.html#abbb1c83b68df79b1a0c8686cec853b59">Index</a>(Integral value) noexcept</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>      : value_{<span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(value)} {}</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>      : _value{<span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(value)} {}</div>
 </div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment"></span> </div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment">  /// @brief Cast to the inegral value.</span></div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment"></span>  <span class="keyword">template</span>&lt;std::<span class="keywordtype">int</span>egral Integral&gt;</div>
 <div class="foldopen" id="foldopen00055" data-start="{" data-end="}">
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#ae1b7e23aaee76787e892cd89db08810b">   55</a></span>  <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <span class="keyword">operator</span> Integral() const noexcept {</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>Integral<span class="keyword">&gt;</span>(value_);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>Integral<span class="keyword">&gt;</span>(_value);</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  }</div>
 </div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="comment"></span> </div>
@@ -224,7 +224,7 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="comment"></span>  <span class="keyword">template</span>&lt;<span class="keyword">class</span> OtherTag&gt;</div>
 <div class="foldopen" id="foldopen00061" data-start="{" data-end="}">
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a66a5e35fe64cde2c6526bcea842fa6ce">   61</a></span>  <span class="keyword">constexpr</span> <span class="keyword">explicit</span> <span class="keyword">operator</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index&lt;OtherTag&gt;</a>() const noexcept {</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index&lt;OtherTag&gt;</a>{value_};</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index&lt;OtherTag&gt;</a>{_value};</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  }</div>
 </div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="comment"></span> </div>
@@ -234,7 +234,7 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>  <span class="keyword">template</span>&lt;std::<span class="keywordtype">int</span>egral Integral&gt;</div>
 <div class="foldopen" id="foldopen00069" data-start="{" data-end="}">
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a0f3ba7b8d651407b96e03432772da4b5">   69</a></span>  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="class_storm_1_1_index.html#a0f3ba7b8d651407b96e03432772da4b5">operator&lt;=&gt;</a>(Integral value) <span class="keyword">const</span> <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keywordflow">return</span> value_ &lt;=&gt; <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(value);</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <span class="keywordflow">return</span> _value &lt;=&gt; <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(value);</div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment">  /// @}</span></div>
@@ -243,13 +243,13 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00076" data-start="{" data-end="}">
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#adeac1920408e3ab471cc927b4d26160b">   76</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>&amp; <a class="code hl_function" href="class_storm_1_1_index.html#adeac1920408e3ab471cc927b4d26160b">operator++</a>() noexcept {</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordflow">return</span> ++value_, *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordflow">return</span> ++_value, *<span class="keyword">this</span>;</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00079" data-start="{" data-end="}">
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a06f1552dd1903a983cf403811272a4d8">   79</a></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_function" href="class_storm_1_1_index.html#a06f1552dd1903a983cf403811272a4d8">operator++</a>(<span class="keywordtype">int</span>) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> copy{*<span class="keyword">this</span>};</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordflow">return</span> ++value_, copy;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordflow">return</span> ++_value, copy;</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="comment">  /// @}</span></div>
@@ -258,13 +258,13 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00087" data-start="{" data-end="}">
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a4c0bbbfddd57e41198c30cb728729248">   87</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>&amp; <a class="code hl_function" href="class_storm_1_1_index.html#a4c0bbbfddd57e41198c30cb728729248">operator--</a>() noexcept {</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordflow">return</span> --value_, *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordflow">return</span> --_value, *<span class="keyword">this</span>;</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a5179a4c7cf9e26ecda3d501e683d25af">   90</a></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_function" href="class_storm_1_1_index.html#a5179a4c7cf9e26ecda3d501e683d25af">operator--</a>(<span class="keywordtype">int</span>) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> copy{*<span class="keyword">this</span>};</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordflow">return</span> --value_, copy;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordflow">return</span> --_value, copy;</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="comment">  /// @}</span></div>
@@ -273,17 +273,17 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00098" data-start="{" data-end="}">
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a8b398ff5b8a79f90a4ab12b33e7ab94f">   98</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>&amp; <a class="code hl_function" href="class_storm_1_1_index.html#a8b398ff5b8a79f90a4ab12b33e7ab94f">operator+=</a>(<a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> delta) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keywordflow">return</span> value_ += delta, *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="keywordflow">return</span> _value += delta, *<span class="keyword">this</span>;</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00101" data-start="{" data-end="};">
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#ac83349d97bd20d2f59fdc555f09aaa5e">  101</a></span>  <span class="keyword">friend</span> <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_friend" href="class_storm_1_1_index.html#ac83349d97bd20d2f59fdc555f09aaa5e">operator+</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>, <a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> d) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>.value_ + d};</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>._value + d};</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00104" data-start="{" data-end="};">
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a3a78853f248d8072f8ec92c91f4073fa">  104</a></span>  <span class="keyword">friend</span> <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_friend" href="class_storm_1_1_index.html#a3a78853f248d8072f8ec92c91f4073fa">operator+</a>(<a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> d, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{d + <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>.value_};</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{d + <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>._value};</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment">  /// @}</span></div>
@@ -292,12 +292,12 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="comment">  /// @{</span></div>
 <div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a624742c269fdd56c15bca0149bec4a07">  111</a></span><span class="comment"></span>  <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>&amp; <a class="code hl_function" href="class_storm_1_1_index.html#a624742c269fdd56c15bca0149bec4a07">operator-=</a>(<a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> delta) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordflow">return</span> value_ -= delta, *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    <span class="keywordflow">return</span> _value -= delta, *<span class="keyword">this</span>;</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00114" data-start="{" data-end="};">
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#ad4c01af5ddd66109183e34948668601f">  114</a></span>  <span class="keyword">friend</span> <span class="keyword">constexpr</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_friend" href="class_storm_1_1_index.html#ad4c01af5ddd66109183e34948668601f">operator-</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>, <a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> d) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>.value_ - d};</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordflow">return</span> <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>{<a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>._value - d};</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>  }<span class="comment"></span></div>
 </div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="comment">  /// @}</span></div>
@@ -305,21 +305,21 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="comment">  /// @brief Difference operator.</span></div>
 <div class="foldopen" id="foldopen00120" data-start="{" data-end="};">
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a08846efce8c683199a688f0d907a461c">  120</a></span><span class="comment"></span>  <span class="keyword">friend</span> <span class="keyword">constexpr</span> <a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a> <a class="code hl_friend" href="class_storm_1_1_index.html#a08846efce8c683199a688f0d907a461c">operator-</a>(<a class="code hl_class" href="class_storm_1_1_index.html">Index</a> i1, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> i2) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a><span class="keyword">&gt;</span>(i1.value_ - i2.value_);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">ptrdiff_t</a><span class="keyword">&gt;</span>(i1._value - i2._value);</div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>  }</div>
 </div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="comment"></span> </div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="comment">  /// @brief Read @p index from the input @p stream.</span></div>
 <div class="foldopen" id="foldopen00125" data-start="{" data-end="};">
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#a86c9423fbf9000064508c9ec78564a47">  125</a></span><span class="comment"></span>  <span class="keyword">friend</span> std::istream&amp; <a class="code hl_friend" href="class_storm_1_1_index.html#a86c9423fbf9000064508c9ec78564a47">operator&gt;&gt;</a>(std::istream&amp; stream, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a>&amp; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordflow">return</span> stream &gt;&gt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>.value_;</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordflow">return</span> stream &gt;&gt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>._value;</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>  }</div>
 </div>
 <div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="comment"></span> </div>
 <div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="comment">  /// @brief Write @p index to the output @p stream.</span></div>
 <div class="foldopen" id="foldopen00130" data-start="{" data-end="};">
 <div class="line"><a id="l00130" name="l00130"></a><span class="lineno"><a class="line" href="class_storm_1_1_index.html#ae60c3e4f82fff0d476edd75339f56927">  130</a></span><span class="comment"></span>  <span class="keyword">friend</span> std::ostream&amp; <a class="code hl_friend" href="class_storm_1_1_index.html#ae60c3e4f82fff0d476edd75339f56927">operator&lt;&lt;</a>(std::ostream&amp; stream, <a class="code hl_class" href="class_storm_1_1_index.html">Index</a> <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>) {</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordflow">return</span> stream &lt;&lt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>.value_;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    <span class="keywordflow">return</span> stream &lt;&lt; <a class="code hl_variable" href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">i</a>._value;</div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>  }</div>
 </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
@@ -358,9 +358,9 @@ $(document).ready(function(){initNavTree('_index_8hpp_source.html',''); initResi
 <div class="ttc" id="aclass_storm_1_1_index_html_adeac1920408e3ab471cc927b4d26160b"><div class="ttname"><a href="class_storm_1_1_index.html#adeac1920408e3ab471cc927b4d26160b">Storm::Index::operator++</a></div><div class="ttdeci">constexpr Index &amp; operator++() noexcept</div><div class="ttdoc">Increment operators.</div><div class="ttdef"><b>Definition</b> <a href="_index_8hpp_source.html#l00076">Index.hpp:76</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_index_html_ae60c3e4f82fff0d476edd75339f56927"><div class="ttname"><a href="class_storm_1_1_index.html#ae60c3e4f82fff0d476edd75339f56927">Storm::Index::operator&lt;&lt;</a></div><div class="ttdeci">friend std::ostream &amp; operator&lt;&lt;(std::ostream &amp;stream, Index i)</div><div class="ttdoc">Write index to the output stream.</div><div class="ttdef"><b>Definition</b> <a href="_index_8hpp_source.html#l00130">Index.hpp:130</a></div></div>
 <div class="ttc" id="aconcept_storm_1_1index_html"><div class="ttname"><a href="concept_storm_1_1index.html">Storm::index</a></div><div class="ttdoc">Index type.</div><div class="ttdef"><b>Definition</b> <a href="_index_8hpp_source.html#l00145">Index.hpp:145</a></div></div>
-<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00265">Base.hpp:265</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a7e087afd1f14c86e1003972e398f3503"><div class="ttname"><a href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">Storm::ptrdiff_t</a></div><div class="ttdeci">std::ptrdiff_t ptrdiff_t</div><div class="ttdoc">Pointer difference type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00284">Base.hpp:284</a></div></div>
-<div class="ttc" id="anamespace_storm_html_ace2929c1a67d57e4fbb0188bb14c6dc7"><div class="ttname"><a href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Storm::i</a></div><div class="ttdeci">constexpr complex_t i</div><div class="ttdoc">.</div><div class="ttdef"><b>Definition</b> <a href="_math_8hpp_source.html#l00119">Math.hpp:119</a></div></div>
+<div class="ttc" id="anamespace_storm_html"><div class="ttname"><a href="namespace_storm.html">Storm</a></div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00032">Base.hpp:32</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a7e087afd1f14c86e1003972e398f3503"><div class="ttname"><a href="namespace_storm.html#a7e087afd1f14c86e1003972e398f3503">Storm::ptrdiff_t</a></div><div class="ttdeci">std::ptrdiff_t ptrdiff_t</div><div class="ttdoc">Pointer difference type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00035">Types.hpp:35</a></div></div>
+<div class="ttc" id="anamespace_storm_html_ace2929c1a67d57e4fbb0188bb14c6dc7"><div class="ttname"><a href="namespace_storm.html#ace2929c1a67d57e4fbb0188bb14c6dc7">Storm::i</a></div><div class="ttdeci">constexpr complex_t i</div><div class="ttdoc">.</div><div class="ttdef"><b>Definition</b> <a href="_math_utils_8hpp_source.html#l00086">MathUtils.hpp:86</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

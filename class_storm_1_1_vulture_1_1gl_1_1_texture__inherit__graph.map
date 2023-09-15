@@ -1,11 +1,11 @@
 <map id="Storm::Vulture::gl::Texture" name="Storm::Vulture::gl::Texture">
-<area shape="rect" id="Node000001" title="OpenGL texture." alt="" coords="201,85,324,126"/>
-<area shape="rect" id="Node000003" href="$class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html" title="OpenGL multisampled 2D texture." alt="" coords="372,5,538,61"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="331,77,378,59,380,64,333,82"/>
-<area shape="rect" id="Node000004" href="$class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html" title="OpenGL 2D texture." alt="" coords="384,85,526,126"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="339,103,383,103,383,108,339,108"/>
-<area shape="rect" id="Node000005" href="$class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html" title="OpenGL texture buffer." alt="" coords="394,150,517,191"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="339,128,394,147,392,152,337,133"/>
-<area shape="rect" id="Node000002" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,92,153,118"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,103,200,103,200,108,168,108"/>
+<area shape="rect" id="Node000001" title="OpenGL texture." alt="" coords="154,85,277,126"/>
+<area shape="rect" id="Node000003" href="$class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html" title="OpenGL multisampled 2D texture." alt="" coords="325,5,491,61"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,77,331,59,333,64,286,82"/>
+<area shape="rect" id="Node000004" href="$class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html" title="OpenGL 2D texture." alt="" coords="337,85,479,126"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="292,103,336,103,336,108,292,108"/>
+<area shape="rect" id="Node000005" href="$class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html" title="OpenGL texture buffer." alt="" coords="347,150,470,191"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="292,128,347,147,345,152,290,133"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,92,106,118"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,103,153,103,153,108,121,108"/>
 </map>

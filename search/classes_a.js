@@ -9,5 +9,7 @@ var searchData=
   ['list_5fcast_5ffn_6',['list_cast_fn',['../struct_storm_1_1meta_1_1list__cast__fn.html',1,'Storm::meta']]],
   ['log_7',['Log',['../class_storm_1_1_log.html',1,'Storm']]],
   ['log10_8',['Log10',['../class_storm_1_1_log10.html',1,'Storm']]],
-  ['log2_9',['Log2',['../class_storm_1_1_log2.html',1,'Storm']]]
+  ['log2_9',['Log2',['../class_storm_1_1_log2.html',1,'Storm']]],
+  ['logicaland_10',['LogicalAnd',['../class_storm_1_1_logical_and.html',1,'Storm']]],
+  ['logicalor_11',['LogicalOr',['../class_storm_1_1_logical_or.html',1,'Storm']]]
 ];

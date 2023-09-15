@@ -173,21 +173,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add5c42620269763bdf3af377af668ac5" id="r_add5c42620269763bdf3af377af668ac5"><td class="memItemLeft" align="right" valign="top">constexpr&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_map_matrix_view.html#add5c42620269763bdf3af377af668ac5">MapMatrixView</a> (Func func, Matrices... mats)</td></tr>
 <tr class="memdesc:add5c42620269763bdf3af377af668ac5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a map view.  <br /></td></tr>
 <tr class="separator:add5c42620269763bdf3af377af668ac5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d03862094a0c7eea3928c1bf7d6e6b3" id="r_a3d03862094a0c7eea3928c1bf7d6e6b3"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_map_matrix_view.html#a3d03862094a0c7eea3928c1bf7d6e6b3">shape</a> () const noexcept</td></tr>
-<tr class="memdesc:a3d03862094a0c7eea3928c1bf7d6e6b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix shape.  <br /></td></tr>
-<tr class="separator:a3d03862094a0c7eea3928c1bf7d6e6b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad54bab0e5555b3ce8824792916754d1a" id="r_ad54bab0e5555b3ce8824792916754d1a"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
+<tr class="memitem:a911699cde112db3b644d988bb239c4da" id="r_a911699cde112db3b644d988bb239c4da"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_storm_1_1_map_matrix_view.html#a911699cde112db3b644d988bb239c4da">shape</a> () const</td></tr>
+<tr class="memdesc:a911699cde112db3b644d988bb239c4da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix shape.  <br /></td></tr>
+<tr class="separator:a911699cde112db3b644d988bb239c4da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad40f16087ff76a43f3cae58682b6fcc1" id="r_ad40f16087ff76a43f3cae58682b6fcc1"><td class="memTemplParams" colspan="2">template&lt;class... Indices&gt; <br />
 requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_map_matrix_view.html">MapMatrixView</a>, Indices...&gt;</td></tr>
-<tr class="memitem:ad54bab0e5555b3ce8824792916754d1a"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_map_matrix_view.html#ad54bab0e5555b3ce8824792916754d1a">operator()</a> (Indices... indices) const noexcept</td></tr>
-<tr class="memdesc:ad54bab0e5555b3ce8824792916754d1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
-<tr class="separator:ad54bab0e5555b3ce8824792916754d1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad40f16087ff76a43f3cae58682b6fcc1"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_storm_1_1_map_matrix_view.html#ad40f16087ff76a43f3cae58682b6fcc1">operator()</a> (Indices... indices) const</td></tr>
+<tr class="memdesc:ad40f16087ff76a43f3cae58682b6fcc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the matrix element at <code>indices</code>.  <br /></td></tr>
+<tr class="separator:ad40f16087ff76a43f3cae58682b6fcc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;std::copy_constructible Func, matrix_view... Matrices&gt;<br />
-requires std::is_object_v&lt;Func&gt; &amp;&amp; (sizeof...(Matrices) &gt;= 1) &amp;&amp; std::regular_invocable&lt;Func, <a class="el" href="namespace_storm.html#a357cc9bd0dad664c57b59cde89d772dc">matrix_element_t</a>&lt;Matrices&gt;...&gt;<br />
+requires compatible_matrices_v&lt;Matrices...&gt; &amp;&amp; std::regular_invocable&lt;Func, <a class="el" href="namespace_storm.html#a357cc9bd0dad664c57b59cde89d772dc">matrix_element_t</a>&lt;Matrices&gt;...&gt; &amp;&amp; can_reference&lt; std::invoke_result_t&lt;Func, <a class="el" href="namespace_storm.html#a357cc9bd0dad664c57b59cde89d772dc">matrix_element_t</a>&lt;Matrices&gt;...&gt;&gt;<br />
 class Storm::MapMatrixView&lt; Func, Matrices &gt;</div><p>Element-wise apply function to the matrices. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00044">44</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00048">48</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="add5c42620269763bdf3af377af668ac5" name="add5c42620269763bdf3af377af668ac5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#add5c42620269763bdf3af377af668ac5">&#9670;&#160;</a></span>MapMatrixView()</h2>
@@ -227,13 +227,13 @@ template&lt;std::copy_constructible Func, matrix_view... Matrices&gt; </div>
 
 <p>Construct a map view. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00056">56</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00060">60</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ad54bab0e5555b3ce8824792916754d1a" name="ad54bab0e5555b3ce8824792916754d1a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad54bab0e5555b3ce8824792916754d1a">&#9670;&#160;</a></span>operator()()</h2>
+<a id="ad40f16087ff76a43f3cae58682b6fcc1" name="ad40f16087ff76a43f3cae58682b6fcc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad40f16087ff76a43f3cae58682b6fcc1">&#9670;&#160;</a></span>operator()()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -256,19 +256,19 @@ requires compatible_matrix_indices_v&lt;<a class="el" href="class_storm_1_1_map_
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Get the matrix element at <code>indices</code>. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00074">74</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00078">78</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
 
 </div>
 </div>
-<a id="a3d03862094a0c7eea3928c1bf7d6e6b3" name="a3d03862094a0c7eea3928c1bf7d6e6b3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d03862094a0c7eea3928c1bf7d6e6b3">&#9670;&#160;</a></span>shape()</h2>
+<a id="a911699cde112db3b644d988bb239c4da" name="a911699cde112db3b644d988bb239c4da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a911699cde112db3b644d988bb239c4da">&#9670;&#160;</a></span>shape()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -287,14 +287,14 @@ template&lt;std::copy_constructible Func, matrix_view... Matrices&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Get the matrix shape. </p>
 
-<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00067">67</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="_matrix_math_8hpp_source.html#l00071">71</a> of file <a class="el" href="_matrix_math_8hpp_source.html">MatrixMath.hpp</a>.</p>
 
 </div>
 </div>

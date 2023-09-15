@@ -1,0 +1,5 @@
+<map id="Storm::NonMovableInterface" name="Storm::NonMovableInterface">
+<area shape="rect" id="Node000001" title="Non movable (and non copyable) object interface." alt="" coords="5,5,194,31"/>
+<area shape="rect" id="Node000002" href="$class_storm_1_1_target_matrix_view.html" title="Output matrix as target wrapper." alt="" coords="17,79,182,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,46,102,79,97,79,97,46"/>
+</map>

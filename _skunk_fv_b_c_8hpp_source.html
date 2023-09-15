@@ -216,14 +216,14 @@ $(document).ready(function(){initNavTree('_skunk_fv_b_c_8hpp_source.html',''); i
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  <span class="keywordtype">void</span> <a class="code hl_function" href="class_storm_1_1_feathers_1_1_mhd_fv_bc_p_t.html#af59937581ba17e06f6f37db5fe4c7006">get_ghost_state</a>(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r, <span class="comment">//</span></div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                       <span class="keyword">const</span> <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a>* u, <a class="code hl_typedef" href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">real_t</a>* u_ghost)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    MhdFluidStateT u_state(n, u), u_ghost_state;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    get_ghost_state_(n, r, u_state, u_ghost_state);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    _get_ghost_state(n, r, u_state, u_ghost_state);</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    u_ghost_state.make_cons(5, u_ghost);</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  }</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="comment"></span> </div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="comment">  /** @brief Compute the ghost state. */</span></div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <span class="keyword">virtual</span> <span class="keywordtype">void</span> get_ghost_state_(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <span class="keyword">virtual</span> <span class="keywordtype">void</span> _get_ghost_state(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                                <span class="keyword">const</span> MhdFluidStateT&amp; u,</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                                MhdFluidStateT&amp; u_ghost) <span class="keyword">const</span> = 0;</div>
 <div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>}; <span class="comment">// MhdFvBcT</span></div>
@@ -244,7 +244,7 @@ $(document).ready(function(){initNavTree('_skunk_fv_b_c_8hpp_source.html',''); i
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="comment"></span> </div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="comment">  /** @brief Compute the ghost state. */</span></div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  <span class="keywordtype">void</span> get_ghost_state_(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  <span class="keywordtype">void</span> _get_ghost_state(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                        <span class="keyword">const</span> MhdFluidStateT&amp; u,</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                        MhdFluidStateT&amp; u_ghost)<span class="keyword"> const override </span>{</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    u_ghost = u;</div>
@@ -271,7 +271,7 @@ $(document).ready(function(){initNavTree('_skunk_fv_b_c_8hpp_source.html',''); i
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="comment"></span> </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment">  /** @brief Compute the ghost state. */</span></div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  <span class="keywordtype">void</span> get_ghost_state_(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  <span class="keywordtype">void</span> _get_ghost_state(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                        <span class="keyword">const</span> MhdFluidStateT&amp; u,</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                        MhdFluidStateT&amp; u_ghost)<span class="keyword"> const override </span>{</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    u_ghost = u;</div>
@@ -299,7 +299,7 @@ $(document).ready(function(){initNavTree('_skunk_fv_b_c_8hpp_source.html',''); i
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="keyword">private</span>:</div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span><span class="comment"></span> </div>
 <div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">  /** @brief Compute the ghost state. */</span></div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>  <span class="keywordtype">void</span> get_ghost_state_(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>  <span class="keywordtype">void</span> _get_ghost_state(<span class="keyword">const</span> vec3_t&amp; n, <span class="keyword">const</span> vec3_t&amp; r,</div>
 <div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>                        <span class="keyword">const</span> MhdFluidStateT&amp; u,</div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                        MhdFluidStateT&amp; u_ghost)<span class="keyword"> const override </span>{</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    u_ghost = u;</div>
@@ -315,7 +315,7 @@ $(document).ready(function(){initNavTree('_skunk_fv_b_c_8hpp_source.html',''); i
 <div class="ttc" id="aclass_storm_1_1_feathers_1_1_mhd_fv_bc_p_t_html"><div class="ttname"><a href="class_storm_1_1_feathers_1_1_mhd_fv_bc_p_t.html">Storm::Feathers::MhdFvBcPT</a></div><div class="ttdoc">Abstract boundary condition.</div><div class="ttdef"><b>Definition</b> <a href="_skunk_fv_b_c_8hpp_source.html#l00041">SkunkFvBC.hpp:41</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_feathers_1_1_mhd_fv_bc_p_t_html_af59937581ba17e06f6f37db5fe4c7006"><div class="ttname"><a href="class_storm_1_1_feathers_1_1_mhd_fv_bc_p_t.html#af59937581ba17e06f6f37db5fe4c7006">Storm::Feathers::MhdFvBcPT::get_ghost_state</a></div><div class="ttdeci">void get_ghost_state(const vec2_t &amp;n, const vec2_t &amp;r, const real_t *u, real_t *u_ghost) const</div><div class="ttdoc">Compute the ghost states.</div><div class="ttdef"><b>Definition</b> <a href="_skunk_fv_b_c_8hpp_source.html#l00050">SkunkFvBC.hpp:50</a></div></div>
 <div class="ttc" id="aclass_storm_1_1_feathers_1_1_mhd_fv_bc_slip_t_html"><div class="ttname"><a href="class_storm_1_1_feathers_1_1_mhd_fv_bc_slip_t.html">Storm::Feathers::MhdFvBcSlipT</a></div><div class="ttdoc">Slip wall boundary condition.</div><div class="ttdef"><b>Definition</b> <a href="_skunk_fv_b_c_8hpp_source.html#l00125">SkunkFvBC.hpp:125</a></div></div>
-<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_base_8hpp_source.html#l00287">Base.hpp:287</a></div></div>
+<div class="ttc" id="anamespace_storm_html_a30e69333d30193d5248834bbe6aa1d6e"><div class="ttname"><a href="namespace_storm.html#a30e69333d30193d5248834bbe6aa1d6e">Storm::real_t</a></div><div class="ttdeci">double real_t</div><div class="ttdoc">Real floating-point type.</div><div class="ttdef"><b>Definition</b> <a href="_types_8hpp_source.html#l00038">Types.hpp:38</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!--

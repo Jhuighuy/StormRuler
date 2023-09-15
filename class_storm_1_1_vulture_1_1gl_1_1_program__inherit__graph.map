@@ -1,5 +1,5 @@
 <map id="Storm::Vulture::gl::Program" name="Storm::Vulture::gl::Program">
-<area shape="rect" id="Node000001" title="OpenGL shader program." alt="" coords="17,79,141,120"/>
-<area shape="rect" id="Node000002" href="$class_storm_1_1_non_copyable.html" title="Non copyable object interface." alt="" coords="5,5,153,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="82,46,82,79,76,79,76,46"/>
+<area shape="rect" id="Node000001" title="OpenGL shader program." alt="" coords="5,79,129,120"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="17,5,117,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="70,46,70,79,64,79,64,46"/>
 </map>

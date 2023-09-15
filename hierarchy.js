@@ -9,7 +9,6 @@ var hierarchy =
     [ "Storm::Add", "class_storm_1_1_add.html", null ],
     [ "Storm::AddAssign", "class_storm_1_1_add_assign.html", null ],
     [ "Storm::AllIndices", "class_storm_1_1_all_indices.html", null ],
-    [ "Storm::And", "class_storm_1_1_and.html", null ],
     [ "Storm::ApproxEqual", "class_storm_1_1_approx_equal.html", null ],
     [ "std::array", null, [
       [ "Storm::IndexedArray< Index, Value, Size >", "class_storm_1_1_indexed_array.html", null ]
@@ -32,6 +31,8 @@ var hierarchy =
     [ "Storm::Compose< Func, RestFuncs >", "class_storm_1_1_compose.html", null ],
     [ "Storm::Compose< Func1, Func2 >", "class_storm_1_1_compose_3_01_func1_00_01_func2_01_4.html", null ],
     [ "Storm::Conj", "class_storm_1_1_conj.html", null ],
+    [ "Storm::Constant< Value >", "class_storm_1_1_constant.html", null ],
+    [ "Storm::CopyAssign", "class_storm_1_1_copy_assign.html", null ],
     [ "Storm::Cos", "class_storm_1_1_cos.html", null ],
     [ "Storm::Cosh", "class_storm_1_1_cosh.html", null ],
     [ "Storm::Feathers::CubicSecondLimiter", "class_storm_1_1_feathers_1_1_cubic_second_limiter.html", null ],
@@ -39,7 +40,7 @@ var hierarchy =
     [ "Storm::Vulture::gl::DebugOutput", "class_storm_1_1_vulture_1_1gl_1_1_debug_output.html", null ],
     [ "Storm::DenseMatrix< Value, NumRows, NumCols >", "class_storm_1_1_dense_matrix.html", null ],
     [ "Storm::DenseMatrix< real_t >", "class_storm_1_1_dense_matrix.html", null ],
-    [ "Storm::detail_::DerivedFromCrtpInterfaceImpl_< CrtpInterface >", "struct_storm_1_1detail___1_1_derived_from_crtp_interface_impl__.html", null ],
+    [ "Storm::detail::DerivedFromCrtpInterfaceImpl< CrtpInterface >", "struct_storm_1_1detail_1_1_derived_from_crtp_interface_impl.html", null ],
     [ "Storm::DivideAssign", "class_storm_1_1_divide_assign.html", null ],
     [ "Storm::DotProduct", "class_storm_1_1_dot_product.html", null ],
     [ "Storm::Feathers::DummySecondLimiter", "class_storm_1_1_feathers_1_1_dummy_second_limiter.html", null ],
@@ -67,6 +68,7 @@ var hierarchy =
     ] ],
     [ "Storm::Exp", "class_storm_1_1_exp.html", null ],
     [ "Storm::Exp2", "class_storm_1_1_exp2.html", null ],
+    [ "Storm::Eye< Value >", "class_storm_1_1_eye.html", null ],
     [ "Storm::Vulture::gl::Framework", "class_storm_1_1_vulture_1_1gl_1_1_framework.html", null ],
     [ "Storm::Feathers::GradientLimiterScheme< Mesh, SlopeLimiter, SecondLimiter >", "class_storm_1_1_feathers_1_1_gradient_limiter_scheme.html", null ],
     [ "Storm::shapes::Hexahedron", "class_storm_1_1shapes_1_1_hexahedron.html", null ],
@@ -82,6 +84,8 @@ var hierarchy =
     [ "Storm::Log", "class_storm_1_1_log.html", null ],
     [ "Storm::Log10", "class_storm_1_1_log10.html", null ],
     [ "Storm::Log2", "class_storm_1_1_log2.html", null ],
+    [ "Storm::LogicalAnd", "class_storm_1_1_logical_and.html", null ],
+    [ "Storm::LogicalOr", "class_storm_1_1_logical_or.html", null ],
     [ "Storm::MatrixViewInterface< MatrixView >", "class_storm_1_1_matrix_view_interface.html", null ],
     [ "Storm::MatrixViewInterface< CrossProductView< Matrix1, Matrix2 > >", "class_storm_1_1_matrix_view_interface.html", [
       [ "Storm::CrossProductView< Matrix1, Matrix2 >", "class_storm_1_1_cross_product_view.html", null ]
@@ -120,10 +124,23 @@ var hierarchy =
     [ "Storm::Feathers::MhdHydroVars", "class_storm_1_1_feathers_1_1_mhd_hydro_vars.html", null ],
     [ "Storm::Min", "class_storm_1_1_min.html", null ],
     [ "Storm::Feathers::MinmodSlopeLimiter", "class_storm_1_1_feathers_1_1_minmod_slope_limiter.html", null ],
+    [ "Storm::MoveAssign", "class_storm_1_1_move_assign.html", null ],
     [ "Storm::Multiply", "class_storm_1_1_multiply.html", null ],
     [ "Storm::MultiplyAssign", "class_storm_1_1_multiply_assign.html", null ],
-    [ "Storm::NonAssignable", "class_storm_1_1_non_assignable.html", null ],
-    [ "Storm::NonCopyable", "class_storm_1_1_non_copyable.html", [
+    [ "Storm::NonAssignableInterface", "class_storm_1_1_non_assignable_interface.html", null ],
+    [ "NonCopyable", null, [
+      [ "Storm::Vulture::gl::Buffer< Type >", "class_storm_1_1_vulture_1_1gl_1_1_buffer.html", null ],
+      [ "Storm::Vulture::gl::Framebuffer", "class_storm_1_1_vulture_1_1gl_1_1_framebuffer.html", null ],
+      [ "Storm::Vulture::gl::Program", "class_storm_1_1_vulture_1_1gl_1_1_program.html", null ],
+      [ "Storm::Vulture::gl::Shader", "class_storm_1_1_vulture_1_1gl_1_1_shader.html", null ],
+      [ "Storm::Vulture::gl::Texture", "class_storm_1_1_vulture_1_1gl_1_1_texture.html", [
+        [ "Storm::Vulture::gl::MultisampledTexture2D< Pixel >", "class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html", null ],
+        [ "Storm::Vulture::gl::Texture2D< Pixel >", "class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html", null ],
+        [ "Storm::Vulture::gl::TextureBuffer", "class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html", null ]
+      ] ],
+      [ "Storm::Vulture::gl::VertexArray", "class_storm_1_1_vulture_1_1gl_1_1_vertex_array.html", null ]
+    ] ],
+    [ "Storm::NonCopyableInterface", "class_storm_1_1_non_copyable_interface.html", [
       [ "Storm::FilteringStreambuf< Char, BeginFilter, EndFilter >", "class_storm_1_1_filtering_streambuf.html", null ],
       [ "Storm::MatrixOwningView< Matrix >", "class_storm_1_1_matrix_owning_view.html", null ],
       [ "Storm::Object", "class_storm_1_1_object.html", [
@@ -171,22 +188,11 @@ var hierarchy =
             [ "Storm::InnerOuterIterativeSolver< InVector, OutVector >", "class_storm_1_1_inner_outer_iterative_solver.html", null ]
           ] ]
         ] ]
-      ] ],
-      [ "Storm::Vulture::gl::Buffer< Type >", "class_storm_1_1_vulture_1_1gl_1_1_buffer.html", null ],
-      [ "Storm::Vulture::gl::Framebuffer", "class_storm_1_1_vulture_1_1gl_1_1_framebuffer.html", null ],
-      [ "Storm::Vulture::gl::Program", "class_storm_1_1_vulture_1_1gl_1_1_program.html", null ],
-      [ "Storm::Vulture::gl::Shader", "class_storm_1_1_vulture_1_1gl_1_1_shader.html", null ],
-      [ "Storm::Vulture::gl::Texture", "class_storm_1_1_vulture_1_1gl_1_1_texture.html", [
-        [ "Storm::Vulture::gl::MultisampledTexture2D< Pixel >", "class_storm_1_1_vulture_1_1gl_1_1_multisampled_texture2_d.html", null ],
-        [ "Storm::Vulture::gl::Texture2D< Pixel >", "class_storm_1_1_vulture_1_1gl_1_1_texture2_d.html", null ],
-        [ "Storm::Vulture::gl::TextureBuffer", "class_storm_1_1_vulture_1_1gl_1_1_texture_buffer.html", null ]
-      ] ],
-      [ "Storm::Vulture::gl::VertexArray", "class_storm_1_1_vulture_1_1gl_1_1_vertex_array.html", null ]
+      ] ]
     ] ],
-    [ "Storm::NonMovable", "class_storm_1_1_non_movable.html", [
+    [ "Storm::NonMovableInterface", "class_storm_1_1_non_movable_interface.html", [
       [ "Storm::TargetMatrixView< Matrix >", "class_storm_1_1_target_matrix_view.html", null ]
     ] ],
-    [ "Storm::Or", "class_storm_1_1_or.html", null ],
     [ "Storm::meta::pair_list< class, class >", "struct_storm_1_1meta_1_1pair__list.html", null ],
     [ "Storm::meta::pair_list< list< Ts... >, X >", "struct_storm_1_1meta_1_1pair__list_3_01list_3_01_ts_8_8_8_01_4_00_01_x_01_4.html", null ],
     [ "Storm::meta::pair_list< X, list< Ts... > >", "struct_storm_1_1meta_1_1pair__list_3_01_x_00_01list_3_01_ts_8_8_8_01_4_01_4.html", null ],

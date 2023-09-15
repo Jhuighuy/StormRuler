@@ -26,5 +26,6 @@
 #cmakedefine01 STORM_BENCH_BLAZE_ENABLED
 #cmakedefine01 STORM_BENCH_EIGEN_ENABLED
 #cmakedefine01 STORM_BENCH_XTENSOR_ENABLED
+#cmakedefine01 STORM_BENCH_NUMPY_ENABLED
 
 // -----------------------------------------------------------------------------

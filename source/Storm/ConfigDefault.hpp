@@ -65,4 +65,9 @@
 #  define STORM_GLM_ENABLED 0
 #endif
 
+// Python configuration (pybind11).
+#ifndef STORM_PYTHON_ENABLED
+#  define STORM_PYTHON_ENABLED 0
+#endif
+
 // -----------------------------------------------------------------------------

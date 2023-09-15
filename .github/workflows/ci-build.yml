@@ -76,6 +76,12 @@ jobs:
       - name: Run tests
         run: |
           ./bin/StormRuler_UnitTests
+
+      # ------------------------------------------------------------------------
+
+      - name: Run benchmarks
+        if: matrix.configuration == 'Release'
+        run: |
           ./bin/StormRuler_Benchmarks
 
   # ----------------------------------------------------------------------------
@@ -111,6 +117,12 @@ jobs:
       - name: Run tests
         run: |
           ./bin/StormRuler_UnitTests
+
+      # ------------------------------------------------------------------------
+
+      - name: Run benchmarks
+        if: matrix.configuration == 'Release'
+        run: |
           ./bin/StormRuler_Benchmarks
 
   # ----------------------------------------------------------------------------
@@ -171,14 +183,26 @@ jobs:
         shell: bash
         run: |
           ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
-          ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
 
       - name: Run tests (MinGW)
         if: matrix.compiler == 'g++'
         shell: msys2 {0}
         run: |
-          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
           ./bin/${{ matrix.configuration }}/StormRuler_Benchmarks.exe
+
+      # ------------------------------------------------------------------------
+
+      - name: Run benchmarks (MSVC)
+        if: matrix.configuration == 'Release' && matrix.compiler == 'cl'
+        shell: bash
+        run: |
+          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
+
+      - name: Run benchmarks (MinGW)
+        if: matrix.configuration == 'Release' && matrix.compiler == 'g++'
+        shell: msys2 {0}
+        run: |
+          ./bin/${{ matrix.configuration }}/StormRuler_UnitTests.exe
 
   # ----------------------------------------------------------------------------
 
